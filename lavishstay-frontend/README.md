@@ -1,6 +1,6 @@
 # LavishStay Frontend - React + TypeScript + Vite
 
-Dự án LavishStay Frontend là một nền tảng đặt phòng cao cấp được xây dựng với:
+Dự án LavishStay Frontend là một nền tảng đặt phòng cao cấp được xây dựng với các công nghệ hiện đại:
 - React 18 + TypeScript
 - Vite cho phát triển và build siêu nhanh
 - Ant Design + Tailwind CSS cho UI/UX
@@ -70,26 +70,3 @@ Runs ESLint to check for code quality issues.
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Vitest Documentation](https://vitest.dev/)
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
