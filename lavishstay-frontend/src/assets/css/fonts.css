@@ -1,0 +1,37 @@
+/* Apply Be Vietnam Pro font family globally */
+body {
+  font-family: 'Be Vietnam Pro', 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Be Vietnam Pro', 'Open Sans', sans-serif;
+  font-weight: 600;
+}
+
+.font-bevietnam {
+  font-family: 'Be Vietnam Pro', 'Open Sans', sans-serif;
+}
+
+.font-light {
+  font-weight: 300;
+}
+
+.font-regular {
+  font-weight: 400;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
