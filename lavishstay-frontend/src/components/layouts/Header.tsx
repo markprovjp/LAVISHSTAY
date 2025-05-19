@@ -12,6 +12,8 @@ import {
   Space,
   Divider,
   Typography,
+  ConfigProvider,
+  theme,
 } from "antd";
 import {
   UserOutlined,
@@ -49,6 +51,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
+  const { token } = theme.useToken(); // Lấy token từ theme
 
   // Sample notification data
   const notifications = [
@@ -91,16 +94,11 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     position: "fixed" as "fixed",
     width: "100%",
     zIndex: 1000,
-    // padding: "0 24px",
-    background:
-      transparent && !scrolled
-        ? "transparent"
-        : isDarkMode
-        ? "#141414"
-        : "#ffffff",
+    background: transparent && !scrolled ? "transparent" : token.colorBgBase,
     boxShadow: scrolled ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
     transition: "all 0.3s ease",
-    backdropFilter: scrolled ? "blur(10px)" : "none",
+    backdropFilter: scrolled ? "blur(12px)" : "none",
+    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
   };
 
   // Navigation items
@@ -109,12 +107,18 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     { key: "/destinations", label: "Điểm đến", icon: <GlobalOutlined /> },
     { key: "/hotels", label: "Khách sạn", icon: <ShoppingOutlined /> },
     { key: "/about", label: "Về chúng tôi", icon: null },
-    { key: "/contact", label: "Liên hệ", icon: <PhoneOutlined /> },
+    // { key: "/contact", label: "Liên hệ", icon: <PhoneOutlined /> }, 
   ];
 
   // User menu dropdown
   const userMenu = (
-    <Menu>
+    <Menu
+      style={{
+        borderRadius: token.borderRadius,
+        background: token.colorBgContainer,
+        boxShadow: token.boxShadowTertiary,
+      }}
+    >
       <Menu.Item key="profile" icon={<UserOutlined />}>
         <Link to="/profile">Hồ sơ cá nhân</Link>
       </Menu.Item>
@@ -136,7 +140,14 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
 
   // Notification dropdown
   const notificationMenu = (
-    <Menu className="notification-dropdown" style={{ width: 320 }}>
+    <Menu
+      style={{
+        width: 320,
+        borderRadius: token.borderRadius,
+        background: token.colorBgContainer,
+        boxShadow: token.boxShadowTertiary,
+      }}
+    >
       <div className="px-4 py-2 flex justify-between items-center">
         <Text strong>Thông báo</Text>
         <Link to="/notifications">
@@ -149,12 +160,20 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       {notifications.map((notification) => (
         <Menu.Item
           key={notification.id}
-          className={!notification.read ? "bg-blue-50 dark:bg-blue-900/20" : ""}
+          style={{
+            background: !notification.read
+              ? isDarkMode
+                ? token.colorPrimary + "20"
+                : token.colorPrimary + "10"
+              : undefined,
+          }}
         >
           <div>
             <div className="flex justify-between">
-              <Text>{notification.message}</Text>
-              {!notification.read && <Badge color="blue" />}
+              <Text style={{ color: token.colorTextBase }}>
+                {notification.message}
+              </Text>
+              {!notification.read && <Badge color={token.colorPrimary} />}
             </div>
             <Text type="secondary" className="text-xs">
               {notification.time}
@@ -166,202 +185,276 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   );
 
   return (
-    <AntHeader
-      style={headerStyle}
-      className="flex items-center justify-between px-4 md:px-8"
-    >
-      {/* Logo */}
-      <div className="logo h-16 flex items-center">
-        <Link to="/" className="flex items-center h-full">
-          <img
-            src={isDarkMode ? logoDark : logoLight}
-            alt="LavishStay"
-            className="h-10 mr-2"
-          />
-          {/* <span className={`text-xl font-bold font-bevietnam ${transparent && !scrolled ? 'text-white' : ''}`}>
-            LavishStay
-          </span> */}
-        </Link>
-      </div>      {/* Desktop Menu */}
-      <div className="hidden lg:flex flex-1 justify-center">
-        <Menu
-          mode="horizontal"
-          selectedKeys={[location.pathname]}
-          items={menuItems.map((item) => ({
-            key: item.key,
-            icon: item.icon,
-            label: (
-              <Link to={item.key}>
-                <span className="font-bevietnam font-medium">{item.label}</span>
-              </Link>
-            ),
-          }))}
-          style={{
-            background: "transparent",
-            borderBottom: "none",
-            color: transparent && !scrolled ? "#fff" : undefined,
-          }}
-          className="min-w-[500px] flex justify-center"
-        />
-      </div>
-
-      {/* Desktop Right Menu */}
-      <div className="hidden lg:flex items-center space-x-4">
-        {/* Search */}
-        {/* <Search 
-          placeholder="Tìm kiếm khách sạn..." 
-          style={{ width: 200 }}
-          className="header-search"
-        /> */}
-
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
-        {/* Notifications */}        <Dropdown
-          overlay={notificationMenu}
-          trigger={["hover"]}
-          placement="bottomRight"
-          overlayClassName="custom-dropdown"
-        >
-          <Badge
-            count={notifications.filter((n) => !n.read).length}
-            size="small"
-          >
-            <Button
-              type="text"
-              icon={<BellOutlined />}
-              className={transparent && !scrolled ? "text-white" : ""}
+    <ConfigProvider theme={{ token }}>
+      <AntHeader
+        style={headerStyle}
+        className="flex items-center justify-between px-4 md:px-6 lg:px-8"
+      >
+        {/* Logo */}
+        <div className="logo flex items-center h-16">
+          <Link to="/" className="flex items-center h-full">
+            <img
+              src={isDarkMode ? logoDark : logoLight}
+              alt="LavishStay"
+              className="h-12 mr-3"
             />
-          </Badge>
-        </Dropdown>        {/* User Menu */}
-        {isAuthenticated ? (
+          </Link>
+        </div>
+
+        {/* Desktop Menu */}
+        <div className="hidden lg:flex flex-1 justify-center mx-8">
+          <Menu
+            mode="horizontal"
+            selectedKeys={[location.pathname]}
+            items={menuItems.map((item) => ({
+              key: item.key,
+              icon: item.icon,
+              label: (
+                <Link to={item.key}>
+                  <span
+                    style={{
+                      fontFamily: token.fontFamily,
+                      fontWeight: 500,
+                      color:
+                        transparent && !scrolled
+                          ? "#ffffff"
+                          : token.colorTextBase,
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              ),
+            }))}
+            style={{
+              background: "transparent",
+              borderBottom: "none",
+              color:
+                transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+              lineHeight: "64px",
+            }}
+            className="min-w-[400px] flex justify-center"
+          />
+        </div>
+
+        {/* Desktop Right Menu */}
+        <div className="hidden lg:flex items-center space-x-3">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
+          {/* Notifications */}
           <Dropdown
-            overlay={userMenu}
+            overlay={notificationMenu}
             trigger={["hover"]}
             placement="bottomRight"
-            overlayClassName="custom-dropdown"
           >
-            <Button type="text" className="flex items-center hover:bg-opacity-20">
-              <Space>
+            <Badge
+              count={notifications.filter((n) => !n.read).length}
+              size="small"
+              style={{ backgroundColor: token.colorPrimary }}
+            >
+              <Button
+                type="text"
+                icon={<BellOutlined style={{ fontSize: 15 }} />}
+                style={{
+                  color:
+                    transparent && !scrolled
+                      ? "#ffffff"
+                      : token.colorTextBase,
+                }}
+                className="hover:bg-opacity-10 rounded-full w-5 h-5 flex items-center justify-center"
+              />
+            </Badge>
+          </Dropdown>
+
+          {/* User Menu */}
+          {isAuthenticated ? (
+            <Dropdown
+              overlay={userMenu}
+              trigger={["hover"]}
+              placement="bottomRight"
+            >
+              <Space
+                className="cursor-pointer hover:bg-opacity-10 rounded-full px-2 py-1"
+                style={{
+                  background:
+                    transparent && !scrolled
+                      ? "rgba(255,255,255,0.1)"
+                      : token.colorPrimary + "10",
+                }}
+              >
                 <Avatar
                   src={user?.avatar}
                   icon={!user?.avatar ? <UserOutlined /> : undefined}
+                  style={{
+                    backgroundColor: token.colorPrimary,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                  }}
                 />
-                <span
-                  className={`hidden xl:inline font-bevietnam ${
-                    transparent && !scrolled ? "text-white" : ""
-                  }`}
+                <Text
+                  style={{
+                    fontFamily: token.fontFamily,
+                    color:
+                      transparent && !scrolled
+                        ? "#ffffff"
+                        : token.colorTextBase,
+                  }}
+                  className="hidden xl:inline"
                 >
                   {user?.name || "Người dùng"}
-                </span>
+                </Text>
               </Space>
-            </Button>
-          </Dropdown>
-        ) : (
-          <Space>
+            </Dropdown>
+          ) : (
             <Link to="/login">
               <Button
-                type={transparent && !scrolled ? "default" : "primary"}
-                ghost={transparent && !scrolled}
-                className="font-bevietnam"
+                type="primary"
+                style={{
+                  borderRadius: token.borderRadius,
+                  background: token.colorPrimary,
+                  borderColor: token.colorPrimary,
+                }}
+                className="font-medium"
               >
                 Đăng nhập
               </Button>
             </Link>
-            <Link to="/register">
-              <Button type="primary" className="font-bevietnam">
-                Đăng ký
-              </Button>
-            </Link>
-          </Space>
-        )}
-      </div>      {/* Mobile Menu Button */}
-      <div className="lg:hidden flex items-center space-x-3">
-        <ThemeToggle />
-        <Button
-          type="text"
-          icon={<MenuOutlined style={{ fontSize: '20px' }} />}
-          onClick={() => setMobileMenuOpen(true)}
-          className={`${transparent && !scrolled ? "text-white" : ""} hover:bg-opacity-20 rounded-full flex items-center justify-center w-10 h-10`}
-        />
-      </div>
-
-      {/* Mobile Menu Drawer */}
-      <Drawer
-        title="Menu"
-        placement="right"
-        onClose={() => setMobileMenuOpen(false)}
-        open={mobileMenuOpen}
-        width={300}
-      >
-        <div className="mb-6">
-          <Search placeholder="Tìm kiếm..." enterButton />
+          )}
         </div>
 
-        <Menu
-          mode="vertical"
-          selectedKeys={[location.pathname]}
-          style={{ border: "none" }}
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden flex items-center space-x-3">
+          <ThemeToggle />
+          <Button
+            type="text"
+            icon={<MenuOutlined style={{ fontSize: "20px" }} />}
+            onClick={() => setMobileMenuOpen(true)}
+            style={{
+              color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+            }}
+            className="hover:bg-opacity-10 rounded-full w-10 h-10 flex items-center justify-center"
+          />
+        </div>
+
+        {/* Mobile Menu Drawer */}
+        <Drawer
+          title={
+            <Text strong style={{ color: token.colorTextBase }}>
+              Menu
+            </Text>
+          }
+          placement="right"
+          onClose={() => setMobileMenuOpen(false)}
+          open={mobileMenuOpen}
+          width={300}
+          styles={{
+            header: { background: token.colorBgBase },
+            body: { background: token.colorBgBase, padding: "16px" },
+          }}
         >
-          {menuItems.map((item) => (
-            <Menu.Item key={item.key} icon={item.icon}>
-              <Link to={item.key} onClick={() => setMobileMenuOpen(false)}>
-                {item.label}
-              </Link>
-            </Menu.Item>
-          ))}
-        </Menu>
 
-        <Divider />
 
-        {isAuthenticated ? (
-          <>
-            <div className="flex items-center space-x-3 mb-6 px-4">
-              <Avatar
-                src={user?.avatar}
-                icon={!user?.avatar ? <UserOutlined /> : undefined}
-              />
-              <div>
-                <div className="font-medium">{user?.name || "Người dùng"}</div>
-                <div className="text-xs text-gray-500">{user?.email}</div>
+          <Menu
+            mode="vertical"
+            selectedKeys={[location.pathname]}
+            style={{ border: "none", background: token.colorBgBase }}
+          >
+            {menuItems.map((item) => (
+              <Menu.Item
+                key={item.key}
+                icon={item.icon}
+                style={{ color: token.colorTextBase }}
+              >
+                <Link
+                  to={item.key}
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ color: token.colorTextBase }}
+                >
+                  {item.label}
+                </Link>
+              </Menu.Item>
+            ))}
+          </Menu>
+
+          <Divider />
+
+          {isAuthenticated ? (
+            <>
+              <div className="flex items-center space-x-3 mb-6 px-4">
+                <Avatar
+                  src={user?.avatar}
+                  icon={!user?.avatar ? <UserOutlined /> : undefined}
+                  style={{
+                    backgroundColor: token.colorPrimary,
+                    border: `1px solid ${token.colorBorderSecondary}`,
+                  }}
+                />
+                <div>
+                  <Text
+                    strong
+                    style={{ color: token.colorTextBase, fontFamily: token.fontFamily }}
+                  >
+                    {user?.name || "Người dùng"}
+                  </Text>
+                  <Text style={{ color: token.colorTextSecondary }} className="text-xs">
+                    {user?.email}
+                  </Text>
+                </div>
               </div>
-            </div>
 
-            <Menu mode="vertical" style={{ border: "none" }}>
-              <Menu.Item key="profile" icon={<UserOutlined />}>
-                <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
-                  Hồ sơ cá nhân
-                </Link>
-              </Menu.Item>
-              <Menu.Item key="bookings" icon={<BookOutlined />}>
-                <Link to="/bookings" onClick={() => setMobileMenuOpen(false)}>
-                  Đặt phòng của tôi
-                </Link>
-              </Menu.Item>
-              <Menu.Item key="wishlist" icon={<HeartOutlined />}>
-                <Link to="/wishlist" onClick={() => setMobileMenuOpen(false)}>
-                  Danh sách yêu thích
-                </Link>
-              </Menu.Item>
-              <Menu.Item key="logout" icon={<LogoutOutlined />}>
-                Đăng xuất
-              </Menu.Item>
-            </Menu>
-          </>
-        ) : (
-          <div className="space-y-3 px-4">
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button type="primary" block>
-                Đăng nhập
-              </Button>
-            </Link>
-            <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-              <Button block>Đăng ký</Button>
-            </Link>
-          </div>
-        )}
-      </Drawer>
-    </AntHeader>
+              <Menu mode="vertical" style={{ border: "none", background: token.colorBgBase }}>
+                <Menu.Item key="profile" icon={<UserOutlined />}>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: token.colorTextBase }}
+                  >
+                    Hồ sơ cá nhân
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="bookings" icon={<BookOutlined />}>
+                  <Link
+                    to="/bookings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: token.colorTextBase }}
+                  >
+                    Đặt phòng của tôi
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="wishlist" icon={<HeartOutlined />}>
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: token.colorTextBase }}
+                  >
+                    Danh sách yêu thích
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="logout" icon={<LogoutOutlined />}>
+                  Đăng xuất
+                </Menu.Item>
+              </Menu>
+            </>
+          ) : (
+            <div className="space-y-3 px-4">
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  type="primary"
+                  block
+                  style={{
+                    borderRadius: token.borderRadius,
+                    background: token.colorPrimary,
+                    borderColor: token.colorPrimary,
+                  }}
+                >
+                  Đăng nhập
+                </Button>
+              </Link>
+            </div>
+          )}
+        </Drawer>
+      </AntHeader>
+    </ConfigProvider>
   );
 };
 

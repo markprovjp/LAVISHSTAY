@@ -3,26 +3,26 @@ import type { ThemeConfig } from 'antd';
 
 // Màu sắc cho chế độ light
 const lightColors = {
-  colorPrimary: '#1890ff',
-  colorLink: '#1890ff',
-  colorSuccess: '#52c41a',
-  colorWarning: '#faad14',
-  colorError: '#f5222d',
-  colorInfo: '#1890ff',
-  colorBgBase: '#ffffff',
-  colorTextBase: '#000000',
+  colorPrimary: '#152C5B',
+  colorLink: '#152C5B',
+  colorSuccess: '#2ca01c',
+  colorWarning: '#d97706',
+  colorError: '#b91c1c',
+  colorInfo: '#0284c7',
+  colorBgBase: '#f8fafc',
+  colorTextBase: '#1e293b',
 };
 
 // Màu sắc cho chế độ dark
 const darkColors = {
-  colorPrimary: '#177ddc',
-  colorLink: '#177ddc',
-  colorSuccess: '#49aa19',
-  colorWarning: '#d89614',
-  colorError: '#a61d24',
-  colorInfo: '#177ddc',
-  colorBgBase: '#141414',
-  colorTextBase: '#ffffff',
+  colorPrimary: '#3b82f6',
+  colorLink: '#3b82f6',
+  colorSuccess: '#4ade80',
+  colorWarning: '#f59e0b',
+  colorError: '#ef4444',
+  colorInfo: '#60a5fa',
+  colorBgBase: '#0f172a',
+  colorTextBase: '#f1f5f9',
 };
 
 // Tạo theme cơ bản
@@ -45,16 +45,16 @@ const createTheme = (isDark = false): ThemeConfig => {
         borderRadius: 6,
       },
       Card: {
-        colorBgContainer: isDark ? '#1f1f1f' : '#ffffff',
+        colorBgContainer: isDark ? '#1e293b' : '#ffffff',
         boxShadowTertiary: isDark 
-          ? '0 4px 12px rgba(0, 0, 0, 0.2)' 
-          : '0 4px 12px rgba(0, 0, 0, 0.08)',
+          ? '0 4px 12px rgba(0, 0, 0, 0.3)' 
+          : '0 4px 12px rgba(0, 0, 0, 0.06)',
         borderRadiusLG: 12,
       },
       Menu: {
         colorPrimary: colorTokens.colorPrimary,
         itemHeight: 50,
-        itemHoverColor: isDark ? '#177ddc' : '#40a9ff',
+        itemHoverColor: isDark ? '#60a5fa' : '#1e40af',
         itemSelectedColor: '#ffffff',
         itemSelectedBg: colorTokens.colorPrimary,
       },
@@ -70,7 +70,7 @@ const createTheme = (isDark = false): ThemeConfig => {
         borderRadius: 6,
       },
       Form: {
-        labelColor: isDark ? '#d9d9d9' : '#4b5563',
+        labelColor: isDark ? '#e2e8f0' : '#4b5563',
       },
     },
   };

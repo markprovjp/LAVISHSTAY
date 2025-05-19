@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Light theme colors */
+  --color-primary: #152C5B;
+  --color-primary-hover: #1e40af;
+  --color-secondary: #64748b;
+  --color-success: #2ca01c;
+  --color-warning: #d97706;
+  --color-error: #b91c1c;
+  --color-info: #0284c7;
+  --color-bg-base: #f8fafc;
+  --color-text-base: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-border: #e2e8f0;
+  --color-bg-container: #ffffff;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  /* Dark theme colors */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #60a5fa;
+  --color-secondary: #cbd5e1;
+  --color-success: #4ade80;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #60a5fa;
+  --color-bg-base: #0f172a;
+  --color-text-base: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-border: #334155;
+  --color-bg-container: #1e293b;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 
 body {
   margin: 0;
@@ -10,6 +43,9 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-base);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code {
@@ -17,41 +53,50 @@ code {
     monospace;
 }
 
-/* Theme Toggle Styling */
-.theme-toggle {
-  border-radius: 24px !important;
-  background-color: var(--color-bg-container);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 2px !important;
-  transition: all 0.2s ease-in-out;
+/* Common UI Components */
+@layer components {
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300;
+    background-color: var(--color-bg-container);
+    box-shadow: var(--box-shadow);
+  }
+  
+  .btn-primary {
+    @apply px-6 py-2 rounded-md font-medium transition-all duration-300;
+    background-color: var(--color-primary);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-primary-hover);
+  }
+  
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold mb-4;
+    color: var(--color-primary);
+  }
+  
+  .section-subtitle {
+    @apply text-base md:text-lg mb-8;
+    color: var(--color-text-secondary);
+  }
 }
 
-.theme-toggle .ant-segmented-item {
-  border-radius: 20px !important;
-  padding: 4px 12px !important;
-  margin: 0 2px;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.theme-toggle .ant-segmented-thumb {
-  border-radius: 20px !important;
-  background-color: var(--color-primary-bg) !important;
+::-webkit-scrollbar-track {
+  background-color: var(--color-bg-base);
 }
 
-.theme-toggle .ant-segmented-item-selected {
-  color: var(--color-primary) !important;
-  font-weight: 500;
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary);
+  border-radius: 4px;
 }
 
-.theme-toggle .ant-segmented-item:not(.ant-segmented-item-selected):hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-/* Dark mode specific styling */
-body[data-theme="dark"] .theme-toggle {
-  background-color: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-body[data-theme="dark"] .theme-toggle .ant-segmented-item:not(.ant-segmented-item-selected):hover {
-  background-color: rgba(255, 255, 255, 0.05);
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-primary-hover);
 }
