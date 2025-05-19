@@ -125,12 +125,6 @@ Start-Sleep -Seconds 2
 # Khoi dong Frontend
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$frontendPath'; Write-Host 'Khoi dong React Frontend tai http://localhost:5173' -ForegroundColor Cyan; npm run dev"
 
-# Mo trinh duyet web (tu chon)
-$openBrowser = Read-Host "Ban co muon mo trinh duyet den trang Frontend khong? (y/n)"
-if ($openBrowser -eq "y") {
-    Start-Process "http://localhost:5173"
-}
-
 Write-Host "
 ==================================================
        LAVISHSTAY DA KHOI DONG THANH CONG

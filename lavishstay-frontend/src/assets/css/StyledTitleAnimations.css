@@ -1,0 +1,30 @@
+/* src/assets/css/StyledTitleAnimations.css */
+/* CSS dành cho StyledTitle component */
+
+.auto-fill .hover-text {
+  width: 100% !important;
+  filter: drop-shadow(0 0 23px var(--animation-color)) !important;
+}
+
+.my-2:hover .hover-text {
+  transition: 0.7s;
+  filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8));
+}
+
+@media (prefers-color-scheme: dark) {
+  .my-2 .title {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  
+  .my-2:hover .hover-text {
+    filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9));
+  }
+}
+
+html.dark .my-2 .title {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+html.dark .my-2:hover .hover-text {
+  filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9));
+}

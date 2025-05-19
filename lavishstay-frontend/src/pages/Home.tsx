@@ -84,23 +84,18 @@ const Home: React.FC = () => {
         "Trải nghiệm tuyệt vời, không gian sống rộng rãi và đầy đủ tiện nghi. Chỉ tiếc là thời gian nghỉ quá ngắn!",
       date: "25/04/2025",
       location: "Đà Nẵng, VN",
-    },  ];
+    },
+  ];
 
   return (
-    <div className="pb-12">
+    <div className="pb-1 ">
+      {" "}
       {/* Hero Section */}
-      <HeroBanner
-        title="Khám phá những kỳ nghỉ xa hoa"
-        subtitle="Tìm và đặt phòng tại những chỗ nghỉ sang trọng nhất cho chuyến du lịch tiếp theo của bạn."
-        ctaText="Khám phá ngay"
-        backgroundImage="https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1760&q=80"
-      />
-
+      <HeroBanner  />
       {/* Search Form */}
-      <div className="container mx-auto px-4 -mt-24 relative z-10 mb-20">
+      <div className="container mx-auto  -mt-4 relative z-10 mb-20">
         <SearchForm className="mx-auto shadow-xl" />
       </div>
-
       {/* Featured Properties Section */}
       <div className="container mx-auto px-4 mb-16">
         <SectionHeader
@@ -124,7 +119,6 @@ const Home: React.FC = () => {
           </Button>
         </div>
       </div>
-
       {/* Features Section */}
       <div className="container mx-auto px-4 mb-16">
         <SectionHeader
@@ -174,7 +168,6 @@ const Home: React.FC = () => {
           </Col>
         </Row>
       </div>
-
       {/* Testimonials Section */}
       <div className="bg-gray-50 py-16 mb-16">
         <div className="container mx-auto px-4">
@@ -194,7 +187,6 @@ const Home: React.FC = () => {
           </Row>
         </div>
       </div>
-
       {/* Newsletter Section */}
       <div className="container mx-auto px-4 mb-16">
         <Newsletter />

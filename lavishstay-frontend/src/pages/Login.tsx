@@ -157,10 +157,10 @@ const Login: React.FC = () => {
                           strong
                           className="text-white font-bevietnam block"
                         >
-                          Nguyễn Minh Anh
+                          Nguyễn Văn Quyền
                         </Text>
                         <Text className="text-white/80 font-bevietnam">
-                          Khách hàng VIP
+                          Khách hàng VIP LUXURY
                         </Text>
                       </div>
                     </div>
@@ -292,7 +292,7 @@ const Login: React.FC = () => {
                       </Divider>{" "}
                       <div className="flex gap-4 mb-6">
                         {" "}
-                        <Button
+                        {/* <Button
                           block
                           icon={
                             <FacebookOutlined style={{ fontSize: "18px" }} />
@@ -300,7 +300,7 @@ const Login: React.FC = () => {
                           className="font-bevietnam rounded-lg h-12 flex items-center justify-center facebook-login-button shadow hover:shadow-lg"
                         >
                           Facebook
-                        </Button>
+                        </Button> */}
                         <Button
                           block
                           icon={
