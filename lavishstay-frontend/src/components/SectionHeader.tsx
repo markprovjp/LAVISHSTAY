@@ -20,12 +20,12 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
 }) => {
   return (
     <div className={`mb-8 ${centered ? "text-center" : ""} ${className}`}>
-      <Title level={2} className="font-bevietnam font-bold text-gray-800 mb-2">
+      <Title level={2} className="font-bevietnam font-bold  mb-2">
         {title}
       </Title>
 
       {subtitle && (
-        <Paragraph className="font-bevietnam text-gray-600 text-lg max-w-2xl mx-auto">
+        <Paragraph className="font-bevietnam  text-lg max-w-2xl mx-auto">
           {subtitle}
         </Paragraph>
       )}

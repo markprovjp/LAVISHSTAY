@@ -15,8 +15,7 @@ import PageHeader from "../components/PageHeader";
 import SectionHeader from "../components/SectionHeader";
 import FeatureCard from "../components/ui/FeatureCard";
 import Stats from "../components/Stats";
-import Testimonial from "../components/Testimonial";
-import Newsletter from "../components/Newsletter";
+
 import ContactForm from "../components/ContactForm";
 
 const { Title, Paragraph, Text } = Typography;
@@ -25,27 +24,27 @@ const About: React.FC = () => {
   // Team members data
   const teamMembers = [
     {
-      name: "Nguyễn Văn An",
+      name: "Nguyễn Văn Quyền",
       position: "Đồng sáng lập & CEO",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      avatar: "../../public/images/users/1.jpg",
       bio: "Hơn 15 năm kinh nghiệm trong ngành khách sạn và du lịch cao cấp.",
     },
     {
-      name: "Trần Thị Minh",
+      name: "Nguyễn Anh Đức",
       position: "Giám đốc Marketing",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+      avatar: "../../public/images/users/5.jpg",
       bio: "Chuyên gia marketing với kinh nghiệm tại các tập đoàn đa quốc gia.",
     },
     {
-      name: "Lê Quang Huy",
+      name: "Lê Hiểu Phước",
       position: "Giám đốc Công nghệ",
-      avatar: "https://randomuser.me/api/portraits/men/62.jpg",
+      avatar: "../../public/images/users/12.jpg",
       bio: "Chuyên gia công nghệ với bề dày kinh nghiệm phát triển các nền tảng đặt phòng.",
     },
     {
-      name: "Phạm Thùy Trang",
+      name: "Lê Thị Trang",
       position: "Giám đốc Trải nghiệm khách hàng",
-      avatar: "https://randomuser.me/api/portraits/women/29.jpg",
+      avatar: "../../public/images/users/9.jpg",
       bio: "Tâm huyết với việc tạo ra những trải nghiệm khách hàng đẳng cấp.",
     },
   ];
@@ -127,36 +126,6 @@ const About: React.FC = () => {
     },
   ];
 
-  // Testimonials data
-  const testimonials = [
-    {
-      name: "Trần Anh Dũng",
-      avatar: "https://randomuser.me/api/portraits/men/3.jpg",
-      rating: 5,
-      comment:
-        "Tôi đã có một kỳ nghỉ tuyệt vời tại biệt thự ở Đà Nẵng qua LavishStay. Mọi thứ đều hoàn hảo từ dịch vụ đặt phòng đến khi trả phòng.",
-      date: "Tháng 3, 2025",
-      location: "Hà Nội",
-    },
-    {
-      name: "Nguyễn Minh Tâm",
-      avatar: "https://randomuser.me/api/portraits/women/6.jpg",
-      rating: 5,
-      comment:
-        "Lần đầu tiên tôi sử dụng LavishStay và đã rất ấn tượng. Căn hộ penthouse tại Nha Trang thật sự xa hoa và đáng giá từng đồng.",
-      date: "Tháng 2, 2025",
-      location: "TP HCM",
-    },
-    {
-      name: "Lê Quốc Tuấn",
-      avatar: "https://randomuser.me/api/portraits/men/36.jpg",
-      rating: 4,
-      comment:
-        "Dịch vụ khách hàng xuất sắc! Khi tôi gặp vấn đề với đặt phòng, đội ngũ LavishStay đã giải quyết nhanh chóng và hiệu quả.",
-      date: "Tháng 1, 2025",
-      location: "Hải Phòng",
-    },
-  ];
 
   return (
     <div>
@@ -174,18 +143,18 @@ const About: React.FC = () => {
           <Col xs={24} md={12}>
             <SectionHeader title="Câu chuyện của chúng tôi" withDivider />
             <div className="space-y-4 font-bevietnam">
-              <Paragraph className="text-gray-700 text-lg">
+              <Paragraph className=" text-lg">
                 LavishStay được thành lập vào năm 2022 với sứ mệnh mang đến
                 những trải nghiệm lưu trú xa hoa, độc đáo cho những du khách
                 đang tìm kiếm không gian nghỉ dưỡng sang trọng và đẳng cấp.
               </Paragraph>
-              <Paragraph className="text-gray-700 text-lg">
+              <Paragraph className=" text-lg">
                 Từ một ý tưởng đơn giản về việc kết nối khách hàng với những bất
                 động sản cao cấp, chúng tôi đã phát triển thành một nền tảng
                 toàn diện cung cấp dịch vụ đặt phòng tại các biệt thự, căn hộ và
                 khách sạn sang trọng trên toàn Việt Nam.
               </Paragraph>
-              <Paragraph className="text-gray-700 text-lg">
+              <Paragraph className=" text-lg">
                 Với đội ngũ nhân viên giàu kinh nghiệm và am hiểu về ngành du
                 lịch cao cấp, chúng tôi cam kết mang đến cho khách hàng những
                 trải nghiệm độc đáo và dịch vụ chất lượng cao nhất.
@@ -199,15 +168,6 @@ const About: React.FC = () => {
                 alt="Luxury accommodation"
                 className="rounded-lg shadow-lg"
               />
-              <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-lg shadow-lg max-w-xs">
-                <Title level={4} className="font-bevietnam text-blue-600 mb-1">
-                  Sứ mệnh của chúng tôi
-                </Title>
-                <Paragraph className="font-bevietnam text-gray-700 mb-0">
-                  Kết nối du khách với những trải nghiệm lưu trú đẳng cấp, tạo
-                  nên những kỷ niệm khó quên.
-                </Paragraph>
-              </div>
             </div>
           </Col>
         </Row>
@@ -289,31 +249,7 @@ const About: React.FC = () => {
           </Row>
         </div>
 
-        {/* Testimonials Section */}
-        <div className="mb-16">
-          <SectionHeader
-            title="Khách hàng nói gì về chúng tôi"
-            subtitle="Những đánh giá từ khách hàng đã trải nghiệm dịch vụ của LavishStay"
-            centered
-            withDivider
-            className="mb-10"
-          />
 
-          <Row gutter={[24, 24]}>
-            {testimonials.map((testimonial, index) => (
-              <Col xs={24} md={8} key={index}>
-                <Testimonial
-                  name={testimonial.name}
-                  avatar={testimonial.avatar}
-                  rating={testimonial.rating}
-                  comment={testimonial.comment}
-                  date={testimonial.date}
-                  location={testimonial.location}
-                />
-              </Col>
-            ))}
-          </Row>
-        </div>
 
         {/* Timeline Section */}
         <div className="mb-16">
@@ -392,12 +328,12 @@ const About: React.FC = () => {
 
         {/* Contact & Newsletter Section */}
         <Row gutter={[48, 48]}>
-          <Col xs={24} md={12}>
+          <Col xs={24} md={24}>
             <ContactForm />
           </Col>
-          <Col xs={24} md={12} className="flex items-center">
+          {/* <Col xs={24} md={12} className="flex items-center">
             <Newsletter />
-          </Col>
+          </Col> */}
         </Row>
       </div>
     </div>

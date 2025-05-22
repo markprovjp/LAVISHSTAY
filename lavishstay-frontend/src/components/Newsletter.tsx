@@ -1,8 +1,25 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Typography, message } from "antd";
-import { MailOutlined, SendOutlined } from "@ant-design/icons";
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  message,
+  ConfigProvider,
+  theme,
+} from "antd";
+import {
+  MailOutlined,
+  SendOutlined,
+  GiftOutlined,
+  SafetyOutlined,
+} from "@ant-design/icons";
+import { useSelector } from "react-redux";
+import { RootState } from "../store";
+import { useTranslation } from "react-i18next";
+import illustration from "../assets/images/illustration.svg";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 interface NewsletterProps {
   title?: string;
@@ -10,17 +27,33 @@ interface NewsletterProps {
   buttonText?: string;
   className?: string;
   style?: React.CSSProperties;
+  showOnlyOnHome?: boolean;
 }
 
 const Newsletter: React.FC<NewsletterProps> = ({
-  title = "Đăng ký nhận thông tin khuyến mãi",
-  subtitle = "Nhận thông tin mới nhất về các ưu đãi và khuyến mãi hấp dẫn từ LavishStay.",
-  buttonText = "Đăng ký",
+  title,
+  subtitle,
+  buttonText,
   className = "",
   style = {},
+  showOnlyOnHome = true,
 }) => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const { isDarkMode } = useSelector((state: RootState) => state.theme);
+  const { token } = theme.useToken();
+  const location = window.location.pathname;
+  const { t } = useTranslation();
+
+  // Đặt các giá trị mặc định bằng cách sử dụng các bản dịch nếu không được cung cấp
+  title = title || t("newsletter.title");
+  subtitle = subtitle || t("newsletter.subtitle");
+  buttonText = buttonText || t("newsletter.button");
+
+  // Nếu showOnlyOnHome là true và không phải đang ở trang chủ, không hiển thị component
+  if (showOnlyOnHome && location !== "/") {
+    return null;
+  }
 
   const handleSubmit = (values: any) => {
     setLoading(true);
@@ -32,66 +65,132 @@ const Newsletter: React.FC<NewsletterProps> = ({
       form.resetFields();
     }, 1000);
   };
-
   return (
-    <div
-      className={`bg-blue-50 py-12 px-6 md:px-12 rounded-xl ${className}`}
-      style={style}
-    >
-      <div className="max-w-xl mx-auto text-center">
-        <Title
-          level={3}
-          className="font-bevietnam font-bold text-blue-700 mb-3"
+    <ConfigProvider theme={{ token }}>
+      <div className="container mx-auto px-4">
+        <div
+          className={`${className}`}
+          style={{
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadius * 2,
+            boxShadow: token.boxShadowTertiary,
+            border: `1px solid ${token.colorBorderSecondary}`,
+            overflow: "hidden",
+            margin: "60px 0",
+            ...style,
+          }}
         >
-          {title}
-        </Title>
+          <div className="flex flex-col md:flex-row items-center">
+            {/* Left side - Illustration */}
+            <div className="w-full md:w-5/12 p-6 md:p-10 flex justify-center md:justify-end">
+              <img
+                src={illustration}
+                alt="Newsletter illustration"
+                className="max-w-full md:max-w-xs h-auto"
+                style={{ maxHeight: "280px" }}
+              />
+            </div>
 
-        <Paragraph className="font-bevietnam text-gray-600 mb-6">
-          {subtitle}
-        </Paragraph>
+            {/* Right side - Content */}
+            <div className="w-full md:w-7/12 p-6 md:p-10 md:pl-4">
+              <div className="mb-6">
+                <Title
+                  level={3}
+                  style={{
+                    color: token.colorPrimary,
+                    fontFamily: token.fontFamily,
+                    marginBottom: "16px",
+                  }}
+                >
+                  {title}
+                </Title>
+                <Paragraph
+                  style={{
+                    color: token.colorTextSecondary,
+                    marginBottom: "24px",
+                  }}
+                >
+                  {subtitle}
+                </Paragraph>
+                <Form
+                  form={form}
+                  onFinish={handleSubmit}
+                  className="newsletter-form"
+                >
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Form.Item
+                      name="email"
+                      rules={[
+                        { required: true, message: "Vui lòng nhập email!" },
+                        { type: "email", message: "Email không hợp lệ!" },
+                      ]}
+                      className="flex-grow mb-0 w-full"
+                      style={{ marginBottom: "0" }}
+                    >
+                      <Input
+                        size="large"
+                        placeholder="Email của bạn"
+                        prefix={
+                          <MailOutlined
+                            style={{ color: token.colorTextSecondary }}
+                          />
+                        }
+                        style={{
+                          borderRadius: token.borderRadius,
+                          height: "44px",
+                        }}
+                      />
+                    </Form.Item>
 
-        <Form
-          form={form}
-          layout="inline"
-          onFinish={handleSubmit}
-          className="flex flex-col sm:flex-row w-full gap-3"
-        >
-          <Form.Item
-            name="email"
-            rules={[
-              { required: true, message: "Vui lòng nhập email!" },
-              { type: "email", message: "Email không hợp lệ!" },
-            ]}
-            className="flex-grow w-full sm:w-auto mb-0"
-          >
-            <Input
-              size="large"
-              placeholder="Email của bạn"
-              prefix={<MailOutlined className="text-gray-400" />}
-              className="w-full"
-            />
-          </Form.Item>
+                    <Form.Item className="mb-0" style={{ marginBottom: "0" }}>
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        icon={<SendOutlined />}
+                        loading={loading}
+                        style={{
+                          height: "44px",
+                          borderRadius: token.borderRadius,
+                          background: token.colorPrimary,
+                          borderColor: token.colorPrimary,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {buttonText}
+                      </Button>
+                    </Form.Item>
+                  </div>
+                </Form>{" "}
+                <Text type="secondary" className="text-xs mt-4 block">
+                  {t("newsletter.privacy")}
+                </Text>
+              </div>
 
-          <Form.Item className="w-full sm:w-auto mb-0">
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              icon={<SendOutlined />}
-              loading={loading}
-              className="w-full sm:w-auto"
-            >
-              {buttonText}
-            </Button>
-          </Form.Item>
-        </Form>
-
-        <Paragraph className="font-bevietnam text-gray-500 text-xs mt-4">
-          Chúng tôi tôn trọng quyền riêng tư của bạn. Bạn có thể hủy đăng ký bất
-          cứ lúc nào.
-        </Paragraph>
+              {/* Features */}
+              <div className="flex flex-wrap gap-y-3">
+                <div className="w-full sm:w-1/2 flex items-center">
+                  <GiftOutlined
+                    style={{ color: token.colorPrimary, marginRight: "8px" }}
+                  />{" "}
+                  <Text style={{ color: token.colorTextSecondary }}>
+                    {t("newsletter.features.exclusive")}
+                  </Text>
+                </div>
+                <div className="w-full sm:w-1/2 flex items-center">
+                  <SafetyOutlined
+                    style={{ color: token.colorPrimary, marginRight: "8px" }}
+                  />
+                  <Text style={{ color: token.colorTextSecondary }}>
+                    {t("newsletter.features.priority")}
+                  </Text>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </ConfigProvider>
   );
 };
 

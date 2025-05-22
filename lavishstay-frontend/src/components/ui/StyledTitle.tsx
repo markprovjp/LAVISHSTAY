@@ -61,12 +61,12 @@ const StyledWrapper = styled.div<{
     --text-stroke-color: ${(props) => props.$strokeColor};
     --animation-color: ${(props) => props.$animationColor};
     --fs-size: ${(props) => props.$fontSize};
-    letter-spacing: 3px;
+    letter-spacing: 10px;
     text-decoration: none;
     font-size: var(--fs-size);
     font-family: "Be Vietnam Pro", sans-serif;
     position: relative;
-    text-transform: uppercase;
+    // text-transform: uppercase;
     color: transparent;
     -webkit-text-stroke: 1px var(--text-stroke-color);
     display: inline-block;
@@ -96,14 +96,11 @@ const StyledWrapper = styled.div<{
 
   /* Auto fill mode */
   &.auto-fill .hover-text {
-    width: 100%;
+    width: 102%;
     filter: drop-shadow(0 0 23px var(--animation-color));
   }
 
-  /* Add animation for the title */
-  .title {
-    cursor: pointer;
-  }
+ 
 `;
 
 export default StyledTitle;

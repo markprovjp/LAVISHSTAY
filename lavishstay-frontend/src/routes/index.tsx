@@ -24,7 +24,7 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {" "}
-      {/* Public Routes - Available to all users */}
+      {/* Các tuyến công khai - Có sẵn cho tất cả người dùng */}
       <Route element={<PublicRoute />}>
         <Route element={<DefaultLayout />}>
           <Route path="/" element={<Home />} />

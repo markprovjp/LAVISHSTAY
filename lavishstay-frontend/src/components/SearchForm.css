@@ -1,0 +1,160 @@
+/* SearchForm.css */
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Pulse animation - already in Tailwind but explicitly defined here */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shake bottom animation */
+@keyframes shake-bottom {
+  0%,100% {
+    transform: rotate(0deg);
+    transform-origin: 50% 100%;
+  }
+  10% {
+    transform: rotate(2deg);
+  }
+  20%,40%,60% {
+    transform: rotate(-4deg);
+  }
+  30%,50%,70% {
+    transform: rotate(4deg);
+  }
+  80% {
+    transform: rotate(-2deg);
+  }
+  90% {
+    transform: rotate(2deg);
+  }
+}
+
+.discount-tag {
+  animation: shake-bottom 0.8s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite both;
+}
+
+/* Destination popover styles */
+.destination-popover .ant-popover-inner {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+
+/* Search history container scrollbar styles */
+.search-history-container {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.search-history-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-history-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-history-container::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 20px;
+}
+
+/* Fix for input background colors */
+.ant-input,
+.ant-picker {
+  background-color: var(--color-bg-container) !important;
+  color: var(--color-text-base) !important;
+}
+
+/* Override for dark mode */
+.dark .ant-input,
+.dark .ant-picker {
+  background-color: var(--color-bg-container) !important;
+  color: var(--color-text-base) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Enhanced search button */
+.search-button {
+  position: relative;
+  z-index: 10;
+}
+
+.search-button .button-home-search::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-button .button-home-search:hover::before {
+  opacity: 1;
+}
+
+/* Special glow effect for the search button */
+.search-button .button-home-search {
+  transition: all 0.3s ease;
+}
+
+.search-button .button-home-search:hover {
+  box-shadow: 0 8px 25px rgba(var(--color-primary-rgb, 21, 44, 91), 0.25),
+              0 0 8px rgba(var(--color-primary-rgb, 21, 44, 91), 0.1);
+}
+
+/* Responsive styles for search form */
+@media (max-width: 768px) {
+  .search-form-container {
+    padding: 12px !important;
+  }
+  
+  .ant-form-item-label {
+    margin-bottom: 4px !important;
+  }
+}
+
+/* Make popovers more mobile-friendly */
+@media (max-width: 768px) {
+  .destination-popover .ant-popover-inner,
+  .guest-popover .ant-popover-inner {
+    width: 95vw !important;
+    max-width: 440px !important;
+  }
+  
+  .destination-popover .ant-popover-inner-content,
+  .guest-popover .ant-popover-inner-content {
+    padding: 12px !important;
+  }
+}

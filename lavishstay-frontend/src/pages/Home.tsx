@@ -5,6 +5,7 @@ import {
   SafetyOutlined,
   CustomerServiceOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 // Import custom components
 import HeroBanner from "../components/ui/HeroBanner";
@@ -16,7 +17,9 @@ import Testimonial from "../components/Testimonial";
 import Newsletter from "../components/Newsletter";
 
 const Home: React.FC = () => {
-  // Sample data for hotels/properties
+  const { t } = useTranslation();
+
+  // Dữ liệu mẫu cho khách sạn/tài sản
   const featuredProperties = [
     {
       id: 1,
@@ -52,38 +55,63 @@ const Home: React.FC = () => {
       features: ["Vườn rộng", "Không gian yên tĩnh", "4 phòng ngủ"],
     },
   ];
-
-  // Sample testimonials
+  
+  // Mẫu lời chứng thực
   const testimonials = [
     {
       id: 1,
-      name: "Nguyễn Thị Mai",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+      name: "Nguyễn Văn Quyền",
+      avatar: "../../public/images/users/1.jpg",
       rating: 5,
+      position: "Doanh nhân",
       comment:
-        "Kỳ nghỉ tuyệt vời nhất mà tôi từng có! Biệt thự sang trọng, view đẹp và dịch vụ hoàn hảo. LavishStay vượt xa mong đợi của tôi.",
+        "Đi nghỉ dưỡng tại LavishStay mà cứ như ở thiên đường! Hướng dẫn viên chuyên nghiệp, nhân viên phục vụ tận tình, cảnh quan tuyệt đẹp. Đề nghị cho 10 điểm chất lượng!",
       date: "10/04/2025",
-      location: "Hà Nội, VN",
+      tour: "Biệt thự hướng biển Nha Trang",
     },
     {
       id: 2,
-      name: "Trần Văn Minh",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      name: "Nguyễn Anh Đức",
+      avatar: "../../public/images/users/5.jpg",
       rating: 5,
+      position: "Giám đốc marketing",
       comment:
-        "Đội ngũ nhân viên rất chuyên nghiệp và tận tình. Căn penthouse có tầm nhìn tuyệt đẹp ra toàn thành phố. Chắc chắn sẽ quay lại!",
+        "Chuyến đi Đà Nẵng - Hội An đúng kiểu 'work hard, play harder'. Căn hộ cao cấp view biển tuyệt đẹp, dịch vụ spa thư giãn hoàn hảo. Lần sau nhất định sẽ quay lại!",
       date: "02/05/2025",
-      location: "TP. Hồ Chí Minh, VN",
+      tour: "Penthouse cao cấp Đà Nẵng",
     },
     {
       id: 3,
-      name: "Lê Hoàng Anh",
-      avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-      rating: 4,
+      name: "Lê Hiểu Phước",
+      avatar: "../../public/images/users/12.jpg",
+      rating: 5,
+      position: "Nhiếp ảnh gia",
       comment:
-        "Trải nghiệm tuyệt vời, không gian sống rộng rãi và đầy đủ tiện nghi. Chỉ tiếc là thời gian nghỉ quá ngắn!",
+        "Đặt phòng với LavishStay mà tưởng đi nghỉ dưỡng 5 sao. Đồ ăn ngon, dịch vụ chuyên nghiệp, cảnh quan tuyệt vời cho chụp ảnh. Quá chất lượng!",
       date: "25/04/2025",
-      location: "Đà Nẵng, VN",
+      tour: "Biệt thự trên đồi Đà Lạt",
+    },
+    {
+      id: 4,
+      name: "Lê Thị Trang",
+      avatar: "../../public/images/users/9.jpg",
+      rating: 4,
+      position: "CEO Startup",
+      comment:
+        "Kỳ nghỉ ở Biệt thự LavishStay thực sự là trải nghiệm đáng nhớ. Không gian riêng tư, tiện nghi đầy đủ, nhân viên phục vụ tận tâm. Tôi đã có những giây phút thư giãn tuyệt vời cùng gia đình.",
+      date: "15/04/2025",
+      tour: "Biệt thự sang trọng Phú Quốc",
+    },
+    {
+      id: 5,
+      name: "Trần Minh Tuấn",
+      avatar: "../../public/images/users/1.jpg",
+      rating: 5,
+      position: "Kiến trúc sư",
+      comment:
+        "Tôi thực sự ấn tượng với thiết kế của căn penthouse. Không gian mở thoáng đãng, nội thất tinh tế đến từng chi tiết. LavishStay mang đến cảm giác như được ở nhà nhưng vẫn trải nghiệm sự sang trọng của một resort 5 sao.",
+      date: "05/05/2025",
+      tour: "Penthouse view biển Vũng Tàu",
     },
   ];
 
@@ -91,20 +119,20 @@ const Home: React.FC = () => {
     <div className="pb-1 ">
       {" "}
       {/* Hero Section */}
-      <HeroBanner  />
+      <HeroBanner />
       {/* Search Form */}
       <div className="container mx-auto  -mt-4 relative z-10 mb-20">
         <SearchForm className="mx-auto shadow-xl" />
       </div>
       {/* Featured Properties Section */}
-      <div className="container mx-auto px-4 mb-16">
+      <div className="container mx-auto px-4 mb-16 ">
+        {" "}
         <SectionHeader
-          title="Chỗ nghỉ nổi bật"
-          subtitle="Khám phá những chỗ nghỉ được yêu thích nhất của chúng tôi"
+          title={t("home.featured.title")}
+          subtitle={t("home.featured.subtitle")}
           centered
           withDivider
         />
-
         <Row gutter={[24, 24]} className="mt-8">
           {featuredProperties.map((property) => (
             <Col xs={24} sm={12} md={8} key={property.id}>
@@ -112,22 +140,21 @@ const Home: React.FC = () => {
             </Col>
           ))}
         </Row>
-
         <div className="text-center mt-8">
           <Button type="primary" size="large">
-            Xem tất cả chỗ nghỉ
+            Xem tất cả phòng
           </Button>
         </div>
       </div>
       {/* Features Section */}
       <div className="container mx-auto px-4 mb-16">
+        {" "}
         <SectionHeader
-          title="Tại sao chọn LavishStay?"
-          subtitle="Chúng tôi cung cấp những trải nghiệm lưu trú sang trọng và độc đáo"
+          title={t("home.why.title")}
+          subtitle={t("home.why.subtitle")}
           centered
           withDivider
         />
-
         <Row gutter={[24, 24]} className="mt-8">
           <Col xs={24} sm={12} md={8}>
             <FeatureCard
@@ -169,22 +196,18 @@ const Home: React.FC = () => {
         </Row>
       </div>
       {/* Testimonials Section */}
-      <div className="bg-gray-50 py-16 mb-16">
+      <div className=" py-16 mb-16">
         <div className="container mx-auto px-4">
+          {" "}
           <SectionHeader
-            title="Khách hàng nói gì về chúng tôi"
-            subtitle="Những đánh giá từ khách hàng đã trải nghiệm dịch vụ của LavishStay"
+            title={t("home.testimonials.title")}
+            subtitle={t("home.testimonials.subtitle")}
             centered
             withDivider
           />
-
-          <Row gutter={[24, 24]} className="mt-8">
-            {testimonials.map((testimonial) => (
-              <Col xs={24} sm={12} md={8} key={testimonial.id}>
-                <Testimonial {...testimonial} />
-              </Col>
-            ))}
-          </Row>
+          <div className="mt-12">
+            <Testimonial testimonials={testimonials} />
+          </div>
         </div>
       </div>
       {/* Newsletter Section */}
