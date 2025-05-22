@@ -101,10 +101,10 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   tooltipPlacement = "bottom",
   size = "small",
 }) => {
-  const { isDarkMode, toggleTheme } = useThemeMode();
+  const { isDarkMode, toggle } = useThemeMode();
 
   const handleToggle = () => {
-    toggleTheme();
+    toggle();
   };
 
   // Map size to CSS value

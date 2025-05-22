@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDarkMode } from '../store/slices/themeSlice';
 import { RootState } from '../store';
+import { createCSSVariables } from '../styles/theme';
 
 /**
  * Custom hook để quản lý dark/light mode
  * - Tự động phát hiện chế độ ưa thích của hệ thống
  * - Lưu chế độ đã chọn vào localStorage
  * - Đồng bộ với theme của hệ thống khi thay đổi
+ * - Áp dụng CSS variables cho toàn bộ ứng dụng
  */
 const useThemeMode = () => {
   const dispatch = useDispatch();
@@ -34,20 +36,48 @@ const useThemeMode = () => {
       }
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    // Thêm event listener để theo dõi thay đổi
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      // Cho các trình duyệt cũ hơn
+      mediaQuery.addListener(handleChange);
+    }
+
+    // Cleanup
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
   }, [dispatch]);
 
-  // Thay đổi chế độ màu
-  const toggleTheme = () => {
-    const newMode = !isDarkMode;
-    dispatch(setDarkMode(newMode));
-    localStorage.setItem('darkMode', String(newMode));
-  };
+  // Cập nhật localStorage khi thay đổi
+  useEffect(() => {
+    localStorage.setItem('darkMode', String(isDarkMode));
+    
+    // Cập nhật thuộc tính data cho body để sử dụng trong Tailwind
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    
+    // Đồng thời cập nhật CSS variables
+    createCSSVariables(isDarkMode);
+    
+    // Thêm hoặc xóa class 'dark' cho Tailwind
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
 
+  // Trả về state và các method cần thiết
   return {
     isDarkMode,
-    toggleTheme,
+    toggle: () => dispatch(setDarkMode(!isDarkMode)),
+    enableDarkMode: () => dispatch(setDarkMode(true)),
+    disableDarkMode: () => dispatch(setDarkMode(false)),
   };
 };
 

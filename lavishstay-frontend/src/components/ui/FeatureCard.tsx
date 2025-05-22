@@ -28,32 +28,26 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       bodyStyle={{ padding: "24px" }}
     >
       <div className="flex flex-col items-center text-center">
-        <div
-          className={`text-4xl mb-4 ${
-            highlighted ? "text-blue-500" : "text-gray-700"
-          }`}
-        >
+        <div className={`text-4xl mb-4 ${highlighted ? "text-blue-500" : ""}`}>
           {icon}
         </div>
 
         <Title
           level={4}
           className={`font-bevietnam font-semibold mb-3
-            ${highlighted ? "text-blue-600" : "text-gray-800"}`}
+            ${highlighted ? "text-blue-600" : ""}`}
         >
           {title}
         </Title>
 
-        <Paragraph className="font-bevietnam text-gray-600 mb-4">
-          {description}
-        </Paragraph>
+        <Paragraph className="font-bevietnam  mb-4">{description}</Paragraph>
 
         {benefits.length > 0 && (
           <ul className="text-left w-full pl-0 mt-2">
             {benefits.map((benefit, index) => (
               <li key={index} className="flex items-start mb-2">
                 <CheckCircleOutlined className="text-green-500 mt-1 mr-2" />
-                <span className="font-bevietnam text-gray-700">{benefit}</span>
+                <span className="font-bevietnam ">{benefit}</span>
               </li>
             ))}
           </ul>

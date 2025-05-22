@@ -1,9 +1,10 @@
 import React from "react";
-import { Typography, Card, Button } from "antd";
+import { Typography } from "antd";
 import { Link } from "react-router-dom";
 import "animate.css";
 import StyledTitle from "./StyledTitle"; // Import component StyledTitle
 import "../../assets/css/StyledTitleAnimations.css"; // Import CSS cho hiệu ứng
+import { useTranslation } from "react-i18next"; //lần đầu là phải iu chtrước
 
 const { Title, Paragraph } = Typography;
 
@@ -15,18 +16,71 @@ interface HeroBannerProps {
   backgroundImage?: string;
   image?: string;
   height?: string;
+  titleKey?: string;
+  subtitleKey?: string;
+  ctaTextKey?: string;
+  // Đạo cụ mới cho tích hợp phụ trợ trong tương laiơng lai
+  bannerData?: {
+    id: number;
+    title: string;
+    subtitle: string;
+    ctaText: string;
+    imageUrl: string;
+    translatedContent?: {
+      [key: string]: {
+        title: string;
+        subtitle: string;
+        ctaText: string;
+      };
+    };
+  };
 }
 
 const HeroBanner: React.FC<HeroBannerProps> = ({
-  title = "–Trải nghiệm đặt phòng tiện ích, tận hưởng kỳ nghỉ như tại chính ngôi nhà bạn",
-  subtitle = "Vô vàn lựa chọn từ nhà nghỉ, biệt thự, homestay đến khách sạn sang trọng – Tất cả trong một hệ thống đặt phòng trực tuyến đa tiện ích",
+  title = "Khoảnh khắc khó quên",
+  subtitle = "Tận dụng những ngày đẹp trời để đưa gia đình đi trốn. Giảm đến 35% cùng những quyền lợi bổ sung ",
   ctaText = "Khám phá ngay",
   ctaLink = "/",
-  image = "/images/luxury-hotel-room-banner.jpg",
-  height = "80vh",
+  image = "/images/home/luxury-hotel-room-banner.avif",
+  height = "60vh",
+  titleKey = "home.banner.title",
+  subtitleKey = "home.banner.subtitle",
+  ctaTextKey = "home.banner.cta",
+  bannerData,
 }) => {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
+
+  // Xử lý trường hợp dữ liệu biểu ngữ đến từ phụ trợ
+  let displayTitle, displaySubtitle, displayCtaText, displayImage;
+
+  if (bannerData) {
+    // Sử dụng nội dung dịch nếu có sẵn cho ngôn ngữ hiện tại
+    if (
+      bannerData.translatedContent &&
+      bannerData.translatedContent[currentLang]
+    ) {
+      const translatedContent = bannerData.translatedContent[currentLang];
+      displayTitle = translatedContent.title;
+      displaySubtitle = translatedContent.subtitle;
+      displayCtaText = translatedContent.ctaText;
+    } else {
+      // Sử dụng nội dung mặc định từ phụ trợ
+      displayTitle = bannerData.title;
+      displaySubtitle = bannerData.subtitle;
+      displayCtaText = bannerData.ctaText;
+    }
+    displayImage = bannerData.imageUrl || image;
+  } else {
+    // Use translation keys if no backend data
+    displayTitle = titleKey ? t(titleKey) : title;
+    displaySubtitle = subtitleKey ? t(subtitleKey) : subtitle;
+    displayCtaText = ctaTextKey ? t(ctaTextKey) : ctaText;
+    displayImage = image;
+  }
+
   return (
-    <div className=" py-1">
+    <div className=" py-10">
       <div
         className="container mx-auto flex flex-col md:flex-row items-center"
         style={{ minHeight: height }}
@@ -42,15 +96,15 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
               {" "}
               <div className="flex flex-col">
                 <StyledTitle
-                  text="LAVISHSTAY"
+                  text="MeliaVinpearl"
                   fontSize="1.5em"
-                  className="my-2 animate__animated animate__fadeIn animate__delay-0.3s"
+                  className="my-5 animate__animated animate__fadeIn animate__delay-0.3s"
                 />
-                <span>{title}</span>
+                <span>{displayTitle}</span>
               </div>
             </Title>{" "}
             <Paragraph className="text-sm md:text-base font-bevietnam mb-10 text-gray-500 font-light animate__animated animate__fadeInLeft animate__delay-0.5s">
-              {subtitle}
+              {displaySubtitle}
             </Paragraph>
             {ctaText && (
               <div className="animate__animated animate__fadeInUp animate__delay-1s">
@@ -64,13 +118,13 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
                     className="px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full shadow-xl group hover:shadow-2xl hover:shadow-blue-600 shadow-blue-600 uppercase font-serif tracking-widest relative overflow-hidden group text-transparent cursor-pointer z-10 after:absolute after:rounded-full after:bg-blue-200 after:h-[85%] after:w-[95%] after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-1/2 hover:saturate-[1.15] active:saturate-[1.4]"
                   >
                     {" "}
-                    <p className="absolute z-40 font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent top-1/2 left-1/2 -translate-x-1/2 group-hover:-translate-y-full h-full w-full transition-all duration-300 -translate-y-[30%] tracking-widest">
-                      KHÁM PHÁ
+                    <p className="absolute z-40 font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent top-1/2 left-1/2 -translate-x-1/2 group-hover:-translate-y-full h-full w-full transition-all duration-300 -translate-y-[35%] tracking-widest">
+                      {i18n.language === "vi" ? "ĐẶT PHÒNG" : "BOOKING"}
                     </p>{" "}
                     <p className="absolute z-40 top-1/2 left-1/2 -translate-x-1/2 translate-y-full h-full w-full transition-all duration-300 group-hover:-translate-y-[50%] tracking-widest font-extrabold">
                       {" "}
                       <span className="text-white font-bold text-lg tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">
-                        XEM 
+                        {i18n.language === "vi" ? "NGAY" : "NOW"}
                       </span>
                     </p>
                     <svg
@@ -163,9 +217,9 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
           {" "}
           <div className="absolute border-2 border-gray-200 rounded-xl w-4/5 h-4/5 -bottom-4 -right-4 animate__animated animate__fadeIn animate__delay-1.5s"></div>
           <img
-            src={image}
+            src={displayImage}
             alt="Luxury accommodation"
-            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 z-10"
+            className="w-full h-full object-cover rounded-xl transition-transform duration-700 hover:scale-105 z-10"
             style={{ minHeight: "450px" }}
           />
         </div>
