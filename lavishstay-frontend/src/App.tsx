@@ -22,6 +22,7 @@ import Home from "./pages/Home";
 import LoginPage from "./pages/Login"; // Assuming Login.tsx exports a default component
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import PaymentPage from "./pages/PaymentPage";
 // import ErrorPage from "./pages/ErrorPage";
 // import ErrorTestPage from "./pages/ErrorTestPage";
 // Placeholder for pages not yet created
@@ -137,6 +138,8 @@ const App: React.FC = () => {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/destinations" element={<Destinations />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/payment" element={<PaymentPage />} />
+                {/* Các trang khác chưa được tạo */}
                 {/* Route error là test lỗi 404 thôi */}
                 {/* <Route path="/error" element={<ErrorPage />} />
                 <Route path="/error-test" element={<ErrorTestPage />} /> */}
