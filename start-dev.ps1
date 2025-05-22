@@ -1,23 +1,34 @@
 # Script khoi dong tu dong LavishStay Frontend va Backend
 # Su dung: Chay file nay trong PowerShell bang lenh ./start-dev.ps1
 
-Write-Host "
+# ASCII Art cho vibe hacker
+Write-Host @"
+   _          _ _       _     ____ ____            
+  | |__   ___| | | ___| |__ / ___|__ / ___|  ___  
+  | '_ \ / __| | |/ _ \ '_ \ |   | '_ \___ \ / __| 
+  | | | | (__| | |  __/ | | | |___| |_) |__) | (__ 
+  |_| |_| \___|_|_|\___|_| |_|____|_.__/____/ \___|
+
 ==================================================
-       KHOI DONG LAVISHSTAY - MOI TRUONG DEV
+[*] LAVISHSTAY DEV ENVIRONMENT
 ==================================================
-" -ForegroundColor Cyan
+"@ -ForegroundColor Cyan
 
 # Kiem tra xem da co npm chua
+Write-Host "[*] Checking npm installation..." -ForegroundColor Yellow
 if (!(Get-Command npm -ErrorAction SilentlyContinue)) {
-    Write-Host "Khong tim thay npm. Hay cai dat Node.js truoc khi chay script nay." -ForegroundColor Red
+    Write-Host "[!] ERROR: npm not found. Please install Node.js first." -ForegroundColor Red
     exit
 }
+Write-Host "[+] npm found!" -ForegroundColor Green
 
 # Kiem tra xem da co php chua
+Write-Host "[*] Checking PHP installation..." -ForegroundColor Yellow
 if (!(Get-Command php -ErrorAction SilentlyContinue)) {
-    Write-Host "Khong tim thay PHP. Hay cai dat PHP truoc khi chay script nay." -ForegroundColor Red
+    Write-Host "[!] ERROR: PHP not found. Please install PHP first." -ForegroundColor Red
     exit
 }
+Write-Host "[+] PHP found!" -ForegroundColor Green
 
 # Duong dan tuyet doi den cac thu muc
 $rootPath = $PSScriptRoot
@@ -31,46 +42,64 @@ function Install-Dependencies {
         [string]$name
     )
     
+    Write-Host "[*] Checking $name dependencies..." -ForegroundColor Yellow
     if (Test-Path -Path "$path\node_modules") {
-        Write-Host "Da tim thay cac dependency cho $name..." -ForegroundColor Green
+        Write-Host "[+] $name dependencies already installed." -ForegroundColor Green
     } else {
-        Write-Host "Dang cai dat cac dependency cho $name..." -ForegroundColor Yellow
+        Write-Host "[*] Installing $name dependencies..." -ForegroundColor Yellow
         Push-Location $path
         npm install
         Pop-Location
+        Write-Host "[+] $name dependencies installed successfully!" -ForegroundColor Green
     }
 }
 
-# Kiem tra va cai dat cac dependency cho Frontend
-if (Test-Path -Path $frontendPath) {
-    Write-Host "Chuan bi khoi dong Frontend..." -ForegroundColor Cyan
-    Install-Dependencies -path $frontendPath -name "Frontend"
-} else {
-    Write-Host "Khong tim thay thu muc Frontend tai $frontendPath" -ForegroundColor Red
+# Hoi nguoi dung muon chay Frontend, Backend hay ca hai
+Write-Host "`n>>> Select service to start:" -ForegroundColor Magenta
+Write-Host "[1] Frontend" -ForegroundColor White
+Write-Host "[2] Backend" -ForegroundColor White
+Write-Host "[3] Both" -ForegroundColor White
+$choice = Read-Host "[*] Enter your choice (1-3)"
+
+# Kiem tra lua chon
+if ($choice -ne "1" -and $choice -ne "2" -and $choice -ne "3") {
+    Write-Host "[!] ERROR: Invalid choice. Please select 1, 2, or 3." -ForegroundColor Red
     exit
 }
 
-# Kiem tra va cai dat cac dependency cho Backend
-if (Test-Path -Path $backendPath) {
-    Write-Host "Chuan bi khoi dong Backend..." -ForegroundColor Cyan
-    
-    # Kiem tra file .env
-    if (!(Test-Path -Path "$backendPath\.env")) {
-        if (Test-Path -Path "$backendPath\.env.example") {
-            Write-Host "Tao file .env tu .env.example..." -ForegroundColor Yellow
-            Copy-Item "$backendPath\.env.example" "$backendPath\.env"
-        } else {
-            Write-Host "Khong tim thay file .env hoac .env.example" -ForegroundColor Red
-            Write-Host "Tao file .env tu dong..." -ForegroundColor Yellow
-            
-            @"
+# Kiem tra va cai dat cac dependency cho Frontend neu chon 1 hoac 3
+if ($choice -eq "1" -or $choice -eq "3") {
+    Write-Host "`n>>> Preparing Frontend..." -ForegroundColor Magenta
+    if (Test-Path -Path $frontendPath) {
+        Install-Dependencies -path $frontendPath -name "Frontend"
+    } else {
+        Write-Host "[!] ERROR: Frontend directory not found at $frontendPath" -ForegroundColor Red
+        exit
+    }
+}
+
+# Kiem tra va cai dat cac dependency cho Backend neu chon 2 hoac 3
+if ($choice -eq "2" -or $choice -eq "3") {
+    Write-Host "`n>>> Preparing Backend..." -ForegroundColor Magenta
+    if (Test-Path -Path $backendPath) {
+        # Kiem tra file .env
+        Write-Host "[*] Checking .env file..." -ForegroundColor Yellow
+        if (!(Test-Path -Path "$backendPath\.env")) {
+            if (Test-Path -Path "$backendPath\.env.example") {
+                Write-Host "[*] Creating .env from .env.example..." -ForegroundColor Yellow
+                Copy-Item "$backendPath\.env.example" "$backendPath\.env"
+            } else {
+                Write-Host "[!] ERROR: .env or .env.example not found" -ForegroundColor Red
+                Write-Host "[*] Generating default .env file..." -ForegroundColor Yellow
+                
+                @"
 APP_NAME=LavishStay
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
 APP_URL=http://localhost
 
-DB_CONNECTION=sqlite
+DB_CONNECTION=mysql
 DB_DATABASE=$backendPath\database\database.sqlite
 
 BROADCAST_DRIVER=log
@@ -80,55 +109,63 @@ QUEUE_CONNECTION=sync
 SESSION_DRIVER=file
 SESSION_LIFETIME=120
 "@ | Out-File -FilePath "$backendPath\.env" -Encoding utf8
+            }
+            
+            # Tao khoa ung dung
+            Push-Location $backendPath
+            Write-Host "[*] Generating Laravel application key..." -ForegroundColor Yellow
+            php artisan key:generate
+            Pop-Location
+            Write-Host "[+] Laravel key generated!" -ForegroundColor Green
+        } else {
+            Write-Host "[+] .env file found." -ForegroundColor Green
         }
         
-        # Tao khoa ung dung
-        Push-Location $backendPath
-        Write-Host "Tao khoa ung dung Laravel..." -ForegroundColor Yellow
-        php artisan key:generate
-        Pop-Location
+        # Kiem tra composer dependencies
+        Write-Host "[*] Checking Composer dependencies..." -ForegroundColor Yellow
+        if (!(Test-Path -Path "$backendPath\vendor")) {
+            Write-Host "[*] Installing Composer dependencies for Backend..." -ForegroundColor Yellow
+            Push-Location $backendPath
+            composer install
+            Pop-Location
+            Write-Host "[+] Composer dependencies installed!" -ForegroundColor Green
+        } else {
+            Write-Host "[+] Composer dependencies already installed." -ForegroundColor Green
+        }
+    } else {
+        Write-Host "[!] ERROR: Backend directory not found at $backendPath" -ForegroundColor Red
+        exit
     }
-    
-    # Kiem tra database SQLite
-    if (!(Test-Path -Path "$backendPath\database\database.sqlite")) {
-        Write-Host "Tao file database SQLite..." -ForegroundColor Yellow
-        New-Item -ItemType File -Path "$backendPath\database\database.sqlite" -Force | Out-Null
-        
-        # Chay cac migration
-        Push-Location $backendPath
-        Write-Host "Chay cac migration co so du lieu..." -ForegroundColor Yellow
-        php artisan migrate --seed
-        Pop-Location
-    }
-    
-    # Kiem tra composer dependencies
-    if (!(Test-Path -Path "$backendPath\vendor")) {
-        Write-Host "Cai dat cac dependency composer cho Backend..." -ForegroundColor Yellow
-        Push-Location $backendPath
-        composer install
-        Pop-Location
-    }
-} else {
-    Write-Host "Khong tim thay thu muc Backend tai $backendPath" -ForegroundColor Red
-    exit
 }
 
-# Khoi dong ca hai dich vu trong cac cua so PowerShell rieng biet
-Write-Host "Dang khoi dong LavishStay..." -ForegroundColor Green
+# Khoi dong dich vu theo lua chon
+Write-Host "`n>>> Starting LavishStay Services..." -ForegroundColor Magenta
 
-# Khoi dong Backend
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; Write-Host 'Khoi dong Laravel Backend tai http://localhost:8000' -ForegroundColor Cyan; php artisan serve"
+if ($choice -eq "1" -or $choice -eq "3") {
+    # Khoi dong Frontend
+    Write-Host "[*] Launching React Frontend at http://localhost:5173..." -ForegroundColor Yellow
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$frontendPath'; Write-Host '[+] React Frontend running at http://localhost:5173' -ForegroundColor Cyan; npm run dev"
+}
 
-# Cho mot chut de dam bao backend da khoi dong
-Start-Sleep -Seconds 2
+if ($choice -eq "2" -or $choice -eq "3") {
+    # Khoi dong Backend
+    Write-Host "[*] Launching Laravel Backend at http://localhost:8000..." -ForegroundColor Yellow
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; Write-Host '[+] Laravel Backend running at http://localhost:8000' -ForegroundColor Cyan; php artisan serve"
+}
 
-# Khoi dong Frontend
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$frontendPath'; Write-Host 'Khoi dong React Frontend tai http://localhost:5173' -ForegroundColor Cyan; npm run dev"
-
-Write-Host "
+# Hien thi thong bao thanh cong
+Write-Host @"
+`n==================================================
+[+] LAVISHSTAY STARTED SUCCESSFULLY
 ==================================================
-       LAVISHSTAY DA KHOI DONG THANH CONG
-==================================================
-Frontend: http://localhost:5173
-Backend:  http://localhost:8000
-" -ForegroundColor Green
+"@ -ForegroundColor Green
+
+if ($choice -eq "1") {
+    Write-Host "Frontend: http://localhost:5173" -ForegroundColor Cyan
+} elseif ($choice -eq "2") {
+    Write-Host "Backend: http://localhost:8000" -ForegroundColor Cyan
+} else {
+    Write-Host "Frontend: http://localhost:5173" -ForegroundColor Cyan
+    Write-Host "Backend: http://localhost:8000" -ForegroundColor Cyan
+}
+Write-Host ">>> System online. Ready to dominate!" -ForegroundColor Magenta
