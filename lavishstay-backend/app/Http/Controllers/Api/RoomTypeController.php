@@ -199,4 +199,12 @@ class RoomTypeController extends Controller
             'message' => 'Room types retrieved successfully'
         ]);
     }
+
+
+
+
+
+
+
+    // Tôi là Kiệt đang sửa ở chỗ này
 }
