@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\RoomTypeController;
+use App\Http\Controllers\RoomController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,3 +19,13 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+// Room Types API
+Route::apiResource('room-types', RoomTypeController::class);
+
+Route::post('room-types/{roomType}/toggle-active', [RoomTypeController::class, 'toggleActive']);
+Route::get('room-types/category/{category}', [RoomTypeController::class, 'getByCategory']);
+
+
+Route::apiResource('rooms', RoomController::class);
