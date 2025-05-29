@@ -561,7 +561,7 @@ export const sampleRoomOptions: RoomOption[] = [
     // Deluxe room options
     {
         id: "deluxe_standard",
-        name: "Tỷ lệ tiêu chuẩn",
+        name: "Tỷ lệ tiêu chuẩn test",
         price: { vnd: 3000000 },
         originalPrice: { vnd: 4000000 },
         discount: 25,
