@@ -18,6 +18,7 @@ import About from "../pages/About";
 import Dashboard from "../pages/dashboard/Dashboard";
 import Profile from "../pages/dashboard/Profile";
 import Bookings from "../pages/dashboard/Bookings";
+
 import NotFound from "../pages/NotFound";
 
 const AppRoutes: React.FC = () => {
@@ -37,8 +38,7 @@ const AppRoutes: React.FC = () => {
           {/* <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} /> */}
         </Route>
-      </Route>
-      {/* Private Routes - Available only to authenticated users */}
+      </Route>      {/* Private Routes - Available only to authenticated users */}
       <Route element={<PrivateRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -46,6 +46,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/bookings" element={<Bookings />} />
         </Route>
       </Route>
+
       {/* 404 Page */}
       <Route path="/404" element={<NotFound />} />
       {/* Redirect all unknown routes to 404 */}

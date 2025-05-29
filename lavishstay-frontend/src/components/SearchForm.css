@@ -64,42 +64,6 @@
 }
 
 
-/* Search history container scrollbar styles */
-.search-history-container {
-  max-height: 300px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
-}
-
-.search-history-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.search-history-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.search-history-container::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
-  border-radius: 20px;
-}
-
-/* Fix for input background colors */
-.ant-input,
-.ant-picker {
-  background-color: var(--color-bg-container) !important;
-  color: var(--color-text-base) !important;
-}
-
-/* Override for dark mode */
-.dark .ant-input,
-.dark .ant-picker {
-  background-color: var(--color-bg-container) !important;
-  color: var(--color-text-base) !important;
-  border-color: var(--color-border) !important;
-}
-
 /* Enhanced search button */
 .search-button {
   position: relative;
@@ -124,6 +88,22 @@
   opacity: 1;
 }
 
+/* DatePicker styling */
+.date-range-popup .ant-picker-panel-container {
+  display: flex;
+  flex-direction: row;
+}
+
+@media (max-width: 768px) {
+  .date-range-popup .ant-picker-panel-container {
+    flex-direction: column !important;
+  }
+  
+  .date-range-popup .ant-picker-panels {
+    flex-direction: column !important;
+  }
+}
+
 /* Special glow effect for the search button */
 .search-button .button-home-search {
   transition: all 0.3s ease;
@@ -143,6 +123,18 @@
   .ant-form-item-label {
     margin-bottom: 4px !important;
   }
+  
+  /* Cải thiện hiển thị DatePicker trên mobile */
+  .ant-picker-panels {
+    flex-direction: column !important;
+  }
+  
+  /* Fix guest popover trên mobile */
+  .guest-popover .ant-popover-inner-content {
+    max-width: 100%;
+    width: 100%;
+    padding: 12px 8px !important;
+  }
 }
 
 /* Make popovers more mobile-friendly */
@@ -156,5 +148,91 @@
   .destination-popover .ant-popover-inner-content,
   .guest-popover .ant-popover-inner-content {
     padding: 12px !important;
+  }
+  
+  /* Fix cho DatePicker popover trên mobile */
+  .ant-picker-dropdown .ant-picker-panel-container {
+    max-width: 95vw !important;
+  }
+  
+  .ant-picker-panels {
+    flex-direction: column !important;
+  }
+}
+
+/* Đảm bảo tính nhất quán cho AutoComplete và DatePicker trong dark mode */
+.dark .ant-select-dropdown {
+  background-color: var(--color-bg-container) !important;
+  color: var(--color-text-base) !important;
+}
+
+.dark .ant-select-item {
+  background-color: var(--color-bg-container) !important;
+  color: var(--color-text-base) !important;
+}
+
+.dark .ant-select-item-option-active,
+.dark .ant-select-item-option-selected {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+.dark .ant-picker-dropdown {
+  background-color: var(--color-bg-container) !important;
+}
+
+.dark .ant-picker-panel-container,
+.dark .ant-picker-panel,
+.dark .ant-picker-header,
+.dark .ant-picker-content,
+.dark .ant-picker-cell {
+  background-color: var(--color-bg-container) !important;
+  color: var(--color-text-base) !important;
+}
+
+/* Đảm bảo input trong dark mode có màu nền đồng nhất */
+.dark .ant-input,
+.dark .ant-select-selector,
+.dark .ant-picker,
+.dark .ant-input-affix-wrapper {
+  background-color: var(--color-bg-container) !important;
+  color: var(--color-text-base) !important;
+}
+
+/* Fix lỗi hiển thị popover trên mobile của DatePicker */
+@media (max-width: 480px) {
+  .ant-picker-dropdown {
+    position: fixed !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    max-width: 95vw !important;
+  }
+  
+  .ant-picker-panel-container {
+    width: 100% !important;
+  }
+  
+  .ant-picker-panel {
+    width: 100% !important;
+  }
+  
+  .ant-picker-date-panel {
+    width: 100% !important;
+  }
+  
+  /* Cải thiện guest popover trên mobile */
+  .guest-popover {
+    width: 95vw !important;
+    max-width: 95vw !important;
+  }
+  
+  .guest-popover .ant-popover-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .guest-popover .ant-popover-inner-content {
+    padding: 10px 8px !important;
+    width: 100% !important;
   }
 }

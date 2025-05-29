@@ -10,6 +10,11 @@ import { createAntdTheme } from "./styles/theme";
 // Import i18n configuration
 import "./i18n";
 
+// Nhập và khởi động máy chủ MirageJS
+import makeServer from "./mirage/server";
+// Khởi tạo server Mirage
+makeServer();
+
 // Import layouts
 import Header from "./components/layouts/Header";
 import Footer from "./components/layouts/Footer";
@@ -19,9 +24,11 @@ import Breadcrumb from "./components/ui/Breadcrumb";
 import Home from "./pages/Home";
 import LoginPage from "./pages/Login"; // Assuming Login.tsx exports a default component
 import About from "./pages/About";
+import Payment from "./pages/Payment"; // Assuming Payment.tsx exports a default component
 import NotFound from "./pages/NotFound";
-import HotelListingPage from "./pages/HotelListingPage";
-import HotelDetailsPage from "./pages/HotelDetailsPage";
+import RoomDetailsPage from "./pages/RoomDetailsPage";
+// import HotelListingPage from "./pages/HotelListingPage";
+// import HotelDetailsPage from "./pages/HotelDetailsPage";
 // import ErrorPage from "./pages/ErrorPage";
 // import ErrorTestPage from "./pages/ErrorTestPage";
 // Placeholder for pages not yet created
@@ -67,24 +74,45 @@ const App: React.FC = () => {
                   minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
                 }}
               >
+                {" "}
                 <Routes>
                   {" "}
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/about" element={<About />} />
-                  <Route path="/hotels" element={<HotelListingPage />} />
-                  <Route path="/hotels/:id" element={<HotelDetailsPage />} />
+                  <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+                  {/* <Route path="/hotels" element={<HotelListingPage />} />
+                  <Route path="/hotels/:id" element={<HotelDetailsPage />} /> */}
                   <Route path="/profile" element={<UserProfile />} />
                   <Route path="/bookings" element={<UserBookings />} />
                   <Route path="/wishlist" element={<UserWishlist />} />
                   <Route path="/settings" element={<UserSettings />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/destinations" element={<Destinations />} />
+                  <Route path="/payment" element={<Payment />} />
                   <Route
                     path="/notifications"
                     element={<NotificationsPage />}
                   />
                   {/* Route error là test lỗi 404 thôi */}
+                  {/* {
+                    {
+                      {
+                        {
+                          {
+                            {
+                              {
+                                {
+                                  {
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  } */}
                   {/* <Route path="/error" element={<ErrorPage />} />
                 <Route path="/error-test" element={<ErrorTestPage />} /> */}
                   <Route path="*" element={<NotFound />} />

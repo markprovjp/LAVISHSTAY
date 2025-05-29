@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import "animate.css";
 import StyledTitle from "./StyledTitle"; // Import component StyledTitle
 import "../../assets/css/StyledTitleAnimations.css"; // Import CSS cho hiệu ứng
-import { useTranslation } from "react-i18next"; //lần đầu là phải iu chtrước
+import { useTranslation } from "react-i18next"; //lần đầu là phải iu trước 
 
 const { Title, Paragraph } = Typography;
 
@@ -37,11 +37,10 @@ interface HeroBannerProps {
 }
 
 const HeroBanner: React.FC<HeroBannerProps> = ({
-  title = "Khoảnh khắc khó quên",
-  subtitle = "Tận dụng những ngày đẹp trời để đưa gia đình đi trốn. Giảm đến 35% cùng những quyền lợi bổ sung ",
+  
   ctaText = "Khám phá ngay",
   ctaLink = "/",
-  image = "/images/home/luxury-hotel-room-banner.avif",
+  image = "/images/home/melia-banner.avif",
   height = "60vh",
   titleKey = "home.banner.title",
   subtitleKey = "home.banner.subtitle",
@@ -80,13 +79,13 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
   }
 
   return (
-    <div className=" py-10">
+    <div className=" my-10 ">
       <div
         className="container mx-auto flex flex-col md:flex-row items-center"
-        style={{ minHeight: height }}
+
       >
         {/* Phần bên trái - Nội dung & Call to Action */}
-        <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12 lg:p-16">
+        <div className="w-full md:w-1/2 flex items-center justify-center p-1 md:p-5">
           <div className="max-w-xl">
             {" "}
             <Title
@@ -96,7 +95,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
               {" "}
               <div className="flex flex-col">
                 <StyledTitle
-                  text="MeliaVinpearl"
+                  text="LAVISHSTAY"
                   fontSize="1.5em"
                   className="my-5 animate__animated animate__fadeIn animate__delay-0.3s"
                 />

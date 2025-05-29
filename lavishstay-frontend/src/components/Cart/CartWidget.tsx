@@ -50,7 +50,7 @@ const CartWidget: React.FC = () => {
       <Badge count={totalItems} showZero>
         <Button
           type="text"
-          icon={<ShoppingCartOutlined style={{ fontSize: "24px" }} />}
+          icon={<ShoppingCartOutlined style={{ fontSize: "18px" }} />}
           onClick={showDrawer}
           className="flex items-center"
         />
@@ -62,7 +62,7 @@ const CartWidget: React.FC = () => {
         open={open}
         width={420}
         footer={
-          <div className="p-4">
+          <div className="p-1">
             <div className="flex justify-between mb-4">
               <Text strong>Total:</Text>
               <Text strong className="text-xl text-indigo-700">

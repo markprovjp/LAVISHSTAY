@@ -1,4 +1,3 @@
-// filepath: c:\xampp\htdocs\SUMMER2025\PRO224\LAVISHSTAY\lavishstay-frontend\src\components\SearchForm.tsx
 import React, { useState } from "react";
 import {
   Form,
@@ -11,18 +10,17 @@ import {
   Tabs,
   Space,
   Typography,
-  Divider,
   Popover,
-  Avatar,
   Tag,
   theme,
+  AutoComplete,
+  Divider,
 } from "antd";
 import {
   SearchOutlined,
   CalendarOutlined,
   UserOutlined,
   HomeOutlined,
-  BankOutlined,
   EnvironmentOutlined,
   ClockCircleOutlined,
   FireOutlined,
@@ -33,30 +31,47 @@ import {
   MessageOutlined,
   UsergroupAddOutlined,
 } from "@ant-design/icons";
-import { Users, UsersRound, UserCheck , Building2 } from "lucide-react";
+import { Users, UsersRound, UserCheck, Building2 } from "lucide-react";
 import ButtonSearch from "./ui/ButtonSearch";
-import "./SearchForm.css"; // Create this file for animations
-// import "../components/ui/ButtonSearch"
+import "./SearchForm.css";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import type { RangePickerProps } from "antd/es/date-picker";
+
+dayjs.extend(customParseFormat);
+
+// Type definitions
+
 const { RangePicker } = DatePicker;
 const { Text, Title } = Typography;
 const { useToken } = theme;
 
-// Type definitions for destination dropdown
-interface SearchHistory {
-  id: string;
-  name: string;
-}
+// Disable dates in the past
+const disabledDate: RangePickerProps["disabledDate"] = (current) => {
+  return current && current < dayjs().startOf("day");
+};
 
-interface PopularDestination {
-  id: string;
-  name: string;
-  image: string;
-}
+// Room options for autocomplete
+const searchedData = [
+  { id: "1", name: "Phòng Grand Palace Đà Lạt" },
+  { id: "2", name: "Phòng The Level" },
+  { id: "3", name: "Phòng Luxury" },
+  { id: "4", name: "Phòng Deluxe" },
+  { id: "5", name: "Phòng Superior" },
+  { id: "6", name: "Phòng Standard" },
+  { id: "7", name: "Phòng Executive" },
+];
 
 interface SearchFormProps {
   onSearch?: (values: any) => void;
   className?: string;
   style?: React.CSSProperties;
+}
+
+// Search history definition
+interface SearchHistory {
+  id: string;
+  name: string;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({
@@ -67,8 +82,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
   const [form] = Form.useForm();
   const { token } = useToken();
   const [activeTab, setActiveTab] = useState<string>("hotel");
-  const [destinationPopoverVisible, setDestinationPopoverVisible] =
-    useState<boolean>(false);
   const [guestPopoverVisible, setGuestPopoverVisible] =
     useState<boolean>(false);
   const [guestType, setGuestType] = useState<string>("solo");
@@ -85,69 +98,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
   // Mock data for search history
   const searchHistory: SearchHistory[] = [
     { id: "1", name: "Khách sạn Grand Palace Đà Lạt" },
-    { id: "2", name: "Vinpearl Resort & Spa Nha Trang Bay" },
-    { id: "3", name: "InterContinental Phú Quốc Long Beach Resort" },
-    { id: "4", name: "Khách sạn Majestic Sài Gòn" },
-    { id: "5", name: "Khách sạn Sofitel Legend Metropole Hà Nội" },
-    { id: "6", name: "Khách sạn JW Marriott Phú Quốc Emerald Bay" },
-    { id: "7", name: "Khách sạn Hilton Garden Inn Đà Nẵng" },
-    { id: "8", name: "Khách sạn Pullman Vũng Tàu" },
-    { id: "9", name: "Khách sạn Sheraton Grand Đà Nẵng Resort" },
-    { id: "10", name: "Khách sạn Park Hyatt Sài Gòn" },
-  ];
-
-  // Mock data for popular destinations
-  const popularDestinations: PopularDestination[] = [
-    {
-      id: "1",
-      name: "Hồ Chí Minh",
-      image: "/images/city/ho-chi-minh.webp",
-    },
-    {
-      id: "2",
-      name: "Đà Nẵng",
-      image: "/images/city/da-nang.webp",
-    },
-    {
-      id: "3",
-      name: "Hà Nội",
-      image: "/images/city/ha-noi.webp",
-    },
-    {
-      id: "4",
-      name: "Hội An",
-      image: "/images/city/hoi-an.webp",
-    },
-    {
-      id: "5",
-      name: "Sapa",
-      image: "/images/city/sa-pa.webp",
-    },
-    {
-      id: "6",
-      name: "Đà Lạt",
-      image: "/images/city/da-lat.webp",
-    },
-    {
-      id: "7",
-      name: "Nha Trang",
-      image: "/images/city/nha-trang.webp",
-    },
-    {
-      id: "8",
-      name: "Phú Quốc",
-      image: "/images/city/phu-quoc.webp",
-    },
-    {
-      id: "9",
-      name: "Bình Định",
-      image: "/images/city/binh-dinh.webp",
-    },
-    {
-      id: "10",
-      name: "Phan Thiết",
-      image: "/images/city/phan-thiet.webp",
-    },
   ];
 
   // Handle search form submission
@@ -159,7 +109,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
       };
       onSearch(searchData);
     }
-    setDestinationPopoverVisible(false);
     setGuestPopoverVisible(false);
   };
 
@@ -169,11 +118,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
     form.resetFields();
   };
 
-  // Function to clear search history that would be connected to Redux
+  // Function to clear search history
   const clearSearchHistory = () => {
-    // This would dispatch a Redux action to clear the search history
-    console.log("Lịch sử tìm kiếm rõ ràng");
-    // For now, we'll just show how this would work without implementing Redux
+    console.log("Lịch sử tìm kiếm đã xóa");
   }; // Destination search dropdown content
   const destinationPopoverContent = (
     <div
@@ -223,7 +170,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   className="   flex items-center justify-between transition-colors relative overflow-hidden group"
                   onClick={() => {
                     form.setFieldsValue({ destination: item.name });
-                    setDestinationPopoverVisible(false);
+                    setGuestPopoverVisible(false);
                   }}
                 >
                   <div className="flex items-start relative z-10">
@@ -252,13 +199,13 @@ const SearchForm: React.FC<SearchFormProps> = ({
           className="hidden md:block"
         />
         {/* Popular Destinations */}
-        <Col xs={24} md={14}>
+        {/* <Col xs={24} md={14}>
           <Title
             level={5}
             className="mb-3 dark:text-gray-100 flex items-center"
           >
             <EnvironmentOutlined className="mr-2" />
-            Địa điểm nổi bật
+            Phòng nổi bật
           </Title>
           <Row gutter={[16, 16]} className="animate-fadeIn">
             {popularDestinations.map((destination) => (
@@ -276,7 +223,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
                       src={destination.image}
                       className="shadow-sm transition-all"
                     />
-                    {/* <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div> */}
                   </div>
                   <div>
                     <Text strong className="  transition-colors">
@@ -287,7 +233,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </Col>
             ))}
           </Row>
-        </Col>
+        </Col> */}
       </Row>
     </div>
   );
@@ -332,11 +278,14 @@ const SearchForm: React.FC<SearchFormProps> = ({
   };
   // Guest selection dropdown content
   const guestPopoverContent = (
-    <div className="p-4   transition-all" style={{ width: "440px" }}>
+    <div
+      className="p-4   transition-all"
+      style={{ width: "100%", maxWidth: "440px" }}
+    >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <div>
           <Title level={5} className="mb-3 ">
-            Bạn đi du lịch kiểu gì?
+            Bạn đi du lịch với ai?
           </Title>
           <Row gutter={[8, 8]}>
             <Col span={12}>
@@ -471,9 +420,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </div>
             </div>{" "}
             {guestType === "group" && guestCount.rooms >= 1 && (
-              <div className="mt-3     p-3 rounded-lg border border-blue-100/70 dark:border-blue-800/30 shadow-sm transform hover:scale-[1.02] transition-transform">
+              <div className="     p-3 rounded-lg border border-blue-100/70 dark:border-blue-800/30 shadow-sm transform hover:scale-[1.02] transition-transform">
                 <p className="text-sm mb-2 flex items-start">
-                  <UsergroupAddOutlined className="mr-1  mt-0.5 flex-shrink-0" />
+                  <UsergroupAddOutlined className="mr-1   flex-shrink-0" />
                   <span>
                     Cần từ 16 phòng trở lên? Chat với LAVISHSTAY để nhận ưu đãi
                     đặc biệt!
@@ -493,7 +442,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             )}
           </div>
         )}{" "}
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-end ">
           <Button
             type="primary"
             size="middle"
@@ -532,8 +481,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
             label: (
               <div className="px-1 relative h-12 flex items-center">
                 <div className="flex items-center z-10 relative">
-                  <Building2  className="mr-1" />
-                  <span className="mr-8">Khách sạn</span>
+                  <Building2 className="mr-1" />
+                  <span className="mr-8">Phòng thường</span>
                 </div>
                 <div className="absolute bottom-9 right-0">
                   <Tag
@@ -552,7 +501,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               <div className="px-1 relative h-12 flex items-center">
                 <div className="flex items-center z-10 relative">
                   <HomeOutlined className="mr-1" />
-                  <span className="mr-8">Biệt thự & Homestay</span>
+                  <span className="mr-8">Phòng The Level </span>
                 </div>
                 <div className="absolute bottom-9 right-0">
                   <Tag color="orange" className="rounded-lg mt-1 mr-0 ">
@@ -584,33 +533,22 @@ const SearchForm: React.FC<SearchFormProps> = ({
               className="mb-0"
               label={
                 <Text strong className="text-sm flex items-center">
-                  <EnvironmentOutlined className="mr-1" /> Địa điểm
+                  <EnvironmentOutlined className="mr-1" /> Phòng
                 </Text>
               }
             >
-              <Popover
-                content={destinationPopoverContent}
-                trigger="click"
-                open={destinationPopoverVisible}
-                onOpenChange={setDestinationPopoverVisible}
-                placement="bottomLeft"
-                overlayClassName="destination-popover"
-                overlayStyle={{
-                  width: "950px",
-                  borderRadius: "12px",
-                  padding: 0,
-                }}
-              >
-                {" "}
-                <Input
-                  size="large"
-                  placeholder="Nhập thành phố hoặc khách sạn..."
-                  prefix={<SearchOutlined className="text-gray-400" />}
-                  className="rounded-lg"
-                  onClick={() => setDestinationPopoverVisible(true)}
-                  style={{}}
-                />
-              </Popover>
+              <AutoComplete
+                className="search-history-container"
+                options={searchedData.map((data) => ({
+                  value: data.name,
+                }))}
+                placeholder="Nhập tên phòng..."
+                filterOption={(inputValue, searchedData) =>
+                  searchedData!.value
+                    .toUpperCase()
+                    .indexOf(inputValue.toUpperCase()) !== -1
+                }
+              />
             </Form.Item>
           </Col>
           {/* Date Range Field */}
@@ -632,6 +570,11 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 placeholder={["Ngày nhận phòng", "Ngày trả phòng"]}
                 className="rounded-lg"
                 suffixIcon={<CalendarOutlined className="text-gray-400" />}
+                disabledDate={disabledDate}
+                popupClassName="date-range-popup"
+                getPopupContainer={(trigger) =>
+                  trigger.parentElement || document.body
+                }
               />
             </Form.Item>
           </Col>{" "}
@@ -646,6 +589,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 </Text>
               }
             >
+              {" "}
               <Popover
                 content={guestPopoverContent}
                 trigger="click"
@@ -657,6 +601,9 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   borderRadius: "12px",
                   padding: 0,
                 }}
+                getPopupContainer={(trigger) =>
+                  trigger.parentElement || document.body
+                }
               >
                 {" "}
                 <Input

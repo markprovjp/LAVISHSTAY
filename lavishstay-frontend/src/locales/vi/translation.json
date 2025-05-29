@@ -24,8 +24,8 @@
     "viewAll": "Xem tất cả"
   },  "home": {
     "banner": {
-      "title": "Khoảnh khắc khó quên",
-      "subtitle": "Tận dụng những ngày đẹp trời để đưa gia đình đi trốn. Giảm đến 35% cùng những quyền lợi bổ sung",
+        "title": "Biểu Tượng Đẳng Cấp Phố Thanh",
+      "subtitle": "Biểu tượng sống động giữa lòng Thanh Hóa. Khám phá không gian nghỉ dưỡng sang trọng, tiện nghi đẳng cấp và vị trí kết nối hoàn hảo cho mọi hành trình.",
       "cta": "Khám phá ngay"
     },
     "search": {
@@ -38,10 +38,6 @@
     "featured": {
       "title": "Chỗ nghỉ nổi bật",
       "subtitle": "Khám phá những chỗ nghỉ được yêu thích nhất của chúng tôi"
-    },
-    "why": {
-      "title": "Tại sao chọn LavishStay?",
-      "subtitle": "Chúng tôi cung cấp những trải nghiệm lưu trú sang trọng và độc đáo"
     },
     "testimonials": {
       "title": "Khách hàng nói gì về chúng tôi",
