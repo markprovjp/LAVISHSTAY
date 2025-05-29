@@ -24,8 +24,8 @@
     "viewAll": "View All"
   },  "home": {
      "banner": {
-      "title": "Unforgettable Moments",
-      "subtitle": "Take advantage of the beautiful days to escape with your family. Save up to 35% with additional benefits",
+      "title": " Thanh Hoa's Icon of Luxury",
+      "subtitle": "A vibrant icon in the heart of Thanh Hoa. Discover luxurious accommodations, premium amenities, and a perfectly connected location for every journey.",
       "cta": "Explore Now"
     },
     "search": {
@@ -38,10 +38,6 @@
     "featured": {
       "title": "Featured Properties",
       "subtitle": "Discover our most popular stays"
-    },
-    "why": {
-      "title": "Why Choose LavishStay?",
-      "subtitle": "We provide luxurious and unique accommodation experiences"
     },
     "testimonials": {
       "title": "What Our Customers Say",

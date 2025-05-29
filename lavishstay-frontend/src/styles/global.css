@@ -108,7 +108,7 @@ html.dark {
     --color-text-base: #f1f5f9;
     --color-text-secondary: #cbd5e1;
     --color-border: #334155;
-    --color-bg-container: #1e293b;
+    /* --color-bg-container: #1e293b; */
     --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 }

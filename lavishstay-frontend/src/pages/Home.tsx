@@ -1,61 +1,44 @@
-import React from "react";
-import { Row, Col, Button } from "antd";
-import {
-  HomeOutlined,
-  SafetyOutlined,
-  CustomerServiceOutlined,
-} from "@ant-design/icons";
+import React, { useMemo } from "react";
+import { Button, Tabs, Spin } from "antd";
 import { useTranslation } from "react-i18next";
 
 // Import custom components
 import HeroBanner from "../components/ui/HeroBanner";
 import SearchForm from "../components/SearchForm";
-import HotelCard from "../components/ui/HotelCard";
 import SectionHeader from "../components/SectionHeader";
-import FeatureCard from "../components/ui/FeatureCard";
 import Testimonial from "../components/Testimonial";
 import Newsletter from "../components/Newsletter";
+import RoomSwiper from "../components/ui/RoomSwiper";
+import Awards from "../components/ui/Awards";
+import HotelActivities from "../components/ui/HotelActivities";
+
+// Import API hooks with axios
+import { useGetAllRooms, useGetRoomsByType } from "../hooks/useApi";
+// Import Room type from models
+import { Room } from "../mirage/models";
 
 const Home: React.FC = () => {
   const { t } = useTranslation();
 
-  // Dữ liệu mẫu cho khách sạn/tài sản
-  const featuredProperties = [
-    {
-      id: 1,
-      title: "Biệt thự hướng biển",
-      location: "Nha Trang, Việt Nam",
-      price: 299,
-      rating: 4.8,
-      image:
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      category: "Biệt thự",
-      features: ["Hồ bơi riêng", "Hướng biển", "3 phòng ngủ"],
-    },
-    {
-      id: 2,
-      title: "Penthouse cao cấp",
-      location: "Đà Nẵng, Việt Nam",
-      price: 349,
-      rating: 4.7,
-      image:
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      category: "Căn hộ",
-      features: ["Tầm nhìn thành phố", "Ban công rộng", "2 phòng ngủ"],
-    },
-    {
-      id: 3,
-      title: "Biệt thự trên đồi",
-      location: "Đà Lạt, Việt Nam",
-      price: 259,
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      category: "Biệt thự",
-      features: ["Vườn rộng", "Không gian yên tĩnh", "4 phòng ngủ"],
-    },
-  ];
-  
+  // Fetch all rooms for the sale section using axios
+  const { data: allRoomsData, isLoading: isAllRoomsLoading } = useGetAllRooms();
+  // Fetch rooms by type for the tabs using axios
+  const { data: deluxeRoomsData, isLoading: isDeluxeLoading } = useGetRoomsByType("deluxe");
+  const { data: premiumRoomsData, isLoading: isPremiumLoading } = useGetRoomsByType("premium");
+  const { data: suiteRoomsData, isLoading: isSuiteLoading } = useGetRoomsByType("suite");
+  const { data: presidentialRoomsData, isLoading: isPresidentialLoading } = useGetRoomsByType("presidential");
+  const { data: theLevelRoomsData, isLoading: isTheLevelLoading } = useGetRoomsByType("theLevel");
+
+  // Process rooms with discounts for the sale section
+  const saleRooms = useMemo(() => {
+    if (allRoomsData?.rooms) {
+      return allRoomsData.rooms
+        .filter((room: Room) => room.discount)
+        .map((room: Room) => ({ ...room, isSale: true }));
+    }
+    return [];
+  }, [allRoomsData]);
+
   // Mẫu lời chứng thực
   const testimonials = [
     {
@@ -116,89 +99,197 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="pb-1 ">
-      {" "}
+    <div className="pb-1">
       {/* Hero Section */}
       <HeroBanner />
       {/* Search Form */}
-      <div className="container mx-auto  -mt-4 relative z-10 mb-20">
+      <div className="container mx-auto mt-4 mb-4 relative z-10 ">
         <SearchForm className="mx-auto shadow-xl" />
-      </div>
-      {/* Featured Properties Section */}
-      <div className="container mx-auto px-4 mb-16 ">
-        {" "}
+      </div>{" "}
+      {/* Awards Section */}
+      <Awards />
+      {/* Sale Rooms Section */}
+      <div className="container mx-auto px-4 mb-16">
         <SectionHeader
-          title={t("home.featured.title")}
-          subtitle={t("home.featured.subtitle")}
+          title="Ưu đãi đặc biệt"
+          subtitle="Những phòng cao cấp với giá ưu đãi hấp dẫn"
           centered
           withDivider
-        />
-        <Row gutter={[24, 24]} className="mt-8">
-          {featuredProperties.map((property) => (
-            <Col xs={24} sm={12} md={8} key={property.id}>
-              <HotelCard {...property} />
-            </Col>
-          ))}
-        </Row>
-        <div className="text-center mt-8">
+        />{" "}
+        <div className="mt-8">
+          {isAllRoomsLoading ? (
+            <div className="text-center py-10">
+              <Spin size="large" tip="Đang tải phòng..." />
+            </div>
+          ) : saleRooms.length > 0 ? (
+            <RoomSwiper rooms={saleRooms} />
+          ) : (
+            <div className="text-center py-10">
+              <p>Không có phòng khuyến mãi nào vào thời điểm hiện tại</p>
+            </div>
+          )}
+        </div>
+      </div>{" "}
+      {/* All Rooms Section with Tabs */}
+      <div className="container mx-auto px-4 mb-16">
+        <SectionHeader
+          title="Các loại phòng của chúng tôi"
+          subtitle="Khám phá đa dạng các loại phòng để có kỳ nghỉ hoàn hảo"
+          centered
+          withDivider
+        />{" "}
+        <div className="mt-8">
+          <Tabs
+            defaultActiveKey="theLevel"
+            centered
+            size="large"
+            tabBarStyle={{
+              marginBottom: "24px",
+              fontWeight: 500,
+            }}
+            tabBarGutter={40}
+            className="room-category-tabs"
+            items={[{
+              key: "deluxe",
+              label: (
+                <span style={{ fontSize: "18px" }}>Phòng Deluxe</span>
+              ),
+              children: (
+                <div className="py-4">
+                  {isDeluxeLoading ? (
+                    <div className="text-center py-10">
+                      <Spin size="large" tip="Đang tải phòng..." />
+                    </div>
+                  ) : deluxeRoomsData?.rooms?.length ? (
+                    <RoomSwiper rooms={deluxeRoomsData.rooms} />
+                  ) : (
+                    <div className="text-center py-10">
+                      <p>Không có phòng Deluxe nào</p>
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "premium",
+              label: (
+                <span style={{ fontSize: "18px" }}>Phòng Premium</span>
+              ),
+              children: (
+                <div className="py-4">
+                  {isPremiumLoading ? (
+                    <div className="text-center py-10">
+                      <Spin size="large" tip="Đang tải phòng..." />
+                    </div>
+                  ) : premiumRoomsData?.rooms?.length ? (
+                    <RoomSwiper rooms={premiumRoomsData.rooms} />
+                  ) : (
+                    <div className="text-center py-10">
+                      <p>Không có phòng Premium nào</p>
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "suite",
+              label: (
+                <span style={{ fontSize: "18px" }}>Phòng Suite</span>
+              ),
+              children: (
+                <div className="py-4">
+                  {isSuiteLoading ? (
+                    <div className="text-center py-10">
+                      <Spin size="large" tip="Đang tải phòng..." />
+                    </div>
+                  ) : suiteRoomsData?.rooms?.length ? (
+                    <RoomSwiper rooms={suiteRoomsData.rooms} />
+                  ) : (
+                    <div className="text-center py-10">
+                      <p>Không có phòng Suite nào</p>
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "theLevel",
+              label: (
+                <span style={{ fontSize: "18px", color: "#0c5f96" }}>
+                  The Level
+                </span>
+              ),
+              children: (
+                <div
+                  className="py-4 px-2"
+                  style={{
+                    backgroundColor: "rgba(176, 210, 237, 0.1)",
+                    borderRadius: "12px",
+                  }}
+                >
+                  {isTheLevelLoading ? (
+                    <div className="text-center py-10">
+                      <Spin size="large" tip="Đang tải phòng..." />
+                    </div>
+                  ) : theLevelRoomsData?.rooms?.length ? (
+                    <RoomSwiper rooms={theLevelRoomsData.rooms} />
+                  ) : (
+                    <div className="text-center py-10">
+                      <p>Không có phòng The Level nào</p>
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "presidential",
+              label: (
+                <span
+                  style={{
+                    fontSize: "18px",
+                    color: "#9c7c38",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Phòng Tổng Thống
+                </span>
+              ),
+              children: (
+                <div
+                  className="py-4 px-2"
+                  style={{
+                    backgroundColor: "rgba(220, 193, 145, 0.1)",
+                    borderRadius: "12px",
+                  }}
+                >
+                  {isPresidentialLoading ? (
+                    <div className="text-center py-10">
+                      <Spin size="large" tip="Đang tải phòng..." />
+                    </div>
+                  ) : presidentialRoomsData?.rooms?.length ? (
+                    <RoomSwiper rooms={presidentialRoomsData.rooms} />
+                  ) : (
+                    <div className="text-center py-10">
+                      <p>Không có phòng tổng thống nào</p>
+                    </div>
+                  )}
+                </div>
+              ),
+            },
+            ]}
+          />
+        </div>
+        <div className="text-center mt-10">
           <Button type="primary" size="large">
             Xem tất cả phòng
           </Button>
         </div>
-      </div>
-      {/* Features Section */}
-      <div className="container mx-auto px-4 mb-16">
-        {" "}
-        <SectionHeader
-          title={t("home.why.title")}
-          subtitle={t("home.why.subtitle")}
-          centered
-          withDivider
-        />
-        <Row gutter={[24, 24]} className="mt-8">
-          <Col xs={24} sm={12} md={8}>
-            <FeatureCard
-              icon={<HomeOutlined />}
-              title="Chỗ nghỉ sang trọng"
-              description="Tất cả chỗ nghỉ của chúng tôi đều được chọn lọc kỹ lưỡng để đảm bảo chất lượng cao nhất."
-              benefits={[
-                "Nội thất cao cấp, thiết kế hiện đại",
-                "Tầm nhìn đẹp, không gian riêng tư",
-                "Tiện nghi đầy đủ, hiện đại",
-              ]}
-              highlighted
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <FeatureCard
-              icon={<CustomerServiceOutlined />}
-              title="Dịch vụ 24/7"
-              description="Đội ngũ concierge luôn sẵn sàng hỗ trợ bạn mọi lúc, mọi nơi."
-              benefits={[
-                "Hỗ trợ khách hàng 24/7",
-                "Dịch vụ đón tiễn sân bay",
-                "Tư vấn du lịch chuyên nghiệp",
-              ]}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <FeatureCard
-              icon={<SafetyOutlined />}
-              title="Đảm bảo an toàn"
-              description="Chúng tôi đặt sự an toàn và thoải mái của khách hàng lên hàng đầu."
-              benefits={[
-                "Hệ thống an ninh 24/7",
-                "Kiểm tra chất lượng định kỳ",
-                "Dịch vụ y tế khẩn cấp",
-              ]}
-            />
-          </Col>
-        </Row>
-      </div>
+      </div>{" "}
+      {/* Phần hoạt động của khách sạn */}
+      <HotelActivities />
       {/* Testimonials Section */}
-      <div className=" py-16 mb-16">
+      <div className="py-16 mb-16 ">
         <div className="container mx-auto px-4">
-          {" "}
           <SectionHeader
             title={t("home.testimonials.title")}
             subtitle={t("home.testimonials.subtitle")}

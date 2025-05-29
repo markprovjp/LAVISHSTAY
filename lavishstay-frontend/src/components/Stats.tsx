@@ -20,7 +20,7 @@ interface StatsProps {
 }
 
 const formatter = (value: number) => (
-  <CountUp end={value} separator="," duration={2.5} />
+  <CountUp end={value} separator="," duration={5.5} />
 );
 
 const Stats: React.FC<StatsProps> = ({
@@ -34,12 +34,12 @@ const Stats: React.FC<StatsProps> = ({
       {(title || subtitle) && (
         <div className="text-center mb-10">
           {title && (
-            <Title level={2} className="font-bevietnam font-bold text-gray-800">
+            <Title level={2} className="font-bevietnam font-bold ">
               {title}
             </Title>
           )}
           {subtitle && (
-            <p className="font-bevietnam text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="font-bevietnam  text-lg max-w-2xl mx-auto">
               {subtitle}
             </p>
           )}
@@ -58,7 +58,7 @@ const Stats: React.FC<StatsProps> = ({
               )}
               <Statistic
                 title={
-                  <span className="font-bevietnam text-gray-600 text-base">
+                  <span className="font-bevietnam  text-base">
                     {stat.title}
                   </span>
                 }

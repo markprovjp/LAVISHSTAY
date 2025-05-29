@@ -62,7 +62,7 @@ export const truncateText = (text: string, maxLength: number): string => {
 };
 
 /**
- * Generate placeholder image URL for properties
+ * Tạo URL hình ảnh giữ chỗ cho các thuộc tính
  */
 export const getPlaceholderImage = (seed = 'lavishstay'): string => {
   return `https://picsum.photos/seed/${seed}/600/400`;

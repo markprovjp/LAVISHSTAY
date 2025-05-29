@@ -35,10 +35,9 @@ import CartWidget from "../Cart/CartWidget";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store";
 import { useTranslation } from "react-i18next";
-// import logoLight from "../../assets/images/logo-light.png";
-// import logoDark from "../../assets/images/logo-dark.png";
+import logoLight from "../../assets/images/logo-light.png";
+import logoDark from "../../assets/images/logo-dark.png";
 const { Header: AntHeader } = Layout;
-const { Search } = Input;
 const { Text } = Typography;
 
 interface HeaderProps {
@@ -106,13 +105,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   // Navigation items
   const menuItems = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
-    {
-      key: "/destinations",
-      label: t("header.destinations"),
-      icon: <GlobalOutlined />,
-    },
     { key: "/hotels", label: t("header.hotels"), icon: <ShoppingOutlined /> },
-    // { key: "/about", label: "Về chúng tôi", icon: null },
+    { key: "/about", label: "Về chúng tôi", icon: null },
     // { key: "/contact", label: "Liên hệ", icon: <PhoneOutlined /> },
   ];
   // User menu dropdown
@@ -198,12 +192,12 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
         <div className="logo flex items-center h-16">
           <Link to="/" className="flex items-center h-full">
             {" "}
-            {/* <img
+            <img
               src={isDarkMode ? logoDark : logoLight}
               alt="LavishStay"
               className="h-10 mr-3"
-            /> */}
-            <svg
+            />
+            {/* <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-8"
               viewBox="0 0 92 27"
@@ -215,7 +209,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                 fill-rule="evenodd"
                 d="M66.663 7.735v18.781h-2.672V7.736h2.672Zm-26.367 0v2.613H31.74v4.767h8.48v2.607h-8.48v6.19h8.48v2.604H29.064V7.736h11.231Zm42.776 0 8.83 18.781h-2.896l-2.843-5.893h-7.25l-2.817 5.893h-2.969l8.952-18.78h.993Zm-79.431 0 7.087 14.172L17.74 7.735h.93l2.73 18.782h-2.65l-1.647-11.81-5.893 11.81h-.994L4.25 14.61l-1.64 11.907H0L2.711 7.735h.93Zm46.61 0v16.202h6.964v2.58h-9.629V7.735h2.666Zm32.311 5.237-2.41 5.06h4.82l-2.41-5.06ZM86.347 0l1.597 1.321c-.802 1.591-1.89 2.39-3.266 2.39-.468 0-1.235-.233-2.297-.698-.77-.381-1.338-.57-1.714-.57-.458 0-.926.43-1.392 1.295l-1.644-1.384.362-.512a6.95 6.95 0 0 1 .676-.832c.222-.233.438-.422.67-.562a2.15 2.15 0 0 1 .703-.313c.244-.063.506-.1.789-.1.653 0 1.418.223 2.27.647.875.445 1.437.665 1.69.665.467 0 .99-.451 1.556-1.347Z"
               ></path>
-            </svg>
+            </svg> */}
           </Link>
         </div>
         {/* Desktop Menu */}

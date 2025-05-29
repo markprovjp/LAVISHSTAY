@@ -25,8 +25,8 @@ import {
   CustomerServiceOutlined,
   GlobalOutlined,
 } from "@ant-design/icons";
-import { useSelector } from "react-redux";
 import { RootState } from "../../store";
+import { useSelector } from "react-redux";
 import logoLight from "../../assets/images/logo-light.png";
 import logoDark from "../../assets/images/logo-dark.png";
 
@@ -34,35 +34,33 @@ const { Footer: AntFooter } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
 const Footer: React.FC = () => {
-  const { isDarkMode } = useSelector((state: RootState) => state.theme);
   const { token } = theme.useToken();
-
+  const { isDarkMode } = useSelector((state: RootState) => state.theme);
   // Quick links for the footer
   const quickLinks = [
     { title: "Về chúng tôi", link: "/about" },
     { title: "Dịch vụ", link: "/services" },
-    { title: "Blogs", link: "/blogs" },
-    { title: "Điều khoản sử dụng", link: "/terms" },
-    { title: "Chính sách riêng tư", link: "/privacy" },
+    { title: "Nhà hàng", link: "/dining" },
+    { title: "Spa & Wellness", link: "/spa" },
+    { title: "Khuyến mãi", link: "/offers" },
     { title: "Liên hệ", link: "/contact" },
   ];
 
-  // Hotel categories
+  // Room categories
   const categories = [
-    { title: "Khách sạn 5 sao", link: "/categories/5-star" },
-    { title: "Resort & Spa", link: "/categories/resort-spa" },
-    { title: "Biệt thự", link: "/categories/villas" },
-    { title: "Căn hộ cao cấp", link: "/categories/apartments" },
-    { title: "Khách sạn boutique", link: "/categories/boutique" },
-    { title: "Homestay", link: "/categories/homestay" },
+    { title: "Phòng Deluxe", link: "/rooms/deluxe" },
+    { title: "Phòng Premium", link: "/rooms/premium" },
+    { title: "Phòng The Level", link: "/rooms/thelevel" },
+    { title: "Phòng Grand", link: "/rooms/grand" },
+    { title: "Phòng Junior Suite", link: "/rooms/junior-suite" },
+    { title: "Phòng Presidential", link: "/rooms/presidential" },
   ];
-
   // Features list
   const features = [
     { icon: <SafetyOutlined />, text: "Đảm bảo giá tốt nhất" },
-    { icon: <CreditCardOutlined />, text: "Thanh toán an toàn" },
-    { icon: <CustomerServiceOutlined />, text: "Hỗ trợ 24/7" },
-    { icon: <GlobalOutlined />, text: "Đối tác trên toàn quốc" },
+    { icon: <CreditCardOutlined />, text: "The Level Benefits" },
+    { icon: <CustomerServiceOutlined />, text: "Dịch vụ 5 sao 24/7" },
+    { icon: <GlobalOutlined />, text: "Đặt phòng toàn cầu" },
   ];
 
   return (
@@ -80,20 +78,26 @@ const Footer: React.FC = () => {
           <Row gutter={[32, 32]} className="mb-12">
             {/* Company Info */}
             <Col xs={24} md={12} lg={10}>
+              {" "}
               <div className="flex items-center mb-4">
-                <img
-                  src={isDarkMode ? logoDark : logoLight}
-                  alt="LavishStay"
-                  className="h-10 mr-3"
-                />
+                <Link to="/" className="flex items-center">
+                  {" "}
+                  <img
+                    src={isDarkMode ? logoDark : logoLight}
+                    alt="LavishStay"
+                    className="h-10 mr-3"
+                  />
+                </Link>
               </div>
               <Paragraph
                 style={{ color: token.colorTextSecondary }}
                 className="mb-6"
               >
-                Khám phá những kỳ nghỉ sang trọng và độc đáo tại những địa điểm
-                tuyệt vời nhất Việt Nam. Chúng tôi cam kết mang đến trải nghiệm
-                lưu trú tuyệt vời với giá cả hợp lý nhất trên thị trường.
+                Trải nghiệm kỳ nghỉ sang trọng tại LavishStay Thanh Hoá - kết
+                hợp hoàn hảo giữa phong cách Tây Ban Nha đặc trưng của
+                LavishStay Hotels International và dịch vụ hiếu khách Việt Nam
+                từ LavishStay, mang đến không gian nghỉ dưỡng tinh tế và đẳng
+                cấp.
               </Paragraph>
               <Space size="middle">
                 <Button
@@ -181,6 +185,7 @@ const Footer: React.FC = () => {
 
             {/* Categories */}
             <Col xs={24} sm={12} md={6} lg={7}>
+              {" "}
               <Title
                 level={5}
                 style={{
@@ -189,7 +194,7 @@ const Footer: React.FC = () => {
                 }}
                 className="mb-4 font-medium"
               >
-                Loại chỗ nghỉ
+                Loại phòng
               </Title>
               <List
                 dataSource={categories}
@@ -246,11 +251,12 @@ const Footer: React.FC = () => {
             <Col span={24}>
               <Divider style={{ background: token.colorBorderSecondary }} />
               <Row gutter={[30, 20]}>
+                {" "}
                 <Col xs={24} sm={8}>
                   <Space>
                     <PhoneOutlined style={{ color: token.colorPrimary }} />
                     <Text style={{ color: token.colorTextSecondary }}>
-                      +84 (0) 123 456 789
+                      +84 (0) 237 3699 699
                     </Text>
                   </Space>
                 </Col>
@@ -258,7 +264,7 @@ const Footer: React.FC = () => {
                   <Space>
                     <MailOutlined style={{ color: token.colorPrimary }} />
                     <Text style={{ color: token.colorTextSecondary }}>
-                      info@lavishstay.com
+                      quyenjpn@gmail.com
                     </Text>
                   </Space>
                 </Col>
@@ -266,7 +272,8 @@ const Footer: React.FC = () => {
                   <Space>
                     <HomeOutlined style={{ color: token.colorPrimary }} />
                     <Text style={{ color: token.colorTextSecondary }}>
-                      123 Đường ABC, Quận 1, TP. Hồ Chí Minh
+                      Số 27 Trần Phú, Phường Điện Biên, Thành Phố Thanh Hóa ,
+                      Việt Nam
                     </Text>
                   </Space>
                 </Col>
@@ -283,8 +290,9 @@ const Footer: React.FC = () => {
             className="text-sm"
           >
             <Col>
-              &copy; {new Date().getFullYear()} LavishStay. Bản quyền thuộc về
-              chúng tôi.
+              {" "}
+              &copy; {new Date().getFullYear()} LavishStay Thanh Hoá. Bản quyền
+              thuộc về LavishStay Hotels International.
             </Col>
             <Col>
               <Space
