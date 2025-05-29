@@ -251,7 +251,7 @@ const Home: React.FC = () => {
                     fontWeight: "bold",
                   }}
                 >
-                  Phòng Tổng Thống
+                  Phòng Presidential
                 </span>
               ),
               children: (
