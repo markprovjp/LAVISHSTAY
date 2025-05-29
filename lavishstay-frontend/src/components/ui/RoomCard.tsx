@@ -1,12 +1,12 @@
 import React from "react";
-import { Card, Typography, Space, Button, Tooltip, Badge } from "antd";
+import { Card, Typography, Space, Button, Badge } from "antd";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRightOutlined,
   EnvironmentOutlined,
 } from "@ant-design/icons";
 import { theme } from "antd";
-import { AmenityUtils } from "../../constants/amenities";
+import RoomMainAmenities from "../room/RoomMainAmenities";
 
 const { Title, Text } = Typography;
 
@@ -22,6 +22,7 @@ export interface RoomProps {
     options?: string[];
   };
   amenities?: string[];
+  mainAmenities?: string[]; // Tiện ích chính hiển thị trên card (4-5 tiện ích)
   discount?: number;
   isSale?: boolean;
   roomType?: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
@@ -44,7 +45,8 @@ const RoomCard: React.FC<RoomProps> = ({
   size,
   view,
   bedType,
-  amenities = ["wifi", "tv", "ac"],
+  amenities = [],
+  mainAmenities,
   discount,
   isSale = false,
   roomType = "standard",
@@ -53,13 +55,11 @@ const RoomCard: React.FC<RoomProps> = ({
 }) => {
   const { token } = theme.useToken();
   const navigate = useNavigate();
+
   // Navigate to room details
   const handleViewDetails = () => {
     navigate(`/rooms/${id}`);
-  };
-
-  // Lấy formatted amenities từ constants
-  const formattedAmenities = AmenityUtils.formatAmenitiesForDisplay(amenities);// Tính giá VND (nếu không có thì convert từ USD với tỷ giá 24,000)
+  };// Tính giá VND (nếu không có thì convert từ USD với tỷ giá 24,000)
   const baseVNDPrice = priceVND || 0;
 
   // Tính giá sau giảm giá nếu có
@@ -135,7 +135,7 @@ const RoomCard: React.FC<RoomProps> = ({
         </Title>
 
         <Space direction="vertical" size="small" className="w-full">
-          <div className="flex flex-wrap items-center gap-x-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm">
             {size && (
               <div className="flex items-center gap-1">
                 <span style={{ color: token.colorTextSecondary }}>📐</span>
@@ -153,29 +153,13 @@ const RoomCard: React.FC<RoomProps> = ({
               <span style={{ color: token.colorTextSecondary }}>🛏️</span>
               <Text style={{ color: token.colorTextSecondary }}>{getBedTypeText(bedType)}</Text>
             </div>
-          )}
-        </Space>        <div className="flex items-center gap-4 py-2">
-          {formattedAmenities.slice(0, 4).map((amenity) => (
-            <Tooltip key={amenity.key} title={amenity.name}>
-              <span
-                className="text-lg transition-colors hover:opacity-70"
-                style={{ color: token.colorPrimary }}
-              >
-                {amenity.icon}
-              </span>
-            </Tooltip>
-          ))}
-          {amenities.length > 4 && (
-            <Tooltip title={`+${amenities.length - 4} tiện nghi khác`}>
-              <span
-                className="text-sm font-medium px-2 py-1 bg-gray-100 rounded-full"
-                style={{ color: token.colorTextSecondary }}
-              >
-                +{amenities.length - 4}
-              </span>
-            </Tooltip>
-          )}
-        </div><div className="flex justify-between items-end mb-3">
+          )}        </Space>
+
+        {/* Hiển thị tiện ích chính */}
+        <RoomMainAmenities
+          amenities={mainAmenities || amenities.slice(0, 5)}
+          limit={4}
+        /><div className="flex justify-between items-end mb-3">
           <div className="flex-1">
             <div className="mb-1">
               <Text type="secondary" style={{ fontSize: "12px" }}>

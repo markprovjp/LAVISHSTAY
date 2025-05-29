@@ -14,18 +14,7 @@ import {
 } from "antd";
 import {
     HomeOutlined,
-    S                            {/* Room Description */}
-                            <div className="mb-6">
-                                <Title level={3} className="mb-4 flex items-center gap-2 text-xl">
-                                    <CheckCircleOutlined className="text-blue-500" />
-                                    Về căn phòng này
-                                </Title>
-                                <div className="bg-gray-50 p-6 rounded-xl">
-                                    <Typography.Paragraph className="leading-relaxed text-base text-gray-700 mb-0">
-                                        {room.description}
-                                    </Typography.Paragraph>
-                                </div>
-                            </div>
+    StarOutlined,
     CheckCircleOutlined,
     ExpandOutlined,
     EyeOutlined,
@@ -78,7 +67,8 @@ const RoomDetailsPage: React.FC = () => {
                     }
                 />
             </div>
-        );    }
+        );
+    }
 
     const formatVND = (price: number) => {
         return new Intl.NumberFormat("vi-VN", {
@@ -89,7 +79,7 @@ const RoomDetailsPage: React.FC = () => {
 
     // Calculate prices
     const originalPrice = room.priceVND; // Giá gốc
-    const discountedPrice = room.discount 
+    const discountedPrice = room.discount
         ? room.priceVND - (room.priceVND * room.discount / 100)
         : room.priceVND; // Giá sau giảm
     const savings = originalPrice - discountedPrice; // Số tiền tiết kiệm
@@ -191,9 +181,9 @@ const RoomDetailsPage: React.FC = () => {
                                                 {room.name}
                                             </Title>
                                             {room.rating && (
-                                                <div className="flex items-center bg-green-100 px-3 py-1 rounded-full">
+                                                <div className="flex items-center bg-green-100 px-1 py-1 rounded-full">
                                                     <StarOutlined className="text-yellow-500 mr-1" />
-                                                    <Text className="font-semibold text-green-700">{room.rating}</Text>
+                                                    <Text className="text-lg  text-green-700">{room.rating}</Text>
                                                 </div>
                                             )}
                                         </div>
@@ -273,7 +263,7 @@ const RoomDetailsPage: React.FC = () => {
                                                     </Title>
                                                 </div>
                                                 <Text type="secondary" className="text-base">
-                                                    /đêm • bao gồm thuế
+                                                    /đêm • chưa bao gồm thuế
                                                 </Text>
                                             </div>
                                         </div>
@@ -307,52 +297,6 @@ const RoomDetailsPage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-
-                            {/* Room Highlights */}
-                            <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl">
-                                <Title level={4} className="mb-4 text-lg text-green-700">
-                                    ✨ Điểm nổi bật của phòng
-                                </Title>
-                                <Row gutter={[16, 16]}>
-                                    <Col xs={12} sm={8} md={6}>
-                                        <div className="text-center p-3">
-                                            <div className="text-2xl mb-2">🏨</div>
-                                            <Text className="text-sm font-medium text-gray-700">
-                                                {room.roomType === "presidential" ? "Hạng Tổng Thống" :
-                                                    room.roomType === "suite" ? "Hạng Suite" :
-                                                        room.roomType === "premium" ? "Hạng Cao Cấp" : "Hạng Sang"}
-                                            </Text>
-                                        </div>
-                                    </Col>
-                                    <Col xs={12} sm={8} md={6}>
-                                        <div className="text-center p-3">
-                                            <div className="text-2xl mb-2">📐</div>
-                                            <Text className="text-sm font-medium text-gray-700">
-                                                {room.size >= 100 ? "Rất rộng rãi" :
-                                                    room.size >= 50 ? "Rộng rãi" :
-                                                        room.size >= 30 ? "Thoải mái" : "Tiện nghi"}
-                                            </Text>
-                                        </div>
-                                    </Col>
-                                    <Col xs={12} sm={8} md={6}>
-                                        <div className="text-center p-3">
-                                            <div className="text-2xl mb-2">🌟</div>
-                                            <Text className="text-sm font-medium text-gray-700">
-                                                {room.rating ? `Đánh giá ${room.rating}` : "Chất lượng cao"}
-                                            </Text>
-                                        </div>
-                                    </Col>
-                                    <Col xs={12} sm={8} md={6}>
-                                        <div className="text-center p-3">
-                                            <div className="text-2xl mb-2">👥</div>
-                                            <Text className="text-sm font-medium text-gray-700">
-                                                {room.maxGuests >= 4 ? "Gia đình lớn" :
-                                                    room.maxGuests >= 3 ? "Nhóm nhỏ" : "Đôi/Cá nhân"}
-                                            </Text>
-                                        </div>
-                                    </Col>
-                                </Row>
-                            </div>
                         </Card>
                     </Col>
                 </Row>{" "}
