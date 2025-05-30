@@ -1,4 +1,5 @@
 import axiosInstance from '../config/axios';
+import { User } from '../mirage/users';
 
 // Interface cho dữ liệu đăng nhập
 export interface LoginCredentials {
@@ -15,13 +16,13 @@ export interface RegisterData {
 }
 
 // Interface cho user
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  created_at: string;
-  updated_at: string;
-}
+// export interface User {
+//   id: number;
+//   name: string;
+//   email: string;
+//   created_at: string;
+//   updated_at: string;
+// }
 
 // Interface cho response đăng nhập
 export interface AuthResponse {

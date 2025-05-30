@@ -7,17 +7,16 @@ import {
   Drawer,
   Dropdown,
   Avatar,
-  Input,
   Badge,
   Space,
   Divider,
   Typography,
   ConfigProvider,
   theme,
+  message,
 } from "antd";
 import {
   UserOutlined,
-  SearchOutlined,
   MenuOutlined,
   BellOutlined,
   HeartOutlined,
@@ -25,18 +24,19 @@ import {
   BookOutlined,
   SettingOutlined,
   HomeOutlined,
-  GlobalOutlined,
   ShoppingOutlined,
-  PhoneOutlined,
 } from "@ant-design/icons";
 import ThemeToggle from "../ui/ThemeToggle";
 import LanguageSwitcher from "../ui/LanguageSwitcher";
-import CartWidget from "../Cart/CartWidget";
-import { useSelector } from "react-redux";
+import RainbowButton from "../ui/RainbowButton";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../store";
+import { logout } from "../../store/slices/authSlice";
+import authService from "../../services/authService";
 import { useTranslation } from "react-i18next";
 import logoLight from "../../assets/images/logo-light.png";
 import logoDark from "../../assets/images/logo-dark.png";
+import AuthModal from "../auth/AuthModal";
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
@@ -46,14 +46,30 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const location = useLocation();
+  const dispatch = useDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { isDarkMode } = useSelector((state: RootState) => state.theme);
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
   const { token } = theme.useToken(); // Lấy token từ theme
   const { t } = useTranslation();
+
+  // Xử lý đăng xuất
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      dispatch(logout());
+      message.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Vẫn logout trên client side ngay cả khi API có lỗi
+      dispatch(logout());
+      message.success("Đăng xuất thành công!");
+    }
+  };
 
   // Sample notification data
   const notifications = [
@@ -101,21 +117,27 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     transition: "all 0.3s ease",
     backdropFilter: scrolled ? "blur(12px)" : "none",
     borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
-  };
-  // Navigation items
+  };  // Navigation items
   const menuItems = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
-    { key: "/hotels", label: t("header.hotels"), icon: <ShoppingOutlined /> },
+
     { key: "/about", label: "Về chúng tôi", icon: null },
-    // { key: "/contact", label: "Liên hệ", icon: <PhoneOutlined /> },
-  ];
-  // User menu dropdown
+    // Development only - Auth test page
+    ...(process.env.NODE_ENV === 'development' ? [
+      { key: "/auth-test", label: "🔐 Auth Test", icon: null }
+    ] : []),
+  ];// User menu dropdown
   const userMenu = (
     <Menu
       style={{
         borderRadius: token.borderRadius,
         background: token.colorBgContainer,
         boxShadow: token.boxShadowTertiary,
+      }}
+      onClick={({ key }) => {
+        if (key === 'logout') {
+          handleLogout();
+        }
       }}
     >
       <Menu.Item key="profile" icon={<UserOutlined />}>
@@ -197,62 +219,37 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
               alt="LavishStay"
               className="h-10 mr-3"
             />
-            {/* <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8"
-              viewBox="0 0 92 27"
-            >
-              <path
-                fill={
-                  transparent && !scrolled ? "#ffffff" : token.colorTextBase
-                }
-                fill-rule="evenodd"
-                d="M66.663 7.735v18.781h-2.672V7.736h2.672Zm-26.367 0v2.613H31.74v4.767h8.48v2.607h-8.48v6.19h8.48v2.604H29.064V7.736h11.231Zm42.776 0 8.83 18.781h-2.896l-2.843-5.893h-7.25l-2.817 5.893h-2.969l8.952-18.78h.993Zm-79.431 0 7.087 14.172L17.74 7.735h.93l2.73 18.782h-2.65l-1.647-11.81-5.893 11.81h-.994L4.25 14.61l-1.64 11.907H0L2.711 7.735h.93Zm46.61 0v16.202h6.964v2.58h-9.629V7.735h2.666Zm32.311 5.237-2.41 5.06h4.82l-2.41-5.06ZM86.347 0l1.597 1.321c-.802 1.591-1.89 2.39-3.266 2.39-.468 0-1.235-.233-2.297-.698-.77-.381-1.338-.57-1.714-.57-.458 0-.926.43-1.392 1.295l-1.644-1.384.362-.512a6.95 6.95 0 0 1 .676-.832c.222-.233.438-.422.67-.562a2.15 2.15 0 0 1 .703-.313c.244-.063.506-.1.789-.1.653 0 1.418.223 2.27.647.875.445 1.437.665 1.69.665.467 0 .99-.451 1.556-1.347Z"
-              ></path>
-            </svg> */}
           </Link>
-        </div>
-        {/* Desktop Menu */}
+        </div>        {/* Desktop Menu */}
         <div className="hidden lg:flex flex-1 justify-center mx-8">
-          <Menu
-            mode="horizontal"
-            selectedKeys={[location.pathname]}
-            items={menuItems.map((item) => ({
-              key: item.key,
-              icon: item.icon,
-              label: (
-                <Link to={item.key}>
-                  <span
-                    style={{
-                      fontFamily: token.fontFamily,
-                      fontWeight: 500,
-                      color:
-                        transparent && !scrolled
-                          ? "#ffffff"
-                          : token.colorTextBase,
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              ),
-            }))}
-            style={{
-              background: "transparent",
-              borderBottom: "none",
-              color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
-              lineHeight: "64px",
-            }}
-            className="min-w-[400px] flex justify-center"
-          />
-        </div>{" "}
-        {/* Desktop Right Menu */}
+          <div className="flex items-center space-x-8">
+            {menuItems.map((item) => (
+              <Link
+                key={item.key}
+                to={item.key}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
+                    ? `bg-opacity-20 font-semibold`
+                    : 'font-medium'
+                  }`}
+                style={{
+                  color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+                }}
+              >
+                {item.icon && (
+                  <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                )}
+                <span style={{ fontFamily: token.fontFamily }}>
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>{" "}        {/* Desktop Right Menu */}
         <div className="hidden lg:flex items-center space-x-3">
           {/* Theme Toggle */}
-          <ThemeToggle /> {/* Language Switcher */}
+          <ThemeToggle />
+          {/* Language Switcher */}
           <LanguageSwitcher mode="icon-only" />
-          {/* Cart Widget */}
-          <CartWidget />
           {/* Notifications */}
           <Dropdown
             overlay={notificationMenu}
@@ -266,12 +263,12 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
             >
               <Button
                 type="text"
-                icon={<BellOutlined style={{ fontSize: 15 }} />}
+                icon={<BellOutlined style={{ fontSize: 18 }} />}
                 style={{
                   color:
                     transparent && !scrolled ? "#ffffff" : token.colorTextBase,
                 }}
-                className="hover:bg-opacity-10 rounded-full w-5 h-5 flex items-center justify-center"
+                className="hover:bg-opacity-10 rounded-lg w-10 h-10 flex items-center justify-center"
               />
             </Badge>
           </Dropdown>
@@ -282,21 +279,18 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
               trigger={["hover"]}
               placement="bottomRight"
             >
-              <Space
-                className="cursor-pointer hover:bg-opacity-10 rounded-full px-2 py-1"
+              <div
+                className="cursor-pointer flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-black hover:bg-opacity-5"
                 style={{
-                  background:
-                    transparent && !scrolled
-                      ? "rgba(255,255,255,0.1)"
-                      : token.colorPrimary + "10",
+                  background: "transparent",
                 }}
               >
                 <Avatar
                   src={user?.avatar}
                   icon={!user?.avatar ? <UserOutlined /> : undefined}
+                  size={32}
                   style={{
                     backgroundColor: token.colorPrimary,
-                    border: `1px solid ${token.colorBorderSecondary}`,
                   }}
                 />
                 <Text
@@ -306,27 +300,20 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                       transparent && !scrolled
                         ? "#ffffff"
                         : token.colorTextBase,
+                    fontWeight: 500,
                   }}
                   className="hidden xl:inline"
                 >
                   {user?.name || "Người dùng"}
                 </Text>
-              </Space>
-            </Dropdown>
-          ) : (
-            <Link to="/login">
-              <Button
-                type="primary"
-                style={{
-                  borderRadius: token.borderRadius,
-                  background: token.colorPrimary,
-                  borderColor: token.colorPrimary,
-                }}
-                className="font-medium"
-              >
-                {t("header.login")}
-              </Button>
-            </Link>
+              </div>
+            </Dropdown>) : (
+            <RainbowButton
+              onClick={() => setAuthModalOpen(true)}
+              size="medium"
+            >
+              Đăng nhập
+            </RainbowButton>
           )}
         </div>{" "}
         {/* Mobile Menu Button */}
@@ -411,11 +398,15 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                     {user?.email}
                   </Text>
                 </div>
-              </div>
-
-              <Menu
+              </div>              <Menu
                 mode="vertical"
                 style={{ border: "none", background: token.colorBgBase }}
+                onClick={({ key }) => {
+                  if (key === 'logout') {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }
+                }}
               >
                 <Menu.Item key="profile" icon={<UserOutlined />}>
                   <Link
@@ -448,26 +439,23 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                   Đăng xuất
                 </Menu.Item>
               </Menu>
-            </>
-          ) : (
+            </>) : (
             <div className="space-y-3 px-4">
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  type="primary"
-                  block
-                  style={{
-                    borderRadius: token.borderRadius,
-                    background: token.colorPrimary,
-                    borderColor: token.colorPrimary,
-                  }}
-                >
-                  Đăng nhập
-                </Button>
-              </Link>
+              <RainbowButton
+                onClick={() => {
+                  setAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full"
+                size="medium"
+              >
+                Đăng nhập
+              </RainbowButton>
             </div>
           )}
         </Drawer>
       </AntHeader>
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </ConfigProvider>
   );
 };

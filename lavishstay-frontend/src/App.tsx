@@ -22,11 +22,11 @@ import Breadcrumb from "./components/ui/Breadcrumb";
 
 // Import pages
 import Home from "./pages/Home";
-import LoginPage from "./pages/Login"; // Assuming Login.tsx exports a default component
 import About from "./pages/About";
 import Payment from "./pages/Payment"; // Assuming Payment.tsx exports a default component
 import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
+import AuthTest from "./pages/AuthTest";
 // import HotelListingPage from "./pages/HotelListingPage";
 // import HotelDetailsPage from "./pages/HotelDetailsPage";
 // import ErrorPage from "./pages/ErrorPage";
@@ -78,7 +78,6 @@ const App: React.FC = () => {
                 <Routes>
                   {" "}
                   <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<LoginPage />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/rooms/:id" element={<RoomDetailsPage />} />
                   {/* <Route path="/hotels" element={<HotelListingPage />} />
@@ -87,9 +86,9 @@ const App: React.FC = () => {
                   <Route path="/bookings" element={<UserBookings />} />
                   <Route path="/wishlist" element={<UserWishlist />} />
                   <Route path="/settings" element={<UserSettings />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/destinations" element={<Destinations />} />
+                  <Route path="/contact" element={<Contact />} />                  <Route path="/destinations" element={<Destinations />} />
                   <Route path="/payment" element={<Payment />} />
+                  <Route path="/auth-test" element={<AuthTest />} />
                   <Route
                     path="/notifications"
                     element={<NotificationsPage />}

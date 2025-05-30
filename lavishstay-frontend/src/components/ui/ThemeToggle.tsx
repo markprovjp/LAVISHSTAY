@@ -28,7 +28,7 @@ const ToggleContainer = styled.div<{ $isDarkMode: boolean; $size: string }>`
       : "28px"};
   border-radius: 50px;
   background: ${(props) => (props.$isDarkMode ? "#0f172a" : "#f1f5f9")};
-  border: 2px solid ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
+  border: 3px solid ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
   cursor: pointer;
   padding: 2px;
   transition: all 0.3s ease;
@@ -121,7 +121,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
 
   return (
     <Tooltip
-      title={isDarkMode ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+      title={isDarkMode ? "Chuyển chế độ sáng" : "Chuyển chế độ tối"}
       placement={tooltipPlacement}
     >
       <ToggleContainer
