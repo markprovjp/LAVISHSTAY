@@ -213,7 +213,7 @@ const RoomCard: React.FC<RoomProps> = ({
           </Title>          <div className="flex items-center ml-2 star-rating">
             <StarFilled style={{ color: "#fadb14", fontSize: "14px" }} />
             <span className="text-sm font-medium ml-1 text-gray-600">
-              {rating ? rating.toFixed(1) : "N/A"}
+              {rating ?? "N/A"}
             </span>
           </div>
         </div>
@@ -275,7 +275,7 @@ const RoomCard: React.FC<RoomProps> = ({
             <UserOutlined style={{ color: themeColors.primary, fontSize: "12px" }} />
           </div><RoomMainAmenities
             amenities={mainAmenities || amenities.slice(0, 4)}
-            limit={4}
+            limit={6}
           />
         </div>
 
