@@ -12,7 +12,7 @@ const store = configureStore({
   // Middleware nếu cần
 });
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
+// Suy ra các loại `rootstate` và` appdispatch` từ chính cửa hàng
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 

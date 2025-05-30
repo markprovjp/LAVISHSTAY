@@ -15,7 +15,7 @@ interface AmenitiesProps {
 
 const RoomAmenities: React.FC<AmenitiesProps> = ({ amenities }) => {
     const [showAllAmenities, setShowAllAmenities] = useState(false);
-    
+
     // Limit amenities shown initially
     const displayAmenities = showAllAmenities ? amenities : amenities.slice(0, 12);
     const formattedAmenities = AmenityUtils.formatAmenitiesForDisplay(displayAmenities);

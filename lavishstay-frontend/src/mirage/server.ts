@@ -1,6 +1,8 @@
 import { createServer, Response } from "miragejs";
-import { sampleRooms, sampleReviews, sampleRoomOptions } from "./models";
-
+import { sampleRooms } from "./models";
+import { sampleUsers, mockCredentials } from "./users";
+import { sampleRoomOptions } from "./roomoption";
+import { sampleReviews } from "./reviews";
 export function makeServer() {
   return createServer({
     routes() {
@@ -92,9 +94,7 @@ export function makeServer() {
         }
 
         // Filter reviews for the specific room
-        const roomReviews = sampleReviews.filter(review => review.roomId === roomId);
-
-        return {
+        const roomReviews = sampleReviews.filter(review => review.roomId === roomId); return {
           roomId,
           reviews: roomReviews,
           count: roomReviews.length,
@@ -102,6 +102,71 @@ export function makeServer() {
             ? roomReviews.reduce((sum, review) => sum + review.rating, 0) / roomReviews.length
             : 0
         };
+      });
+
+      // API endpoint cho đăng nhập
+      this.post("/auth/login", (_, request) => {
+        const { email, password } = JSON.parse(request.requestBody);
+
+        // Kiểm tra thông tin đăng nhập
+        const validCredential = mockCredentials.find(
+          cred => cred.email === email && cred.password === password
+        );
+
+        if (!validCredential) {
+          return new Response(401, {}, {
+            error: "Email hoặc mật khẩu không đúng!"
+          });
+        }
+
+        // Tìm user tương ứng
+        const user = sampleUsers.find(u => u.email === email);
+
+        if (!user) {
+          return new Response(404, {}, {
+            error: "Không tìm thấy người dùng!"
+          });
+        }
+
+        // Tạo mock token
+        const token = `mock_token_${user.id}_${Date.now()}`;
+
+        return {
+          user,
+          token,
+          token_type: "Bearer"
+        };
+      });
+
+      // API endpoint cho đăng xuất
+      this.post("/auth/logout", () => {
+        return new Response(200, {}, { message: "Đăng xuất thành công!" });
+      });
+
+      // API endpoint để lấy thông tin user hiện tại
+      this.get("/auth/user", (_, request) => {
+        const authHeader = request.requestHeaders.Authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return new Response(401, {}, { error: "Token không hợp lệ!" });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+
+        // Parse user ID từ mock token
+        const tokenParts = token.split('_');
+        if (tokenParts.length < 3 || tokenParts[0] !== 'mock' || tokenParts[1] !== 'token') {
+          return new Response(401, {}, { error: "Token không hợp lệ!" });
+        }
+
+        const userId = parseInt(tokenParts[2]);
+        const user = sampleUsers.find(u => u.id === userId);
+
+        if (!user) {
+          return new Response(404, {}, { error: "Không tìm thấy người dùng!" });
+        }
+
+        return { user };
       });
     }
   });

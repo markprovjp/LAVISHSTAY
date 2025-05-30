@@ -2,33 +2,24 @@ import React from 'react';
 import {
     WifiOutlined,
     DesktopOutlined,
-    BuildOutlined,
-    ShopOutlined,
     SafetyOutlined,
     CoffeeOutlined,
     HomeOutlined,
-    BankOutlined,
-    EnvironmentOutlined,
-    CustomerServiceOutlined,
-    UserOutlined,
-    SettingOutlined,
+    PhoneOutlined,
+    ThunderboltOutlined,
+    SoundOutlined,
+    ShopOutlined,
+    RestOutlined,
     EyeOutlined,
     ApartmentOutlined,
-    RestOutlined,
-    CarOutlined,
+    CustomerServiceOutlined,
+    BuildOutlined,
     SkinOutlined,
-    ShoppingOutlined,
-    CarryOutOutlined,
     BgColorsOutlined,
-    ToolOutlined,
-    ThunderboltOutlined,
-    PhoneOutlined,
-    ClockCircleOutlined,
-    BellOutlined,
-    SoundOutlined,
-    StopOutlined,
+    MedicineBoxOutlined,
+    EnvironmentOutlined,
     TeamOutlined,
-    MedicineBoxOutlined
+    SettingOutlined
 } from '@ant-design/icons';
 
 // Định nghĩa tiện ích với tên và icon function
@@ -37,75 +28,153 @@ export interface Amenity {
     icon: () => React.ReactNode;
 }
 
-// Danh sách tiện ích cơ bản với tên và icon
+// Danh sách tiện ích với tên và icon dựa trên dữ liệu từ model
 export const AMENITIES: Record<string, Amenity> = {
-    // Tiện ích chính (hiển thị ở home)
-    'hướng thành phố': {
-        name: 'Hướng Thành phố',
+    // Main Amenities - Tiện ích chính từ model
+    'Nhìn ra thành phố': {
+        name: 'Nhìn ra thành phố',
         icon: () => React.createElement(ApartmentOutlined)
     },
-    'không hút thuốc': {
-        name: 'Không hút thuốc',
-        icon: () => React.createElement(StopOutlined)
+    'Điều hòa không khí': {
+        name: 'Điều hòa không khí',
+        icon: () => React.createElement(BuildOutlined)
     },
-    'bồn tắm/vòi sen riêng': {
-        name: 'Bồn tắm/vòi sen riêng',
-        icon: () => React.createElement(SkinOutlined)
+    'Phòng tắm riêng trong phòng': {
+        name: 'Phòng tắm riêng trong phòng',
+        icon: () => React.createElement(RestOutlined)
     },
-
-    // Khả năng tiếp cận
-    'khả năng tiếp cận cho người khuyết tật': {
-        name: 'Khả năng tiếp cận cho người khuyết tật',
-        icon: () => React.createElement(TeamOutlined)
-    },
-    'bàn trang điểm phù hợp cho người khuyết tật': {
-        name: 'Bàn trang điểm phù hợp cho người khuyết tật',
-        icon: () => React.createElement(TeamOutlined)
-    },
-    'khả năng tiếp cận cho người khó đi lại': {
-        name: 'Khả năng tiếp cận cho người khó đi lại',
-        icon: () => React.createElement(TeamOutlined)
-    },
-
-    // Giải trí
-    'điện thoại': {
-        name: 'Điện thoại',
-        icon: () => React.createElement(PhoneOutlined)
-    },
-    'wifi miễn phí': {
-        name: 'Wi-Fi miễn phí trong tất cả các phòng!',
-        icon: () => React.createElement(WifiOutlined)
-    },
-    'truyền hình cáp/vệ tinh': {
-        name: 'Truyền hình cáp/vệ tinh',
+    'TV màn hình phẳng': {
+        name: 'TV màn hình phẳng',
         icon: () => React.createElement(DesktopOutlined)
     },
-
-    // Bếp
-    'ấm nước điện': {
-        name: 'Ấm nước điện',
+    'Hệ thống cách âm': {
+        name: 'Hệ thống cách âm',
+        icon: () => React.createElement(SoundOutlined)
+    },
+    'Minibar': {
+        name: 'Minibar',
+        icon: () => React.createElement(ShopOutlined)
+    },
+    'WiFi miễn phí': {
+        name: 'WiFi miễn phí',
+        icon: () => React.createElement(WifiOutlined)
+    },
+    'Suite riêng tư': {
+        name: 'Suite riêng tư',
+        icon: () => React.createElement(HomeOutlined)
+    },
+    'Máy pha cà phê': {
+        name: 'Máy pha cà phê',
         icon: () => React.createElement(CoffeeOutlined)
     },
+    'Có cung cấp nôi/cũi theo yêu cầu': {
+        name: 'Có cung cấp nôi/cũi theo yêu cầu',
+        icon: () => React.createElement(TeamOutlined)
+    },
 
-    // Phòng tắm và vật dụng vệ sinh
-    'áo choàng tắm': {
+    // Standard Amenities - Tiện ích phòng tiêu chuẩn từ model
+    'Đồ vệ sinh cá nhân miễn phí': {
+        name: 'Đồ vệ sinh cá nhân miễn phí',
+        icon: () => React.createElement(MedicineBoxOutlined)
+    },
+    'Áo choàng tắm': {
         name: 'Áo choàng tắm',
         icon: () => React.createElement(SkinOutlined)
     },
-    'cân': {
-        name: 'Cân',
-        icon: () => React.createElement(ToolOutlined)
+    'Két an toàn': {
+        name: 'Két an toàn',
+        icon: () => React.createElement(SafetyOutlined)
     },
-    'máy sấy tóc': {
+    'Nhà vệ sinh': {
+        name: 'Nhà vệ sinh',
+        icon: () => React.createElement(RestOutlined)
+    },
+    'Bồn tắm hoặc Vòi sen': {
+        name: 'Bồn tắm hoặc Vòi sen',
+        icon: () => React.createElement(SkinOutlined)
+    },
+    'Khăn tắm': {
+        name: 'Khăn tắm',
+        icon: () => React.createElement(SkinOutlined)
+    },
+    'Ổ điện gần giường': {
+        name: 'Ổ điện gần giường',
+        icon: () => React.createElement(ThunderboltOutlined)
+    },
+    'Bàn làm việc': {
+        name: 'Bàn làm việc',
+        icon: () => React.createElement(DesktopOutlined)
+    },
+    'Khu vực tiếp khách': {
+        name: 'Khu vực tiếp khách',
+        icon: () => React.createElement(HomeOutlined)
+    },
+    'TV': {
+        name: 'TV',
+        icon: () => React.createElement(DesktopOutlined)
+    },
+    'Dép': {
+        name: 'Dép',
+        icon: () => React.createElement(RestOutlined)
+    },
+    'Tủ lạnh': {
+        name: 'Tủ lạnh',
+        icon: () => React.createElement(ShopOutlined)
+    },
+    'Điện thoại': {
+        name: 'Điện thoại',
+        icon: () => React.createElement(PhoneOutlined)
+    },
+    'Máy sấy tóc': {
         name: 'Máy sấy tóc',
         icon: () => React.createElement(ThunderboltOutlined)
     },
-    'phòng tắm riêng': {
-        name: 'Phòng tắm riêng',
-        icon: () => React.createElement(RestOutlined)
+    'Sàn trải thảm': {
+        name: 'Sàn trải thảm',
+        icon: () => React.createElement(HomeOutlined)
     },
-    'các loại khăn': {
-        name: 'Các loại khăn',
+    'Ấm đun nước điện': {
+        name: 'Ấm đun nước điện',
+        icon: () => React.createElement(CoffeeOutlined)
+    },
+    'Tủ hoặc phòng để quần áo': {
+        name: 'Tủ hoặc phòng để quần áo',
+        icon: () => React.createElement(HomeOutlined)
+    },
+    'Giấy vệ sinh': {
+        name: 'Giấy vệ sinh',
+        icon: () => React.createElement(MedicineBoxOutlined)
+    },
+
+    // View & Location Features
+    'Tầm nhìn cảnh biển': {
+        name: 'Tầm nhìn cảnh biển',
+        icon: () => React.createElement(EyeOutlined)
+    },
+    'Tầm nhìn toàn cảnh biển': {
+        name: 'Tầm nhìn toàn cảnh biển',
+        icon: () => React.createElement(EyeOutlined)
+    },
+    'Hướng ngoài trời': {
+        name: 'Hướng ngoài trời',
+        icon: () => React.createElement(EnvironmentOutlined)
+    },
+
+    // Additional Amenities
+    'Truyền hình cáp/vệ tinh': {
+        name: 'Truyền hình cáp/vệ tinh',
+        icon: () => React.createElement(DesktopOutlined)
+    },
+    'máy pha trà/cà phê': {
+        name: 'Máy pha trà/cà phê',
+        icon: () => React.createElement(CoffeeOutlined)
+    },
+    'tủ lạnh nhỏ trong phòng': {
+        name: 'Tủ lạnh nhỏ trong phòng',
+        icon: () => React.createElement(ShopOutlined)
+    },
+    'khăn tắm cao cấp': {
+        name: 'Khăn tắm cao cấp',
         icon: () => React.createElement(SkinOutlined)
     },
     'gương': {
@@ -116,221 +185,105 @@ export const AMENITIES: Record<string, Amenity> = {
         name: 'Phòng tắm đứng',
         icon: () => React.createElement(RestOutlined)
     },
-    'vật dụng tắm rửa': {
-        name: 'Vật dụng tắm rửa',
-        icon: () => React.createElement(MedicineBoxOutlined)
-    },
-
-    // Tiện nghi
-    'cách âm': {
-        name: 'Cách âm',
-        icon: () => React.createElement(SoundOutlined)
+    'nước đóng chai miễn phí': {
+        name: 'Nước đóng chai miễn phí',
+        icon: () => React.createElement(CoffeeOutlined)
     },
     'dép đi trong nhà': {
         name: 'Dép đi trong nhà',
         icon: () => React.createElement(RestOutlined)
     },
-    'dịch vụ báo thức': {
-        name: 'Dịch vụ báo thức',
-        icon: () => React.createElement(BellOutlined)
+    'Không hút thuốc': {
+        name: 'Không hút thuốc',
+        icon: () => React.createElement(EnvironmentOutlined)
     },
-    'điều hòa': {
-        name: 'Điều hòa',
-        icon: () => React.createElement(BuildOutlined)
-    },
-    'đồ dùng cho giấc ngủ thoải mái': {
-        name: 'Đồ dùng cho giấc ngủ thoải mái',
-        icon: () => React.createElement(RestOutlined)
-    },
-    'đồng hồ báo thức': {
-        name: 'Đồng hồ báo thức',
-        icon: () => React.createElement(ClockCircleOutlined)
-    },
-    'ô cắm điện gần giường': {
-        name: 'Ô cắm điện gần giường',
-        icon: () => React.createElement(ThunderboltOutlined)
-    },
-    'rèm che ánh sáng': {
-        name: 'Rèm che ánh sáng',
-        icon: () => React.createElement(HomeOutlined)
-    },
-
-    // Ăn uống
-    'máy pha trà/cà phê': {
-        name: 'Máy pha trà/cà phê',
-        icon: () => React.createElement(CoffeeOutlined)
-    },
-    'nước đóng chai miễn phí': {
-        name: 'Nước đóng chai miễn phí',
-        icon: () => React.createElement(CoffeeOutlined)
-    },
-    'tủ lạnh': {
-        name: 'Tủ lạnh',
-        icon: () => React.createElement(ShopOutlined)
-    },
-    'tủ lạnh nhỏ trong phòng': {
-        name: 'Tủ lạnh nhỏ trong phòng',
-        icon: () => React.createElement(ShopOutlined)
-    },
-
-    // Dịch vụ và tiện nghi
-    'dọn phòng hằng ngày': {
-        name: 'Dọn phòng hằng ngày',
-        icon: () => React.createElement(CustomerServiceOutlined)
-    },
-
-    // Legacy amenities - giữ lại để tương thích ngược
-    wifi: {
-        name: 'Wi-Fi miễn phí',
-        icon: () => React.createElement(WifiOutlined)
-    },
-    tv: {
-        name: 'TV màn hình phẳng',
-        icon: () => React.createElement(DesktopOutlined)
-    },
-    'điều hoà': {
-        name: 'Điều hoà không khí',
-        icon: () => React.createElement(BuildOutlined)
-    },
-    minibar: {
-        name: 'Minibar',
-        icon: () => React.createElement(ShopOutlined)
-    },
-    'minibar cao cấp': {
-        name: 'Minibar cao cấp',
-        icon: () => React.createElement(ShoppingOutlined)
-    },
-    'két sắt': {
-        name: 'Két sắt',
-        icon: () => React.createElement(SafetyOutlined)
-    },
-    'két sắt lớn': {
-        name: 'Két sắt lớn',
-        icon: () => React.createElement(BankOutlined)
-    },
-    'máy pha cà phê': {
-        name: 'Máy pha cà phê',
-        icon: () => React.createElement(CoffeeOutlined)
-    },
-    'máy pha cà phê espresso': {
-        name: 'Máy pha espresso',
-        icon: () => React.createElement(CoffeeOutlined)
-    },
-    'bàn làm việc': {
-        name: 'Bàn làm việc',
-        icon: () => React.createElement(DesktopOutlined)
-    },
-    'khăn tắm cao cấp': {
-        name: 'Khăn tắm cao cấp',
+    'Phòng tắm đứng & bồn tắm': {
+        name: 'Phòng tắm đứng & bồn tắm',
         icon: () => React.createElement(SkinOutlined)
-    },
-    'nước uống miễn phí': {
-        name: 'Nước uống miễn phí',
-        icon: () => React.createElement(CoffeeOutlined)
-    },
-    'dịch vụ phòng 24/7': {
-        name: 'Dịch vụ phòng 24/7',
-        icon: () => React.createElement(CustomerServiceOutlined)
-    },
-    'dịch vụ phòng VIP': {
-        name: 'Dịch vụ phòng VIP',
-        icon: () => React.createElement(CustomerServiceOutlined)
-    },
-    'quản gia 24/7': {
-        name: 'Quản gia riêng 24/7',
-        icon: () => React.createElement(UserOutlined)
-    },
-    'dịch vụ quản gia': {
-        name: 'Dịch vụ quản gia',
-        icon: () => React.createElement(SettingOutlined)
-    },
-    'lounge riêng': {
-        name: 'Lounge riêng',
-        icon: () => React.createElement(RestOutlined)
-    },
-    'view biển': {
-        name: 'View biển',
-        icon: () => React.createElement(EyeOutlined)
-    },
-    'view thành phố': {
-        name: 'View thành phố',
-        icon: () => React.createElement(ApartmentOutlined)
-    },
-    'view toàn cảnh biển': {
-        name: 'View toàn cảnh biển',
-        icon: () => React.createElement(EyeOutlined)
-    },
-    'view panorama': {
-        name: 'View panorama',
-        icon: () => React.createElement(EyeOutlined)
-    },
-    cityView: {
-        name: 'City View',
-        icon: () => React.createElement(ApartmentOutlined)
-    },
-    'ban công riêng': {
-        name: 'Ban công riêng',
-        icon: () => React.createElement(HomeOutlined)
-    },
-    'ban công panorama': {
-        name: 'Ban công panorama',
-        icon: () => React.createElement(HomeOutlined)
     },
     'phòng khách riêng': {
         name: 'Phòng khách riêng',
         icon: () => React.createElement(HomeOutlined)
     },
-    'phòng ăn riêng': {
-        name: 'Phòng ăn riêng',
-        icon: () => React.createElement(CarryOutOutlined)
+    'view toàn cảnh biển': {
+        name: 'View toàn cảnh biển',
+        icon: () => React.createElement(EyeOutlined)
     },
-    'bể bơi': {
-        name: 'Bể bơi',
+    'minibar cao cấp': {
+        name: 'Minibar cao cấp',
+        icon: () => React.createElement(ShopOutlined)
+    },
+    'két sắt': {
+        name: 'Két sắt',
+        icon: () => React.createElement(SafetyOutlined)
+    },
+    'dịch vụ phòng 24/7': {
+        name: 'Dịch vụ phòng 24/7',
+        icon: () => React.createElement(CustomerServiceOutlined)
+    },
+    'Phòng chờ thương gia': {
+        name: 'Phòng chờ thương gia',
+        icon: () => React.createElement(TeamOutlined)
+    },
+    'Bể bơi riêng': {
+        name: 'Bể bơi riêng',
         icon: () => React.createElement(BgColorsOutlined)
     },
-    'phòng gym': {
-        name: 'Phòng tập gym',
-        icon: () => React.createElement(ToolOutlined)
-    },
-    'spa': {
-        name: 'Spa & Massage',
+    'Bồn tắm/vòi sen riêng': {
+        name: 'Bồn tắm/vòi sen riêng',
         icon: () => React.createElement(SkinOutlined)
     },
-    'nhà hàng': {
-        name: 'Nhà hàng',
-        icon: () => React.createElement(CarryOutOutlined)
+    'Phòng chờ Thương Gia': {
+        name: 'Phòng chờ Thương Gia',
+        icon: () => React.createElement(TeamOutlined)
     },
-    'bar': {
-        name: 'Bar',
-        icon: () => React.createElement(CoffeeOutlined)
+    '2 phòng tắm': {
+        name: '2 phòng tắm',
+        icon: () => React.createElement(RestOutlined)
     },
-    'đỗ xe': {
-        name: 'Chỗ đỗ xe',
-        icon: () => React.createElement(CarOutlined)
+    'Phòng tắm vòi sen & bồn tắm': {
+        name: 'Phòng tắm vòi sen & bồn tắm',
+        icon: () => React.createElement(SkinOutlined)
     },
-    'ban công': {
-        name: 'Ban công',
+    '2 phòng ngủ': {
+        name: '2 phòng ngủ',
         icon: () => React.createElement(HomeOutlined)
     },
-    'view núi': {
-        name: 'View núi',
-        icon: () => React.createElement(EnvironmentOutlined)
-    },
-    'bồn tắm': {
-        name: 'Bồn tắm riêng',
-        icon: () => React.createElement(SkinOutlined)
-    },
-    'máy giặt': {
-        name: 'Máy giặt',
-        icon: () => React.createElement(ToolOutlined)
-    },
-    'bếp': {
-        name: 'Bếp nấu ăn',
-        icon: () => React.createElement(CarryOutOutlined)
-    },
-};
 
-// Helper functions đơn giản để làm việc với amenities
+    // Legacy & Alternative Mappings - Để tương thích ngược
+    'wifi miễn phí': {
+        name: 'WiFi miễn phí',
+        icon: () => React.createElement(WifiOutlined)
+    },
+    'tv màn hình phẳng': {
+        name: 'TV màn hình phẳng',
+        icon: () => React.createElement(DesktopOutlined)
+    },
+    'điều hòa không khí': {
+        name: 'Điều hòa không khí',
+        icon: () => React.createElement(BuildOutlined)
+    },
+    'minibar': {
+        name: 'Minibar',
+        icon: () => React.createElement(ShopOutlined)
+    },
+    'phòng tắm riêng trong phòng': {
+        name: 'Phòng tắm riêng trong phòng',
+        icon: () => React.createElement(RestOutlined)
+    },
+    'hệ thống cách âm': {
+        name: 'Hệ thống cách âm',
+        icon: () => React.createElement(SoundOutlined)
+    },
+    'suite riêng tư': {
+        name: 'Suite riêng tư',
+        icon: () => React.createElement(HomeOutlined)
+    },
+    'máy pha cà phê': {
+        name: 'Máy pha cà phê',
+        icon: () => React.createElement(CoffeeOutlined)
+    }
+};// Helper functions để làm việc với amenities
 export const getAmenity = (key: string): Amenity | null => {
     return AMENITIES[key] || null;
 };
@@ -377,11 +330,11 @@ export const filterValid = (amenityKeys: string[]): string[] => {
 // Danh sách tiện ích chính để hiển thị ở home (4-5 tiện ích)
 export const getMainAmenities = (): string[] => {
     return [
-        'hướng thành phố',
-        'không hút thuốc', 
-        'bồn tắm/vòi sen riêng',
-        'wifi miễn phí',
-        'điều hòa'
+        'Điều hòa không khí',
+        'WiFi miễn phí',
+        'TV màn hình phẳng',
+        'Phòng tắm riêng trong phòng',
+        'Minibar'
     ];
 };
 

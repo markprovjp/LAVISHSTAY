@@ -97,7 +97,7 @@ const HotelActivities: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold     mb-4">Hoạt động & Tiện ích</h2>
+          <h2 className="text-4xl      mb-4">Hoạt động & Tiện ích</h2>
           <p className="text-lg  max-w-2xl mx-auto">
             Khám phá những trải nghiệm đẳng cấp tại khách sạn với các tiện ích
             hiện đại và dịch vụ chăm sóc tận tâm
@@ -129,10 +129,6 @@ const HotelActivities: React.FC = () => {
               dynamicBullets: true,
             }}
             navigation={true}
-            // autoplay={{
-            //    delay: 6000,
-            //   disableOnInteraction: false,
-            // }}
             loop={false}
             modules={[EffectCoverflow, Pagination, Navigation, Autoplay]}
             className="activities-swiper pb-12"
@@ -246,7 +242,7 @@ const HotelActivities: React.FC = () => {
             type="primary"
             size="large"
             icon={<CalendarOutlined />}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 border-0 rounded-lg px-8 py-6 h-auto font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300"
+            className=" border-0 rounded-lg px-8 py-6 h-auto  shadow-xl  transition-all duration-300"
           >
             Đặt lịch trải nghiệm ngay
           </Button>{" "}

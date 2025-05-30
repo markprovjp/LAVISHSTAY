@@ -177,12 +177,11 @@ const RoomCard: React.FC<RoomProps> = ({
         ...cardStyle,
       }}
       cover={
-        <div className="relative overflow-hidden" style={{ height: "200px" }}>
+        <div className="relative overflow-hidden" style={{ height: "300px" }}>
           <img
             alt={name}
             src={image}
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-          />          {/* Room Type Badge */}
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" />          {/* Room Type Badge */}
           <div
             className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold room-type-badge"
             style={{
@@ -195,6 +194,19 @@ const RoomCard: React.FC<RoomProps> = ({
               roomType === "presidential" ? "Presidential" :
                 roomType.charAt(0).toUpperCase() + roomType.slice(1)}
           </div>
+
+          {/* Discount Badge */}
+          {discount && discount > 0 && (
+            <div
+              className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white shadow-lg"
+              style={{
+                backgroundColor: "#ef4444",
+                animation: "pulse 2s infinite"
+              }}
+            >
+              -{discount}%
+            </div>
+          )}
         </div>
       }
       bodyStyle={{ padding: "16px" }}
@@ -206,7 +218,7 @@ const RoomCard: React.FC<RoomProps> = ({
             level={5}
             className="mb-0 font-bold leading-tight flex-1" style={{
               color: themeColors.text,
-              fontSize: "16px",
+              fontSize: "20px",
             }}
           >
             {name}
@@ -269,13 +281,9 @@ const RoomCard: React.FC<RoomProps> = ({
           style={{ backgroundColor: themeColors.secondary }}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-              Tiện ích chính
-            </span>
-            <UserOutlined style={{ color: themeColors.primary, fontSize: "12px" }} />
           </div><RoomMainAmenities
             amenities={mainAmenities || amenities.slice(0, 4)}
-            limit={6}
+            limit={8}
           />
         </div>
 
@@ -284,7 +292,7 @@ const RoomCard: React.FC<RoomProps> = ({
           <div className="flex-1">
             <div className="mb-1">
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Giá từ/đêm
+                Giá/đêm
               </span>
             </div>            {discount && baseVNDPrice > 0 ? (
               <div className="space-y-1">
