@@ -148,14 +148,18 @@ const Home: React.FC = () => {
               fontWeight: 500,
             }}
             tabBarGutter={40}
-            className="room-category-tabs"
-            items={[{
+            className="room-category-tabs" items={[{
               key: "deluxe",
               label: (
-                <span style={{ fontSize: "18px" }}>Phòng Deluxe</span>
-              ),
-              children: (
-                <div className="py-4">
+                <span style={{ fontSize: "18px", color: "#6366f1", fontWeight: "600" }}>Phòng Deluxe</span>
+              ), children: (
+                <div
+                  className="py-4 px-2"
+                  style={{
+                    backgroundColor: "rgba(99, 102, 241, 0.08)",
+                    borderRadius: "12px",
+                  }}
+                >
                   {isDeluxeLoading ? (
                     <div className="text-center py-10">
                       <Spin size="large" tip="Đang tải phòng..." />
@@ -169,14 +173,18 @@ const Home: React.FC = () => {
                   )}
                 </div>
               ),
-            },
-            {
+            }, {
               key: "premium",
               label: (
-                <span style={{ fontSize: "18px" }}>Phòng Premium</span>
-              ),
-              children: (
-                <div className="py-4">
+                <span style={{ fontSize: "18px", color: "#059669", fontWeight: "600" }}>Phòng Premium</span>
+              ), children: (
+                <div
+                  className="py-4 px-2"
+                  style={{
+                    backgroundColor: "rgba(5, 150, 105, 0.08)",
+                    borderRadius: "12px",
+                  }}
+                >
                   {isPremiumLoading ? (
                     <div className="text-center py-10">
                       <Spin size="large" tip="Đang tải phòng..." />
@@ -190,14 +198,18 @@ const Home: React.FC = () => {
                   )}
                 </div>
               ),
-            },
-            {
+            }, {
               key: "suite",
               label: (
-                <span style={{ fontSize: "18px" }}>Phòng Suite</span>
-              ),
-              children: (
-                <div className="py-4">
+                <span style={{ fontSize: "18px", color: "#dc2626", fontWeight: "600" }}>Phòng Suite</span>
+              ), children: (
+                <div
+                  className="py-4 px-2"
+                  style={{
+                    backgroundColor: "rgba(220, 38, 38, 0.08)",
+                    borderRadius: "12px",
+                  }}
+                >
                   {isSuiteLoading ? (
                     <div className="text-center py-10">
                       <Spin size="large" tip="Đang tải phòng..." />
@@ -211,69 +223,65 @@ const Home: React.FC = () => {
                   )}
                 </div>
               ),
-            },
-            {
+            }, {
               key: "theLevel",
               label: (
-                <span style={{ fontSize: "18px", color: "#0c5f96" }}>
+                <span style={{ fontSize: "18px", color: "#0ea5e9", fontWeight: "600" }}>
                   The Level
                 </span>
               ),
-              children: (
-                <div
-                  className="py-4 px-2"
-                  style={{
-                    backgroundColor: "rgba(176, 210, 237, 0.1)",
-                    borderRadius: "12px",
-                  }}
-                >
-                  {isTheLevelLoading ? (
-                    <div className="text-center py-10">
-                      <Spin size="large" tip="Đang tải phòng..." />
-                    </div>
-                  ) : theLevelRoomsData?.rooms?.length ? (
-                    <RoomSwiper rooms={theLevelRoomsData.rooms} />
-                  ) : (
-                    <div className="text-center py-10">
-                      <p>Không có phòng The Level nào</p>
-                    </div>
-                  )}
-                </div>
+              children: (<div
+                className="py-4 px-2"
+                style={{
+                  backgroundColor: "rgba(14, 165, 233, 0.08)",
+                  borderRadius: "12px",
+                }}
+              >
+                {isTheLevelLoading ? (
+                  <div className="text-center py-10">
+                    <Spin size="large" tip="Đang tải phòng..." />
+                  </div>
+                ) : theLevelRoomsData?.rooms?.length ? (
+                  <RoomSwiper rooms={theLevelRoomsData.rooms} />
+                ) : (
+                  <div className="text-center py-10">
+                    <p>Không có phòng The Level nào</p>
+                  </div>
+                )}
+              </div>
               ),
-            },
-            {
+            }, {
               key: "presidential",
               label: (
                 <span
                   style={{
                     fontSize: "18px",
-                    color: "#9c7c38",
-                    fontWeight: "bold",
+                    color: "#d97706",
+                    fontWeight: "600",
                   }}
                 >
                   Phòng Presidential
                 </span>
               ),
-              children: (
-                <div
-                  className="py-4 px-2"
-                  style={{
-                    backgroundColor: "rgba(220, 193, 145, 0.1)",
-                    borderRadius: "12px",
-                  }}
-                >
-                  {isPresidentialLoading ? (
-                    <div className="text-center py-10">
-                      <Spin size="large" tip="Đang tải phòng..." />
-                    </div>
-                  ) : presidentialRoomsData?.rooms?.length ? (
-                    <RoomSwiper rooms={presidentialRoomsData.rooms} />
-                  ) : (
-                    <div className="text-center py-10">
-                      <p>Không có phòng tổng thống nào</p>
-                    </div>
-                  )}
-                </div>
+              children: (<div
+                className="py-4 px-2"
+                style={{
+                  backgroundColor: "rgba(217, 119, 6, 0.08)",
+                  borderRadius: "12px",
+                }}
+              >
+                {isPresidentialLoading ? (
+                  <div className="text-center py-10">
+                    <Spin size="large" tip="Đang tải phòng..." />
+                  </div>
+                ) : presidentialRoomsData?.rooms?.length ? (
+                  <RoomSwiper rooms={presidentialRoomsData.rooms} />
+                ) : (
+                  <div className="text-center py-10">
+                    <p>Không có phòng tổng thống nào</p>
+                  </div>
+                )}
+              </div>
               ),
             },
             ]}
