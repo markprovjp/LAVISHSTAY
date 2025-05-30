@@ -17,21 +17,21 @@ const RoomMainAmenities: React.FC<MainAmenitiesProps> = ({
 
     if (formattedAmenities.length === 0) {
         return null;
-    } return (
-        <Row gutter={[6, 6]} className="mt-2">
+    }
+
+    return (
+        <div className="grid grid-cols-2 gap-2">
             {formattedAmenities.map((amenity) => (
-                <Col xs={12} sm={12} md={12} lg={12} xl={12} key={amenity.key}>
-                    <div className="flex items-center p-2 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-                        <div className="text-sm mr-2 flex-shrink-0 text-blue-600">
-                            {amenity.icon}
-                        </div>
-                        <span className="text-xs font-medium leading-tight text-gray-700 truncate">
-                            {amenity.name}
-                        </span>
+                <div key={amenity.key} className="flex items-center gap-2 py-1">
+                    <div className="flex items-center justify-center w-4 h-4 text-xs opacity-80">
+                        {amenity.icon}
                     </div>
-                </Col>
+                    <span className="text-xs font-medium text-gray-700 truncate leading-tight">
+                        {amenity.name}
+                    </span>
+                </div>
             ))}
-        </Row>
+        </div>
     );
 };
 
