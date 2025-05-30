@@ -378,7 +378,7 @@ export const filterValid = (amenityKeys: string[]): string[] => {
 export const getMainAmenities = (): string[] => {
     return [
         'hướng thành phố',
-        'không hút thuốc',
+        'không hút thuốc', 
         'bồn tắm/vòi sen riêng',
         'wifi miễn phí',
         'điều hòa'
