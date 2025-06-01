@@ -1,5 +1,89 @@
 /* SearchForm.css */
 
+/* Blur container for the search form */
+.search-form-blur-container {
+  position: relative;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  padding: 6px;
+  margin: 0 auto;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-form-blur-container:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    0 6px 20px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+
+
+/* Compact search form card */
+.search-form-compact {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-radius: 50px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+
+/* Compact search button */
+.search-button-compact {
+  border-radius: 50px !important;
+  font-weight: 600 !important;
+  height: 40px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.search-button-compact:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4) !important;
+}
+
+
+.ant-input.rounded-full:hover,
+.ant-picker.rounded-full:hover {
+  border-color: rgba(37, 99, 235, 0.4) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.ant-input.rounded-full:focus,
+.ant-picker.rounded-full:focus {
+  border-color: #2563eb !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Dark mode input styling */
+.dark .ant-input.rounded-full,
+.dark .ant-picker.rounded-full {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f9fafb !important;
+}
+
+.dark .ant-input.rounded-full:hover,
+.dark .ant-picker.rounded-full:hover {
+  background: rgba(17, 24, 39, 1) !important;
+  border-color: rgba(37, 99, 235, 0.5) !important;
+}
+
 /* Fade-in animation */
 @keyframes fadeIn {
   from {
@@ -14,6 +98,32 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+
+
+/* Responsive adjustments for compact form */
+@media (max-width: 768px) {
+  .search-form-blur-container {
+    margin: 0 16px;
+    padding: 6px;
+    border-radius: 20px;
+  }
+  
+  .search-form-compact {
+    border-radius: 16px !important;
+  }
+  
+  .ant-input.rounded-full,
+  .ant-picker.rounded-full {
+    border-radius: 25px !important;
+  }
+  
+  .search-button-compact {
+    border-radius: 25px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
 }
 
 /* Pulse animation - already in Tailwind but explicitly defined here */
@@ -62,6 +172,7 @@
   border-radius: 12px;
   overflow: hidden;
 }
+
 
 
 /* Enhanced search button */

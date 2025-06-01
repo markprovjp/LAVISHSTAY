@@ -11,7 +11,7 @@ export interface Review {
     reviewDate: string; // Ngày viết review
     helpful: number;
     notHelpful: number; roomType: string; // Loại phòng đã ở
-    travelType: "business" | "couple" | "solo" | "family_young" | "family_teen" | "group";
+    travelType: "business" | "couple" | "solo" | "family_young"| "group";
     adminReply?: {
         content: string;
         date: string;
@@ -120,7 +120,7 @@ export const sampleReviews: Review[] = [
         helpful: 18,
         notHelpful: 2,
         roomType: "Phòng Suite (Suite Room)",
-        travelType: "family_teen",
+        travelType: "family_young",
         adminReply: {
             content: "Cảm ơn gia đình anh Nguyễn! Chúng tôi rất vui khi các bé và gia đình đã có kỳ nghỉ vui vẻ. Hy vọng sẽ được đón tiếp gia đình trong những chuyến du lịch tiếp theo!",
             date: "2024-01-23",

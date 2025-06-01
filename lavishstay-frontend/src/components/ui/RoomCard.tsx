@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Typography, Space, Button } from "antd";
+import { Card, Typography, Space, Button, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRightOutlined,
@@ -9,6 +9,7 @@ import {
 } from "@ant-design/icons";
 import { theme } from "antd";
 import RoomMainAmenities from "../room/RoomMainAmenities";
+import { RoomOption } from "../../mirage/roomoption";
 import "./RoomCard.css";
 
 const { Title } = Typography;
@@ -29,6 +30,9 @@ export interface RoomProps {
   discount?: number;
   roomType?: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
   rating?: number; // Add rating from Room model
+  maxGuests?: number;
+  availableRooms?: number;
+  options?: RoomOption[]; // Thêm options để hiển thị giá thấp nhất và thông tin khác
   className?: string;
   style?: React.CSSProperties;
 }
@@ -51,8 +55,11 @@ const RoomCard: React.FC<RoomProps> = ({
   amenities = [],
   mainAmenities,
   discount,
-  roomType = "standard",
+  roomType = "deluxe",
   rating,
+  maxGuests,
+  availableRooms,
+  options = [],
   className = "",
   style = {},
 }) => {
@@ -62,13 +69,33 @@ const RoomCard: React.FC<RoomProps> = ({
   // Navigate to room details
   const handleViewDetails = () => {
     navigate(`/rooms/${id}`);
-  };// Tính giá VND (nếu không có thì convert từ USD với tỷ giá 24,000)
-  const baseVNDPrice = priceVND || 0;
+  };
+  // Tính giá VND từ options hoặc priceVND fallback
+  const calculateDisplayPrice = () => {
+    if (options && options.length > 0) {
+      // Lấy giá thấp nhất từ các options
+      const minPrice = Math.min(...options.map(option => option.pricePerNight.vnd));
+      return minPrice;
+    }
+    return priceVND || 0;
+  };
+
+  const baseVNDPrice = calculateDisplayPrice();
 
   // Tính giá sau giảm giá nếu có
   const discountedVNDPrice = discount
     ? baseVNDPrice - (baseVNDPrice * discount) / 100
     : baseVNDPrice;
+
+  // Kiểm tra xem có nhiều options không để hiển thị "Từ" trước giá
+  const hasMultipleOptions = options && options.length > 1;
+
+  // Tính số khách tối đa từ options hoặc maxGuests
+  const maxGuestsDisplay = maxGuests || (options && options.length > 0
+    ? Math.max(...options.map(option => option.maxGuests))
+    : 2);  // Kiểm tra availability
+  const isLowAvailability = availableRooms && availableRooms <= 3;
+  const isUnavailable = availableRooms === 0;
 
   // Helper function to get bed type display text
   const getBedTypeText = (bedType: string | { default: string; options?: string[] }): string => {
@@ -228,9 +255,7 @@ const RoomCard: React.FC<RoomProps> = ({
               {rating ?? "N/A"}
             </span>
           </div>
-        </div>
-
-        {/* Enhanced Room Details */}
+        </div>        {/* Enhanced Room Details */}
         <Space direction="vertical" size="small" className="w-full">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {size && (
@@ -259,6 +284,18 @@ const RoomCard: React.FC<RoomProps> = ({
                 </span>
               </div>
             )}
+            {/* Thêm thông tin số khách */}
+            <div className="flex items-center gap-1.5">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
+              >
+                <UserOutlined style={{ fontSize: "12px" }} />
+              </div>
+              <span className="text-sm font-medium" style={{ color: themeColors.text }}>
+                Tối đa {maxGuestsDisplay} khách
+              </span>
+            </div>
           </div>
 
           {bedType && (
@@ -274,6 +311,25 @@ const RoomCard: React.FC<RoomProps> = ({
               </span>
             </div>
           )}
+
+          {/* Thêm thông tin availability */}
+          {availableRooms !== undefined && (
+            <div className="flex items-center gap-1.5">
+              {isUnavailable ? (
+                <Tag color="red" className="text-xs">
+                  Hết phòng
+                </Tag>
+              ) : isLowAvailability ? (
+                <Tag color="orange" className="text-xs">
+                  Chỉ còn {availableRooms} phòng
+                </Tag>
+              ) : (
+                <Tag color="green" className="text-xs">
+                  {availableRooms} phòng có sẵn
+                </Tag>
+              )}
+            </div>
+          )}
         </Space>
 
         {/* Enhanced Amenities Display */}        <div
@@ -285,16 +341,10 @@ const RoomCard: React.FC<RoomProps> = ({
             amenities={mainAmenities || amenities.slice(0, 4)}
             limit={8}
           />
-        </div>
-
-        {/* Enhanced Price and CTA Section */}
+        </div>        {/* Enhanced Price and CTA Section */}
         <div className="flex justify-between items-end pt-1">
           <div className="flex-1">
-            <div className="mb-1">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                Giá/đêm
-              </span>
-            </div>            {discount && baseVNDPrice > 0 ? (
+            {discount && baseVNDPrice > 0 ? (
               <div className="space-y-1">
                 <div className="text-sm text-gray-400 line-through">
                   {formatVND(baseVNDPrice)}
@@ -304,39 +354,49 @@ const RoomCard: React.FC<RoomProps> = ({
                     className="text-xl font-bold"
                     style={{ color: "#ef4444" }}
                   >
-                    {formatVND(discountedVNDPrice)}
+                    {formatVND(discountedVNDPrice)} / đêm
                   </span>
                 </div>
               </div>
             ) : baseVNDPrice > 0 ? (
-              <span
-                className="text-xl font-bold"
-                style={{ color: themeColors.primary }}
-              >
-                {formatVND(baseVNDPrice)}
-              </span>
+              <div className="flex items-baseline gap-1">
+                {hasMultipleOptions && (
+                  <span className="text-sm font-medium text-gray-600">từ</span>
+                )}
+                <span
+                  className="text-xl font-bold"
+                  style={{ color: themeColors.primary }}
+                >
+                  {formatVND(baseVNDPrice)}
+                </span>
+              </div>
             ) : (
               <span className="text-lg font-medium text-gray-500">
                 Liên hệ
               </span>
             )}
-          </div>
-
-          {/* Enhanced CTA Button */}
+            {/* Hiển thị số lượng options nếu có nhiều */}
+            {hasMultipleOptions && (
+              <div className="text-xs text-gray-500 mt-1">
+                {options.length} lựa chọn có sẵn
+              </div>
+            )}
+          </div>          {/* Enhanced CTA Button */}
           <Button
             type="primary"
             icon={<ArrowRightOutlined />}
             onClick={handleViewDetails}
             size="middle"
+            disabled={isUnavailable}
             className="transition-all duration-200 font-semibold px-6"
             style={{
               borderRadius: "8px",
-              backgroundColor: themeColors.primary,
-              borderColor: themeColors.primary,
-              boxShadow: `0 2px 8px ${themeColors.primary}30`
+              backgroundColor: isUnavailable ? "#d9d9d9" : themeColors.primary,
+              borderColor: isUnavailable ? "#d9d9d9" : themeColors.primary,
+              boxShadow: isUnavailable ? "none" : `0 2px 8px ${themeColors.primary}30`
             }}
           >
-            Xem chi tiết
+            {isUnavailable ? "Hết phòng" : "Xem chi tiết"}
           </Button>
         </div>
       </div>

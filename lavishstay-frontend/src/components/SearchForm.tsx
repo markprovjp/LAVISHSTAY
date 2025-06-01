@@ -1,49 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
-  Input,
   Button,
   DatePicker,
   Card,
   Row,
   Col,
-  Tabs,
   Space,
   Typography,
   Popover,
-  Tag,
   theme,
-  AutoComplete,
   Divider,
+  Affix,
+  Input,
+  message,
 } from "antd";
 import {
   SearchOutlined,
   CalendarOutlined,
   UserOutlined,
-  HomeOutlined,
-  EnvironmentOutlined,
-  ClockCircleOutlined,
-  FireOutlined,
-  CloseOutlined,
-  DeleteOutlined,
   PlusOutlined,
   MinusOutlined,
   MessageOutlined,
   UsergroupAddOutlined,
 } from "@ant-design/icons";
-import { Users, UsersRound, UserCheck, Building2 } from "lucide-react";
+import { Users, UsersRound, UserCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ButtonSearch from "./ui/ButtonSearch";
 import "./SearchForm.css";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import type { RangePickerProps } from "antd/es/date-picker";
+import { useSearch } from "../hooks/useSearch";
 
 dayjs.extend(customParseFormat);
 
 // Type definitions
 
 const { RangePicker } = DatePicker;
-const { Text, Title } = Typography;
+const { Title } = Typography;
 const { useToken } = theme;
 
 // Disable dates in the past
@@ -51,27 +46,10 @@ const disabledDate: RangePickerProps["disabledDate"] = (current) => {
   return current && current < dayjs().startOf("day");
 };
 
-// Room options for autocomplete
-const searchedData = [
-  { id: "1", name: "Phòng Grand Palace Đà Lạt" },
-  { id: "2", name: "Phòng The Level" },
-  { id: "3", name: "Phòng Luxury" },
-  { id: "4", name: "Phòng Deluxe" },
-  { id: "5", name: "Phòng Superior" },
-  { id: "6", name: "Phòng Standard" },
-  { id: "7", name: "Phòng Executive" },
-];
-
 interface SearchFormProps {
-  onSearch?: (values: any) => void;
+  onSearch?: (results: any) => void;
   className?: string;
   style?: React.CSSProperties;
-}
-
-// Search history definition
-interface SearchHistory {
-  id: string;
-  name: string;
 }
 
 const SearchForm: React.FC<SearchFormProps> = ({
@@ -81,351 +59,202 @@ const SearchForm: React.FC<SearchFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const { token } = useToken();
-  const [activeTab, setActiveTab] = useState<string>("hotel");
-  const [guestPopoverVisible, setGuestPopoverVisible] =
-    useState<boolean>(false);
-  const [guestType, setGuestType] = useState<string>("solo");
-  const [guestCount, setGuestCount] = useState<{
-    adults: number;
-    children: number;
-    rooms: number;
-  }>({
-    adults: 1,
-    children: 0,
-    rooms: 1,
-  });
+  const navigate = useNavigate();
 
-  // Mock data for search history
-  const searchHistory: SearchHistory[] = [
-    { id: "1", name: "Khách sạn Grand Palace Đà Lạt" },
-  ];
+  const {
+    searchData,
+    isValidSearchData,
+    setSearchDateRange,
+    setSearchGuestType,
+    handleGuestCountChange,
+    performSearch,
+    formatGuestSelection,
+    clearError,
+  } = useSearch();
+
+  const [guestPopoverVisible, setGuestPopoverVisible] = useState<boolean>(false);
+
+  // Initialize form with search data
+  useEffect(() => {
+    const formValues: any = {};
+
+    if (searchData.dateRange && Array.isArray(searchData.dateRange)) {
+      // Ensure dateRange contains valid dayjs objects
+      const isValidDateRange = searchData.dateRange.every(date =>
+        date && typeof date.isValid === 'function' && date.isValid()
+      );
+
+      if (isValidDateRange) {
+        formValues.dateRange = searchData.dateRange;
+      }
+    }
+
+    formValues.guests = formatGuestSelection();
+    form.setFieldsValue(formValues);
+  }, [searchData, form, formatGuestSelection]);
 
   // Handle search form submission
-  const handleSearch = (values: any) => {
-    if (onSearch) {
-      const searchData = {
-        ...values,
-        accommodationType: activeTab,
-      };
-      onSearch(searchData);
-    }
-    setGuestPopoverVisible(false);
-  };
+  const handleSearch = async (values: any) => {
+    try {
+      // Clear any previous errors
+      clearError();
 
-  // Handle tab change
-  const handleTabChange = (key: string) => {
-    setActiveTab(key);
-    form.resetFields();
-  };
-
-  // Function to clear search history
-  const clearSearchHistory = () => {
-    console.log("Lịch sử tìm kiếm đã xóa");
-  }; // Destination search dropdown content
-  const destinationPopoverContent = (
-    <div
-      className="p-4"
-      style={{
-        width: "100%",
-        maxWidth: "1000px",
-      }}
-    >
-      <Row gutter={[20, 20]}>
-        {/* Search History */}
-        <Col xs={24} md={9}>
-          <div className="flex justify-between items-center mb-3">
-            <Title level={5} className="m-0 flex items-center">
-              <ClockCircleOutlined className="mr-2" />
-              Lịch sử tìm kiếm
-            </Title>
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              onClick={clearSearchHistory}
-              className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
-            >
-              Xóa
-            </Button>
-          </div>
-          <div className="search-history-container rounded-lg p-2">
-            <Space
-              direction="vertical"
-              style={{ width: "100%" }}
-              className="animate-fadeIn"
-            >
-              {searchHistory.map((item) => (
-                <Button
-                  key={item.id}
-                  type="text"
-                  block
-                  style={{
-                    textAlign: "left",
-                    height: "auto",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    whiteSpace: "normal",
-                    wordBreak: "break-word",
-                  }}
-                  className="   flex items-center justify-between transition-colors relative overflow-hidden group"
-                  onClick={() => {
-                    form.setFieldsValue({ destination: item.name });
-                    setGuestPopoverVisible(false);
-                  }}
-                >
-                  <div className="flex items-start relative z-10">
-                    <ClockCircleOutlined className=" mt-1 mr-2" />
-                    <div style={{ maxWidth: "100%" }}>{item.name}</div>
-                  </div>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10">
-                    <CloseOutlined
-                      className=" hover:text-red-500 ml-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Would dispatch a Redux action to remove this item
-                        console.log("Remove history item:", item.id);
-                      }}
-                    />
-                  </div>
-                  <div className="absolute inset-0   transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform"></div>
-                </Button>
-              ))}
-            </Space>
-          </div>
-        </Col>{" "}
-        <Divider
-          type="vertical"
-          style={{ height: "100%" }}
-          className="hidden md:block"
-        />
-        {/* Popular Destinations */}
-        {/* <Col xs={24} md={14}>
-          <Title
-            level={5}
-            className="mb-3 dark:text-gray-100 flex items-center"
-          >
-            <EnvironmentOutlined className="mr-2" />
-            Phòng nổi bật
-          </Title>
-          <Row gutter={[16, 16]} className="animate-fadeIn">
-            {popularDestinations.map((destination) => (
-              <Col xs={12} sm={8} md={6} lg={5} key={destination.id}>
-                <div
-                  onClick={() => {
-                    form.setFieldsValue({ destination: destination.name });
-                    setDestinationPopoverVisible(false);
-                  }}
-                  className="text-center cursor-pointer group"
-                >
-                  <div className="relative mb-2 overflow-hidden  transform transition-all group-hover:scale-105 ">
-                    <Avatar
-                      size={64}
-                      src={destination.image}
-                      className="shadow-sm transition-all"
-                    />
-                  </div>
-                  <div>
-                    <Text strong className="  transition-colors">
-                      {destination.name}
-                    </Text>
-                  </div>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </Col> */}
-      </Row>
-    </div>
-  );
-
-  // Handle guest count changes
-  const handleGuestCountChange = (
-    type: "adults" | "children" | "rooms",
-    operation: "increase" | "decrease"
-  ) => {
-    setGuestCount((prevCount) => {
-      const newCount = { ...prevCount };
-
-      if (operation === "increase") {
-        newCount[type] += 1;
-      } else if (
-        operation === "decrease" &&
-        newCount[type] > (type === "adults" ? 1 : 0)
-      ) {
-        newCount[type] -= 1;
+      // Update date range if changed
+      if (values.dateRange && values.dateRange !== searchData.dateRange) {
+        setSearchDateRange(values.dateRange);
       }
 
-      // Ensure at least 1 room for every 4 people
-      if (type === "adults" || type === "children") {
-        const totalPeople = newCount.adults + newCount.children;
-        newCount.rooms = Math.max(newCount.rooms, Math.ceil(totalPeople / 4));
+      // Validate before search
+      if (!isValidSearchData) {
+        message.error('Vui lòng điền đầy đủ thông tin tìm kiếm');
+        return;
+      }      // Perform search
+      const results = await performSearch();
+
+      // Close popover
+      setGuestPopoverVisible(false);
+
+      // Navigate to search results page
+      navigate('/search');
+
+      // Call parent callback if provided
+      if (onSearch) {
+        onSearch(results);
       }
 
-      return newCount;
-    });
-  }; // Format guest selection text
-  const formatGuestSelection = () => {
-    if (guestType === "solo") {
-      return "1 người";
-    } else if (guestType === "couple") {
-      return "2 người";
-    } else if (guestType === "family" || guestType === "group") {
-      const { adults, children, rooms } = guestCount;
-      const totalPeople = adults + children;
-      return `${totalPeople} người, ${rooms} phòng`;
+      message.success(`Tìm thấy ${results.total} phòng phù hợp`);
+    } catch (error: any) {
+      message.error(error.message || 'Có lỗi xảy ra khi tìm kiếm');
     }
-    return "Số lượng khách";
   };
+
   // Guest selection dropdown content
   const guestPopoverContent = (
     <div
-      className="p-4   transition-all"
-      style={{ width: "100%", maxWidth: "440px" }}
+      className="p-6 guest-popover-content"
+      style={{ width: "100%", maxWidth: "420px" }}
     >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
-        <div>
-          <Title level={5} className="mb-3 ">
-            Bạn đi du lịch với ai?
-          </Title>
-          <Row gutter={[8, 8]}>
+        <div>          <Title level={5} className="mb-4 text-center font-semibold">
+          Bạn đi du lịch với ai?
+        </Title>          <Row gutter={[12, 12]}>
             <Col span={12}>
               <Button
-                type={guestType === "solo" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setGuestType("solo");
-                  setGuestCount({ adults: 1, children: 0, rooms: 1 });
+                type={searchData.guestType === "solo" ? "primary" : "default"}
+                block onClick={() => {
+                  setSearchGuestType("solo");
                 }}
-                className={`rounded-lg h-auto py-2 transition-all ${
-                  guestType === "solo" ? "shadow-md" : " "
-                }`}
+                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "solo" ? "shadow-lg scale-105" : "hover:scale-105"
+                  }`}
               >
-                <UserOutlined className="text-lg mr-1" /> Đi một mình
+                <UserOutlined className="text-lg mr-2" /> Đi một mình
               </Button>
             </Col>
             <Col span={12}>
               <Button
-                type={guestType === "couple" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setGuestType("couple");
-                  setGuestCount({ adults: 2, children: 0, rooms: 1 });
+                type={searchData.guestType === "couple" ? "primary" : "default"}
+                block onClick={() => {
+                  setSearchGuestType("couple");
                 }}
-                className={`rounded-lg h-auto py-2 transition-all ${
-                  guestType === "couple" ? "shadow-md" : ""
-                }`}
+                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "couple" ? "shadow-lg scale-105" : "hover:scale-105"
+                  }`}
               >
-                <UsersRound className="text-lg mr-1" /> Cặp đôi
+                <UsersRound className="text-lg mr-2" /> Cặp đôi
               </Button>
             </Col>
             <Col span={12}>
               <Button
-                type={guestType === "family" ? "primary" : "default"}
+                type={searchData.guestType === "business" ? "primary" : "default"}
                 block
-                onClick={() => setGuestType("family")}
-                className={`rounded-lg h-auto py-2 transition-all ${
-                  guestType === "family" ? "shadow-md" : ""
-                }`}
+                onClick={() => setSearchGuestType("business")}
+                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "business" ? "shadow-lg scale-105" : "hover:scale-105"
+                  }`}
               >
-                <Users className="text-lg mr-1" /> Gia đình
+                <UserCheck className="text-lg mr-2" /> Công tác
               </Button>
             </Col>
             <Col span={12}>
               <Button
-                type={guestType === "group" ? "primary" : "default"}
+                type={searchData.guestType === "family_young" ? "primary" : "default"}
                 block
-                onClick={() => setGuestType("group")}
-                className={`rounded-lg h-auto py-2 transition-all ${
-                  guestType === "group" ? "shadow-md" : ""
-                }`}
+                onClick={() => setSearchGuestType("family_young")}
+                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "family_young" ? "shadow-lg scale-105" : "hover:scale-105"
+                  }`}
               >
-                <UsergroupAddOutlined className="text-lg mr-1" /> Đi theo nhóm
+                <Users className="text-lg mr-2" /> Gia đình trẻ
+              </Button>
+            </Col>
+            <Col span={12}>
+              <Button
+                type={searchData.guestType === "group" ? "primary" : "default"}
+                block
+                onClick={() => setSearchGuestType("group")}
+                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "group" ? "shadow-lg scale-105" : "hover:scale-105"
+                  }`}
+              >
+                <UsergroupAddOutlined className="text-lg mr-2" /> Đi theo nhóm
               </Button>
             </Col>
           </Row>
-        </div>
-        {(guestType === "family" || guestType === "group") && (
+        </div>        {(searchData.guestType === "family_young" || searchData.guestType === "group") && (
           <div className="animate-fadeIn">
-            <Divider className="my-2 dark:border-gray-600" />{" "}
-            <div className="flex justify-between items-center mb-3 p-2 rounded-lg ">
-              <div className="flex items-center">
-                <span className="text-sm font-medium">Phòng</span>
-                <span className="ml-1 text-xs ">(tối thiểu 1)</span>
+            <Divider className="my-4" />
+            <div className="  p-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <span className="text-sm font-semibold">Người lớn</span>
+                  <span className="ml-2 text-xs text-gray-500">(tối thiểu 1)</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button
+                    icon={<MinusOutlined />}
+                    size="small"
+                    onClick={() => handleGuestCountChange("adults", "decrease")}
+                    disabled={searchData.guestDetails.adults <= 1}
+                    className=" w-8 h-8 flex items-center justify-center"
+                  />
+                  <span className="min-w-[30px] text-center font-bold text-lg">
+                    {searchData.guestDetails.adults}
+                  </span>
+                  <Button
+                    icon={<PlusOutlined />}
+                    size="small"
+                    onClick={() => handleGuestCountChange("adults", "increase")}
+                    className=" w-8 h-8 flex items-center justify-center"
+                  />
+                </div>
               </div>
-              <div className="flex items-center">
-                <Button
-                  icon={<MinusOutlined />}
-                  size="small"
-                  onClick={() => handleGuestCountChange("rooms", "decrease")}
-                  disabled={guestCount.rooms <= 1}
-                  className="  transition-all"
-                />
-                <span className="mx-2 min-w-[30px] text-center font-semibold">
-                  {guestCount.rooms}
-                </span>
-                <Button
-                  icon={<PlusOutlined />}
-                  size="small"
-                  onClick={() => handleGuestCountChange("rooms", "increase")}
-                  className="  transition-all"
-                />
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <span className="text-sm font-semibold">Trẻ em</span>
+                  <span className="ml-2 text-xs ">(0-17 tuổi)</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Button
+                    icon={<MinusOutlined />}
+                    size="small"
+                    onClick={() => handleGuestCountChange("children", "decrease")}
+                    disabled={searchData.guestDetails.children <= 0}
+                    className=" w-8 h-8 flex items-center justify-center"
+                  />
+                  <span className="min-w-[30px] text-center font-bold text-lg">
+                    {searchData.guestDetails.children}
+                  </span>
+                  <Button
+                    icon={<PlusOutlined />}
+                    size="small"
+                    onClick={() => handleGuestCountChange("children", "increase")}
+                    className=" w-8 h-8 flex items-center justify-center"
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex justify-between items-center mb-3 p-2 rounded-lg ">
-              <div className="flex items-center">
-                <span className="text-sm font-medium">Người lớn</span>
-                <span className="ml-1 text-xs ">(tối thiểu 1)</span>
-              </div>
-              <div className="flex items-center">
-                <Button
-                  icon={<MinusOutlined />}
-                  size="small"
-                  onClick={() => handleGuestCountChange("adults", "decrease")}
-                  disabled={guestCount.adults <= 1}
-                  className=" transition-all"
-                />
-                <span className="mx-2 min-w-[30px] text-center font-semibold">
-                  {guestCount.adults}
-                </span>
-                <Button
-                  icon={<PlusOutlined />}
-                  size="small"
-                  onClick={() => handleGuestCountChange("adults", "increase")}
-                  className=" transition-all"
-                />
-              </div>
-            </div>
-            <div className="flex justify-between items-center p-2 rounded-lg ">
-              <div className="flex items-center">
-                <span className="text-sm font-medium">Trẻ em</span>
-                <span className="ml-1 text-xs ">(0-17 tuổi)</span>
-              </div>
-              <div className="flex items-center">
-                <Button
-                  icon={<MinusOutlined />}
-                  size="small"
-                  onClick={() => handleGuestCountChange("children", "decrease")}
-                  disabled={guestCount.children <= 0}
-                  className="  transition-all"
-                />
-                <span className="mx-2 min-w-[30px] text-center font-semibold">
-                  {guestCount.children}
-                </span>
-                <Button
-                  icon={<PlusOutlined />}
-                  size="small"
-                  onClick={() => handleGuestCountChange("children", "increase")}
-                  className=" transition-all"
-                />
-              </div>
-            </div>{" "}
-            {guestType === "group" && guestCount.rooms >= 1 && (
-              <div className="     p-3 rounded-lg border border-blue-100/70 dark:border-blue-800/30 shadow-sm transform hover:scale-[1.02] transition-transform">
-                <p className="text-sm mb-2 flex items-start">
-                  <UsergroupAddOutlined className="mr-1   flex-shrink-0" />
-                  <span>
-                    Cần từ 16 phòng trở lên? Chat với LAVISHSTAY để nhận ưu đãi
-                    đặc biệt!
+            {searchData.guestType === "group" && (
+              <div className="mt-4 p-4 rounded-2xl border-2 border-blue-100 ">
+                <p className="text-sm mb-3 flex items-start">
+                  <UsergroupAddOutlined className="mr-2 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <span className="font-medium">
+                    Cần đặt nhiều phòng? Chat với LAVISHSTAY để nhận ưu đãi đặc biệt!
                   </span>
                 </p>
                 <Button
@@ -433,7 +262,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   icon={<MessageOutlined />}
                   size="small"
                   block
-                  className="  transition-colors"
+                  className="rounded-xl font-medium"
                   onClick={() => console.log("Chat with support")}
                 >
                   Chat ngay
@@ -441,248 +270,136 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </div>
             )}
           </div>
-        )}{" "}
-        <div className="flex justify-end ">
+        )}
+        <div className="flex justify-end pt-2">
           <Button
             type="primary"
-            size="middle"
+            size="large"
             onClick={() => {
               setGuestPopoverVisible(false);
               form.setFieldsValue({ guests: formatGuestSelection() });
             }}
-            className="rounded-lg shadow-sm hover:shadow-md transition-all px-4   "
+            className="rounded-2xl shadow-lg  transition-all px-8 font-semibold"
             icon={<UserCheck />}
           >
-            Xác nhận lựa chọn
+            Xác nhận
           </Button>
         </div>
       </Space>
     </div>
-  );
-  return (
-    <Card
-      className={`shadow-lg rounded-xl transition-all search-form-container ${className}`}
-      style={{
-        ...style,
-        background: token.colorBgContainer,
-        color: token.colorText,
-        borderColor: token.colorBorderSecondary,
-      }}
-      bodyStyle={{ padding: "16px 24px" }}
-    >
-      {/* Tab Selection */}{" "}
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        className="mb-3 font-bevietnam"
-        items={[
-          {
-            key: "hotel",
-            label: (
-              <div className="px-1 relative h-12 flex items-center">
-                <div className="flex items-center z-10 relative">
-                  <Building2 className="mr-1" />
-                  <span className="mr-8">Phòng thường</span>
-                </div>
-                <div className="absolute bottom-9 right-0">
-                  <Tag
-                    color="red"
-                    className="rounded-lg mt-1 mr-0 discount-tag"
-                  >
-                    Giảm 500K
-                  </Tag>
-                </div>
-              </div>
-            ),
-          },
-          {
-            key: "villa",
-            label: (
-              <div className="px-1 relative h-12 flex items-center">
-                <div className="flex items-center z-10 relative">
-                  <HomeOutlined className="mr-1" />
-                  <span className="mr-8">Phòng The Level </span>
-                </div>
-                <div className="absolute bottom-9 right-0">
-                  <Tag color="orange" className="rounded-lg mt-1 mr-0 ">
-                    Giảm 300K
-                  </Tag>
-                </div>
-              </div>
-            ),
-          },
-        ]}
-        tabBarStyle={{
-          marginBottom: "12px",
-          borderBottom: `1px solid ${token.colorBorderSecondary}`,
-        }}
-      />
-      {/* Search Form */}
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSearch}
-        className="font-bevietnam"
+  ); return (
+    <Affix offsetTop={76}>
+      <div
+        className={`search-form-blur-container mx-auto max-w-4xl px-4 ${className}`}
+        style={{ ...style, zIndex: 1000 }}
       >
-        {" "}
-        <Row gutter={[16, 16]} align="middle">
-          {/* Destination Field */}
-          <Col xs={24} sm={24} md={6} lg={7}>
-            <Form.Item
-              name="destination"
-              className="mb-0"
-              label={
-                <Text strong className="text-sm flex items-center">
-                  <EnvironmentOutlined className="mr-1" /> Phòng
-                </Text>
-              }
-            >
-              <AutoComplete
-                className="search-history-container"
-                options={searchedData.map((data) => ({
-                  value: data.name,
-                }))}
-                placeholder="Nhập tên phòng..."
-                filterOption={(inputValue, searchedData) =>
-                  searchedData!.value
-                    .toUpperCase()
-                    .indexOf(inputValue.toUpperCase()) !== -1
-                }
-              />
-            </Form.Item>
-          </Col>
-          {/* Date Range Field */}
-          <Col xs={24} sm={24} md={8} lg={8}>
-            <Form.Item
-              name="dateRange"
-              className="mb-0"
-              label={
-                <Text strong className="text-sm flex items-center">
-                  <CalendarOutlined className="mr-1" /> Ngày đến - Ngày về
-                </Text>
-              }
-            >
-              {" "}
-              <RangePicker
-                size="large"
-                style={{ width: "100%" }}
-                format="DD/MM/YYYY"
-                placeholder={["Ngày nhận phòng", "Ngày trả phòng"]}
-                className="rounded-lg"
-                suffixIcon={<CalendarOutlined className="text-gray-400" />}
-                disabledDate={disabledDate}
-                popupClassName="date-range-popup"
-                getPopupContainer={(trigger) =>
-                  trigger.parentElement || document.body
-                }
-              />
-            </Form.Item>
-          </Col>{" "}
-          {/* Guests Field */}
-          <Col xs={24} sm={12} md={5} lg={6}>
-            <Form.Item
-              name="guests"
-              className="mb-0"
-              label={
-                <Text strong className="text-sm flex items-center">
-                  <UserOutlined className="mr-1" /> Số khách
-                </Text>
-              }
-            >
-              {" "}
-              <Popover
-                content={guestPopoverContent}
-                trigger="click"
-                open={guestPopoverVisible}
-                onOpenChange={setGuestPopoverVisible}
-                placement="bottomRight"
-                overlayClassName="guest-popover"
-                overlayStyle={{
-                  borderRadius: "12px",
-                  padding: 0,
-                }}
-                getPopupContainer={(trigger) =>
-                  trigger.parentElement || document.body
-                }
-              >
-                {" "}
-                <Input
-                  size="large"
-                  placeholder="Số lượng khách"
-                  readOnly
-                  value={formatGuestSelection()}
-                  style={{}}
-                  prefix={
-                    <span className="flex items-center">
-                      {guestType === "solo" && <UserOutlined className="" />}
-                      {guestType === "couple" && (
-                        <>
-                          <UserOutlined className="" />
-                          <UserOutlined className=" -ml-1" />
-                        </>
-                      )}
-                      {guestType === "family" && (
-                        <>
-                          <UserOutlined className="" />
-                          <UserOutlined className=" -ml-1" />
-                          <UserOutlined className=" -ml-1 text-xs" />
-                        </>
-                      )}
-                      {guestType === "group" && (
-                        <>
-                          <UserOutlined className="" />
-                          <UserOutlined className=" -ml-1" />
-                          <UserOutlined className=" -ml-1" />
-                          <UserOutlined className=" -ml-1" />
-                        </>
-                      )}
-                    </span>
-                  }
-                  className="rounded-lg cursor-pointer transition-colors"
-                  onClick={() => setGuestPopoverVisible(true)}
-                />
-              </Popover>
-            </Form.Item>
-          </Col>
-          {/* Search Button */}{" "}
-          <Col
-            xs={24}
-            sm={12}
-            md={activeTab === "hotel" ? 3 : 3}
-            lg={activeTab === "hotel" ? 3 : 3}
+        <Card
+          className="search-form-compact shadow-2xl transition-all duration-300 "
+          bodyStyle={{ padding: "12px 16px" }}
+          bordered={false}
+        >
+          <Form
+            form={form}
+            layout="horizontal"
+            onFinish={handleSearch}
+            className="font-bevietnam"
           >
-            {" "}
-            <Form.Item
-              className="mb-0"
-              label={<div className="opacity-0 text-sm">.</div>}
-            >
-              {" "}
-              <ButtonSearch
-                type="submit"
-                text="Tìm kiếm"
-                className="w-full search-button"
-                icon={<SearchOutlined className="search-icon text-xl" />}
-                style={{
-                  borderColor: token.colorPrimary,
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-        {/* Special deal tag (only for hotel tab) */}
-        {activeTab === "hotel" && (
-          <div className="mt-3">
-            <Tag
-              color="orange"
-              icon={<FireOutlined />}
-              className="rounded-lg px-2 py-1"
-            >
-              Ưu đãi đặc biệt: Giảm 15% cho đặt phòng trước 7 ngày
-            </Tag>
-          </div>
-        )}
-      </Form>
-    </Card>
+            <Row gutter={[8, 8]} align="middle" justify="center">
+              {/* Date Range Field */}
+              <Col xs={24} sm={11} md={9} lg={12}>
+                <Form.Item name="dateRange" className="mb-0">
+                  <RangePicker
+                    size="large"
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY"
+                    placeholder={["Ngày nhận phòng", "Ngày trả phòng"]}
+                    className="rounded-full border-0 shadow-sm transition-all duration-200"
+                    suffixIcon={<CalendarOutlined className="text-gray-800" />}
+                    disabledDate={disabledDate}
+                    popupClassName="date-range-popup"
+                    getPopupContainer={(trigger) =>
+                      trigger.parentElement || document.body
+                    }
+                  />
+                </Form.Item>
+              </Col>
+
+              {/* Guests Field */}
+              <Col xs={24} sm={8} md={6} lg={8}>
+                <Form.Item name="guests" className="mb-0">                  <Popover
+                  content={guestPopoverContent}
+                  trigger="click"
+                  open={guestPopoverVisible}
+                  onOpenChange={setGuestPopoverVisible}
+                  placement="bottomRight"
+                  overlayClassName="guest-popover-rounded"
+                  overlayStyle={{
+                    borderRadius: "20px",
+                    padding: 0,
+                  }}
+                  getPopupContainer={(trigger) =>
+                    trigger.parentElement || document.body
+                  }
+                >
+                  <Input
+                    size="large"
+                    placeholder="Số khách"
+                    readOnly
+                    value={formatGuestSelection()} prefix={
+                      <span className="flex items-center text-gray-500">
+                        {searchData.guestType === "solo" && <UserOutlined />}
+                        {searchData.guestType === "couple" && (
+                          <>
+                            <UserOutlined />
+                            <UserOutlined className="-ml-1" />
+                          </>
+                        )}
+                        {searchData.guestType === "business" && <UserCheck />}
+                        {searchData.guestType === "family_young" && (
+                          <>
+                            <UserOutlined />
+                            <UserOutlined className="-ml-1" />
+                            <UserOutlined className="-ml-1 text-xs" />
+                          </>
+                        )}
+                        {searchData.guestType === "group" && (
+                          <>
+                            <UserOutlined />
+                            <UserOutlined className="-ml-1" />
+                            <UserOutlined className="-ml-1" />
+                            <UserOutlined className="-ml-1" />
+                          </>
+                        )}
+                      </span>
+                    }
+                    className="rounded-full border-0 shadow-sm cursor-pointer transition-all duration-200"
+                    onClick={() => setGuestPopoverVisible(true)}
+                  />
+                </Popover>
+                </Form.Item>
+              </Col>
+
+              {/* Search Button */}
+              <Col xs={24} sm={5} md={3} lg={4}>
+                <Form.Item className="mb-2">
+                  <ButtonSearch
+                    type="submit"
+                    text="Tìm kiếm"
+                    className="w-full search-button-compact"
+                    icon={<SearchOutlined className="text-lg" />}
+                    style={{
+                      borderColor: token.colorPrimary,
+                      borderRadius: "50px",
+                      fontWeight: "600",
+                    }}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </Card>
+      </div>
+    </Affix>
   );
 };
 

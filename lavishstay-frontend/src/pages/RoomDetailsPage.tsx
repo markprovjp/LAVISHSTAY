@@ -23,6 +23,7 @@ import {
 
 // Import hooks
 import { useGetRoomById } from "../hooks/useApi";
+import { RoomOption } from "../mirage/roomoption";
 
 // Import components
 import RoomImageGallery from "../components/room/RoomImageGallery";
@@ -75,14 +76,43 @@ const RoomDetailsPage: React.FC = () => {
             style: "currency",
             currency: "VND",
         }).format(price);
+    };    // Calculate prices from options or fallback to priceVND
+    const calculatePriceInfo = () => {
+        if (room.options && room.options.length > 0) {
+            // Lấy giá thấp nhất và cao nhất từ options
+            const prices = room.options.map((option: RoomOption) => option.pricePerNight);
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+            const hasMultipleOptions = room.options.length > 1;
+
+            return {
+                originalPrice: room.discount ? minPrice / (1 - room.discount / 100) : minPrice,
+                discountedPrice: minPrice,
+                minPrice,
+                maxPrice,
+                hasMultipleOptions,
+                optionsCount: room.options.length
+            };
+        } else {
+            // Fallback to original logic
+            const originalPrice = room.priceVND;
+            const discountedPrice = room.discount
+                ? room.priceVND - (room.priceVND * room.discount / 100)
+                : room.priceVND;
+
+            return {
+                originalPrice,
+                discountedPrice,
+                minPrice: discountedPrice,
+                maxPrice: discountedPrice,
+                hasMultipleOptions: false,
+                optionsCount: 0
+            };
+        }
     };
 
-    // Calculate prices
-    const originalPrice = room.priceVND; // Giá gốc
-    const discountedPrice = room.discount
-        ? room.priceVND - (room.priceVND * room.discount / 100)
-        : room.priceVND; // Giá sau giảm
-    const savings = originalPrice - discountedPrice; // Số tiền tiết kiệm
+    const priceInfo = calculatePriceInfo();
+    const savings = priceInfo.originalPrice - priceInfo.discountedPrice;
 
     return (
         <div className="min-h-screen ">
@@ -243,31 +273,8 @@ const RoomDetailsPage: React.FC = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>                                    {/* Pricing Card */}
-                                    <div className="lg:w-80 w-full">
-                                        <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl border border-blue-200">
-                                            <div className="text-center">
-                                                {room.discount && (
-                                                    <div className="mb-3">
-                                                        <Text delete type="secondary" className="text-lg block">
-                                                            {formatVND(originalPrice)}
-                                                        </Text>
-                                                        <div className="text-red-500 font-semibold text-sm">
-                                                            Tiết kiệm {formatVND(savings)}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className="flex items-baseline justify-center gap-2 mb-2">
-                                                    <Title level={2} className="mb-0 text-3xl font-bold text-indigo-700">
-                                                        {formatVND(discountedPrice)}
-                                                    </Title>
-                                                </div>
-                                                <Text type="secondary" className="text-base">
-                                                    /đêm • chưa bao gồm thuế
-                                                </Text>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </div>                                  
+
                                 </div>
                             </div>
 
@@ -322,9 +329,9 @@ const RoomDetailsPage: React.FC = () => {
                 </Row>                {/* Room Service Options - Full Width */}
                 <Row gutter={[0, 24]} className="mt-8" id="room-services">
                     <Col span={24}>
-                        <RoomServiceOptions roomId={room.id.toString()} />
+                        <RoomServiceOptions roomId={room.id.toString()} roomOptions={room.options} />
                     </Col>
-                </Row>                {/* Reviews Section - Full Width */}
+                </Row>{/* Reviews Section - Full Width */}
                 <Row gutter={[0, 24]} className="mt-8" id="room-reviews">
                     <Col span={24}>
                         <RoomReviews roomId={room.id.toString()} />
