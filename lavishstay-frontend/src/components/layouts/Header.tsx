@@ -228,8 +228,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                 key={item.key}
                 to={item.key}
                 className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
-                    ? `bg-opacity-20 font-semibold`
-                    : 'font-medium'
+                  ? `bg-opacity-20 font-semibold`
+                  : 'font-medium'
                   }`}
                 style={{
                   color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,

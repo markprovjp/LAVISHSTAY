@@ -1,80 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { Card, Button, Tag, Typography, Space, Radio, Alert, Tooltip, Progress, Spin } from "antd";
+import { Card, Button, Tag, Typography, Space, Progress, Divider } from "antd";
 import {
     StarFilled,
-    EyeOutlined,
     UserOutlined,
     InfoCircleOutlined,
-    ClockCircleOutlined,
     CoffeeOutlined,
-    WifiOutlined,
-    CarOutlined,
-    RestOutlined,
     CheckCircleOutlined,
     GiftOutlined,
-    PhoneOutlined,
-    SafetyOutlined,
-    CustomerServiceOutlined,
+    CreditCardOutlined,
+    DollarOutlined,
+    ExclamationCircleOutlined,
+    SafetyCertificateOutlined,
+    MinusOutlined,
+    PlusOutlined,
+    ShoppingCartOutlined,
 } from "@ant-design/icons";
-import { useGetRoomOptions } from "../../hooks/useApi";
-import { RoomOption } from "../../mirage/models";
+import { RoomOption } from "../../mirage/roomoption";
 
 const { Title, Text } = Typography;
 
 interface RoomServiceOptionsProps {
-    roomId: string;
+    roomOptions?: RoomOption[];
 }
 
-const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomId }) => {
-    const [selectedRoom, setSelectedRoom] = useState<string>("");
+const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [] }) => {
+    const [roomQuantities, setRoomQuantities] = useState<{ [optionId: string]: number }>({});
 
-    // Use hook to fetch room options
-    const { data: roomOptionsData, isLoading: loading, error } = useGetRoomOptions(roomId);
-    const roomOptions = roomOptionsData?.options || [];    // Function to get icon component from icon name string
-    const getIconComponent = (iconName: string) => {
-        const iconMap: { [key: string]: any } = {
-            ClockCircleOutlined: <ClockCircleOutlined style={{ color: "#52c41a" }} />,
-            CoffeeOutlined: <CoffeeOutlined style={{ color: "#fa8c16" }} />,
-            WifiOutlined: <WifiOutlined style={{ color: "#1890ff" }} />,
-            CarOutlined: <CarOutlined style={{ color: "#722ed1" }} />,
-            RestOutlined: <RestOutlined style={{ color: "#13c2c2" }} />,
-            CheckCircleOutlined: <CheckCircleOutlined style={{ color: "#52c41a" }} />,
-            GiftOutlined: <GiftOutlined style={{ color: "#eb2f96" }} />,
-            PhoneOutlined: <PhoneOutlined style={{ color: "#fa541c" }} />,
-            SafetyOutlined: <SafetyOutlined style={{ color: "#faad14" }} />,
-            CustomerServiceOutlined: <CustomerServiceOutlined style={{ color: "#1890ff" }} />,
-        };
-        return iconMap[iconName] || <CheckCircleOutlined style={{ color: "#52c41a" }} />;
-    };
+    // Use provided options or empty array
+    const options = roomOptions;
 
     useEffect(() => {
-        if (roomOptions && roomOptions.length > 0) {
-            setSelectedRoom(roomOptions[0].id);
+        if (options && options.length > 0) {
+            // Initialize room quantities to 0 (no selection initially)
+            const initialQuantities: { [optionId: string]: number } = {};
+            options.forEach(option => {
+                initialQuantities[option.id] = 0;
+            });
+            setRoomQuantities(initialQuantities);
         }
-    }, [roomOptions]); if (loading) {
-        return (
-            <Card title="Tùy chọn phòng" className="shadow-md">
-                <div className="text-center py-8">
-                    <Spin size="large" />
-                    <div className="mt-4">Đang tải tùy chọn phòng...</div>
-                </div>
-            </Card>
-        );
-    }
+    }, [options]);
 
-    if (error) {
-        return (
-            <Card title="Tùy chọn phòng" className="shadow-md">
-                <Alert
-                    message="Không thể tải tùy chọn phòng"
-                    description="Vui lòng thử lại sau"
-                    type="warning"
-                    showIcon
-                />
-            </Card>
-        );
-    }
-
+    // Format VND currency
     const formatVND = (price: number) => {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -82,408 +48,413 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomId }) => {
         }).format(price);
     };
 
-    const getPromotionStyle = (type: string) => {
-        switch (type) {
-            case "hot":
-                return { color: "#ff4d4f", background: "#fff2f0", border: "#ffccc7" };
-            case "limited":
-                return { color: "#fa8c16", background: "#fff7e6", border: "#ffd591" };
-            case "member":
-                return { color: "#722ed1", background: "#f9f0ff", border: "#d3adf7" };
-            case "lowest":
-                return { color: "#52c41a", background: "#f6ffed", border: "#b7eb8f" };
-            case "deal":
-                return { color: "#1890ff", background: "#e6f7ff", border: "#91d5ff" };
+    // Get cancellation policy display
+    const getCancellationPolicyDisplay = (policy: RoomOption['cancellationPolicy']) => {
+        switch (policy.type) {
+            case 'free':
+                return { text: 'Hủy miễn phí', color: 'green', icon: <CheckCircleOutlined /> };
+            case 'conditional':
+                return { text: 'Hủy có điều kiện', color: 'orange', icon: <InfoCircleOutlined /> };
+            case 'non_refundable':
+                return { text: 'Không hoàn tiền', color: 'red', icon: <ExclamationCircleOutlined /> };
             default:
-                return { color: "#52c41a", background: "#f6ffed", border: "#b7eb8f" };
+                return { text: 'Liên hệ', color: 'gray', icon: <InfoCircleOutlined /> };
         }
     };
 
-    const getGuestTooltip = (maxGuests: number, selectedGuests: number = 2) => {
-        if (selectedGuests > maxGuests) {
-            return {
-                title: `Vượt quá sức chứa khách Ưu đãi này bao gồm 1 Phòng, ${maxGuests} Người Lớn.`,
-                color: "red"
-            };
+    // Get payment policy display
+    const getPaymentPolicyDisplay = (policy: RoomOption['paymentPolicy']) => {
+        switch (policy.type) {
+            case 'pay_now_with_vietQR':
+                return { text: 'Thanh toán ngay với VietQR', color: 'blue', icon: <CreditCardOutlined /> };
+            case 'pay_at_hotel':
+                return { text: 'Thanh toán tại khách sạn', color: 'green', icon: <DollarOutlined /> };
+            default:
+                return { text: 'Liên hệ', color: 'gray', icon: <InfoCircleOutlined /> };
         }
-        return {
-            title: `Ưu đãi này chứa được nhóm du lịch của bạn! Ưu đãi này bao gồm 1 Phòng, ${maxGuests} Người Lớn.`,
-            color: "green"
-        };
+    };    // Get availability status
+    const getAvailabilityStatus = (availability: RoomOption['availability']) => {
+        const { remaining, total } = availability;
+        const percentage = (remaining / total) * 100;
+
+        if (remaining === 0) {
+            return { color: "red", text: "Hết phòng", urgent: true };
+        } else if (remaining <= 3) {
+            return { color: "orange", text: `Chỉ còn ${remaining} phòng`, urgent: true };
+        } else if (percentage <= 30) {
+            return { color: "gold", text: `${remaining} phòng còn lại`, urgent: false };
+        } else {
+            return { color: "green", text: `${remaining} phòng có sẵn`, urgent: false };
+        }
+    };    // Handle room quantity change
+    const handleQuantityChange = (optionId: string, quantity: number) => {
+        setRoomQuantities(prev => ({
+            ...prev,
+            [optionId]: quantity
+        }));
+    };// Calculate total price for an option
+    const calculateTotalPrice = (option: RoomOption, quantity: number) => {
+        return option.pricePerNight.vnd * quantity;
     };
 
-    const getAvailabilityStatus = (available: number, total: number) => {
-        const percentage = (available / total) * 100;
-        if (available === 0) return { color: "red", text: "Hết phòng" };
-        if (percentage <= 25)
-            return { color: "orange", text: `Chỉ còn ${available} phòng` };
-        if (percentage <= 50)
-            return { color: "gold", text: `Còn ${available} phòng` };
-        return { color: "green", text: `${available} phòng trống` };
+    // Calculate total for all selected rooms
+    const calculateGrandTotal = () => {
+        return Object.entries(roomQuantities).reduce((total, [optionId, quantity]) => {
+            if (quantity > 0) {
+                const option = options.find(opt => opt.id === optionId);
+                if (option) {
+                    return total + calculateTotalPrice(option, quantity);
+                }
+            }
+            return total;
+        }, 0);
     };
 
-    if (roomOptions.length === 0) {
+    // Get selected rooms count
+    const getSelectedRoomsCount = () => {
+        return Object.values(roomQuantities).reduce((total, quantity) => total + quantity, 0);
+    };
+
+    if (!options || options.length === 0) {
         return (
-            <Card title="Tùy chọn phòng" className="shadow-md">
+            <Card className="mt-6">
                 <div className="text-center py-8">
-                    <Alert
-                        message="Không có tùy chọn phòng"
-                        description="Hiện tại không có tùy chọn phòng nào khả dụng."
-                        type="info"
-                        showIcon
-                    />
+                    <Text type="secondary">Không có lựa chọn dịch vụ cho phòng này</Text>
                 </div>
             </Card>
         );
     }
 
     return (
-        <div style={{ marginTop: 22 }}>
-            <div style={{ marginBottom: 24 }}>
-                <Title level={3} style={{ marginBottom: 8 }}>
-                    Lựa Chọn Phòng & Dịch Vụ
-                </Title>
-                <Text type="secondary">
-                    Chọn gói dịch vụ phù hợp với nhu cầu của bạn
-                </Text>
-            </div>
+        <div className="mt-6">
+            <Card className="shadow-sm border-0 rounded-lg overflow-hidden">
+                <div className="p-6 border-b border-gray-100">
+                    <Title level={3} className="text-center mb-2 text-gray-800 font-medium">
+                        Lựa chọn dịch vụ phòng
+                    </Title>
+                    <Text className="text-center block text-gray-500 text-sm">
+                        Chọn số lượng phòng cho từng loại dịch vụ bạn muốn
+                    </Text>
+                </div>
 
-            {/* Special Promotion Alert */}
-            <Alert
-                message="🔥 Ưu đãi đặc biệt!"
-                description="Giá thấp nhất chúng tôi có được! Đặt ngay để không bỏ lỡ cơ hội."
-                type="success"
-                showIcon
-                style={{
-                    marginBottom: 24,
-                    border: "1px solid #52c41a",
-                    borderRadius: "8px",
-                }}
-            />
+                {/* Room Options */}
+                <div className="p-6">
+                    <Space direction="vertical" className="w-full" size={20}>
+                        {options.map((option) => {
+                            const availability = getAvailabilityStatus(option.availability);
+                            const cancellation = getCancellationPolicyDisplay(option.cancellationPolicy);
+                            const payment = getPaymentPolicyDisplay(option.paymentPolicy);
+                            const isUnavailable = option.availability.remaining === 0;
+                            const currentQuantity = roomQuantities[option.id] || 0;
+                            const isSelected = currentQuantity > 0;
 
-            <Radio.Group
-                value={selectedRoom}
-                onChange={(e) => setSelectedRoom(e.target.value)}
-                style={{ width: "100%" }}
-            >
-                <div
-                    style={{
-                        display: "flex",
-                        overflowX: "auto",
-                        gap: "16px",
-                        padding: "8px 0",
-                    }}
-                >
-                    {roomOptions.map((room: RoomOption) => {
-                        const availability = getAvailabilityStatus(
-                            room.available,
-                            room.totalRooms
-                        );
-                        const promotionStyle = room.promotion
-                            ? getPromotionStyle(room.promotion.type)
-                            : null;
-                        const isRecommended = room.recommended;
-                        const isSelected = selectedRoom === room.id;
-                        const isUnavailable = room.available === 0;
-
-                        return (
-                            <div
-                                key={room.id}
-                                style={{
-                                    minWidth: "280px",
-                                    maxWidth: "380px",
-                                    position: "relative",
-                                }}
-                            >
-                                {/* Recommended Badge */}
-                                {isRecommended && (
-                                    <div
-                                        style={{
-                                            position: "absolute",
-                                            top: "-8px",
-                                            left: "16px",
-                                            zIndex: 10,
-                                            background: "linear-gradient(135deg, #ff6b6b, #ee5a24)",
-                                            color: "white",
-                                            padding: "4px 12px",
-                                            borderRadius: "12px",
-                                            fontSize: "12px",
-                                            fontWeight: "bold",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: "4px",
-                                            boxShadow: "0 2px 8px rgba(255, 107, 107, 0.3)",
-                                        }}
-                                    >
-                                        <StarFilled style={{ fontSize: "10px" }} />
-                                        Đề xuất
-                                    </div>
-                                )}
-
+                            return (
                                 <Card
-                                    hoverable={!isUnavailable}
-                                    className={`room-option-card ${isSelected ? "selected" : ""
-                                        } ${isRecommended ? "recommended" : ""}`}
-                                    style={{
-                                        height: "100%",
-                                        border: isSelected
-                                            ? "2px solid #1890ff"
-                                            : isRecommended
-                                                ? "2px solid #ff6b6b"
-                                                : "1px solid #d9d9d9",
-                                        borderRadius: "12px",
-                                        overflow: "hidden",
-                                        opacity: isUnavailable ? 0.6 : 1,
-                                        boxShadow: isRecommended
-                                            ? "0 4px 20px rgba(255, 107, 107, 0.15)"
-                                            : isSelected
-                                                ? "0 4px 20px rgba(24, 144, 255, 0.15)"
-                                                : "0 2px 8px rgba(0, 0, 0, 0.06)",
-                                        transform: isRecommended ? "translateY(-4px)" : "none",
-                                        transition: "all 0.3s ease",
-                                    }}
+                                    key={option.id}
+                                    className={`transition-all duration-300 border-2 ${isSelected
+                                            ? 'border-blue-400 shadow-lg bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                                        } ${isUnavailable ? 'opacity-60' : ''}`}
+                                    bodyStyle={{ padding: '20px' }}
                                 >
-                                    <div style={{ padding: "16px" }}>
-                                        {/* Header */}
-                                        <div style={{ marginBottom: 16 }}>
-                                            <Radio
-                                                value={room.id}
-                                                disabled={isUnavailable}
-                                                style={{ marginBottom: 8 }}
-                                            >
-                                                <Title
-                                                    level={5}
-                                                    style={{ margin: 0, display: "inline" }}
-                                                >
-                                                    {room.name}
-                                                </Title>
-                                            </Radio>
-                                            {/* Promotion Tag */}
-                                            {room.promotion && (
-                                                <Tag
-                                                    style={{
-                                                        marginLeft: 8,
-                                                        border: `1px solid ${promotionStyle?.border}`,
-                                                        background: promotionStyle?.background,
-                                                        color: promotionStyle?.color,
-                                                        fontSize: "11px",
-                                                    }}
-                                                >
-                                                    {room.promotion.message}
-                                                </Tag>
-                                            )}
-                                        </div>
+                                    <div className="flex flex-col lg:flex-row gap-4">
+                                        {/* Left Section - Room Info */}
+                                        <div className="flex-1">
+                                            {/* Room Header */}
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Title level={4} className="mb-0 text-gray-800 font-medium">
+                                                            {option.name}
+                                                        </Title>
+                                                        {option.recommended && (
+                                                            <Tag color="gold" className="text-xs border-0">
+                                                                <StarFilled /> Đề xuất
+                                                            </Tag>
+                                                        )}
+                                                        {option.mostPopular && (
+                                                            <Tag color="red" className="text-xs border-0">
+                                                                🔥 Phổ biến
+                                                            </Tag>
+                                                        )}
+                                                        {option.promotion && (
+                                                            <Tag color="orange" className="text-xs border-0">
+                                                                {option.promotion.message}
+                                                            </Tag>
+                                                        )}
+                                                    </div>
 
-                                        {/* Price */}
-                                        <div style={{ marginBottom: 16, textAlign: "right" }}>
-                                            {room.memberPrice && room.promotion?.type === "member" && (
-                                                <div style={{ marginBottom: 4 }}>
-                                                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                                                        Giá thành viên
-                                                    </Text>
+                                                    {/* Tags */}
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        <Tag icon={<UserOutlined />} className="border-0 bg-gray-100">
+                                                            {option.minGuests} - {option.maxGuests} khách/phòng
+                                                        </Tag>
+                                                        <Tag
+                                                            icon={cancellation.icon}
+                                                            className="border-0"
+                                                            color={cancellation.color}
+                                                        >
+                                                            {cancellation.text}
+                                                        </Tag>
+                                                        <Tag
+                                                            icon={payment.icon}
+                                                            className="border-0"
+                                                            color={payment.color}
+                                                        >
+                                                            {payment.text}
+                                                        </Tag>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Meal Options */}
+                                            <div className="mb-3">
+                                                <Text className="text-sm text-gray-600 block mb-2">Bữa ăn bao gồm:</Text>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {option.mealOptions.breakfast && (
+                                                        <Tag
+                                                            color={option.mealOptions.breakfast.included ? "green" : "orange"}
+                                                            icon={<CoffeeOutlined />}
+                                                            className="border-0"
+                                                        >
+                                                            {option.mealOptions.breakfast.included
+                                                                ? "Bữa sáng miễn phí"
+                                                                : `Bữa sáng +${formatVND(option.mealOptions.breakfast.price || 0)}`
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                    {option.mealOptions.dinner && (
+                                                        <Tag
+                                                            color={option.mealOptions.dinner.included ? "green" : "orange"}
+                                                            icon={<GiftOutlined />}
+                                                            className="border-0"
+                                                        >
+                                                            {option.mealOptions.dinner.included
+                                                                ? "Bữa tối miễn phí"
+                                                                : `Bữa tối +${formatVND(option.mealOptions.dinner.price || 0)}`
+                                                            }
+                                                        </Tag>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Additional Services */}
+                                            {option.additionalServices && option.additionalServices.length > 0 && (
+                                                <div className="mb-3">
+                                                    <Text className="text-sm text-gray-600 block mb-2">Dịch vụ bổ sung:</Text>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {option.additionalServices.map((service, index) => (
+                                                            <Tag key={index} className="text-xs border-0 bg-gray-100">
+                                                                {service.name}
+                                                                {service.price && ` (+${service.price})`}
+                                                            </Tag>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
-                                            {room.originalPrice && room.discount && (
-                                                <div style={{ marginBottom: 4 }}>
-                                                    <Text
-                                                        delete
-                                                        type="secondary"
-                                                        style={{ fontSize: "14px" }}
-                                                    >
-                                                        {formatVND(room.originalPrice.vnd)}
-                                                    </Text>
-                                                    <Tag
-                                                        color="red"
-                                                        style={{ marginLeft: 4, fontSize: "11px" }}
-                                                    >
-                                                        -{room.discount}%
+
+                                            {/* Availability */}
+                                            <div className="mb-3">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <Text className="text-sm text-gray-600">Tình trạng phòng:</Text>
+                                                    <Tag color={availability.color} className="text-xs border-0">
+                                                        {availability.text}
                                                     </Tag>
                                                 </div>
-                                            )}
-                                            <Text strong style={{ fontSize: "18px", color: "#1890ff" }}>
-                                                {formatVND(room.memberPrice?.vnd || room.price.vnd)}
-                                            </Text>
-                                            <div style={{ marginTop: 4 }}>
-                                                {room.policies.map((policy: string, idx: number) => (
-                                                    <Text key={idx} type="secondary" style={{ fontSize: "10px", display: "block" }}>
-                                                        {policy}
+                                                <Progress
+                                                    percent={Math.max(5, (option.availability.remaining / option.availability.total) * 100)}
+                                                    status={isUnavailable ? "exception" : "active"}
+                                                    strokeColor={
+                                                        availability.color === 'red' ? '#ff4d4f' :
+                                                            availability.color === 'orange' ? '#fa8c16' : '#52c41a'
+                                                    }
+                                                    size="small"
+                                                    showInfo={false}
+                                                />
+                                                {option.availability.urgencyMessage && (
+                                                    <Text type="warning" className="text-xs block mt-1">
+                                                        ⚡ {option.availability.urgencyMessage}
                                                     </Text>
-                                                ))}
+                                                )}
+                                            </div>
+
+                                            {/* Policy Details */}
+                                            <div className="text-xs text-gray-500 space-y-1 border-t border-gray-100 pt-3">
+                                                <div className="flex items-start gap-1">
+                                                    <SafetyCertificateOutlined className="mt-0.5" />
+                                                    <span>{option.cancellationPolicy.description}</span>
+                                                </div>
+                                                <div className="flex items-start gap-1">
+                                                    <CreditCardOutlined className="mt-0.5" />
+                                                    <span>{option.paymentPolicy.description}</span>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Guest Capacity with Tooltip */}
-                                        <div style={{ marginBottom: 16 }}>
-                                            <Tooltip title={getGuestTooltip(room.maxGuests, 2).title}>
-                                                <div style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: 4,
-                                                    color: getGuestTooltip(room.maxGuests, 2).color === "red" ? "#ff4d4f" : "#52c41a"
-                                                }}>
-                                                    <UserOutlined style={{ fontSize: "12px" }} />
-                                                    <Text style={{ fontSize: "12px" }}>
-                                                        Tối đa {room.maxGuests} khách
-                                                    </Text>
-                                                    <InfoCircleOutlined style={{ fontSize: "10px", opacity: 0.6 }} />
-                                                </div>
-                                            </Tooltip>
-                                        </div>
-
-                                        {/* Services */}
-                                        <div style={{ marginBottom: 16 }}>
-                                            <Text
-                                                strong
-                                                style={{
-                                                    fontSize: "13px",
-                                                    marginBottom: 8,
-                                                    display: "block",
-                                                }}
-                                            >
-                                                Dịch vụ bao gồm:
-                                            </Text>
-                                            <Space
-                                                direction="vertical"
-                                                size={4}
-                                                style={{ width: "100%" }}
-                                            >                                                {room.services.slice(0, 5).map((service: any, index: number) => (
-                                                <div
-                                                    key={index}
-                                                    style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: 6,
-                                                        justifyContent: "space-between",
-                                                    }}
-                                                >                                                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                        <span style={{ fontSize: "14px" }}>
-                                                            {getIconComponent(service.icon)}
-                                                        </span>
-                                                        <Text style={{ fontSize: "12px" }}>
-                                                            {service.name}
-                                                        </Text>
+                                        {/* Right Section - Price & Quantity */}
+                                        <div className="lg:w-80 flex flex-col">
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 h-full flex flex-col">
+                                                {/* Price */}
+                                                <div className="text-center mb-4">
+                                                    <Text className="text-sm text-gray-500 block">Giá mỗi phòng/đêm</Text>
+                                                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                                                        {formatVND(option.pricePerNight.vnd)}
                                                     </div>
-                                                    {service.price && (
-                                                        <Text type="secondary" style={{ fontSize: "10px" }}>
-                                                            {service.price}
+                                                    {option.promotion?.discount && (
+                                                        <Text className="text-xs text-green-600">
+                                                            Tiết kiệm {option.promotion.discount}%
                                                         </Text>
                                                     )}
                                                 </div>
-                                            ))}
 
-                                            </Space>
-                                        </div>
+                                                {/* Quantity Selector */}
+                                                <div className="flex-1 flex flex-col justify-center">
+                                                    <div className="text-center mb-3">
+                                                        <Text className="text-sm text-gray-600 block mb-2">Số lượng phòng</Text>
+                                                        <div className="flex items-center justify-center gap-3">
+                                                            <Button
+                                                                type="text"
+                                                                icon={<MinusOutlined />}
+                                                                size="large"
+                                                                onClick={() => {
+                                                                    if (currentQuantity > 0) {
+                                                                        handleQuantityChange(option.id, currentQuantity - 1);
+                                                                    }
+                                                                }}
+                                                                disabled={isUnavailable || currentQuantity <= 0}
+                                                                className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:border-blue-400"
+                                                            />
+                                                            <div className="w-16 h-10 flex items-center justify-center bg-gray-50 border border-gray-200 rounded-lg">
+                                                                <span className="text-lg font-medium">{currentQuantity}</span>
+                                                            </div>
+                                                            <Button
+                                                                type="text"
+                                                                icon={<PlusOutlined />}
+                                                                size="large"
+                                                                onClick={() => {
+                                                                    if (currentQuantity < option.availability.remaining) {
+                                                                        handleQuantityChange(option.id, currentQuantity + 1);
+                                                                    }
+                                                                }}
+                                                                disabled={isUnavailable || currentQuantity >= option.availability.remaining}
+                                                                className="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:border-blue-400"
+                                                            />
+                                                        </div>
+                                                        <Text className="text-xs text-gray-400 mt-1">
+                                                            Tối đa {option.availability.remaining} phòng
+                                                        </Text>
+                                                    </div>
 
-                                        {/* Booking Speed Badge */}
-                                        {room.bookingSpeed && (
-                                            <div style={{ marginBottom: 8 }}>
-                                                <Tag
-                                                    color="processing"
-                                                    style={{
-                                                        fontSize: "11px",
-                                                        fontWeight: "bold",
-                                                        padding: "2px 8px"
-                                                    }}
-                                                >
-                                                    {room.bookingSpeed}
-                                                </Tag>
+                                                    {/* Total for this option */}
+                                                    {currentQuantity > 0 && (
+                                                        <div className="text-center border-t border-gray-100 pt-3">
+                                                            <Text className="text-sm text-gray-600 block">Tổng cộng</Text>
+                                                            <div className="text-xl font-bold text-red-500">
+                                                                {formatVND(calculateTotalPrice(option, currentQuantity))}
+                                                            </div>
+                                                            <Text className="text-xs text-gray-500">
+                                                                {currentQuantity} phòng × {formatVND(option.pricePerNight.vnd)}
+                                                            </Text>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
-
-                                        {/* Availability Status with Progress Bar */}
-                                        <div style={{ marginBottom: 16 }}>
-                                            <div style={{ marginBottom: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <Text style={{ fontSize: "12px", fontWeight: 500 }}>
-                                                    Tình trạng:
-                                                </Text>
-                                                <Tag
-                                                    color={availability.color}
-                                                    style={{ fontSize: "11px" }}
-                                                >
-                                                    {availability.text}
-                                                </Tag>
-                                            </div>
-                                            <Progress
-                                                percent={room.available === 0 ? 0 : Math.max((room.available / room.totalRooms) * 100, 10)}
-                                                size="small"
-                                                status="active"
-                                                strokeColor={{
-                                                    '0%': room.available === 0 ? '#ff4d4f' :
-                                                        room.available <= 1 ? '#ff7875' :
-                                                            room.available <= 2 ? '#ffa940' : '#73d13d',
-                                                    '100%': room.available === 0 ? '#cf1322' :
-                                                        room.available <= 1 ? '#ff4d4f' :
-                                                            room.available <= 2 ? '#fa8c16' : '#52c41a'
-                                                }}
-                                                trailColor="#f5f5f5"
-                                                showInfo={false}
-                                            />
                                         </div>
                                     </div>
                                 </Card>
+                            );
+                        })}
+                    </Space>
+                </div>                {/* Summary Section */}
+                {getSelectedRoomsCount() > 0 && (
+                    <>
+                        <Divider className="my-0" />
+                        <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-blue-100">
+                            <Title level={4} className="mb-4 text-blue-800 flex items-center gap-2">
+                                <ShoppingCartOutlined />
+                                Tóm tắt đặt phòng ({getSelectedRoomsCount()} phòng)
+                            </Title>
+
+                            <div className="space-y-3">
+                                {Object.entries(roomQuantities).map(([optionId, quantity]) => {
+                                    if (quantity <= 0) return null;
+                                    const option = options.find(opt => opt.id === optionId);
+                                    if (!option) return null;
+
+                                    return (
+                                        <div key={optionId} className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100">
+                                            <div>
+                                                <Text strong className="text-gray-800">{option.name}</Text>
+                                                <div className="text-sm text-gray-500">
+                                                    {quantity} phòng × {formatVND(option.pricePerNight.vnd)}/phòng/đêm
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg font-bold text-red-600">
+                                                    {formatVND(calculateTotalPrice(option, quantity))}
+                                                </div>
+                                                <div className="text-xs text-gray-500">mỗi đêm</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+
+                                {/* Grand Total */}
+                                <div className="border-t border-blue-200 pt-3">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <Text strong className="text-lg text-gray-800">Tổng cộng:</Text>
+                                            <div className="text-sm text-gray-500">
+                                                {getSelectedRoomsCount()} phòng cho 1 đêm
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-bold text-red-600">
+                                                {formatVND(calculateGrandTotal())}
+                                            </div>
+                                            <div className="text-sm text-gray-500">mỗi đêm</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        );
-                    })}
+                        </div>
+                    </>
+                )}
+
+                {/* Booking Button */}
+                <div className="p-6 border-t border-gray-100">
+                    <div className="text-center">
+                        <Button
+                            type="primary"
+                            size="large"
+                            disabled={getSelectedRoomsCount() === 0}
+                            className="px-8 py-2 h-auto font-semibold"
+                            style={{
+                                background: getSelectedRoomsCount() === 0
+                                    ? '#d9d9d9'
+                                    : 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '16px',
+                                height: '48px',
+                                minWidth: '200px'
+                            }}
+                        >
+                            {getSelectedRoomsCount() === 0
+                                ? 'Chọn phòng để đặt'
+                                : `Đặt ${getSelectedRoomsCount()} phòng - ${formatVND(calculateGrandTotal())}/đêm`
+                            }
+                        </Button>
+
+                        {getSelectedRoomsCount() > 0 && (
+                            <div className="mt-3 text-xs text-gray-500">
+                                <SafetyCertificateOutlined className="mr-1" />
+                                Đặt phòng an toàn - Thanh toán được bảo mật
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </Radio.Group>
-
-            {/* View More Button */}
-            <div style={{ textAlign: "center", marginTop: 24 }}>
-                <Button
-                    type="link"
-                    icon={<EyeOutlined />}
-                    style={{ color: "#1890ff", fontWeight: 500 }}
-                >
-                    Xem thêm lựa chọn phòng khác
-                </Button>
-            </div>
-
-            {/* Price Note */}
-            <Alert
-                message="Giá mỗi đêm chưa gồm thuế và phí dịch vụ"
-                type="info"
-                showIcon={false}
-                style={{
-                    marginTop: 16,
-                    border: "1px solid #e1e8ed",
-                    borderRadius: "8px",
-                }}
-            />
-
-            {/* Book Now Button */}
-            <div style={{ marginTop: 24, textAlign: "center" }}>
-                <Button
-                    type="primary"
-                    size="large"
-                    disabled={
-                        roomOptions.find((r: RoomOption) => r.id === selectedRoom)?.available === 0
-                    }
-                    style={{
-                        background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
-                        borderColor: "transparent",
-                        height: 48,
-                        paddingLeft: 40,
-                        paddingRight: 40,
-                        borderRadius: "24px",
-                        fontWeight: "bold",
-                        fontSize: "16px",
-                        boxShadow: "0 4px 15px rgba(255, 107, 107, 0.4)",
-                        transition: "all 0.3s ease",
-                    }}
-                    onClick={() => {
-                        window.location.href = `/payment`;
-                    }}
-                >
-                    {(() => {
-                        const selectedRoomData = roomOptions.find((r: RoomOption) => r.id === selectedRoom);
-                        if (selectedRoomData?.available === 0) {
-                            return "Hết phòng";
-                        }
-                        const price = selectedRoomData?.memberPrice || selectedRoomData?.price;
-                        return `Đặt phòng ngay - ${formatVND(price?.vnd || 0)}`;
-                    })()}
-                </Button>
-            </div>
+            </Card>
         </div>
     );
 };

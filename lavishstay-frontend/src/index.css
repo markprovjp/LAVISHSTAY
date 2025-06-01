@@ -82,6 +82,110 @@ code {
   }
 }
 
+/* Search Results specific styles */
+.search-form-compact .ant-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.search-form-compact .ant-form-item {
+  margin-bottom: 8px;
+}
+
+/* Carousel custom styling */
+.custom-dots .slick-dots {
+  bottom: 10px;
+}
+
+.custom-dots .slick-dots li button {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.custom-dots .slick-dots li.slick-active button {
+  background: white;
+}
+
+/* Image gallery thumbnails */
+.image-gallery-thumbnails {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.image-gallery-thumbnail {
+  flex: 1;
+  height: 48px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.image-gallery-thumbnail:hover {
+  opacity: 1;
+}
+
+.image-gallery-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+/* Modal carousel styling */
+.ant-modal .ant-carousel .slick-prev,
+.ant-modal .ant-carousel .slick-next {
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+}
+
+.ant-modal .ant-carousel .slick-prev:before,
+.ant-modal .ant-carousel .slick-next:before {
+  color: white;
+  font-size: 16px;
+}
+
+/* Action buttons on room images */
+.room-action-buttons {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.room-action-buttons .ant-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.room-action-buttons .ant-btn:hover {
+  background: white;
+  transform: scale(1.05);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;

@@ -13,6 +13,8 @@ import AuthLayout from "../components/layouts/AuthLayout";
 // Pages
 import Home from "../pages/Home";
 import About from "../pages/About";
+import SearchResults from "../pages/SearchResults";
+import RoomDetailsPage from "../pages/RoomDetailsPage";
 // import Login from "../pages/Login";
 // import Register from "../pages/Register";
 import Dashboard from "../pages/dashboard/Dashboard";
@@ -24,12 +26,12 @@ import NotFound from "../pages/NotFound";
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {" "}
-      {/* Các tuyến công khai - Có sẵn cho tất cả người dùng */}
-      <Route element={<PublicRoute />}>
+      {" "}      {/* Các tuyến công khai - Có sẵn cho tất cả người dùng */}      <Route element={<PublicRoute />}>
         <Route element={<DefaultLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/rooms/:id" element={<RoomDetailsPage />} />
         </Route>
       </Route>
       {/* Các tuyến đường Auth - Chỉ dành cho người dùng không xác định nha */}

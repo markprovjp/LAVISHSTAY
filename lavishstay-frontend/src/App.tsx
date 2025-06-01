@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "./store";
 import ThemeProvider from "./providers/ThemeProvider";
 import QueryProvider from "./providers/QueryProvider";
+import { SearchProvider } from "./contexts/SearchContext";
 import { createAntdTheme } from "./styles/theme";
 
 // Import i18n configuration
@@ -19,6 +20,7 @@ makeServer();
 import Header from "./components/layouts/Header";
 import Footer from "./components/layouts/Footer";
 import Breadcrumb from "./components/ui/Breadcrumb";
+import ScrollToTop from "./components/utils/ScrollToTop";
 
 // Import pages
 import Home from "./pages/Home";
@@ -27,6 +29,8 @@ import Payment from "./pages/Payment"; // Assuming Payment.tsx exports a default
 import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
+import SearchResults from "./pages/SearchResults";
+
 // import HotelListingPage from "./pages/HotelListingPage";
 // import HotelDetailsPage from "./pages/HotelDetailsPage";
 // import ErrorPage from "./pages/ErrorPage";
@@ -58,13 +62,13 @@ const App: React.FC = () => {
   const { isDarkMode } = useSelector((state: RootState) => state.theme);
 
   // Sử dụng hàm helper để tạo theme dựa trên isDarkMode
-  const currentTheme = createAntdTheme(isDarkMode);
-  return (
+  const currentTheme = createAntdTheme(isDarkMode); return (
     <ConfigProvider theme={currentTheme}>
       <ThemeProvider>
         <QueryProvider>
-          <AntApp className={isDarkMode ? "dark" : "light"}>
-            <Router>
+          <SearchProvider>
+            <AntApp className={isDarkMode ? "dark" : "light"}><Router>
+              <ScrollToTop />
               <Header />
               <Breadcrumb />
               <Content
@@ -80,6 +84,9 @@ const App: React.FC = () => {
                   <Route path="/" element={<Home />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+                  <Route path="/search" element={<SearchResults />} />
+                  {/* Các tuyến đường khác */}
+                  {/* <Route path="/login" element={<LoginPage />} />
                   {/* <Route path="/hotels" element={<HotelListingPage />} />
                   <Route path="/hotels/:id" element={<HotelDetailsPage />} /> */}
                   <Route path="/profile" element={<UserProfile />} />
@@ -119,8 +126,8 @@ const App: React.FC = () => {
                 <FloatButton.BackTop />
               </Content>
               <Footer />
-            </Router>
-          </AntApp>
+            </Router>          </AntApp>
+          </SearchProvider>
         </QueryProvider>
       </ThemeProvider>
     </ConfigProvider>

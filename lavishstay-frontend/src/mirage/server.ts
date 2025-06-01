@@ -1,7 +1,6 @@
 import { createServer, Response } from "miragejs";
 import { sampleRooms } from "./models";
 import { sampleUsers, mockCredentials } from "./users";
-import { sampleRoomOptions } from "./roomoption";
 import { sampleReviews } from "./reviews";
 export function makeServer() {
   return createServer({
@@ -54,10 +53,8 @@ export function makeServer() {
           return new Response(404, {}, { error: "Phòng không tồn tại" });
         }
 
-        // Filter room options based on room type
-        const roomOptions = sampleRoomOptions.filter((option: any) =>
-          option.roomType === room.roomType
-        );
+        // Get room options from the room itself
+        const roomOptions = room.options || [];
 
         return {
           roomId,
