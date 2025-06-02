@@ -14,14 +14,14 @@
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                 <!-- Add room type button -->
                 <a href="{{ route('admin.room-types.create') }}">
-                        <button
-                                class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
-                                <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
-                                        <path
-                                        d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                                </svg>
-                                <span class="max-xs:sr-only">Add Room Type</span>
-                        </button>
+                    <button
+                        class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
+                        <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
+                            <path
+                                d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                        </svg>
+                        <span class="max-xs:sr-only">Add Room Type</span>
+                    </button>
                 </a>
             </div>
 
@@ -154,12 +154,13 @@
 
                                     <!-- Category -->
                                     <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
-                                        <div class="inline-flex font-medium rounded-full text-center px-2.5 py-0.5 text-xs
+                                        <div
+                                            class="inline-flex font-medium rounded-full text-center px-2.5 py-0.5 text-xs
             @if ($roomType->category == 'standard') bg-emerald-100 dark:bg-emerald-400/0.3 text-emerald-600 dark:text-emerald-400
             @elseif ($roomType->category == 'presidential') bg-violet-100 dark:bg-violet-400/0.3 text-violet-600 dark:text-violet-400
             @else bg-amber-100 dark:bg-amber-400/0.3 text-amber-600 dark:text-amber-400 @endif">
-    {{ ucfirst(str_replace('_', ' ', $roomType->category)) }}
-</div>
+                                            {{ ucfirst(str_replace('_', ' ', $roomType->category)) }}
+                                        </div>
                                     </td>
 
                                     <!-- Capacity -->
@@ -256,7 +257,7 @@
                                     </td>
 
                                     <!-- Actions -->
-                                  
+
                                     <td class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap">
                                         <div class="relative inline-block text-left">
                                             <button type="button"
