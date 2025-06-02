@@ -1,5 +1,6 @@
 // Search service with Mirage.js integration for development
 import { SearchData } from '../store/slices/searchSlice';
+import { generateRoomOptions, getUrgencyMessage } from '../mirage/roomOptionGenerator';
 
 // Import mock service for fallback
 import { mockSearchService } from './mockSearchService';
@@ -41,13 +42,18 @@ class SearchService {
             const response = await fetch(`${API_BASE_URL}/rooms`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            } const data = await response.json();
             let filteredRooms = data.rooms || [];
 
             // Apply client-side filtering to match search criteria
-            filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);
+            filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);            // Generate dynamic room options based on check-in date
+            if (searchData.checkIn) {
+                filteredRooms = filteredRooms.map((room: any) => ({
+                    ...room,
+                    options: generateRoomOptions(room.roomType, searchData.checkIn!, room.priceVND),
+                    urgencyRoomMessage: getUrgencyMessage(searchData.checkIn!) || room.urgencyRoomMessage
+                }));
+            }
 
             // Pagination
             const total = filteredRooms.length;

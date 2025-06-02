@@ -15,7 +15,10 @@ import {
   UserOutlined,
   DollarOutlined,
 } from "@ant-design/icons";
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import dayjs, { Dayjs } from "dayjs";
+import { calculateNightsFromRange, formatVND } from '../../utils/helpers';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -36,15 +39,14 @@ const RoomBookingForm: React.FC<RoomBookingFormProps> = ({ room }) => {
   const [dates, setDates] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [guests, setGuests] = useState<number>(1);
 
-  const formatVND = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
-  };
+  // Get search data from Redux store for initial values
+  const searchData = useSelector((state: RootState) => state.search);
 
   const calculateNights = () => {
-    if (!dates || !dates[0] || !dates[1]) return 0;
+    if (!dates || !dates[0] || !dates[1]) {
+      // Fallback to search data if local dates not set
+      return calculateNightsFromRange(searchData.dateRange) || 0;
+    }
     return dates[1].diff(dates[0], "day");
   };
 
