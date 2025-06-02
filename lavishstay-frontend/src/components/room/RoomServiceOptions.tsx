@@ -16,14 +16,19 @@ import {
     ShoppingCartOutlined,
 } from "@ant-design/icons";
 import { RoomOption } from "../../mirage/roomoption";
+import './RoomServiceOptions.css';
 
 const { Title, Text } = Typography;
 
 interface RoomServiceOptionsProps {
     roomOptions?: RoomOption[];
+    numberOfNights?: number;
 }
 
-const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [] }) => {
+const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({
+    roomOptions = [],
+    numberOfNights = 1
+}) => {
     const [roomQuantities, setRoomQuantities] = useState<{ [optionId: string]: number }>({});
 
     // Use provided options or empty array
@@ -92,9 +97,9 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
             ...prev,
             [optionId]: quantity
         }));
-    };// Calculate total price for an option
+    };    // Calculate total price for an option (including multiple nights)
     const calculateTotalPrice = (option: RoomOption, quantity: number) => {
-        return option.pricePerNight.vnd * quantity;
+        return option.pricePerNight.vnd * quantity * numberOfNights;
     };
 
     // Calculate total for all selected rooms
@@ -123,82 +128,71 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
                 </div>
             </Card>
         );
-    }
-
-    return (
-        <div className="mt-6">
-            <Card className="shadow-sm border-0 rounded-lg overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                    <Title level={3} className="text-center mb-2 text-gray-800 font-medium">
+    } return (
+        <div className="room-service-options-container">
+            <Card className="room-service-card">
+                <div className="room-service-header">
+                    <Title level={3} className="room-service-title">
                         Lựa chọn dịch vụ phòng
                     </Title>
-                    <Text className="text-center block text-gray-500 text-sm">
-                        Chọn số lượng phòng cho từng loại dịch vụ bạn muốn
+                    <Text className="room-service-subtitle">
+                        Chọn số lượng phòng cho từng loại dịch vụ bạn muốn ({numberOfNights} đêm)
                     </Text>
                 </div>
 
                 {/* Room Options */}
-                <div className="p-6">
-                    <Space direction="vertical" className="w-full" size={20}>
+                <div className="room-options-grid">
+                    <Space direction="vertical" className="w-full" size={24}>
                         {options.map((option) => {
                             const availability = getAvailabilityStatus(option.availability);
                             const cancellation = getCancellationPolicyDisplay(option.cancellationPolicy);
                             const payment = getPaymentPolicyDisplay(option.paymentPolicy);
                             const isUnavailable = option.availability.remaining === 0;
                             const currentQuantity = roomQuantities[option.id] || 0;
-                            const isSelected = currentQuantity > 0;
-
-                            return (
+                            const isSelected = currentQuantity > 0; return (
                                 <Card
                                     key={option.id}
-                                    className={`transition-all duration-300 border-2 ${isSelected
-                                            ? 'border-blue-400 shadow-lg bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                                        } ${isUnavailable ? 'opacity-60' : ''}`}
-                                    bodyStyle={{ padding: '20px' }}
-                                >
-                                    <div className="flex flex-col lg:flex-row gap-4">
+                                    className={`room-option-card ${isSelected ? 'selected' : ''} ${isUnavailable ? 'unavailable' : ''}`}
+                                >                                    <div className="room-option-content">
                                         {/* Left Section - Room Info */}
-                                        <div className="flex-1">
-                                            {/* Room Header */}
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <Title level={4} className="mb-0 text-gray-800 font-medium">
+                                        <div className="room-info-section">                                            {/* Room Header */}
+                                            <div className="room-header">
+                                                <div className="room-title-section">
+                                                    <div className="room-name-badges">
+                                                        <Title level={4} className="room-name">
                                                             {option.name}
-                                                        </Title>
-                                                        {option.recommended && (
-                                                            <Tag color="gold" className="text-xs border-0">
+                                                        </Title>                                                        {option.recommended && (
+                                                            <Tag color="gold" className="badge-recommended">
                                                                 <StarFilled /> Đề xuất
                                                             </Tag>
                                                         )}
                                                         {option.mostPopular && (
-                                                            <Tag color="red" className="text-xs border-0">
+                                                            <Tag color="red" className="badge-popular">
                                                                 🔥 Phổ biến
                                                             </Tag>
                                                         )}
                                                         {option.promotion && (
-                                                            <Tag color="orange" className="text-xs border-0">
+                                                            <Tag color="orange" className="badge-promotion">
                                                                 {option.promotion.message}
                                                             </Tag>
                                                         )}
                                                     </div>
 
                                                     {/* Tags */}
-                                                    <div className="flex flex-wrap gap-2 mb-3">
-                                                        <Tag icon={<UserOutlined />} className="border-0 bg-gray-100">
+                                                    <div className="room-tags">
+                                                        <Tag icon={<UserOutlined />} className="tag-guests">
                                                             {option.minGuests} - {option.maxGuests} khách/phòng
                                                         </Tag>
                                                         <Tag
                                                             icon={cancellation.icon}
-                                                            className="border-0"
+                                                            className="tag-cancellation"
                                                             color={cancellation.color}
                                                         >
                                                             {cancellation.text}
                                                         </Tag>
                                                         <Tag
                                                             icon={payment.icon}
-                                                            className="border-0"
+                                                            className="tag-payment"
                                                             color={payment.color}
                                                         >
                                                             {payment.text}
@@ -289,19 +283,22 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
                                                     <span>{option.paymentPolicy.description}</span>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {/* Right Section - Price & Quantity */}
-                                        <div className="lg:w-80 flex flex-col">
-                                            <div className="bg-white border border-gray-200 rounded-lg p-4 h-full flex flex-col">
+                                        </div>                                        {/* Right Section - Price & Quantity */}
+                                        <div className="price-quantity-section">
+                                            <div className="price-card">
                                                 {/* Price */}
                                                 <div className="text-center mb-4">
-                                                    <Text className="text-sm text-gray-500 block">Giá mỗi phòng/đêm</Text>
+                                                    <Text className="text-sm text-gray-500 block">
+                                                        Tổng giá cho {numberOfNights} đêm
+                                                    </Text>
                                                     <div className="text-2xl font-bold text-blue-600 mb-1">
-                                                        {formatVND(option.pricePerNight.vnd)}
+                                                        {formatVND(option.pricePerNight.vnd * numberOfNights)}
                                                     </div>
+                                                    <Text className="text-xs text-gray-400">
+                                                        {formatVND(option.pricePerNight.vnd)}/phòng/đêm
+                                                    </Text>
                                                     {option.promotion?.discount && (
-                                                        <Text className="text-xs text-green-600">
+                                                        <Text className="text-xs text-green-600 block mt-1">
                                                             Tiết kiệm {option.promotion.discount}%
                                                         </Text>
                                                     )}
@@ -343,9 +340,7 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
                                                         <Text className="text-xs text-gray-400 mt-1">
                                                             Tối đa {option.availability.remaining} phòng
                                                         </Text>
-                                                    </div>
-
-                                                    {/* Total for this option */}
+                                                    </div>                                                    {/* Total for this option */}
                                                     {currentQuantity > 0 && (
                                                         <div className="text-center border-t border-gray-100 pt-3">
                                                             <Text className="text-sm text-gray-600 block">Tổng cộng</Text>
@@ -353,7 +348,7 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
                                                                 {formatVND(calculateTotalPrice(option, currentQuantity))}
                                                             </div>
                                                             <Text className="text-xs text-gray-500">
-                                                                {currentQuantity} phòng × {formatVND(option.pricePerNight.vnd)}
+                                                                {currentQuantity} phòng × {numberOfNights} đêm
                                                             </Text>
                                                         </div>
                                                     )}
@@ -403,16 +398,15 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
                                 <div className="border-t border-blue-200 pt-3">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <Text strong className="text-lg text-gray-800">Tổng cộng:</Text>
-                                            <div className="text-sm text-gray-500">
-                                                {getSelectedRoomsCount()} phòng cho 1 đêm
+                                            <Text strong className="text-lg text-gray-800">Tổng cộng:</Text>                                            <div className="text-sm text-gray-500">
+                                                {getSelectedRoomsCount()} phòng cho {numberOfNights} đêm
                                             </div>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-2xl font-bold text-red-600">
                                                 {formatVND(calculateGrandTotal())}
                                             </div>
-                                            <div className="text-sm text-gray-500">mỗi đêm</div>
+                                            <div className="text-sm text-gray-500">tổng {numberOfNights} đêm</div>
                                         </div>
                                     </div>
                                 </div>
@@ -438,11 +432,10 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({ roomOptions = [
                                 fontSize: '16px',
                                 height: '48px',
                                 minWidth: '200px'
-                            }}
-                        >
+                            }}                        >
                             {getSelectedRoomsCount() === 0
                                 ? 'Chọn phòng để đặt'
-                                : `Đặt ${getSelectedRoomsCount()} phòng - ${formatVND(calculateGrandTotal())}/đêm`
+                                : `Đặt ${getSelectedRoomsCount()} phòng - ${formatVND(calculateGrandTotal())} (${numberOfNights} đêm)`
                             }
                         </Button>
 

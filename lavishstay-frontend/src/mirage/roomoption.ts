@@ -57,11 +57,24 @@ export interface RoomOption {
         type: "hot" | "limited" | "member" | "lowest" | "deal";
         message: string;
         discount?: number; // % giảm giá
-    };
-
-    recommended?: boolean; // Được đề xuất
+    }; recommended?: boolean; // Được đề xuất
 
     mostPopular?: boolean; // Được ưa chuộng nhất
+
+    // Dynamic pricing information
+    dynamicPricing?: {
+        basePrice: number;
+        finalPrice: number;
+        adjustments: Array<{
+            factor: number;
+            reason: string;
+            type: 'increase' | 'decrease';
+        }>;
+        savings: number;
+        urgencyLevel: 'low' | 'medium' | 'high' | 'urgent';
+        recommendationScore: number;
+    };
+}
 }
 
 // Lưu ý: Các options hiện tại đã được tích hợp vào Room models

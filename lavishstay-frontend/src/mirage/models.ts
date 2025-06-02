@@ -19,12 +19,16 @@ export interface Room {
     isSale?: boolean;
     roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
     rating?: number;
+    // thông báo sắp cháy phòng
+    urgencyRoomMessage?: string; // Thông báo nếu phòng sắp hết
     maxGuests: number; // Số khách tối đa mà loại phòng này có thể chứa
     description: string;
     images: string[];
     totalRooms: number; // Tổng số phòng có sẵn của loại này
     availableRooms: number; // Số phòng còn lại
     options: RoomOption[]; // Các lựa chọn giá và dịch vụ cho loại phòng này
+    lavishPlusDiscount?: number; // Giảm giá cho thành viên LavishPlus
+
 }
 
 // Hotel Rating Details Interface
@@ -87,6 +91,8 @@ export const sampleRooms: Room[] = [
         discount: 1,
         roomType: "deluxe",
         rating: 9.5,
+        urgencyRoomMessage: "Chỉ còn 7 phòng . Hãy nhanh tay đặt  !",
+        lavishPlusDiscount: 10, // Giảm 10% cho thành viên LavishPlus
         maxGuests: 2,
         totalRooms: 23, // Tổng số phòng deluxe
         availableRooms: 18, // Số phòng còn lại
@@ -395,6 +401,8 @@ export const sampleRooms: Room[] = [
         discount: 2,
         roomType: "premium",
         rating: 9.4,
+        urgencyRoomMessage: "Chỉ còn 5 phòng . Hãy nhanh tay đặt  !",
+        lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
         maxGuests: 2,
         totalRooms: 8, // Tổng số phòng premium
         availableRooms: 15, // Số phòng còn lại
@@ -718,6 +726,8 @@ export const sampleRooms: Room[] = [
         discount: 7,
         roomType: "theLevel",
         rating: 9.8,
+        urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
+        lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
         maxGuests: 4,
         totalRooms: 8, // Tổng số phòng The Level
         availableRooms: 13, // Số phòng còn lại
