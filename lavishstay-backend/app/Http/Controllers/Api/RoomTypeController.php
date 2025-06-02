@@ -206,5 +206,5 @@ class RoomTypeController extends Controller
 
 
 
-    // Tôi là Kiệt đang sửa ở chỗ này, Đức
+
 }
