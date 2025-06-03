@@ -282,16 +282,7 @@
                                                         onclick="toggleDetails({{ $roomType->room_type_id }}); closeDropdown({{ $roomType->room_type_id }})"
                                                         class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                         role="menuitem">
-                                                        {{-- <svg class="w-4 h-4 mr-3 text-blue-500" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
-                                                            </path>
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                                            </path>
-                                                        </svg> --}}
+                                                        
                                                         View Details
                                                     </button>
 
@@ -299,13 +290,7 @@
                                                     <a href="{{ route('admin.room-types.edit', $roomType->room_type_id) }}"
                                                         class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                         role="menuitem">
-                                                        {{-- <svg class="w-4 h-4 mr-3 text-green-500" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                                            </path>
-                                                        </svg> --}}
+                                                        
                                                         Edit Room Type
                                                     </a>
 
@@ -315,22 +300,9 @@
                                                         class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                         role="menuitem">
                                                         @if ($roomType->is_active)
-                                                            {{-- <svg class="w-4 h-4 mr-3 text-orange-500" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636">
-                                                                </path>
-                                                            </svg> --}}
                                                             Deactivate
                                                         @else
-                                                            {{-- <svg class="w-4 h-4 mr-3 text-green-500" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
-                                                                </path>
-                                                            </svg> --}}
+                                                            
                                                             Activate
                                                         @endif
                                                     </button>
@@ -911,260 +883,7 @@
     </script>
 
 
-    <!-- Custom Styles -->
-    <style>
-        .table-auto th {
-            position: sticky;
-            top: 0;
-            background: inherit;
-            z-index: 10;
-        }
-
-        .form-input,
-        .form-select {
-            @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-gray-300 sm:text-sm;
-        }
-
-        .btn {
-            @apply inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition ease-in-out duration-150;
-        }
-
-        /* Responsive table scroll */
-        @media (max-width: 1024px) {
-            .overflow-x-auto {
-                overflow-x: scroll;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .table-auto {
-                min-width: 1200px;
-            }
-        }
-
-        /* Loading states */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Hover effects */
-        .table-auto tbody tr:hover {
-            @apply bg-gray-50 dark:bg-gray-700/30;
-        }
-
-        /* Status badges */
-        .status-badge {
-            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-        }
-
-        /* Feature tags */
-        .feature-tag {
-            @apply inline-flex items-center px-2 py-1 rounded-full text-xs;
-        }
-
-        .table-auto th {
-            position: sticky;
-            top: 0;
-            background: inherit;
-            z-index: 10;
-        }
-
-        .form-input,
-        .form-select {
-            @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-gray-300 sm:text-sm;
-        }
-
-        .btn {
-            @apply inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition ease-in-out duration-150;
-        }
-
-        /* Dropdown animations */
-        .dropdown-enter {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-
-        .dropdown-enter-active {
-            opacity: 1;
-            transform: scale(1);
-            transition: opacity 150ms ease-out, transform 150ms ease-out;
-        }
-
-        .dropdown-exit {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .dropdown-exit-active {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 75ms ease-in, transform 75ms ease-in;
-        }
-
-        /* Action button hover effects */
-        .action-button {
-            @apply relative overflow-hidden;
-        }
-
-        .action-button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(139, 92, 246, 0.1);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.3s ease, height 0.3s ease;
-        }
-
-        .action-button:hover::before {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Responsive table scroll */
-        @media (max-width: 1024px) {
-            .overflow-x-auto {
-                overflow-x: scroll;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .table-auto {
-                min-width: 1200px;
-            }
-
-            /* Adjust dropdown position on mobile */
-            .dropdown-menu-mobile {
-                position: fixed !important;
-                right: 1rem !important;
-                left: auto !important;
-                transform: none !important;
-            }
-        }
-
-        /* Loading states */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Hover effects */
-        .table-auto tbody tr:hover {
-            @apply bg-gray-50 dark:bg-gray-700/30;
-        }
-
-        /* Status badges */
-        .status-badge {
-            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-        }
-
-        /* Feature tags */
-        .feature-tag {
-            @apply inline-flex items-center px-2 py-1 rounded-full text-xs;
-        }
-
-        /* Notification animations */
-        .notification {
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Smooth transitions for details expansion */
-        .details-row {
-            transition: all 0.3s ease-in-out;
-        }
-
-        .details-row.hidden {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-
-        .details-row:not(.hidden) {
-            max-height: 1000px;
-            opacity: 1;
-        }
-
-        /* Custom scrollbar for dropdown */
-        .dropdown-menu::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .dropdown-menu::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .dropdown-menu::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.5);
-            border-radius: 2px;
-        }
-
-        .dropdown-menu::-webkit-scrollbar-thumb:hover {
-            background: rgba(156, 163, 175, 0.7);
-        }
-
-        /* Focus states for accessibility */
-        .dropdown-menu button:focus,
-        .dropdown-menu a:focus {
-            @apply outline-none ring-2 ring-violet-500 ring-inset;
-        }
-
-        /* Animation for action button */
-        .action-button {
-            transition: all 0.2s ease-in-out;
-        }
-
-        .action-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .action-button:active {
-            transform: scale(0.95);
-        }
-
-        /* Pulse animation for loading states */
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        /* Dropdown shadow */
-        .dropdown-shadow {
-            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Dark mode adjustments */
-        @media (prefers-color-scheme: dark) {
-            .dropdown-shadow {
-                box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-            }
-        }
-    </style>
+    
 
 
 </x-app-layout>

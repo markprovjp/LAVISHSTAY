@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataFeedController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FAQController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomTypesController;
 use App\Http\Controllers\UserController;
@@ -49,4 +50,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/{id}/edit', [RoomTypesController::class, 'edit'])->name('admin.room-types.edit');
 
        
+
+
+    //FAQs
+    Route::get('/admin/faqs', [FAQController::class, 'index'])->name('admin.faqs');
+    Route::get('/admin/faqs/create', [FAQController::class, 'create'])->name('admin.faqs.create');
+    Route::post('/admin/faqs/store', [FAQController::class, 'store'])->name('admin.faqs.store');
+    Route::get('/admin/faqs/edit/{faqId}', [FAQController::class, 'edit'])->name('admin.faqs.edit');    
+    Route::put('/admin/faqs/updat/{faqId}', [FAQController::class, 'update'])->name('admin.faqs.update');
+
+    
+    Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
+    Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 });
