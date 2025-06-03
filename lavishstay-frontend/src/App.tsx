@@ -20,7 +20,7 @@ makeServer();
 import Header from "./components/layouts/Header";
 import Footer from "./components/layouts/Footer";
 import Breadcrumb from "./components/ui/Breadcrumb";
-import ScrollToTop from "./components/utils/ScrollToTop";
+import ScrollToTop from "./utils/ScrollToTop";
 
 // Import pages
 import Home from "./pages/Home";

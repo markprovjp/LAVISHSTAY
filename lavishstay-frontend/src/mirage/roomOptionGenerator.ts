@@ -23,9 +23,9 @@ export const generateRoomOptions = (
     const daysDifference = calculateDaysDifference(checkInDate);
     const isAdvanceBooking = daysDifference >= 2; // Đặt trước 2 ngày
 
-    // Ngày hủy miễn phí (1 ngày trước check-in)
+    // Ngày hủy miễn phí (2 ngày trước check-in)
     const freeUntilDate = new Date(checkInDate);
-    freeUntilDate.setDate(freeUntilDate.getDate() - 1);
+    freeUntilDate.setDate(freeUntilDate.getDate() - 2);
     const freeUntilString = freeUntilDate.toISOString();
 
     const options: RoomOption[] = [];
@@ -136,16 +136,15 @@ export const generateRoomOptions = (
                 { icon: "GiftOutlined", name: "Bữa sáng buffet", included: true }
             ]
         });
-
     } else {
-        // Đặt phòng cùng ngày hoặc ngày mai: Chỉ có option không hoàn tiền
+        // Đặt phòng cùng ngày hoặc ngày mai: CHỈ có các option không hoàn tiền với pricing tiers khác nhau
 
-        // Option duy nhất: Không hoàn tiền
+        // Option 1: Giá rẻ nhất cho 2 guests (1.2M base)
         options.push({
-            id: `${roomType}_last_minute`,
-            name: "Đặt phòng gấp - Không hoàn tiền",
-            pricePerNight: { vnd: basePrice },
-            maxGuests: roomType === "deluxe" ? 2 : roomType === "premium" ? 3 : 4,
+            id: `${roomType}_urgent_basic_2guests`,
+            name: "Đặt gấp - Tiết kiệm (2 khách)",
+            pricePerNight: { vnd: 1200000 },
+            maxGuests: 2,
             minGuests: 1,
             roomType,
             mealOptions: {
@@ -153,16 +152,21 @@ export const generateRoomOptions = (
                     included: false,
                     price: 260000,
                     description: "Bữa sáng Tuyệt hảo - VND 260.000"
+                },
+                dinner: {
+                    included: false,
+                    price: 1300000, // Để tổng cộng = 2.5M khi có breakfast + dinner
+                    description: "Bữa tối + Bữa sáng - VND 1.300.000"
                 }
             },
             cancellationPolicy: {
                 type: "non_refundable",
                 penalty: 100,
-                description: "Phí hủy: Toàn bộ tiền phòng"
+                description: "Không hoàn tiền - Phí hủy: Toàn bộ tiền phòng"
             },
             paymentPolicy: {
                 type: "pay_at_hotel",
-                description: "Không cần thanh toán trước - thanh toán tại chỗ nghỉ"
+                description: "Thanh toán tại chỗ nghỉ"
             },
             availability: {
                 total: 5,
@@ -175,9 +179,152 @@ export const generateRoomOptions = (
             ],
             mostPopular: true
         });
+
+        // Option 2: Cho 1 guest với breakfast included (1.5M)
+        options.push({
+            id: `${roomType}_urgent_1guest_breakfast`,
+            name: "Đặt gấp - 1 khách có sáng",
+            pricePerNight: { vnd: 1500000 },
+            maxGuests: 1,
+            minGuests: 1,
+            roomType,
+            mealOptions: {
+                breakfast: {
+                    included: true,
+                    price: 0,
+                    description: "Bữa sáng buffet miễn phí"
+                }
+            },
+            cancellationPolicy: {
+                type: "non_refundable",
+                penalty: 100,
+                description: "Không hoàn tiền - Phí hủy: Toàn bộ tiền phòng"
+            },
+            paymentPolicy: {
+                type: "pay_at_hotel",
+                description: "Thanh toán tại chỗ nghỉ"
+            },
+            availability: {
+                total: 3,
+                remaining: Math.floor(Math.random() * 2) + 1,
+                urgencyMessage: daysDifference === 0 ? "Ưu đãi đặc biệt cho 1 khách!" : "Gói 1 khách sắp hết!"
+            },
+            additionalServices: [
+                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
+                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true },
+                { icon: "GiftOutlined", name: "Bữa sáng buffet", included: true }
+            ]
+        });
+
+        // Option 3: Premium package với breakfast + dinner (2.5M total)
+        options.push({
+            id: `${roomType}_urgent_premium_meals`,
+            name: "Đặt gấp - Gói ăn đầy đủ",
+            pricePerNight: { vnd: 2500000 },
+            maxGuests: roomType === "deluxe" ? 2 : roomType === "premium" ? 3 : 4,
+            minGuests: 1,
+            roomType,
+            mealOptions: {
+                breakfast: {
+                    included: true,
+                    price: 0,
+                    description: "Bữa sáng buffet miễn phí"
+                },
+                dinner: {
+                    included: true,
+                    price: 0,
+                    description: "Bữa tối + Bữa sáng - Đã bao gồm"
+                }
+            },
+            cancellationPolicy: {
+                type: "non_refundable",
+                penalty: 100,
+                description: "Không hoàn tiền - Phí hủy: Toàn bộ tiền phòng"
+            },
+            paymentPolicy: {
+                type: "pay_at_hotel",
+                description: "Thanh toán tại chỗ nghỉ"
+            },
+            availability: {
+                total: 4,
+                remaining: Math.floor(Math.random() * 2) + 1,
+                urgencyMessage: daysDifference === 0 ? "Gói cao cấp cuối cùng!" : "Gói đầy đủ bữa ăn sắp hết!"
+            },
+            additionalServices: [
+                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
+                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true },
+                { icon: "GiftOutlined", name: "Bữa sáng buffet", included: true },
+                { icon: "RestaurantOutlined", name: "Bữa tối cao cấp", included: true }
+            ]
+        });
     }
 
     return options;
+};
+
+// Helper function để sắp xếp options theo số lượng khách
+export const prioritizeOptionsByGuestCount = (
+    options: RoomOption[],
+    guestCount: number
+): RoomOption[] => {
+    return [...options].sort((a, b) => {
+        // Ưu tiên options phù hợp với số khách
+        const aMatches = guestCount >= a.minGuests && guestCount <= a.maxGuests;
+        const bMatches = guestCount >= b.minGuests && guestCount <= b.maxGuests;
+
+        if (aMatches && !bMatches) return -1;
+        if (!aMatches && bMatches) return 1;
+
+        // Nếu cả hai đều phù hợp hoặc không phù hợp, sắp xếp theo giá
+        return a.pricePerNight.vnd - b.pricePerNight.vnd;
+    });
+};
+
+// Helper function để thêm warnings cho guest count
+export const addGuestCountWarning = (
+    option: RoomOption,
+    guestCount: number
+): RoomOption => {
+    const isExceedsCapacity = guestCount > option.maxGuests;
+    const isBelowMinimum = guestCount < option.minGuests;
+
+    if (isExceedsCapacity || isBelowMinimum) {
+        return {
+            ...option,
+            guestCountWarning: {
+                type: isExceedsCapacity ? "exceeds_capacity" : "below_minimum",
+                message: isExceedsCapacity
+                    ? `Phòng này chỉ phù hợp cho tối đa ${option.maxGuests} khách`
+                    : `Phòng này yêu cầu tối thiểu ${option.minGuests} khách`,
+                suggestedAction: isExceedsCapacity
+                    ? "Vui lòng chọn phòng khác hoặc giảm số khách"
+                    : "Vui lòng chọn phòng khác hoặc tăng số khách"
+            }
+        };
+    }
+
+    return option;
+};
+
+// Main function để generate và prioritize options
+export const generatePrioritizedRoomOptions = (
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel",
+    checkInDate: string,
+    basePrice: number,
+    guestCount: number = 2
+): RoomOption[] => {
+    // Generate basic options
+    const options = generateRoomOptions(roomType, checkInDate, basePrice);
+
+    // Add guest count warnings
+    const optionsWithWarnings = options.map(option =>
+        addGuestCountWarning(option, guestCount)
+    );
+
+    // Prioritize by guest count
+    const prioritizedOptions = prioritizeOptionsByGuestCount(optionsWithWarnings, guestCount);
+
+    return prioritizedOptions;
 };
 
 // Helper function để lấy thông báo khẩn cấp dựa trên thời gian
