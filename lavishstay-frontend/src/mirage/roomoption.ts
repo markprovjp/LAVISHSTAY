@@ -2,17 +2,16 @@ export interface RoomOption {
     id: string;
     name: string;
     pricePerNight: {
-        vnd: number; // Giá mỗi đêm
+        vnd: number;
     };
-    maxGuests: number; // Số khách tối đa cho option này
-    minGuests: number; // Số khách tối thiểu cho option này
+    maxGuests: number;
+    minGuests: number;
     roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
 
-    // Các lựa chọn dịch vụ
     mealOptions: {
         breakfast?: {
-            included: boolean; // Có bao gồm bữa sáng không
-            price?: number; // VND nếu không bao gồm
+            included: boolean;
+            price?: number;
             description: string;
         };
         dinner?: {
@@ -22,29 +21,25 @@ export interface RoomOption {
         };
     };
 
-    // Chính sách hủy
     cancellationPolicy: {
         type: "free" | "non_refundable" | "conditional";
-        freeUntil?: string; // Ngày có thể hủy miễn phí (ISO string) 
-        penalty?: number; // Phí hủy (VND hoặc %)  (phí huỷ toàn bộ tiền phòng thì dịch vụ option sẽ rẻ hơn so với huỷ miễn phí)
+        freeUntil?: string;
+        penalty?: number;
         description: string;
     };
 
-    // Chính sách thanh toán
     paymentPolicy: {
         type: "pay_now_with_vietQR" | "pay_at_hotel";
         description: string;
         prepaymentRequired?: boolean;
     };
 
-    // Số lượng phòng
     availability: {
-        total: number; // Tổng số phòng loại này
-        remaining: number; // Số phòng còn lại
-        urgencyMessage?: string; // "Chỉ còn 2 phòng!" để tạo áp lực
+        total: number;
+        remaining: number;
+        urgencyMessage?: string;
     };
 
-    // Các dịch vụ bổ sung
     additionalServices?: {
         icon: string;
         name: string;
@@ -52,16 +47,21 @@ export interface RoomOption {
         included: boolean;
     }[];
 
-    // Khuyến mãi
     promotion?: {
         type: "hot" | "limited" | "member" | "lowest" | "deal";
         message: string;
-        discount?: number; // % giảm giá
-    }; recommended?: boolean; // Được đề xuất
+        discount?: number;
+    }; recommended?: boolean;
+    mostPopular?: boolean;
 
-    mostPopular?: boolean; // Được ưa chuộng nhất
+    guestCountWarning?: string; // Thêm warning cho guest count
 
-    // Dynamic pricing information
+    guestCountWarningDetail?: {
+        type: "exceeds_capacity" | "below_minimum";
+        message: string;
+        suggestedAction: string;
+    };
+
     dynamicPricing?: {
         basePrice: number;
         finalPrice: number;
@@ -75,7 +75,3 @@ export interface RoomOption {
         recommendationScore: number;
     };
 }
-}
-
-// Lưu ý: Các options hiện tại đã được tích hợp vào Room models
-// Interface RoomOption được định nghĩa ở trên và sẽ được sử dụng trong models.ts

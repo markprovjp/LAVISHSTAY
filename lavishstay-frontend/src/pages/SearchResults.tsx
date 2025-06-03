@@ -238,21 +238,27 @@ const SearchResults: React.FC = () => {
         const fetchResults = async () => {
             try {
                 setLoading(true);
-                const results = await searchService.searchRooms(searchData);
-                // Apply dynamic pricing to each room
+                const results = await searchService.searchRooms(searchData);                // Apply dynamic pricing to each room
                 const roomsWithDynamicPricing = results.rooms.map(room => {                    // Safe date handling with defaults - convert to dayjs
                     const checkInDate = searchData.dateRange && searchData.dateRange[0] ?
                         searchData.dateRange[0] : dayjs();
                     const checkOutDate = searchData.dateRange && searchData.dateRange[1] ?
                         searchData.dateRange[1] : dayjs().add(1, 'day');
 
-                    // Generate dynamic room options using dayjs dates
+                    // Calculate actual guest count
+                    const actualGuestCount = searchData.guestDetails
+                        ? searchData.guestDetails.adults + searchData.guestDetails.children
+                        : 2; // Default to 2 guests
+
+                    // Generate dynamic room options using dayjs dates với guest count
                     const dynamicOptions = generateRoomOptionsWithDynamicPricing(
-                        room.priceVND || 1500000, // basePrice from room (use default if undefined)
+                        room.priceVND || 1900000, // TĂNG FALLBACK PRICE LÊN 3M
                         room.roomType, // roomType
                         room.maxGuests, // maxGuests
                         checkInDate, // checkInDate as dayjs
-                        checkOutDate  // checkOutDate as dayjs
+                        checkOutDate,  // checkOutDate as dayjs
+                        dayjs(), // bookingDate
+                        actualGuestCount // guestCount for prioritization
                     );
 
                     return {
@@ -430,13 +436,9 @@ const SearchResults: React.FC = () => {
                                                     className="cursor-pointer hover:text-blue-600 transition-colors group"
                                                     onClick={() => showImageGallery(room, 0)}
                                                 >
-                                                    <Title level={3} className="mb-2 group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                                                    <Title level={3} className="mb-2  transition-colors flex items-center gap-2">
                                                         {room.name}
-                                                        <EyeOutlined className="text-base opacity-50 group-hover:opacity-100" />
                                                     </Title>
-                                                    <Text type="secondary" className="text-sm flex items-center gap-1">
-                                                        📷 Nhấn để xem {room.images?.length || 1} hình ảnh
-                                                    </Text>
                                                 </div>
 
                                                 <Space size="large" className="mt-3" wrap>
@@ -485,39 +487,9 @@ const SearchResults: React.FC = () => {
                                                             onClick={() => showRoomDetail(room)}
                                                         />
                                                     </Tooltip>
-                                                    <Tooltip title="Xem hình ảnh">
-                                                        <Button
-                                                            type="default"
-                                                            icon={<GiftOutlined />}
-                                                            size="small"
-                                                            onClick={() => showImageGallery(room, 0)}
-                                                        />
-                                                    </Tooltip>
                                                 </Space>
                                             </div>
                                         </div>{/* Comprehensive Breakfast Information */}
-                                        {room.options.some(option => option.mealOptions?.breakfast) && (
-                                            <div className="mb-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                                                <Text strong className="text-orange-800 flex items-center gap-2 mb-2">
-                                                    <CoffeeOutlined /> Thông tin bữa sáng
-                                                </Text>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                    {room.options
-                                                        .filter(option => option.mealOptions?.breakfast)
-                                                        .map((option, idx) => (
-                                                            <div key={idx} className="flex items-center gap-2">
-                                                                <Tag
-                                                                    color={option.mealOptions?.breakfast?.included ? "green" : "orange"}
-                                                                    className="min-w-fit"
-                                                                >
-                                                                    {option.mealOptions?.breakfast?.included ? "Bao gồm" : "Có thể thêm"}
-                                                                </Tag>
-                                                                <Text className="text-sm">{option.name}</Text>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {/* Alert Messages */}
                                         <Space direction="vertical" size="small" className="w-full mb-4">
@@ -1150,84 +1122,6 @@ const SearchResults: React.FC = () => {
                                     <Text>{selectedRoomDetail.description}</Text>
                                 </div>
                             </>
-                        )}
-                    </div>
-                )}
-            </Modal>
-
-            {/* Image Gallery Modal */}
-            <Modal
-                title="Hình ảnh phòng"
-                open={imageModalVisible}
-                onCancel={() => setImageModalVisible(false)}
-                footer={null}
-                width="90vw"
-                style={{ top: 20 }}
-                className="image-gallery-modal"
-            >
-                {currentRoomImages.length > 0 && (
-                    <div className="relative">
-                        <div className="text-center mb-4">
-                            <Image
-                                src={currentRoomImages[currentImageIndex]}
-                                alt={`Room image ${currentImageIndex + 1}`}
-                                style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
-                                preview={false}
-                            />
-                        </div>
-
-                        {/* Navigation buttons */}
-                        {currentRoomImages.length > 1 && (
-                            <>
-                                <Button
-                                    type="primary"
-                                    shape="circle"
-                                    icon={<LeftOutlined />}
-                                    onClick={handlePrevImage}
-                                    className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10"
-                                    size="large"
-                                />
-                                <Button
-                                    type="primary"
-                                    shape="circle"
-                                    icon={<RightOutlined />}
-                                    onClick={handleNextImage}
-                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10"
-                                    size="large"
-                                />
-                            </>
-                        )}
-
-                        {/* Image counter */}
-                        <div className="text-center mt-2">
-                            <Text type="secondary">
-                                {currentImageIndex + 1} / {currentRoomImages.length}
-                            </Text>
-                        </div>
-
-                        {/* Thumbnail navigation */}
-                        {currentRoomImages.length > 1 && (
-                            <div className="flex justify-center gap-2 mt-4 overflow-x-auto pb-2">
-                                {currentRoomImages.map((img, index) => (
-                                    <div
-                                        key={index}
-                                        className={`flex-shrink-0 cursor-pointer border-2 rounded transition-all ${index === currentImageIndex
-                                            ? 'border-blue-500 opacity-100'
-                                            : 'border-gray-300 opacity-60 hover:opacity-80'
-                                            }`}
-                                        onClick={() => setCurrentImageIndex(index)}
-                                    >
-                                        <Image
-                                            src={img}
-                                            alt={`Thumbnail ${index + 1}`}
-                                            width={80}
-                                            height={60}
-                                            className="object-cover rounded"
-                                            preview={false}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
                         )}
                     </div>
                 )}

@@ -1,6 +1,6 @@
 // Search service with Mirage.js integration for development
 import { SearchData } from '../store/slices/searchSlice';
-import { generateRoomOptions, getUrgencyMessage } from '../mirage/roomOptionGenerator';
+import { generatePrioritizedRoomOptions, getUrgencyMessage } from '../mirage/roomOptionGenerator';
 
 // Import mock service for fallback
 import { mockSearchService } from './mockSearchService';
@@ -50,7 +50,12 @@ class SearchService {
             if (searchData.checkIn) {
                 filteredRooms = filteredRooms.map((room: any) => ({
                     ...room,
-                    options: generateRoomOptions(room.roomType, searchData.checkIn!, room.priceVND),
+                    options: generatePrioritizedRoomOptions(
+                        room.roomType,
+                        searchData.checkIn!,
+                        room.priceVND,
+                        searchData.guests || 2
+                    ),
                     urgencyRoomMessage: getUrgencyMessage(searchData.checkIn!) || room.urgencyRoomMessage
                 }));
             }
