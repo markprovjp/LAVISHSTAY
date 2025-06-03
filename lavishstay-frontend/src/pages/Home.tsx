@@ -11,6 +11,7 @@ import Newsletter from "../components/Newsletter";
 import RoomSwiper from "../components/ui/RoomSwiper";
 import Awards from "../components/ui/Awards";
 import HotelActivities from "../components/ui/HotelActivities";
+import SwiftPande from "../components/ui/swiftPande";
 
 // Import API hooks with axios
 import { useGetAllRooms, useGetRoomsByType } from "../hooks/useApi";
@@ -105,9 +106,10 @@ const Home: React.FC = () => {
       {/* Search Form */}
       <div className="container mx-auto mt-4 mb-4 relative z-10 ">
         <SearchForm className="mx-auto shadow-xl" />
-      </div>{" "}
-      {/* Awards Section */}
+      </div>{" "}      {/* Awards Section */}
       <Awards />
+      
+   
       {/* Sale Rooms Section */}
       <div className="container mx-auto px-4 mb-16">
         <SectionHeader
@@ -294,7 +296,19 @@ const Home: React.FC = () => {
         </div>
       </div>{" "}
       {/* Phần hoạt động của khách sạn */}
-      <HotelActivities />
+      <HotelActivities />      {/* Hotel Gallery 3D Carousel */}
+      <div className="mb-1">
+        <div className="container mx-auto ">
+          <SectionHeader
+            title="Khám phá LavishStay"
+            subtitle="Trải nghiệm không gian sang trọng qua từng góc nhìn"
+            centered
+            withDivider
+          />
+        </div>
+        <SwiftPande />
+      </div>
+      
       {/* Testimonials Section */}
       <div className="py-16 mb-16 ">
         <div className="container mx-auto px-4">
