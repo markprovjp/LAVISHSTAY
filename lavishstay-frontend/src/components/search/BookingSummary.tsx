@@ -94,21 +94,17 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 padding: '20px',
             }}
         >
-            <div className="mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <CheckCircleOutlined className="text-blue-600 text-lg" />
-                    <Title level={5} className="mb-0 text-gray-800">Tóm tắt đặt phòng</Title>
-                </div>
+            <div className="mb-2">
 
-                <div className="bg-gray-50 p-3 rounded-lg">
+                <div className=" p-3 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                            <CalendarOutlined className="text-gray-600" />
-                            <Text className="text-gray-700 font-medium">{nights} đêm</Text>
+                            <CalendarOutlined className="" />
+                            <Text className=" font-medium">{nights} đêm</Text>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Users size={14} className="text-gray-600" />
-                            <Text className="text-gray-700 font-medium">
+                            <Users size={14} className="" />
+                            <Text className=" font-medium">
                                 {(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} khách
                             </Text>
                         </div>
@@ -118,13 +114,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-slate-700 rounded-full"></div>
-                        <Text strong className="text-slate-800 font-semibold">Phòng đã chọn</Text>
+                        <div className="w-2 h-2  rounded-full"></div>
+                        <Text strong className=" font-semibold">Phòng đã chọn</Text>
                     </div>
                     <Badge
                         count={summary.length}
                         style={{
-                            backgroundColor: '#334155',
                             fontSize: '11px',
                             height: '18px',
                             minWidth: '18px',
@@ -142,21 +137,21 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                     } : {}}
                 >
                     {summary.map((item, index) => (
-                        <div key={index} className="group bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-in-out">
+                        <div key={index} className="group  border border-slate-200  p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-in-out">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <Bed size={14} className="text-slate-500 flex-shrink-0" />
-                                        <Text strong className="text-slate-800 font-semibold truncate">
+                                        <Bed size={14} className=" flex-shrink-0" />
+                                        <Text strong className=" font-semibold truncate">
                                             {item.roomName}
                                         </Text>
                                     </div>
-                                    <Text className="text-xs text-slate-600 font-medium ml-5 truncate">
+                                    <Text className="text-xs  font-medium ml-5 truncate">
                                         {item.optionName}
                                     </Text>
                                 </div>
                                 <div className="flex items-center gap-2 ml-3">
-                                    <div className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                    <div className="  px-3 py-1 rounded-full text-xs font-semibold">
                                         ×{item.quantity}
                                     </div>
                                     <Button
@@ -164,16 +159,16 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                                         size="small"
                                         icon={<CloseOutlined />}
                                         onClick={() => handleRemoveRoom(item.roomId, item.optionId)}
-                                        className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                        className="w-7 h-7 flex items-center justify-center  hover:text-red-500 hover:bg-red-50 rounded-full p-0 transition-all duration-200 opacity-0 group-hover:opacity-100"
                                         style={{ minWidth: '28px' }}
                                     />
                                 </div>
                             </div>
                             <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                                <Text className="text-xs text-slate-500 font-medium">
+                                <Text className="text-xs  font-medium">
                                     {formatVND(item.pricePerNight)}/đêm
                                 </Text>
-                                <Text strong className="text-slate-800 font-bold">
+                                <Text strong className=" font-bold">
                                     {formatVND(item.total)}
                                 </Text>
                             </div>
@@ -184,7 +179,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <div className="mb-4">
                 <div className="flex items-center gap-2 mb-3">
                     <Coffee size={14} className="text-amber-600" />
-                    <Text strong className="text-gray-800 text-sm">Bữa sáng</Text>
+                    <Text strong className=" text-sm">Bữa sáng</Text>
                 </div>
 
                 <Radio.Group
@@ -232,7 +227,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <div className="mb-4">
                 <div className="flex items-center gap-2 mb-3">
                     <Bed size={14} className="text-indigo-600" />
-                    <Text strong className="text-gray-800 text-sm">Ưu Tiên Giường</Text>
+                    <Text strong className=" text-sm">Ưu Tiên Giường</Text>
                 </div>
 
                 <Radio.Group
@@ -255,16 +250,16 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <div className="space-y-3">
                 {breakfastPrice > 0 && (
                     <div className="flex justify-between items-center text-sm">
-                        <Text className="text-gray-600">Phụ thu bữa sáng:</Text>
+                        <Text className="">Phụ thu bữa sáng:</Text>
                         <Text strong className="text-amber-600">{formatVND(breakfastPrice)}</Text>
                     </div>
-                )}            <div className=" p-1   rounded-xl border-2 border-blue-200 shadow-sm">
+                )}            <div className=" p-3   rounded-xl border-2 border-blue-200 shadow-sm">
                     <div className="flex justify-between items-center">
                         <Text strong className="text-sm ">Tổng thanh toán:</Text>
                         <Text strong className="text-lg  ">{formatVND(finalTotal)}</Text>
                     </div>
                     {nights > 1 && (
-                        <Text className="text-sm text-gray-600 mt-1">
+                        <Text className="text-sm  mt-1">
                             Trung bình {formatVND(finalTotal / nights)}/đêm
                         </Text>
                     )}

@@ -80,9 +80,9 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                         style={{ backgroundImage: `url(${image})` }}
                                         onClick={() => onShowImageGallery(room, index)}
                                     >
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                                                <div className="flex items-center gap-2 text-gray-700">
+                                        <div className="absolute inset-0   transition-colors duration-200 flex items-center justify-center">
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity  duration-200 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                                                <div className="flex items-center gap-2 ">
                                                     <Eye size={14} />
                                                     <Text className="text-xs font-medium">Xem {room.images?.length || 1} ảnh</Text>
                                                 </div>
@@ -112,7 +112,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
                         <div className="flex items-start justify-between gap-2 mb-3">
                             <Title
                                 level={4}
-                                className="mb-0 hover:text-blue-600 transition-colors cursor-pointer text-gray-800 flex-1"
+                                className="mb-0  transition-colors cursor-pointer  flex-1"
                                 onClick={() => onShowImageGallery(room, 0)}
                                 style={{ lineHeight: '1.3', fontSize: '20px' }}
                             >
@@ -135,22 +135,22 @@ const RoomCard: React.FC<RoomCardProps> = ({
 
                         {/* Room Stats */}
                         <Space size={12} wrap className="mb-3">
-                            <div className="flex items-center gap-1.5 text-gray-600">
+                            <div className="flex items-center gap-1.5 ">
                                 <HomeOutlined style={{ fontSize: '14px', color: '#6b7280' }} />
                                 <Text className="text-sm">{room.size}m²</Text>
                             </div>
-                            <div className="flex items-center gap-1.5 text-gray-600">
+                            <div className="flex items-center gap-1.5 ">
                                 <EyeOutlined style={{ fontSize: '14px', color: '#6b7280' }} />
                                 <Text className="text-sm">{room.view}</Text>
                             </div>
-                            <div className="flex items-center gap-1.5 text-gray-600">
+                            <div className="flex items-center gap-1.5 ">
                                 <UserOutlined style={{ fontSize: '14px', color: '#6b7280' }} />
                                 <Text className="text-sm">Tối đa {room.maxGuests} khách</Text>
                             </div>
                             {room.rating && (
-                                <div className="flex items-center gap-1.5 text-gray-600">
+                                <div className="flex items-center gap-1.5 ">
                                     <StarFilled style={{ fontSize: '14px', color: '#f59e0b' }} />
-                                    <Text className="text-sm font-medium text-gray-800">{room.rating}/10</Text>
+                                    <Text className="text-sm font-medium ">{room.rating}/10</Text>
                                 </div>
                             )}
                         </Space>                        {/* Alerts */}
@@ -176,20 +176,20 @@ const RoomCard: React.FC<RoomCardProps> = ({
                         <div className="mb-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <GiftOutlined style={{ fontSize: '14px', color: '#3b82f6' }} />
-                                <Text className="text-sm font-medium text-gray-700">Tiện ích nổi bật</Text>
+                                <Text className="text-sm font-medium ">Tiện ích nổi bật</Text>
                             </div>
                             <div className="flex flex-wrap gap-1">
                                 {getMainAmenities(room.mainAmenities || room.amenities).slice(0, 7).map((amenity, index) => (
                                     <span
                                         key={index}
-                                        className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs border border-blue-100"
+                                        className="inline-flex items-center gap-1 px-2 py-1   rounded text-xs border border-blue-100"
                                     >
                                         {amenity.icon && <span style={{ fontSize: '10px' }}>{amenity.icon}</span>}
                                         <span>{amenity.name}</span>
                                     </span>
                                 ))}
                                 {getMainAmenities(room.mainAmenities || room.amenities).length > 7 && (
-                                    <span className="inline-flex items-center px-2 py-1 bg-gray-50 text-gray-600 rounded text-xs">
+                                    <span className="inline-flex items-center px-2 py-1   rounded text-xs">
                                         +{getMainAmenities(room.mainAmenities || room.amenities).length - 7} khác
                                     </span>
                                 )}
@@ -204,7 +204,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
             <div>
                 <div className="flex items-center gap-2 mb-3">
                     <GiftOutlined style={{ fontSize: '14px', color: '#6366f1' }} />
-                    <Text className="text-sm font-medium text-gray-700">Lựa chọn đặt phòng</Text>
+                    <Text className="text-sm font-medium ">Lựa chọn đặt phòng</Text>
                 </div>
                 <RoomOptionsSection
                     room={room}

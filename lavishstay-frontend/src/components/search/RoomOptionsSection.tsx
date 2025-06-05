@@ -136,9 +136,9 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                         <Card
                             key={option.id}
                             className={`transition-all duration-200 ${isSelected
-                                    ? 'border-blue-300 bg-blue-50/30 shadow-md'
+                                    ? ''
                                     : 'border-gray-200 hover:border-blue-200 hover:shadow-sm'
-                                } ${isUnavailable ? 'opacity-60' : ''}`}
+                                } ${isUnavailable ? '' : ''}`}
                             bodyStyle={{ padding: '14px' }}
                             size="small"
                         >
@@ -214,7 +214,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                 {/* Price and Controls */}
                                 <div className="flex items-center gap-3">
                                     <div className="text-right">
-                                        <Text strong className="text-blue-600 text-base">
+                                        <Text strong className=" text-base">
                                             {formatVND(option.pricePerNight.vnd)}
                                         </Text>
                                         <Text className="text-xs  block">/ đêm</Text>
@@ -228,7 +228,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                             size="small"
                                             disabled={currentQuantity === 0 || isUnavailable}
                                             onClick={() => onQuantityChange(room.id.toString(), option.id, currentQuantity - 1)}
-                                            className="w-8 h-8 flex items-center justify-center border-none   hover:text-blue-600"
+                                            className="w-8 h-8 flex items-center justify-center border-none   "
                                         />
                                         <div className="w-10 h-8 flex items-center justify-center  border-x border-gray-200">
                                             <Text className="text-sm font-medium ">{currentQuantity}</Text>
@@ -239,7 +239,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                             size="small"
                                             disabled={currentQuantity >= option.availability.remaining || isUnavailable}
                                             onClick={() => onQuantityChange(room.id.toString(), option.id, currentQuantity + 1)}
-                                            className="w-8 h-8 flex items-center justify-center border-none   hover:text-blue-600"
+                                            className="w-8 h-8 flex items-center justify-center border-none   "
                                         />
                                     </div>
                                 </div>
