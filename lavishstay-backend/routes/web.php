@@ -5,7 +5,7 @@ use App\Http\Controllers\DataFeedController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\RoomTypesController;
+use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\UserController;
 
 Route::redirect('/', 'login');
@@ -31,7 +31,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     //Bắt đầu code từ đây
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
 
     Route::get('/admin/rooms', [RoomController::class, 'index'])->name('admin.rooms');
@@ -43,11 +42,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     //Rooms Types
-    Route::get('/admin/room-types', [RoomTypesController::class, 'index'])->name('admin.room-types');
-    Route::get('/admin/room-types/create', [RoomTypesController::class, 'create'])->name('admin.room-types.create');
-    Route::post('/admin/room-types/store', [RoomTypesController::class, 'create'])->name('admin.room-types.store');
-    Route::get('/admin/room-types/store', [RoomTypesController::class, 'create'])->name('admin.room-types.auto-save');
-    Route::get('/admin/room-types/{id}/edit', [RoomTypesController::class, 'edit'])->name('admin.room-types.edit');
+    Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
+    Route::get('/admin/room-types/show  ', [RoomTypeController::class, 'index'])->name('admin.room-types.show');
+    Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
+    Route::post('/admin/room-types/store', [RoomTypeController::class, 'create'])->name('admin.room-types.store');
+    Route::get('/admin/room-types/store', [RoomTypeController::class, 'create'])->name('admin.room-types.auto-save');
+    Route::get('/admin/room-types/{id}/edit', [RoomTypeController::class, 'edit'])->name('admin.room-types.edit');
 
        
 
@@ -58,8 +58,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/faqs/store', [FAQController::class, 'store'])->name('admin.faqs.store');
     Route::get('/admin/faqs/edit/{faqId}', [FAQController::class, 'edit'])->name('admin.faqs.edit');    
     Route::put('/admin/faqs/updat/{faqId}', [FAQController::class, 'update'])->name('admin.faqs.update');
-
-    
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 });
