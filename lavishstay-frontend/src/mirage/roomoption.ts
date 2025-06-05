@@ -8,19 +8,7 @@ export interface RoomOption {
     minGuests: number;
     roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
 
-    mealOptions: {
-        breakfast?: {
-            included: boolean;
-            price?: number;
-            description: string;
-        };
-        dinner?: {
-            included: boolean;
-            price?: number;
-            description: string;
-        };
-    };
-
+ 
     cancellationPolicy: {
         type: "free" | "non_refundable" | "conditional";
         freeUntil?: string;

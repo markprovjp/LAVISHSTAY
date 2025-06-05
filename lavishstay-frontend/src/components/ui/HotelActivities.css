@@ -66,12 +66,7 @@
   transform: translateY(-8px) !important;
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3) !important;
 }
-/* Enhanced active slide effects */
-.activities-swiper .swiper-slide-active .activity-card {
-  transform: scale(1.02) !important;
-  z-index: 10 !important;
-  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.35) !important;
-}
+
 
 .activities-swiper .swiper-slide-active .activity-card::after {
   content: '';

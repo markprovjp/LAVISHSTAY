@@ -25,7 +25,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
     <Card
       className={`h-full feature-card transition-all duration-300 hover:shadow-lg 
         ${highlighted ? "border-blue-500 shadow-md" : ""} ${className}`}
-      bodyStyle={{ padding: "24px" }}
+      styles={{ body: { padding: "24px" } }}
     >
       <div className="flex flex-col items-center text-center">
         <div className={`text-4xl mb-4 ${highlighted ? "text-blue-500" : ""}`}>

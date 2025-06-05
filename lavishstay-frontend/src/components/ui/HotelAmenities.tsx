@@ -407,7 +407,7 @@ const HotelAmenities: React.FC = () => {
                     </Text>
                   </div>
                 }
-                bordered={false}
+                variant="borderless"
               >
                 <div className="space-y-3">
                   {" "}

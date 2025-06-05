@@ -19,11 +19,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
             footer={null}
             centered
             width={560}
-            destroyOnClose
-            bodyStyle={{
-                padding: "18px 18px 10px 18px",
-                borderRadius: 14,
-                minHeight: 0,
+            destroyOnHidden
+            styles={{
+                body: {
+                    padding: "18px 18px 10px 18px",
+                    borderRadius: 14,
+                    minHeight: 0,
+                }
             }}
         >
             <h2

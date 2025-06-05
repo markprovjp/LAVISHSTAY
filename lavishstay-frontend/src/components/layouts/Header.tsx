@@ -253,6 +253,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
           {/* Notifications */}
           <Dropdown
             overlay={notificationMenu}
+            
             trigger={["hover"]}
             placement="bottomRight"
           >

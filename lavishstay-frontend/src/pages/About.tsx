@@ -41,25 +41,25 @@ const About: React.FC = () => {
     {
       name: "Nguyễn Văn Quyền",
       position: "Tổng Giám đốc",
-      avatar: "../../public/images/users/1.jpg",
+      avatar: "../images/users/1.jpg",
       bio: "Hơn 15 năm kinh nghiệm trong ngành khách sạn và dịch vụ cao cấp.",
     },
     {
       name: "Nguyễn Anh Đức",
       position: "Giám đốc Vận hành",
-      avatar: "../../public/images/users/5.jpg",
+      avatar: "/images/users/5.jpg",
       bio: "Chuyên gia vận hành khách sạn với kinh nghiệm tại các thương hiệu quốc tế.",
     },
     {
       name: "Lê Hiểu Phước",
       position: "Giám đốc F&B",
-      avatar: "../../public/images/users/12.jpg",
+      avatar: "/images/users/12.jpg",
       bio: "Chuyên gia ẩm thực với bề dày kinh nghiệm tại các nhà hàng fine dining.",
     },
     {
       name: "Lê Thị Trang",
       position: "Giám đốc Dịch vụ khách hàng",
-      avatar: "../../public/images/users/9.jpg",
+      avatar: "/images/users/9.jpg",
       bio: "Tâm huyết với việc tạo ra những trải nghiệm khách hàng đẳng cấp.",
     },
   ]; // Statistics data for hotel

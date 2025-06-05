@@ -69,7 +69,7 @@ const Profile: React.FC = () => {
     <div>
       <Title level={2}>Hồ sơ cá nhân</Title>
 
-      <Card bordered={false} className="shadow-sm mb-6">
+      <Card variant="outlined" className="shadow-sm mb-6">
         <div className="flex items-center">
           <Avatar
             size={100}
@@ -89,7 +89,7 @@ const Profile: React.FC = () => {
         </div>
       </Card>
 
-      <Card bordered={false} className="shadow-sm">
+      <Card variant="outlined" className="shadow-sm">
         <Title level={4} className="mb-4">
           Thông tin cá nhân
         </Title>

@@ -18,7 +18,7 @@ import {
 } from "@ant-design/icons";
 
 const { Title, Paragraph, Text } = Typography;
-  
+
 interface TestimonialItemProps {
   name: string;
   avatar?: string;
@@ -51,14 +51,15 @@ const TestimonialItem: React.FC<TestimonialItemProps> = ({
   return (
     <Card
       className="testimonial-card overflow-hidden transition-all duration-300"
-      bordered={false}
+      variant="borderless"
       style={{
         borderRadius: token.borderRadius * 2,
         height: "100%",
         boxShadow: token.boxShadowTertiary,
         background: token.colorBgContainer,
       }}
-      bodyStyle={{ padding: "24px" }}
+
+      styles={{ body: { padding: 24 } }}
     >
       <div className="absolute top-4 right-4 opacity-10">
         <CommentOutlined

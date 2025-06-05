@@ -236,7 +236,7 @@ const RoomCard: React.FC<RoomProps> = ({
           )}
         </div>
       }
-      bodyStyle={{ padding: "16px" }}
+      styles={{ body: { padding: "16px" } }}
     >
       <div className="space-y-3">
         {/* Room Title with enhanced styling */}
