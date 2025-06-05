@@ -6,26 +6,36 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
+    protected $table = 'room';
+    protected $primaryKey = 'room_id';
+    public $timestamps = false;
+
     protected $fillable = [
+        'hotel_id',
+        'room_type_id',
         'name',
-        'description',
-        'price',
-        'capacity',
-        'amenities',
-        'image_url',
-        'status',
+        'image',
+        'base_price_vnd',
+        'size',
+        'view',
+        'rating',
+        'lavish_plus_discount',
+        'max_guests',
+        'total_rooms',
+        'description'
     ];
 
     protected $casts = [
-        'amenities' => 'array', // Assuming amenities is stored as a JSON array
+        'base_price_vnd' => 'decimal:2',
+        'rating' => 'decimal:1',
+        'lavish_plus_discount' => 'decimal:2',
     ];
 
-    public function bookings()
+    /**
+     * Relationship with room type
+     */
+    public function roomType()
     {
-        return $this->hasMany('App\Models\Booking');
-    }
-    public function reviews()
-    {
-        return $this->hasMany('App\Models\Review');
+        return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
     }
 }

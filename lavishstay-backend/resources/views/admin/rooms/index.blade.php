@@ -33,7 +33,7 @@
         <!-- Cards -->
         <div class="grid grid-cols-12 gap-6">
 
-           <h1>Rooms</h1>
+           
            
         </div>
 

@@ -64,7 +64,7 @@
                         @endif
 
                         <div class="">
-                            <table class="min-w-full table-auto">
+                            <table class="w-full table-auto">
                                 <thead>
                                     <tr class="bg-gray-50 dark:bg-gray-700">
                                         <th
