@@ -4,8 +4,8 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Tạo Loại Phòng Mới</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Thêm loại phòng mới vào danh mục khách sạn của bạn</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh Sửa Loại Phòng</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật thông tin loại phòng</p>
             </div>
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
@@ -18,7 +18,7 @@
         <x-slot name="header">
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {{ __('Thêm Loại Phòng Mới') }}
+                    {{ __('Chỉnh Sửa Loại Phòng') }}
                 </h2>
                 <a href="{{ route('admin.room-types') }}"
                     class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
@@ -41,8 +41,9 @@
                             </div>
                         @endif
 
-                        <form action="{{ route('admin.room-types.store') }}" method="POST" id="roomTypeForm">
+                        <form action="{{ route('admin.room-types.update', $roomType->room_type_id) }}" method="POST" id="roomTypeForm">
                             @csrf
+                            @method('PUT')
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Room Code -->
@@ -51,7 +52,7 @@
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Mã Loại Phòng <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="text" name="room_code" id="room_code" value="{{ old('room_code') }}"
+                                    <input type="text" name="room_code" id="room_code" value="{{ old('room_code', $roomType->room_code) }}"
                                         class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
                                         placeholder="Ví dụ: deluxe_001" required>
                                 </div>
@@ -62,7 +63,7 @@
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Tổng Số Phòng
                                     </label>
-                                    <input type="number" name="total_room" id="total_room" value="{{ old('total_room') }}"
+                                    <input type="number" name="total_room" id="total_room" value="{{ old('total_room', $roomType->total_room) }}"
                                         class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
                                         placeholder="Ví dụ: 50" min="0">
                                 </div>
@@ -73,7 +74,7 @@
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Tên Loại Phòng <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="text" name="name" id="name" value="{{ old('name') }}"
+                                    <input type="text" name="name" id="name" value="{{ old('name', $roomType->name) }}"
                                         class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
                                         placeholder="Ví dụ: Phòng Deluxe Hướng Biển" required>
                                 </div>
@@ -86,7 +87,7 @@
                                     </label>
                                     <textarea name="description" id="description" rows="5"
                                         class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
-                                        placeholder="Mô tả loại phòng...">{{ old('description') }}</textarea>
+                                        placeholder="Mô tả loại phòng...">{{ old('description', $roomType->description) }}</textarea>
                                 </div>
                             </div>
 
@@ -98,8 +99,8 @@
                                         Hủy
                                     </a>
                                     <button type="submit"
-                                        class="btn bg-indigo-500 hover:bg-indigo-600 text-white">
-                                        Tạo Loại Phòng
+                                        class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                                        Cập Nhật Loại Phòng
                                     </button>
                                 </div>
                             </div>
@@ -133,7 +134,7 @@
             document.getElementById('roomTypeForm').addEventListener('submit', function(e) {
                 if (!validateForm()) {
                     e.preventDefault();
-                    showNotification('Vui lòng điền đầy đủ các trường bắt buộc!', 'error');
+                    showNotification('Vui lòng điền đầy đủ các trường bắt buộc', 'error');
                     return;
                 }
 
@@ -144,7 +145,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Đang tạo...
+                    Đang cập nhật...
                 `;
                 submitBtn.disabled = true;
             });

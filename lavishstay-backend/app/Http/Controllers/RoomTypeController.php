@@ -4,65 +4,96 @@ namespace App\Http\Controllers;
 
 use App\Models\RoomType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class RoomTypeController extends Controller
 {
-    
     public function index()
     {
-        $roomTypes = RoomType::with(['amenities', 'rooms'])
-            ->paginate(7);
-
+        $roomTypes = RoomType::with(['amenities', 'rooms'])->paginate(7);
         return view('admin.room-types.index', compact('roomTypes'));
     }
 
-  
     public function create()
     {
-        // TODO: Implement create form
-        return redirect()->route('admin.room-types.index')
-            ->with('info', 'Chức năng thêm loại phòng đang được phát triển.');
+        return view('admin.room-types.create');
     }
 
-    
     public function store(Request $request)
     {
-        // Code tiếp theo sẽ xử lý việc lưu loại phòng mới
-        return redirect()->route('admin.room-types.index')
-            ->with('info', 'Chức năng thêm loại phòng đang được phát triển.');
+        $validator = Validator::make($request->all(), [
+            'room_code' => 'required|string|max:255|unique:room_types,room_code',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'total_room' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $data = $request->only(['room_code', 'name', 'description', 'total_room']);
+        RoomType::create($data);
+
+        return redirect()->route('admin.room-types')
+            ->with('success', 'Loại phòng đã được tạo thành công!');
     }
 
-    
     public function show($roomTypeId)
     {
-       $roomType = RoomType::with(['amenities', 'rooms'])
+        $roomType = RoomType::with(['amenities', 'rooms'])
             ->where('room_type_id', $roomTypeId)
             ->firstOrFail();
-        
+
         return view('admin.room-types.show', compact('roomType'));
     }
 
-   
-    public function edit(RoomType $roomType)
+    public function edit($roomTypeId)
     {
-        // Code tiếp
-        return redirect()->route('admin.room-types.index')
-            ->with('info', 'Chức năng sửa loại phòng đang được phát triển.');
+        $roomType = RoomType::findOrFail($roomTypeId);
+        return view('admin.room-types.edit', compact('roomType'));
     }
 
-   
-    public function update(Request $request, RoomType $roomType)
+    public function update(Request $request, $roomTypeId)
     {
-        // Code tiếp
-        return redirect()->route('admin.room-types.index')
-            ->with('info', 'Chức năng sửa loại phòng đang được phát triển.');
+        $validator = Validator::make($request->all(), [
+            'room_code' => 'required|string|max:255|unique:room_types,room_code,' . $roomTypeId . ',room_type_id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'total_room' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $roomType = RoomType::findOrFail($roomTypeId);
+        $roomType->update($request->only(['room_code', 'name', 'description', 'total_room']));
+
+        return redirect()->route('admin.room-types')
+            ->with('success', 'Loại phòng đã được cập nhật thành công!');
     }
 
-   
-    public function destroy(RoomType $roomType)
+    public function destroy($roomTypeId)
     {
-        // Code tiếp
-        return redirect()->route('admin.room-types.index')
-            ->with('info', 'Chức năng xóa loại phòng đang được phát triển.');
+        $roomType = RoomType::findOrFail($roomTypeId);
+
+        if ($roomType->rooms()->exists()) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Không thể xóa loại phòng này vì có phòng đang sử dụng nó!'
+            ], 400);
+        }
+
+        $roomType->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Loại phòng đã được xóa thành công!'
+        ]);
     }
 }
