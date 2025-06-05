@@ -39,7 +39,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                             borderRadius: '8px',
                             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
                         }}
-                        bodyStyle={{ padding: 0 }}
+                        styles={{ body: { padding: 0 } }}
                     >
                         <Carousel autoplay dots={{ className: 'custom-dots' }}>
                             {bookingData.images.map((image: string, index: number) => (

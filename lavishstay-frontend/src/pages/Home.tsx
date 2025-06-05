@@ -11,7 +11,7 @@ import Newsletter from "../components/Newsletter";
 import RoomSwiper from "../components/ui/RoomSwiper";
 import Awards from "../components/ui/Awards";
 import HotelActivities from "../components/ui/HotelActivities";
-import SwiftPande from "../components/ui/swiftPande";
+import SwiftPande from "../components/ui/swiftPanda";
 
 // Import API hooks with axios
 import { useGetAllRooms, useGetRoomsByType } from "../hooks/useApi";
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
     {
       id: 1,
       name: "Nguyễn Văn Quyền",
-      avatar: "../../public/images/users/1.jpg",
+      avatar: "../images/users/1.jpg",
       rating: 5,
       position: "Doanh nhân",
       comment:
@@ -56,7 +56,7 @@ const Home: React.FC = () => {
     {
       id: 2,
       name: "Nguyễn Anh Đức",
-      avatar: "../../public/images/users/5.jpg",
+      avatar: "../images/users/5.jpg",
       rating: 5,
       position: "Giám đốc marketing",
       comment:
@@ -67,7 +67,7 @@ const Home: React.FC = () => {
     {
       id: 3,
       name: "Lê Hiểu Phước",
-      avatar: "../../public/images/users/12.jpg",
+      avatar: "../images/users/12.jpg",
       rating: 5,
       position: "Nhiếp ảnh gia",
       comment:
@@ -78,7 +78,7 @@ const Home: React.FC = () => {
     {
       id: 4,
       name: "Lê Thị Trang",
-      avatar: "../../public/images/users/9.jpg",
+      avatar: "../images/users/9.jpg",
       rating: 4,
       position: "CEO Startup",
       comment:
@@ -89,7 +89,7 @@ const Home: React.FC = () => {
     {
       id: 5,
       name: "Trần Minh Tuấn",
-      avatar: "../../public/images/users/1.jpg",
+      avatar: "../images/users/1.jpg",
       rating: 5,
       position: "Kiến trúc sư",
       comment:
@@ -108,8 +108,8 @@ const Home: React.FC = () => {
         <SearchForm className="mx-auto shadow-xl" />
       </div>{" "}      {/* Awards Section */}
       <Awards />
-      
-   
+
+
       {/* Sale Rooms Section */}
       <div className="container mx-auto px-4 mb-16">
         <SectionHeader
@@ -296,8 +296,10 @@ const Home: React.FC = () => {
         </div>
       </div>{" "}
       {/* Phần hoạt động của khách sạn */}
-      <HotelActivities />      {/* Hotel Gallery 3D Carousel */}
-      <div className="mb-1">
+      <HotelActivities />     
+       
+      {/* Hotel Gallery 3D Carousel */}
+      <div className="mt-11">
         <div className="container mx-auto ">
           <SectionHeader
             title="Khám phá LavishStay"
@@ -308,9 +310,9 @@ const Home: React.FC = () => {
         </div>
         <SwiftPande />
       </div>
-      
+
       {/* Testimonials Section */}
-      <div className="py-16 mb-16 ">
+      <div className="py-16  ">
         <div className="container mx-auto px-4">
           <SectionHeader
             title={t("home.testimonials.title")}

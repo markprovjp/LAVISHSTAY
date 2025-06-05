@@ -14,64 +14,73 @@ interface ThemeToggleProps {
 const ToggleContainer = styled.div<{ $isDarkMode: boolean; $size: string }>`
   position: relative;
   display: flex;
+  align-items: center;
   width: ${(props) =>
     props.$size === "large"
       ? "80px"
       : props.$size === "middle"
-      ? "64px"
-      : "56px"};
+        ? "64px"
+        : "56px"};
   height: ${(props) =>
     props.$size === "large"
       ? "36px"
       : props.$size === "middle"
-      ? "32px"
-      : "28px"};
+        ? "32px"
+        : "28px"};
   border-radius: 50px;
   background: ${(props) => (props.$isDarkMode ? "#0f172a" : "#f1f5f9")};
-  border: 3px solid ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
+  border: 2px solid ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
   cursor: pointer;
-  padding: 2px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 3px;
+  transition: background 0.5s ease, border-color 0.5s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  will-change: transform;
 
-  &:hover {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+
+
+  &:active {
+    transform: translateY(0);
+    transition: transform 0.5s ease;
   }
 `;
 
 const ToggleThumb = styled.div<{ $isDarkMode: boolean; $size: string }>`
   position: absolute;
-  top: 0px;
-  left: ${(props) =>
-    props.$isDarkMode
-      ? props.$size === "large"
-        ? "calc(100% - 32px)"
-        : props.$size === "middle"
-        ? "calc(100% - 28px)"
-        : "calc(100% - 24px)"
-      : "0px"};
+  top: 50%;
+  left: ${(props) => {
+    const thumbSize =
+      props.$size === "large" ? 30 : props.$size === "middle" ? 26 : 22;
+    const containerWidth =
+      props.$size === "large" ? 80 : props.$size === "middle" ? 64 : 56;
+    const padding = 3;
+    return props.$isDarkMode
+      ? `${containerWidth - thumbSize - padding}px`
+      : `${padding}px`;
+  }};
   width: ${(props) =>
     props.$size === "large"
-      ? "32px"
+      ? "30px"
       : props.$size === "middle"
-      ? "28px"
-      : "24px"};
+        ? "26px"
+        : "22px"};
   height: ${(props) =>
     props.$size === "large"
-      ? "32px"
+      ? "30px"
       : props.$size === "middle"
-      ? "28px"
-      : "24px"};
+        ? "26px"
+        : "22px"};
   border-radius: 50%;
   background: ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  transition: left 0.25s ease-out, background 0.2s ease;
   color: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 2;
+  transform: translateY(-50%);
+  will-change: left;
 `;
 
 const IconsContainer = styled.div`
@@ -79,18 +88,21 @@ const IconsContainer = styled.div`
   width: 100%;
   justify-content: space-between;
   align-items: center;
-  padding: 0 6px;
+  padding: 0 8px;
   position: relative;
   z-index: 1;
+  height: 100%;
 `;
 
 const IconWrapper = styled.div<{ $active: boolean; $isDarkMode: boolean }>`
   color: ${(props) =>
-    props.$active ? (props.$isDarkMode ? "#3b82f6" : "#152C5B") : "#9ca3af"};
+    props.$active ? "transparent" : props.$isDarkMode ? "#64748b" : "#94a3b8"};
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
+  font-size: 12px;
+  opacity: ${(props) => (props.$active ? 0.3 : 0.7)};
 `;
 
 /**
@@ -130,12 +142,11 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
         className={className}
         onClick={handleToggle}
         data-testid="theme-toggle"
-      >
-        <ToggleThumb $isDarkMode={isDarkMode} $size={getSizeValue()}>
+      >        <ToggleThumb $isDarkMode={isDarkMode} $size={getSizeValue()}>
           {isDarkMode ? (
-            <MoonOutlined style={{ fontSize: "14px" }} />
+            <MoonOutlined style={{ fontSize: "12px" }} />
           ) : (
-            <SunOutlined style={{ fontSize: "14px" }} />
+            <SunOutlined style={{ fontSize: "12px" }} />
           )}
         </ToggleThumb>
         <IconsContainer>

@@ -4,12 +4,6 @@
   margin-top: 1.5rem;
 }
 
-.room-service-options-container .ant-card {
-  border: none;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
-  overflow: hidden;
-}
 
 /* Header Section */
 .room-service-header {

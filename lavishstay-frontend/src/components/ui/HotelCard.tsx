@@ -53,7 +53,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
         </div>
       }
       onClick={onClick}
-      bodyStyle={{ padding: "16px" }}
+      styles={{ body: { padding: "16px" } }}
     >
       <div className="mb-2 flex justify-between items-center">
         <Rate disabled defaultValue={rating} className="text-sm" />

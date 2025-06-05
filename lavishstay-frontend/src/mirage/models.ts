@@ -50,7 +50,7 @@ export interface HotelRatingDetails {
 export const sampleRooms: Room[] = [{
     id: 1,
     name: "Phòng Loại Sang (Deluxe Room)",
-    image: "../../public/images/room/Deluxe_Room/1.jpg",
+    image: "/images/room/Deluxe_Room/1.jpg",
     priceVND: 2000000, // TĂNG GIÁ GỐC LÊN 2.5M// Giá thấp nhất từ các options
     size: 32,
     view: "Nhìn ra thành phố",
@@ -97,18 +97,95 @@ export const sampleRooms: Room[] = [{
     availableRooms: 18, // Số phòng còn lại
     description: "Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.",
     images: [
-        "../../public/images/room/Deluxe_Room/1.jpg",
-        "../../public/images/room/Deluxe_Room/2.jpg",
-        "../../public/images/room/Deluxe_Room/3.webp",
-        "../../public/images/room/Deluxe_Room/4.webp",
+        "/images/room/Deluxe_Room/1.jpg",
+        "/images/room/Deluxe_Room/2.jpg",
+        "/images/room/Deluxe_Room/3.webp", "/images/room/Deluxe_Room/4.webp",
     ],
     options: [
-
+        {
+            id: "deluxe-single",
+            name: "Phòng đơn - Không bữa sáng",
+            pricePerNight: { vnd: 1800000 },
+            maxGuests: 1,
+            minGuests: 1,
+            roomType: "deluxe",
+            
+            cancellationPolicy: {
+                type: "free",
+                freeUntil: "24h trước check-in",
+                description: "Hủy miễn phí đến 24h trước check-in"
+            },
+            paymentPolicy: {
+                type: "pay_at_hotel",
+                description: "Thanh toán khi nhận phòng"
+            },
+            availability: {
+                total: 10,
+                remaining: 5
+            },
+            promotion: {
+                type: "member",
+                message: "Đề xuất cho bạn",
+                discount: 10
+            }
+        },
+        {
+            id: "deluxe-double-basic",
+            name: "Phòng đôi - Không bữa sáng",
+            pricePerNight: { vnd: 2000000 },
+            maxGuests: 2,
+            minGuests: 1,
+            roomType: "deluxe",
+            
+            cancellationPolicy: {
+                type: "free",
+                freeUntil: "24h trước check-in",
+                description: "Hủy miễn phí đến 24h trước check-in"
+            },
+            paymentPolicy: {
+                type: "pay_at_hotel",
+                description: "Thanh toán khi nhận phòng"
+            },
+            availability: {
+                total: 15,
+                remaining: 8
+            },
+            promotion: {
+                type: "hot",
+                message: "Phổ biến nhất",
+                discount: 15
+            }
+        },
+        {
+            id: "deluxe-double-premium",
+            name: "Phòng đôi - Premium (Không ăn)",
+            pricePerNight: { vnd: 2400000 },
+            maxGuests: 2,
+            minGuests: 1,
+            roomType: "deluxe",
+            
+            cancellationPolicy: {
+                type: "conditional",
+                freeUntil: "12h trước check-in",
+                penalty: 50,
+                description: "Hủy có điều kiện, phí 50%"
+            },
+            paymentPolicy: {
+                type: "pay_now_with_vietQR",
+                description: "Thanh toán ngay qua VietQR",
+                prepaymentRequired: true
+            },
+            availability: {
+                total: 8,
+                remaining: 3,
+                urgencyMessage: "Chỉ còn 3 phòng!"
+            }
+        }
     ]
 }, {
     id: 2,
     name: "Phòng cao cấp trong góc (Premium Corner Room)",
-    image: "../../public/images/room/Premium_Corner_Room/1.jpg",
+    image: "images/room/Premium_Corner_Room/1.jpg",
     priceVND: 1600000,
     size: 55,
     view: "Tầm nhìn thành phố",
@@ -156,12 +233,11 @@ export const sampleRooms: Room[] = [{
     availableRooms: 15, // Số phòng còn lại
     description: "Phòng giường đôi rộng rãi này có máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm.",
     images: [
-        "../../public/images/room/Premium_Corner_Room/1.jpg",
-        "../../public/images/room/Premium_Corner_Room/2.jpg",
-        "../../public/images/room/Premium_Corner_Room/3.webp",
-        "../../public/images/room/Premium_Corner_Room/4.jpg",
-        "../../public/images/room/Premium_Corner_Room/5.webp",
-        "../../public/images/room/Premium_Corner_Room/6.webp",
+        "/images/room/Premium_Corner_Room/1.jpg",
+        "/images/room/Premium_Corner_Room/2.jpg",
+        "/images/room/Premium_Corner_Room/3.webp",
+        "/images/room/Premium_Corner_Room/4.jpg",
+        "/images/room/Premium_Corner_Room/5.webp", "/images/room/Premium_Corner_Room/6.webp",
     ],
     options: [
 
@@ -169,7 +245,7 @@ export const sampleRooms: Room[] = [{
 }, {
     id: 3,
     name: "Phòng The Level Cao cấp (The Level Premium Room)",
-    image: "../../public/images/room/The_Level_Premium_Room/1.jpg",
+    image: "/images/room/The_Level_Premium_Room/1.jpg",
     priceVND: 3900000,
     size: 33,
     view: "Nhìn ra thành phố",
@@ -216,211 +292,211 @@ export const sampleRooms: Room[] = [{
     availableRooms: 13, // Số phòng còn lại
     description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
     images: [
-        "../../public/images/room/The_Level_Premium_Room/1.jpg",
-        "../../public/images/room/The_Level_Premium_Room/2.webp",
-        "../../public/images/room/The_Level_Premium_Room/3.jpg",
-        "../../public/images/room/The_Level_Premium_Room/4.jpg",
-        "../../public/images/room/The_Level_Premium_Room/5.jpg",
-        "../../public/images/room/The_Level_Premium_Room/6.webp",
-        "../../public/images/room/The_Level_Premium_Room/7.jpg",
-        "../../public/images/room/The_Level_Premium_Room/8.webp",
+        "/images/room/The_Level_Premium_Room/1.jpg",
+        "/images/room/The_Level_Premium_Room/2.webp",
+        "/images/room/The_Level_Premium_Room/3.jpg",
+        "/images/room/The_Level_Premium_Room/4.jpg",
+        "/images/room/The_Level_Premium_Room/5.jpg",
+        "/images/room/The_Level_Premium_Room/6.webp",
+        "/images/room/The_Level_Premium_Room/7.jpg",
+        "/images/room/The_Level_Premium_Room/8.webp",
     ],
     options: [
 
     ]
 },
 {
-        id: 4,
-        name: "Phòng Suite (Suite Room)",
-        image: "../../public/images/room/Suite/1.webp",
-        priceVND: 6200000,
-        size: 78,
-        view: "Tầm nhìn toàn cảnh biển",
-        bedType: {
-            default: "1 giường đôi cực lớn  ",
-            options: ["Giường đôi", "2 giường đơn"]
-        },
-        amenities: [
-            "Đồ vệ sinh cá nhân miễn phí",
-            "Áo choàng tắm",
-            "Két an toàn",
-            "Nhà vệ sinh",
-            "Bồn tắm hoặc Vòi sen",
-            "Khăn tắm",
-            "Ổ điện gần giường",
-            "Bàn làm việc",
-            "Khu vực tiếp khách",
-            "TV",
-            "Dép",
-            "Tủ lạnh",
-            "Điện thoại",
-            "Máy sấy tóc",
-            "Sàn trải thảm",
-            "Ấm đun nước điện",
-            "Tủ hoặc phòng để quần áo",
-            "Giấy vệ sinh"
-        ],
-        mainAmenities: [
-            "Điều hòa không khí",
-            "Phòng tắm riêng trong phòng",
-            "TV màn hình phẳng",
-            "Hệ thống cách âm",
-            "Minibar",
-            "WiFi miễn phí",
-            "Suite riêng tư",
-            "Có cung cấp nôi/cũi theo yêu cầu"
+    id: 4,
+    name: "Phòng Suite (Suite Room)",
+    image: "/images/room/Suite/1.webp",
+    priceVND: 6200000,
+    size: 78,
+    view: "Tầm nhìn toàn cảnh biển",
+    bedType: {
+        default: "1 giường đôi cực lớn  ",
+        options: ["Giường đôi", "2 giường đơn"]
+    },
+    amenities: [
+        "Đồ vệ sinh cá nhân miễn phí",
+        "Áo choàng tắm",
+        "Két an toàn",
+        "Nhà vệ sinh",
+        "Bồn tắm hoặc Vòi sen",
+        "Khăn tắm",
+        "Ổ điện gần giường",
+        "Bàn làm việc",
+        "Khu vực tiếp khách",
+        "TV",
+        "Dép",
+        "Tủ lạnh",
+        "Điện thoại",
+        "Máy sấy tóc",
+        "Sàn trải thảm",
+        "Ấm đun nước điện",
+        "Tủ hoặc phòng để quần áo",
+        "Giấy vệ sinh"
+    ],
+    mainAmenities: [
+        "Điều hòa không khí",
+        "Phòng tắm riêng trong phòng",
+        "TV màn hình phẳng",
+        "Hệ thống cách âm",
+        "Minibar",
+        "WiFi miễn phí",
+        "Suite riêng tư",
+        "Có cung cấp nôi/cũi theo yêu cầu"
 
-        ],
-        discount: 15,
-        roomType: "suite",
-        rating: 9.8,
-                  urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
+    ],
+    discount: 15,
+    roomType: "suite",
+    rating: 9.8,
+    urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
     totalRooms: 11, // Tổng số phòng The Level
     availableRooms: 9, // Số phòng còn lại
-        description: "Suite rộng rãi này được bố trí 1 phòng ngủ, khu vực ghế ngồi và 1 phòng tắm với buồng tắm đứng cùng bồn tắm. Suite này có máy điều hòa, TV màn hình phẳng, tường cách âm, minibar, khu vực ăn uống cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
-        images: [
-            "../../public/images/room/Suite/1.webp",
-            "../../public/images/room/Suite/2.webp",
-            "../../public/images/room/Suite/3.webp",
-            "../../public/images/room/Suite/4.webp",
-            "../../public/images/room/Suite/5.jpg",
-            "../../public/images/room/Suite/6.jpg",
-            "../../public/images/room/Suite/7.webp",
-        ],
-        options: [
+    description: "Suite rộng rãi này được bố trí 1 phòng ngủ, khu vực ghế ngồi và 1 phòng tắm với buồng tắm đứng cùng bồn tắm. Suite này có máy điều hòa, TV màn hình phẳng, tường cách âm, minibar, khu vực ăn uống cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
+    images: [
+        "/images/room/Suite/1.webp",
+        "/images/room/Suite/2.webp",
+        "/images/room/Suite/3.webp",
+        "/images/room/Suite/4.webp",
+        "/images/room/Suite/5.jpg",
+        "/images/room/Suite/6.jpg",
+        "/images/room/Suite/7.webp",
+    ],
+    options: [
 
-        ]
-    }, 
+    ]
+},
 {
-        id: 5,
-        name: "Phòng The Level Hảo Hạng Ở Góc (The Level Premium Corner Room)",
-        image: "../../public/images/room/The_Level_Premium_Corner_Room/1.webp",
-        priceVND: 3244000,
-        size: 45,
-        view: "Nhìn ra thành phố",
-        bedType: {
-            default: "1 giường đôi cực lớn  hoặc 2 giường đơn",
-            options: ["Giường đôi", "2 giường đơn"]
-        },
-        amenities: [
-            "Đồ vệ sinh cá nhân miễn phí",
-            "Áo choàng tắm",
-            "Két an toàn",
-            "Nhà vệ sinh",
-            "Bồn tắm hoặc Vòi sen",
-            "Khăn tắm",
-            "Ổ điện gần giường",
-            "Bàn làm việc",
-            "Khu vực tiếp khách",
-            "TV",
-            "Dép",
-            "Tủ lạnh",
-            "Điện thoại",
-            "Máy sấy tóc",
-            "Sàn trải thảm",
-            "Ấm đun nước điện",
-            "Tủ hoặc phòng để quần áo",
-            "Giấy vệ sinh"
-        ],
-        mainAmenities: [
-            "Điều hòa không khí",
-            "Phòng tắm riêng trong phòng",
-            "TV màn hình phẳng",
-            "Hệ thống cách âm",
-            "Minibar",
-            "WiFi miễn phí",
-            "Máy pha cà phê",
+    id: 5,
+    name: "Phòng The Level Hảo Hạng Ở Góc (The Level Premium Corner Room)",
+    image: "/images/room/The_Level_Premium_Corner_Room/1.webp",
+    priceVND: 3244000,
+    size: 45,
+    view: "Nhìn ra thành phố",
+    bedType: {
+        default: "1 giường đôi cực lớn  hoặc 2 giường đơn",
+        options: ["Giường đôi", "2 giường đơn"]
+    },
+    amenities: [
+        "Đồ vệ sinh cá nhân miễn phí",
+        "Áo choàng tắm",
+        "Két an toàn",
+        "Nhà vệ sinh",
+        "Bồn tắm hoặc Vòi sen",
+        "Khăn tắm",
+        "Ổ điện gần giường",
+        "Bàn làm việc",
+        "Khu vực tiếp khách",
+        "TV",
+        "Dép",
+        "Tủ lạnh",
+        "Điện thoại",
+        "Máy sấy tóc",
+        "Sàn trải thảm",
+        "Ấm đun nước điện",
+        "Tủ hoặc phòng để quần áo",
+        "Giấy vệ sinh"
+    ],
+    mainAmenities: [
+        "Điều hòa không khí",
+        "Phòng tắm riêng trong phòng",
+        "TV màn hình phẳng",
+        "Hệ thống cách âm",
+        "Minibar",
+        "WiFi miễn phí",
+        "Máy pha cà phê",
 
-        ],
-        discount: 17,
-        roomType: "theLevel",
-        rating: 10,
-            urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
+    ],
+    discount: 17,
+    roomType: "theLevel",
+    rating: 10,
+    urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
     totalRooms: 13, // Tổng số phòng The Level
     availableRooms: 7, // Số phòng còn lại
-        description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
-        images: [
-            "../../public/images/room/The_Level_Premium_Corner_Room/1.webp",
-            "../../public/images/room/The_Level_Premium_Corner_Room/2.jpg",
-            "../../public/images/room/The_Level_Premium_Corner_Room/3.webp",
-            "../../public/images/room/The_Level_Premium_Corner_Room/4.jpg",
-            "../../public/images/room/The_Level_Premium_Corner_Room/5.webp",
-            "../../public/images/room/The_Level_Premium_Corner_Room/6.jpg"
-        ],
-        options: [
+    description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
+    images: [
+        "/images/room/The_Level_Premium_Corner_Room/1.webp",
+        "/images/room/The_Level_Premium_Corner_Room/2.jpg",
+        "/images/room/The_Level_Premium_Corner_Room/3.webp",
+        "/images/room/The_Level_Premium_Corner_Room/4.jpg",
+        "/images/room/The_Level_Premium_Corner_Room/5.webp",
+        "/images/room/The_Level_Premium_Corner_Room/6.jpg"
+    ],
+    options: [
 
-        ],
+    ],
+},
+{
+    id: 6,
+    name: "Phòng Suite The Level (The Level Suite Room)",
+    image: "/images/room/The_Level_Suite_Room/1.webp",
+    priceVND: 14681000,
+    size: 93,
+    view: "Nhìn ra thành phố",
+    bedType: {
+        default: "1 giường đôi cực lớn  "
     },
-  {
-        id: 6,
-        name: "Phòng Suite The Level (The Level Suite Room)",
-        image: "../../public/images/room/The_Level_Suite_Room/1.webp",
-        priceVND: 14681000,
-        size: 93,
-        view: "Nhìn ra thành phố",
-        bedType: {
-            default: "1 giường đôi cực lớn  "
-        },
-        amenities: [
-            "Đồ vệ sinh cá nhân miễn phí",
-            "Áo choàng tắm",
-            "Két an toàn",
-            "Nhà vệ sinh",
-            "Bồn tắm hoặc Vòi sen",
-            "Khăn tắm",
-            "Ổ điện gần giường",
-            "Bàn làm việc",
-            "Khu vực tiếp khách",
-            "TV",
-            "Dép",
-            "Tủ lạnh",
-            "Điện thoại",
-            "Máy sấy tóc",
-            "Sàn trải thảm",
-            "Ấm đun nước điện",
-            "Tủ hoặc phòng để quần áo",
-            "Giấy vệ sinh"
-        ],
-        mainAmenities: [
-            "Điều hòa không khí",
-            "Phòng tắm riêng trong phòng",
-            "TV màn hình phẳng",
-            "Hệ thống cách âm",
-            "Minibar",
-            "WiFi miễn phí",
-            "Máy pha cà phê",
-        ],
-        discount: 75,
-        roomType: "theLevel",
-        rating: 10,
-            urgencyRoomMessage: "Chỉ còn 8 phòng . Hãy nhanh tay đặt  !",
+    amenities: [
+        "Đồ vệ sinh cá nhân miễn phí",
+        "Áo choàng tắm",
+        "Két an toàn",
+        "Nhà vệ sinh",
+        "Bồn tắm hoặc Vòi sen",
+        "Khăn tắm",
+        "Ổ điện gần giường",
+        "Bàn làm việc",
+        "Khu vực tiếp khách",
+        "TV",
+        "Dép",
+        "Tủ lạnh",
+        "Điện thoại",
+        "Máy sấy tóc",
+        "Sàn trải thảm",
+        "Ấm đun nước điện",
+        "Tủ hoặc phòng để quần áo",
+        "Giấy vệ sinh"
+    ],
+    mainAmenities: [
+        "Điều hòa không khí",
+        "Phòng tắm riêng trong phòng",
+        "TV màn hình phẳng",
+        "Hệ thống cách âm",
+        "Minibar",
+        "WiFi miễn phí",
+        "Máy pha cà phê",
+    ],
+    discount: 75,
+    roomType: "theLevel",
+    rating: 10,
+    urgencyRoomMessage: "Chỉ còn 8 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
     totalRooms: 12, // Tổng số phòng The Level
     availableRooms: 13, // Số phòng còn lại
-        description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
-        images: [
-            "../../public/images/room/The_Level_Suite_Room/1.webp",
-            "../../public/images/room/The_Level_Suite_Room/2.webp",
-            "../../public/images/room/The_Level_Suite_Room/3.webp",
-            "../../public/images/room/The_Level_Suite_Room/4.jpg",
-            "../../public/images/room/The_Level_Suite_Room/5.jpg",
-            "../../public/images/room/The_Level_Suite_Room/6.jpg",
-            "../../public/images/room/The_Level_Suite_Room/7.webp",
-            "../../public/images/room/The_Level_Suite_Room/8.webp",
-        ],
-        options: [
+    description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
+    images: [
+        "/images/room/The_Level_Suite_Room/1.webp",
+        "/images/room/The_Level_Suite_Room/2.webp",
+        "/images/room/The_Level_Suite_Room/3.webp",
+        "/images/room/The_Level_Suite_Room/4.jpg",
+        "/images/room/The_Level_Suite_Room/5.jpg",
+        "/images/room/The_Level_Suite_Room/6.jpg",
+        "/images/room/The_Level_Suite_Room/7.webp",
+        "/images/room/The_Level_Suite_Room/8.webp",
+    ],
+    options: [
 
-        ]
-    },
+    ]
+},
 {
     id: 7,
     name: "Suite Hạng Tổng Thống (Presidential Suite)",
-    image: "../../public/images/room/Presidential_Suite/1.webp",
+    image: "/images/room/Presidential_Suite/1.webp",
     priceVND: 50000000,
     size: 270,
     view: "Hướng ngoài trời",
@@ -462,31 +538,31 @@ export const sampleRooms: Room[] = [{
     discount: 5,
     roomType: "presidential",
     rating: 10,
-    urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
+    urgencyRoomMessage: "Chỉ còn 1 phòng duy nhất . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 4,
     totalRooms: 8,
     availableRooms: 13, // Số phòng còn lại
     description: "Suite rộng rãi này được bố trí 1 phòng khách, 2 phòng ngủ riêng biệt và 2 phòng tắm với buồng tắm đứng cùng đồ vệ sinh cá nhân miễn phí. Suite này có máy điều hòa, khu vực ghế ngồi với TV màn hình phẳng, tường cách âm, minibar, máy pha cà phê cũng như khu vực ăn uống. Căn này được trang bị 2 giường.",
     images: [
-        "../../public/images/room/Presidential_Suite/1.webp",
-        "../../public/images/room/Presidential_Suite/2.jpg",
-        "../../public/images/room/Presidential_Suite/3.jpg",
-        "../../public/images/room/Presidential_Suite/4.jpg",
-        "../../public/images/room/Presidential_Suite/5.jpg",
-        "../../public/images/room/Presidential_Suite/6.jpg",
-        "../../public/images/room/Presidential_Suite/7.jpg",
-        "../../public/images/room/Presidential_Suite/8.jpg",
-        "../../public/images/room/Presidential_Suite/9.jpg",
-        "../../public/images/room/Presidential_Suite/10.webp",
-        "../../public/images/room/Presidential_Suite/11.jpg",
-        "../../public/images/room/Presidential_Suite/12.webp",
-        "../../public/images/room/Presidential_Suite/13.jpg",
-        "../../public/images/room/Presidential_Suite/14.webp",
-        "../../public/images/room/Presidential_Suite/15.jpg",
-        "../../public/images/room/Presidential_Suite/16.jpg",
-        "../../public/images/room/Presidential_Suite/17.jpg",
-        "../../public/images/room/Presidential_Suite/18.jpg",
+        "/images/room/Presidential_Suite/1.webp",
+        "/images/room/Presidential_Suite/2.jpg",
+        "/images/room/Presidential_Suite/3.jpg",
+        "/images/room/Presidential_Suite/4.jpg",
+        "/images/room/Presidential_Suite/5.jpg",
+        "/images/room/Presidential_Suite/6.jpg",
+        "/images/room/Presidential_Suite/7.jpg",
+        "/images/room/Presidential_Suite/8.jpg",
+        "/images/room/Presidential_Suite/9.jpg",
+        "/images/room/Presidential_Suite/10.webp",
+        "/images/room/Presidential_Suite/11.jpg",
+        "/images/room/Presidential_Suite/12.webp",
+        "/images/room/Presidential_Suite/13.jpg",
+        "/images/room/Presidential_Suite/14.webp",
+        "/images/room/Presidential_Suite/15.jpg",
+        "/images/room/Presidential_Suite/16.jpg",
+        "/images/room/Presidential_Suite/17.jpg",
+        "/images/room/Presidential_Suite/18.jpg",
     ],
     options: [
 

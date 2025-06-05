@@ -1,6 +1,6 @@
 // Search service with Mirage.js integration for development
 import { SearchData } from '../store/slices/searchSlice';
-import { generatePrioritizedRoomOptions, getUrgencyMessage } from '../mirage/roomOptionGenerator';
+// import { generatePrioritizedRoomOptions, getUrgencyMessage } from '../mirage/roomOptionGenerator';
 
 // Import mock service for fallback
 import { mockSearchService } from './mockSearchService';

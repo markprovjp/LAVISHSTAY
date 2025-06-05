@@ -51,7 +51,7 @@ const Stats: React.FC<StatsProps> = ({
           <Col xs={24} sm={12} md={stats.length === 4 ? 6 : 8} key={index}>
             <Card
               className="text-center h-full hover:shadow-md transition-shadow duration-300"
-              bordered={false}
+              variant="borderless"
             >
               {stat.icon && (
                 <div className="text-4xl text-blue-500 mb-4">{stat.icon}</div>

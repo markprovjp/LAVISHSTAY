@@ -288,15 +288,15 @@ const SearchForm: React.FC<SearchFormProps> = ({
       </Space>
     </div>
   ); return (
-    <Affix offsetTop={76}>
+    <Affix offsetTop={88}>
       <div
         className={`search-form-blur-container mx-auto max-w-4xl px-4 ${className}`}
         style={{ ...style, zIndex: 1000 }}
       >
         <Card
           className="search-form-compact shadow-2xl transition-all duration-300 "
-          bodyStyle={{ padding: "12px 16px" }}
-          bordered={false}
+          styles={{ body: { padding: "12px 16px" } }}
+          variant="outlined" 
         >
           <Form
             form={form}
@@ -316,7 +316,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                     className="rounded-full border-0 shadow-sm transition-all duration-200"
                     suffixIcon={<CalendarOutlined className="text-gray-800" />}
                     disabledDate={disabledDate}
-                    popupClassName="date-range-popup"
+                    classNames={{ popup: { root: "date-range-popup" } }}
                     getPopupContainer={(trigger) =>
                       trigger.parentElement || document.body
                     }
