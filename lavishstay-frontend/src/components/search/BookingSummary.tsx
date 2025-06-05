@@ -83,172 +83,203 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
 
     if (summary.length === 0) {
         return null;
-    } return (<Card
-        className="bs-booking-summary-card sticky top-4 shadow-md border border-gray-200"
-        style={{ borderRadius: '8px' }}
-        bodyStyle={{ padding: '16px' }}
-    >
-        <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-                <CheckCircleOutlined className="text-blue-600 text-lg" />
-                <Title level={5} className="mb-0 text-gray-800">Tóm tắt đặt phòng</Title>
-            </div>
-
-            <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                        <CalendarOutlined className="text-gray-600" />
-                        <Text className="text-gray-700 font-medium">{nights} đêm</Text>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Users size={14} className="text-gray-600" />
-                        <Text className="text-gray-700 font-medium">
-                            {(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} khách
-                        </Text>
-                    </div>
+    } return (
+        <Card
+            className="bs-booking-summary-card shadow-lg border border-gray-200"
+            style={{
+                borderRadius: '12px',
+                overflow: 'hidden'
+            }}
+            bodyStyle={{
+                padding: '20px',
+            }}
+        >
+            <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                    <CheckCircleOutlined className="text-blue-600 text-lg" />
+                    <Title level={5} className="mb-0 text-gray-800">Tóm tắt đặt phòng</Title>
                 </div>
-            </div>
-        </div>            {/* Selected Rooms */}
-        <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
-                <Text strong className="text-gray-800 text-sm">Phòng đã chọn</Text>
-                <Text className="text-xs text-gray-500">{summary.length} loại</Text>
-            </div>
 
-            <div
-                className={`space-y-2 ${summary.length > 2 ? 'max-h-32 overflow-y-auto pr-2' : ''}`}
-                style={summary.length > 2 ? {
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#cbd5e1 #f1f5f9'
-                } : {}}
-            >                {summary.map((item, index) => (
-                <div key={index} className="bg-white border border-gray-200 p-2 rounded-lg shadow-sm">
-                    <div className="flex justify-between items-start mb-1">
-                        <div className="flex-1">
-                            <Text strong className="text-gray-800 block text-xs leading-tight">{item.roomName}</Text>
-                            <Text className="text-xs text-gray-500 leading-tight">{item.optionName}</Text>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                            <CalendarOutlined className="text-gray-600" />
+                            <Text className="text-gray-700 font-medium">{nights} đêm</Text>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <Tag color="blue" className="text-xs px-1 py-0">x{item.quantity}</Tag>
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={<CloseOutlined />}
-                                onClick={() => handleRemoveRoom(item.roomId, item.optionId)}
-                                className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0"
-                                style={{ minWidth: '24px' }}
-                            />
+                        <div className="flex items-center gap-2">
+                            <Users size={14} className="text-gray-600" />
+                            <Text className="text-gray-700 font-medium">
+                                {(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} khách
+                            </Text>
                         </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                        <Text className="text-xs text-gray-500">
-                            {formatVND(item.pricePerNight)}/đêm
-                        </Text>
-                        <Text strong className="text-blue-600 text-xs">{formatVND(item.total)}</Text>
+                </div>
+            </div>            {/* Selected Rooms */}
+            <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-slate-700 rounded-full"></div>
+                        <Text strong className="text-slate-800 font-semibold">Phòng đã chọn</Text>
                     </div>
+                    <Badge
+                        count={summary.length}
+                        style={{
+                            backgroundColor: '#334155',
+                            fontSize: '11px',
+                            height: '18px',
+                            minWidth: '18px',
+                            lineHeight: '18px'
+                        }}
+                    />
                 </div>
-            ))}
-            </div>
-        </div><Divider className="my-4" />        {/* Breakfast Options */}
-        <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-                <Coffee size={14} className="text-amber-600" />
-                <Text strong className="text-gray-800 text-sm">Bữa sáng</Text>
-            </div>
 
-            <Radio.Group
-                value={breakfastOption}
-                onChange={(e) => setBreakfastOption(e.target.value)}
-                className="w-full"
-            >
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Radio value="none" className="text-sm">
-                            Không ăn sáng
-                        </Radio>
-                        <Badge count="Miễn phí" style={{ backgroundColor: '#52c41a' }} />
+                <div
+                    className={`space-y-3 ${summary.length > 2 ? 'max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 pr-2' : ''}`}
+                    style={summary.length > 2 ? {
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        padding: '12px'
+                    } : {}}
+                >
+                    {summary.map((item, index) => (
+                        <div key={index} className="group bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-in-out">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Bed size={14} className="text-slate-500 flex-shrink-0" />
+                                        <Text strong className="text-slate-800 font-semibold truncate">
+                                            {item.roomName}
+                                        </Text>
+                                    </div>
+                                    <Text className="text-xs text-slate-600 font-medium ml-5 truncate">
+                                        {item.optionName}
+                                    </Text>
+                                </div>
+                                <div className="flex items-center gap-2 ml-3">
+                                    <div className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                        ×{item.quantity}
+                                    </div>
+                                    <Button
+                                        type="text"
+                                        size="small"
+                                        icon={<CloseOutlined />}
+                                        onClick={() => handleRemoveRoom(item.roomId, item.optionId)}
+                                        className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full p-0 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                        style={{ minWidth: '28px' }}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                <Text className="text-xs text-slate-500 font-medium">
+                                    {formatVND(item.pricePerNight)}/đêm
+                                </Text>
+                                <Text strong className="text-slate-800 font-bold">
+                                    {formatVND(item.total)}
+                                </Text>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div><Divider className="my-4" />        {/* Breakfast Options */}
+            <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                    <Coffee size={14} className="text-amber-600" />
+                    <Text strong className="text-gray-800 text-sm">Bữa sáng</Text>
+                </div>
+
+                <Radio.Group
+                    value={breakfastOption}
+                    onChange={(e) => setBreakfastOption(e.target.value)}
+                    className="w-full"
+                >
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <Radio value="none" className="text-sm">
+                                Không ăn sáng
+                            </Radio>
+                            <Badge count="Miễn phí" style={{ backgroundColor: '#52c41a' }} />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <Radio value="standard" className="text-sm">
+                                Ăn sáng
+                            </Radio>
+                            <Badge count="260K/người" style={{ backgroundColor: '#1890ff' }} />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <Radio value="premium" className="text-sm">
+                                Ăn sáng VIP
+                            </Radio>
+                            <Badge count="500K/người" style={{ backgroundColor: '#fa541c' }} />
+                        </div>
                     </div>
+                </Radio.Group>
 
-                    <div className="flex items-center justify-between">
-                        <Radio value="standard" className="text-sm">
-                            Ăn sáng
-                        </Radio>
-                        <Badge count="260K/người" style={{ backgroundColor: '#1890ff' }} />
+                {breakfastPrice > 0 && (
+                    <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                        <div className="flex justify-between items-center">
+                            <Text className="text-xs text-amber-700">
+                                Tổng bữa sáng ({(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} người × {nights} đêm)
+                            </Text>
+                            <Text strong className="text-amber-700 text-xs">{formatVND(breakfastPrice)}</Text>
+                        </div>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                        <Radio value="premium" className="text-sm">
-                            Ăn sáng VIP
-                        </Radio>
-                        <Badge count="500K/người" style={{ backgroundColor: '#fa541c' }} />
-                    </div>
-                </div>
-            </Radio.Group>
-
-            {breakfastPrice > 0 && (
-                <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
-                    <div className="flex justify-between items-center">
-                        <Text className="text-xs text-amber-700">
-                            Tổng bữa sáng ({(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} người × {nights} đêm)
-                        </Text>
-                        <Text strong className="text-amber-700 text-xs">{formatVND(breakfastPrice)}</Text>
-                    </div>
-                </div>
-            )}
-        </div>
-
-        <Divider className="my-4" />        {/* Bed Preference */}
-        <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-                <Bed size={14} className="text-indigo-600" />
-                <Text strong className="text-gray-800 text-sm">Loại giường</Text>
-            </div>
-
-            <Radio.Group
-                value={bedPreference}
-                onChange={(e) => setBedPreference(e.target.value)}
-                className="w-full"
-            >
-                <div className="grid grid-cols-2 gap-2">
-                    <Radio value="double" className="text-sm">
-                        Giường đôi
-                    </Radio>
-                    <Radio value="single" className="text-sm">
-                        Giường đơn
-                    </Radio>
-                </div>
-            </Radio.Group>
-        </div>
-
-        <Divider className="my-4" />            {/* Total */}
-        <div className="space-y-3">
-            {breakfastPrice > 0 && (
-                <div className="flex justify-between items-center text-sm">
-                    <Text className="text-gray-600">Phụ thu bữa sáng:</Text>
-                    <Text strong className="text-amber-600">{formatVND(breakfastPrice)}</Text>
-                </div>
-            )}
-
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                <div className="flex justify-between items-center">
-                    <Text strong className="text-lg text-gray-800">Tổng thanh toán:</Text>
-                    <Text strong className="text-2xl text-blue-600">{formatVND(finalTotal)}</Text>
-                </div>
-                {nights > 1 && (
-                    <Text className="text-xs text-gray-500 mt-1">
-                        Trung bình {formatVND(finalTotal / nights)}/đêm
-                    </Text>
                 )}
             </div>
-        </div><Button
-            type="primary"
-            size="large"
-            className="w-full mt-4 h-10 bg-blue-600 hover:bg-blue-700 border-none shadow-md hover:shadow-lg rounded-lg font-semibold"
-            icon={<GiftOutlined />}
-        >
-            TIẾP TỤC ĐẶT PHÒNG
-        </Button>
-    </Card>
+
+            <Divider className="my-4" />        {/* Bed Preference */}
+            <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                    <Bed size={14} className="text-indigo-600" />
+                    <Text strong className="text-gray-800 text-sm">Ưu Tiên Giường</Text>
+                </div>
+
+                <Radio.Group
+                    value={bedPreference}
+                    onChange={(e) => setBedPreference(e.target.value)}
+                    className="w-full"
+                >
+                    <div className="grid grid-cols-2 gap-2">
+                        <Radio value="double" className="text-sm">
+                            Giường đôi
+                        </Radio>
+                        <Radio value="single" className="text-sm">
+                            Giường đơn
+                        </Radio>
+                    </div>
+                </Radio.Group>
+            </div>
+
+            <Divider className="" />            {/* Total */}
+            <div className="space-y-3">
+                {breakfastPrice > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                        <Text className="text-gray-600">Phụ thu bữa sáng:</Text>
+                        <Text strong className="text-amber-600">{formatVND(breakfastPrice)}</Text>
+                    </div>
+                )}            <div className=" p-1   rounded-xl border-2 border-blue-200 shadow-sm">
+                    <div className="flex justify-between items-center">
+                        <Text strong className="text-sm ">Tổng thanh toán:</Text>
+                        <Text strong className="text-lg  ">{formatVND(finalTotal)}</Text>
+                    </div>
+                    {nights > 1 && (
+                        <Text className="text-sm text-gray-600 mt-1">
+                            Trung bình {formatVND(finalTotal / nights)}/đêm
+                        </Text>
+                    )}
+                </div>
+            </div>
+
+            <Button
+                type="primary"
+                size="large"
+                className="w-full mt-6 h-12    border-none shadow-lg  rounded-xl font-bold text-white transition-all duration-300 transform "
+                icon={<GiftOutlined />}
+            >
+                TIẾP TỤC ĐẶT PHÒNG
+            </Button>
+        </Card>
     );
 };
 

@@ -60,7 +60,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
   const [form] = Form.useForm();
   const { token } = useToken();
   const navigate = useNavigate();
-
   const {
     searchData,
     isValidSearchData,
@@ -71,7 +70,6 @@ const SearchForm: React.FC<SearchFormProps> = ({
     formatGuestSelection,
     clearError,
   } = useSearch();
-
   const [guestPopoverVisible, setGuestPopoverVisible] = useState<boolean>(false);
 
   // Initialize form with search data
@@ -102,13 +100,13 @@ const SearchForm: React.FC<SearchFormProps> = ({
       // Update date range if changed
       if (values.dateRange && values.dateRange !== searchData.dateRange) {
         setSearchDateRange(values.dateRange);
-      }
-
-      // Validate before search
+      }      // Validate before search
       if (!isValidSearchData) {
         message.error('Vui lòng điền đầy đủ thông tin tìm kiếm');
         return;
-      }      // Perform search
+      }
+
+      // Perform search
       const results = await performSearch();
 
       // Close popover
@@ -137,24 +135,29 @@ const SearchForm: React.FC<SearchFormProps> = ({
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <div>          <Title level={5} className="mb-4 text-center font-semibold">
           Bạn đi du lịch với ai?
-        </Title>          <Row gutter={[12, 12]}>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "solo" ? "primary" : "default"}
-                block onClick={() => {
-                  setSearchGuestType("solo");
-                }}
-                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "solo" ? "shadow-lg scale-105" : "hover:scale-105"
-                  }`}
-              >
-                <UserOutlined className="text-lg mr-2" /> Đi một mình
-              </Button>
-            </Col>
+        </Title>          <Row gutter={[12, 12]}>            <Col span={12}>
+          <Button
+            type={searchData.guestType === "solo" ? "primary" : "default"}
+            block onClick={() => {
+              setSearchGuestType("solo");
+              form.setFieldsValue({ guests: "1 người" });
+              // Auto-close popover for solo, couple, business
+              setGuestPopoverVisible(false);
+            }}
+            className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "solo" ? "shadow-lg scale-105" : "hover:scale-105"
+              }`}
+          >
+            <UserOutlined className="text-lg mr-2" /> Đi một mình
+          </Button>
+        </Col>
             <Col span={12}>
               <Button
                 type={searchData.guestType === "couple" ? "primary" : "default"}
                 block onClick={() => {
                   setSearchGuestType("couple");
+                  form.setFieldsValue({ guests: "2 người" });
+                  // Auto-close popover for solo, couple, business
+                  setGuestPopoverVisible(false);
                 }}
                 className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "couple" ? "shadow-lg scale-105" : "hover:scale-105"
                   }`}
@@ -166,7 +169,12 @@ const SearchForm: React.FC<SearchFormProps> = ({
               <Button
                 type={searchData.guestType === "business" ? "primary" : "default"}
                 block
-                onClick={() => setSearchGuestType("business")}
+                onClick={() => {
+                  setSearchGuestType("business");
+                  form.setFieldsValue({ guests: "1 người (Công tác)" });
+                  // Auto-close popover for solo, couple, business
+                  setGuestPopoverVisible(false);
+                }}
                 className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "business" ? "shadow-lg scale-105" : "hover:scale-105"
                   }`}
               >
@@ -177,7 +185,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
               <Button
                 type={searchData.guestType === "family_young" ? "primary" : "default"}
                 block
-                onClick={() => setSearchGuestType("family_young")}
+                onClick={() => {
+                  setSearchGuestType("family_young");
+                  form.setFieldsValue({ guests: formatGuestSelection() });
+                }}
                 className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "family_young" ? "shadow-lg scale-105" : "hover:scale-105"
                   }`}
               >
@@ -188,7 +199,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
               <Button
                 type={searchData.guestType === "group" ? "primary" : "default"}
                 block
-                onClick={() => setSearchGuestType("group")}
+                onClick={() => {
+                  setSearchGuestType("group");
+                  form.setFieldsValue({ guests: formatGuestSelection() });
+                }}
                 className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "group" ? "shadow-lg scale-105" : "hover:scale-105"
                   }`}
               >
@@ -205,21 +219,32 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   <span className="text-sm font-semibold">Người lớn</span>
                   <span className="ml-2 text-xs text-gray-500">(tối thiểu 1)</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Button
-                    icon={<MinusOutlined />}
-                    size="small"
-                    onClick={() => handleGuestCountChange("adults", "decrease")}
-                    disabled={searchData.guestDetails.adults <= 1}
-                    className=" w-8 h-8 flex items-center justify-center"
-                  />
+                <div className="flex items-center space-x-3">                  <Button
+                  icon={<MinusOutlined />}
+                  size="small"
+                  onClick={() => {
+                    handleGuestCountChange("adults", "decrease");
+                    // Update form immediately
+                    setTimeout(() => {
+                      form.setFieldsValue({ guests: formatGuestSelection() });
+                    }, 100);
+                  }}
+                  disabled={searchData.guestDetails.adults <= 1}
+                  className=" w-8 h-8 flex items-center justify-center"
+                />
                   <span className="min-w-[30px] text-center font-bold text-lg">
                     {searchData.guestDetails.adults}
                   </span>
                   <Button
                     icon={<PlusOutlined />}
                     size="small"
-                    onClick={() => handleGuestCountChange("adults", "increase")}
+                    onClick={() => {
+                      handleGuestCountChange("adults", "increase");
+                      // Update form immediately
+                      setTimeout(() => {
+                        form.setFieldsValue({ guests: formatGuestSelection() });
+                      }, 100);
+                    }}
                     className=" w-8 h-8 flex items-center justify-center"
                   />
                 </div>
@@ -229,21 +254,32 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   <span className="text-sm font-semibold">Trẻ em</span>
                   <span className="ml-2 text-xs ">(0-17 tuổi)</span>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Button
-                    icon={<MinusOutlined />}
-                    size="small"
-                    onClick={() => handleGuestCountChange("children", "decrease")}
-                    disabled={searchData.guestDetails.children <= 0}
-                    className=" w-8 h-8 flex items-center justify-center"
-                  />
+                <div className="flex items-center space-x-3">                  <Button
+                  icon={<MinusOutlined />}
+                  size="small"
+                  onClick={() => {
+                    handleGuestCountChange("children", "decrease");
+                    // Update form immediately
+                    setTimeout(() => {
+                      form.setFieldsValue({ guests: formatGuestSelection() });
+                    }, 100);
+                  }}
+                  disabled={searchData.guestDetails.children <= 0}
+                  className=" w-8 h-8 flex items-center justify-center"
+                />
                   <span className="min-w-[30px] text-center font-bold text-lg">
                     {searchData.guestDetails.children}
                   </span>
                   <Button
                     icon={<PlusOutlined />}
                     size="small"
-                    onClick={() => handleGuestCountChange("children", "increase")}
+                    onClick={() => {
+                      handleGuestCountChange("children", "increase");
+                      // Update form immediately
+                      setTimeout(() => {
+                        form.setFieldsValue({ guests: formatGuestSelection() });
+                      }, 100);
+                    }}
                     className=" w-8 h-8 flex items-center justify-center"
                   />
                 </div>
@@ -269,22 +305,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 </Button>
               </div>
             )}
-          </div>
-        )}
-        <div className="flex justify-end pt-2">
-          <Button
-            type="primary"
-            size="large"
-            onClick={() => {
-              setGuestPopoverVisible(false);
-              form.setFieldsValue({ guests: formatGuestSelection() });
-            }}
-            className="rounded-2xl shadow-lg  transition-all px-8 font-semibold"
-            icon={<UserCheck />}
-          >
-            Xác nhận
-          </Button>
-        </div>
+          </div>)}
       </Space>
     </div>
   ); return (
@@ -296,7 +317,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
         <Card
           className="search-form-compact shadow-2xl transition-all duration-300 "
           styles={{ body: { padding: "12px 16px" } }}
-          variant="outlined" 
+          variant="outlined"
         >
           <Form
             form={form}

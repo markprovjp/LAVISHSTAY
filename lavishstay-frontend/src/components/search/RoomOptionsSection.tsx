@@ -274,7 +274,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                 {option.dynamicPricing && (
                                     <div className="text-xs  flex items-center gap-1">
                                         {option.dynamicPricing.savings > 0 && (
-                                            <span className="text-green-600 font-medium">
+                                            <span className="text-green-600 font-medium ">
                                                 <GiftOutlined />
                                                 Tiết kiệm {formatVND(option.dynamicPricing.savings)}
                                             </span>
@@ -306,7 +306,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                     message={option.availability.urgencyMessage}
                                     type="error"
                                     showIcon
-                                    className="mt-2"
+                                    className="mt-2 "
                                 />
                             )}
 
