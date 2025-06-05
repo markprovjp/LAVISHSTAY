@@ -682,7 +682,7 @@ export class RoomOptionGenerator {    /**
         const options: RoomOption[] = [];        // Chỉ có 1 option cho 4 người - phòng tổng thống
         options.push({
             id: `${baseConfig.roomType}_presidential_4guest`,
-            name: `Presidential Suite Imperial - 4 khách`,
+            name: `Presidential Suite - 4 khách`,
             pricePerNight: { vnd: 50000000 }, // 50M cho 4 người
             maxGuests: 4,
             minGuests: 1,

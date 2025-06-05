@@ -205,10 +205,6 @@ const RoomCard: React.FC<RoomCardProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                     <GiftOutlined style={{ fontSize: '14px', color: '#6366f1' }} />
                     <Text className="text-sm font-medium text-gray-700">Lựa chọn đặt phòng</Text>
-                    <Badge
-                        count={room.options.length}
-                        style={{ backgroundColor: '#6366f1', fontSize: '10px' }}
-                    />
                 </div>
                 <RoomOptionsSection
                     room={room}

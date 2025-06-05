@@ -248,19 +248,18 @@ const SearchResults: React.FC = () => {
                                 );
                             })}
                         </Space>
-                    </Col>
-
-                    {/* Booking Summary Sidebar - 30% Width */}
-                    <Col xs={24} lg={8}>                        <Affix offsetTop={190}>
-                        <BookingSummary
-                            selectedRooms={selectedRooms}
-                            rooms={rooms}
-                            formatVND={formatVND}
-                            getNights={getNights}
-                            searchData={searchData}
-                            onQuantityChange={handleQuantityChange}
-                        />
-                    </Affix>
+                    </Col>                    {/* Booking Summary Sidebar - 30% Width */}
+                    <Col xs={24} lg={8}>
+                        <Affix offsetTop={190}>
+                            <BookingSummary
+                                selectedRooms={selectedRooms}
+                                rooms={rooms}
+                                formatVND={formatVND}
+                                getNights={getNights}
+                                searchData={searchData}
+                                onQuantityChange={handleQuantityChange}
+                            />
+                        </Affix>
                     </Col>
                 </Row>
             </div>
