@@ -8,7 +8,7 @@
                 <nav class="flex mb-3" aria-label="Breadcrumb">
                     <ol class="inline-flex items-center space-x-1 md:space-x-3">
                         <li class="inline-flex items-center">
-                            <a href="{{ route('admin.room-types.index') }}" class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
+                            <a href="{{ route('admin.room-types') }}" class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
                                 Quản lý loại phòng
                             </a>
                         </li>
@@ -23,13 +23,12 @@
                     </ol>
                 </nav>
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">{{ $roomType->name }}</h1>
-                <p class="text-gray-600 dark:text-gray-400">Mã: {{ $roomType->room_type_id }}</p>
             </div>
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                 <button onclick="showComingSoon('Sửa loại phòng')" class="btn bg-yellow-500 hover:bg-yellow-600 text-white">
-                    <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16">
+                    <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="16" height="16">
                         <path d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z"/>
                     </svg>
                     <span class="ml-2">Chỉnh sửa</span>
@@ -48,14 +47,14 @@
                         <h2 class="font-semibold text-gray-800 dark:text-gray-100">Thông tin loại phòng</h2>
                     </div>
                     <div class="p-5">
-                        <div class="space-y-4">
+                        <div class="space-y-4 p-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên loại phòng</label>
                                 <p class="text-gray-900 dark:text-gray-100 font-medium">{{ $roomType->name }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mã loại phòng</label>
-                                <p class="text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded inline-block">{{ $roomType->room_type_id }}</p>
+                                <p class="text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md inline-block">{{ $roomType->room_type_id }} </p> - <span class="bg-red-500 rounded-md text-white p-2 dark:bg-green-700 dark:text-white-400">{{ $roomType->room_code }}</span>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả</label>
@@ -75,13 +74,13 @@
                     </div>
                     <div class="p-5">
                         @if($roomType->amenities->count() > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-6 md:grid-cols-2 gap-3">
                                 @foreach($roomType->amenities as $amenity)
                                     <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg {{ $amenity->is_highlighted ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : '' }}">
                                         <div class="flex-shrink-0">
                                             @if($amenity->icon)
                                                 <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                                                    <span class="text-blue-600 dark:text-blue-400 text-sm">{{ $amenity->icon }}</span>
+                                                    <span class="text-blue-600 dark:text-blue-400 text-lg">{{ $amenity->icon }}</span>
                                                 </div>
                                             @else
                                                 <div class="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
@@ -121,8 +120,8 @@
             <div class="space-y-6">
                 
                 <!-- Statistics -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
+                    <div class=" py-4 border-b border-gray-100 dark:border-gray-700/60">
                         <h2 class="font-semibold text-gray-800 dark:text-gray-100">Thống kê</h2>
                     </div>
                     <div class="p-5">
@@ -151,20 +150,20 @@
                     <div class="p-5">
                         <div class="space-y-3">
                             <button onclick="showComingSoon('Thêm tiện ích')" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20" width="20" height="20">
                                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
                                 </svg>
                                 Thêm tiện ích
                             </button>
                             <button onclick="showComingSoon('Quản lý phòng')" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20" width="20" height="20">
                                     <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
                                     <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path>
                                 </svg>
                                 Xem danh sách phòng
                             </button>
                             <button onclick="showComingSoon('Sao chép loại phòng')" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20" width="20" height="20">
                                     <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
                                     <path d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11.586l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L11.586 11H15z"></path>
                                 </svg>
