@@ -12,7 +12,6 @@ import {
     Image,
     Skeleton,
     Empty,
-    Affix,
     Modal,
     Carousel,
     Divider
@@ -250,7 +249,13 @@ const SearchResults: React.FC = () => {
                         </Space>
                     </Col>                    {/* Booking Summary Sidebar - 30% Width */}
                     <Col xs={24} lg={8}>
-                        <Affix offsetTop={190}>
+                        <div
+                            style={{
+                                position: 'sticky',
+                                top: '190px',
+                                overflow: 'auto'
+                            }}
+                        >
                             <BookingSummary
                                 selectedRooms={selectedRooms}
                                 rooms={rooms}
@@ -259,7 +264,7 @@ const SearchResults: React.FC = () => {
                                 searchData={searchData}
                                 onQuantityChange={handleQuantityChange}
                             />
-                        </Affix>
+                        </div>
                     </Col>
                 </Row>
             </div>

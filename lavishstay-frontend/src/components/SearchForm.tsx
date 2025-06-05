@@ -327,7 +327,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           >
             <Row gutter={[8, 8]} align="middle" justify="center">
               {/* Date Range Field */}
-              <Col xs={24} sm={11} md={9} lg={12}>
+              <Col xs={24} sm={11} md={9} lg={10}>
                 <Form.Item name="dateRange" className="mb-0">
                   <RangePicker
                     size="large"
@@ -346,7 +346,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </Col>
 
               {/* Guests Field */}
-              <Col xs={24} sm={8} md={6} lg={8}>
+              <Col xs={24} sm={8} md={6} lg={7}>
                 <Form.Item name="guests" className="mb-0">                  <Popover
                   content={guestPopoverContent}
                   trigger="click"
@@ -401,7 +401,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </Col>
 
               {/* Search Button */}
-              <Col xs={24} sm={5} md={3} lg={4}>
+              <Col xs={24} sm={5} md={3} lg={7}>
                 <Form.Item className="mb-2">
                   <ButtonSearch
                     type="submit"
