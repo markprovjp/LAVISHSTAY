@@ -159,8 +159,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                                         size="small"
                                         icon={<CloseOutlined />}
                                         onClick={() => handleRemoveRoom(item.roomId, item.optionId)}
-                                        className="w-7 h-7 flex items-center justify-center  hover:text-red-500 hover:bg-red-50 rounded-full p-0 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                        style={{ minWidth: '28px' }}
+                                        className=" flex items-center justify-center  hover:text-red-500  opacity-0 group-hover:opacity-100"
                                     />
                                 </div>
                             </div>
@@ -175,75 +174,65 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                         </div>
                     ))}
                 </div>
-            </div><Divider className="my-4" />        {/* Breakfast Options */}
-            <div className="mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <Coffee size={14} className="text-amber-600" />
-                    <Text strong className=" text-sm">Bữa sáng</Text>
+            </div>            <Divider className="my-2" />
+
+            {/* Breakfast & Bed Preferences - Compact Layout */}
+            <div className="mb-3 space-y-3">
+                {/* Breakfast Options */}
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Coffee size={12} className="text-amber-600" />
+                        <Text strong className="text-xs">Bữa sáng</Text>
+                    </div>
+                    <Radio.Group
+                        value={breakfastOption}
+                        onChange={(e) => setBreakfastOption(e.target.value)}
+                        className="w-full"
+                    >
+                        <div className="grid grid-cols-3 gap-1">
+                            <div className="text-center">
+                                <Radio value="none" className="text-xs block mb-1">Không</Radio>
+                                <Badge count="Free" style={{ backgroundColor: '#52c41a', fontSize: '9px', height: '14px', lineHeight: '14px' }} />
+                            </div>
+                            <div className="text-center">
+                                <Radio value="standard" className="text-xs block mb-1">Cơ bản</Radio>
+                                <Badge count="260K" style={{ backgroundColor: '#1890ff', fontSize: '9px', height: '14px', lineHeight: '14px' }} />
+                            </div>
+                            <div className="text-center">
+                                <Radio value="premium" className="text-xs block mb-1">VIP</Radio>
+                                <Badge count="500K" style={{ backgroundColor: '#fa541c', fontSize: '9px', height: '14px', lineHeight: '14px' }} />
+                            </div>
+                        </div>
+                    </Radio.Group>
+                    {breakfastPrice > 0 && (
+                        <div className="mt-2 p-1.5 bg-amber-50 rounded-lg border border-amber-200">
+                            <div className="flex justify-between items-center">
+                                <Text className="text-xs text-amber-700">
+                                    Tổng bữa sáng ({(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} người × {nights} đêm)
+                                </Text>
+                                <Text strong className="text-amber-700 text-xs">{formatVND(breakfastPrice)}</Text>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <Radio.Group
-                    value={breakfastOption}
-                    onChange={(e) => setBreakfastOption(e.target.value)}
-                    className="w-full"
-                >
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Radio value="none" className="text-sm">
-                                Không ăn sáng
-                            </Radio>
-                            <Badge count="Miễn phí" style={{ backgroundColor: '#52c41a' }} />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <Radio value="standard" className="text-sm">
-                                Ăn sáng
-                            </Radio>
-                            <Badge count="260K/người" style={{ backgroundColor: '#1890ff' }} />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <Radio value="premium" className="text-sm">
-                                Ăn sáng VIP
-                            </Radio>
-                            <Badge count="500K/người" style={{ backgroundColor: '#fa541c' }} />
-                        </div>
+                {/* Bed Preference */}
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Bed size={12} className="text-indigo-600" />
+                        <Text strong className="text-xs">Ưu tiên giường</Text>
                     </div>
-                </Radio.Group>
-
-                {breakfastPrice > 0 && (
-                    <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
-                        <div className="flex justify-between items-center">
-                            <Text className="text-xs text-amber-700">
-                                Tổng bữa sáng ({(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} người × {nights} đêm)
-                            </Text>
-                            <Text strong className="text-amber-700 text-xs">{formatVND(breakfastPrice)}</Text>
+                    <Radio.Group
+                        value={bedPreference}
+                        onChange={(e) => setBedPreference(e.target.value)}
+                        className="w-full"
+                    >
+                        <div className="grid grid-cols-2 gap-2">
+                            <Radio value="double" className="text-xs">Giường đôi</Radio>
+                            <Radio value="single" className="text-xs">Giường đơn</Radio>
                         </div>
-                    </div>
-                )}
-            </div>
-
-            <Divider className="my-4" />        {/* Bed Preference */}
-            <div className="mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                    <Bed size={14} className="text-indigo-600" />
-                    <Text strong className=" text-sm">Ưu Tiên Giường</Text>
+                    </Radio.Group>
                 </div>
-
-                <Radio.Group
-                    value={bedPreference}
-                    onChange={(e) => setBedPreference(e.target.value)}
-                    className="w-full"
-                >
-                    <div className="grid grid-cols-2 gap-2">
-                        <Radio value="double" className="text-sm">
-                            Giường đôi
-                        </Radio>
-                        <Radio value="single" className="text-sm">
-                            Giường đơn
-                        </Radio>
-                    </div>
-                </Radio.Group>
             </div>
 
             <Divider className="" />            {/* Total */}
