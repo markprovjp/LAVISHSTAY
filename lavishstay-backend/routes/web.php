@@ -43,7 +43,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     //Rooms Types
     Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
-    Route::get('/admin/room-types/show  ', [RoomTypeController::class, 'index'])->name('admin.room-types.show');
+
+    Route::get('/admin/room-types/show/{room_type_id}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
     Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
     Route::post('/admin/room-types/store', [RoomTypeController::class, 'create'])->name('admin.room-types.store');
     Route::get('/admin/room-types/store', [RoomTypeController::class, 'create'])->name('admin.room-types.auto-save');

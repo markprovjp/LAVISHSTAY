@@ -27,15 +27,17 @@ class RoomTypeController extends Controller
     
     public function store(Request $request)
     {
-        // TODO: Implement store logic
+        // Code tiếp theo sẽ xử lý việc lưu loại phòng mới
         return redirect()->route('admin.room-types.index')
             ->with('info', 'Chức năng thêm loại phòng đang được phát triển.');
     }
 
     
-    public function show(RoomType $roomType)
+    public function show($roomTypeId)
     {
-        $roomType->load(['amenities', 'rooms']);
+       $roomType = RoomType::with(['amenities', 'rooms'])
+            ->where('room_type_id', $roomTypeId)
+            ->firstOrFail();
         
         return view('admin.room-types.show', compact('roomType'));
     }
@@ -43,7 +45,7 @@ class RoomTypeController extends Controller
    
     public function edit(RoomType $roomType)
     {
-        // TODO: Implement edit form
+        // Code tiếp
         return redirect()->route('admin.room-types.index')
             ->with('info', 'Chức năng sửa loại phòng đang được phát triển.');
     }
@@ -51,7 +53,7 @@ class RoomTypeController extends Controller
    
     public function update(Request $request, RoomType $roomType)
     {
-        // TODO: Implement update logic
+        // Code tiếp
         return redirect()->route('admin.room-types.index')
             ->with('info', 'Chức năng sửa loại phòng đang được phát triển.');
     }
@@ -59,7 +61,7 @@ class RoomTypeController extends Controller
    
     public function destroy(RoomType $roomType)
     {
-        // TODO: Implement delete logic
+        // Code tiếp
         return redirect()->route('admin.room-types.index')
             ->with('info', 'Chức năng xóa loại phòng đang được phát triển.');
     }
