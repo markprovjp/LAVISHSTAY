@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Divider, Alert, Badge, Space, Row, Col, Tag } from 'antd';
+import { Card, Typography, Divider, Alert, Space, Row, Col, Tag } from 'antd';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import {
@@ -8,7 +8,11 @@ import {
     HomeOutlined,
     UserOutlined,
     EyeOutlined,
-    InfoCircleOutlined
+    InfoCircleOutlined,
+    CrownOutlined,
+    TrophyOutlined,
+    FireOutlined,
+    ThunderboltOutlined
 } from '@ant-design/icons';
 import { Eye } from 'lucide-react';
 import { Room } from '../../mirage/models';
@@ -62,7 +66,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
 
     return (
         <Card
-            className="room-card hover:shadow-md transition-shadow duration-200"
+            className="room-card  transition-shadow duration-200"
             bodyStyle={{ padding: '16px' }}
         >
             <Row gutter={16}>
@@ -102,15 +106,25 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                     </div>
                                 </SwiperSlide>
                             ))}
-                        </Swiper>
-
-                        {/* Badges */}
-                        <div className="absolute top-2 left-2 z-10 flex gap-1">
+                        </Swiper>                        {/* Badges */}
+                        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                             {room.isSale && (
-                                <Badge count={`-${room.discount}%`} style={{ backgroundColor: '#ef4444', fontSize: '10px' }} />
+                                <div className="relative">
+                                    <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 border border-red-300">
+                                        <FireOutlined className="text-xs animate-pulse" />
+                                        <span className="text-xs font-bold">-{room.discount}%</span>
+                                    </div>
+                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+                                </div>
                             )}
                             {shouldShowSuggestion(room) && (
-                                <Badge count="Gợi ý" style={{ backgroundColor: '#10b981', fontSize: '15px' }} />
+                                <div className="relative">
+                                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2 py-1 rounded-lg shadow-lg flex items-center gap-1.5 border border-emerald-300">
+                                        <ThunderboltOutlined className="text-xs" />
+                                        <span className="text-xs font-bold">Gợi ý</span>
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-lg blur-sm opacity-50 -z-10"></div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -127,21 +141,26 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                 onClick={() => onShowImageGallery(room, 0)}
                                 style={{ lineHeight: '1.3', fontSize: '20px' }}
                             >
-                                {room.name}
-                            </Title>
-                            {shouldShowSuggestion(room) && (
-
-                                <Badge
-                                    count="TOP CHOICE"
-                                    style={{
-                                        backgroundColor: '#f59e0b',
-                                        fontSize: '15px',
-                                        height: '20px',
-                                        lineHeight: '20px',
-                                        borderRadius: '10px'
-                                    }}
-                                />
-                            )}
+                                {room.name}                            </Title>                            {shouldShowSuggestion(room) && (
+                                    <Tag
+                                        color="gold"
+                                        icon={<CrownOutlined />}
+                                        style={{
+                                            borderRadius: '20px',
+                                            padding: '4px 12px',
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            border: '2px solid #ffd700',
+                                            background: 'linear-gradient(135deg, #fff9c4 0%, #fef3c7 100%)',
+                                            color: '#b45309',
+                                            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                        }}
+                                    >
+                                        TOP CHOICE
+                                    </Tag>
+                                )}
                         </div>
 
                         {/* Room Stats */}

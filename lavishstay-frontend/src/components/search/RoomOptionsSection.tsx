@@ -141,7 +141,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                             {/* Header với tên option và badges */}
                             <Flex justify="space-between" align="flex-start" className="mb-3">
                                 <div className="flex-1 mr-4">
-                                    <div className="flex items-center gap-2 mb-2">
+                                    <div className="flex items-center gap-2 mb-1">
                                         <Title level={5} className="mb-0 text-gray-800" style={{ fontSize: '16px' }}>
                                             {option.name}
                                         </Title>
