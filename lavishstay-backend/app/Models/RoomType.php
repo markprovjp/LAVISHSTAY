@@ -14,7 +14,8 @@ class RoomType extends Model
         'room_type_id',
         'room_code',
         'name',
-        'description'
+        'description',
+        'total_rooms'
     ];
 
     /**
