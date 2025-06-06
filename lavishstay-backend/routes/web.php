@@ -37,20 +37,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-
-
-
-
     //Rooms Types
     Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
-
-    Route::get('/admin/room-types/show/{room_type_id}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
     Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
-    Route::post('/admin/room-types/store', [RoomTypeController::class, 'create'])->name('admin.room-types.store');
-    Route::get('/admin/room-types/store', [RoomTypeController::class, 'create'])->name('admin.room-types.auto-save');
-    Route::get('/admin/room-types/{id}/edit', [RoomTypeController::class, 'edit'])->name('admin.room-types.edit');
-
-       
+    Route::post('/admin/room-types/store', [RoomTypeController::class, 'store'])->name('admin.room-types.store');
+    Route::post('/admin/room-types/auto-save', [RoomTypeController::class, 'autoSave'])->name('admin.room-types.auto-save');
+    Route::get('/admin/room-types/edit/{roomTypeId}', [RoomTypeController::class, 'edit'])->name('admin.room-types.edit');
+    Route::put('/admin/room-types/update/{roomTypeId}', [RoomTypeController::class, 'update'])->name('admin.room-types.update');
+    Route::post('/admin/room-types/destroy/{roomTypeId}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy');
+    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
+        
 
     Route::get('/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
     Route::get('/rooms/show/{room_id}', [RoomController::class, 'show'])->name('admin.rooms.show');
@@ -65,4 +61,6 @@ Route::get('/admin/rooms/{room_id}/calendar-data', [RoomController::class, 'getC
     Route::put('/admin/faqs/updat/{faqId}', [FAQController::class, 'update'])->name('admin.faqs.update');
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
+
+
 });
