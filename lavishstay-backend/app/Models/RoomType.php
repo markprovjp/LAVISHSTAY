@@ -11,14 +11,14 @@ class RoomType extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'room_type_id',
+'room_type_id',
         'room_code',
         'name',
         'description',
         'total_rooms'
     ];
 
-    /**
+/**
      * Relationship with amenities
      */
     public function amenities()
@@ -26,7 +26,7 @@ class RoomType extends Model
         return $this->hasMany(RoomTypeAmenity::class, 'room_type_id', 'room_type_id');
     }
 
-    /**
+/**
      * Get highlighted amenities
      */
     public function highlightedAmenities()
@@ -34,7 +34,7 @@ class RoomType extends Model
         return $this->amenities()->where('is_highlighted', 1);
     }
 
-    /**
+/**
      * Relationship with rooms
      */
     public function rooms()
