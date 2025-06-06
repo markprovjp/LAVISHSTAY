@@ -74,7 +74,7 @@
                     </div>
                     <div class="p-5">
                         @if($roomType->amenities->count() > 0)
-                            <div class="grid grid-cols-6 md:grid-cols-2 gap-3">
+                            <div class="grid grid-cols-6 md:grid-cols-2 gap-4 p-3">
                                 @foreach($roomType->amenities as $amenity)
                                     <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg {{ $amenity->is_highlighted ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : '' }}">
                                         <div class="flex-shrink-0">

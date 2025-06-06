@@ -52,6 +52,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
        
 
+    Route::get('/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
+    Route::get('/rooms/show/{room_id}', [RoomController::class, 'show'])->name('admin.rooms.show');
+
+Route::get('/admin/rooms/{room_id}/calendar-data', [RoomController::class, 'getCalendarData'])->name('rooms.calendar-data');
 
     //FAQs
     Route::get('/admin/faqs', [FAQController::class, 'index'])->name('admin.faqs');

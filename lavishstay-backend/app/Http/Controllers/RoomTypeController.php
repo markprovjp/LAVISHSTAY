@@ -20,7 +20,7 @@ class RoomTypeController extends Controller
     public function create()
     {
         // TODO: Implement create form
-        return redirect()->route('admin.room-types.index')
+        return redirect()->route('admin.room-types')
             ->with('info', 'Chức năng thêm loại phòng đang được phát triển.');
     }
 

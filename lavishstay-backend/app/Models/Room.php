@@ -14,6 +14,7 @@ class Room extends Model
         'hotel_id',
         'room_type_id',
         'name',
+        'floor',
         'image',
         'base_price_vnd',
         'size',
@@ -21,14 +22,17 @@ class Room extends Model
         'rating',
         'lavish_plus_discount',
         'max_guests',
-        'total_rooms',
-        'description'
+        'description',
+        'status'
     ];
 
     protected $casts = [
         'base_price_vnd' => 'decimal:2',
         'rating' => 'decimal:1',
         'lavish_plus_discount' => 'decimal:2',
+        'size' => 'integer',
+        'max_guests' => 'integer',
+        'floor' => 'integer'
     ];
 
     /**
@@ -37,5 +41,55 @@ class Room extends Model
     public function roomType()
     {
         return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
+    }
+
+    /**
+     * Get status label
+     */
+    public function getStatusLabelAttribute()
+    {
+        $labels = [
+            'available' => 'Trống',
+            'occupied' => 'Đang sử dụng',
+            'maintenance' => 'Đang bảo trì',
+            'cleaning' => 'Đang dọn dẹp'
+        ];
+
+        return $labels[$this->status] ?? 'Không xác định';
+    }
+
+    /**
+     * Get status color
+     */
+    public function getStatusColorAttribute()
+    {
+        $colors = [
+            'available' => 'green',
+            'occupied' => 'red',
+            'maintenance' => 'yellow',
+            'cleaning' => 'blue'
+        ];
+
+        return $colors[$this->status] ?? 'gray';
+    }
+
+    public function roomOptions()
+    {
+        return $this->hasMany(RoomOption::class, 'room_id', 'room_id');
+    }
+    
+    /**
+     * Get availability data through room options
+     */
+    public function availability()
+    {
+        return $this->hasManyThrough(
+            RoomAvailability::class,
+            RoomOption::class,
+            'room_id', // Foreign key on room_option table
+            'option_id', // Foreign key on room_availability table
+            'room_id', // Local key on rooms table
+            'option_id' // Local key on room_option table
+        );
     }
 }
