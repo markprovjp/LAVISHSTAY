@@ -61,13 +61,11 @@ const SearchResults: React.FC = () => {
             style: "currency",
             currency: "VND",
         }).format(price);
-    };
-
-    // Check if room suggestion should be shown
+    };    // Check if room suggestion should be shown - now always shows all rooms
     const shouldShowSuggestion = (room: Room) => {
-        if (!searchData.guestDetails) return false;
-        const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-        return room.maxGuests >= totalGuests;
+        // Always return true to show all rooms regardless of guest count
+        // Capacity warnings will be handled by the room options themselves
+        return true;
     };
 
     // Handle room quantity change

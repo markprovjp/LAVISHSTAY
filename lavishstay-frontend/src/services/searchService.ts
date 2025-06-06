@@ -1,6 +1,5 @@
 // Search service with Mirage.js integration for development
 import { SearchData } from '../store/slices/searchSlice';
-// import { generatePrioritizedRoomOptions, getUrgencyMessage } from '../mirage/roomOptionGenerator';
 
 // Import mock service for fallback
 import { mockSearchService } from './mockSearchService';
@@ -43,22 +42,8 @@ class SearchService {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             } const data = await response.json();
-            let filteredRooms = data.rooms || [];
-
-            // Apply client-side filtering to match search criteria
-            filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);            // Generate dynamic room options based on check-in date
-            if (searchData.checkIn) {
-                filteredRooms = filteredRooms.map((room: any) => ({
-                    ...room,
-                    options: generatePrioritizedRoomOptions(
-                        room.roomType,
-                        searchData.checkIn!,
-                        room.priceVND,
-                        searchData.guests || 2
-                    ),
-                    urgencyRoomMessage: getUrgencyMessage(searchData.checkIn!) || room.urgencyRoomMessage
-                }));
-            }
+            let filteredRooms = data.rooms || [];            // Apply client-side filtering to match search criteria
+            filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);
 
             // Pagination
             const total = filteredRooms.length;
@@ -90,62 +75,118 @@ class SearchService {
                 room.name.toLowerCase().includes(searchTerm) ||
                 room.roomType.toLowerCase().includes(searchTerm)
             );
-        }
+        }        // DON'T FILTER by guest count - just prioritize in sorting later
+        // Allow all rooms to be shown, warnings will be handled in dynamic pricing
+        // The filtering below was preventing 5+ guests from seeing any rooms
 
-        // Filter by guest count
+        // const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
+        // filtered = filtered.filter(room => room.maxGuests >= totalGuests);
+
+        // Instead of filtering, we'll store guest count for prioritization
         if (searchData.guestDetails) {
             const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-            filtered = filtered.filter(room => room.maxGuests >= totalGuests);
-        }
+            // Add guest count as property for later sorting, but don't filter
+            filtered = filtered.map(room => ({
+                ...room,
+                _searchGuestCount: totalGuests
+            }));
+        }        // DON'T FILTER by guest type preferences - show all rooms with prioritization
+        // This allows users to see all available options and make informed decisions
+        // Warnings and calculations will be handled in the room options
 
-        // Filter by guest type preferences (adjusted for single hotel room types)
         if (searchData.guestType) {
+            // Instead of filtering, we'll add preference scoring for sorting
             switch (searchData.guestType) {
                 case 'business':
-                    filtered = filtered.filter(room =>
-                        room.roomType === 'deluxe' ||
-                        room.roomType === 'premium' ||
-                        room.amenities.some(amenity =>
-                            amenity.toLowerCase().includes('wifi') ||
-                            amenity.toLowerCase().includes('work') ||
-                            amenity.toLowerCase().includes('desk') ||
-                            amenity.toLowerCase().includes('bàn làm việc')
-                        )
-                    );
+                    filtered = filtered.map(room => ({
+                        ...room,
+                        _preferenceScore: (room.roomType === 'deluxe' || room.roomType === 'premium') ? 10 :
+                            room.amenities.some(amenity =>
+                                amenity.toLowerCase().includes('wifi') ||
+                                amenity.toLowerCase().includes('work') ||
+                                amenity.toLowerCase().includes('desk') ||
+                                amenity.toLowerCase().includes('bàn làm việc')
+                            ) ? 5 : 0
+                    }));
                     break;
                 case 'couple':
-                    filtered = filtered.filter(room =>
-                        room.roomType === 'suite' ||
-                        room.roomType === 'presidential' ||
-                        room.roomType === 'theLevel' ||
-                        room.maxGuests <= 2
-                    );
+                    filtered = filtered.map(room => ({
+                        ...room,
+                        _preferenceScore: (room.roomType === 'suite' || room.roomType === 'presidential' || room.roomType === 'theLevel') ? 10 :
+                            room.maxGuests <= 2 ? 8 : 3
+                    }));
                     break;
                 case 'solo':
-                    filtered = filtered.filter(room =>
-                        room.roomType === 'deluxe' ||
-                        room.maxGuests <= 2
-                    );
+                    filtered = filtered.map(room => ({
+                        ...room,
+                        _preferenceScore: room.roomType === 'deluxe' ? 10 :
+                            room.maxGuests <= 2 ? 8 : 3
+                    }));
                     break;
                 case 'family_young':
-                    filtered = filtered.filter(room =>
-                        room.roomType === 'suite' ||
-                        room.roomType === 'presidential' ||
-                        room.maxGuests >= 4
-                    );
+                    filtered = filtered.map(room => ({
+                        ...room,
+                        _preferenceScore: (room.roomType === 'suite' || room.roomType === 'presidential') ? 10 :
+                            room.maxGuests >= 4 ? 8 : 5
+                    }));
                     break;
                 case 'group':
-                    filtered = filtered.filter(room =>
-                        room.roomType === 'suite' ||
-                        room.roomType === 'presidential' ||
-                        room.maxGuests >= 6
-                    );
+                    filtered = filtered.map(room => ({
+                        ...room,
+                        _preferenceScore: room.roomType === 'presidential' ? 10 :
+                            room.roomType === 'suite' ? 8 :
+                                room.maxGuests >= 4 ? 6 : 3
+                    }));
+                    break;
+                default:
+                    filtered = filtered.map(room => ({
+                        ...room,
+                        _preferenceScore: 5 // Default neutral score
+                    }));
                     break;
             }
-        }
-
-        // Filter by availability (only show rooms with available inventory)
+        } else {
+            // No guest type specified, give all rooms equal preference
+            filtered = filtered.map(room => ({
+                ...room,
+                _preferenceScore: 5
+            }));
+        }        // Filter by availability (only show rooms with available inventory)
         filtered = filtered.filter(room => room.availableRooms > 0);
+
+        // Sort rooms by preference and capacity match
+        filtered.sort((a, b) => {
+            const aPreference = (a as any)._preferenceScore || 5;
+            const bPreference = (b as any)._preferenceScore || 5;
+            const aGuestCount = (a as any)._searchGuestCount || 2;
+
+            // First priority: preference score
+            if (aPreference !== bPreference) {
+                return bPreference - aPreference; // Higher preference first
+            }
+
+            // Second priority: capacity match (for guest count)
+            if (aGuestCount > 0) {
+                const aMatch = a.maxGuests >= aGuestCount;
+                const bMatch = b.maxGuests >= aGuestCount;
+
+                if (aMatch && !bMatch) return -1;
+                if (!aMatch && bMatch) return 1;
+
+                // If both match or both don't match, prefer Presidential (higher capacity)
+                if (a.roomType === 'presidential' && b.roomType !== 'presidential') return -1;
+                if (a.roomType !== 'presidential' && b.roomType === 'presidential') return 1;
+            }
+
+            // Third priority: price (ascending)
+            return a.priceVND - b.priceVND;
+        });
+
+        // Clean up temporary properties
+        filtered = filtered.map(room => {
+            const { _preferenceScore, _searchGuestCount, ...cleanRoom } = room as any;
+            return cleanRoom;
+        });
 
         return filtered;
     }// Check room availability

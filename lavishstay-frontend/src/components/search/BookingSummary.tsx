@@ -94,9 +94,9 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 padding: '20px',
             }}
         >
-            <div className="mb-2">
+            <div className="mb-1">
 
-                <div className=" p-3 rounded-lg">
+                <div className=" p-2 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
                             <CalendarOutlined className="" />
@@ -110,12 +110,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                         </div>
                     </div>
                 </div>
-            </div>            {/* Selected Rooms */}
-            <div className="mb-6">
+            </div>      <Divider className="" />                {/* Selected Rooms */}
+            <div className="mb-2">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-2 h-2  rounded-full"></div>
-                        <Text strong className=" font-semibold">Phòng đã chọn</Text>
+                        <div className="  rounded-full"></div>
+                        <Text strong className=" ">Phòng đã chọn</Text>
                     </div>
                     <Badge
                         count={summary.length}
@@ -123,7 +123,6 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                             fontSize: '11px',
                             height: '18px',
                             minWidth: '18px',
-                            lineHeight: '18px'
                         }}
                     />
                 </div>

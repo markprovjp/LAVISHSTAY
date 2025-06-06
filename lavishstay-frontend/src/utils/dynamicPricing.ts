@@ -2,6 +2,17 @@
 
 import dayjs, { Dayjs } from 'dayjs';
 import { RoomOption } from '../mirage/roomoption';
+export type { RoomOption };
+import {
+    PRICING_MULTIPLIERS,
+    createDeluxeOptions,
+    createPremiumOptions,
+    createSuiteOptions,
+    createTheLevelPremiumOptions,
+    createTheLevelPremiumCornerOptions,
+    createSuiteTheLevelOptions,
+    createPresidentialOptions
+} from './pricing';
 
 
 /**
@@ -17,7 +28,7 @@ import { RoomOption } from '../mirage/roomoption';
 
 export interface DynamicPricingConfig {
     basePrice: number;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
     maxGuests: number;
     minGuests: number;
 }
@@ -378,617 +389,112 @@ export class DynamicPricingEngine {
     }
 }
 
+
+
 /**
  * ROOM OPTION GENERATOR với Dynamic Pricing theo yêu cầu mới
  */
-export class RoomOptionGenerator {    /**
+export class RoomOptionGenerator {
+    /**
      * Generate multiple room options theo logic nghiệp vụ mới
      */
     static generateDynamicRoomOptions(
         baseConfig: DynamicPricingConfig,
         context: BookingContext
     ): RoomOption[] {
-        const options: RoomOption[] = [];
         const daysInAdvance = context.checkInDate.diff(context.bookingDate, 'day');
         const isUrgentBooking = daysInAdvance <= 1; // Hôm nay hoặc ngày mai
 
-        // Tạo options theo roomType và guest count
-        if (baseConfig.roomType === 'deluxe') {
-            options.push(...this.createDeluxeOptions(baseConfig, context, isUrgentBooking));
-        } else if (baseConfig.roomType === 'premium') {
-            options.push(...this.createPremiumOptions(baseConfig, context, isUrgentBooking));
-        } else if (baseConfig.roomType === 'suite') {
-            options.push(...this.createSuiteOptions(baseConfig, context, isUrgentBooking));
-        } else if (baseConfig.roomType === 'presidential') {
-            options.push(...this.createPresidentialOptions(baseConfig, context, isUrgentBooking));
-        } else if (baseConfig.roomType === 'theLevel') {
-            options.push(...this.createTheLevelOptions(baseConfig, context, isUrgentBooking));
+        // Tính hệ số điều chỉnh giá theo ngày đặc biệt
+        const priceMultiplier = this.calculatePriceMultiplier(context);
+
+        // Tạo options theo roomType
+        let options: RoomOption[] = [];
+
+        switch (baseConfig.roomType) {
+            case 'deluxe':
+                options = createDeluxeOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'premium':
+                options = createPremiumOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'suite':
+                options = createSuiteOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'presidential':
+                options = createPresidentialOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'theLevel':
+                options = createTheLevelPremiumOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'theLevelPremium':
+                options = createTheLevelPremiumOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'theLevelPremiumCorner':
+                options = createTheLevelPremiumCornerOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            case 'suiteTheLevel':
+                options = createSuiteTheLevelOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+                break;
+            default:
+                options = createDeluxeOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
         }
 
         return options.sort((a, b) => a.pricePerNight.vnd - b.pricePerNight.vnd);
     }    /**
-     * Tạo options cho phòng Deluxe theo yêu cầu
-     */    private static createDeluxeOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption[] {
-        const options: RoomOption[] = [];
-
-        // Luôn tạo options cho cả 1 người và 2 người
-        // Option cho 1 người
-        options.push(this.createDeluxeSingleGuestOption(baseConfig, context, isUrgentBooking));
-        // Options cho 2 người (3 options khác nhau)
-        options.push(...this.createDeluxeDoubleGuestOptions(baseConfig, context, isUrgentBooking));
-
-        return options;
-    }/**
-     * Tạo option cho 1 người - phòng Deluxe
-     */    private static createDeluxeSingleGuestOption(
-        baseConfig: DynamicPricingConfig,
-        _context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption {
-        const basePrice = 1500000; // 1.5 triệu cho 1 người
-
-        return {
-            id: `${baseConfig.roomType}_single_1guest`,
-            name: `Deluxe Classic - 1 khách`,
-            pricePerNight: { vnd: basePrice },
-            maxGuests: 1,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-            cancellationPolicy: {
-                type: "non_refundable",
-                penalty: 100,
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : "Phí hủy: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_now_with_vietQR",
-                description: "Thanh toán ngay"
-            },
-
-            availability: {
-                total: 5,
-                remaining: Math.floor(Math.random() * 4) + 1,
-                urgencyMessage: isUrgentBooking ? "Đặt gấp - Chỉ còn ít phòng!" : undefined
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng tuyệt hảo", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true }
-            ],
-
-            recommended: true, // Ưu tiên cho 1 người
-
-            dynamicPricing: {
-                basePrice: basePrice,
-                finalPrice: basePrice,
-                adjustments: [],
-                savings: 0,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 90 // High score vì match với guest count
-            }
-        };
-    }
-
-    /**
-     * Tạo 3 options cho 2 người - phòng Deluxe
-     */    private static createDeluxeDoubleGuestOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption[] {
-        const options: RoomOption[] = [];        // Option 1: Giá rẻ nhất - 1.2 triệu, chỉ có bữa sáng tuyệt hảo thêm 260k
-        options.push({
-            id: `${baseConfig.roomType}_basic_2guest`,
-            name: `Deluxe Standard - 2 khách`,
-            pricePerNight: { vnd: 1200000 },
-            maxGuests: 2,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-
-            cancellationPolicy: {
-                type: "non_refundable",
-                penalty: 100,
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Phí hủy: Đêm đầu tiên"
-                        : "Phí hủy: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_now_with_vietQR",
-                description: "Thanh toán ngay - Giá tốt nhất"
-            },
-
-            availability: {
-                total: 8,
-                remaining: Math.floor(Math.random() * 6) + 1,
-                urgencyMessage: isUrgentBooking ? "Đặt gấp!" : undefined
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true }
-            ],
-
-            promotion: {
-                type: "hot",
-                message: "Giá tốt nhất!",
-                discount: 15
-            },
-
-            dynamicPricing: {
-                basePrice: 1400000,
-                finalPrice: 1200000,
-                adjustments: [{ factor: 0.86, reason: "Giá ưu đãi đặc biệt", type: 'decrease' }],
-                savings: 200000,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 75
-            }
-        });        // Option 2: Bao gồm bữa sáng tuyệt hảo
-        options.push({
-            id: `${baseConfig.roomType}_breakfast_2guest`,
-            name: `Deluxe Premium - 2 khách`,
-            pricePerNight: { vnd: 1460000 },
-            maxGuests: 2,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-
-            cancellationPolicy: {
-                type: isUrgentBooking ? "non_refundable" : "conditional",
-                penalty: 100,
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Phí hủy: Đêm đầu tiên"
-                        : "Phí hủy: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_now_with_vietQR",
-                description: "Thanh toán ngay"
-            },
-
-            availability: {
-                total: 8,
-                remaining: Math.floor(Math.random() * 6) + 1
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng tuyệt hảo", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true }
-            ],
-
-            mostPopular: true,
-
-            dynamicPricing: {
-                basePrice: 1720000,
-                finalPrice: 1460000,
-                adjustments: [{ factor: 0.85, reason: "Combo bữa sáng ưu đãi", type: 'decrease' }],
-                savings: 260000,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 85
-            }
-        });        // Option 3: Bao gồm cả bữa sáng và tối - 2.5 triệu
-        options.push({
-            id: `${baseConfig.roomType}_fullboard_2guest`,
-            name: `Deluxe Executive - 2 khách`,
-            pricePerNight: { vnd: 2500000 },
-            maxGuests: 2,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-
-            cancellationPolicy: {
-                type: isUrgentBooking ? "non_refundable" : "free",
-                penalty: isUrgentBooking ? 100 : 0,
-                freeUntil: isUrgentBooking ? undefined : context.checkInDate.subtract(2, 'day').toISOString(),
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Hủy miễn phí trước 2 ngày / Phí hủy muộn: Đêm đầu tiên"
-                        : "Hủy miễn phí trước 2 ngày / Phí hủy muộn: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_at_hotel",
-                description: "Thanh toán tại khách sạn"
-            },
-
-            availability: {
-                total: 5,
-                remaining: Math.floor(Math.random() * 4) + 1
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng tuyệt hảo", included: true },
-                { icon: "UtensilsOutlined", name: "Bữa tối cao cấp", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe VIP", included: true },
-                { icon: "UserOutlined", name: "Late check-out miễn phí", included: true }
-            ],
-
-            promotion: {
-                type: "member",
-                message: "Gói Full Board - Tiện lợi nhất"
-            },
-
-            dynamicPricing: {
-                basePrice: 2800000,
-                finalPrice: 2500000,
-                adjustments: [{ factor: 0.89, reason: "Gói combo ưu đãi", type: 'decrease' }],
-                savings: 300000,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 70
-            }
-        });
-
-        return options;
-    }
-
-    /**
-     * Tạo options cho phòng Premium 
+     * Tính hệ số điều chỉnh giá theo ngày đặc biệt
      */
-    private static createPremiumOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption[] {
-        // Premium room có giá cao hơn Deluxe khoảng 50%
-        return this.createStandardRoomOptions(baseConfig, context, isUrgentBooking, {
-            singleGuestPrice: 2200000, // 2.2M cho 1 người
-            doubleGuestBasic: 1800000, // 1.8M cho 2 người basic
-            doubleGuestBreakfast: 2060000, // 2.06M với breakfast
-            doubleGuestFullboard: 3500000, // 3.5M full board
-        });
-    }
+    private static calculatePriceMultiplier(context: BookingContext): number {
+        const checkInDate = context.checkInDate;
 
-    /**
-     * Tạo options cho phòng Suite
-     */
-    private static createSuiteOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption[] {
-        // Suite có giá cao hơn Premium khoảng 70%
-        return this.createStandardRoomOptions(baseConfig, context, isUrgentBooking, {
-            singleGuestPrice: 3500000, // 3.5M cho 1 người
-            doubleGuestBasic: 2800000, // 2.8M cho 2 người basic
-            doubleGuestBreakfast: 3060000, // 3.06M với breakfast
-            doubleGuestFullboard: 5000000, // 5M full board
-        });
-    }
-
-    /**
-     * Tạo options cho phòng Presidential - chỉ có option cho 4 người
-     */
-    private static createPresidentialOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption[] {
-        const options: RoomOption[] = [];        // Chỉ có 1 option cho 4 người - phòng tổng thống
-        options.push({
-            id: `${baseConfig.roomType}_presidential_4guest`,
-            name: `Presidential Suite - 4 khách`,
-            pricePerNight: { vnd: 50000000 }, // 50M cho 4 người
-            maxGuests: 4,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-            cancellationPolicy: {
-                type: isUrgentBooking ? "non_refundable" : "free",
-                penalty: isUrgentBooking ? 100 : 0,
-                freeUntil: isUrgentBooking ? undefined : context.checkInDate.subtract(3, 'day').toISOString(),
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Hủy miễn phí trước 3 ngày / Phí hủy muộn: 2 đêm đầu"
-                        : "Hủy miễn phí trước 3 ngày / Phí hủy muộn: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_at_hotel",
-                description: "Thanh toán tại khách sạn - Dịch vụ VIP"
-            },
-
-            availability: {
-                total: 2,
-                remaining: 1,
-                urgencyMessage: "Chỉ còn 1 phòng cuối cùng!"
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng VIP", included: true },
-                { icon: "UtensilsOutlined", name: "Bữa tối cao cấp", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe VIP", included: true },
-                { icon: "UserOutlined", name: "Butler service 24/7", included: true },
-                { icon: "StarOutlined", name: "Spa miễn phí", included: true }
-            ],
-
-            promotion: {
-                type: "member",
-                message: "Phòng Presidential - Đẳng cấp nhất"
-            },
-
-            recommended: true,
-
-            dynamicPricing: {
-                basePrice: 50000000,
-                finalPrice: 4700000, // Giảm giá đặc biệt
-                adjustments: [{ factor: 0.8, reason: "Ưu đãi đặc biệt Presidential", type: 'decrease' }],
-                savings: 2000000,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
-                recommendationScore: 95
-            }
-        });
-
-        return options;
-    }
-
-    /**
-     * Tạo options cho phòng The Level
-     */
-    private static createTheLevelOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean
-    ): RoomOption[] {
-        // The Level có giá cao hơn Suite khoảng 50%
-        return this.createStandardRoomOptions(baseConfig, context, isUrgentBooking, {
-            singleGuestPrice: 5000000, // 5M cho 1 người
-            doubleGuestBasic: 4200000, // 4.2M cho 2 người basic
-            doubleGuestBreakfast: 4460000, // 4.46M với breakfast
-            doubleGuestFullboard: 7000000, // 7M full board
-        });
-    }
-
-    /**
-     * Helper method để tạo standard room options với pricing khác nhau
-     */
-    private static createStandardRoomOptions(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean,
-        pricing: {
-            singleGuestPrice: number;
-            doubleGuestBasic: number;
-            doubleGuestBreakfast: number;
-            doubleGuestFullboard: number;
+        // Kiểm tra Tết
+        if (this.isTetPeriod(checkInDate)) {
+            return PRICING_MULTIPLIERS.tet;
         }
-    ): RoomOption[] {
-        const options: RoomOption[] = [];        // Option cho 1 người
-        options.push({
-            id: `${baseConfig.roomType}_single_1guest`,
-            name: `${baseConfig.roomType.charAt(0).toUpperCase() + baseConfig.roomType.slice(1)} Classic - 1 khách`,
-            pricePerNight: { vnd: pricing.singleGuestPrice },
-            maxGuests: 1,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
 
+        // Kiểm tra ngày lễ
+        if (this.isHolidayPeriod(checkInDate)) {
+            return PRICING_MULTIPLIERS.holiday;
+        }
 
-            cancellationPolicy: {
-                type: "non_refundable",
-                penalty: 100,
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : "Phí hủy: Toàn bộ tiền phòng"
-            },
+        // Kiểm tra cuối tuần
+        if (checkInDate.day() === 0 || checkInDate.day() === 6) {
+            return PRICING_MULTIPLIERS.weekend;
+        }
 
-            paymentPolicy: {
-                type: "pay_now_with_vietQR",
-                description: "Thanh toán ngay"
-            },
-
-            availability: {
-                total: 5,
-                remaining: Math.floor(Math.random() * 4) + 1,
-                urgencyMessage: isUrgentBooking ? "Đặt gấp - Chỉ còn ít phòng!" : undefined
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng tuyệt hảo", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true }
-            ],
-
-            recommended: true,
-
-            dynamicPricing: {
-                basePrice: pricing.singleGuestPrice,
-                finalPrice: pricing.singleGuestPrice,
-                adjustments: [],
-                savings: 0,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 90
-            }
-        });
-
-        // 3 options cho 2 người
-        options.push(...this.createDoubleGuestOptionsGeneric(baseConfig, context, isUrgentBooking, pricing));
-
-        return options;
+        // Ngày bình thường
+        return PRICING_MULTIPLIERS.normal;
     }
 
     /**
-     * Helper method để tạo options cho 2 người (generic)
+     * Helper: Kiểm tra xem ngày có đang trong kỳ nghỉ không
      */
-    private static createDoubleGuestOptionsGeneric(
-        baseConfig: DynamicPricingConfig,
-        context: BookingContext,
-        isUrgentBooking: boolean,
-        pricing: {
-            doubleGuestBasic: number;
-            doubleGuestBreakfast: number;
-            doubleGuestFullboard: number;
-        }
-    ): RoomOption[] {
-        const options: RoomOption[] = [];        // Option 1: Basic (rẻ nhất)
-        options.push({
-            id: `${baseConfig.roomType}_basic_2guest`,
-            name: `${baseConfig.roomType.charAt(0).toUpperCase() + baseConfig.roomType.slice(1)} Standard - 2 khách`,
-            pricePerNight: { vnd: pricing.doubleGuestBasic },
-            maxGuests: 2,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
+    private static isHolidayPeriod(date: Dayjs): boolean {
+        const month = date.month() + 1;
+        const day = date.date();
 
+        // Vietnamese holidays
+        const holidays = [
+            { month: 4, day: 30 }, // Liberation Day
+            { month: 5, day: 1 },  // Labor Day
+            { month: 9, day: 2 },  // Independence Day
+            // Add more holidays as needed
+        ];
 
-            cancellationPolicy: {
-                type: "non_refundable",
-                penalty: 100,
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Phí hủy: Đêm đầu tiên"
-                        : "Phí hủy: Toàn bộ tiền phòng"
-            },
+        return holidays.some(holiday =>
+            holiday.month === month && holiday.day === day
+        );
+    }
 
-            paymentPolicy: {
-                type: "pay_now_with_vietQR",
-                description: "Thanh toán ngay - Giá tốt nhất"
-            },
+    /**
+     * Helper: Check if date is in Tet period
+     */
+    private static isTetPeriod(date: Dayjs): boolean {
+        // Simplified Tet check - usually late January to mid February
+        const month = date.month() + 1;
+        const day = date.date();
 
-            availability: {
-                total: 8,
-                remaining: Math.floor(Math.random() * 6) + 1,
-                urgencyMessage: isUrgentBooking ? "Đặt gấp!" : undefined
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true }
-            ],
-
-            promotion: {
-                type: "hot",
-                message: "Giá tốt nhất!",
-                discount: 15
-            },
-
-            dynamicPricing: {
-                basePrice: pricing.doubleGuestBasic * 1.15,
-                finalPrice: pricing.doubleGuestBasic,
-                adjustments: [{ factor: 0.87, reason: "Giá ưu đãi đặc biệt", type: 'decrease' }],
-                savings: pricing.doubleGuestBasic * 0.15,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 75
-            }
-        });        // Option 2: Với breakfast
-        options.push({
-            id: `${baseConfig.roomType}_breakfast_2guest`,
-            name: `${baseConfig.roomType.charAt(0).toUpperCase() + baseConfig.roomType.slice(1)} Premium - 2 khách`,
-            pricePerNight: { vnd: pricing.doubleGuestBreakfast },
-            maxGuests: 2,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-
-
-            cancellationPolicy: {
-                type: isUrgentBooking ? "non_refundable" : "conditional",
-                penalty: 100,
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Phí hủy: Đêm đầu tiên"
-                        : "Phí hủy: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_now_with_vietQR",
-                description: "Thanh toán ngay"
-            },
-
-            availability: {
-                total: 8,
-                remaining: Math.floor(Math.random() * 6) + 1
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng tuyệt hảo", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe miễn phí", included: true }
-            ],
-
-            mostPopular: true,
-
-            dynamicPricing: {
-                basePrice: pricing.doubleGuestBreakfast * 1.18,
-                finalPrice: pricing.doubleGuestBreakfast,
-                adjustments: [{ factor: 0.85, reason: "Combo bữa sáng ưu đãi", type: 'decrease' }],
-                savings: pricing.doubleGuestBreakfast * 0.18,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 85
-            }
-        });        // Option 3: Full board
-        options.push({
-            id: `${baseConfig.roomType}_fullboard_2guest`,
-            name: `${baseConfig.roomType.charAt(0).toUpperCase() + baseConfig.roomType.slice(1)} Executive - 2 khách`,
-            pricePerNight: { vnd: pricing.doubleGuestFullboard },
-            maxGuests: 2,
-            minGuests: 1,
-            roomType: baseConfig.roomType,
-
-
-
-            cancellationPolicy: {
-                type: isUrgentBooking ? "non_refundable" : "free",
-                penalty: isUrgentBooking ? 100 : 0,
-                freeUntil: isUrgentBooking ? undefined : context.checkInDate.subtract(2, 'day').toISOString(),
-                description: isUrgentBooking
-                    ? "Phí hủy: Toàn bộ tiền phòng"
-                    : context.nights > 1
-                        ? "Hủy miễn phí trước 2 ngày / Phí hủy muộn: Đêm đầu tiên"
-                        : "Hủy miễn phí trước 2 ngày / Phí hủy muộn: Toàn bộ tiền phòng"
-            },
-
-            paymentPolicy: {
-                type: "pay_at_hotel",
-                description: "Thanh toán tại khách sạn"
-            },
-
-            availability: {
-                total: 5,
-                remaining: Math.floor(Math.random() * 4) + 1
-            },
-
-            additionalServices: [
-                { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
-                { icon: "CoffeeOutlined", name: "Bữa sáng tuyệt hảo", included: true },
-                { icon: "UtensilsOutlined", name: "Bữa tối cao cấp", included: true },
-                { icon: "CarOutlined", name: "Đỗ xe VIP", included: true },
-                { icon: "UserOutlined", name: "Late check-out miễn phí", included: true }
-            ],
-
-            promotion: {
-                type: "member",
-                message: "Gói Full Board - Tiện lợi nhất"
-            },
-
-            dynamicPricing: {
-                basePrice: pricing.doubleGuestFullboard * 1.12,
-                finalPrice: pricing.doubleGuestFullboard,
-                adjustments: [{ factor: 0.89, reason: "Gói combo ưu đãi", type: 'decrease' }],
-                savings: pricing.doubleGuestFullboard * 0.12,
-                urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
-                recommendationScore: 70
-            }
-        });
-
-        return options;
+        return (month === 1 && day >= 20) || (month === 2 && day <= 15);
     }
 }
 
@@ -997,12 +503,12 @@ export class RoomOptionGenerator {    /**
  */
 export const generateRoomOptionsWithDynamicPricing = (
     basePrice: number,
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel",
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel",
     maxGuests: number,
     checkInDate: Dayjs,
     checkOutDate: Dayjs,
     bookingDate: Dayjs = dayjs(),
-    guestCount: number = 2 // Thêm parameter để biết số khách thực tế
+    guestCount: number = 2
 ): RoomOption[] => {
     const config: DynamicPricingConfig = {
         basePrice,
@@ -1017,54 +523,104 @@ export const generateRoomOptionsWithDynamicPricing = (
         bookingDate,
         nights: checkOutDate.diff(checkInDate, 'day'),
         guestCount
-    }; const allOptions = RoomOptionGenerator.generateDynamicRoomOptions(config, context);
+    };
 
-    // Thêm logic ưu tiên và cảnh báo dựa trên guest count
+    const allOptions = RoomOptionGenerator.generateDynamicRoomOptions(config, context);
+
+    // Áp dụng các quy tắc năng lực và cảnh báo số lượng khách
     return allOptions.map(option => {
-        // Nếu guest count khác với room capacity, thêm cảnh báo
-        if (guestCount !== option.maxGuests) {
-            const warning = guestCount > option.maxGuests
-                ? ` Phòng này chỉ phù hợp cho ${option.maxGuests} khách, bạn đang tìm cho ${guestCount} khách`
-                : guestCount < option.maxGuests
-                    ? ` Phòng này phù hợp cho ${option.maxGuests} khách, bạn đang tìm cho ${guestCount} khách`
-                    : undefined;
+        const isPresidentialRoom = option.roomType === 'presidential';
+        const actualMaxGuests = isPresidentialRoom ? 4 : 2;
 
-            if (warning && option.dynamicPricing) {
+        const updatedOption = {
+            ...option,
+            maxGuests: actualMaxGuests
+        };
+
+        if (guestCount !== actualMaxGuests) {
+            let warning = '';
+            let warningDetail = null;
+
+            if (guestCount > actualMaxGuests) {
+                const remainingGuests = guestCount - actualMaxGuests;
+                const additionalRoomsNeeded = Math.ceil(remainingGuests / 2);
+
+                warning = `Phòng này phù hợp cho ${actualMaxGuests} khách. Bạn có thể đặt phòng này và cần thêm chỗ ở cho ${remainingGuests} khách.`;
+
+                let suggestedAction = '';
+                if (isPresidentialRoom) {
+                    suggestedAction = `Đặt thêm ${additionalRoomsNeeded} phòng nữa cho ${remainingGuests} khách còn lại`;
+                } else {
+                    if (guestCount <= 4) {
+                        suggestedAction = `Đặt thêm ${additionalRoomsNeeded} phòng nữa hoặc chọn phòng Presidential Suite (4 khách)`;
+                    } else {
+                        suggestedAction = `Đặt thêm ${additionalRoomsNeeded} phòng nữa cho ${remainingGuests} khách còn lại`;
+                    }
+                }
+
+                warningDetail = {
+                    type: "exceeds_capacity" as const,
+                    message: `Cần thêm chỗ ở cho ${remainingGuests} khách`,
+                    suggestedAction: suggestedAction
+                };
+            } else {
+                warning = `Phòng này phù hợp cho ${actualMaxGuests} khách, bạn đang tìm cho ${guestCount} khách`;
+
+                warningDetail = {
+                    type: "below_minimum" as const,
+                    message: `Phòng có thể chứa thêm ${actualMaxGuests - guestCount} khách`,
+                    suggestedAction: "Phòng này vẫn phù hợp cho nhu cầu của bạn"
+                };
+            }
+
+            if (warning && updatedOption.dynamicPricing) {
                 return {
-                    ...option,
+                    ...updatedOption,
                     guestCountWarning: warning,
-                    // Điều chỉnh recommendation score
+                    guestCountWarningDetail: warningDetail,
                     dynamicPricing: {
-                        ...option.dynamicPricing,
-                        recommendationScore: guestCount === option.maxGuests
-                            ? option.dynamicPricing.recommendationScore + 20  // Bonus cho match perfect
-                            : option.dynamicPricing.recommendationScore - 10   // Penalty cho không match
+                        ...updatedOption.dynamicPricing,
+                        recommendationScore: guestCount === actualMaxGuests
+                            ? updatedOption.dynamicPricing.recommendationScore + 20
+                            : guestCount > actualMaxGuests
+                                ? updatedOption.dynamicPricing.recommendationScore - 15
+                                : updatedOption.dynamicPricing.recommendationScore - 5
                     }
                 } as RoomOption;
             }
         }
 
-        // Nếu guest count match perfect, tăng recommendation score
-        if (guestCount === option.maxGuests && option.dynamicPricing) {
+        if (guestCount === actualMaxGuests && updatedOption.dynamicPricing) {
             return {
-                ...option,
+                ...updatedOption,
                 dynamicPricing: {
-                    ...option.dynamicPricing,
-                    recommendationScore: option.dynamicPricing.recommendationScore + 20
+                    ...updatedOption.dynamicPricing,
+                    recommendationScore: updatedOption.dynamicPricing.recommendationScore + 20
                 }
             } as RoomOption;
         }
 
-        return option;
+        return updatedOption;
     }).sort((a, b) => {
-        // Ưu tiên options match với guest count lên đầu
-        const aMatch = a.maxGuests === guestCount;
-        const bMatch = b.maxGuests === guestCount;
+        const aIsPresidential = a.roomType === 'presidential';
+        const bIsPresidential = b.roomType === 'presidential';
+        const aActualMaxGuests = aIsPresidential ? 4 : 2;
+        const bActualMaxGuests = bIsPresidential ? 4 : 2;
 
-        if (aMatch && !bMatch) return -1;
-        if (!aMatch && bMatch) return 1;
+        const aMatchExact = aActualMaxGuests === guestCount;
+        const bMatchExact = bActualMaxGuests === guestCount;
+        const aCanAccommodate = aActualMaxGuests >= guestCount;
+        const bCanAccommodate = bActualMaxGuests >= guestCount;
 
-        // Sau đó sort theo giá
+        if (aMatchExact && !bMatchExact) return -1;
+        if (!aMatchExact && bMatchExact) return 1;
+
+        if (aCanAccommodate && !bCanAccommodate) return -1;
+        if (!aCanAccommodate && bCanAccommodate) return 1; if (!aCanAccommodate && !bCanAccommodate) {
+            if (aIsPresidential && !bIsPresidential) return -1;
+            if (!aIsPresidential && bIsPresidential) return 1;
+        }
+
         return a.pricePerNight.vnd - b.pricePerNight.vnd;
     });
 };

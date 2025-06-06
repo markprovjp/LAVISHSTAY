@@ -6,9 +6,9 @@ export interface RoomOption {
     };
     maxGuests: number;
     minGuests: number;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
 
- 
+
     cancellationPolicy: {
         type: "free" | "non_refundable" | "conditional";
         freeUntil?: string;
