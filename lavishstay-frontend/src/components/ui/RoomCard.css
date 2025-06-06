@@ -3,6 +3,9 @@
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  min-height: 570px !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .room-card:hover {
@@ -230,4 +233,36 @@
   100% {
     transform: translateX(100%);
   }
+}
+
+/* Đảm bảo consistent card height cho tất cả room types */
+.room-card {
+  /* ...existing styles... */
+  min-height: 520px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.room-card .ant-card-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Đảm bảo title có chiều cao tối thiểu nhất quán */
+.room-card .ant-typography {
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Amenities section flexible */
+.room-card .amenities-section {
+  flex: 1 !important;
+  min-height: 120px !important;
+}
+
+/* Button luôn ở bottom */
+.room-card .action-button-container {
+  margin-top: auto !important;
 }

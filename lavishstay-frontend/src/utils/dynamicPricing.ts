@@ -157,7 +157,7 @@ export class DynamicPricingEngine {
     }
 
     /**
-     * 2. WEEKEND/PEAK PRICING
+     * 2. Giá cuối tuần/đỉnh cao
 * - Các ngày trong tuần (Thứ Hai -Thứ 6): Giá cơ sở
 * - Thứ Sáu/Chủ nhật: +15%
 * - Thứ bảy: +25%
@@ -478,7 +478,21 @@ export class RoomOptionGenerator {
             { month: 4, day: 30 }, // Liberation Day
             { month: 5, day: 1 },  // Labor Day
             { month: 9, day: 2 },  // Independence Day
-            // Add more holidays as needed
+            { month: 1, day: 1 },  // New Year's Day
+            { month: 12, day: 25 }, // Christmas Day
+            { month: 2, day: 17 },  // Lunar New Year (Tet)
+            { month: 2, day: 18 },  // Tet Holiday
+            { month: 2, day: 19 },  // Tet Holiday
+            { month: 1, day: 20 },  // Ngày Giải phóng miền Nam
+            { month: 1, day: 21 },  // Ngày Quốc tế Lao động
+            { month: 3, day: 8 },  // Ngày Quốc tế Phụ nữ
+            { month: 4, day: 30 },  // Ngày Giải phóng miền Nam
+            { month: 5, day: 19 },  // Ngày sinh Chủ tịch Hồ Chí Minh
+            { month: 6, day: 1 },   // Ngày Quốc tế Thi
+            { month: 9, day: 2 },   // Ngày Quốc khánh
+            { month: 10, day: 20 }, // Ngày Phụ nữ Việt
+            { month: 12, day: 31 }  // Ngày cuối năm
+            
         ];
 
         return holidays.some(holiday =>

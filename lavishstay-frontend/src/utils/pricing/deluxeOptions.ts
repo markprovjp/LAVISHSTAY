@@ -10,6 +10,7 @@ export const createDeluxeOptions = (
     isUrgentBooking: boolean,
     priceMultiplier: number = 1.0
 ): RoomOption[] => {
+    
     const options: RoomOption[] = [];
     const pricing = ROOM_PRICING.deluxe;
 
