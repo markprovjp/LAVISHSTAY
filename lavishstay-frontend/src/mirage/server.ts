@@ -6,7 +6,7 @@ export function makeServer() {
   return createServer({
     routes() {
       this.namespace = "api";
-      this.timing = 400; // Thêm độ trễ để mô phỏng API thật
+      this.timing = 4; // Thêm độ trễ để mô phỏng API thật
 
       // API endpoint để lấy tất cả các phòng
       this.get("/rooms", () => {

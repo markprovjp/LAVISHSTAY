@@ -67,13 +67,12 @@ class MockSearchService {
                 room.name.toLowerCase().includes(searchTerm) ||
                 room.roomType.toLowerCase().includes(searchTerm)
             );
-        }
-
-        // Filter by guest count
-        if (searchData.guestDetails) {
-            const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-            filteredRooms = filteredRooms.filter(room => room.maxGuests >= totalGuests);
-        }        // Filter by availability (simplified for single hotel)
+        }        // Filter by guest count - removed hard filtering to show all rooms
+        // Capacity warnings will be handled by room options themselves
+        // if (searchData.guestDetails) {
+        //     const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
+        //     filteredRooms = filteredRooms.filter(room => room.maxGuests >= totalGuests);
+        // }// Filter by availability (simplified for single hotel)
         if (searchData.dateRange && searchData.dateRange.length === 2) {
             // For single hotel, we assume rooms are available unless specifically unavailable
             // You can add more complex availability logic here if needed

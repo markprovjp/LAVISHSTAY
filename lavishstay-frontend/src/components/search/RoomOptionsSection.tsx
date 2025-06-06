@@ -1,5 +1,14 @@
 import React from 'react';
-import { Card, Typography, Button, Badge, Space, Progress, Divider, Alert } from 'antd';
+import {
+    Card,
+    Typography,
+    Button,
+    Space,
+    Progress,
+    Tooltip,
+    Tag,
+    Flex
+} from 'antd';
 import {
     PlusOutlined,
     MinusOutlined,
@@ -8,25 +17,25 @@ import {
     StopOutlined,
     CheckCircleOutlined,
     WarningOutlined,
-    GiftOutlined,
     InfoCircleOutlined
 } from '@ant-design/icons';
 import { Room } from '../../mirage/models';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 interface RoomOptionsSectionProps {
     room: Room;
     selectedRooms: { [roomId: string]: { [optionId: string]: number } };
     onQuantityChange: (roomId: string, optionId: string, quantity: number) => void;
     formatVND: (price: number) => string;
+    getNights?: () => number;
 }
 
 const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
-    room,
-    selectedRooms,
+    room, selectedRooms,
     onQuantityChange,
-    formatVND
+    formatVND,
+    getNights: _
 }) => {
     const getAvailabilityStatus = (availability: any) => {
         const remaining = availability.remaining;
@@ -35,58 +44,45 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
 
         if (remaining === 0) {
             return {
-                color: '#ef4444',
+                color: '#ff4d4f',
                 text: 'Hết phòng',
-                urgency: 'unavailable',
-                percentage: 0,
-                progressColor: '#ef4444'
+                percentage: 0
             };
         } else if (percentage <= 20) {
             return {
-                color: '#ef4444',
-                text: `Chỉ còn ${remaining} phòng!`,
-                urgency: 'high',
-                percentage,
-                progressColor: '#ef4444'
+                color: '#ff4d4f',
+                text: `Chỉ còn ${remaining} phòng`,
+                percentage
             };
-        } else if (percentage <= 30) {
+        } else if (percentage <= 50) {
             return {
-                color: '#f59e0b',
+                color: '#faad14',
                 text: `Còn ${remaining} phòng`,
-                urgency: 'medium',
-                percentage,
-                progressColor: '#f59e0b'
+                percentage
             };
         }
         return {
-            color: '#10b981',
+            color: '#52c41a',
             text: `Còn ${remaining} phòng`,
-            urgency: 'low',
-            percentage,
-            progressColor: '#10b981'
+            percentage
         };
-    };
-
-    const getCancellationPolicyDisplay = (policy: string) => {
+    }; const getCancellationPolicyDisplay = (policy: string) => {
         switch (policy) {
             case 'free':
                 return {
                     text: 'Hủy miễn phí',
-                    color: '#10b981',
-                    badge: { color: 'success', icon: <CheckCircleOutlined /> }
+                    icon: <CheckCircleOutlined />
                 };
             case 'conditional':
                 return {
                     text: 'Hủy có điều kiện',
-                    color: '#f59e0b',
-                    badge: { color: 'warning', icon: <WarningOutlined /> }
+                    icon: <WarningOutlined />
                 };
             case 'non_refundable':
             default:
                 return {
                     text: 'Không hoàn tiền',
-                    color: '#ef4444',
-                    badge: { color: 'error', icon: <StopOutlined /> }
+                    icon: <StopOutlined />
                 };
         }
     };
@@ -96,32 +92,25 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
             case 'pay_now_with_vietQR':
                 return {
                     icon: <QrcodeOutlined />,
-                    text: 'Thanh toán ngay bằng VietQR',
-                    color: '#3b82f6',
-                    badge: { color: 'processing' }
+                    text: 'VietQR'
                 };
             case 'pay_at_hotel':
             default:
                 return {
                     icon: <HomeOutlined />,
-                    text: 'Thanh toán tại khách sạn',
-                    color: '#10b981',
-                    badge: { color: 'success' }
+                    text: 'Tại khách sạn'
                 };
         }
-    };
-
-    const displayOptions = room.options.slice(0, 2); // Hiển thị tối đa 2 options
+    }; const displayOptions = room.options.slice(0, 2);
     const hasScrollableOptions = room.options.length > 2;
 
     return (
         <div className="space-y-3">
-            {/* Options container với cuộn nếu > 2 options */}
             <div
                 className={hasScrollableOptions ? "max-h-80 overflow-y-auto space-y-3 pr-1" : "space-y-3"}
                 style={{
                     scrollbarWidth: 'thin',
-                    scrollbarColor: '#cbd5e1 #f1f5f9'
+                    scrollbarColor: '#cbd5e1 transparent'
                 }}
             >
                 {(hasScrollableOptions ? room.options : displayOptions).map((option: any) => {
@@ -135,210 +124,157 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                     return (
                         <Card
                             key={option.id}
-                            className={`transition-all duration-200 ${isSelected
-                                    ? ''
-                                    : 'border-gray-200 hover:border-blue-200 hover:shadow-sm'
-                                } ${isUnavailable ? '' : ''}`}
-                            bodyStyle={{ padding: '14px' }}
-                            size="small"
+                            className={`
+                                transition-all duration-200
+                                ${isSelected
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                                } 
+                                ${isUnavailable ? 'opacity-60' : ''}
+                            `}
+                            bodyStyle={{ padding: '16px' }}
+                            style={{
+                                borderRadius: '8px',
+                                border: isSelected ? '2px solid #3b82f6' : '1px solid #e5e7eb'
+                            }}
                         >
-                            {/* Header */}
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="flex-1">
+                            {/* Header với tên option và badges */}
+                            <Flex justify="space-between" align="flex-start" className="mb-3">
+                                <div className="flex-1 mr-4">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Text strong className="text-sm ">
+                                        <Title level={5} className="mb-0 text-gray-800" style={{ fontSize: '16px' }}>
                                             {option.name}
-                                        </Text>
+                                        </Title>
 
-                                        {/* Option badges */}
+                                        {/* Simple badges */}
                                         {option.recommended && (
-                                            <Badge
-                                                count="Đề xuất"
-                                                style={{
-                                                    backgroundColor: '#3b82f6',
-                                                    fontSize: '10px',
-                                                    height: '18px',
-                                                    lineHeight: '18px',
-                                                    borderRadius: '9px'
-                                                }}
-                                            />
+                                            <Tag color="gold" style={{ fontSize: '11px' }}>
+                                                Đề xuất
+                                            </Tag>
                                         )}
                                         {option.mostPopular && (
-                                            <Badge
-                                                count="Phổ biến"
-                                                style={{
-                                                    backgroundColor: '#ef4444',
-                                                    fontSize: '10px',
-                                                    height: '18px',
-                                                    lineHeight: '18px',
-                                                    borderRadius: '9px'
-                                                }}
-                                            />
-                                        )}
-                                        {option.promotion && (
-                                            <Badge
-                                                count={option.promotion.message}
-                                                style={{
-                                                    backgroundColor: '#f59e0b',
-                                                    fontSize: '10px',
-                                                    height: '18px',
-                                                    lineHeight: '18px',
-                                                    borderRadius: '9px'
-                                                }}
-                                            />
+                                            <Tag color="red" style={{ fontSize: '11px' }}>
+                                                Phổ biến
+                                            </Tag>
                                         )}
                                     </div>
 
-                                    {/* Progress bar cho availability */}
-                                    <div className="mb-2">
-                                        <Progress
-                                            status='active'
-                                            
-                                            percent={availability.percentage}
-                                            size="small"
-                                            strokeColor={{
-                                                '0%': availability.progressColor,
-                                                '100%': availability.progressColor === '#ef4444' ? '#dc2626' :
-                                                    availability.progressColor === '#f59e0b' ? '#d97706' : '#059669'
-                                            }}
-                                            trailColor="#f1f5f9"
-                                            showInfo={false}
-                                            strokeWidth={6}
-                                        />
-                                        <Text className="text-xs" style={{ color: availability.color }}>
-                                            {availability.text}
-                                        </Text>
-                                    </div>
+                                    {/* Progress bar thay thế thông tin số phòng còn lại */}
+                                    {!isUnavailable && (
+                                        <div className="mb-2">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <Text className="text-xs text-gray-600">Tình trạng phòng</Text>
+                                                <Text className="text-xs" style={{ color: availability.color }}>
+                                                    {availability.text}
+                                                </Text>
+                                            </div>
+                                            <Progress
+                                                percent={availability.percentage}
+                                                showInfo={false}
+                                                strokeColor={availability.color}
+                                                strokeWidth={6}
+                                                trailColor="#f0f0f0"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Warning cho capacity */}
+                                    {option.guestCountWarningDetail?.type === "exceeds_capacity" && (
+                                        <Tag
+                                            color="orange"
+                                            icon={<WarningOutlined />}
+                                            style={{ fontSize: '11px', marginBottom: '8px' }}
+                                        >
+                                            Cần đặt thêm phòng
+                                        </Tag>
+                                    )}
                                 </div>
 
-                                {/* Price and Controls */}
+                                {/* Price và quantity */}
                                 <div className="flex items-center gap-3">
                                     <div className="text-right">
-                                        <Text strong className=" text-base">
+                                        <div className="text-lg font-semibold text-gray-800">
                                             {formatVND(option.pricePerNight.vnd)}
-                                        </Text>
-                                        <Text className="text-xs  block">/ đêm</Text>
+                                        </div>
+                                        <div className="text-xs text-gray-500">/ đêm</div>
+                                        {option.dynamicPricing?.savings > 0 && (
+                                            <div className="text-xs text-green-600 font-medium">
+                                                Tiết kiệm {formatVND(option.dynamicPricing.savings)}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Quantity Selector */}
-                                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden ">
+                                    {/* Quantity selector */}
+                                    <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white">
                                         <Button
                                             type="text"
-                                            icon={<MinusOutlined />}
+                                            icon={<MinusOutlined style={{ fontSize: '12px' }} />}
                                             size="small"
                                             disabled={currentQuantity === 0 || isUnavailable}
                                             onClick={() => onQuantityChange(room.id.toString(), option.id, currentQuantity - 1)}
-                                            className="w-8 h-8 flex items-center justify-center border-none   "
+                                            className="w-8 h-8 border-none hover:bg-gray-50"
+                                            style={{ borderRadius: '0' }}
                                         />
-                                        <div className="w-10 h-8 flex items-center justify-center  border-x border-gray-200">
-                                            <Text className="text-sm font-medium ">{currentQuantity}</Text>
+                                        <div className="w-10 h-8 flex items-center justify-center bg-gray-50 border-x border-gray-200 text-sm font-medium">
+                                            {currentQuantity}
                                         </div>
                                         <Button
                                             type="text"
-                                            icon={<PlusOutlined />}
+                                            icon={<PlusOutlined style={{ fontSize: '12px' }} />}
                                             size="small"
                                             disabled={currentQuantity >= option.availability.remaining || isUnavailable}
                                             onClick={() => onQuantityChange(room.id.toString(), option.id, currentQuantity + 1)}
-                                            className="w-8 h-8 flex items-center justify-center border-none   "
+                                            className="w-8 h-8 border-none hover:bg-gray-50"
+                                            style={{ borderRadius: '0' }}
                                         />
                                     </div>
                                 </div>
-                            </div>
+                            </Flex>
 
-                            <Divider style={{ margin: '8px 0' }} />
-
-                            {/* Policy Information với Badges */}
-                            <div className="flex items-center justify-between">
-                                <Space size={8} wrap>
-                                    <Badge
-                                        color={cancellation.badge.color}
-                                        text={
-                                            <span className="text-xs flex items-center gap-1">
-                                                {cancellation.badge.icon}
-                                                {cancellation.text}
-                                            </span>
-                                        }
-                                    />
-                                    <Badge
-                                        color={payment.badge.color}
-                                        text={
-                                            <span className="text-xs flex items-center gap-1">
-                                                {payment.icon}
-                                                {payment.text}
-                                            </span>
-                                        }
-                                    />
+                            {/* Policy info đơn giản */}
+                            <div className="pt-2 border-t border-gray-100">
+                                <Space size={8}>
+                                    <Tooltip title={cancellation.text}>
+                                        <Tag
+                                            icon={cancellation.icon}
+                                            className="cursor-help"
+                                            style={{
+                                                fontSize: '11px',
+                                                backgroundColor: '#f8fafc',
+                                                border: '1px solid #e2e8f0',
+                                                color: '#64748b'
+                                            }}
+                                        >
+                                            {cancellation.text}
+                                        </Tag>
+                                    </Tooltip>
+                                    <Tooltip title={`Thanh toán ${payment.text}`}>
+                                        <Tag
+                                            icon={payment.icon}
+                                            className="cursor-help"
+                                            style={{
+                                                fontSize: '11px',
+                                                backgroundColor: '#f8fafc',
+                                                border: '1px solid #e2e8f0',
+                                                color: '#64748b'
+                                            }}
+                                        >
+                                            {payment.text}
+                                        </Tag>
+                                    </Tooltip>
                                 </Space>
-
-                                {/* Additional info từ dynamicPricing */}
-                                {option.dynamicPricing && (
-                                    <div className="text-xs  flex items-center gap-1">
-                                        {option.dynamicPricing.savings > 0 && (
-                                            <span className="text-green-600 font-medium ">
-                                                <GiftOutlined />
-                                                Tiết kiệm {formatVND(option.dynamicPricing.savings)}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>                            {/* Additional notifications từ option và dynamicPricing */}
-                            {option.guestCountWarning && (
-                                <Alert
-                                    message={option.guestCountWarning}
-                                    type="warning"
-                                    showIcon
-                                    className="mt-2"
-                                />
-                            )}
-
-                            {option.guestCountWarningDetail && (
-                                <Alert
-                                    message={option.guestCountWarningDetail.message}
-                                    description={option.guestCountWarningDetail.suggestedAction}
-                                    type={option.guestCountWarningDetail.type === "exceeds_capacity" ? "error" : "info"}
-                                    showIcon
-                                    className="mt-2"
-                                />
-                            )}
-
-                            {option.availability.urgencyMessage && (
-                                <Alert
-                                    message={option.availability.urgencyMessage}
-                                    type="error"
-                                    showIcon
-                                    className="mt-2 "
-                                />
-                            )}
-
-                            {/* Hiển thị tất cả thông báo từ dynamicPricing */}
-                            {option.dynamicPricing?.adjustments && option.dynamicPricing.adjustments.length > 0 && (
-                                <div className="mt-2">
-                                    {option.dynamicPricing.adjustments
-                                        .filter((adj: any) => adj.reason && adj.reason.length > 0)
-                                        .slice(0, 2) // Hiển thị tối đa 2 điều chỉnh để tránh quá tải
-                                        .map((adjustment: any, index: number) => (
-                                            <Alert
-                                                key={index}
-                                                message={adjustment.reason}
-                                                type={adjustment.type === 'decrease' ? 'success' : 'warning'}
-                                                showIcon
-                                                className="mb-1"
-                                            />
-                                        ))
-                                    }
-                                </div>
-                            )}
+                            </div>
                         </Card>
                     );
                 })}
             </div>
 
-            {/* Chỉ hiển thị thông báo "+X tùy chọn khác" nếu không cuộn */}
+            {/* Summary for additional options */}
             {!hasScrollableOptions && room.options.length > 2 && (
-                <div className="text-center py-2">
-                    <Text className="text-xs  flex items-center justify-center gap-1">
-                        <InfoCircleOutlined />
-                        +{room.options.length - 2} tùy chọn khác
+                <div className="text-center py-2 px-3 bg-gray-50 rounded-md border border-gray-200">
+                    <Text className="text-sm text-gray-600">
+                        <InfoCircleOutlined className="mr-1" />
+                        Còn {room.options.length - 2} tùy chọn khác
                     </Text>
                 </div>
             )}

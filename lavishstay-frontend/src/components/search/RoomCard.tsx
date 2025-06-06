@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Divider, Alert, Badge, Space, Row, Col } from 'antd';
+import { Card, Typography, Divider, Alert, Badge, Space, Row, Col, Tag } from 'antd';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import {
@@ -7,7 +7,8 @@ import {
     GiftOutlined,
     HomeOutlined,
     UserOutlined,
-    EyeOutlined
+    EyeOutlined,
+    InfoCircleOutlined
 } from '@ant-design/icons';
 import { Eye } from 'lucide-react';
 import { Room } from '../../mirage/models';
@@ -45,9 +46,19 @@ const RoomCard: React.FC<RoomCardProps> = ({
 }) => {
     const isSuitable = searchData.guestDetails
         ? room.maxGuests >= (searchData.guestDetails.adults + searchData.guestDetails.children)
-        : true; const getMainAmenities = (amenities: string[]) => {
-            return formatAmenitiesForDisplay(amenities);
-        };
+        : true;
+
+    const getCapacityWarningMessage = () => {
+        if (!searchData.guestDetails) return null;
+        const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
+        if (totalGuests > room.maxGuests) {
+            const additionalGuests = totalGuests - room.maxGuests;
+            return `Phòng này phù hợp cho ${room.maxGuests} khách. Bạn có thể đặt phòng này và cần thêm chỗ ở cho ${additionalGuests} khách.`;
+        }
+        return null;
+    }; const getMainAmenities = (amenities: string[]) => {
+        return formatAmenitiesForDisplay(amenities);
+    };
 
     return (
         <Card
@@ -162,12 +173,12 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                     showIcon
                                     className="mb-2"
                                 />
-                            )}
-                            {!isSuitable && (
+                            )}                            {!isSuitable && (
                                 <Alert
-                                    message="Phòng này có thể không phù hợp với số lượng khách của bạn"
+                                    message={getCapacityWarningMessage() || "Phòng này có thể không phù hợp với số lượng khách của bạn"}
                                     type="info"
                                     showIcon
+                                    className="mb-2"
                                 />
                             )}
                         </div>
@@ -205,6 +216,13 @@ const RoomCard: React.FC<RoomCardProps> = ({
                 <div className="flex items-center gap-2 mb-3">
                     <GiftOutlined style={{ fontSize: '14px', color: '#6366f1' }} />
                     <Text className="text-sm font-medium ">Lựa chọn đặt phòng</Text>
+                    {room.options.length > 2 && (
+                        <Col>
+                            <Tag color="blue" icon={<InfoCircleOutlined />}>
+                                Cuộn để xem thêm
+                            </Tag>
+                        </Col>
+                    )}
                 </div>
                 <RoomOptionsSection
                     room={room}

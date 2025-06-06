@@ -59,19 +59,67 @@ const SearchForm: React.FC<SearchFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const { token } = useToken();
-  const navigate = useNavigate();
-  const {
+  const navigate = useNavigate(); const {
     searchData,
     isValidSearchData,
     setSearchDateRange,
     setSearchGuestType,
-    handleGuestCountChange,
+    updateGuests,
     performSearch,
-    formatGuestSelection,
     clearError,
   } = useSearch();
   const [guestPopoverVisible, setGuestPopoverVisible] = useState<boolean>(false);
 
+  // Local state for guest details editing (for family_young and group types)
+  const [localGuestDetails, setLocalGuestDetails] = useState({
+    adults: searchData.guestDetails.adults,
+    children: searchData.guestDetails.children
+  });
+
+  // Update local state when searchData changes (from external sources)
+  useEffect(() => {
+    setLocalGuestDetails({
+      adults: searchData.guestDetails.adults,
+      children: searchData.guestDetails.children
+    });
+  }, [searchData.guestDetails.adults, searchData.guestDetails.children]);
+
+  // Handle local guest count change (doesn't update Redux store immediately)
+  const handleLocalGuestCountChange = (
+    type: "adults" | "children",
+    operation: "increase" | "decrease"
+  ) => {
+    setLocalGuestDetails(prev => {
+      const newDetails = { ...prev };
+      if (operation === "increase") {
+        newDetails[type] += 1;
+      } else if (
+        operation === "decrease" &&
+        newDetails[type] > (type === "adults" ? 1 : 0)
+      ) {
+        newDetails[type] -= 1;
+      }
+      return newDetails;
+    });
+  };
+
+  // Format guest selection using local state for family_young and group types
+  const formatLocalGuestSelection = () => {
+    switch (searchData.guestType) {
+      case "solo":
+        return "1 người";
+      case "couple":
+        return "2 người";
+      case "business":
+        return "1 người (Công tác)";
+      case "family_young":
+      case "group":
+        const totalPeople = localGuestDetails.adults + localGuestDetails.children;
+        return `${totalPeople} người`;
+      default:
+        return "Số lượng khách";
+    }
+  };
   // Initialize form with search data
   useEffect(() => {
     const formValues: any = {};
@@ -87,26 +135,34 @@ const SearchForm: React.FC<SearchFormProps> = ({
       }
     }
 
-    formValues.guests = formatGuestSelection();
+    // Use local formatting for guest display
+    formValues.guests = formatLocalGuestSelection();
     form.setFieldsValue(formValues);
-  }, [searchData, form, formatGuestSelection]);
-
-  // Handle search form submission
+  }, [searchData, form, formatLocalGuestSelection]);// Handle search form submission
   const handleSearch = async (values: any) => {
     try {
       // Clear any previous errors
       clearError();
 
+      // Sync local guest details with Redux store for family_young and group types
+      if (searchData.guestType === "family_young" || searchData.guestType === "group") {
+        // Directly update Redux with local values
+        updateGuests(localGuestDetails);
+
+        // Wait a bit for Redux update to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
       // Update date range if changed
       if (values.dateRange && values.dateRange !== searchData.dateRange) {
         setSearchDateRange(values.dateRange);
-      }      // Validate before search
+      }
+
+      // Validate before search
       if (!isValidSearchData) {
         message.error('Vui lòng điền đầy đủ thông tin tìm kiếm');
         return;
-      }
-
-      // Perform search
+      }      // Perform search
       const results = await performSearch();
 
       // Close popover
@@ -135,65 +191,76 @@ const SearchForm: React.FC<SearchFormProps> = ({
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <div>          <Title level={5} className="mb-4 text-center font-semibold">
           Bạn đi du lịch với ai?
-        </Title>          <Row gutter={[12, 12]}>            <Col span={12}>
-          <Button
-            type={searchData.guestType === "solo" ? "primary" : "default"}
-            block onClick={() => {
-              setSearchGuestType("solo");
-              form.setFieldsValue({ guests: "1 người" });
-              // Auto-close popover for solo, couple, business
-              setGuestPopoverVisible(false);
-            }}
-            className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "solo" ? "shadow-lg scale-105" : "hover:scale-105"
-              }`}
-          >
-            <UserOutlined className="text-lg mr-2" /> Đi một mình
-          </Button>
+        </Title>          <Row gutter={[12, 12]}>            <Col span={12}>              <Button
+          type={searchData.guestType === "solo" ? "primary" : "default"}
+          block onClick={() => {
+            setSearchGuestType("solo");
+            form.setFieldsValue({ guests: "1 người" });
+            // Auto-close popover and auto-search for simple guest types
+            setGuestPopoverVisible(false);
+            // Auto-search after form update
+            setTimeout(() => {
+              const formValues = form.getFieldsValue();
+              handleSearch(formValues);
+            }, 100);
+          }}
+          className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "solo" ? "shadow-lg scale-105" : "hover:scale-105"
+            }`}
+        >
+          <UserOutlined className="text-lg mr-2" /> Đi một mình
+        </Button>
         </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "couple" ? "primary" : "default"}
-                block onClick={() => {
-                  setSearchGuestType("couple");
-                  form.setFieldsValue({ guests: "2 người" });
-                  // Auto-close popover for solo, couple, business
-                  setGuestPopoverVisible(false);
-                }}
-                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "couple" ? "shadow-lg scale-105" : "hover:scale-105"
-                  }`}
-              >
-                <UsersRound className="text-lg mr-2" /> Cặp đôi
-              </Button>
+            <Col span={12}>              <Button
+              type={searchData.guestType === "couple" ? "primary" : "default"}
+              block onClick={() => {
+                setSearchGuestType("couple");
+                form.setFieldsValue({ guests: "2 người" });
+                // Auto-close popover and auto-search for simple guest types
+                setGuestPopoverVisible(false);
+                // Auto-search after form update
+                setTimeout(() => {
+                  const formValues = form.getFieldsValue();
+                  handleSearch(formValues);
+                }, 100);
+              }}
+              className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "couple" ? "shadow-lg scale-105" : "hover:scale-105"
+                }`}
+            >
+              <UsersRound className="text-lg mr-2" /> Cặp đôi
+            </Button>
             </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "business" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("business");
-                  form.setFieldsValue({ guests: "1 người (Công tác)" });
-                  // Auto-close popover for solo, couple, business
-                  setGuestPopoverVisible(false);
-                }}
-                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "business" ? "shadow-lg scale-105" : "hover:scale-105"
-                  }`}
-              >
-                <UserCheck className="text-lg mr-2" /> Công tác
-              </Button>
+            <Col span={12}>              <Button
+              type={searchData.guestType === "business" ? "primary" : "default"}
+              block
+              onClick={() => {
+                setSearchGuestType("business");
+                form.setFieldsValue({ guests: "1 người (Công tác)" });
+                // Auto-close popover and auto-search for simple guest types
+                setGuestPopoverVisible(false);
+                // Auto-search after form update
+                setTimeout(() => {
+                  const formValues = form.getFieldsValue();
+                  handleSearch(formValues);
+                }, 100);
+              }}
+              className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "business" ? "shadow-lg scale-105" : "hover:scale-105"
+                }`}
+            >
+              <UserCheck className="text-lg mr-2" /> Công tác
+            </Button>
             </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "family_young" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("family_young");
-                  form.setFieldsValue({ guests: formatGuestSelection() });
-                }}
-                className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "family_young" ? "shadow-lg scale-105" : "hover:scale-105"
-                  }`}
-              >
-                <Users className="text-lg mr-2" /> Gia đình trẻ
-              </Button>
+            <Col span={12}>              <Button
+              type={searchData.guestType === "family_young" ? "primary" : "default"}
+              block
+              onClick={() => {
+                setSearchGuestType("family_young");
+                form.setFieldsValue({ guests: formatLocalGuestSelection() });
+              }}
+              className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "family_young" ? "shadow-lg scale-105" : "hover:scale-105"
+                }`}
+            >
+              <Users className="text-lg mr-2" /> Gia đình trẻ
+            </Button>
             </Col>
             <Col span={12}>
               <Button
@@ -201,7 +268,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
                 block
                 onClick={() => {
                   setSearchGuestType("group");
-                  form.setFieldsValue({ guests: formatGuestSelection() });
+                  form.setFieldsValue({ guests: formatLocalGuestSelection() });
                 }}
                 className={`rounded-2xl h-auto py-3 transition-all font-medium ${searchData.guestType === "group" ? "shadow-lg scale-105" : "hover:scale-105"
                   }`}
@@ -223,27 +290,26 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   icon={<MinusOutlined />}
                   size="small"
                   onClick={() => {
-                    handleGuestCountChange("adults", "decrease");
-                    // Update form immediately
+                    handleLocalGuestCountChange("adults", "decrease");
+                    // Update form display with local values
                     setTimeout(() => {
-                      form.setFieldsValue({ guests: formatGuestSelection() });
-                    }, 100);
+                      form.setFieldsValue({ guests: formatLocalGuestSelection() });
+                    }, 50);
                   }}
-                  disabled={searchData.guestDetails.adults <= 1}
+                  disabled={localGuestDetails.adults <= 1}
                   className=" w-8 h-8 flex items-center justify-center"
                 />
                   <span className="min-w-[30px] text-center font-bold text-lg">
-                    {searchData.guestDetails.adults}
-                  </span>
-                  <Button
+                    {localGuestDetails.adults}
+                  </span>                  <Button
                     icon={<PlusOutlined />}
                     size="small"
                     onClick={() => {
-                      handleGuestCountChange("adults", "increase");
-                      // Update form immediately
+                      handleLocalGuestCountChange("adults", "increase");
+                      // Update form display with local values
                       setTimeout(() => {
-                        form.setFieldsValue({ guests: formatGuestSelection() });
-                      }, 100);
+                        form.setFieldsValue({ guests: formatLocalGuestSelection() });
+                      }, 50);
                     }}
                     className=" w-8 h-8 flex items-center justify-center"
                   />
@@ -258,27 +324,26 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   icon={<MinusOutlined />}
                   size="small"
                   onClick={() => {
-                    handleGuestCountChange("children", "decrease");
-                    // Update form immediately
+                    handleLocalGuestCountChange("children", "decrease");
+                    // Update form display with local values
                     setTimeout(() => {
-                      form.setFieldsValue({ guests: formatGuestSelection() });
-                    }, 100);
+                      form.setFieldsValue({ guests: formatLocalGuestSelection() });
+                    }, 50);
                   }}
-                  disabled={searchData.guestDetails.children <= 0}
+                  disabled={localGuestDetails.children <= 0}
                   className=" w-8 h-8 flex items-center justify-center"
                 />
                   <span className="min-w-[30px] text-center font-bold text-lg">
-                    {searchData.guestDetails.children}
-                  </span>
-                  <Button
+                    {localGuestDetails.children}
+                  </span>                  <Button
                     icon={<PlusOutlined />}
                     size="small"
                     onClick={() => {
-                      handleGuestCountChange("children", "increase");
-                      // Update form immediately
+                      handleLocalGuestCountChange("children", "increase");
+                      // Update form display with local values
                       setTimeout(() => {
-                        form.setFieldsValue({ guests: formatGuestSelection() });
-                      }, 100);
+                        form.setFieldsValue({ guests: formatLocalGuestSelection() });
+                      }, 50);
                     }}
                     className=" w-8 h-8 flex items-center justify-center"
                   />
@@ -327,7 +392,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           >
             <Row gutter={[8, 8]} align="middle" justify="center">
               {/* Date Range Field */}
-              <Col xs={24} sm={11} md={9} lg={10}>
+              <Col xs={24} sm={11} md={9} lg={11}>
                 <Form.Item name="dateRange" className="mb-0">
                   <RangePicker
                     size="large"
@@ -361,12 +426,11 @@ const SearchForm: React.FC<SearchFormProps> = ({
                   getPopupContainer={(trigger) =>
                     trigger.parentElement || document.body
                   }
-                >
-                  <Input
+                >                  <Input
                     size="large"
                     placeholder="Số khách"
                     readOnly
-                    value={formatGuestSelection()} prefix={
+                    value={formatLocalGuestSelection()} prefix={
                       <span className="flex items-center text-gray-500">
                         {searchData.guestType === "solo" && <UserOutlined />}
                         {searchData.guestType === "couple" && (
@@ -401,7 +465,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
               </Col>
 
               {/* Search Button */}
-              <Col xs={24} sm={5} md={3} lg={7}>
+              <Col xs={24} sm={5} md={3} lg={6}>
                 <Form.Item className="mb-2">
                   <ButtonSearch
                     type="submit"
