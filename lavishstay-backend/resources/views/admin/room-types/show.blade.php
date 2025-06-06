@@ -90,6 +90,7 @@
                                                 </div>
                                             @endif
                                         </div>
+                                        
                                         <div class="ml-3 flex-1">
                                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {{ $amenity->name }}
@@ -98,7 +99,7 @@
                                                         Nổi bật
                                                     </span>
                                                 @endif
-                                                
+
                                             </p>
                                         </div>
                                     </div>
