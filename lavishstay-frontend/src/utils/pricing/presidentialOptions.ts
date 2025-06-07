@@ -1,6 +1,6 @@
 import { RoomOption, DynamicPricingConfig, BookingContext } from '../dynamicPricing';
 import { ROOM_PRICING } from './roomPricing';
-
+import { calculateCancellationPolicy } from './cancellationPolicyUtils';
 /**
  * Tạo option cho phòng Presidential (chỉ có 1 option duy nhất cho 4 người)
  */
@@ -21,12 +21,7 @@ export const createPresidentialOptions = (
         maxGuests: 4,
         minGuests: 1,
         roomType: 'presidential',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(7, 'day').toISOString(),
-            description: "Hủy miễn phí trước 7 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.fourGuest * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn - Dịch vụ VIP"

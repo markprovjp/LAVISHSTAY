@@ -41,7 +41,7 @@ const About: React.FC = () => {
     {
       name: "Nguyễn Văn Quyền",
       position: "Tổng Giám đốc",
-      avatar: "../images/users/1.jpg",
+      avatar: "images/users/1.jpg",
       bio: "Hơn 15 năm kinh nghiệm trong ngành khách sạn và dịch vụ cao cấp.",
     },
     {

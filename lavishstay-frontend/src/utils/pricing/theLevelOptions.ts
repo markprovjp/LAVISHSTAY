@@ -1,6 +1,6 @@
 import { RoomOption, DynamicPricingConfig, BookingContext } from '../dynamicPricing';
 import { ROOM_PRICING } from './roomPricing';
-
+import { calculateCancellationPolicy } from './cancellationPolicyUtils';
 /**
  * Tạo options cho phòng The Level Premium (2 options cho 1 người, 4 options cho 2 người)
  */
@@ -11,9 +11,7 @@ export const createTheLevelPremiumOptions = (
     priceMultiplier: number = 1.0
 ): RoomOption[] => {
     const options: RoomOption[] = [];
-    const pricing = ROOM_PRICING.theLevelPremium;
-
-    // 2 options cho 1 người
+    const pricing = ROOM_PRICING.theLevelPremium;    // 2 options cho 1 người
     options.push({
         id: `theLevel_premium_single_basic`,
         name: `The Level Premium - 1 khách`,
@@ -21,19 +19,13 @@ export const createTheLevelPremiumOptions = (
         maxGuests: 1,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(2, 'day').toISOString(),
-            description: "Hủy miễn phí trước 2 ngày"
-        },
-        paymentPolicy: {
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.basic * priceMultiplier)), paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         },
         availability: {
-            total: 3,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 6,
+            remaining: 4
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -52,28 +44,21 @@ export const createTheLevelPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 90
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `theLevel_premium_single_premium`,
         name: `The Level Premium Plus - 1 khách`,
         pricePerNight: { vnd: Math.round(pricing.singleGuest.premium * priceMultiplier) },
         maxGuests: 1,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         },
         availability: {
-            total: 2,
-            remaining: 1
+            total: 5,
+            remaining: 3
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -96,9 +81,7 @@ export const createTheLevelPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 85
         }
-    });
-
-    // 4 options cho 2 người
+    });    // 4 options cho 2 người
     options.push({
         id: `theLevel_premium_double_basic`,
         name: `The Level Premium Basic - 2 khách`,
@@ -106,18 +89,13 @@ export const createTheLevelPremiumOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "conditional",
-            penalty: 20,
-            description: "Hủy có điều kiện"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
-        },
-        availability: {
-            total: 4,
-            remaining: Math.floor(Math.random() * 3) + 1
+        }, availability: {
+            total: 8,
+            remaining: 6
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -139,28 +117,21 @@ export const createTheLevelPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `theLevel_premium_double_standard`,
         name: `The Level Premium Standard - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(1, 'day').toISOString(),
-            description: "Hủy miễn phí trước 1 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         },
         availability: {
-            total: 3,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 5,
+            remaining: 3
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -179,28 +150,21 @@ export const createTheLevelPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 88
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `theLevel_premium_double_premium`,
         name: `The Level Premium Plus - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(2, 'day').toISOString(),
-            description: "Hủy miễn phí trước 2 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         },
         availability: {
-            total: 2,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 4,
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -220,21 +184,13 @@ export const createTheLevelPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 82
         }
-    });
-
-    options.push({
-        id: `theLevel_premium_double_luxury`,
-        name: `The Level Premium Luxury - 2 khách`,
+    }); options.push({
+        id: `theLevel_premium_double_luxury`, name: `The Level Premium Luxury - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
@@ -280,29 +236,21 @@ export const createTheLevelPremiumCornerOptions = (
     priceMultiplier: number = 1.0
 ): RoomOption[] => {
     const options: RoomOption[] = [];
-    const pricing = ROOM_PRICING.theLevelPremiumCorner;
-
-    // 2 options cho 1 người
+    const pricing = ROOM_PRICING.theLevelPremiumCorner;    // 2 options cho 1 người
     options.push({
-        id: `theLevel_corner_single_basic`,
-        name: `The Level Premium Corner - 1 khách`,
+        id: `theLevel_corner_single_basic`, name: `The Level Premium Corner - 1 khách`,
         pricePerNight: { vnd: Math.round(pricing.singleGuest.basic * priceMultiplier) },
         maxGuests: 1,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(2, 'day').toISOString(),
-            description: "Hủy miễn phí trước 2 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         },
         availability: {
-            total: 2,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 4,
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -322,28 +270,21 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 90
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `theLevel_corner_single_premium`,
         name: `The Level Premium Corner Plus - 1 khách`,
         pricePerNight: { vnd: Math.round(pricing.singleGuest.premium * priceMultiplier) },
         maxGuests: 1,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         },
         availability: {
-            total: 1,
-            remaining: 1
+            total: 4,
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -367,28 +308,21 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 85
         }
-    });
-
-    // 4 options cho 2 người (tương tự như Premium nhưng giá cao hơn)
+    });    // 4 options cho 2 người (tương tự như Premium nhưng giá cao hơn)
     options.push({
-        id: `theLevel_corner_double_basic`,
-        name: `The Level Premium Corner Basic - 2 khách`,
+        id: `theLevel_corner_double_basic`, name: `The Level Premium Corner Basic - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "conditional",
-            penalty: 20,
-            description: "Hủy có điều kiện"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
         },
         availability: {
-            total: 3,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 6,
+            remaining: 4
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -411,28 +345,21 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `theLevel_corner_double_standard`,
         name: `The Level Premium Corner Standard - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(1, 'day').toISOString(),
-            description: "Hủy miễn phí trước 1 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         },
         availability: {
-            total: 2,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 5,
+            remaining: 3
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -452,26 +379,20 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 88
         }
-    });
-    options.push({
+    }); options.push({
         id: `theLevel_corner_plus_double_premium`,
         name: `The Level Premium Corner Plus - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(2, 'day').toISOString(),
-            description: "Hủy miễn phí trước 2 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         },
         availability: {
-            total: 1,
+            total: 3,
             remaining: 1
         },
         additionalServices: [
@@ -501,12 +422,7 @@ export const createTheLevelPremiumCornerOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
@@ -553,29 +469,21 @@ export const createSuiteTheLevelOptions = (
     priceMultiplier: number = 1.0
 ): RoomOption[] => {
     const options: RoomOption[] = [];
-    const pricing = ROOM_PRICING.suiteTheLevel;
-
-    // 2 options cho 1 người
+    const pricing = ROOM_PRICING.suiteTheLevel;    // 2 options cho 1 người
     options.push({
-        id: `suite_theLevel_single_basic`,
-        name: `Suite The Level - 1 khách`,
+        id: `suite_theLevel_single_basic`, name: `Suite The Level - 1 khách`,
         pricePerNight: { vnd: Math.round(pricing.singleGuest.basic * priceMultiplier) },
         maxGuests: 1,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         },
         availability: {
-            total: 2,
-            remaining: 1
+            total: 4,
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -600,28 +508,21 @@ export const createSuiteTheLevelOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 90
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `suite_theLevel_single_premium`,
         name: `Suite The Level Plus - 1 khách`,
         pricePerNight: { vnd: Math.round(pricing.singleGuest.premium * priceMultiplier) },
         maxGuests: 1,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(4, 'day').toISOString(),
-            description: "Hủy miễn phí trước 4 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         },
         availability: {
-            total: 1,
-            remaining: 1
+            total: 3,
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -645,9 +546,7 @@ export const createSuiteTheLevelOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 85
         }
-    });
-
-    // 4 options cho 2 người
+    });    // 4 options cho 2 người
 
     options.push({
         id: `suite_theLevel_double_basic`,
@@ -656,18 +555,14 @@ export const createSuiteTheLevelOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "conditional",
-            penalty: 20,
-            description: "Hủy có điều kiện"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
         },
         availability: {
-            total: 3,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 6,
+            remaining: 4
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -691,28 +586,21 @@ export const createSuiteTheLevelOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    }); options.push({
         id: `suite_theLevel_double_standard`,
         name: `Suite The Level Standard - 2 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(1, 'day').toISOString(),
-            description: "Hủy miễn phí trước 1 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         },
         availability: {
-            total: 2,
-            remaining: Math.floor(Math.random() * 2) + 1
+            total: 4,
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -741,18 +629,13 @@ export const createSuiteTheLevelOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "conditional",
-            penalty: 20,
-            description: "Hủy có điều kiện"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
-        },
-        availability: {
-            total: 3,
-            remaining: Math.floor(Math.random() * 2) + 1
+        }, availability: {
+            total: 2,
+            remaining: 1
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -785,12 +668,7 @@ export const createSuiteTheLevelOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'theLevel',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(5, 'day').toISOString(),
-            description: "Hủy miễn phí trước 5 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"

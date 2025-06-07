@@ -71,8 +71,8 @@ const RoomCard: React.FC<RoomCardProps> = ({
         >
             <Row gutter={16}>
                 {/* Left Side - Images */}
-                <Col xs={24} lg={8}>
-                    <div className="relative h-48 lg:h-52 rounded-lg overflow-hidden group">
+                <Col xs={24} lg={10}>
+                    <div className="relative h-48 lg:h-72 rounded-lg overflow-hidden group">
                         <Swiper
                             modules={[Autoplay, Navigation, Pagination]}
                             autoplay={{
@@ -131,7 +131,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
                 </Col>
 
                 {/* Right Side - Room Details */}
-                <Col xs={24} lg={16}>
+                <Col xs={24} lg={14}>
                     <div className="h-full flex flex-col">
                         {/* Room Title and TOP CHOICE badge */}
                         <div className="flex items-start justify-between gap-2 mb-3">
@@ -209,7 +209,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                 <Text className="text-sm font-medium ">Tiện ích nổi bật</Text>
                             </div>
                             <div className="flex flex-wrap gap-1">
-                                {getMainAmenities(room.mainAmenities || room.amenities).slice(0, 7).map((amenity, index) => (
+                                {getMainAmenities(room.mainAmenities || room.amenities).slice(0, 9).map((amenity, index) => (
                                     <span
                                         key={index}
                                         className="inline-flex items-center gap-1 px-2 py-1   rounded text-xs border border-blue-100"
@@ -218,9 +218,9 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                         <span>{amenity.name}</span>
                                     </span>
                                 ))}
-                                {getMainAmenities(room.mainAmenities || room.amenities).length > 7 && (
+                                {getMainAmenities(room.mainAmenities || room.amenities).length > 9 && (
                                     <span className="inline-flex items-center px-2 py-1   rounded text-xs">
-                                        +{getMainAmenities(room.mainAmenities || room.amenities).length - 7} khác
+                                        +{getMainAmenities(room.mainAmenities || room.amenities).length - 9} khác
                                     </span>
                                 )}
                             </div>

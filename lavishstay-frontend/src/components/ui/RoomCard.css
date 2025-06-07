@@ -3,7 +3,7 @@
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  min-height: 570px !important;
+  min-height: 520px !important;
   display: flex !important;
   flex-direction: column !important;
 }

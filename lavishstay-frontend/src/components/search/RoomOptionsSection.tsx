@@ -4,10 +4,10 @@ import {
     Typography,
     Button,
     Space,
-    Progress,
     Tooltip,
     Tag,
-    Flex
+    Flex,
+    Progress
 } from 'antd';
 import {
     PlusOutlined,
@@ -46,26 +46,52 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
             return {
                 color: '#ff4d4f',
                 text: 'Hết phòng',
-                percentage: 0
+                percentage: 0,
+                strokeColor: '#ff4d4f'
             };
-        } else if (percentage <= 20) {
+        } else if (remaining === 1) {
             return {
-                color: '#ff4d4f',
-                text: `Chỉ còn ${remaining} phòng`,
-                percentage
+                color: '#ff7875',
+                text: `Chỉ còn ${remaining} phòng!`,
+                percentage,
+                strokeColor: '#ff7875'
             };
-        } else if (percentage <= 50) {
+        } else if (remaining === 2) {
+            return {
+                color: '#fa8c16',
+                text: `Chỉ còn ${remaining} phòng`,
+                percentage,
+                strokeColor: '#fa8c16'
+            };
+        } else if (remaining === 3) {
             return {
                 color: '#faad14',
                 text: `Còn ${remaining} phòng`,
-                percentage
+                percentage,
+                strokeColor: '#faad14'
+            };
+        } else if (remaining <= 5) {
+            return {
+                color: '#52c41a',
+                text: `Còn ${remaining} phòng`,
+                percentage,
+                strokeColor: '#52c41a'
+            };
+        } else if (remaining <= 8) {
+            return {
+                color: '#1890ff',
+                text: `${remaining} phòng có sẵn`,
+                percentage,
+                strokeColor: '#1890ff'
+            };
+        } else {
+            return {
+                color: '#722ed1',
+                text: `${remaining} phòng có sẵn`,
+                percentage,
+                strokeColor: '#722ed1'
             };
         }
-        return {
-            color: '#52c41a',
-            text: `Còn ${remaining} phòng`,
-            percentage
-        };
     }; const getCancellationPolicyDisplay = (policy: string) => {
         switch (policy) {
             case 'free':
@@ -157,22 +183,40 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                                 Phổ biến
                                             </Tag>
                                         )}
-                                    </div>
-
-                                    {/* Progress bar thay thế thông tin số phòng còn lại */}
+                                    </div>                                    {/* Availability display with progress bar */}
                                     {!isUnavailable && (
                                         <div className="mb-2">
                                             <div className="flex items-center justify-between mb-1">
-                                                <Text className="text-xs text-gray-600">Tình trạng phòng</Text>
-                                                <Text className="text-xs" style={{ color: availability.color }}>
+                                                <Text className="text-xs font-medium" style={{ color: availability.color }}>
                                                     {availability.text}
+                                                </Text>
+                                                <Text className="text-xs text-gray-400">
+                                                    {Math.round(availability.percentage)}%
                                                 </Text>
                                             </div>
                                             <Progress
                                                 percent={availability.percentage}
+                                                size="small"
+                                                strokeColor={availability.strokeColor}
                                                 showInfo={false}
-                                                strokeColor={availability.color}
-                                                strokeWidth={6}
+                                                trailColor="#f0f0f0"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isUnavailable && (
+                                        <div className="mb-2">
+                                            <div className="flex items-center gap-1">
+                                                <StopOutlined style={{ color: '#ff4d4f', fontSize: '12px' }} />
+                                                <Text className="text-xs font-medium text-red-500">
+                                                    Hết phòng
+                                                </Text>
+                                            </div>
+                                            <Progress
+                                                percent={0}
+                                                size="small"
+                                                strokeColor="#ff4d4f"
+                                                showInfo={false}
                                                 trailColor="#f0f0f0"
                                             />
                                         </div>
