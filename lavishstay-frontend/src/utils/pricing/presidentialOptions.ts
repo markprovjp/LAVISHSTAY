@@ -61,7 +61,7 @@ export const createPresidentialOptions = (
             ],
             savings: 8000000, // Tiết kiệm 8 triệu
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
-            recommendationScore: 100 // Score cao nhất vì là phòng VIP nhất
+            recommendationScore: 95 // Score cao nhất vì là phòng VIP nhất
         }
     });
 
