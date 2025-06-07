@@ -99,7 +99,8 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({
         }));
     };    // Calculate total price for an option (including multiple nights)
     const calculateTotalPrice = (option: RoomOption, quantity: number) => {
-        return option.pricePerNight.vnd * quantity * numberOfNights;
+        const finalPrice = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
+        return finalPrice * quantity * numberOfNights;
     };
 
     // Calculate total for all selected rooms
@@ -286,21 +287,25 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({
                                         </div>                                        {/* Right Section - Price & Quantity */}
                                         <div className="price-quantity-section">
                                             <div className="price-card">
-                                                {/* Price */}
-                                                <div className="text-center mb-4">
+                                                {/* Price */}                                                <div className="text-center mb-4">
                                                     <Text className="text-sm text-gray-500 block">
                                                         Tổng giá cho {numberOfNights} đêm
                                                     </Text>
                                                     <div className="text-2xl font-bold text-blue-600 mb-1">
-                                                        {formatVND(option.pricePerNight.vnd * numberOfNights)}
+                                                        {formatVND((option.dynamicPricing?.finalPrice || option.pricePerNight.vnd) * numberOfNights)}
                                                     </div>
                                                     <Text className="text-xs text-gray-400">
-                                                        {formatVND(option.pricePerNight.vnd)}/phòng/đêm
+                                                        {formatVND(option.dynamicPricing?.finalPrice || option.pricePerNight.vnd)}/phòng/đêm
                                                     </Text>
                                                     {option.promotion?.discount && (
                                                         <Text className="text-xs text-green-600 block mt-1">
                                                             Tiết kiệm {option.promotion.discount}%
                                                         </Text>
+                                                    )}
+                                                    {option.dynamicPricing?.basePrice && option.dynamicPricing.basePrice !== (option.dynamicPricing?.finalPrice || option.pricePerNight.vnd) && (
+                                                        <div className="text-xs text-gray-400 line-through">
+                                                            Giá gốc: {formatVND(option.dynamicPricing.basePrice)}/đêm
+                                                        </div>
                                                     )}
                                                 </div>
 
@@ -377,13 +382,12 @@ const RoomServiceOptions: React.FC<RoomServiceOptionsProps> = ({
                                     if (!option) return null;
 
                                     return (
-                                        <div key={optionId} className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100">
-                                            <div>
-                                                <Text strong className="text-gray-800">{option.name}</Text>
-                                                <div className="text-sm text-gray-500">
-                                                    {quantity} phòng × {formatVND(option.pricePerNight.vnd)}/phòng/đêm
-                                                </div>
+                                        <div key={optionId} className="flex justify-between items-center p-3 bg-white rounded-lg border border-blue-100">                                            <div>
+                                            <Text strong className="text-gray-800">{option.name}</Text>
+                                            <div className="text-sm text-gray-500">
+                                                {quantity} phòng × {formatVND(option.dynamicPricing?.finalPrice || option.pricePerNight.vnd)}/phòng/đêm
                                             </div>
+                                        </div>
                                             <div className="text-right">
                                                 <div className="text-lg font-bold text-red-600">
                                                     {formatVND(calculateTotalPrice(option, quantity))}

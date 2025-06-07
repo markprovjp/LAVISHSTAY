@@ -4,6 +4,7 @@ import { RoomOption } from './roomoption';
 
 export interface Room {
     id: number;
+    room_code: string; // Mã phòng, có thể để trống nếu không cần thiết
     name: string;
     image: string;
     priceVND: number; // Giá thấp nhất từ các options
@@ -49,6 +50,7 @@ export interface HotelRatingDetails {
 // Dữ liệu mẫu cho phòng
 export const sampleRooms: Room[] = [{
     id: 1,
+    room_code: "DELUXE",
     name: "Phòng Loại Sang (Deluxe Room)",
     image: "/images/room/Deluxe_Room/1.jpg",
     priceVND: 2000000, // TĂNG GIÁ GỐC LÊN 2.5M// Giá thấp nhất từ các options
@@ -106,6 +108,7 @@ export const sampleRooms: Room[] = [{
     ]
 }, {
     id: 2,
+    room_code: "PREMIUM",
     name: "Phòng cao cấp trong góc (Premium Corner Room)",
     image: "images/room/Premium_Corner_Room/1.jpg",
     priceVND: 1600000,
@@ -166,6 +169,7 @@ export const sampleRooms: Room[] = [{
     ]
 }, {
     id: 3,
+    room_code: "THE_LEVEL_PREMIUM",
     name: "Phòng The Level Cao cấp (The Level Premium Room)",
     image: "/images/room/The_Level_Premium_Room/1.jpg",
     priceVND: 3900000,
@@ -229,6 +233,7 @@ export const sampleRooms: Room[] = [{
 },
 {
     id: 4,
+    room_code: "SUITE",
     name: "Phòng Suite (Suite Room)",
     image: "/images/room/Suite/1.webp",
     priceVND: 6200000,
@@ -293,6 +298,7 @@ export const sampleRooms: Room[] = [{
 },
 {
     id: 5,
+    room_code: "THE_LEVEL_PREMIUM_CORNER",
     name: "Phòng The Level Hảo Hạng Ở Góc (The Level Premium Corner Room)",
     image: "/images/room/The_Level_Premium_Corner_Room/1.webp",
     priceVND: 3244000,
@@ -355,6 +361,7 @@ export const sampleRooms: Room[] = [{
 },
 {
     id: 6,
+    room_code: "THE_LEVEL_SUITE",
     name: "Phòng Suite The Level (The Level Suite Room)",
     image: "/images/room/The_Level_Suite_Room/1.webp",
     priceVND: 14681000,
@@ -417,6 +424,7 @@ export const sampleRooms: Room[] = [{
 },
 {
     id: 7,
+    room_code: "PRESIDENTIAL_SUITE",
     name: "Suite Hạng Tổng Thống (Presidential Suite)",
     image: "/images/room/Presidential_Suite/1.webp",
     priceVND: 50000000,
