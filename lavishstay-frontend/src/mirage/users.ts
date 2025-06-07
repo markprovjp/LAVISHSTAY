@@ -18,7 +18,7 @@ export const sampleUsers: User[] = [
         id: 1,
         name: "Nguyễn Văn Quyền",
         email: "user@example.com",
-        avatar: "../../images/users/1.jpg",
+        avatar: "images/users/1.jpg",
         role: "user",
         phone: "0123456789",
         address: "123 Nguyễn Huệ, Q1, TP.HCM",

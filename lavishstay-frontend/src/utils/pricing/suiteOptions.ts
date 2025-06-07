@@ -1,5 +1,6 @@
 import { RoomOption, DynamicPricingConfig, BookingContext } from '../dynamicPricing';
 import { ROOM_PRICING } from './roomPricing';
+import { calculateCancellationPolicy } from './cancellationPolicyUtils';
 
 /**
  * Tạo options cho phòng Suite (2 options cho 1 người, 4 options cho 2 người)
@@ -11,9 +12,7 @@ export const createSuiteOptions = (
     priceMultiplier: number = 1.0
 ): RoomOption[] => {
     const options: RoomOption[] = [];
-    const pricing = ROOM_PRICING.suite;
-
-    // 2 options cho 1 người (chỉ có 1 giá)
+    const pricing = ROOM_PRICING.suite;    // 2 options cho 1 người (chỉ có 1 giá)
     options.push({
         id: `suite_single_basic`,
         name: `Suite Classic - 1 khách`,
@@ -21,19 +20,13 @@ export const createSuiteOptions = (
         maxGuests: 1,
         minGuests: 1,
         roomType: 'suite',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(2, 'day').toISOString(),
-            description: "Hủy miễn phí trước 2 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
-        },
-        availability: {
-            total: 4,
-            remaining: Math.floor(Math.random() * 3) + 1
+        }, availability: {
+            total: 10,
+            remaining: 8
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -60,19 +53,13 @@ export const createSuiteOptions = (
         maxGuests: 1,
         minGuests: 1,
         roomType: 'suite',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
-        },
-        availability: {
-            total: 2,
-            remaining: Math.floor(Math.random() * 2) + 1
+        }, availability: {
+            total: 5,
+            remaining: 3
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -104,18 +91,13 @@ export const createSuiteOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'suite',
-        cancellationPolicy: {
-            type: "conditional",
-            penalty: 30,
-            description: "Hủy có điều kiện"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
-        },
-        availability: {
-            total: 6,
-            remaining: Math.floor(Math.random() * 4) + 2
+        }, availability: {
+            total: 12,
+            remaining: 10
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -145,19 +127,13 @@ export const createSuiteOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'suite',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(1, 'day').toISOString(),
-            description: "Hủy miễn phí trước 1 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
         paymentPolicy: {
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
-        },
-        availability: {
-            total: 5,
-            remaining: Math.floor(Math.random() * 4) + 1
+        }, availability: {
+            total: 7,
+            remaining: 5
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -184,19 +160,13 @@ export const createSuiteOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'suite',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(2, 'day').toISOString(),
-            description: "Hủy miễn phí trước 2 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
-        },
-        availability: {
+        }, availability: {
             total: 4,
-            remaining: Math.floor(Math.random() * 3) + 1
+            remaining: 2
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -224,19 +194,13 @@ export const createSuiteOptions = (
         maxGuests: 2,
         minGuests: 1,
         roomType: 'suite',
-        cancellationPolicy: {
-            type: "free",
-            penalty: 0,
-            freeUntil: context.checkInDate.subtract(3, 'day').toISOString(),
-            description: "Hủy miễn phí trước 3 ngày"
-        },
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),
         paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
-        },
-        availability: {
-            total: 2,
-            remaining: Math.floor(Math.random() * 2) + 1
+        }, availability: {
+            total: 1,
+            remaining: 1
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },

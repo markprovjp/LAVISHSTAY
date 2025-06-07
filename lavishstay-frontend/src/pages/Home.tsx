@@ -45,7 +45,7 @@ const Home: React.FC = () => {
     {
       id: 1,
       name: "Nguyễn Văn Quyền",
-      avatar: "../images/users/1.jpg",
+      avatar: "images/users/1.jpg",
       rating: 5,
       position: "Doanh nhân",
       comment:
@@ -56,7 +56,7 @@ const Home: React.FC = () => {
     {
       id: 2,
       name: "Nguyễn Anh Đức",
-      avatar: "../images/users/5.jpg",
+      avatar: "images/users/5.jpg",
       rating: 5,
       position: "Giám đốc marketing",
       comment:
@@ -67,7 +67,7 @@ const Home: React.FC = () => {
     {
       id: 3,
       name: "Lê Hiểu Phước",
-      avatar: "../images/users/12.jpg",
+      avatar: "images/users/12.jpg",
       rating: 5,
       position: "Nhiếp ảnh gia",
       comment:
@@ -78,7 +78,7 @@ const Home: React.FC = () => {
     {
       id: 4,
       name: "Lê Thị Trang",
-      avatar: "../images/users/9.jpg",
+      avatar: "images/users/9.jpg",
       rating: 4,
       position: "CEO Startup",
       comment:
@@ -89,7 +89,7 @@ const Home: React.FC = () => {
     {
       id: 5,
       name: "Trần Minh Tuấn",
-      avatar: "../images/users/1.jpg",
+      avatar: "images/users/1.jpg",
       rating: 5,
       position: "Kiến trúc sư",
       comment:
