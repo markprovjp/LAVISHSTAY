@@ -117,7 +117,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
             case 'non_refundable':
             default:
                 return {
-                    text: 'Không hoàn tiền',
+                    text: 'Phí hủy : toàn bộ tiền phòng',
                     icon: <StopOutlined />,
                     description: policy.description || 'Không hoàn tiền'
                 };
@@ -245,18 +245,22 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                             </div>
 
                             {/* Price và quantity */}
-                            <div className="flex items-center gap-3">
-                                <div className="text-right">
-                                    <div className="text-lg font-semibold text-gray-800">
-                                        {formatVND(option.pricePerNight.vnd)}
-                                    </div>
-                                    <div className="text-xs text-gray-500">/ đêm</div>
-                                    {option.dynamicPricing?.savings > 0 && (
-                                        <div className="text-xs text-green-600 font-medium">
-                                            Tiết kiệm {formatVND(option.dynamicPricing.savings)}
-                                        </div>
-                                    )}
+                            <div className="flex items-center gap-3">                                <div className="text-right">
+                                <div className="text-lg font-semibold text-gray-800">
+                                    {formatVND(option.dynamicPricing?.finalPrice || option.pricePerNight.vnd)}
                                 </div>
+                                <div className="text-xs text-gray-500">/ đêm</div>
+                                {option.dynamicPricing?.savings > 0 && (
+                                    <div className="text-xs text-green-600 font-medium">
+                                        Tiết kiệm {formatVND(option.dynamicPricing.savings)}
+                                    </div>
+                                )}
+                                {option.dynamicPricing?.basePrice && option.dynamicPricing.basePrice !== (option.dynamicPricing?.finalPrice || option.pricePerNight.vnd) && (
+                                    <div className="text-xs text-gray-400 line-through">
+                                        {formatVND(option.dynamicPricing.basePrice)}
+                                    </div>
+                                )}
+                            </div>
 
                                 {/* Quantity selector */}
                                 <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white">

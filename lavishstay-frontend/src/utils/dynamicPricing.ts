@@ -440,7 +440,11 @@ export class RoomOptionGenerator {
                 options = createDeluxeOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
         }
 
-        return options.sort((a, b) => a.pricePerNight.vnd - b.pricePerNight.vnd);
+        return options.sort((a, b) => {
+            const priceA = a.dynamicPricing?.finalPrice || a.pricePerNight.vnd;
+            const priceB = b.dynamicPricing?.finalPrice || b.pricePerNight.vnd;
+            return priceA - priceB;
+        });
     }    /**
      * Tính hệ số điều chỉnh giá theo ngày đặc biệt
      */
@@ -492,7 +496,7 @@ export class RoomOptionGenerator {
             { month: 9, day: 2 },   // Ngày Quốc khánh
             { month: 10, day: 20 }, // Ngày Phụ nữ Việt
             { month: 12, day: 31 }  // Ngày cuối năm
-            
+
         ];
 
         return holidays.some(holiday =>
