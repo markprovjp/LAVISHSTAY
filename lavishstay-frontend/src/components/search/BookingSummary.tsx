@@ -254,17 +254,17 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                         </div>
                     </Radio.Group>
                 </Card>
-            </Space>
-
-            {/* Total Section */}
+            </Space>            {/* Total Section */}
             <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                 <div className="space-y-3">
                     {breakfastPrice > 0 && (
-                        <div className="flex justify-between items-center text-sm">
-                            <Text>Phụ thu bữa sáng:</Text>
-                            <Text strong className="text-amber-600">{formatVND(breakfastPrice)}</Text>
+                        <>
+                            <div className="flex justify-between items-center text-sm">
+                                <Text>Phụ thu bữa sáng:</Text>
+                                <Text strong className="text-amber-600">{formatVND(breakfastPrice)}</Text>
+                            </div>
                             <Divider className="my-2" />
-                        </div>
+                        </>
                     )}
                     <div className="flex justify-between items-center">
                         <Text strong className="text-lg">Tổng thanh toán:</Text>
