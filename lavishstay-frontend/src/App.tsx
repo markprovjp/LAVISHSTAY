@@ -25,16 +25,25 @@ import ScrollToTop from "./utils/ScrollToTop";
 // Import pages
 import Home from "./pages/Home";
 import About from "./pages/About";
-import Payment from "./pages/Payment"; // Assuming Payment.tsx exports a default component
+import Payment from "./pages/Payment";
 import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
 import SearchResults from "./pages/SearchResults";
+import ChangePassword from "./components/profile/ChangePassword";
 
-// import HotelListingPage from "./pages/HotelListingPage";
-// import HotelDetailsPage from "./pages/HotelDetailsPage";
-// import ErrorPage from "./pages/ErrorPage";
-// import ErrorTestPage from "./pages/ErrorTestPage";
+// Import profile components
+import {
+  ProfileLayout,
+  PersonalInfo,
+  BookingManagement,
+  Security,
+  ForgotPassword,
+  Wishlist,
+  Notifications,
+  Settings
+} from "./components/profile";
+
 // Placeholder for pages not yet created
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
   <div style={{ padding: "20px" }}>
@@ -42,19 +51,15 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
     <p>Trang này đang được xây dựng , từ từ thôi ku!!!!.</p>
   </div>
 );
-const UserProfile = () => <PlaceholderPage title="User Profile" />;
-const UserBookings = () => <PlaceholderPage title="User Bookings" />;
-const UserWishlist = () => <PlaceholderPage title="User Wishlist" />;
-const UserSettings = () => <PlaceholderPage title="User Settings" />;
+
 const Contact = () => <PlaceholderPage title="Contact Us" />;
 const Destinations = () => (
   <PlaceholderPage title="Điểm đến của ku em tại đây ha , NHƯNG " />
 );
-const NotificationsPage = () => <PlaceholderPage title="Notifications" />;
 
 // Import CSS
 import "./App.css";
-import "./index.css"; // Đảm bảo tailwindcss được nhập khẩu
+import "./index.css";
 
 const { Content } = Layout;
 
@@ -62,71 +67,63 @@ const App: React.FC = () => {
   const { isDarkMode } = useSelector((state: RootState) => state.theme);
 
   // Sử dụng hàm helper để tạo theme dựa trên isDarkMode
-  const currentTheme = createAntdTheme(isDarkMode); return (
+  const currentTheme = createAntdTheme(isDarkMode);
+
+  return (
     <ConfigProvider theme={currentTheme}>
       <ThemeProvider>
         <QueryProvider>
           <SearchProvider>
-            <AntApp className={isDarkMode ? "dark" : "light"}><Router>
-              <ScrollToTop />
-              <Header />
-              <Breadcrumb />
-              <Content
-                style={{
-                  paddingTop: "64px", // Chiều cao của tiêu đề cố định
-                  background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
-                  minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
-                }}
-              >
-                {" "}
-                <Routes>
-                  {" "}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/rooms/:id" element={<RoomDetailsPage />} />
-                  <Route path="/search" element={<SearchResults />} />
-                  {/* Các tuyến đường khác */}
-                  {/* <Route path="/login" element={<LoginPage />} />
-                  {/* <Route path="/hotels" element={<HotelListingPage />} />
-                  <Route path="/hotels/:id" element={<HotelDetailsPage />} /> */}
-                  <Route path="/profile" element={<UserProfile />} />
-                  <Route path="/bookings" element={<UserBookings />} />
-                  <Route path="/wishlist" element={<UserWishlist />} />
-                  <Route path="/settings" element={<UserSettings />} />
-                  <Route path="/contact" element={<Contact />} />                  <Route path="/destinations" element={<Destinations />} />
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/auth-test" element={<AuthTest />} />
-                  <Route
-                    path="/notifications"
-                    element={<NotificationsPage />}
-                  />
-                  {/* Route error là test lỗi 404 thôi */}
-                  {/* {
-                    {
-                      {
-                        {
-                          {
-                            {
-                              {
-                                {
-                                  {
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  } */}
-                  {/* <Route path="/error" element={<ErrorPage />} />
-                <Route path="/error-test" element={<ErrorTestPage />} /> */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>{" "}
-                <FloatButton.BackTop />
-              </Content>
-              <Footer />
-            </Router>          </AntApp>
+            <AntApp className={isDarkMode ? "dark" : "light"}>
+              <Router>
+                <ScrollToTop />
+                <Header />
+                <Breadcrumb />
+                <Content
+                  style={{
+                    paddingTop: "64px", // Chiều cao của tiêu đề cố định
+                    background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
+                    minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
+                  }}
+                >
+                  <Routes>
+                    {/* Main Pages */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+                    <Route path="/search" element={<SearchResults />} />
+
+                    {/* Profile Routes with nested routing */}
+                    <Route path="/profile" element={<ProfileLayout />}>
+                      <Route index element={<PersonalInfo />} />
+                      <Route path="personal-info" element={<PersonalInfo />} />
+                      <Route path="bookings" element={<BookingManagement />} />
+                      <Route path="security" element={<Security />} />
+                      <Route path="wishlist" element={<Wishlist />} />
+                      <Route path="notifications" element={<Notifications />} />
+                      <Route path="settings" element={<Settings />} />
+                      <Route path="forgot-password" element={<ForgotPassword />} />
+                      <Route path="change-password" element={<ChangePassword />} />
+                    </Route>                    {/* Standalone routes */}
+
+                    {/* Legacy routes for backward compatibility */}
+                    <Route path="/bookings" element={<BookingManagement />} />
+                    <Route path="/settings" element={<Settings />} />
+
+                    {/* Other routes */}
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/destinations" element={<Destinations />} />
+                    <Route path="/payment" element={<Payment />} />
+                    <Route path="/auth-test" element={<AuthTest />} />
+
+                    {/* 404 Route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  <FloatButton.BackTop />
+                </Content>
+                <Footer />
+              </Router>
+            </AntApp>
           </SearchProvider>
         </QueryProvider>
       </ThemeProvider>

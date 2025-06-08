@@ -136,6 +136,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
 
                 <Collapse
                     activeKey={showRoomDetails ? ['1'] : []}
+                    
                     ghost
                     size="small"
                     items={[{
