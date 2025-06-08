@@ -1,0 +1,321 @@
+/* Security Component Styles */
+.security-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.security-header {
+  margin-bottom: 32px;
+}
+
+.security-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-icon {
+  font-size: 32px;
+  color: #d4af37;
+  background: linear-gradient(135deg, #d4af37, #f4e4a7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.security-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.security-card:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.security-card .ant-card-head {
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.security-card .ant-card-head-title {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Password Strength */
+.password-strength {
+  margin: 12px 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #d4af37;
+}
+
+.password-requirements {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.password-requirements li {
+  margin: 4px 0;
+  color: #666;
+}
+
+/* Security Options */
+.security-options {
+  padding: 8px 0;
+}
+
+.security-option {
+  padding: 16px 0;
+}
+
+.option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.option-info {
+  flex: 1;
+}
+
+/* Login Activity */
+.login-activity-item {
+  padding: 20px 0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.login-activity-item:hover {
+  background: #f8f9fa;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.device-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #d4af37, #f4e4a7);
+  color: white;
+  font-size: 20px;
+}
+
+/* Submit Button */
+.submit-btn {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #d4af37, #f4e4a7);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, #c19b26, #e6d396);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
+  transform: translateY(-2px);
+}
+
+/* Form Styling */
+.ant-form-item-label > label {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.ant-input,
+.ant-input-password {
+  border-radius: 8px;
+  border: 1.5px solid #e0e0e0;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-password:focus,
+.ant-input-password-focused {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
+}
+
+/* Progress Bar */
+.ant-progress-line {
+  margin: 8px 0;
+}
+
+.ant-progress-bg {
+  border-radius: 4px;
+}
+
+/* Alert Styling */
+.ant-alert {
+  border-radius: 12px;
+  border: none;
+  margin-top: 16px;
+}
+
+.ant-alert-info {
+  background: linear-gradient(135deg, #e6f7ff, #f0f9ff);
+  border-left: 4px solid #1890ff;
+}
+
+/* Switch Styling */
+.ant-switch {
+  background-color: #bfbfbf;
+}
+
+.ant-switch-checked {
+  background-color: #d4af37;
+}
+
+.ant-switch:focus {
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+/* Divider */
+.ant-divider {
+  margin: 16px 0;
+  border-color: #f0f0f0;
+}
+
+/* Badge */
+.ant-badge-status-success {
+  background-color: #52c41a;
+}
+
+/* List */
+.ant-list-item {
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.ant-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .security-container {
+    padding: 16px;
+  }
+  
+  .security-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .title-icon {
+    font-size: 24px;
+  }
+  
+  .option-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .login-activity-item {
+    padding: 16px 0;
+  }
+  
+  .device-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .security-container {
+    padding: 12px;
+  }
+  
+  .security-card {
+    margin-bottom: 16px;
+  }
+  
+  .ant-card-body {
+    padding: 16px;
+  }
+  
+  .submit-btn {
+    height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .security-card {
+    background: #141414;
+    border-color: #333;
+  }
+  
+  .security-card .ant-card-head {
+    background: linear-gradient(135deg, #1f1f1f, #141414);
+    border-bottom-color: #333;
+  }
+  
+  .security-card .ant-card-head-title {
+    color: #ffffff;
+  }
+  
+  .password-strength {
+    background: #1f1f1f;
+    border-left-color: #d4af37;
+  }
+  
+  .login-activity-item:hover {
+    background: #1f1f1f;
+  }
+  
+  .ant-form-item-label > label {
+    color: #ffffff;
+  }
+  
+  .password-requirements li {
+    color: #999;
+  }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.security-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.security-option {
+  animation: fadeInUp 0.6s ease-out;
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+}
+
+.login-activity-item {
+  animation: fadeInUp 0.6s ease-out;
+  animation-delay: 0.2s;
+  animation-fill-mode: both;
+}
