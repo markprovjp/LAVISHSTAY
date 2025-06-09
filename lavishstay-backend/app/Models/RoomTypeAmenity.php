@@ -24,8 +24,10 @@ class RoomTypeAmenity extends Model
     /**
      * Relationship with room type
      */
-    public function roomType()
+    public function roomTypes()
     {
-        return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
+        return $this->belongsToMany(RoomType::class, 'room_type_amenity', 'amenity_id', 'room_type_id')
+                    ->withPivot('is_highlighted')
+                    ->withTimestamps();
     }
 }
