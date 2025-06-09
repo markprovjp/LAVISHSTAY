@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setDarkMode } from '../store/slices/themeSlice';
 import { RootState } from '../store';
 import { createCSSVariables } from '../styles/theme';
+import { scrollManager } from '../utils/scrollManager';
 
 /**
  * Custom hook để quản lý dark/light mode
@@ -52,32 +53,45 @@ const useThemeMode = () => {
         mediaQuery.removeListener(handleChange);
       }
     };
-  }, [dispatch]);
-
-  // Cập nhật localStorage khi thay đổi
+  }, [dispatch]);  // Cập nhật localStorage khi thay đổi
   useEffect(() => {
-    localStorage.setItem('darkMode', String(isDarkMode));
-    
-    // Cập nhật thuộc tính data cho body để sử dụng trong Tailwind
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
-    
-    // Đồng thời cập nhật CSS variables
-    createCSSVariables(isDarkMode);
-    
-    // Thêm hoặc xóa class 'dark' cho Tailwind
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    // Temporarily disable scroll to prevent conflicts during theme change
+    scrollManager.disableScrollTemporarily(300);
 
+    // Batch DOM updates to prevent layout thrashing
+    requestAnimationFrame(() => {
+      localStorage.setItem('darkMode', String(isDarkMode));
+
+      // Cập nhật thuộc tính data cho body để sử dụng trong Tailwind
+      document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+
+      // Đồng thời cập nhật CSS variables
+      createCSSVariables(isDarkMode);
+
+      // Thêm hoặc xóa class 'dark' cho Tailwind
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    });
+  }, [isDarkMode]);
   // Trả về state và các method cần thiết
   return {
     isDarkMode,
-    toggle: () => dispatch(setDarkMode(!isDarkMode)),
-    enableDarkMode: () => dispatch(setDarkMode(true)),
-    disableDarkMode: () => dispatch(setDarkMode(false)),
+    toggle: () => {
+      // Disable scroll briefly to prevent conflicts
+      scrollManager.disableScrollTemporarily(200);
+      dispatch(setDarkMode(!isDarkMode));
+    },
+    enableDarkMode: () => {
+      scrollManager.disableScrollTemporarily(200);
+      dispatch(setDarkMode(true));
+    },
+    disableDarkMode: () => {
+      scrollManager.disableScrollTemporarily(200);
+      dispatch(setDarkMode(false));
+    },
   };
 };
 

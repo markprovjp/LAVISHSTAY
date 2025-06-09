@@ -1,5 +1,5 @@
 // src/components/Cart/CartWidget.tsx
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   ShoppingCartOutlined,
   DeleteOutlined,
@@ -20,9 +20,9 @@ import {
 } from "antd";
 import useCartStore from "../../store/useCartStore";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
-const CartWidget: React.FC = () => {
+const CartWidget: React.FC = React.memo(() => {
   const [open, setOpen] = useState(false);
   const {
     items,
@@ -33,17 +33,55 @@ const CartWidget: React.FC = () => {
     clearCart,
   } = useCartStore();
 
-  const showDrawer = () => {
+  // Memoize event handlers
+  const showDrawer = useCallback(() => {
     setOpen(true);
-  };
+  }, []);
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     setOpen(false);
-  };
-
-  const formatPrice = (price: number) => {
+  }, []);
+  const formatPrice = useCallback((price: number) => {
     return price.toFixed(2);
-  };
+  }, []);
+
+  // Memoize list actions to prevent re-renders
+  const getListActions = useCallback((item: any) => [
+    <Button
+      key="delete"
+      type="text"
+      danger
+      icon={<DeleteOutlined />}
+      onClick={() => removeItem(item.id)}
+    />,
+  ], [removeItem]);
+
+  // Memoize quantity controls
+  const getQuantityControls = useCallback((item: any) => (
+    <div className="flex items-center">
+      <Button
+        type="text"
+        icon={<MinusOutlined />}
+        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+        disabled={item.quantity <= 1}
+      />
+      <InputNumber
+        min={1}
+        max={99}
+        value={item.quantity}
+        onChange={(value) =>
+          value && updateQuantity(item.id, value)
+        }
+        controls={false}
+        className="w-12 mx-1 text-center"
+      />
+      <Button
+        type="text"
+        icon={<PlusOutlined />}
+        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+      />
+    </div>
+  ), [updateQuantity]);
 
   return (
     <>
@@ -93,63 +131,33 @@ const CartWidget: React.FC = () => {
             description="Your cart is empty"
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
-        ) : (
-          <List
-            itemLayout="horizontal"
-            dataSource={items}
-            renderItem={(item) => (
-              <List.Item
-                actions={[
-                  <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => removeItem(item.id)}
-                  />,
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Avatar
-                      shape="square"
-                      size={64}
-                      src={
-                        item.imageUrl ||
-                        `https://placehold.co/64x64?text=${item.name.charAt(0)}`
-                      }
-                    />
-                  }
-                  title={<Text strong>{item.name}</Text>}
-                  description={
-                    <Text type="secondary">${formatPrice(item.price)}</Text>
-                  }
-                />
-                <div className="flex items-center">
-                  <Button
-                    type="text"
-                    icon={<MinusOutlined />}
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                  />
-                  <InputNumber
-                    min={1}
-                    max={99}
-                    value={item.quantity}
-                    onChange={(value) =>
-                      value && updateQuantity(item.id, value)
+        ) : (<List
+          itemLayout="horizontal"
+          dataSource={items}
+          renderItem={(item) => (
+            <List.Item
+              actions={getListActions(item)}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Avatar
+                    shape="square"
+                    size={64}
+                    src={
+                      item.imageUrl ||
+                      `https://placehold.co/64x64?text=${item.name.charAt(0)}`
                     }
-                    controls={false}
-                    className="w-12 mx-1 text-center"
                   />
-                  <Button
-                    type="text"
-                    icon={<PlusOutlined />}
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  />
-                </div>
-              </List.Item>
-            )}
-          />
+                }
+                title={<Text strong>{item.name}</Text>}
+                description={
+                  <Text type="secondary">${formatPrice(item.price)}</Text>
+                }
+              />
+              {getQuantityControls(item)}
+            </List.Item>
+          )}
+        />
         )}
 
         {items.length > 0 && (
@@ -170,6 +178,8 @@ const CartWidget: React.FC = () => {
       </Drawer>
     </>
   );
-};
+});
+
+CartWidget.displayName = 'CartWidget';
 
 export default CartWidget;

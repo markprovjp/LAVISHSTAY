@@ -1,0 +1,75 @@
+/* Theme transition optimizations */
+/* Prevent layout shifts and scroll jumps during theme transitions */
+
+* {
+  /* Ensure consistent box-sizing */
+  box-sizing: border-box;
+}
+
+html {
+  /* Prevent scroll behavior conflicts */
+  scroll-behavior: auto !important;
+}
+
+/* Smooth theme transitions */
+html.theme-transitioning * {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease !important;
+}
+
+/* Prevent scroll during theme change */
+html.scroll-locked {
+  overflow: hidden;
+  height: 100%;
+}
+
+body.scroll-locked {
+  overflow: hidden;
+  height: 100%;
+  position: fixed;
+  width: 100%;
+}
+
+/* Theme toggle specific optimizations */
+.theme-toggle-container {
+  /* Ensure toggle doesn't cause layout shift */
+  contain: layout;
+  will-change: auto;
+}
+
+/* Prevent reflow during theme changes */
+.ant-layout,
+.ant-layout-content {
+  transition: background-color 0.3s ease !important;
+  will-change: background-color;
+}
+
+/* Override any smooth scroll behavior that might conflict */
+.no-smooth-scroll,
+.no-smooth-scroll * {
+  scroll-behavior: auto !important;
+}
+
+/* Optimize theme transitions for common elements */
+.ant-card,
+.ant-btn,
+.ant-input,
+.ant-select {
+  transition: background-color 0.3s ease, 
+              border-color 0.3s ease,
+              color 0.3s ease !important;
+}
+
+/* Prevent unnecessary repaints */
+.theme-stable {
+  contain: style;
+}
+
+/* Performance optimization for theme changes */
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transitioning * {
+    transition: none !important;
+  }
+}

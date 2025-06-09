@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Form,
   Button,
@@ -41,7 +41,7 @@ const { RangePicker } = DatePicker;
 const { Title } = Typography;
 const { useToken } = theme;
 
-// Disable dates in the past
+// Disable dates in the past - memoized
 const disabledDate: RangePickerProps["disabledDate"] = (current) => {
   return current && current < dayjs().startOf("day");
 };
@@ -52,7 +52,7 @@ interface SearchFormProps {
   style?: React.CSSProperties;
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({
+const SearchForm: React.FC<SearchFormProps> = React.memo(({
   onSearch,
   className = "",
   style = {},
@@ -84,8 +84,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
     });
   }, [searchData.guestDetails.adults, searchData.guestDetails.children]);
 
-  // Handle local guest count change (doesn't update Redux store immediately)
-  const handleLocalGuestCountChange = (
+  // Handle local guest count change (doesn't update Redux store immediately) - memoized
+  const handleLocalGuestCountChange = useCallback((
     type: "adults" | "children",
     operation: "increase" | "decrease"
   ) => {
@@ -101,10 +101,10 @@ const SearchForm: React.FC<SearchFormProps> = ({
       }
       return newDetails;
     });
-  };
+  }, []);
 
-  // Format guest selection using local state for family_young and group types
-  const formatLocalGuestSelection = () => {
+  // Format guest selection using local state for family_young and group types - memoized
+  const formatLocalGuestSelection = useCallback(() => {
     switch (searchData.guestType) {
       case "solo":
         return "1 người";
@@ -119,7 +119,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
       default:
         return "Số lượng khách";
     }
-  };
+  }, [searchData.guestType, localGuestDetails.adults, localGuestDetails.children]);
+
   // Initialize form with search data
   useEffect(() => {
     const formValues: any = {};
@@ -138,8 +139,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
     // Use local formatting for guest display
     formValues.guests = formatLocalGuestSelection();
     form.setFieldsValue(formValues);
-  }, [searchData, form, formatLocalGuestSelection]);// Handle search form submission
-  const handleSearch = async (values: any) => {
+  }, [searchData, form, formatLocalGuestSelection]);// Handle search form submission - memoized
+  const handleSearch = useCallback(async (values: any) => {
     try {
       // Clear any previous errors
       clearError();
@@ -180,7 +181,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
     } catch (error: any) {
       message.error(error.message || 'Có lỗi xảy ra khi tìm kiếm');
     }
-  };
+  }, [form, searchData, localGuestDetails, navigate, onSearch]);
 
   // Guest selection dropdown content
   const guestPopoverContent = (
@@ -486,6 +487,8 @@ const SearchForm: React.FC<SearchFormProps> = ({
       </div>
     </Affix>
   );
-};
+});
+
+SearchForm.displayName = 'SearchForm';
 
 export default SearchForm;

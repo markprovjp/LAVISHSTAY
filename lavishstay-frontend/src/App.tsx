@@ -37,7 +37,6 @@ import {
   ProfileLayout,
   PersonalInfo,
   BookingManagement,
-  Security,
   ForgotPassword,
   Wishlist,
   Notifications,
@@ -60,75 +59,86 @@ const Destinations = () => (
 // Import CSS
 import "./App.css";
 import "./index.css";
+import "./styles/theme-transitions.css";
 
 const { Content } = Layout;
 
-const App: React.FC = () => {
+const App: React.FC = React.memo(() => {
   const { isDarkMode } = useSelector((state: RootState) => state.theme);
 
   // Sử dụng hàm helper để tạo theme dựa trên isDarkMode
   const currentTheme = createAntdTheme(isDarkMode);
 
-  return (
-    <ConfigProvider theme={currentTheme}>
-      <ThemeProvider>
-        <QueryProvider>
-          <SearchProvider>
-            <AntApp className={isDarkMode ? "dark" : "light"}>
-              <Router>
-                <ScrollToTop />
-                <Header />
-                <Breadcrumb />
-                <Content
-                  style={{
-                    paddingTop: "64px", // Chiều cao của tiêu đề cố định
-                    background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
-                    minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
-                  }}
-                >
-                  <Routes>
-                    {/* Main Pages */}
-                    <Route path="/" element={<Home />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/rooms/:id" element={<RoomDetailsPage />} />
-                    <Route path="/search" element={<SearchResults />} />
-
-                    {/* Profile Routes with nested routing */}
-                    <Route path="/profile" element={<ProfileLayout />}>
-                      <Route index element={<PersonalInfo />} />
-                      <Route path="personal-info" element={<PersonalInfo />} />
-                      <Route path="bookings" element={<BookingManagement />} />
-                      <Route path="security" element={<Security />} />
-                      <Route path="wishlist" element={<Wishlist />} />
-                      <Route path="notifications" element={<Notifications />} />
-                      <Route path="settings" element={<Settings />} />
-                      <Route path="forgot-password" element={<ForgotPassword />} />
-                      <Route path="change-password" element={<ChangePassword />} />
-                    </Route>                    {/* Standalone routes */}
-
-                    {/* Legacy routes for backward compatibility */}
-                    <Route path="/bookings" element={<BookingManagement />} />
-                    <Route path="/settings" element={<Settings />} />
-
-                    {/* Other routes */}
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/destinations" element={<Destinations />} />
-                    <Route path="/payment" element={<Payment />} />
-                    <Route path="/auth-test" element={<AuthTest />} />
-
-                    {/* 404 Route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  <FloatButton.BackTop />
-                </Content>
-                <Footer />
-              </Router>
-            </AntApp>
-          </SearchProvider>
-        </QueryProvider>
-      </ThemeProvider>
-    </ConfigProvider>
+  // Memoize provider wrapper to reduce re-renders
+  const ProviderWrapper: React.FC<{ children: React.ReactNode }> = React.useMemo(
+    () =>
+      ({ children }) => (
+        <ConfigProvider theme={currentTheme}>
+          <ThemeProvider>
+            <QueryProvider>
+              <SearchProvider>
+                <AntApp className={isDarkMode ? "dark" : "light"}>
+                  {children}
+                </AntApp>
+              </SearchProvider>
+            </QueryProvider>
+          </ThemeProvider>
+        </ConfigProvider>
+      ),
+    [currentTheme, isDarkMode]
   );
-};
+
+  return (
+    <ProviderWrapper>
+      <Router>
+        <ScrollToTop />
+        <Header />
+        <Breadcrumb />
+        <Content
+          style={{
+            paddingTop: "64px", // Chiều cao của tiêu đề cố định
+            background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
+            minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
+          }}
+        >
+          <Routes>
+            {/* Main Pages */}
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+            <Route path="/search" element={<SearchResults />} />
+
+            {/* Profile Routes with nested routing */}
+            <Route path="/profile" element={<ProfileLayout />}>
+              <Route index element={<PersonalInfo />} />
+              <Route path="personal-info" element={<PersonalInfo />} />
+              <Route path="bookings" element={<BookingManagement />} />
+              <Route path="wishlist" element={<Wishlist />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="change-password" element={<ChangePassword />} />
+            </Route>                    {/* Standalone routes */}
+
+            {/* Legacy routes for backward compatibility */}
+            <Route path="/bookings" element={<BookingManagement />} />
+            <Route path="/settings" element={<Settings />} />
+
+            {/* Other routes */}
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/destinations" element={<Destinations />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/auth-test" element={<AuthTest />} />
+
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <FloatButton.BackTop />
+        </Content>
+        <Footer />
+      </Router>
+    </ProviderWrapper>
+  );
+});
 
 export default App;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Card, Typography, Space, Button, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
 import {
@@ -52,129 +52,155 @@ const RoomCard: React.FC<RoomProps> = ({
   const { token } = theme.useToken();
   const navigate = useNavigate();
 
-  // Navigate to room details
-  const handleViewDetails = () => {
+  // Memoize navigation handler
+  const handleViewDetails = useCallback(() => {
     navigate(`/rooms/${id}`);
-  };
+  }, [navigate, id]);
 
-  // Tính số khách tối đa từ maxGuests hoặc default 2
-  const maxGuestsDisplay = maxGuests || 2;// Kiểm tra availability
-  const isLowAvailability = availableRooms && availableRooms <= 3;
-  const isUnavailable = availableRooms === 0;
+  // Memoize computed values
+  const maxGuestsDisplay = useMemo(() => maxGuests || 2, [maxGuests]);
+  const isLowAvailability = useMemo(() => availableRooms && availableRooms <= 3, [availableRooms]);
+  const isUnavailable = useMemo(() => availableRooms === 0, [availableRooms]);
 
-  // Helper function to get bed type display text
-  const getBedTypeText = (bedType: string | { default: string; options?: string[] }): string => {
+  // Memoize bed type display
+  const bedTypeText = useMemo(() => {
     if (typeof bedType === 'string') {
       return bedType;
     }
-    return bedType.default;
-  };
-  // Styling based on room type với màu sắc hiện đại và trendy
-  let cardStyle = { ...style };
-  let additionalClass = "";
-  let themeColors = {
-    primary: "#1890ff",
-    secondary: "#f5f5f5",
-    accent: "#52c41a",
-    text: token.colorTextBase,
-    border: "#f0f0f0"
-  };
+    return bedType?.default || '';
+  }, [bedType]);
 
-  switch (roomType) {
-    case "deluxe":
-      themeColors = {
-        primary: "#6366f1", // Indigo modern
-        secondary: "#f1f5f9",
-        accent: "#8b5cf6",
-        text: "#4338ca",
-        border: "#c7d2fe"
-      };
-      cardStyle = {
-        ...style,
-        border: "1px solid #c7d2fe",
-        background: "linear-gradient(135deg, #fefbff 0%, #f8fafc 100%)",
-      };
-      additionalClass = "deluxe-room";
-      break;
-    case "premium":
-      themeColors = {
-        primary: "#059669", // Emerald green
-        secondary: "#ecfdf5",
-        accent: "#10b981",
-        text: "#047857",
-        border: "#a7f3d0"
-      };
-      cardStyle = {
-        ...style,
-        border: "1px solid #a7f3d0",
-        background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
-      };
-      additionalClass = "premium-room";
-      break;
-    case "suite":
-      themeColors = {
-        primary: "#dc2626", // Red modern
-        secondary: "#fef2f2",
-        accent: "#ef4444",
-        text: "#b91c1c",
-        border: "#fecaca"
-      };
-      cardStyle = {
-        ...style,
-        border: "1px solid #fecaca",
-        background: "linear-gradient(135deg, #fffbeb 0%, #fef2f2 100%)",
-      };
-      additionalClass = "suite-room";
-      break;
-    case "presidential":
-      themeColors = {
-        primary: "#d97706", // Amber luxury
-        secondary: "#fffbeb",
-        accent: "#f59e0b",
-        text: "#92400e",
-        border: "#fed7aa"
-      };
-      cardStyle = {
-        ...style,
-        border: "1px solid #fed7aa",
-        background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-      };
-      additionalClass = "presidential-room";
-      break;
-    case "theLevel":
-      themeColors = {
-        primary: "#0ea5e9", // Sky blue
-        secondary: "#f0f9ff",
-        accent: "#38bdf8",
-        text: "#0369a1",
-        border: "#bae6fd"
-      };
-      cardStyle = {
-        ...style,
-        border: "1px solid #bae6fd",
-        background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
-      };
-      additionalClass = "the-level-room";
-      break;
-    default:
-      break;
-  }
-  const card = (    <Card
+  // Memoize theme colors based on room type
+  const themeColors = useMemo(() => {
+    const baseColors = {
+      primary: "#1890ff",
+      secondary: "#f5f5f5",
+      accent: "#52c41a",
+      text: token.colorTextBase,
+      border: "#f0f0f0"
+    };
+
+    switch (roomType) {
+      case "deluxe":
+        return {
+          primary: "#6366f1",
+          secondary: "#f1f5f9",
+          accent: "#8b5cf6",
+          text: "#4338ca",
+          border: "#c7d2fe"
+        };
+      case "premium":
+        return {
+          primary: "#059669",
+          secondary: "#ecfdf5",
+          accent: "#10b981",
+          text: "#047857",
+          border: "#a7f3d0"
+        };
+      case "suite":
+        return {
+          primary: "#dc2626",
+          secondary: "#fef2f2",
+          accent: "#ef4444",
+          text: "#b91c1c",
+          border: "#fecaca"
+        };
+      case "presidential":
+        return {
+          primary: "#d97706",
+          secondary: "#fffbeb",
+          accent: "#f59e0b",
+          text: "#92400e",
+          border: "#fed7aa"
+        };
+      case "theLevel":
+        return {
+          primary: "#0ea5e9",
+          secondary: "#f0f9ff",
+          accent: "#38bdf8",
+          text: "#0369a1",
+          border: "#bae6fd"
+        };
+      default:
+        return baseColors;
+    }
+  }, [roomType, token.colorTextBase]);
+
+  // Memoize card style
+  const cardStyle = useMemo(() => {
+    const baseStyle = { ...style };
+
+    switch (roomType) {
+      case "deluxe":
+        return {
+          ...baseStyle,
+          border: "1px solid #c7d2fe",
+          background: "linear-gradient(135deg, #fefbff 0%, #f8fafc 100%)",
+        };
+      case "premium":
+        return {
+          ...baseStyle,
+          border: "1px solid #a7f3d0",
+          background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
+        };
+      case "suite":
+        return {
+          ...baseStyle,
+          border: "1px solid #fecaca",
+          background: "linear-gradient(135deg, #fffbeb 0%, #fef2f2 100%)",
+        };
+      case "presidential":
+        return {
+          ...baseStyle,
+          border: "1px solid #fed7aa",
+          background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+        };
+      case "theLevel":
+        return {
+          ...baseStyle,
+          border: "1px solid #bae6fd",
+          background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+        };
+      default:
+        return baseStyle;
+    }
+  }, [style, roomType]);
+
+  // Memoize additional class name
+  const additionalClass = useMemo(() => {
+    switch (roomType) {
+      case "deluxe": return "deluxe-room";
+      case "premium": return "premium-room";
+      case "suite": return "suite-room";
+      case "presidential": return "presidential-room";
+      case "theLevel": return "the-level-room";
+      default: return "";
+    }
+  }, [roomType]);
+
+  // Memoize room type display text
+  const roomTypeDisplay = useMemo(() => {
+    if (roomType === "theLevel") return "The Level";
+    if (roomType === "presidential") return "Presidential";
+    return roomType.charAt(0).toUpperCase() + roomType.slice(1);
+  }, [roomType]); const card = (
+    <Card
       hoverable
       className={`room-card overflow-hidden transition-all duration-300 ${className} ${additionalClass}`}
       style={{
         borderRadius: "16px",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-        minHeight: "520px", // Đảm bảo tất cả thẻ có chiều cao tối thiểu nhất quán
+        minHeight: "520px",
         display: "flex",
         flexDirection: "column",
         ...cardStyle,
-      }}cover={
+      }}
+      cover={
         <div className="relative overflow-hidden" style={{ height: "300px" }}>
           <img
             alt={name}
             src={image}
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110" 
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
           />
           {/* Room Type Badge */}
           <div
@@ -185,23 +211,22 @@ const RoomCard: React.FC<RoomProps> = ({
               border: `1px solid ${themeColors.primary}30`
             }}
           >
-            {roomType === "theLevel" ? "The Level" :
-              roomType === "presidential" ? "Presidential" :
-                roomType.charAt(0).toUpperCase() + roomType.slice(1)}
+            {roomTypeDisplay}
           </div>
         </div>
-      }      styles={{ body: { padding: "16px", flex: 1, display: "flex", flexDirection: "column" } }}
+      }
+      styles={{ body: { padding: "16px", flex: 1, display: "flex", flexDirection: "column" } }}
     >
       <div className="space-y-3 flex-1 flex flex-col">
         {/* Room Title with enhanced styling */}
         <div className="flex items-start justify-between">
           <Title
             level={5}
-            className="mb-0 font-bold leading-tight flex-1" 
+            className="mb-0 font-bold leading-tight flex-1"
             style={{
               color: themeColors.text,
               fontSize: "20px",
-              minHeight: "48px", // Đảm bảo chiều cao tối thiểu cho title
+              minHeight: "48px",
               display: "flex",
               alignItems: "center",
             }}
@@ -214,7 +239,9 @@ const RoomCard: React.FC<RoomProps> = ({
               {rating ?? "N/A"}
             </span>
           </div>
-        </div>{/* Enhanced Room Details */}
+        </div>
+
+        {/* Enhanced Room Details */}
         <Space direction="vertical" size="small" className="w-full">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {size && (
@@ -266,7 +293,7 @@ const RoomCard: React.FC<RoomProps> = ({
                 🛏️
               </div>
               <span className="text-sm font-medium" style={{ color: themeColors.text }}>
-                {getBedTypeText(bedType)}
+                {bedTypeText}
               </span>
             </div>
           )}
@@ -289,10 +316,12 @@ const RoomCard: React.FC<RoomProps> = ({
               )}
             </div>
           )}
-        </Space>        {/* Enhanced Amenities Display */}
+        </Space>
+
+        {/* Enhanced Amenities Display */}
         <div
           className="p-3 rounded-lg flex-1 amenities-section"
-          style={{ 
+          style={{
             backgroundColor: themeColors.secondary,
           }}
         >
@@ -303,9 +332,7 @@ const RoomCard: React.FC<RoomProps> = ({
             amenities={mainAmenities || amenities.slice(0, 6)}
             limit={6}
           />
-        </div>
-
-        {/* Action Button - luôn ở cuối */}
+        </div>        {/* Action Button - luôn ở cuối */}
         <div className="pt-2 action-button-container">
           <Button
             type="primary"
@@ -328,7 +355,12 @@ const RoomCard: React.FC<RoomProps> = ({
       </div>
     </Card>
   );
+
   return card;
 };
 
-export default RoomCard;
+RoomCard.displayName = 'RoomCard';
+
+export default React.memo(RoomCard);
+
+
