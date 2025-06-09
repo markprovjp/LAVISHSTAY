@@ -1,18 +1,24 @@
-/* HotelActivities.css - Custom styles for Hotel Activities component */
+/* HotelActivities.css - Optimized styles for Hotel Activities component */
 
 .activities-swiper {
   padding: 40px 0px !important;
+  /* Performance optimizations */
+  contain: layout style paint;
+  will-change: transform;
 }
 
 .activities-swiper .swiper-slide {
   display: flex;
   align-items: stretch;
-  /* transition: all 0.5s ease-in-out !important; */
+  /* Optimized transitions */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform;
 }
 
 .activities-swiper .swiper-slide .activity-card {
-  /* transition: all 0.5s ease-in-out !important; */
   position: relative;
+  /* Performance optimizations */
+  will-change: transform, box-shadow;
 }
 
 .activities-swiper .swiper-pagination {
@@ -20,16 +26,16 @@
 }
 
 .activities-swiper .swiper-pagination-bullet {
-  /* background: #3b82f6 !important; */
   opacity: 0.5 !important;
   width: 12px !important;
   height: 12px !important;
-  /* transition: all 0.3s ease !important; */
+  /* Faster transitions */
+  transition: all 0.2s ease !important;
+  will-change: transform, opacity;
 }
 
 .activities-swiper .swiper-pagination-bullet-active {
   opacity: 1 !important;
-  /* transform: scale(1.3) !important; */
   background: #1d4ed8 !important;
 }
 
@@ -41,15 +47,17 @@
   width: 50px !important;
   height: 50px !important;
   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15) !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.2s ease !important;
   margin-top: -25px !important;
+  /* Performance optimizations */
+  will-change: transform, background-color, color;
 }
 
 .activities-swiper .swiper-button-next:hover,
 .activities-swiper .swiper-button-prev:hover {
   background: #3b82f6 !important;
   color: white !important;
-  transform: scale(1.1) !important;
+  transform: scale(1.05) !important;
 }
 
 .activities-swiper .swiper-button-next:after,
@@ -59,12 +67,14 @@
 }
 
 .activity-card {
-  transition: all 0.3s ease !important;
+  /* Optimized transitions */
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  will-change: transform, box-shadow;
 }
 
 .activity-card:hover {
-  transform: translateY(-8px) !important;
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.25) !important;
 }
 
 
@@ -162,9 +172,40 @@
   }
 }
 
-@media (max-width: 480px) {
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  /* Simplified animations on mobile */
+  .activity-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  .activities-swiper .swiper-button-next:hover,
+  .activities-swiper .swiper-button-prev:hover {
+    transform: scale(1.02) !important;
+  }
+  
+  /* Disable heavy animations on mobile */
+  .activity-card {
+    animation: none !important;
+  }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .activities-swiper .swiper-slide,
+  .activity-card,
+  .activities-swiper .swiper-pagination-bullet,
   .activities-swiper .swiper-button-next,
   .activities-swiper .swiper-button-prev {
-    display: none !important;
+    transition: none !important;
+  }
+  
+  .activity-card:hover {
+    transform: none !important;
+  }
+  
+  .activity-card {
+    animation: none !important;
   }
 }

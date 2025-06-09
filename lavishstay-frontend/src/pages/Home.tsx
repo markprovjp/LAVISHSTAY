@@ -299,7 +299,7 @@ const Home: React.FC = () => {
       <HotelActivities />     
        
       {/* Hotel Gallery 3D Carousel */}
-      <div className="mt-11">
+      {/* <div className="mt-11">
         <div className="container mx-auto ">
           <SectionHeader
             title="Khám phá LavishStay"
@@ -309,7 +309,7 @@ const Home: React.FC = () => {
           />
         </div>
         <SwiftPande />
-      </div>
+      </div> */}
 
       {/* Testimonials Section */}
       <div className="py-16  ">

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Card, Rate, Typography, Tag, Space } from "antd";
 import {
   HeartOutlined,
@@ -21,7 +21,7 @@ interface HotelCardProps {
   onClick?: () => void;
 }
 
-const HotelCard: React.FC<HotelCardProps> = ({
+const HotelCard: React.FC<HotelCardProps> = React.memo(({
   title,
   location,
   price,
@@ -31,6 +31,43 @@ const HotelCard: React.FC<HotelCardProps> = ({
   features = [],
   onClick,
 }) => {
+  // Memoize click handler
+  const handleClick = useCallback(() => {
+    onClick?.();
+  }, [onClick]);
+
+  // Memoize meta description
+  const metaDescription = useMemo(() => (
+    <div className="space-y-2">
+      <div className="flex items-center font-bevietnam text-gray-500">
+        <EnvironmentOutlined className="mr-1" /> {location}
+      </div>
+
+      {features.length > 0 && (
+        <Space wrap className="pt-2">
+          {features.map((feature, index) => (
+            <Tag key={index} className="font-bevietnam m-0">
+              {feature}
+            </Tag>
+          ))}
+        </Space>
+      )}
+
+      <div className="flex justify-between items-center pt-2">
+        <div className="flex items-center">
+          <HomeOutlined className="text-blue-500 mr-1" />
+          <Text className="font-bevietnam font-bold text-gray-700">
+            LavishStay
+          </Text>
+        </div>
+        <Text className="font-bevietnam font-bold text-blue-600 text-lg">
+          ${price}
+          <Text className="text-gray-500 text-sm">/đêm</Text>
+        </Text>
+      </div>
+    </div>
+  ), [location, features, price]);
+
   return (
     <Card
       hoverable
@@ -52,7 +89,7 @@ const HotelCard: React.FC<HotelCardProps> = ({
           </button>
         </div>
       }
-      onClick={onClick}
+      onClick={handleClick}
       styles={{ body: { padding: "16px" } }}
     >
       <div className="mb-2 flex justify-between items-center">
@@ -64,39 +101,12 @@ const HotelCard: React.FC<HotelCardProps> = ({
         title={
           <Text className="text-lg font-bevietnam font-semibold">{title}</Text>
         }
-        description={
-          <div className="space-y-2">
-            <div className="flex items-center font-bevietnam text-gray-500">
-              <EnvironmentOutlined className="mr-1" /> {location}
-            </div>
-
-            {features.length > 0 && (
-              <Space wrap className="pt-2">
-                {features.map((feature, index) => (
-                  <Tag key={index} className="font-bevietnam m-0">
-                    {feature}
-                  </Tag>
-                ))}
-              </Space>
-            )}
-
-            <div className="flex justify-between items-center pt-2">
-              <div className="flex items-center">
-                <HomeOutlined className="text-blue-500 mr-1" />
-                <Text className="font-bevietnam font-bold text-gray-700">
-                  LavishStay
-                </Text>
-              </div>
-              <Text className="font-bevietnam font-bold text-blue-600 text-lg">
-                ${price}
-                <Text className="text-gray-500 text-sm">/đêm</Text>
-              </Text>
-            </div>
-          </div>
-        }
+        description={metaDescription}
       />
     </Card>
   );
-};
+});
+
+HotelCard.displayName = 'HotelCard';
 
 export default HotelCard;

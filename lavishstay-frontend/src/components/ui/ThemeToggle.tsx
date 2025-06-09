@@ -31,17 +31,19 @@ const ToggleContainer = styled.div<{ $isDarkMode: boolean; $size: string }>`
   background: ${(props) => (props.$isDarkMode ? "#0f172a" : "#f1f5f9")};
   border: 2px solid ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
   cursor: pointer;
-  padding: 3px;
-  transition: background 0.5s ease, border-color 0.5s ease;
+  padding: 3px;  transition: background 0.3s ease, border-color 0.3s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  will-change: transform;
+  will-change: background, border-color;
+  transform: translateZ(0); /* Force hardware acceleration */
 
-
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
 
   &:active {
-    transform: translateY(0);
-    transition: transform 0.5s ease;
+    transform: translateZ(0) scale(0.98);
+    transition: transform 0.1s ease;
   }
 `;
 
@@ -74,12 +76,11 @@ const ToggleThumb = styled.div<{ $isDarkMode: boolean; $size: string }>`
   background: ${(props) => (props.$isDarkMode ? "#3b82f6" : "#152C5B")};
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: left 0.25s ease-out, background 0.2s ease;
+  justify-content: center;  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 2;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateZ(0);
   will-change: left;
 `;
 
@@ -113,10 +114,16 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   tooltipPlacement = "bottom",
   size = "small",
 }) => {
-  const { isDarkMode, toggle } = useThemeMode();
+  const { isDarkMode, toggle } = useThemeMode(); const handleToggle = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-  const handleToggle = () => {
-    toggle();
+    // Prevent any potential side effects that might trigger routing
+    try {
+      toggle();
+    } catch (error) {
+      console.error('Error toggling theme:', error);
+    }
   };
 
   // Map size to CSS value
@@ -135,14 +142,30 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
     <Tooltip
       title={isDarkMode ? "Chuyển chế độ sáng" : "Chuyển chế độ tối"}
       placement={tooltipPlacement}
-    >
-      <ToggleContainer
-        $isDarkMode={isDarkMode}
-        $size={getSizeValue()}
-        className={className}
-        onClick={handleToggle}
-        data-testid="theme-toggle"
-      >        <ToggleThumb $isDarkMode={isDarkMode} $size={getSizeValue()}>
+    >      <ToggleContainer
+      $isDarkMode={isDarkMode}
+      $size={getSizeValue()}
+      className={className}
+      onClick={handleToggle}
+      data-testid="theme-toggle"
+      role="switch"
+      aria-checked={isDarkMode}
+      aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+      tabIndex={0} onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Create a synthetic mouse event for consistency
+          const syntheticEvent = {
+            preventDefault: () => { },
+            stopPropagation: () => { },
+          } as React.MouseEvent<HTMLDivElement>;
+
+          handleToggle(syntheticEvent);
+        }
+      }}
+    ><ToggleThumb $isDarkMode={isDarkMode} $size={getSizeValue()}>
           {isDarkMode ? (
             <MoonOutlined style={{ fontSize: "12px" }} />
           ) : (

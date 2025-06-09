@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 
 import {
   Card,
@@ -36,7 +36,7 @@ export interface TestimonialsProps {
   style?: React.CSSProperties;
 }
 
-const TestimonialItem: React.FC<TestimonialItemProps> = ({
+const TestimonialItem: React.FC<TestimonialItemProps> = React.memo(({
   name,
   avatar,
   rating,
@@ -138,12 +138,13 @@ const TestimonialItem: React.FC<TestimonialItemProps> = ({
         <Text style={{ color: token.colorTextSecondary, fontSize: "0.875rem" }}>
           {date}
         </Text>
-      )}
-    </Card>
+      )}    </Card>
   );
-};
+});
 
-const Testimonial: React.FC<TestimonialsProps> = ({
+TestimonialItem.displayName = 'TestimonialItem';
+
+const Testimonial: React.FC<TestimonialsProps> = React.memo(({
   testimonials,
   className = "",
   style = {},
@@ -151,21 +152,20 @@ const Testimonial: React.FC<TestimonialsProps> = ({
   const { token } = theme.useToken();
   const carouselRef = React.useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     carouselRef.current?.next();
     setActiveIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
-  };
+  }, [testimonials.length]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     carouselRef.current?.prev();
     setActiveIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
-  };
+  }, [testimonials.length]);
 
-  const goToSlide = (index: number) => {
+  const goToSlide = useCallback((index: number) => {
     carouselRef.current?.goTo(index);
     setActiveIndex(index);
-  };
+  }, []);
 
   return (
     <ConfigProvider theme={{ token }}>
@@ -243,6 +243,8 @@ const Testimonial: React.FC<TestimonialsProps> = ({
       </div>
     </ConfigProvider>
   );
-};
+});
+
+Testimonial.displayName = 'Testimonial';
 
 export default Testimonial;

@@ -164,8 +164,13 @@
   }
 }
 
-/* Smooth scroll behavior */
-html {
+/* Remove global scroll behavior to prevent conflicts with ScrollToTop component */
+/* html {
+  scroll-behavior: smooth;
+} */
+
+/* Apply smooth scroll only to specific elements if needed */
+.travel-experience-card .smooth-scroll {
   scroll-behavior: smooth;
 }
 

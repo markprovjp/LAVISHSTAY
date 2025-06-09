@@ -11,7 +11,10 @@ import {
   Modal,
   Progress,
   Result,
-  Divider
+  Divider,
+  Radio,
+  Row,
+  Col
 } from 'antd';
 import {
   MailOutlined,
@@ -19,7 +22,9 @@ import {
   LockOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  PhoneOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -36,12 +41,17 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [resendCountdown, setResendCountdown] = useState(0);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const steps = [
+  const [verificationMethod, setVerificationMethod] = useState<'email' | 'phone'>('email'); const steps = [
     {
-      title: 'Nhập Email',
-      icon: <MailOutlined />,
+      title: 'Chọn Phương Thức',
+      icon: <UserOutlined />,
+    },
+    {
+      title: verificationMethod === 'email' ? 'Nhập Email' : 'Nhập SĐT',
+      icon: verificationMethod === 'email' ? <MailOutlined /> : <PhoneOutlined />,
     },
     {
       title: 'Xác Thực OTP',
@@ -85,10 +95,10 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
   }; const handleEmailSubmit = async (values: { email: string }) => {
     setLoading(true);
     try {
-      // API call to send OTP
+      // API call to send OTP to email
       await new Promise(resolve => setTimeout(resolve, 2000));
       setEmail(values.email);
-      setCurrentStep(1);
+      setCurrentStep(2);
       setResendCountdown(60); // 60 seconds countdown
     } catch (error) {
       Modal.error({
@@ -100,12 +110,29 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
     }
   };
 
+  const handlePhoneSubmit = async (values: { phoneNumber: string }) => {
+    setLoading(true);
+    try {
+      // API call to send OTP to phone
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setPhoneNumber(values.phoneNumber);
+      setCurrentStep(2);
+      setResendCountdown(60); // 60 seconds countdown
+    } catch (error) {
+      Modal.error({
+        title: 'Lỗi',
+        content: 'Không thể gửi mã xác thực. Vui lòng thử lại.',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleOtpSubmit = async (_values: { otp: string }) => {
     setLoading(true);
     try {
       // API call to verify OTP
       await new Promise(resolve => setTimeout(resolve, 1500));
-      setCurrentStep(2);
+      setCurrentStep(3);
     } catch (error) {
       Modal.error({
         title: 'Mã không hợp lệ',
@@ -115,13 +142,12 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
       setLoading(false);
     }
   };
-
   const handlePasswordReset = async (_values: { password: string; confirmPassword: string }) => {
     setLoading(true);
     try {
       // API call to reset password
       await new Promise(resolve => setTimeout(resolve, 2000));
-      setCurrentStep(3);
+      setCurrentStep(4);
       setTimeout(() => {
         onSuccess?.();
       }, 3000);
@@ -179,13 +205,111 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
                   justifyContent: 'center',
                   margin: '0 auto 16px'
                 }}>
+                  <UserOutlined style={{ fontSize: '24px', color: '#595959' }} />
+                </div>
+                <Title level={3} style={{ marginBottom: '8px', color: '#262626' }}>
+                  Chọn Phương Thức Khôi Phục
+                </Title>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Lựa chọn cách thức xác thực để khôi phục tài khoản
+                </Text>
+              </div>
+
+              <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
+                <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                  <Radio.Group
+                    value={verificationMethod}
+                    onChange={(e) => setVerificationMethod(e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    <Row gutter={[16, 16]}>
+                      <Col span={12}>
+                        <Card
+                          hoverable
+                          className={verificationMethod === 'email' ? 'selected-card' : ''}
+                          onClick={() => setVerificationMethod('email')}
+                          style={{
+                            textAlign: 'center',
+                            border: verificationMethod === 'email' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Radio value="email" style={{ display: 'none' }} />
+                          <div style={{ padding: '16px 0' }}>
+                            <MailOutlined style={{ fontSize: '32px', color: '#1890ff', marginBottom: '12px' }} />
+                            <div>
+                              <Text strong>Email</Text>
+                              <br />
+                              <Text type="secondary" style={{ fontSize: '12px' }}>
+                                Gửi mã qua email
+                              </Text>
+                            </div>
+                          </div>
+                        </Card>
+                      </Col>
+                      <Col span={12}>
+                        <Card
+                          hoverable
+                          className={verificationMethod === 'phone' ? 'selected-card' : ''}
+                          onClick={() => setVerificationMethod('phone')}
+                          style={{
+                            textAlign: 'center',
+                            border: verificationMethod === 'phone' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Radio value="phone" style={{ display: 'none' }} />
+                          <div style={{ padding: '16px 0' }}>
+                            <PhoneOutlined style={{ fontSize: '32px', color: '#52c41a', marginBottom: '12px' }} />
+                            <div>
+                              <Text strong>Số điện thoại</Text>
+                              <br />
+                              <Text type="secondary" style={{ fontSize: '12px' }}>
+                                Gửi OTP qua SMS
+                              </Text>
+                            </div>
+                          </div>
+                        </Card>
+                      </Col>
+                    </Row>
+                  </Radio.Group>
+
+                  <Button
+                    type="primary"
+                    size="large"
+                    block
+                    onClick={() => setCurrentStep(1)}
+                  >
+                    Tiếp Tục
+                  </Button>
+                </Space>
+              </div>
+            </Space>
+          </div>
+        );
+
+      case 1:
+        return verificationMethod === 'email' ? (
+          <div style={{ padding: '24px 0' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}>
                   <MailOutlined style={{ fontSize: '24px', color: '#595959' }} />
                 </div>
                 <Title level={3} style={{ marginBottom: '8px', color: '#262626' }}>
-                  Quên Mật Khẩu
+                  Nhập Địa Chỉ Email
                 </Title>
                 <Text type="secondary" style={{ fontSize: '14px' }}>
-                  Nhập địa chỉ email để nhận mã xác thực
+                  Nhập email đã đăng ký để nhận mã xác thực
                 </Text>
               </div>
 
@@ -210,7 +334,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
                   />
                 </Form.Item>
 
-                <Form.Item style={{ marginBottom: 0 }}>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                   <Button
                     type="primary"
                     htmlType="submit"
@@ -220,13 +344,88 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
                   >
                     Gửi Mã Xác Thực
                   </Button>
-                </Form.Item>
+
+                  <Button
+                    type="link"
+                    onClick={() => setCurrentStep(0)}
+                    style={{ padding: 0, fontSize: '14px' }}
+                  >
+                    Quay lại chọn phương thức khác
+                  </Button>
+                </Space>
               </Form>
             </Space>
           </div>
-        );
+        ) : (
+          <div style={{ padding: '24px 0' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}>
+                  <PhoneOutlined style={{ fontSize: '24px', color: '#595959' }} />
+                </div>
+                <Title level={3} style={{ marginBottom: '8px', color: '#262626' }}>
+                  Nhập Số Điện Thoại
+                </Title>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Nhập số điện thoại đã đăng ký để nhận OTP
+                </Text>
+              </div>
 
-      case 1:
+              <Form
+                layout="vertical"
+                onFinish={handlePhoneSubmit}
+                style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}
+              >
+                <Form.Item
+                  label="Số điện thoại"
+                  name="phoneNumber"
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập số điện thoại' },
+                    {
+                      pattern: /^(0[3|5|7|8|9])+([0-9]{8})$/,
+                      message: 'Số điện thoại không hợp lệ'
+                    }
+                  ]}
+                >
+                  <Input
+                    prefix={<PhoneOutlined style={{ color: '#8c8c8c' }} />}
+                    placeholder="Nhập số điện thoại"
+                    size="large"
+                  />
+                </Form.Item>
+
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    size="large"
+                    block
+                  >
+                    Gửi Mã OTP
+                  </Button>
+
+                  <Button
+                    type="link"
+                    onClick={() => setCurrentStep(0)}
+                    style={{ padding: 0, fontSize: '14px' }}
+                  >
+                    Quay lại chọn phương thức khác
+                  </Button>
+                </Space>
+              </Form>
+            </Space>
+          </div>
+        ); case 2:
         return (
           <div style={{ padding: '24px 0' }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -247,7 +446,10 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
                   Xác Thực OTP
                 </Title>
                 <Text type="secondary" style={{ fontSize: '14px' }}>
-                  Nhập mã 6 số đã gửi đến <strong>{email}</strong>
+                  Nhập mã 6 số đã gửi đến{' '}
+                  <strong>
+                    {verificationMethod === 'email' ? email : phoneNumber}
+                  </strong>
                 </Text>
               </div>
 
@@ -307,13 +509,19 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
                   >
                     Xác Thực
                   </Button>
+
+                  <Button
+                    type="link"
+                    onClick={() => setCurrentStep(1)}
+                    style={{ padding: 0, fontSize: '14px' }}
+                  >
+                    Quay lại
+                  </Button>
                 </Space>
               </Form>
             </Space>
           </div>
-        );
-
-      case 2:
+        ); case 3:
         return (
           <div style={{ padding: '24px 0' }}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -428,7 +636,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <Result
             status="success"

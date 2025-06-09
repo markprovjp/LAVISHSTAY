@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import store from "./store";
 import "./index.css";
 import App from "./App";
+import "./utils/performanceOptimization";
 
 // Khởi tạo Mirage server trong development mode
 if (process.env.NODE_ENV === 'development') {
@@ -13,13 +14,18 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
+// Disable StrictMode in development to avoid findDOMNode warnings
+const AppWrapper = process.env.NODE_ENV === 'development' ?
+  ({ children }: { children: React.ReactNode }) => <>{children}</> :
+  React.StrictMode;
+
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
-  <React.StrictMode>
+  <AppWrapper>
     <Provider store={store}>
       <HelmetProvider>
         <App />
       </HelmetProvider>
     </Provider>
-  </React.StrictMode>
+  </AppWrapper>
 );
