@@ -1,157 +1,104 @@
-<p align="center"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></p>
+# Free Tailwind & Laravel admin dashboard template
 
-# LavishStay - Backend
+![Mosaic TailwindCSS template preview](https://github.com/cruip/laravel-tailwindcss-admin-dashboard-template/assets/2683512/68bf8c3d-6525-4565-b6f8-c81611b9c1eb)
 
-LavishStay là một ứng dụng đặt phòng khách sạn được xây dựng bằng Laravel (Backend) và React (Frontend). Dự án này được phát triển cho khóa học PRO224 - SUMMER2025.
+**Mosaic Lite Laravel** is a responsive admin dashboard template built on top of Tailwind CSS and fully coded in Laravel Jetstream. This template is a great starting point for anyone who wants to create a user interface for SaaS products, administrator dashboards, modern web apps, and more.
+Use it for whatever you want, and be sure to reach us out on [Twitter](https://twitter.com/Cruip_com) if you build anything cool/useful with it.
 
-## Yêu Cầu Hệ Thống
+**UPDATE 2025-02-02** Added Tailwind v4 support!
 
-Để chạy ứng dụng, bạn cần cài đặt các phần mềm sau:
+Created and maintained with ❤️ by [Cruip.com](https://cruip.com/).
 
-- PHP >= 8.2
-- Composer
-- XAMPP 
+## Live demo
+
+Check a live demo here 👉️ [https://mosaic.cruip.com/](https://mosaic.cruip.com/?template=laravel)
+
+## Mosaic Pro
+
+[![Mosaic Tailwind Admin Template](https://github.com/cruip/tailwind-dashboard-template/assets/2683512/2b4d0fae-bb07-4229-8a8a-48005f2f33cb)](https://cruip.com/mosaic/)
+
+## Design files
+
+If you need the design files, you can download them from Figma's Community 👉 https://bit.ly/3sigqHe
+
+## Table of contents
+
+* [Usage](#usage)
+  * [Setup your .env config file](#setup-your-env-config-file)
+  * [Install Laravel dependencies](#install-laravel-dependencies)
+  * [Migrate the tables](#migrate-the-tables)
+  * [Generate some test data](#generate-some-test-data)
+  * [Compile the front-end](#compile-the-front-end)
+  * [Launch the Laravel backend](#launch-the-Laravel-backend)        
+* [Credits](#credits)
+* [Terms and License](#terms-and-license)
+* [About Us](#about-us)
+* [Stay in the loop](#stay-in-the-loop)
+
+## Usage
+
+This project was built with [Laravel Jetstream](https://jetstream.laravel.com/) and [Livewire + Blade](https://jetstream.laravel.com/2.x/introduction.html#livewire-blade) as Stack.
+
+### Setup your .env config file
+Make sure to add the database configuration in your .env file such as database name, username, password and port.
+
+### Install Laravel dependencies
+In the root of your Laravel application, run the ``php composer.phar install`` (or ``composer install``) command to install all of the framework's dependencies.
+
+### Migrate the tables
+
+In order to migrate the tables and setup the bare minimum structure for this app
+to display some data you shoud open your terminal, locate and enter this project
+directory and run the following command
+
+``php artisan migrate``
+
+### Generate some test data
+
+Once you have all your database tables setup you can then generate some test data
+which will come from our pre-made database table seeders.
+In order to do so, in your terminal run the following command
+
+``php artisan db:seed``
+
+N.B. If you run this command twice, all the test data will be duplicated and added to the existing table data, if you want to avoid having duplicate test data please
+make sure to ``truncate`` the following ``datafeeds`` table in your database.
+
+### Compile the front-end
+
+In order to compile all the CSS and JS assets for the front-end of this site you need to install NPM dependencies. To do that, open the terminal, type npm install and press the ``Enter`` key.
+
+Then run ``npm run dev`` in the terminal to run a development server to re-compile static assets when making changes to the template.
+
+When you have done with changes, run ``npm run build`` for compiling and minify for production.
+
+### Launch the Laravel backend
+
+In order to make this Laravel installation work properly on your local machine you
+can run the following command in your terminal window.
+
+``php artisan serve``
+
+You should receive a message similar to this
+``Starting Laravel development server: http://127.0.0.1:8000`` simply copy the URL
+in your browser and you'll be ready to test out your new mosaic laravel app.
 
 
-## Cài Đặt
+## Credits
 
-### Phương pháp 1: Sử dụng script tự động
+- [Nucleo](https://nucleoapp.com/)
 
-Dự án đã cung cấp một script PowerShell để thiết lập và chạy cả Backend và Frontend:
+## Terms and License
 
-1. Mở PowerShell và điều hướng đến thư mục gốc của dự án
-2. Chạy lệnh:
-```powershell
-./start-dev.ps1
-```
-3. Chọn tùy chọn 2 (Backend) hoặc 3 (Cả hai) từ menu
+- License 👉 [https://cruip.com/terms/](https://cruip.com/terms/).
+- Copyright 2022 [Cruip](https://cruip.com/).
+- Use it for personal and commercial projects, but please don’t republish, redistribute, or resell the template.
+- Attribution is not required, although it is really appreciated.
 
-### Phương pháp 2: Cài đặt thủ công
+## About Us
 
-#### Bước 1: Clone dự án (nếu chưa có)
+We're an Italian developer/designer duo creating high-quality design/code resources for developers, makers, and startups.
 
-```bash
-git clone <repository-url> LavishStay
-cd LavishStay/lavishstay-backend
-```
+## Stay in the loop
 
-#### Bước 2: Cài đặt các dependency
-
-```bash
-composer install
-```
-
-#### Bước 3: Thiết lập môi trường
-
-```bash
-# Tạo file .env từ mẫu
-cp .env.example .env
-
-# Tạo khóa ứng dụng
-php artisan key:generate
-```
-
-#### Bước 4: Cấu hình cơ sở dữ liệu
-
-Mặc định, dự án sử dụng SQLite. File database.sqlite đã được tạo sẵn trong thư mục `/database`. Nếu bạn muốn sử dụng MySQL, hãy chỉnh sửa các thông số sau trong file `.env`:
-
-```
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=lavishstay
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-#### Bước 5: Chạy migration và seeder
-
-```bash
-# Chạy migration để tạo các bảng trong database
-php artisan migrate
-
-# Chạy seeder để tạo dữ liệu mẫu (nếu cần)
-php artisan db:seed
-```
-
-## Chạy Ứng Dụng
-
-### Khởi động server Laravel
-
-```bash
-php artisan serve
-```
-
-Server sẽ chạy tại địa chỉ: [http://localhost:8000](http://localhost:8000)
-
-### Chạy Queue Worker (nếu cần)
-
-```bash
-php artisan queue:work
-```
-
-### Chạy Scheduler (nếu cần)
-
-```bash
-php artisan schedule:work
-```
-
-## Cấu Trúc Thư Mục
-
-- `app/` - Chứa các models, controllers và các thành phần core của ứng dụng
-- `bootstrap/` - Chứa các files khởi động ứng dụng
-- `config/` - Chứa tất cả các file cấu hình của ứng dụng
-- `database/` - Chứa migrations, seeders và factories
-- `public/` - Thư mục gốc web, chứa index.php và các assets
-- `resources/` - Chứa views, assets chưa biên dịch
-- `routes/` - Chứa các định nghĩa route
-- `storage/` - Chứa logs, sesions, cache
-- `tests/` - Chứa các files test
-
-## Các Lệnh Hữu Ích
-
-```bash
-# Xóa cache
-php artisan cache:clear
-
-# Xóa cache route
-php artisan route:clear
-
-# Xóa cache config
-php artisan config:clear
-
-# Liệt kê tất cả routes
-php artisan route:list
-
-# Tạo controller mới
-php artisan make:controller TenController
-
-# Tạo model mới với migration
-php artisan make:model TenModel -m
-
-# Chạy test
-php artisan test
-```
-
-## Liên Kết Frontend
-
-Frontend của dự án được xây dựng bằng React và có thể được khởi động riêng biệt:
-
-```bash
-cd ../lavishstay-frontend
-npm install
-npm run dev
-```
-
-Frontend sẽ chạy tại địa chỉ: [http://localhost:5173](http://localhost:5173)
-
-## Liên Hệ
-
-Nếu bạn có bất kỳ câu hỏi hay góp ý nào, vui lòng liên hệ:
-
-- Email: [email@example.com](mailto:email@example.com)
-- GitHub: [GitHub Repository](https://github.com/yourusername/lavishstay)
-
-## License
-
-Dự án này được cấp phép theo [MIT license](https://opensource.org/licenses/MIT).
+If you would like to know when we release new resources, you can follow [@pacovitiello](https://x.com/pacovitiello) and [@DavidePacilio](https://x.com/DavidePacilio) on X, or you can subscribe to our [newsletter](https://cruip.com/newsletter/).
