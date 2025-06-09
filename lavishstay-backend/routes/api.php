@@ -23,7 +23,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 // Room Types API
-Route::apiResource('room-types', RoomTypeController::class);
+// Route::apiResource('room-types', RoomTypeController::class);
 
 
 
