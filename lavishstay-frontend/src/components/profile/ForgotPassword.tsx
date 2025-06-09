@@ -7,63 +7,53 @@ import {
   Typography,
   Space,
   Alert,
-  Row,
-  Col,
   Steps,
   Modal,
-  Statistic
+  Progress,
+  Result,
+  Divider
 } from 'antd';
 import {
   MailOutlined,
   SafetyCertificateOutlined,
   LockOutlined,
   CheckCircleOutlined,
-  ArrowLeftOutlined,
   ClockCircleOutlined,
-  KeyOutlined
+  ReloadOutlined
 } from '@ant-design/icons';
-import './ForgotPassword.css';
 
-const { Title, Text, Paragraph } = Typography;
-const { Countdown } = Statistic;
+const { Title, Text } = Typography;
 
 interface ForgotPasswordProps {
   onBack?: () => void;
   onSuccess?: () => void;
 }
 
-const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) => {
+const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onSuccess }) => {
   const [emailForm] = Form.useForm();
   const [otpForm] = Form.useForm();
   const [resetForm] = Form.useForm();
-  
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [passwordStrength, setPasswordStrength] = useState(0);
-
   const steps = [
     {
-      title: 'Email Verification',
+      title: 'Nhập Email',
       icon: <MailOutlined />,
-      description: 'Enter your email address'
     },
     {
-      title: 'OTP Verification',
+      title: 'Xác Thực OTP',
       icon: <SafetyCertificateOutlined />,
-      description: 'Enter the verification code'
     },
     {
-      title: 'Reset Password',
+      title: 'Đặt Lại Mật Khẩu',
       icon: <LockOutlined />,
-      description: 'Create a new password'
     },
     {
-      title: 'Complete',
+      title: 'Hoàn Thành',
       icon: <CheckCircleOutlined />,
-      description: 'Password reset successfully'
     }
   ];
 
@@ -87,34 +77,30 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
     if (passwordStrength < 75) return '#fadb14';
     return '#52c41a';
   };
-
   const getPasswordStrengthText = () => {
-    if (passwordStrength < 25) return 'Weak';
-    if (passwordStrength < 50) return 'Fair';
-    if (passwordStrength < 75) return 'Good';
-    return 'Strong';
-  };
-
-  const handleEmailSubmit = async (values: { email: string }) => {
+    if (passwordStrength < 25) return 'Yếu';
+    if (passwordStrength < 50) return 'Trung bình';
+    if (passwordStrength < 75) return 'Tốt';
+    return 'Mạnh';
+  }; const handleEmailSubmit = async (values: { email: string }) => {
     setLoading(true);
     try {
       // API call to send OTP
       await new Promise(resolve => setTimeout(resolve, 2000));
       setEmail(values.email);
-      setOtpSent(true);
       setCurrentStep(1);
       setResendCountdown(60); // 60 seconds countdown
     } catch (error) {
       Modal.error({
-        title: 'Error',
-        content: 'Failed to send verification code. Please try again.',
+        title: 'Lỗi',
+        content: 'Không thể gửi mã xác thực. Vui lòng thử lại.',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOtpSubmit = async (values: { otp: string }) => {
+  const handleOtpSubmit = async (_values: { otp: string }) => {
     setLoading(true);
     try {
       // API call to verify OTP
@@ -122,15 +108,15 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
       setCurrentStep(2);
     } catch (error) {
       Modal.error({
-        title: 'Invalid Code',
-        content: 'The verification code is incorrect. Please try again.',
+        title: 'Mã không hợp lệ',
+        content: 'Mã xác thực không đúng. Vui lòng thử lại.',
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePasswordReset = async (values: { password: string; confirmPassword: string }) => {
+  const handlePasswordReset = async (_values: { password: string; confirmPassword: string }) => {
     setLoading(true);
     try {
       // API call to reset password
@@ -141,14 +127,13 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
       }, 3000);
     } catch (error) {
       Modal.error({
-        title: 'Error',
-        content: 'Failed to reset password. Please try again.',
+        title: 'Lỗi',
+        content: 'Không thể đặt lại mật khẩu. Vui lòng thử lại.',
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleResendOtp = async () => {
     setLoading(true);
     try {
@@ -156,13 +141,13 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
       await new Promise(resolve => setTimeout(resolve, 1000));
       setResendCountdown(60);
       Modal.success({
-        title: 'Code Sent',
-        content: 'A new verification code has been sent to your email.',
+        title: 'Đã gửi mã',
+        content: 'Mã xác thực mới đã được gửi đến email của bạn.',
       });
     } catch (error) {
       Modal.error({
-        title: 'Error',
-        content: 'Failed to resend verification code. Please try again.',
+        title: 'Lỗi',
+        content: 'Không thể gửi lại mã xác thực. Vui lòng thử lại.',
       });
     } finally {
       setLoading(false);
@@ -177,283 +162,323 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBack, onSuccess }) =>
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [resendCountdown]);
-
-  const renderStepContent = () => {
+  }, [resendCountdown]); const renderStepContent = () => {
     switch (currentStep) {
       case 0:
         return (
-          <Card className="step-card">
-            <div className="step-header">
-              <MailOutlined className="step-icon" />
-              <Title level={3}>Forgot Your Password?</Title>
-              <Paragraph type="secondary">
-                Don't worry! Enter your email address and we'll send you a verification code to reset your password.
-              </Paragraph>
-            </div>
+          <div style={{ padding: '24px 0' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}>
+                  <MailOutlined style={{ fontSize: '24px', color: '#595959' }} />
+                </div>
+                <Title level={3} style={{ marginBottom: '8px', color: '#262626' }}>
+                  Quên Mật Khẩu
+                </Title>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Nhập địa chỉ email để nhận mã xác thực
+                </Text>
+              </div>
 
-            <Form
-              form={emailForm}
-              layout="vertical"
-              onFinish={handleEmailSubmit}
-              autoComplete="off"
-            >
-              <Form.Item
-                label="Email Address"
-                name="email"
-                rules={[
-                  { required: true, message: 'Please enter your email address' },
-                  { type: 'email', message: 'Please enter a valid email address' }
-                ]}
+              <Form
+                form={emailForm}
+                layout="vertical"
+                onFinish={handleEmailSubmit}
+                style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}
               >
-                <Input
-                  prefix={<MailOutlined />}
-                  placeholder="Enter your email address"
-                  size="large"
-                />
-              </Form.Item>
-
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  size="large"
-                  block
-                  className="submit-btn"
+                <Form.Item
+                  label="Email"
+                  name="email"
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập email' },
+                    { type: 'email', message: 'Email không hợp lệ' }
+                  ]}
                 >
-                  Send Verification Code
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
+                  <Input
+                    prefix={<MailOutlined style={{ color: '#8c8c8c' }} />}
+                    placeholder="Nhập địa chỉ email"
+                    size="large"
+                  />
+                </Form.Item>
+
+                <Form.Item style={{ marginBottom: 0 }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    size="large"
+                    block
+                  >
+                    Gửi Mã Xác Thực
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Space>
+          </div>
         );
 
       case 1:
         return (
-          <Card className="step-card">
-            <div className="step-header">
-              <SafetyCertificateOutlined className="step-icon" />
-              <Title level={3}>Enter Verification Code</Title>
-              <Paragraph type="secondary">
-                We've sent a 6-digit verification code to <strong>{email}</strong>
-              </Paragraph>
-            </div>
-
-            <Form
-              form={otpForm}
-              layout="vertical"
-              onFinish={handleOtpSubmit}
-              autoComplete="off"
-            >
-              <Form.Item
-                label="Verification Code"
-                name="otp"
-                rules={[
-                  { required: true, message: 'Please enter the verification code' },
-                  { len: 6, message: 'Verification code must be 6 digits' }
-                ]}
-              >
-                <Input
-                  placeholder="Enter 6-digit code"
-                  size="large"
-                  maxLength={6}
-                  style={{ textAlign: 'center', fontSize: '20px', letterSpacing: '8px' }}
-                />
-              </Form.Item>
-
-              <div className="resend-section">
-                {resendCountdown > 0 ? (
-                  <Text type="secondary">
-                    <ClockCircleOutlined /> Resend code in {resendCountdown} seconds
-                  </Text>
-                ) : (
-                  <Button
-                    type="link"
-                    onClick={handleResendOtp}
-                    loading={loading}
-                    className="resend-btn"
-                  >
-                    Resend Verification Code
-                  </Button>
-                )}
+          <div style={{ padding: '24px 0' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}>
+                  <SafetyCertificateOutlined style={{ fontSize: '24px', color: '#595959' }} />
+                </div>
+                <Title level={3} style={{ marginBottom: '8px', color: '#262626' }}>
+                  Xác Thực OTP
+                </Title>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Nhập mã 6 số đã gửi đến <strong>{email}</strong>
+                </Text>
               </div>
 
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  size="large"
-                  block
-                  className="submit-btn"
+              <Form
+                form={otpForm}
+                layout="vertical"
+                onFinish={handleOtpSubmit}
+                style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}
+              >
+                <Form.Item
+                  label="Mã xác thực"
+                  name="otp"
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập mã xác thực' },
+                    { len: 6, message: 'Mã xác thực phải có 6 số' }
+                  ]}
                 >
-                  Verify Code
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
+                  <Input
+                    placeholder="000000"
+                    size="large"
+                    maxLength={6}
+                    style={{
+                      textAlign: 'center',
+                      fontSize: '18px',
+                      letterSpacing: '4px',
+                      fontWeight: '500'
+                    }}
+                  />
+                </Form.Item>
+
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  {resendCountdown > 0 ? (
+                    <Alert
+                      message={`Gửi lại mã sau ${resendCountdown} giây`}
+                      type="info"
+                      showIcon
+                      icon={<ClockCircleOutlined />}
+                    />
+                  ) : (
+                    <Button
+                      type="link"
+                      onClick={handleResendOtp}
+                      loading={loading}
+                      icon={<ReloadOutlined />}
+                      style={{ padding: 0, fontSize: '14px' }}
+                    >
+                      Gửi Lại Mã Xác Thực
+                    </Button>
+                  )}
+
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    size="large"
+                    block
+                  >
+                    Xác Thực
+                  </Button>
+                </Space>
+              </Form>
+            </Space>
+          </div>
         );
 
       case 2:
         return (
-          <Card className="step-card">
-            <div className="step-header">
-              <LockOutlined className="step-icon" />
-              <Title level={3}>Create New Password</Title>
-              <Paragraph type="secondary">
-                Please create a strong password for your account
-              </Paragraph>
-            </div>
+          <div style={{ padding: '24px 0' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
+                }}>
+                  <LockOutlined style={{ fontSize: '24px', color: '#595959' }} />
+                </div>
+                <Title level={3} style={{ marginBottom: '8px', color: '#262626' }}>
+                  Tạo Mật Khẩu Mới
+                </Title>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Tạo mật khẩu mạnh cho tài khoản của bạn
+                </Text>
+              </div>
 
-            <Form
-              form={resetForm}
-              layout="vertical"
-              onFinish={handlePasswordReset}
-              autoComplete="off"
-            >
-              <Form.Item
-                label="New Password"
-                name="password"
-                rules={[
-                  { required: true, message: 'Please enter your new password' },
-                  { min: 8, message: 'Password must be at least 8 characters' }
-                ]}
+              <Form
+                form={resetForm}
+                layout="vertical"
+                onFinish={handlePasswordReset}
+                style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}
               >
-                <Input.Password
-                  placeholder="Enter new password"
-                  size="large"
-                  onChange={handlePasswordChange}
-                />
-              </Form.Item>
+                <Form.Item
+                  label="Mật khẩu mới"
+                  name="password"
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+                    { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
+                  ]}
+                >
+                  <Input.Password
+                    placeholder="Nhập mật khẩu mới"
+                    size="large"
+                    onChange={handlePasswordChange}
+                  />
+                </Form.Item>
 
-              {passwordStrength > 0 && (
-                <div className="password-strength">
-                  <Text strong>Password Strength: </Text>
-                  <div className="strength-bar">
-                    <div
-                      className="strength-fill"
-                      style={{
-                        width: `${passwordStrength}%`,
-                        backgroundColor: getPasswordStrengthColor()
-                      }}
+                {passwordStrength > 0 && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <Text style={{ fontSize: '12px', color: '#8c8c8c' }}>Độ mạnh:</Text>
+                      <Text style={{ fontSize: '12px', color: getPasswordStrengthColor(), fontWeight: 500 }}>
+                        {getPasswordStrengthText()}
+                      </Text>
+                    </div>
+                    <Progress
+                      percent={passwordStrength}
+                      strokeColor={getPasswordStrengthColor()}
+                      showInfo={false}
+                      size="small"
                     />
                   </div>
-                  <Text style={{ color: getPasswordStrengthColor() }}>
-                    {getPasswordStrengthText()}
-                  </Text>
-                </div>
-              )}
+                )}
 
-              <Form.Item
-                label="Confirm New Password"
-                name="confirmPassword"
-                dependencies={['password']}
-                rules={[
-                  { required: true, message: 'Please confirm your new password' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue('password') === value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error('Passwords do not match'));
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password
-                  placeholder="Confirm new password"
-                  size="large"
-                />
-              </Form.Item>
-
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  size="large"
-                  block
-                  className="submit-btn"
+                <Form.Item
+                  label="Xác nhận mật khẩu"
+                  name="confirmPassword"
+                  dependencies={['password']}
+                  rules={[
+                    { required: true, message: 'Vui lòng xác nhận mật khẩu' },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue('password') === value) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Mật khẩu không khớp'));
+                      },
+                    }),
+                  ]}
                 >
-                  Reset Password
-                </Button>
-              </Form.Item>
-            </Form>
+                  <Input.Password
+                    placeholder="Xác nhận mật khẩu mới"
+                    size="large"
+                  />
+                </Form.Item>
 
-            <Alert
-              message="Password Requirements"
-              description={
-                <ul className="password-requirements">
-                  <li>At least 8 characters long</li>
-                  <li>Include uppercase and lowercase letters</li>
-                  <li>Include at least one number</li>
-                  <li>Include at least one special character</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </Card>
+                <Alert
+                  message="Yêu cầu mật khẩu"
+                  description={
+                    <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
+                      • Ít nhất 8 ký tự<br />
+                      • Có chữ hoa và chữ thường<br />
+                      • Có ít nhất 1 số và 1 ký tự đặc biệt
+                    </div>
+                  }
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: '24px' }}
+                />
+
+                <Form.Item style={{ marginBottom: 0 }}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    size="large"
+                    block
+                  >
+                    Đặt Lại Mật Khẩu
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Space>
+          </div>
         );
 
       case 3:
         return (
-          <Card className="step-card success-card">
-            <div className="step-header">
-              <CheckCircleOutlined className="step-icon success-icon" />
-              <Title level={3}>Password Reset Successfully!</Title>
-              <Paragraph type="secondary">
-                Your password has been updated successfully. You will be redirected to login shortly.
-              </Paragraph>
-            </div>
-
-            <div className="success-actions">
+          <Result
+            status="success"
+            title="Đặt Lại Mật Khẩu Thành Công!"
+            subTitle="Mật khẩu đã được cập nhật. Bạn có thể đăng nhập với mật khẩu mới."
+            extra={[
               <Button
                 type="primary"
                 size="large"
-                className="submit-btn"
                 onClick={onSuccess}
+                key="login"
               >
-                Continue to Login
+                Đóng
               </Button>
-            </div>
-          </Card>
+            ]}
+            style={{ padding: '24px 0' }}
+          />
         );
 
       default:
         return null;
     }
-  };
-
-  return (
-    <div className="forgot-password-container">
-      <Row justify="center">
-        <Col xs={24} sm={20} md={16} lg={12} xl={10}>
-          <div className="forgot-password-wrapper">
-            {onBack && (
-              <Button
-                type="text"
-                icon={<ArrowLeftOutlined />}
-                onClick={onBack}
-                className="back-btn"
-              >
-                Back to Login
-              </Button>
-            )}
-
-            <Steps
-              current={currentStep}
-              items={steps}
-              className="forgot-password-steps"
-            />
-
-            <div className="step-content">
-              {renderStepContent()}
-            </div>
+  }; return (
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: '16px' }}>
+            <Title level={4} style={{ margin: 0, color: '#262626' }}>
+              Quên Mật Khẩu
+            </Title>
+            <Text type="secondary" style={{ fontSize: '14px' }}>
+              Khôi phục tài khoản của bạn
+            </Text>
           </div>
-        </Col>
-      </Row>
+
+          {/* Steps */}
+          <Steps
+            current={currentStep}
+            items={steps}
+            size="small"
+            style={{ marginBottom: '24px' }}
+          />
+
+          <Divider style={{ margin: 0 }} />
+
+          {/* Content */}
+          {renderStepContent()}
+        </Space>
+      </Card>
     </div>
   );
 };

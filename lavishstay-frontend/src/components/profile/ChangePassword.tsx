@@ -23,7 +23,6 @@ import {
   SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import './ChangePassword.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -93,20 +92,9 @@ const ChangePassword: React.FC = () => {
   return (
     <div className="change-password-container">
       <div className="change-password-wrapper">
-        <Button 
-          type="text" 
-          icon={<ArrowLeftOutlined />}
-          onClick={handleBack}
-          className="back-btn"
-        >
-          Back
-        </Button>
 
         <Card className="change-password-card">
           <div className="change-password-header">
-            <div className="header-icon">
-              <KeyOutlined />
-            </div>
             <Title level={2}>Change Password</Title>
             <Paragraph type="secondary">
               Create a new secure password for your LavishStay account

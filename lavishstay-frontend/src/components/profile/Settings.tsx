@@ -31,7 +31,6 @@ import {
 } from '@ant-design/icons';
 import { Shield } from 'lucide-react';
 
-import './Settings.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
