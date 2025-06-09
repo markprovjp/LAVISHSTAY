@@ -1,19 +1,18 @@
-import React from 'react';
-import { Layout, Menu, Avatar, Typography, Card, Space } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Layout, Menu, Avatar, Typography, Spin, Divider } from 'antd';
 import {
     UserOutlined,
     BookOutlined,
     HeartOutlined,
     SettingOutlined,
-    LockOutlined,
-    MailOutlined,
     BellOutlined,
-    SafetyOutlined
+    SafetyOutlined,
+    LogoutOutlined,
+    LockOutlined,
+    KeyOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
-import './ProfileLayout.css';
+import { profileService, type UserProfile } from '../../services/profileService';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -21,157 +20,259 @@ const { Title, Text } = Typography;
 const ProfileLayout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { isDarkMode } = useSelector((state: RootState) => state.theme);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock user data - thay thế bằng data thực từ store
-    const currentUser = {
-        id: 1,
-        name: 'Nguyễn Văn A',
-        email: 'nguyenvana@email.com',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-        memberSince: '2023',
-        totalBookings: 12,
-        loyaltyLevel: 'Gold'
+    useEffect(() => {
+        const loadUserProfile = async () => {
+            try {
+                const profile = await profileService.getUserProfile();
+                setUserProfile(profile);
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        }; loadUserProfile();
+    }, []);
+
+    const handleMenuClick = (path: string) => {
+        navigate(path);
     };
 
-    const menuItems = [
-        {
-            key: '/profile',
-            icon: <UserOutlined />,
-            label: 'Thông tin cá nhân',
-            path: '/profile'
-        },
-        {
-            key: '/profile/bookings',
-            icon: <BookOutlined />,
-            label: 'Đặt phòng của tôi',
-            path: '/profile/bookings'
-        },
-        {
-            key: '/profile/wishlist',
-            icon: <HeartOutlined />,
-            label: 'Danh sách yêu thích',
-            path: '/profile/wishlist'
-        },
-        {
-            key: '/profile/security',
-            icon: <LockOutlined />,
-            label: 'Bảo mật',
-            path: '/profile/security'
-        },
-        {
-            key: '/profile/change-password',
-            icon: <SafetyOutlined />,
-            label: 'Đổi mật khẩu',
-            path: '/profile/change-password'
-        },
-        {
-            key: '/profile/forgot-password',
-            icon: <MailOutlined />,
-            label: 'Quên mật khẩu',
-            path: '/profile/forgot-password'
-        },
-        {
-            key: '/profile/notifications',
-            icon: <BellOutlined />,
-            label: 'Thông báo',
-            path: '/profile/notifications'
-        },
-        {
-            key: '/profile/settings',
-            icon: <SettingOutlined />,
-            label: 'Cài đặt',
-            path: '/profile/settings'
-        }
-    ];
-
-    const handleMenuClick = (item: any) => {
-        const menuItem = menuItems.find(menu => menu.key === item.key);
-        if (menuItem) {
-            navigate(menuItem.path);
-        }
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        navigate('/');
     };
 
-    const getCurrentKey = () => {
-        const currentPath = location.pathname;
-        const menuItem = menuItems.find(item => item.path === currentPath);
-        return menuItem ? menuItem.key : '/profile';
-    };
-
-    return (
-        <div className="profile-layout-container">
-            <Layout className="profile-layout">
-                {/* Sidebar */}
+    if (loading) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '200px'
+            }}>
+                <Spin size="large" />
+            </div>
+        );
+    } return (
+        <div className="container mx-auto px-4 py-8">
+            <Layout style={{
+                background: 'white',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                minHeight: '600px'
+            }}>
                 <Sider
-                    width={320}
-                    className="profile-sidebar"
-                    theme={isDarkMode ? 'dark' : 'light'}
-                    breakpoint="lg"
-                    collapsedWidth="0"
+                    width={280}
+                    style={{
+                        background: '#fafafa',
+                        borderRight: '1px solid #e8e8e8'
+                    }}
                 >
-                    {/* User Profile Card */}
-                    <Card className="profile-user-card" bordered={false}>
-                        <div className="profile-user-info">
-                            <div className="profile-avatar-container">
-                                <Avatar
-                                    size={80}
-                                    src={currentUser.avatar}
-                                    className="profile-avatar"
-                                >
-                                    {currentUser.name.charAt(0)}
-                                </Avatar>
-                                <div className="profile-status-badge">
-                                    <span className="status-dot"></span>
-                                    Online
-                                </div>
-                            </div>
+                    {/* User Profile Header */}
+                    <div style={{
+                        padding: '24px',
+                        borderBottom: '1px solid #e8e8e8',
+                        textAlign: 'center'
+                    }}>
+                        <Avatar
+                            size={64}
+                            src={userProfile?.avatar}
+                            style={{
+                                backgroundColor: '#1890ff',
+                                marginBottom: '12px'
+                            }}
+                        >
+                            {userProfile?.name?.[0]?.toUpperCase()}
+                        </Avatar>
 
-                            <div className="profile-user-details">
-                                <Title level={4} className="profile-user-name">
-                                    {currentUser.name}
-                                </Title>
-                                <Text className="profile-user-email">
-                                    {currentUser.email}
-                                </Text>
-                                <div className="profile-loyalty-badge">
-                                    <span className="loyalty-level">{currentUser.loyaltyLevel} Member</span>
-                                    <span className="member-since">Thành viên từ {currentUser.memberSince}</span>
-                                </div>
-                            </div>
+                        <div>
+                            <Title level={5} style={{
+                                margin: '0 0 4px 0',
+                                color: '#262626',
+                                fontWeight: 600
+                            }}>
+                                {userProfile?.name}
+                            </Title>
+                            <Text type="secondary" style={{
+                                fontSize: '13px',
+                                color: '#8c8c8c'
+                            }}>
+                                {userProfile?.email}
+                            </Text>
                         </div>
-
-                        {/* Stats */}
-                        <div className="profile-stats">
-                            <div className="stat-item">
-                                <div className="stat-number">{currentUser.totalBookings}</div>
-                                <div className="stat-label">Lượt đặt phòng</div>
-                            </div>
-                            <div className="stat-divider"></div>
-                            <div className="stat-item">
-                                <div className="stat-number">4.9</div>
-                                <div className="stat-label">Đánh giá TB</div>
-                            </div>
-                        </div>
-                    </Card>
+                    </div>
 
                     {/* Navigation Menu */}
-                    <Menu
-                        mode="inline"
-                        selectedKeys={[getCurrentKey()]}
-                        className="profile-menu"
-                        items={menuItems}
-                        onClick={handleMenuClick}
-                    />
+                    <div style={{ padding: '8px 0' }}>
+                        <Menu
+                            mode="inline"
+                            selectedKeys={[location.pathname]}
+                            style={{
+                                border: 'none',
+                                background: 'transparent'
+                            }}
+                        >
+                            {/* Main Section */}
+                            <Menu.Item
+                                key="/profile"
+                                icon={<UserOutlined />}
+                                onClick={() => handleMenuClick('/profile')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Thông tin cá nhân
+                            </Menu.Item>
+                            <Menu.Item
+                                key="/profile/bookings"
+                                icon={<BookOutlined />}
+                                onClick={() => handleMenuClick('/profile/bookings')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Lịch sử đặt phòng
+                            </Menu.Item>
+                            <Menu.Item
+                                key="/profile/wishlist"
+                                icon={<HeartOutlined />}
+                                onClick={() => handleMenuClick('/profile/wishlist')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Danh sách yêu thích
+                            </Menu.Item>
+
+                            <Divider style={{ margin: '8px 0', borderColor: '#e8e8e8' }} />
+
+                            {/* Security Section */}
+                            <Menu.Item
+                                key="/profile/change-password"
+                                icon={<KeyOutlined />}
+                                onClick={() => handleMenuClick('/profile/change-password')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Đổi mật khẩu
+                            </Menu.Item>
+                            <Menu.Item
+                                key="/profile/forgot-password"
+                                icon={<LockOutlined />}
+                                onClick={() => handleMenuClick('/profile/forgot-password')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Quên mật khẩu
+                            </Menu.Item>
+
+                            <Divider style={{ margin: '8px 0', borderColor: '#e8e8e8' }} />
+
+                            {/* Settings Section */}
+                            <Menu.Item
+                                key="/profile/notifications"
+                                icon={<BellOutlined />}
+                                onClick={() => handleMenuClick('/profile/notifications')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Thông báo
+                            </Menu.Item>
+                            <Menu.Item
+                                key="/profile/security"
+                                icon={<SafetyOutlined />}
+                                onClick={() => handleMenuClick('/profile/security')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Bảo mật
+                            </Menu.Item>
+                            <Menu.Item
+                                key="/profile/settings"
+                                icon={<SettingOutlined />}
+                                onClick={() => handleMenuClick('/profile/settings')}
+                                style={{
+                                    margin: '4px 12px',
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Cài đặt
+                            </Menu.Item>
+                        </Menu>
+                    </div>
+
+                    {/* Logout */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '16px',
+                        left: '12px',
+                        right: '12px'
+                    }}>
+                        <Divider style={{ margin: '0 0 8px 0', borderColor: '#e8e8e8' }} />
+                        <Menu
+                            mode="inline"
+                            style={{
+                                border: 'none',
+                                background: 'transparent'
+                            }}
+                        >
+                            <Menu.Item
+                                key="logout"
+                                icon={<LogoutOutlined />}
+                                onClick={handleLogout}
+                                danger
+                                style={{
+                                    borderRadius: '6px',
+                                    height: '40px',
+                                    lineHeight: '40px'
+                                }}
+                            >
+                                Đăng xuất
+                            </Menu.Item>
+                        </Menu>
+                    </div>
                 </Sider>
 
-                {/* Main Content */}
-                <Layout className="profile-content-layout">
-                    <Content className="profile-content">
-                        <div className="profile-content-wrapper">
-                            <Outlet />
-                        </div>
-                    </Content>
-                </Layout>
+                <Content style={{
+                    padding: '32px',
+                    background: 'white',
+                    minHeight: '600px',
+                    overflow: 'auto'
+                }}>
+                    <Outlet />
+                </Content>
             </Layout>
         </div>
     );

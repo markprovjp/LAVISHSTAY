@@ -110,7 +110,7 @@ export const sampleRooms: Room[] = [{
     id: 2,
     room_code: "PREMIUM",
     name: "Phòng cao cấp trong góc (Premium Corner Room)",
-    image: "images/room/Premium_Corner_Room/1.jpg",
+    image: "/images/room/Premium_Corner_Room/1.jpg",
     priceVND: 1600000,
     size: 55,
     view: "Tầm nhìn thành phố",

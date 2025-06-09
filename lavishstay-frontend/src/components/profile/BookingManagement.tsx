@@ -41,7 +41,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import dayjs from 'dayjs';
 import { AmenityUtils } from '../../constants/amenities';
-import './BookingManagement.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;

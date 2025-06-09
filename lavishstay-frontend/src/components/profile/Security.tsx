@@ -30,7 +30,6 @@ import {
     DeleteOutlined
 } from '@ant-design/icons';
 import { Shield } from 'lucide-react';
-import './Security.css';
 
 const { Title, Text, Paragraph } = Typography;
 

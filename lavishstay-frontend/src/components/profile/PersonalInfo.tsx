@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Card,
     Row,
@@ -10,13 +10,10 @@ import {
     Upload,
     Typography,
     Divider,
-    Tag,
     Space,
     DatePicker,
-    Select,
     message,
-    Badge,
-    Tooltip
+    Spin
 } from 'antd';
 import {
     EditOutlined,
@@ -28,73 +25,45 @@ import {
     MailOutlined,
     CalendarOutlined,
     EnvironmentOutlined,
-    IdcardOutlined,
-    CrownOutlined,
-    GiftOutlined,
-    StarOutlined
+    IdcardOutlined
 } from '@ant-design/icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
+import { profileService, type UserProfile } from '../../services/profileService';
 import dayjs from 'dayjs';
-import './PersonalInfo.css';
 
-const { Title, Text, Paragraph } = Typography;
-const { Option } = Select;
-const { TextArea } = Input;
-
-interface UserData {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    dateOfBirth: string;
-    address: string;
-    city: string;
-    country: string;
-    bio: string;
-    avatar: string;
-    idNumber: string;
-    memberSince: string;
-    loyaltyLevel: string;
-    totalSpent: number;
-    totalBookings: number;
-    averageRating: number;
-}
+const { Title, Text } = Typography;
 
 const PersonalInfo: React.FC = () => {
-    const { isDarkMode } = useSelector((state: RootState) => state.theme);
     const [isEditing, setIsEditing] = useState(false);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [userData, setUserData] = useState<UserProfile | null>(null);
 
-    // Mock user data - thay thế bằng data thực từ API
-    const [userData, setUserData] = useState<UserData>({
-        id: 1,
-        firstName: 'Nguyễn Văn',
-        lastName: 'A',
-        email: 'nguyenvana@email.com',
-        phone: '+84 912 345 678',
-        dateOfBirth: '1990-05-15',
-        address: '123 Đường ABC, Quận 1',
-        city: 'Hồ Chí Minh',
-        country: 'Việt Nam',
-        bio: 'Tôi là một travel blogger yêu thích khám phá những địa điểm mới và trải nghiệm văn hóa khác nhau.',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
-        idNumber: '012345678901',
-        memberSince: '2023-01-15',
-        loyaltyLevel: 'Gold',
-        totalSpent: 15750000,
-        totalBookings: 12,
-        averageRating: 4.9
-    });
+    useEffect(() => {
+        const loadUserProfile = async () => {
+            try {
+                const profile = await profileService.getUserProfile();
+                setUserData(profile);
+                form.setFieldsValue({
+                    ...profile,
+                    dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth) : null
+                });
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                message.error('Không thể tải thông tin người dùng');
+            }
+        };
+
+        loadUserProfile();
+    }, [form]);
 
     const handleEdit = () => {
         setIsEditing(true);
-        form.setFieldsValue({
-            ...userData,
-            dateOfBirth: userData.dateOfBirth ? dayjs(userData.dateOfBirth) : null
-        });
+        if (userData) {
+            form.setFieldsValue({
+                ...userData,
+                dateOfBirth: userData.dateOfBirth ? dayjs(userData.dateOfBirth) : null
+            });
+        }
     };
 
     const handleSave = async () => {
@@ -111,7 +80,7 @@ const PersonalInfo: React.FC = () => {
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            setUserData({ ...userData, ...updatedData });
+            setUserData({ ...userData!, ...updatedData });
             setIsEditing(false);
             message.success('Cập nhật thông tin thành công!');
         } catch (error) {
@@ -133,48 +102,45 @@ const PersonalInfo: React.FC = () => {
         }
     };
 
-    const getLoyaltyColor = (level: string) => {
-        switch (level) {
-            case 'Bronze': return '#cd7f32';
-            case 'Silver': return '#c0c0c0';
-            case 'Gold': return '#ffd700';
-            case 'Platinum': return '#e5e4e2';
-            case 'Diamond': return '#b9f2ff';
-            default: return '#1890ff';
-        }
-    };
-
-    const getLoyaltyIcon = (level: string) => {
-        switch (level) {
-            case 'Diamond': return <GiftOutlined />;
-            case 'Platinum':
-            case 'Gold': return <CrownOutlined />;
-            default: return <StarOutlined />;
-        }
-    };
-
-    return (
-        <div className="personal-info-container">
+    if (!userData) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '50px' }}>
+                <Spin size="large" />
+            </div>);
+    } return (
+        <div>
             {/* Header Section */}
-            <div className="personal-info-header">
+            <div style={{ marginBottom: '32px' }}>
                 <Row align="middle" justify="space-between">
                     <Col>
-                        <Title level={2} className="page-title">
-                            <UserOutlined className="title-icon" />
+                        <Title level={2} style={{
+                            margin: 0,
+                            color: '#262626',
+                            fontWeight: 500
+                        }}>
+                            <UserOutlined style={{ marginRight: '12px', color: '#8c8c8c' }} />
                             Thông tin cá nhân
                         </Title>
-                        <Text className="page-subtitle">
-                            Quản lý thông tin cá nhân và tài khoản của bạn
+                        <Text style={{
+                            fontSize: '16px',
+                            color: '#8c8c8c',
+                            marginTop: '8px',
+                            display: 'block'
+                        }}>
+                            Quản lý thông tin cá nhân của bạn tại LavishStay Premium Hotel
                         </Text>
                     </Col>
                     <Col>
                         {!isEditing ? (
                             <Button
-                                type="primary"
+                                type="default"
                                 icon={<EditOutlined />}
                                 onClick={handleEdit}
                                 size="large"
-                                className="edit-button"
+                                style={{
+                                    borderRadius: '8px',
+                                    height: '44px'
+                                }}
                             >
                                 Chỉnh sửa
                             </Button>
@@ -184,6 +150,10 @@ const PersonalInfo: React.FC = () => {
                                     icon={<CloseOutlined />}
                                     onClick={handleCancel}
                                     size="large"
+                                    style={{
+                                        borderRadius: '8px',
+                                        height: '44px'
+                                    }}
                                 >
                                     Hủy
                                 </Button>
@@ -193,7 +163,12 @@ const PersonalInfo: React.FC = () => {
                                     onClick={handleSave}
                                     loading={loading}
                                     size="large"
-                                    className="save-button"
+                                    style={{
+                                        borderRadius: '8px',
+                                        height: '44px',
+                                        background: '#262626',
+                                        borderColor: '#262626'
+                                    }}
                                 >
                                     Lưu
                                 </Button>
@@ -203,18 +178,28 @@ const PersonalInfo: React.FC = () => {
                 </Row>
             </div>
 
-            <Row gutter={[24, 24]}>
+            <Row gutter={[32, 32]}>
                 {/* Profile Summary Card */}
                 <Col xs={24} lg={8}>
-                    <Card className="profile-summary-card" bordered={false}>
-                        <div className="avatar-section">
-                            <div className="avatar-container">
+                    <Card
+                        bordered={false}
+                        style={{
+                            borderRadius: '12px',
+                            background: '#fafafa'
+                        }}
+                    >
+                        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                            <div style={{ position: 'relative', display: 'inline-block' }}>
                                 <Avatar
-                                    size={120}
+                                    size={100}
                                     src={userData.avatar}
-                                    className="user-avatar"
+                                    style={{
+                                        backgroundColor: '#d9d9d9',
+                                        border: '4px solid white',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    }}
                                 >
-                                    {userData.firstName.charAt(0)}{userData.lastName.charAt(0)}
+                                    {userData.name?.charAt(0)}
                                 </Avatar>
 
                                 {isEditing && (
@@ -222,79 +207,104 @@ const PersonalInfo: React.FC = () => {
                                         showUploadList={false}
                                         action="/api/upload-avatar"
                                         onChange={handleAvatarChange}
-                                        className="avatar-upload"
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: '0',
+                                            right: '0'
+                                        }}
                                     >
                                         <Button
                                             shape="circle"
                                             icon={<CameraOutlined />}
-                                            className="avatar-upload-button"
+                                            size="small"
+                                            style={{
+                                                background: 'white',
+                                                border: '2px solid #f0f0f0'
+                                            }}
                                         />
                                     </Upload>
                                 )}
                             </div>
 
-                            <div className="user-basic-info">
-                                <Title level={3} className="user-name">
-                                    {userData.firstName} {userData.lastName}
+                            <div style={{ marginTop: '20px' }}>
+                                <Title level={3} style={{
+                                    margin: '0 0 4px 0',
+                                    color: '#262626',
+                                    fontWeight: 500
+                                }}>
+                                    {userData.name}
                                 </Title>
+                                <Text style={{
+                                    color: '#8c8c8c',
+                                    fontSize: '14px'
+                                }}>
+                                    Thành viên từ {dayjs(userData.memberSince).format('DD/MM/YYYY')}
+                                </Text>
+                            </div>
+                        </div>
 
-                                <div className="loyalty-info">
-                                    <Badge
-                                        count={
-                                            <span className="loyalty-badge" style={{ backgroundColor: getLoyaltyColor(userData.loyaltyLevel) }}>
-                                                {getLoyaltyIcon(userData.loyaltyLevel)}
-                                                {userData.loyaltyLevel}
-                                            </span>
-                                        }
-                                    >
-                                        <Text className="member-since">
-                                            Thành viên từ {dayjs(userData.memberSince).format('DD/MM/YYYY')}
-                                        </Text>
-                                    </Badge>
+                        <Divider style={{ margin: '24px 0', borderColor: '#e8e8e8' }} />
+
+                        {/* Stats */}
+                        <Row gutter={16} style={{ textAlign: 'center' }}>
+                            <Col span={8}>
+                                <div style={{ padding: '12px 8px' }}>
+                                    <div style={{
+                                        fontSize: '28px',
+                                        fontWeight: 600,
+                                        color: '#262626',
+                                        marginBottom: '4px'
+                                    }}>
+                                        {userData.totalBookings}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '12px',
+                                        color: '#8c8c8c',
+                                        fontWeight: 500
+                                    }}>
+                                        Đặt phòng
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <Divider />
-
-                        {/* Stats Cards */}
-                        <div className="stats-grid">
-                            <div className="stat-card">
-                                <div className="stat-number">{userData.totalBookings}</div>
-                                <div className="stat-label">Lượt đặt phòng</div>
-                            </div>
-
-                            <div className="stat-card">
-                                <div className="stat-number">
-                                    {(userData.totalSpent / 1000000).toFixed(1)}M
+                            </Col>
+                            <Col span={8}>
+                                <div style={{ padding: '12px 8px' }}>
+                                    <div style={{
+                                        fontSize: '28px',
+                                        fontWeight: 600,
+                                        color: '#262626',
+                                        marginBottom: '4px'
+                                    }}>
+                                        {userData.loyaltyPoints.toLocaleString()}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '12px',
+                                        color: '#8c8c8c',
+                                        fontWeight: 500
+                                    }}>
+                                        Điểm tích lũy
+                                    </div>
                                 </div>
-                                <div className="stat-label">Tổng chi tiêu</div>
-                            </div>
-
-                            <div className="stat-card">
-                                <div className="stat-number">{userData.averageRating}</div>
-                                <div className="stat-label">Đánh giá TB</div>
-                            </div>
-                        </div>
-
-                        {/* Bio Section */}
-                        <div className="bio-section">
-                            <Title level={5}>Giới thiệu</Title>
-                            {isEditing ? (
-                                <Form.Item name="bio" className="bio-form-item">
-                                    <TextArea
-                                        rows={3}
-                                        placeholder="Giới thiệu về bản thân..."
-                                        maxLength={200}
-                                        showCount
-                                    />
-                                </Form.Item>
-                            ) : (
-                                <Paragraph className="bio-text">
-                                    {userData.bio || 'Chưa có thông tin giới thiệu'}
-                                </Paragraph>
-                            )}
-                        </div>
+                            </Col>
+                            <Col span={8}>
+                                <div style={{ padding: '12px 8px' }}>
+                                    <div style={{
+                                        fontSize: '28px',
+                                        fontWeight: 600,
+                                        color: '#262626',
+                                        marginBottom: '4px'
+                                    }}>
+                                        {userData.avgRating.toFixed(1)}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '12px',
+                                        color: '#8c8c8c',
+                                        fontWeight: 500
+                                    }}>
+                                        Đánh giá
+                                    </div>
+                                </div>
+                            </Col>
+                        </Row>
                     </Card>
                 </Col>
 
@@ -302,51 +312,47 @@ const PersonalInfo: React.FC = () => {
                 <Col xs={24} lg={16}>
                     <Card
                         title={
-                            <div className="card-title">
-                                <IdcardOutlined className="card-icon" />
+                            <div style={{
+                                fontSize: '18px',
+                                fontWeight: 500,
+                                color: '#262626'
+                            }}>
+                                <IdcardOutlined style={{ marginRight: '12px', color: '#8c8c8c' }} />
                                 Thông tin chi tiết
                             </div>
                         }
-                        className="personal-details-card"
                         bordered={false}
+                        style={{
+                            borderRadius: '12px'
+                        }}
                     >
                         <Form
                             form={form}
                             layout="vertical"
                             disabled={!isEditing}
-                            className="personal-form"
                         >
-                            <Row gutter={[16, 16]}>
+                            <Row gutter={[24, 24]}>
                                 <Col xs={24} sm={12}>
                                     <Form.Item
-                                        label="Họ và tên đệm"
-                                        name="firstName"
-                                        rules={[{ required: true, message: 'Vui lòng nhập họ!' }]}
+                                        label={<span style={{ fontWeight: 500, color: '#595959' }}>Họ và tên</span>}
+                                        name="name"
+                                        rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
                                     >
                                         <Input
-                                            prefix={<UserOutlined />}
-                                            placeholder="Nhập họ và tên đệm"
+                                            prefix={<UserOutlined style={{ color: '#bfbfbf' }} />}
+                                            placeholder="Nhập họ và tên"
                                             size="large"
+                                            style={{
+                                                borderRadius: '8px',
+                                                borderColor: '#d9d9d9'
+                                            }}
                                         />
                                     </Form.Item>
                                 </Col>
 
                                 <Col xs={24} sm={12}>
                                     <Form.Item
-                                        label="Tên"
-                                        name="lastName"
-                                        rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
-                                    >
-                                        <Input
-                                            placeholder="Nhập tên"
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col xs={24} sm={12}>
-                                    <Form.Item
-                                        label="Email"
+                                        label={<span style={{ fontWeight: 500, color: '#595959' }}>Email</span>}
                                         name="email"
                                         rules={[
                                             { required: true, message: 'Vui lòng nhập email!' },
@@ -354,105 +360,68 @@ const PersonalInfo: React.FC = () => {
                                         ]}
                                     >
                                         <Input
-                                            prefix={<MailOutlined />}
+                                            prefix={<MailOutlined style={{ color: '#bfbfbf' }} />}
                                             placeholder="email@example.com"
                                             size="large"
+                                            style={{
+                                                borderRadius: '8px',
+                                                borderColor: '#d9d9d9'
+                                            }}
                                         />
                                     </Form.Item>
                                 </Col>
 
                                 <Col xs={24} sm={12}>
                                     <Form.Item
-                                        label="Số điện thoại"
+                                        label={<span style={{ fontWeight: 500, color: '#595959' }}>Số điện thoại</span>}
                                         name="phone"
                                         rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
                                     >
                                         <Input
-                                            prefix={<PhoneOutlined />}
+                                            prefix={<PhoneOutlined style={{ color: '#bfbfbf' }} />}
                                             placeholder="+84 xxx xxx xxx"
                                             size="large"
+                                            style={{
+                                                borderRadius: '8px',
+                                                borderColor: '#d9d9d9'
+                                            }}
                                         />
                                     </Form.Item>
                                 </Col>
 
                                 <Col xs={24} sm={12}>
                                     <Form.Item
-                                        label="Ngày sinh"
+                                        label={<span style={{ fontWeight: 500, color: '#595959' }}>Ngày sinh</span>}
                                         name="dateOfBirth"
                                     >
                                         <DatePicker
                                             placeholder="Chọn ngày sinh"
                                             format="DD/MM/YYYY"
                                             size="large"
-                                            style={{ width: '100%' }}
-                                            suffixIcon={<CalendarOutlined />}
-                                        />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col xs={24} sm={12}>
-                                    <Form.Item
-                                        label="CMND/CCCD"
-                                        name="idNumber"
-                                    >
-                                        <Input
-                                            placeholder="Số CMND/CCCD"
-                                            size="large"
+                                            style={{
+                                                width: '100%',
+                                                borderRadius: '8px',
+                                                borderColor: '#d9d9d9'
+                                            }}
+                                            suffixIcon={<CalendarOutlined style={{ color: '#bfbfbf' }} />}
                                         />
                                     </Form.Item>
                                 </Col>
 
                                 <Col xs={24}>
                                     <Form.Item
-                                        label="Địa chỉ"
+                                        label={<span style={{ fontWeight: 500, color: '#595959' }}>Địa chỉ</span>}
                                         name="address"
                                     >
                                         <Input
-                                            prefix={<EnvironmentOutlined />}
+                                            prefix={<EnvironmentOutlined style={{ color: '#bfbfbf' }} />}
                                             placeholder="Số nhà, tên đường, phường/xã"
                                             size="large"
+                                            style={{
+                                                borderRadius: '8px',
+                                                borderColor: '#d9d9d9'
+                                            }}
                                         />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col xs={24} sm={12}>
-                                    <Form.Item
-                                        label="Thành phố"
-                                        name="city"
-                                    >
-                                        <Select
-                                            placeholder="Chọn thành phố"
-                                            size="large"
-                                            showSearch
-                                            filterOption={(input, option) =>
-                                                (option?.children as unknown as string)
-                                                    .toLowerCase()
-                                                    .includes(input.toLowerCase())
-                                            }
-                                        >
-                                            <Option value="Hồ Chí Minh">Hồ Chí Minh</Option>
-                                            <Option value="Hà Nội">Hà Nội</Option>
-                                            <Option value="Đà Nẵng">Đà Nẵng</Option>
-                                            <Option value="Cần Thơ">Cần Thơ</Option>
-                                            <Option value="Hải Phòng">Hải Phòng</Option>
-                                        </Select>
-                                    </Form.Item>
-                                </Col>
-
-                                <Col xs={24} sm={12}>
-                                    <Form.Item
-                                        label="Quốc gia"
-                                        name="country"
-                                    >
-                                        <Select
-                                            placeholder="Chọn quốc gia"
-                                            size="large"
-                                        >
-                                            <Option value="Việt Nam">Việt Nam</Option>
-                                            <Option value="Singapore">Singapore</Option>
-                                            <Option value="Malaysia">Malaysia</Option>
-                                            <Option value="Thailand">Thailand</Option>
-                                        </Select>
                                     </Form.Item>
                                 </Col>
                             </Row>

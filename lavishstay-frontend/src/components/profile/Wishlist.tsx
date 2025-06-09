@@ -1,190 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Typography,
-  Space,
   Button,
   Row,
   Col,
   Empty,
   Rate,
-  Tag,
   Modal,
   message,
-  Tooltip,
   Input,
   Select,
+  Spin,
+  Checkbox,
+  Popconfirm,
   Divider
 } from 'antd';
 import {
   HeartOutlined,
   HeartFilled,
-  ShareAltOutlined,
   DeleteOutlined,
   EyeOutlined,
-  CalendarOutlined,
-  EnvironmentOutlined,
-  FilterOutlined,
-  SearchOutlined,
-  StarFilled
+  CalendarOutlined
 } from '@ant-design/icons';
-import { AMENITIES } from '../../constants/amenities';
-import './Wishlist.css';
+import { useNavigate } from 'react-router-dom';
+import { wishlistService, type WishlistItem } from '../../services/wishlistService';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
-interface WishlistItem {
-  id: string;
-  name: string;
-  location: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviews: number;
-  image: string;
-  amenities: string[];
-  addedDate: string;
-  category: 'hotel' | 'resort' | 'villa' | 'apartment';
-  available: boolean;
-}
-
 const Wishlist: React.FC = () => {
+  const navigate = useNavigate();
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('recent');
-  const [filterCategory, setFilterCategory] = useState('all');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const [wishlistItems] = useState<WishlistItem[]>([
-    {
-      id: '1',
-      name: 'Luxury Ocean View Resort',
-      location: 'Phu Quoc, Vietnam',
-      price: 2500000,
-      originalPrice: 3000000,
-      rating: 4.8,
-      reviews: 245,
-      image: '/images/hotel1.jpg',
-      amenities: ['wifi', 'pool', 'spa', 'restaurant', 'gym'],
-      addedDate: '2024-01-15',
-      category: 'resort',
-      available: true
-    },
-    {
-      id: '2',
-      name: 'City Center Business Hotel',
-      location: 'Ho Chi Minh City, Vietnam',
-      price: 1200000,
-      rating: 4.5,
-      reviews: 189,
-      image: '/images/hotel2.jpg',
-      amenities: ['wifi', 'restaurant', 'gym', 'meeting-room'],
-      addedDate: '2024-01-10',
-      category: 'hotel',
-      available: true
-    },
-    {
-      id: '3',
-      name: 'Mountain Villa Retreat',
-      location: 'Da Lat, Vietnam',
-      price: 1800000,
-      originalPrice: 2200000,
-      rating: 4.9,
-      reviews: 156,
-      image: '/images/villa1.jpg',
-      amenities: ['wifi', 'fireplace', 'garden', 'kitchen'],
-      addedDate: '2024-01-08',
-      category: 'villa',
-      available: false
-    },
-    {
-      id: '4',
-      name: 'Beach Front Apartment',
-      location: 'Nha Trang, Vietnam',
-      price: 900000,
-      rating: 4.3,
-      reviews: 98,
-      image: '/images/apartment1.jpg',
-      amenities: ['wifi', 'kitchen', 'balcony', 'beach-access'],
-      addedDate: '2024-01-05',
-      category: 'apartment',
-      available: true
-    }
-  ]);
+  useEffect(() => {
+    const loadWishlist = async () => {
+      try {
+        const items = await wishlistService.getWishlist();
+        setWishlistItems(items);
+      } catch (error) {
+        console.error('Error loading wishlist:', error);
+        message.error('Không thể tải danh sách yêu thích');
+      } finally {
+        setLoading(false);
+      }
+    }; loadWishlist();
+  }, []);
 
-  const getAmenityIcon = (amenityKey: string) => {
-    const amenity = AMENITIES.find(a => a.key === amenityKey);
-    return amenity ? amenity.icon : null;
+  const handleViewDetails = (roomId: string) => {
+    navigate(`/rooms/${roomId}`);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
+  const getMainAmenities = (item: WishlistItem) => {
+    // Use mainAmenities if available, otherwise fall back to first 4 amenities
+    const amenitiesArray = item.mainAmenities && item.mainAmenities.length > 0
+      ? item.mainAmenities
+      : item.amenities;
+    return amenitiesArray.slice(0, 4);
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
-  const handleRemoveFromWishlist = (itemId: string) => {
-    Modal.confirm({
-      title: 'Remove from Wishlist',
-      content: 'Are you sure you want to remove this item from your wishlist?',
-      okText: 'Remove',
-      okType: 'danger',
-      onOk() {
-        message.success('Item removed from wishlist');
-      },
-    });
-  };
-
-  const handleShare = (item: WishlistItem) => {
-    if (navigator.share) {
-      navigator.share({
-        title: item.name,
-        text: `Check out this amazing place: ${item.name} in ${item.location}`,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      message.success('Link copied to clipboard');
+  }; const handleRemoveFromWishlist = async (itemId: string) => {
+    try {
+      await wishlistService.removeFromWishlist(itemId);
+      setWishlistItems(items => items.filter(item => item.id !== itemId));
+      message.success('Đã xóa loại phòng khỏi danh sách yêu thích');
+    } catch (error) {
+      message.error('Không thể xóa khỏi danh sách yêu thích');
     }
-  };
-
-  const handleBulkRemove = () => {
+  }; const handleBulkRemove = async () => {
     if (selectedItems.length === 0) {
-      message.warning('Please select items to remove');
+      message.warning('Vui lòng chọn loại phòng để xóa');
       return;
     }
 
     Modal.confirm({
-      title: `Remove ${selectedItems.length} items from wishlist?`,
-      content: 'This action cannot be undone.',
-      okText: 'Remove All',
+      title: `Xóa ${selectedItems.length} loại phòng khỏi danh sách yêu thích?`,
+      content: 'Hành động này không thể hoàn tác.',
+      okText: 'Xóa tất cả',
+      cancelText: 'Hủy',
       okType: 'danger',
-      onOk() {
-        setSelectedItems([]);
-        message.success(`${selectedItems.length} items removed from wishlist`);
+      async onOk() {
+        try {
+          await wishlistService.removeMultipleFromWishlist(selectedItems);
+          setWishlistItems(items => items.filter(item => !selectedItems.includes(item.id)));
+          setSelectedItems([]);
+          message.success(`Đã xóa ${selectedItems.length} loại phòng khỏi danh sách yêu thích`);
+        } catch (error) {
+          message.error('Không thể xóa các loại phòng đã chọn');
+        }
       },
     });
-  };
-
-  const filteredItems = wishlistItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
-    return matchesSearch && matchesCategory;
+  }; const filteredItems = wishlistItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   }).sort((a, b) => {
     switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
       case 'rating':
         return b.rating - a.rating;
+      case 'name':
+        return a.name.localeCompare(b.name);
       case 'recent':
       default:
         return new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime();
@@ -198,88 +119,100 @@ const Wishlist: React.FC = () => {
       setSelectedItems(selectedItems.filter(id => id !== itemId));
     }
   };
-
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '50px' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
   return (
-    <div className="wishlist-container">
-      <div className="wishlist-header">
-        <div className="header-content">
-          <div className="title-section">
-            <HeartFilled className="title-icon" />
-            <div>
-              <Title level={2}>My Wishlist</Title>
-              <Text type="secondary">
-                {wishlistItems.length} saved properties
-              </Text>
-            </div>
-          </div>
-
-          <div className="header-actions">
+    <div style={{
+      padding: '24px',
+      background: '#fafafa',
+      minHeight: '100vh'
+    }}>
+      {/* Header */}
+      <div style={{
+        marginBottom: '32px',
+        background: 'white',
+        padding: '24px',
+        borderRadius: '12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      }}>        <Row align="middle" justify="space-between">
+          <Col>
+            <Title level={2} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '12px', color: '#262626' }}>
+              <HeartFilled style={{ color: '#ff4d4f', fontSize: '28px' }} />
+              Danh sách yêu thích
+            </Title>
+            <Text type="secondary" style={{ fontSize: '16px', marginTop: '4px', display: 'block' }}>
+              {wishlistItems.length} loại phòng đã lưu
+            </Text>
+          </Col>
+          <Col>
             {selectedItems.length > 0 && (
               <Button
                 danger
                 icon={<DeleteOutlined />}
                 onClick={handleBulkRemove}
               >
-                Remove Selected ({selectedItems.length})
+                Xóa đã chọn ({selectedItems.length})
               </Button>
             )}
-          </div>
-        </div>
-
-        <div className="filters-section">
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={12} md={8}>
-              <Search
-                placeholder="Search by name or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                prefix={<SearchOutlined />}
-                allowClear
-              />
-            </Col>
-            <Col xs={12} sm={6} md={4}>
-              <Select
-                value={filterCategory}
-                onChange={setFilterCategory}
-                style={{ width: '100%' }}
-                prefix={<FilterOutlined />}
-              >
-                <Option value="all">All Categories</Option>
-                <Option value="hotel">Hotels</Option>
-                <Option value="resort">Resorts</Option>
-                <Option value="villa">Villas</Option>
-                <Option value="apartment">Apartments</Option>
-              </Select>
-            </Col>
-            <Col xs={12} sm={6} md={4}>
-              <Select
-                value={sortBy}
-                onChange={setSortBy}
-                style={{ width: '100%' }}
-              >
-                <Option value="recent">Recently Added</Option>
-                <Option value="price-low">Price: Low to High</Option>
-                <Option value="price-high">Price: High to Low</Option>
-                <Option value="rating">Highest Rated</Option>
-              </Select>
-            </Col>
-          </Row>
-        </div>
+          </Col>
+        </Row>
+      </div>      {/* Filters */}
+      <div style={{
+        marginBottom: '32px',
+        background: 'white',
+        padding: '20px',
+        borderRadius: '12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      }}>
+        <Row gutter={[16, 16]}>          <Col xs={24} sm={12} md={8}>
+          <Search
+            placeholder="Tìm kiếm theo tên loại phòng..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            allowClear
+            size="large"
+          />
+        </Col>
+          <Col xs={12} sm={6} md={4}><Select
+            value={sortBy}
+            onChange={setSortBy}
+            style={{ width: '100%' }}
+            size="large"
+            placeholder="Sắp xếp"
+          >
+            <Option value="recent">Mới nhất</Option>
+            <Option value="name">Tên A-Z</Option>
+            <Option value="rating">Đánh giá cao nhất</Option>
+          </Select>
+          </Col>
+        </Row>
       </div>
 
-      {filteredItems.length === 0 ? (
-        <div className="empty-state">
+      {/* Content */}      {filteredItems.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
           <Empty
-            image={<HeartOutlined style={{ fontSize: 64, color: '#d4af37' }} />}
+            image={<HeartOutlined style={{ fontSize: 72, color: '#bfbfbf' }} />}
             description={
               <div>
-                <Title level={4}>No items in your wishlist</Title>
-                <Paragraph type="secondary">
-                  Start exploring and save your favorite properties to see them here.
+                <Title level={3} style={{ color: '#8c8c8c', marginTop: '24px' }}>
+                  {searchTerm ? 'Không tìm thấy loại phòng nào' : 'Chưa có loại phòng nào trong danh sách yêu thích'}
+                </Title>
+                <Paragraph type="secondary" style={{ fontSize: '16px', marginTop: '12px' }}>
+                  {searchTerm
+                    ? `Không có loại phòng nào phù hợp với "${searchTerm}"`
+                    : 'Hãy khám phá và lưu những loại phòng yêu thích của bạn tại LavishStay Premium Hotel'
+                  }
                 </Paragraph>
-                <Button type="primary" className="explore-btn">
-                  Explore Properties
-                </Button>
+                {!searchTerm && (
+                  <Button type="primary" size="large" style={{ marginTop: '16px' }}>
+                    Khám phá loại phòng
+                  </Button>
+                )}
               </div>
             }
           />
@@ -287,137 +220,146 @@ const Wishlist: React.FC = () => {
       ) : (
         <Row gutter={[24, 24]}>
           {filteredItems.map((item) => (
-            <Col xs={24} sm={12} lg={8} xl={6} key={item.id}>
+            <Col xs={24} sm={12} lg={8} key={item.id}>
               <Card
-                className={`wishlist-card ${!item.available ? 'unavailable' : ''}`}
-                cover={
-                  <div className="card-cover">
+                hoverable cover={
+                  <div style={{ position: 'relative', height: '240px', overflow: 'hidden' }}>
                     <img
                       src={item.image}
                       alt={item.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
                       onError={(e) => {
                         e.currentTarget.src = '/images/placeholder-hotel.jpg';
                       }}
                     />
-                    <div className="card-overlay">
-                      <div className="overlay-actions">
-                        <Tooltip title="View Details">
-                          <Button
-                            type="primary"
-                            shape="circle"
-                            icon={<EyeOutlined />}
-                            className="action-btn"
-                          />
-                        </Tooltip>
-                        <Tooltip title="Share">
-                          <Button
-                            type="default"
-                            shape="circle"
-                            icon={<ShareAltOutlined />}
-                            className="action-btn"
-                            onClick={() => handleShare(item)}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Remove from Wishlist">
-                          <Button
-                            danger
-                            shape="circle"
-                            icon={<DeleteOutlined />}
-                            className="action-btn"
-                            onClick={() => handleRemoveFromWishlist(item.id)}
-                          />
-                        </Tooltip>
-                      </div>
-                      <div className="availability-badge">
-                        {item.available ? (
-                          <Tag color="success">Available</Tag>
-                        ) : (
-                          <Tag color="error">Not Available</Tag>
-                        )}
-                      </div>
+
+                    {/* Selection checkbox */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      left: '12px'
+                    }}>
+                      <Checkbox
+                        checked={selectedItems.includes(item.id)}
+                        onChange={(e) => handleItemSelect(item.id, e.target.checked)}
+                        style={{
+                          background: 'rgba(255,255,255,0.95)',
+                          borderRadius: '6px',
+                          padding: '6px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                    </div>{/* Overlay actions */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      display: 'flex',
+                      gap: '8px'
+                    }}>
+                      <Popconfirm
+                        title="Xóa khỏi yêu thích"
+                        description="Bạn có chắc chắn muốn xóa loại phòng này?"
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        onConfirm={() => handleRemoveFromWishlist(item.id)}
+                      >
+                        <Button
+                          type="text"
+                          shape="circle"
+                          icon={<DeleteOutlined />}
+                          style={{
+                            background: 'rgba(255,255,255,0.95)',
+                            color: '#ff4d4f',
+                            border: 'none',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                          }}
+                        />
+                      </Popconfirm>
                     </div>
-                    {item.originalPrice && (
-                      <div className="discount-badge">
-                        {Math.round((1 - item.price / item.originalPrice) * 100)}% OFF
-                      </div>
-                    )}
-                  </div>
-                }
-                actions={[
+                  </div>}
+                style={{
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  border: 'none'
+                }}
+                bodyStyle={{ padding: '20px' }} actions={[
                   <Button
                     type="link"
-                    size="small"
-                    onClick={() => handleItemSelect(item.id, !selectedItems.includes(item.id))}
+                    icon={<EyeOutlined />}
+                    style={{ color: '#1890ff' }}
+                    onClick={() => handleViewDetails(item.id)}
                   >
-                    {selectedItems.includes(item.id) ? 'Deselect' : 'Select'}
+                    Xem chi tiết
                   </Button>
                 ]}
-              >
-                <div className="card-content">
-                  <div className="property-header">
-                    <Title level={5} className="property-name" ellipsis>
+              >                <div style={{ padding: '4px 0' }}>
+                  {/* Room name and rating */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <Title level={4} style={{ margin: 0, color: '#262626' }} ellipsis>
                       {item.name}
                     </Title>
-                    <div className="rating-section">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                       <Rate
                         disabled
                         value={item.rating}
                         allowHalf
-                        character={<StarFilled />}
+                        style={{ fontSize: '16px', color: '#faad14' }}
                       />
-                      <Text type="secondary" className="rating-text">
-                        {item.rating} ({item.reviews})
+                      <Text type="secondary" style={{ fontSize: '14px', fontWeight: 500 }}>
+                        {item.rating} • {item.reviews} đánh giá
                       </Text>
                     </div>
-                  </div>
-
-                  <div className="location-section">
-                    <EnvironmentOutlined className="location-icon" />
-                    <Text type="secondary" ellipsis>
-                      {item.location}
+                  </div>                  {/* Amenities */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <Text strong style={{ fontSize: '14px', color: '#595959', marginBottom: '8px', display: 'block' }}>
+                      Tiện ích chính
                     </Text>
-                  </div>
-
-                  <div className="amenities-section">
-                    <div className="amenities-list">
-                      {item.amenities.slice(0, 4).map((amenity) => {
-                        const icon = getAmenityIcon(amenity);
-                        return icon ? (
-                          <Tooltip key={amenity} title={amenity}>
-                            <div className="amenity-icon">
-                              {icon}
-                            </div>
-                          </Tooltip>
-                        ) : null;
-                      })}
-                      {item.amenities.length > 4 && (
-                        <div className="amenity-more">
-                          +{item.amenities.length - 4}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {getMainAmenities(item).map((amenity, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#f0f6ff',
+                            border: '1px solid #d6e4ff',
+                            borderRadius: '16px',
+                            fontSize: '13px',
+                            color: '#1890ff',
+                            fontWeight: 500
+                          }}
+                        >
+                          {amenity}
+                        </div>
+                      ))}
+                      {(item.mainAmenities?.length || item.amenities.length) > 4 && (
+                        <div style={{
+                          padding: '6px 12px',
+                          background: '#f5f5f5',
+                          border: '1px solid #e8e8e8',
+                          borderRadius: '16px',
+                          fontSize: '13px',
+                          color: '#8c8c8c',
+                          fontWeight: 500
+                        }}>
+                          +{(item.mainAmenities?.length || item.amenities.length) - 4} khác
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <Divider style={{ margin: '12px 0' }} />
+                  <Divider style={{ margin: '16px 0', borderColor: '#f0f0f0' }} />
 
-                  <div className="price-section">
-                    <div className="price-info">
-                      {item.originalPrice && (
-                        <Text delete type="secondary" className="original-price">
-                          {formatPrice(item.originalPrice)}
-                        </Text>
-                      )}
-                      <Title level={5} className="current-price">
-                        {formatPrice(item.price)}
-                        <Text type="secondary" className="price-unit">/night</Text>
-                      </Title>
-                    </div>
-                  </div>
-
-                  <div className="added-date">
-                    <CalendarOutlined />
-                    <Text type="secondary">
-                      Added on {formatDate(item.addedDate)}
+                  {/* Added date */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CalendarOutlined style={{ fontSize: '14px', color: '#bfbfbf' }} />
+                    <Text type="secondary" style={{ fontSize: '13px' }}>
+                      Đã thêm {formatDate(item.addedDate)}
                     </Text>
                   </div>
                 </div>

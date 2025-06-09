@@ -33,7 +33,6 @@ import {
   HeartFilled,
   ShoppingCartOutlined
 } from '@ant-design/icons';
-import './Notifications.css';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
