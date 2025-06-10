@@ -5,7 +5,8 @@ use App\Http\Controllers\Api\RoomTypeController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\RoomOptionController;
+use App\Http\Controllers\BookingController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -29,3 +30,9 @@ Route::apiResource('room-types', RoomTypeController::class);
 
 //FAQs API
 Route::apiResource('faqs', FAQController::class);
+
+
+
+Route::apiResource('room-options', RoomOptionController::class);
+Route::post('bookings', [BookingController::class, 'store']);
+Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);
