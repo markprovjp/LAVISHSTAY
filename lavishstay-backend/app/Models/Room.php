@@ -3,9 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+trait HasTranslations
+{
+    public function getTranslatedAttribute($column, $lang)
+    {
+        return Translation::where('table_name', $this->getTable())
+            ->where('column_name', $column)
+            ->where('record_id', $this->getKey())
+            ->where('language_code', $lang)
+            ->value('value') ?? $this->$column;
+    }
+}
 class Room extends Model
 {
+    use HasTranslations;
     protected $table = 'room';
     protected $primaryKey = 'room_id';
     public $timestamps = false;
@@ -35,6 +46,12 @@ class Room extends Model
         'floor' => 'integer'
     ];
 
+
+    public function translations()
+    {
+        return $this->hasMany(Translation::class, 'record_id')
+            ->where('table_name', $this->getTable());
+    }
     /**
      * Relationship with room type
      */
