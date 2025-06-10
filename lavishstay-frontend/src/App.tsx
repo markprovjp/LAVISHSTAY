@@ -56,7 +56,7 @@ const Destinations = () => (
   <PlaceholderPage title="Điểm đến của ku em tại đây ha , NHƯNG " />
 );
 
-// Import CSS
+// Import CSS vào nhé
 import "./App.css";
 import "./index.css";
 import "./styles/theme-transitions.css";
