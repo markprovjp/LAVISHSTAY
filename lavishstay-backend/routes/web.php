@@ -11,6 +11,8 @@ use App\Http\Controllers\ServiceAmenityController;
 use App\Http\Controllers\ServiceBedController;
 use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\CurrencyController;
 
 Route::redirect('/', 'login');
 
@@ -124,7 +126,21 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::patch('/admin/services/beds/toggle-status/{bedType}', [ServiceBedController::class, 'toggleStatus'])->name('admin.services.beds.toggle-status');
 
 
+    // Languages
+    Route::get('/admin/multinational/languages', [LanguageController::class, 'index'])->name('admin.multinational.languages');
+    Route::get('/admin/multinational/languages/create', [LanguageController::class, 'create'])->name('admin.multinational.languages.create');
+    Route::post('/admin/multinational/languages/store', [LanguageController::class, 'store'])->name('admin.multinational.languages.store');
+    Route::get('/admin/multinational/languages/edit/{language_code}', [LanguageController::class, 'edit'])->name('admin.multinational.languages.edit');
+    Route::put('/admin/multinational/languages/update/{language_code}', [LanguageController::class, 'update'])->name('admin.multinational.languages.update');
+    Route::post('/admin/multinational/languages/destroy/{language_code}', [LanguageController::class, 'destroy'])->name('admin.multinational.languages.destroy');
 
+    // Currencies
+    Route::get('/admin/multinational/currencies', [CurrencyController::class, 'index'])->name('admin.multinational.currencies');
+    Route::get('/admin/multinational/currencies/create', [CurrencyController::class, 'create'])->name('admin.multinational.currencies.create');
+    Route::post('/admin/multinational/currencies/store', [CurrencyController::class, 'store'])->name('admin.multinational.currencies.store');
+    Route::get('/admin/multinational/currencies/edit/{currency_code}', [CurrencyController::class, 'edit'])->name('admin.multinational.currencies.edit');
+    Route::put('/admin/multinational/currencies/update/{currency_code}', [CurrencyController::class, 'update'])->name('admin.multinational.currencies.update');
+    Route::post('/admin/multinational/currencies/destroy/{currency_code}', [CurrencyController::class, 'destroy'])->name('admin.multinational.currencies.destroy');
 
 
     //FAQs
