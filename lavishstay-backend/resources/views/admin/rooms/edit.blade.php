@@ -49,6 +49,15 @@
                     Cập nhật thông tin phòng {{ $roomType->name }}
                 </p>
             </div>
+            <div class="flex items-center justify-end space-x-4">
+                <a href="{{ route('admin.rooms.show', $room->room_id) }}" 
+                   class="btn border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
+                    <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16" height="16">
+                        <path d="M6.6 13.4L5.2 12 8.4 8.8H1v-1.6h7.4L5.2 4 6.6 2.6 12.2 8.2 6.6 13.4z"/>
+                    </svg>
+                    Hủy bỏ
+                </a>
+            </div>
         </div>
 
         <!-- Form -->
@@ -237,11 +246,9 @@
                                 Hình ảnh hiện tại
                             </label>
                             <div class="relative inline-block">
-                                <img src="{{ $room->image }}" alt="{{ $room->name }}" 
-                                     class="h-48 w-72 object-cover rounded-lg border border-gray-200 dark:border-gray-600">
-                                <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                                    Ảnh hiện tại
-                                </div>
+                                <img width="200px" src="{{ $room->image }}" alt="{{ $room->name }}" 
+                                     class="h-24 max-w-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600">
+                                
                             </div>
                         </div>
                     @endif
@@ -256,9 +263,9 @@
                                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
-                                <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex items-center py-3 text-sm text-gray-600 dark:text-gray-400">
                                     <label for="image" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-violet-600 hover:text-violet-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-violet-500">
-                                        <span>{{ $room->image ? 'Chọn ảnh mới' : 'Tải lên hình ảnh' }}</span>
+                                        <span class="btn bg-sky-700 me-3 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">{{ $room->image ? 'Chọn ảnh mới' : 'Tải lên hình ảnh' }}</span>
                                         <input id="image" name="image" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
                                     </label>
                                     <p class="pl-1">hoặc kéo thả</p>
@@ -292,20 +299,14 @@
 
             <!-- Action Buttons -->
             <div class="flex items-center justify-end space-x-4">
-                <a href="{{ route('admin.rooms.show', $room->room_id) }}" 
-                   class="btn border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
-                    <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16">
-                        <path d="M6.6 2.6L5.2 4 8.4 7.2H1v1.6h7.4L5.2 12 6.6 13.4 12.2 7.8 6.6 2.6z"/>
-                    </svg>
-                    Hủy bỏ
-                </a>
                 
-                <button type="submit" class="btn bg-yellow-500 hover:bg-yellow-600 text-white">
-                    <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16">
+                <button type="submit" class="btn cursor-pointer bg-violet-500 hover:bg-violet-600 text-white">
+                    <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16" height="16">
                         <path d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z"/>
                     </svg>
                     Cập nhật phòng
                 </button>
+                
             </div>
         </form>
 
