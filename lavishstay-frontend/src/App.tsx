@@ -30,7 +30,6 @@ import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
 import SearchResults from "./pages/SearchResults";
-import ChangePassword from "./components/profile/ChangePassword";
 
 // Import profile components
 import {
@@ -40,7 +39,8 @@ import {
   ForgotPassword,
   Wishlist,
   Notifications,
-  Settings
+  Settings,
+  ChangePassword
 } from "./components/profile";
 
 // Placeholder for pages not yet created
@@ -60,6 +60,8 @@ const Destinations = () => (
 import "./App.css";
 import "./index.css";
 import "./styles/theme-transitions.css";
+import "./styles/global.css";
+import "./styles/performance-optimizations.css";
 
 const { Content } = Layout;
 
