@@ -44,6 +44,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+
+    //User//////////////////////////////////
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
+    Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::post('/admin/users/store', [UserController::class, 'store'])->name('admin.users.store');
+    Route::get('/admin/users/edit/{id}', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::get('/admin/users/show/{id}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::delete('/admin/users/destroy/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+
     //Rooms Types/////////////////////////////////
     Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
     Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
