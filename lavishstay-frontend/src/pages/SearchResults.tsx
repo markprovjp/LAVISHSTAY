@@ -24,8 +24,14 @@ import {
     StarFilled,
     ShoppingCartOutlined
 } from '@ant-design/icons';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
+import {
+    setRoomsData,
+    updateRoomSelection,
+    selectBookingState,
+    selectSelectedRoomsCount
+} from '../store/slices/bookingSlice';
 import { Room } from '../mirage/models';
 import { searchService } from '../services/searchService';
 import SearchForm from '../components/SearchForm';
@@ -44,19 +50,14 @@ import { showAddRoomNotification } from '../components/search/NotificationSystem
 
 const { Title, Text } = Typography;
 
-interface SelectedRooms {
-    [roomId: string]: {
-        [optionId: string]: number;
-    };
-}
-
 const SearchResults: React.FC = () => {
-    const navigate = useNavigate();
+    const navigate = useNavigate(); const dispatch = useDispatch();
     const searchData = useSelector((state: RootState) => state.search);
+    const bookingState = useSelector(selectBookingState);
+    const selectedRoomsCount = useSelector(selectSelectedRoomsCount);
+
     const [loading, setLoading] = useState(true);
     const [rooms, setRooms] = useState<Room[]>([]);
-    const [selectedRooms, setSelectedRooms] = useState<SelectedRooms>({});
-    const [total, setTotal] = useState(0);
     const [isRoomDetailModalVisible, setIsRoomDetailModalVisible] = useState(false);
     const [selectedRoomDetail, setSelectedRoomDetail] = useState<Room | null>(null);
 
@@ -82,14 +83,17 @@ const SearchResults: React.FC = () => {
         return true;
     };    // Handle room quantity change with notification
     const handleQuantityChange = (roomId: string, optionId: string, quantity: number) => {
-        const prevQuantity = selectedRooms[roomId]?.[optionId] || 0;
+        const prevQuantity = bookingState.selectedRooms[roomId]?.[optionId] || 0;
+        const nights = getNights();
+        const guestCount = (searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0);
 
-        setSelectedRooms(prev => ({
-            ...prev,
-            [roomId]: {
-                ...prev[roomId],
-                [optionId]: quantity
-            }
+        // Update Redux store
+        dispatch(updateRoomSelection({
+            roomId,
+            optionId,
+            quantity,
+            nights,
+            guestCount
         }));
 
         // Show notification when adding rooms
@@ -101,7 +105,7 @@ const SearchResults: React.FC = () => {
                 showAddRoomNotification(api, room.name, option.name, quantity);
             }
         }
-    };    // Handle room detail modal
+    };// Handle room detail modal
     const showRoomDetail = (room: Room) => {
         setSelectedRoomDetail(room);
         setIsRoomDetailModalVisible(true);
@@ -123,11 +127,9 @@ const SearchResults: React.FC = () => {
             'presidential': 'Presidential Suite'
         };
         return typeMap[roomType] || roomType.charAt(0).toUpperCase() + roomType.slice(1);
-    };// Get total selected items count
+    };    // Get total selected items count
     const getTotalSelectedItems = () => {
-        return Object.values(selectedRooms).reduce((total, roomOptions) => {
-            return total + Object.values(roomOptions).reduce((sum, quantity) => sum + quantity, 0);
-        }, 0);
+        return selectedRoomsCount;
     };
 
     // Handle room detail page navigation
@@ -170,10 +172,42 @@ const SearchResults: React.FC = () => {
                         ...room,
                         options: dynamicOptions
                     };
-                });
+                }); setRooms(roomsWithDynamicPricing);
 
-                setRooms(roomsWithDynamicPricing);
-                setTotal(results.total);
+                // Update Redux store with rooms data
+                dispatch(setRoomsData(roomsWithDynamicPricing.map(room => ({
+                    id: room.id, // Keep as number, not string
+                    name: room.name,
+                    image: room.image || '', // Main image
+                    images: room.images || [], // All images array
+                    size: room.size,
+                    view: room.view,
+                    bedType: typeof room.bedType === 'string' ? room.bedType : room.bedType?.default,
+                    amenities: room.amenities || [],
+                    mainAmenities: room.mainAmenities || [],
+                    roomType: room.roomType,
+                    rating: room.rating,
+                    maxGuests: room.maxGuests,
+                    availableRooms: room.availableRooms,
+                    options: room.options.map(option => ({
+                        id: option.id,
+                        name: option.name,
+                        pricePerNight: {
+                            vnd: option.pricePerNight?.vnd || 1900000
+                        },
+                        maxGuests: option.maxGuests || room.maxGuests,
+                        minGuests: option.minGuests || 1,
+                        roomType: room.roomType,
+                        cancellationPolicy: option.cancellationPolicy,
+                        paymentPolicy: option.paymentPolicy,
+                        availability: option.availability,
+                        additionalServices: option.additionalServices,
+                        promotion: option.promotion,
+                        recommended: option.recommended,
+                        mostPopular: option.mostPopular,
+                        dynamicPricing: option.dynamicPricing
+                    }))
+                }))));
             } catch (error: any) {
                 message.error('Có lỗi xảy ra khi tải kết quả tìm kiếm');
                 console.error('Search error:', error);
@@ -236,10 +270,9 @@ const SearchResults: React.FC = () => {
             {/* Search Form Header */}
             <div className="shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-4 py-6">
-                    <div className="mb-4">
-                        <Title level={2} className="mb-2">
-                            Kết quả tìm kiếm phòng ({total} phòng)
-                        </Title>
+                    <div className="mb-4">                        <Title level={2} className="mb-2">
+                        Kết quả tìm kiếm phòng ({rooms.length} phòng)
+                    </Title>
                         <Space size="middle">
                             {searchData.dateRange && (
                                 <Text type="secondary">
@@ -270,20 +303,18 @@ const SearchResults: React.FC = () => {
                     {/* Group rooms by type and create sections */}
                     {Array.from(new Set(rooms.map(room => room.roomType))).map((roomType) => {
                         const roomsOfType = rooms.filter(room => room.roomType === roomType);
-                        return (
-                            <RoomTypeSection
-                                key={roomType}
-                                roomType={roomType}
-                                rooms={roomsOfType}
-                                selectedRooms={selectedRooms}
-                                onQuantityChange={handleQuantityChange}
-                                onShowImageGallery={showImageGallery}
-                                shouldShowSuggestion={shouldShowSuggestion}
-                                searchData={searchData}
-                                formatVND={formatVND}
-                                getNights={getNights}
-                                getRoomTypeDisplayName={getRoomTypeDisplayName}
-                            />
+                        return (<RoomTypeSection
+                            key={roomType}
+                            roomType={roomType}
+                            rooms={roomsOfType}
+                            onQuantityChange={handleQuantityChange}
+                            onShowImageGallery={showImageGallery}
+                            shouldShowSuggestion={shouldShowSuggestion}
+                            searchData={searchData}
+                            formatVND={formatVND}
+                            getNights={getNights}
+                            getRoomTypeDisplayName={getRoomTypeDisplayName}
+                        />
                         );
                     })}
                 </Space>
@@ -329,149 +360,133 @@ const SearchResults: React.FC = () => {
                     borderBottom: '1px solid #e8e8e8',
                     padding: '16px 24px'
                 }}
-            >
-                <BookingSummary
-                    selectedRooms={selectedRooms}
-                    rooms={rooms}
+            >                <BookingSummary
                     formatVND={formatVND}
                     getNights={getNights}
-                    searchData={searchData}
-                    onQuantityChange={handleQuantityChange}
                 />
             </Drawer>
-       
-     
 
-    <Modal
-        title={selectedRoomDetail?.name}
-        open={isRoomDetailModalVisible}
-        onCancel={() => setIsRoomDetailModalVisible(false)}
-        footer={[
-            <Button key="back" onClick={() => setIsRoomDetailModalVisible(false)}>
-                Đóng
-            </Button>,
-            <Button
-                key="detail"
-                type="default"
-                onClick={() => {
-                    if (selectedRoomDetail) {
-                        navigateToRoomDetail(selectedRoomDetail.id.toString());
-                    }
-                }}
-            >
-                Xem chi tiết phòng
-            </Button>,
-            <Button
-                key="book"
-                type="primary"
-                onClick={() => {
-                    if (selectedRoomDetail) {
-                        navigateToRoomDetail(selectedRoomDetail.id.toString());
-                    }
-                }}
-            >
-                Đặt phòng ngay
-            </Button>
-        ]}
-        width={1000}
-    >
-        {selectedRoomDetail && (
-            <div>
-                {/* Room Images Carousel */}
-                {selectedRoomDetail.images && selectedRoomDetail.images.length > 0 ? (
-                    <Carousel
-                        dots={{ className: '' }}
-                        arrows
-                        prevArrow={<LeftOutlined />}
-                        nextArrow={<RightOutlined />}
-                        className="mb-4"
+
+
+            <Modal
+                title={selectedRoomDetail?.name}
+                open={isRoomDetailModalVisible}
+                onCancel={() => setIsRoomDetailModalVisible(false)}
+                footer={[
+                    <Button key="back" onClick={() => setIsRoomDetailModalVisible(false)}>
+                        Đóng
+                    </Button>,
+                    <Button
+                        key="detail"
+                        type="default"
+                        onClick={() => {
+                            if (selectedRoomDetail) {
+                                navigateToRoomDetail(selectedRoomDetail.id.toString());
+                            }
+                        }}
                     >
-                        {selectedRoomDetail.images.map((img, index) => (
-                            <div key={index}>
-                                <Image
-                                    src={img}
-                                    alt={`${selectedRoomDetail.name} ${index + 1}`}
-                                    className="w-full h-54 object-cover rounded"
-                                    fallback="https://via.placeholder.com/800x300?text=Room+Image"
-                                />
-                            </div>
-                        ))}
-                    </Carousel>
-                ) : (
-                    <Image
-                        src={selectedRoomDetail.image}
-                        alt={selectedRoomDetail.name}
-                        className="w-full h-64 object-cover rounded mb-4"
-                        fallback="https://via.placeholder.com/800x300?text=Room+Image"
-                    />
-                )}
+                        Xem chi tiết phòng
+                    </Button>,
+                    <Button
+                        key="book"
+                        type="primary"
+                        onClick={() => {
+                            if (selectedRoomDetail) {
+                                navigateToRoomDetail(selectedRoomDetail.id.toString());
+                            }
+                        }}
+                    >
+                        Đặt phòng ngay
+                    </Button>
+                ]}
+                width={1000}
+            >
+                {selectedRoomDetail && (
+                    <div>
+                        {/* Room Images Carousel */}
+                        {selectedRoomDetail.images && selectedRoomDetail.images.length > 0 ? (
+                            <Carousel
+                                dots={{ className: '' }}
+                                arrows
+                                prevArrow={<LeftOutlined />}
+                                nextArrow={<RightOutlined />}
+                                className="mb-4"
+                            >
+                                {selectedRoomDetail.images.map((img, index) => (
+                                    <div key={index}>
+                                        <Image
+                                            src={img}
+                                            alt={`${selectedRoomDetail.name} ${index + 1}`}
+                                            className="w-full h-54 object-cover rounded"
+                                            fallback="https://via.placeholder.com/800x300?text=Room+Image"
+                                        />
+                                    </div>
+                                ))}
+                            </Carousel>
+                        ) : (
+                            <Image
+                                src={selectedRoomDetail.image}
+                                alt={selectedRoomDetail.name}
+                                className="w-full h-64 object-cover rounded mb-4"
+                                fallback="https://via.placeholder.com/800x300?text=Room+Image"
+                            />
+                        )}
 
-                {/* Room Details */}
-                <Row gutter={[16, 16]}>
-                    <Col span={12}>
-                        <Space direction="vertical" size="small" className="w-full">
-                            <div>
-                                <Text strong>Diện tích: </Text>
-                                <Text>{selectedRoomDetail.size}m²</Text>
-                            </div>
-                            <div>
-                                <Text strong>View: </Text>
-                                <Text>{selectedRoomDetail.view}</Text>
-                            </div>
-                            <div>
-                                <Text strong>Số khách tối đa: </Text>
-                                <Text>{selectedRoomDetail.maxGuests} khách</Text>
-                            </div>
-                            {selectedRoomDetail.rating && (
-                                <div>
-                                    <Text strong>Đánh giá: </Text>
-                                    <Space>
-                                        <StarFilled className="text-yellow-500" />
-                                        <Text>{selectedRoomDetail.rating}/10</Text>
-                                    </Space>
-                                </div>
-                            )}
-                        </Space>
-                    </Col>
-                    <Col span={12}>
-                        <div className="text-right">
-                            <Text type="secondary">Giá từ</Text>
-                            <div>
-                                <Title level={3} className="text-blue-600 mb-0">
-                                    {formatVND(selectedRoomDetail.priceVND)}
-                                </Title>
-                                <Text type="secondary">/đêm</Text>
-                            </div>
-                        </div>
-                    </Col>
-                </Row>
+                        {/* Room Details */}
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Space direction="vertical" size="small" className="w-full">
+                                    <div>
+                                        <Text strong>Diện tích: </Text>
+                                        <Text>{selectedRoomDetail.size}m²</Text>
+                                    </div>
+                                    <div>
+                                        <Text strong>View: </Text>
+                                        <Text>{selectedRoomDetail.view}</Text>
+                                    </div>
+                                    <div>
+                                        <Text strong>Số khách tối đa: </Text>
+                                        <Text>{selectedRoomDetail.maxGuests} khách</Text>
+                                    </div>
+                                    {selectedRoomDetail.rating && (
+                                        <div>
+                                            <Text strong>Đánh giá: </Text>
+                                            <Space>
+                                                <StarFilled className="text-yellow-500" />
+                                                <Text>{selectedRoomDetail.rating}/10</Text>
+                                            </Space>
+                                        </div>
+                                    )}
+                                </Space>
+                            </Col>
+                        </Row>
 
-                <Divider />
-
-                {/* All Amenities */}
-                <div>
-                    <Text strong className="block mb-3">Tiện ích đầy đủ:</Text>
-                    <Space size="small" wrap>
-                        {selectedRoomDetail.amenities.map((amenity, index) => (
-                            <Tag key={index} className="rounded-full">
-                                {amenity}
-                            </Tag>
-                        ))}
-                    </Space>
-                </div>
-
-                {selectedRoomDetail.description && (
-                    <>
                         <Divider />
+
+                        {/* All Amenities */}
                         <div>
-                            <Text strong className="block mb-2">Mô tả:</Text>
-                            <Text>{selectedRoomDetail.description}</Text>
+                            <Text strong className="block mb-3">Tiện ích đầy đủ:</Text>
+                            <Space size="small" wrap>
+                                {selectedRoomDetail.amenities.map((amenity, index) => (
+                                    <Tag key={index} className="rounded-full">
+                                        {amenity}
+                                    </Tag>
+                                ))}
+                            </Space>
                         </div>
-                    </>
+
+                        {selectedRoomDetail.description && (
+                            <>
+                                <Divider />
+                                <div>
+                                    <Text strong className="block mb-2">Mô tả:</Text>
+                                    <Text>{selectedRoomDetail.description}</Text>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 )}
-            </div>
-        )}
-    </Modal>
+            </Modal>
         </div >
     );
 };

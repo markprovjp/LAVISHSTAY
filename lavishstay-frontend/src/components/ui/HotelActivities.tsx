@@ -9,13 +9,14 @@ import {
 } from "swiper/modules";
 // import { motion } from "framer-motion";
 import { CalendarOutlined, ArrowRightOutlined } from "@ant-design/icons";
-import { Waves, Dumbbell, Sparkles } from "lucide-react";
+import { Waves, Dumbbell, Sparkles, Dot } from "lucide-react";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/effect-coverflow";
+import { dot } from "node:test/reporters";
 
 interface Activity {
   id: number;
@@ -113,7 +114,7 @@ const HotelActivities: React.FC = React.memo(() => {
   const renderActivityCard = useCallback((activity: Activity) => (
     <SwiperSlide
       key={activity.id}
-      style={{ width: "520px", height: "auto" }}
+      style={{ width: "420px", height: "auto" }}
     >
       <div className="h-full">
         <Card
@@ -121,7 +122,6 @@ const HotelActivities: React.FC = React.memo(() => {
           styles={{ body: { padding: 0 } }}
           style={{
             borderRadius: "20px",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           }}
         >
           {/* Image Section */}
@@ -198,20 +198,14 @@ const HotelActivities: React.FC = React.memo(() => {
 
   // Memoize bottom CTA button style
   const bottomCtaStyle = useMemo(() => ({
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     border: "none",
     borderRadius: "12px",
     padding: "12px 32px",
     height: "auto",
-    boxShadow: "0 20px 40px -12px rgba(102, 126, 234, 0.4)",
   }), []);
   return (
-    <div className="relative py-6 overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br"></div>
-      <div className="absolute top-10 left-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-      <div className="absolute top-10 right-0 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-      <div className="absolute bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+    <div className="relative  overflow-hidden">
+
 
       <div className="container mx-auto px-4 relative">
         {/* Header */}
