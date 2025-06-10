@@ -13,6 +13,7 @@ use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\TranslationController;
 
 Route::redirect('/', 'login');
 
@@ -135,6 +136,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/multinational/currencies/edit/{currency_code}', [CurrencyController::class, 'edit'])->name('admin.multinational.currencies.edit');
     Route::put('/admin/multinational/currencies/update/{currency_code}', [CurrencyController::class, 'update'])->name('admin.multinational.currencies.update');
     Route::post('/admin/multinational/currencies/destroy/{currency_code}', [CurrencyController::class, 'destroy'])->name('admin.multinational.currencies.destroy');
+
+    // Translation
+    Route::prefix('admin/translation')->name('admin.translation.')->group(function () {
+        Route::get('/', [TranslationController::class, 'index'])->name('index');
+        Route::get('/create', [TranslationController::class, 'create'])->name('create');
+        Route::post('/store', [TranslationController::class, 'store'])->name('store');
+        Route::get('/edit/{translationId}', [TranslationController::class, 'edit'])->name('edit');
+        Route::put('/update/{translationId}', [TranslationController::class, 'update'])->name('update');
+        Route::post('/destroy/{translationId}', [TranslationController::class, 'destroy'])->name('destroy');
+    });
+
 
 
     //FAQs
