@@ -185,17 +185,17 @@ const RoomCard: React.FC<RoomProps> = ({
   }, [roomType]); const card = (
     <Card
       hoverable
-      className={`room-card overflow-hidden transition-all duration-300 ${className} ${additionalClass}`}
+      className={`room-card overflow-hidden transition-all duration-300 h-full ${className} ${additionalClass}`}
       style={{
         borderRadius: "16px",
         boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-        minHeight: "520px",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         ...cardStyle,
       }}
       cover={
-        <div className="relative overflow-hidden" style={{ height: "300px" }}>
+        <div className="relative overflow-hidden" style={{ height: "240px" }}>
           <img
             alt={name}
             src={image}
@@ -215,24 +215,26 @@ const RoomCard: React.FC<RoomProps> = ({
         </div>
       }
       styles={{ body: { padding: "16px", flex: 1, display: "flex", flexDirection: "column" } }}
-    >
-      <div className="space-y-3 flex-1 flex flex-col">
-        {/* Room Title with enhanced styling */}
-        <div className="flex items-start justify-between">
+    >      <div className="space-y-3 flex-1 flex flex-col h-full">
+        {/* Room Title with fixed height */}
+        <div className="flex items-start justify-between" style={{ minHeight: "60px" }}>
           <Title
             level={5}
-            className="mb-0 font-bold leading-tight flex-1"
+            className="mb-0 font-bold leading-tight flex-1 line-clamp-2"
             style={{
               color: themeColors.text,
-              fontSize: "20px",
-              minHeight: "48px",
-              display: "flex",
-              alignItems: "center",
+              fontSize: "18px",
+              lineHeight: "1.3",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
             {name}
           </Title>
-          <div className="flex items-center ml-2 star-rating">
+          <div className="flex items-center ml-2 star-rating flex-shrink-0">
             <StarFilled style={{ color: "#fadb14", fontSize: "14px" }} />
             <span className="text-sm font-medium ml-1 text-gray-600">
               {rating ?? "N/A"}
@@ -240,88 +242,91 @@ const RoomCard: React.FC<RoomProps> = ({
           </div>
         </div>
 
-        {/* Enhanced Room Details */}
-        <Space direction="vertical" size="small" className="w-full">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {size && (
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
-                  style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
-                >
-                  📐
+        {/* Enhanced Room Details with fixed height */}
+        <div style={{ minHeight: "100px" }}>
+          <Space direction="vertical" size="small" className="w-full">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {size && (
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
+                    style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
+                  >
+                    📐
+                  </div>
+                  <span className="text-sm font-medium" style={{ color: themeColors.text }}>
+                    {size} m²
+                  </span>
                 </div>
-                <span className="text-sm font-medium" style={{ color: themeColors.text }}>
-                  {size} m²
-                </span>
-              </div>
-            )}
-            {view && (
+              )}
+              {view && (
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
+                  >
+                    <EnvironmentOutlined style={{ fontSize: "12px" }} />
+                  </div>
+                  <span className="text-sm font-medium" style={{ color: themeColors.text }}>
+                    {view}
+                  </span>
+                </div>
+              )}
+              {/* Thêm thông tin số khách */}
               <div className="flex items-center gap-1.5">
                 <div
                   className="w-5 h-5 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
                 >
-                  <EnvironmentOutlined style={{ fontSize: "12px" }} />
+                  <UserOutlined style={{ fontSize: "12px" }} />
                 </div>
                 <span className="text-sm font-medium" style={{ color: themeColors.text }}>
-                  {view}
+                  Tối đa {maxGuestsDisplay} khách
+                </span>
+              </div>
+            </div>
+
+            {bedType && (
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
+                  style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
+                >
+                  🛏️
+                </div>
+                <span className="text-sm font-medium" style={{ color: themeColors.text }}>
+                  {bedTypeText}
                 </span>
               </div>
             )}
-            {/* Thêm thông tin số khách */}
-            <div className="flex items-center gap-1.5">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
-              >
-                <UserOutlined style={{ fontSize: "12px" }} />
+
+            {/* Thêm thông tin availability */}
+            {availableRooms !== undefined && (
+              <div className="flex items-center gap-1.5">
+                {isUnavailable ? (
+                  <Tag color="red" className="text-xs">
+                    Hết phòng
+                  </Tag>
+                ) : isLowAvailability ? (
+                  <Tag color="orange" className="text-xs">
+                    Chỉ còn {availableRooms} phòng
+                  </Tag>
+                ) : (
+                  <Tag color="green" className="text-xs">
+                    {availableRooms} phòng có sẵn
+                  </Tag>
+                )}
               </div>
-              <span className="text-sm font-medium" style={{ color: themeColors.text }}>
-                Tối đa {maxGuestsDisplay} khách
-              </span>
-            </div>
-          </div>
+            )}
+          </Space>
+        </div>
 
-          {bedType && (
-            <div className="flex items-center gap-1.5">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
-                style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}
-              >
-                🛏️
-              </div>
-              <span className="text-sm font-medium" style={{ color: themeColors.text }}>
-                {bedTypeText}
-              </span>
-            </div>
-          )}
-
-          {/* Thêm thông tin availability */}
-          {availableRooms !== undefined && (
-            <div className="flex items-center gap-1.5">
-              {isUnavailable ? (
-                <Tag color="red" className="text-xs">
-                  Hết phòng
-                </Tag>
-              ) : isLowAvailability ? (
-                <Tag color="orange" className="text-xs">
-                  Chỉ còn {availableRooms} phòng
-                </Tag>
-              ) : (
-                <Tag color="green" className="text-xs">
-                  {availableRooms} phòng có sẵn
-                </Tag>
-              )}
-            </div>
-          )}
-        </Space>
-
-        {/* Enhanced Amenities Display */}
+        {/* Enhanced Amenities Display with flex-grow */}
         <div
           className="p-3 rounded-lg flex-1 amenities-section"
           style={{
             backgroundColor: themeColors.secondary,
+            minHeight: "120px"
           }}
         >
           <div className="text-sm font-medium mb-2" style={{ color: themeColors.text }}>
@@ -331,8 +336,10 @@ const RoomCard: React.FC<RoomProps> = ({
             amenities={mainAmenities || amenities.slice(0, 6)}
             limit={6}
           />
-        </div>        {/* Action Button - luôn ở cuối */}
-        <div className="pt-2 action-button-container">
+        </div>
+
+        {/* Action Button - luôn ở cuối với margin-top auto */}
+        <div className="pt-3 action-button-container mt-auto">
           <Button
             type="primary"
             icon={<ArrowRightOutlined />}

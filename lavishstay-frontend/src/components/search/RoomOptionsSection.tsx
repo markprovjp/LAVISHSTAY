@@ -200,11 +200,10 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                             <Text className="text-xs font-medium" style={{ color: availability.color }}>
                                                 {availability.text}
                                             </Text>
-                                            <Text className="text-xs text-gray-400">
-                                                {Math.round(availability.percentage)}%
-                                            </Text>
+
                                         </div>
                                         <Progress
+                                            status='active'
                                             percent={availability.percentage}
                                             size="small"
                                             strokeColor={availability.strokeColor}
@@ -223,6 +222,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                             </Text>
                                         </div>
                                         <Progress
+
                                             percent={0}
                                             size="small"
                                             strokeColor="#ff4d4f"
