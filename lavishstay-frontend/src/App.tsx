@@ -123,8 +123,6 @@ const App: React.FC = React.memo(() => {
             </Route>                    {/* Standalone routes */}
 
             {/* Legacy routes for backward compatibility */}
-            <Route path="/bookings" element={<BookingManagement />} />
-            <Route path="/settings" element={<Settings />} />
 
             {/* Other routes */}
             <Route path="/contact" element={<Contact />} />

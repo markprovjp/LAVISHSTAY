@@ -26,7 +26,6 @@ import {
 } from "@ant-design/icons";
 import { Users, UsersRound, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ButtonSearch from "./ui/ButtonSearch";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import type { RangePickerProps } from "antd/es/date-picker";
@@ -376,108 +375,75 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   ); return (
     <Affix offsetTop={88}>
       <div
-        className={`search-form-blur-container mx-auto max-w-4xl  ${className}`}
+        className={`search-form-blur-container mx-auto max-w-2xl px-2 ${className}`}
         style={{ ...style, zIndex: 1000 }}
       >
         <Card
-          className="search-form-compact shadow-2xl transition-all duration-300 "
-          styles={{ body: { padding: "12px 16px" } }}
+          className="rounded-3xl shadow-xl border border-gray-100 search-form-card"
           variant="outlined"
         >
           <Form
             form={form}
-            layout="horizontal"
+            layout="vertical"
             onFinish={handleSearch}
             className="font-bevietnam"
           >
-            <Row gutter={[8, 8]} align="middle" justify="center">
+            <Row gutter={[18, 18]} align="middle" justify="center">
               {/* Date Range Field */}
-              <Col xs={24} sm={11} md={9} lg={11}>
-                <Form.Item name="dateRange" className="mb-0">
+              <Col xs={24} sm={12}>
+                <Form.Item name="dateRange" className="mb-0" label={false}>
                   <RangePicker
                     size="large"
                     style={{ width: "100%" }}
                     format="DD/MM/YYYY"
-                    placeholder={["Ngày nhận phòng", "Ngày trả phòng"]}
-                    className="rounded-full border-0 shadow-sm transition-all duration-200"
-                    suffixIcon={<CalendarOutlined className="text-gray-800" />}
+                    placeholder={["Nhận phòng", "Trả phòng"]}
+                    className="rounded-full border-0 shadow-sm search-form-input"
+                    suffixIcon={<CalendarOutlined />}
                     disabledDate={disabledDate}
-                    classNames={{ popup: { root: "date-range-popup" } }}
-                    getPopupContainer={(trigger) =>
-                      trigger.parentElement || document.body
-                    }
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
                   />
                 </Form.Item>
               </Col>
 
               {/* Guests Field */}
-              <Col xs={24} sm={8} md={6} lg={7}>
-                <Form.Item name="guests" className="mb-0">                  <Popover
-                  content={guestPopoverContent}
-                  trigger="click"
-                  open={guestPopoverVisible}
-                  onOpenChange={setGuestPopoverVisible}
-                  placement="bottomRight"
-                  overlayClassName="guest-popover-rounded"
-                  overlayStyle={{
-                    borderRadius: "20px",
-                    padding: 0,
-                  }}
-                  getPopupContainer={(trigger) =>
-                    trigger.parentElement || document.body
-                  }
-                >                  <Input
-                    size="large"
-                    placeholder="Số khách"
-                    readOnly
-                    value={formatLocalGuestSelection()} prefix={
-                      <span className="flex items-center text-gray-500">
-                        {searchData.guestType === "solo" && <UserOutlined />}
-                        {searchData.guestType === "couple" && (
-                          <>
-                            <UserOutlined />
-                            <UserOutlined className="-ml-1" />
-                          </>
-                        )}
-                        {searchData.guestType === "business" && <UserCheck />}
-                        {searchData.guestType === "family_young" && (
-                          <>
-                            <UserOutlined />
-                            <UserOutlined className="-ml-1" />
-                            <UserOutlined className="-ml-1 text-xs" />
-                          </>
-                        )}
-                        {searchData.guestType === "group" && (
-                          <>
-                            <UserOutlined />
-                            <UserOutlined className="-ml-1" />
-                            <UserOutlined className="-ml-1" />
-                            <UserOutlined className="-ml-1" />
-                          </>
-                        )}
-                      </span>
-                    }
-                    className="rounded-full border-0 shadow-sm cursor-pointer transition-all duration-200"
-                    onClick={() => setGuestPopoverVisible(true)}
-                  />
-                </Popover>
+              <Col xs={24} sm={6}>
+                <Form.Item name="guests" className="mb-0" label={false}>
+                  <Popover
+                    content={guestPopoverContent}
+                    trigger="click"
+                    open={guestPopoverVisible}
+                    onOpenChange={setGuestPopoverVisible}
+                    placement="bottomRight"
+                    overlayClassName="guest-popover-rounded"
+                    overlayStyle={{ borderRadius: "20px", padding: 0 }}
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                  >
+                    <Input
+                      size="large"
+                      placeholder="Số khách"
+                      readOnly
+                      value={formatLocalGuestSelection()}
+                      prefix={<UserOutlined />}
+                      className="rounded-full border-0 shadow-sm cursor-pointer search-form-input"
+                      onClick={() => setGuestPopoverVisible(true)}
+                    />
+                  </Popover>
                 </Form.Item>
               </Col>
 
               {/* Search Button */}
-              <Col xs={24} sm={5} md={3} lg={6}>
-                <Form.Item className="mb-2">
-                  <ButtonSearch
-                    type="submit"
-                    text="Tìm kiếm"
-                    className="w-full search-button-compact"
+              <Col xs={24} sm={6} className="flex items-end">
+                <Form.Item className="mb-0 w-full">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    size="large"
+                    className="w-full rounded-full font-bold search-button-compact flex items-center justify-center"
+                    style={{ minHeight: 48, fontWeight: 600, fontSize: 16, padding: 0 }}
                     icon={<SearchOutlined className="text-lg" />}
-                    style={{
-                      borderColor: token.colorPrimary,
-                      borderRadius: "50px",
-                      fontWeight: "600",
-                    }}
-                  />
+                  >
+                    <span className="ml-1">Tìm kiếm</span>
+                  </Button>
                 </Form.Item>
               </Col>
             </Row>
