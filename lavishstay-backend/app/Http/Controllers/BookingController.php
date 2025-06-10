@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
@@ -65,7 +66,7 @@ class BookingController extends Controller
         DB::beginTransaction();
         try {
             $booking = Booking::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'option_id' => $request->option_id,
                 'check_in_date' => $checkIn,
                 'check_out_date' => $checkOut,
