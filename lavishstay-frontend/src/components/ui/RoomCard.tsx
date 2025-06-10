@@ -9,7 +9,6 @@ import {
 } from "@ant-design/icons";
 import { theme } from "antd";
 import RoomMainAmenities from "../room/RoomMainAmenities";
-import "./RoomCard.css";
 
 const { Title } = Typography;
 

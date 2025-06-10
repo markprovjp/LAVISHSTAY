@@ -1,6 +1,4 @@
-/* Import performance optimizations */
-@import './styles/performance-optimizations.css';
-
+/* App Component Styles */
 .App {
   text-align: center;
 }

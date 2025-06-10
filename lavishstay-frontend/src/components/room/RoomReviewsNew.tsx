@@ -25,7 +25,6 @@ import {
     FlagOutlined
 } from "@ant-design/icons";
 import { formatDate } from "../../utils/helpers";
-import "./RoomReviews.css";
 
 const { Title, Text, Paragraph } = Typography;
 

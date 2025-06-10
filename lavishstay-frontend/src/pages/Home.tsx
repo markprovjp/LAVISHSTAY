@@ -11,7 +11,6 @@ import Newsletter from "../components/Newsletter";
 import RoomSwiper from "../components/ui/RoomSwiper";
 import Awards from "../components/ui/Awards";
 import HotelActivities from "../components/ui/HotelActivities";
-import SwiftPande from "../components/ui/swiftPanda";
 
 // Import API hooks with axios
 import { useGetAllRooms, useGetRoomsByType } from "../hooks/useApi";

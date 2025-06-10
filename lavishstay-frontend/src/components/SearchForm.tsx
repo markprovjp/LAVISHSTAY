@@ -27,7 +27,6 @@ import {
 import { Users, UsersRound, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ButtonSearch from "./ui/ButtonSearch";
-import "./SearchForm.css";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import type { RangePickerProps } from "antd/es/date-picker";
@@ -377,7 +376,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   ); return (
     <Affix offsetTop={88}>
       <div
-        className={`search-form-blur-container mx-auto max-w-4xl px-4 ${className}`}
+        className={`search-form-blur-container mx-auto max-w-4xl  ${className}`}
         style={{ ...style, zIndex: 1000 }}
       >
         <Card
