@@ -11,8 +11,14 @@ use App\Http\Controllers\ServiceAmenityController;
 use App\Http\Controllers\ServiceBedController;
 use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminController;
 
 Route::redirect('/', 'login');
+
+// Route cho Admin Payment (không cần auth cho demo) Quyền code
+Route::get('/admin/payment', function () {
+    return view('admin.payment');
+})->name('admin.payment');
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
@@ -122,4 +128,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 
 
+});
+
+// Admin routes - không cần auth
+Route::prefix('admin')->group(function () {
+    Route::get('/payment', [AdminController::class, 'paymentManagement'])->name('admin.payment');
 });
