@@ -181,33 +181,7 @@
                                 Quản trị viên
                             </option>
                         </select>
-                        {{-- <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-user-tag mr-2 text-violet-600"></i>
-                            Vai trò <span class="text-red-500">*</span>
-                        </label>
-                        <select id="role" name="role" required
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                            <option value="">Chọn vai trò</option>
-                            <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>
-                                Khách hàng
-                            </option>
-                            <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>
-                                Nhân viên
-                            </option>
-                            <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>
-                                Quản lý
-                            </option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
-                                Quản trị viên
-                            </option>
-                        </select>
-                        @error('role')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div> --}}
+                      
                     </div>
 
                     <!-- Địa chỉ -->
