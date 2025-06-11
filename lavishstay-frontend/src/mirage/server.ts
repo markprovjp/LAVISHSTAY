@@ -8,6 +8,10 @@ export function makeServer() {
       this.namespace = "api";
       this.timing = 4; // Thêm độ trễ để mô phỏng API thật
 
+      // Passthrough cho payment API - để gọi thẳng Laravel backend
+      this.passthrough('http://localhost:8000/api/payment/**');
+      this.passthrough('http://localhost:8000/api/payment/*');
+
       // API endpoint để lấy tất cả các phòng
       this.get("/rooms", () => {
         return {

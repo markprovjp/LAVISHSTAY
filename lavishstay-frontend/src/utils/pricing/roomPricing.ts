@@ -4,7 +4,7 @@
 export const ROOM_PRICING = {
     deluxe: {
         singleGuest: {
-            basic: 1500000,      // 1.5M
+            basic: 5000,      // 5K (rẻ nhất và test)
             premium: 1800000     // 1.8M
         },
         doubleGuest: {

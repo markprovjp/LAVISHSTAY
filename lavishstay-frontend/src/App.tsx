@@ -26,6 +26,7 @@ import ScrollToTop from "./utils/ScrollToTop";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Payment from "./pages/Payment";
+import AdminPayment from "./pages/AdminPayment";
 import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
@@ -122,12 +123,11 @@ const App: React.FC = React.memo(() => {
               <Route path="change-password" element={<ChangePassword />} />
             </Route>                    {/* Standalone routes */}
 
-            {/* Legacy routes for backward compatibility */}
-
-            {/* Other routes */}
+            {/* Legacy routes for backward compatibility */}            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />
+            <Route path="/admin/payment" element={<AdminPayment />} />
             <Route path="/auth-test" element={<AuthTest />} />
 
             {/* 404 Route */}
