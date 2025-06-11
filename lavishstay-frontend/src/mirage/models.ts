@@ -416,7 +416,7 @@ export const sampleRooms: Room[] = [{
         "/images/room/The_Level_Suite_Room/5.jpg",
         "/images/room/The_Level_Suite_Room/6.jpg",
         "/images/room/The_Level_Suite_Room/7.webp",
-        "/images/room/The_Level_Suite_Room/8.webp",
+        "/images/room/The_Level_Suite_Room/8.jpg",
     ],
     options: [
 

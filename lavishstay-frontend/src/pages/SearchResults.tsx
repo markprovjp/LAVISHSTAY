@@ -172,7 +172,7 @@ const SearchResults: React.FC = () => {
                         ...room,
                         options: dynamicOptions
                     };
-                }); setRooms(roomsWithDynamicPricing);
+                });                setRooms(roomsWithDynamicPricing);
 
                 // Update Redux store with rooms data
                 dispatch(setRoomsData(roomsWithDynamicPricing.map(room => ({

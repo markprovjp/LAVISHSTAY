@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    Layout,
-    Steps,
-    Form,
-    message,
-    Card,
-    Row,
-    Col,
-    Divider,
-    Tag,
-    Typography,
-    Space,
-    Image,
+import { 
+    Layout, 
+    Steps, 
+    Form, 
+    message, 
+    Card, 
+    Row, 
+    Col, 
+    Divider, 
+    Tag, 
+    Typography, 
+    Space, 
+    Image, 
     Button,
     Input,
     Checkbox,
@@ -22,12 +22,12 @@ import {
     Alert,
     Badge
 } from "antd";
-import {
-    WifiOutlined,
-    CarOutlined,
-    UserOutlined,
-    GiftOutlined,
-    StarOutlined,
+import { 
+    WifiOutlined, 
+    CarOutlined, 
+    UserOutlined, 
+    GiftOutlined, 
+    StarOutlined, 
     CoffeeOutlined,
     HomeOutlined,
     EyeOutlined,
@@ -39,6 +39,7 @@ import {
     TeamOutlined
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
+import { RootState } from "../store";
 import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms } from "../store/slices/bookingSlice";
 import { selectSearchData } from "../store/slices/searchSlice";
 
@@ -172,9 +173,9 @@ const Payment: React.FC = () => {
         const total = roomsTotal + serviceFee + tax;
 
         return { roomsTotal, serviceFee, tax, total };
-    }; const totals = calculateTotals();
-    const nights = searchData.checkIn && searchData.checkOut
-        ? Math.ceil((new Date(searchData.checkOut).getTime() - new Date(searchData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+    };    const totals = calculateTotals();
+    const nights = searchData.checkIn && searchData.checkOut 
+        ? Math.ceil((new Date(searchData.checkOut).getTime() - new Date(searchData.checkIn).getTime()) / (1000 * 60 * 60 * 24)) 
         : 1;
 
     // Steps configuration
@@ -251,10 +252,10 @@ const Payment: React.FC = () => {
                             </Checkbox>
                         </Form.Item>
                         <Form.Item>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                size="large"
+                            <Button 
+                                type="primary" 
+                                htmlType="submit" 
+                                size="large" 
                                 loading={isProcessing}
                                 block
                             >
@@ -276,16 +277,16 @@ const Payment: React.FC = () => {
         <Row gutter={[24, 24]}>
             <Col span={16}>
                 <Card title="Phương thức thanh toán" className="mb-4">
-                    <Radio.Group
-                        value={selectedPaymentMethod}
+                    <Radio.Group 
+                        value={selectedPaymentMethod} 
                         onChange={(e) => setSelectedPaymentMethod(e.target.value)}
                         className="w-full"
                     >
                         <Space direction="vertical" className="w-full">
                             {paymentMethods.map(method => (
                                 <Radio key={method.id} value={method.id} className="w-full">
-                                    <Card
-                                        size="small"
+                                    <Card 
+                                        size="small" 
                                         className={`ml-6 ${selectedPaymentMethod === method.id ? 'border-blue-500' : ''}`}
                                     >
                                         <Row align="middle" justify="space-between">
@@ -372,9 +373,9 @@ const Payment: React.FC = () => {
                     <Text type="secondary" className="text-lg">
                         Cảm ơn bạn đã tin tương và sử dụng dịch vụ của LavishStay
                     </Text>
-
+                    
                     <Divider />
-
+                    
                     <Descriptions title="Thông tin đặt phòng" column={2}>
                         <Descriptions.Item label="Mã đặt phòng">
                             <Text strong>LAVISH{Date.now().toString().slice(-8)}</Text>
@@ -479,10 +480,10 @@ const Payment: React.FC = () => {
                                             .filter((service: any) => service.included)
                                             .slice(0, 3)
                                             .map((service: any, serviceIndex: number) => (
-                                                <Tag key={serviceIndex} color="green" className="text-xs mb-1">
-                                                    {iconMap[service.icon]} {service.name}
-                                                </Tag>
-                                            ))}
+                                            <Tag key={serviceIndex} color="green" className="text-xs mb-1">
+                                                {iconMap[service.icon]} {service.name}
+                                            </Tag>
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -531,7 +532,7 @@ const Payment: React.FC = () => {
             default:
                 return null;
         }
-    }; return (
+    };    return (
         <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
             <Content style={{ padding: '24px' }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -539,9 +540,9 @@ const Payment: React.FC = () => {
                     <div className="text-center mb-8">
                         <Title level={2}>Thanh toán đặt phòng</Title>
                         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-                            <Progress
-                                percent={(currentStep + 1) * 33.33}
-                                showInfo={false}
+                            <Progress 
+                                percent={(currentStep + 1) * 33.33} 
+                                showInfo={false} 
                                 strokeColor="#1890ff"
                             />
                             <Steps
