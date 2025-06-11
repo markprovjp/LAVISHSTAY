@@ -159,7 +159,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
 
       // Validate before search
       if (!isValidSearchData) {
-        message.error('Vui lòng điền đầy đủ thông tin tìm kiếm');
+        message.error('Kiểm tra lại ngày tháng và số lượng khách trước khi tìm kiếm');
         return;
       }      // Perform search
       const results = await performSearch();
