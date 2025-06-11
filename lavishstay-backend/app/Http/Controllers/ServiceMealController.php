@@ -2,16 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-
-class ServiceMealController extends Controller
-{
-    public function index(){
-        return view('admin.services.meals.index');
-    }
-}
-=======
 use App\Models\MealType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -122,4 +112,3 @@ class ServiceMealController extends Controller
         ]);
     }
 }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc

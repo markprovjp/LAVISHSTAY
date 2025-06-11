@@ -11,12 +11,9 @@ use App\Http\Controllers\ServiceAmenityController;
 use App\Http\Controllers\ServiceBedController;
 use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
-<<<<<<< HEAD
-=======
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\TranslationController;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 Route::redirect('/', 'login');
 
@@ -47,9 +44,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-<<<<<<< HEAD
-    //Rooms Types
-=======
 
     //User//////////////////////////////////
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
@@ -59,10 +53,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
     Route::get('/admin/users/show/{id}', [UserController::class, 'show'])->name('admin.users.show');
     Route::delete('/admin/users/destroy/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::put('/admin/users/change-password/{id}', [UserController::class, 'changePassword'])->name('admin.users.change-password');
 
 
     //Rooms Types/////////////////////////////////
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
     Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
     Route::post('/admin/room-types/store', [RoomTypeController::class, 'store'])->name('admin.room-types.store');
@@ -73,14 +67,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
         
 
-<<<<<<< HEAD
-    Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
-    Route::get('/admin/rooms/show/{room_id}', [RoomController::class, 'show'])->name('admin.rooms.show');
-
-    Route::get('/admin/rooms/{room_id}/calendar-data', [RoomController::class, 'getCalendarData'])->name('rooms.calendar-data');
-
-
-=======
     
 
     // Room //////////////////////////////////////////
@@ -93,7 +79,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/rooms/type/{room}/edit', [RoomController::class, 'edit'])->name('admin.rooms.edit');
     Route::put('/admin/rooms/type/{room}', [RoomController::class, 'update'])->name('admin.rooms.update');
     Route::delete('/admin/rooms/type/{room}/delete', [RoomController::class, 'destroy'])->name('admin.rooms.destroy');
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
     // Cách liiiiiiiiiiiiiiiiiiii
@@ -124,47 +109,28 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Amenities Management Kiệt //////////////////////////////////
     Route::get('/admin/services/amenities', [ServiceAmenityController::class, 'index'])->name('admin.services.amenities');
-<<<<<<< HEAD
-
-=======
     Route::get('/admin/services/amenities/create', [ServiceAmenityController::class, 'create'])->name('admin.services.amenities.create');
     Route::post('/admin/services/amenities/store', [ServiceAmenityController::class, 'store'])->name('admin.services.amenities.store');
     Route::get('/admin/services/amenities/edit/{amenityId}', [ServiceAmenityController::class, 'edit'])->name('admin.services.amenities.edit');
     Route::put('/admin/services/amenities/update/{amenityId}', [ServiceAmenityController::class, 'update'])->name('admin.services.amenities.update');
     Route::post('/admin/services/amenities/destroy/{amenityId}', [ServiceAmenityController::class, 'destroy'])->name('admin.services.amenities.destroy');
     Route::patch('/admin/services/amenities/toggle-status/{amenity}', [ServiceAmenityController::class, 'toggleStatus'])->name('admin.services.amenities.toggle-status');
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
     //  Meals Management Công //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
-<<<<<<< HEAD
-
-=======
     Route::get('/admin/services/meals/create', [ServiceMealController::class, 'create'])->name('admin.services.meals.create');
     Route::post('/admin/services/meals/store', [ServiceMealController::class, 'store'])->name('admin.services.meals.store');
     Route::get('/admin/services/meals/edit/{id}', [ServiceMealController::class, 'edit'])->name('admin.services.meals.edit');
     Route::put('/admin/services/meals/update/{id}', [ServiceMealController::class, 'update'])->name('admin.services.meals.update');
     Route::post('/admin/services/meals/destroy/{id}', [ServiceMealController::class, 'destroy'])->name('admin.services.meals.destroy');
     Route::patch('/admin/services/meals/toggle-status/{mealType}', [ServiceMealController::class, 'toggleStatus'])->name('admin.services.meals.toggle-status');
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
     //  Meals Management Tuyên //////////////////////////////////
     Route::get('/admin/services/beds', [ServiceBedController::class, 'index'])->name('admin.services.beds');
-<<<<<<< HEAD
-
-
-
-
-
-
-
-
-
-=======
     Route::get('/admin/services/beds/create', [ServiceBedController::class, 'create'])->name('admin.services.beds.create');
     Route::post('/admin/services/beds/store', [ServiceBedController::class, 'store'])->name('admin.services.beds.store');
     Route::get('/admin/services/beds/edit/{id}', [ServiceBedController::class, 'edit'])->name('admin.services.beds.edit');
@@ -198,7 +164,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::put('/update/{translationId}', [TranslationController::class, 'update'])->name('update');
         Route::post('/destroy/{translationId}', [TranslationController::class, 'destroy'])->name('destroy');
     });
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 

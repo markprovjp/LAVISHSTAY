@@ -10,11 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-<<<<<<< HEAD
-=======
 use function Psy\debug;
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 class RoomTypeController extends Controller
 {
     public function index()

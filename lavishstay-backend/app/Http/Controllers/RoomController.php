@@ -2,20 +2,14 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-=======
 use App\Models\Hotel;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-<<<<<<< HEAD
-=======
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 class RoomController extends Controller
 {
