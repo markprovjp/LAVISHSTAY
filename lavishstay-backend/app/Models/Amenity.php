@@ -9,6 +9,10 @@ class Amenity extends Model
 {
     use HasFactory;
 
+<<<<<<< HEAD
+=======
+    protected $table = 'amenities';
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     protected $primaryKey = 'amenity_id';
     
     protected $fillable = [
