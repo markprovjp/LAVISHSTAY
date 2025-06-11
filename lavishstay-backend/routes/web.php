@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
     Route::get('/admin/users/show/{id}', [UserController::class, 'show'])->name('admin.users.show');
     Route::delete('/admin/users/destroy/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::put('/admin/users/change-password/{id}', [UserController::class, 'changePassword'])->name('admin.users.change-password');
 
 
     //Rooms Types/////////////////////////////////

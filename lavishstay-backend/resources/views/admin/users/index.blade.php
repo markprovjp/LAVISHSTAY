@@ -160,11 +160,11 @@
                                                             View User
                                                         </a>
                                                         <!-- Edit -->
-                                                        <a href="{{ route('admin.users.edit', $user->id) }}"
+                                                        {{-- <a href="{{ route('admin.users.edit', $user->id) }}"
                                                             class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                             role="menuitem">
                                                             Edit User
-                                                        </a>
+                                                        </a> --}}
 
                                                         <!-- Divider -->
                                                         <div class="border-t border-gray-100 dark:border-gray-700"></div>
