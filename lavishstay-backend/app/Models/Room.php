@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     protected $table = 'room';
     protected $primaryKey = 'room_id';
     public $timestamps = false;
@@ -35,6 +39,24 @@ class Room extends Model
         'floor' => 'integer'
     ];
 
+<<<<<<< HEAD
+=======
+
+    public function translations()
+    {
+        return $this->hasMany(Translation::class, 'record_id')
+            ->where('table_name', $this->getTable());
+    }
+    public function getTranslatedAttribute($column, $lang)
+    {
+        $translation = $this->translations()
+            ->where('column_name', $column)
+            ->where('language_code', $lang)
+            ->first();
+
+        return $translation ? $translation->value : $this->$column;
+    }
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     /**
      * Relationship with room type
      */

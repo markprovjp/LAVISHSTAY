@@ -15,6 +15,8 @@ const breadcrumbNameMap: Record<string, string> = {
   '/destinations': 'Điểm đến',
   '/register': 'Đăng ký',
   '/notifications': 'Thông báo',
+
+  '/payment': 'Thanh toán',
   // Add other routes here
 };
 

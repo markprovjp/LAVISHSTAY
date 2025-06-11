@@ -11,6 +11,12 @@ use App\Http\Controllers\ServiceAmenityController;
 use App\Http\Controllers\ServiceBedController;
 use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
+<<<<<<< HEAD
+=======
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\TranslationController;
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 Route::redirect('/', 'login');
 
@@ -41,7 +47,22 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+<<<<<<< HEAD
     //Rooms Types
+=======
+
+    //User//////////////////////////////////
+    Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
+    Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::post('/admin/users/store', [UserController::class, 'store'])->name('admin.users.store');
+    Route::get('/admin/users/edit/{id}', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
+    Route::get('/admin/users/show/{id}', [UserController::class, 'show'])->name('admin.users.show');
+    Route::delete('/admin/users/destroy/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+
+    //Rooms Types/////////////////////////////////
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
     Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
     Route::post('/admin/room-types/store', [RoomTypeController::class, 'store'])->name('admin.room-types.store');
@@ -52,12 +73,27 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
         
 
+<<<<<<< HEAD
     Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
     Route::get('/admin/rooms/show/{room_id}', [RoomController::class, 'show'])->name('admin.rooms.show');
 
     Route::get('/admin/rooms/{room_id}/calendar-data', [RoomController::class, 'getCalendarData'])->name('rooms.calendar-data');
 
 
+=======
+    
+
+    // Room //////////////////////////////////////////
+    Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
+    Route::get('/admin/rooms/show/{room_id}', [RoomController::class, 'show'])->name('admin.rooms.show');
+    Route::get('/admin/rooms/{room_id}/calendar-data', [RoomController::class, 'getCalendarData'])->name('rooms.calendar-data');
+
+    Route::get('/admin/rooms/type/{roomType}/create', [RoomController::class, 'create'])->name('admin.rooms.create');
+    Route::post('/admin/rooms/type/{roomType}/store', [RoomController::class, 'store'])->name('admin.rooms.store');
+    Route::get('/admin/rooms/type/{room}/edit', [RoomController::class, 'edit'])->name('admin.rooms.edit');
+    Route::put('/admin/rooms/type/{room}', [RoomController::class, 'update'])->name('admin.rooms.update');
+    Route::delete('/admin/rooms/type/{room}/delete', [RoomController::class, 'destroy'])->name('admin.rooms.destroy');
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
     // Cách liiiiiiiiiiiiiiiiiiii
@@ -88,18 +124,37 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Amenities Management Kiệt //////////////////////////////////
     Route::get('/admin/services/amenities', [ServiceAmenityController::class, 'index'])->name('admin.services.amenities');
+<<<<<<< HEAD
 
+=======
+    Route::get('/admin/services/amenities/create', [ServiceAmenityController::class, 'create'])->name('admin.services.amenities.create');
+    Route::post('/admin/services/amenities/store', [ServiceAmenityController::class, 'store'])->name('admin.services.amenities.store');
+    Route::get('/admin/services/amenities/edit/{amenityId}', [ServiceAmenityController::class, 'edit'])->name('admin.services.amenities.edit');
+    Route::put('/admin/services/amenities/update/{amenityId}', [ServiceAmenityController::class, 'update'])->name('admin.services.amenities.update');
+    Route::post('/admin/services/amenities/destroy/{amenityId}', [ServiceAmenityController::class, 'destroy'])->name('admin.services.amenities.destroy');
+    Route::patch('/admin/services/amenities/toggle-status/{amenity}', [ServiceAmenityController::class, 'toggleStatus'])->name('admin.services.amenities.toggle-status');
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
     //  Meals Management Công //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
+<<<<<<< HEAD
 
+=======
+    Route::get('/admin/services/meals/create', [ServiceMealController::class, 'create'])->name('admin.services.meals.create');
+    Route::post('/admin/services/meals/store', [ServiceMealController::class, 'store'])->name('admin.services.meals.store');
+    Route::get('/admin/services/meals/edit/{id}', [ServiceMealController::class, 'edit'])->name('admin.services.meals.edit');
+    Route::put('/admin/services/meals/update/{id}', [ServiceMealController::class, 'update'])->name('admin.services.meals.update');
+    Route::post('/admin/services/meals/destroy/{id}', [ServiceMealController::class, 'destroy'])->name('admin.services.meals.destroy');
+    Route::patch('/admin/services/meals/toggle-status/{mealType}', [ServiceMealController::class, 'toggleStatus'])->name('admin.services.meals.toggle-status');
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
     //  Meals Management Tuyên //////////////////////////////////
     Route::get('/admin/services/beds', [ServiceBedController::class, 'index'])->name('admin.services.beds');
+<<<<<<< HEAD
 
 
 
@@ -109,6 +164,41 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+=======
+    Route::get('/admin/services/beds/create', [ServiceBedController::class, 'create'])->name('admin.services.beds.create');
+    Route::post('/admin/services/beds/store', [ServiceBedController::class, 'store'])->name('admin.services.beds.store');
+    Route::get('/admin/services/beds/edit/{id}', [ServiceBedController::class, 'edit'])->name('admin.services.beds.edit');
+    Route::put('/admin/services/beds/update/{id}', [ServiceBedController::class, 'update'])->name('admin.services.beds.update');
+    Route::post('/admin/services/beds/destroy/{id}', [ServiceBedController::class, 'destroy'])->name('admin.services.beds.destroy');
+    Route::patch('/admin/services/beds/toggle-status/{bedType}', [ServiceBedController::class, 'toggleStatus'])->name('admin.services.beds.toggle-status');
+
+
+    // Languages
+    Route::get('/admin/multinational/languages', [LanguageController::class, 'index'])->name('admin.multinational.languages');
+    Route::get('/admin/multinational/languages/create', [LanguageController::class, 'create'])->name('admin.multinational.languages.create');
+    Route::post('/admin/multinational/languages/store', [LanguageController::class, 'store'])->name('admin.multinational.languages.store');
+    Route::get('/admin/multinational/languages/edit/{language_code}', [LanguageController::class, 'edit'])->name('admin.multinational.languages.edit');
+    Route::put('/admin/multinational/languages/update/{language_code}', [LanguageController::class, 'update'])->name('admin.multinational.languages.update');
+    Route::post('/admin/multinational/languages/destroy/{language_code}', [LanguageController::class, 'destroy'])->name('admin.multinational.languages.destroy');
+
+    // Currencies
+    Route::get('/admin/multinational/currencies', [CurrencyController::class, 'index'])->name('admin.multinational.currencies');
+    Route::get('/admin/multinational/currencies/create', [CurrencyController::class, 'create'])->name('admin.multinational.currencies.create');
+    Route::post('/admin/multinational/currencies/store', [CurrencyController::class, 'store'])->name('admin.multinational.currencies.store');
+    Route::get('/admin/multinational/currencies/edit/{currency_code}', [CurrencyController::class, 'edit'])->name('admin.multinational.currencies.edit');
+    Route::put('/admin/multinational/currencies/update/{currency_code}', [CurrencyController::class, 'update'])->name('admin.multinational.currencies.update');
+    Route::post('/admin/multinational/currencies/destroy/{currency_code}', [CurrencyController::class, 'destroy'])->name('admin.multinational.currencies.destroy');
+
+    // Translation
+    Route::prefix('admin/translation')->name('admin.translation.')->group(function () {
+        Route::get('/', [TranslationController::class, 'index'])->name('index');
+        Route::get('/create', [TranslationController::class, 'create'])->name('create');
+        Route::post('/store', [TranslationController::class, 'store'])->name('store');
+        Route::get('/edit/{translationId}', [TranslationController::class, 'edit'])->name('edit');
+        Route::put('/update/{translationId}', [TranslationController::class, 'update'])->name('update');
+        Route::post('/destroy/{translationId}', [TranslationController::class, 'destroy'])->name('destroy');
+    });
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
