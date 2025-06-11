@@ -18,6 +18,13 @@ use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
+
+
+    public function index(){
+        // $bookings = Booking::with('option')->get();
+        return view('admin.bookings.index');
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
