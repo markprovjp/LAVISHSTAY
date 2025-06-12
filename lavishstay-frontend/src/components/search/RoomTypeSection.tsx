@@ -12,6 +12,9 @@ interface RoomTypeSectionProps {
     rooms: Room[];
     onQuantityChange: (roomId: string, optionId: string, quantity: number) => void;
     onShowImageGallery: (room: Room) => void;
+    onShowRoomDetail?: (room: Room) => void;
+    onViewDetail?: (roomId: string) => void;
+    onBookNow?: (roomId: string) => void;
     shouldShowSuggestion: () => boolean;
     searchData: any;
     formatVND: (price: number) => string;
@@ -44,7 +47,7 @@ const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({
                         room={room}
                         selectedRooms={bookingState.selectedRooms}
                         onQuantityChange={onQuantityChange}
-                        onShowImageGallery={onShowImageGallery}
+                        onShowImageGallery={(room) => onShowImageGallery(room)}
                         shouldShowSuggestion={shouldShowSuggestion}
                         searchData={searchData}
                         formatVND={formatVND}

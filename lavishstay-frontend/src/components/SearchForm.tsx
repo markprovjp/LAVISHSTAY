@@ -393,7 +393,6 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       >
         <Card
           className="shadow-sm border border-gray-200 rounded-2xl "
-          bodyStyle={{ padding: '32px' }}
         >
           <Form
             form={form}

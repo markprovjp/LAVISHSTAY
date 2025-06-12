@@ -35,6 +35,10 @@ import dayjs from 'dayjs';
 // Import new components
 import BookingSummary from '../components/search/BookingSummary';
 import RoomTypeSection from '../components/search/RoomTypeSection';
+import BookingFloatButton from '../components/search/BookingFloatButton';
+import AnchorNavigation from '../components/search/AnchorNavigation';
+import ImageGalleryModal from '../components/search/ImageGalleryModal';
+import RoomDetailModal from '../components/search/RoomDetailModal';
 import { showAddRoomNotification } from '../components/search/NotificationSystem';
 
 const { Title, Text } = Typography;
@@ -49,6 +53,18 @@ const SearchResults: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [rooms, setRooms] = useState<Room[]>([]);
     const [isBookingDrawerVisible, setIsBookingDrawerVisible] = useState(false);
+
+    // Modal states
+    const [imageGalleryState, setImageGalleryState] = useState({
+        visible: false,
+        images: [] as string[],
+        currentIndex: 0,
+        roomName: ''
+    });
+    const [roomDetailState, setRoomDetailState] = useState({
+        visible: false,
+        room: null as Room | null
+    });
 
     // Notification API
     const [api, contextHolder] = notification.useNotification();
@@ -119,7 +135,51 @@ const SearchResults: React.FC = () => {
 
     // Handle image gallery
     const showImageGallery = (room: Room) => {
-        console.log('Show gallery for room:', room.name);
+        setImageGalleryState({
+            visible: true,
+            images: room.images || [room.image || ''],
+            currentIndex: 0,
+            roomName: room.name
+        });
+    };
+
+    // Handle image gallery navigation
+    const handleImageGalleryNext = () => {
+        setImageGalleryState(prev => ({
+            ...prev,
+            currentIndex: (prev.currentIndex + 1) % prev.images.length
+        }));
+    };
+
+    const handleImageGalleryPrevious = () => {
+        setImageGalleryState(prev => ({
+            ...prev,
+            currentIndex: prev.currentIndex === 0 ? prev.images.length - 1 : prev.currentIndex - 1
+        }));
+    };
+
+    const closeImageGallery = () => {
+        setImageGalleryState(prev => ({ ...prev, visible: false }));
+    };
+
+    // Handle room detail modal (for future use)
+    // const showRoomDetail = (room: Room) => {
+    //     setRoomDetailState({
+    //         visible: true,
+    //         room: room
+    //     });
+    // };
+
+    const closeRoomDetail = () => {
+        setRoomDetailState({ visible: false, room: null });
+    };
+
+    const handleViewDetail = (roomId: string) => {
+        navigate(`/room/${roomId}`);
+    };
+
+    const handleBookNow = () => {
+        navigate('/booking');
     };
 
     // Fetch search results
@@ -291,6 +351,14 @@ const SearchResults: React.FC = () => {
 
             {/* Main Content Layout */}
             <div className="relative">
+                {/* Anchor Navigation - fixed position cho desktop */}
+                {rooms.length > 0 && (
+                    <AnchorNavigation
+                        rooms={rooms}
+                        getRoomTypeDisplayName={getRoomTypeDisplayName}
+                    />
+                )}
+
                 {/* Room Cards Container - Full Width */}
                 <div className="max-w-7xl mx-auto px-4 py-8">
                     <Space direction="vertical" size="large" className="w-full">
@@ -316,34 +384,7 @@ const SearchResults: React.FC = () => {
                 </div>
             </div>
 
-            {/* Floating Action Button for Booking Summary */}
-            {getTotalSelectedItems() > 0 && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        bottom: '24px',
-                        right: '24px',
-                        zIndex: 1000
-                    }}
-                >
-                    <Button
-                        type="primary"
-                        size="large"
-                        shape="round"
-                        icon={<ShoppingCartOutlined />}
-                        onClick={() => setIsBookingDrawerVisible(true)}
-                        style={{
-                            height: '60px',
-                            padding: '0 24px',
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.4)'
-                        }}
-                    >
-                        Xem giỏ hàng ({getTotalSelectedItems()})
-                    </Button>
-                </div>
-            )}
+
 
             {/* Booking Summary Drawer */}
             <Drawer
@@ -378,12 +419,40 @@ const SearchResults: React.FC = () => {
                     borderBottom: '1px solid #e8e8e8',
                     padding: '16px 24px'
                 }}
-            >
-                <BookingSummary
+            >            <BookingSummary
                     formatVND={formatVND}
                     getNights={getNights}
                 />
             </Drawer>
+
+            {/* Booking Float Button - hiển thị khi có phòng được chọn */}
+            {getTotalSelectedItems() > 0 && (
+                <BookingFloatButton
+                    totalItems={getTotalSelectedItems()}
+                    onClick={() => setIsBookingDrawerVisible(true)}
+                />
+            )}
+
+            {/* Image Gallery Modal */}
+            <ImageGalleryModal
+                visible={imageGalleryState.visible}
+                images={imageGalleryState.images}
+                currentIndex={imageGalleryState.currentIndex}
+                roomName={imageGalleryState.roomName}
+                onClose={closeImageGallery}
+                onNext={handleImageGalleryNext}
+                onPrevious={handleImageGalleryPrevious}
+            />
+
+            {/* Room Detail Modal */}
+            <RoomDetailModal
+                visible={roomDetailState.visible}
+                room={roomDetailState.room}
+                onClose={closeRoomDetail}
+                onViewDetail={handleViewDetail}
+                onBookNow={handleBookNow}
+                formatVND={formatVND}
+            />
         </div>
     );
 };
