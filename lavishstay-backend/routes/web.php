@@ -214,7 +214,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Chính sách hủy phòng///////////////////////////////////////////////////
     Route::get('/admin/cancellation-policies', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies');
     Route::get('/admin/cancellation-policies/show/{id}', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies.show');
-
     Route::get('/admin/cancellation-policies/create', [CancellationPolicyController::class, 'create'])->name('admin.cancellation-policies.create');
     Route::post('/admin/cancellation-policies/store', [CancellationPolicyController::class, 'store'])->name('admin.cancellation-policies.store');
     Route::get('/admin/cancellation-policies/edit/{id}', [CancellationPolicyController::class, 'edit'])->name('admin.cancellation-policies.edit');
@@ -242,7 +241,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Chính sách checkout ///////////////////////////////////////////////////
     Route::get('/admin/checkout-policies', [CheckoutPolicyController::class, 'index'])->name('admin.checkout-policies');
-
+    Route::get('/admin/checkout-policies/create', [CheckoutPolicyController::class, 'create'])->name('admin.checkout-policies.create');
+    Route::post('/admin/checkout-policies', [CheckoutPolicyController::class, 'store'])->name('admin.checkout-policies.store');
+    Route::get('/admin/checkout-policies/{checkoutPolicy}/edit', [CheckoutPolicyController::class, 'edit'])->name('admin.checkout-policies.edit');
+    Route::put('/admin/checkout-policies/{checkoutPolicy}', [CheckoutPolicyController::class, 'update'])->name('admin.checkout-policies.update');
+    Route::delete('/admin/checkout-policies/{checkoutPolicy}', [CheckoutPolicyController::class, 'destroy'])->name('admin.checkout-policies.destroy');
+    Route::patch('/admin/checkout-policies/{checkoutPolicy}/toggle-status', [CheckoutPolicyController::class, 'toggleStatus'])->name('admin.checkout-policies.toggle-status');
 
 
     
@@ -263,8 +267,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     //Giá động
     Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
-
-
 
 
 
