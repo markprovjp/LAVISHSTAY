@@ -64,7 +64,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     ];
 
     const generatePaymentContent = () => {
-        return `LAVISH ${bookingCode}`;
+        return `LAVISHSTAY_${bookingCode}`;
     };
 
     return (
@@ -116,31 +116,22 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             {selectedPaymentMethod === 'vietqr' && (
                 <Card title="Quét mã QR để thanh toán" className="shadow-sm">
                     <Row gutter={24} align="top">
-                        <Col span={12}>
+                        <Col span={14}>
                             <div className="text-center">
-                                <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                                    <div className="bg-white p-2 rounded-lg border border-gray-200 inline-block">
+                                    <div className=" p-2 rounded-lg border border-gray-200 inline-block">
                                         <Image
                                             src={generateVietQRUrl(totalAmount, generatePaymentContent())}
                                             alt="VietQR Payment Code"
-                                            width={280}
-                                            height={280}
+                                            width={350}
+                                            height={480}
                                             preview={false}
                                             style={{ borderRadius: 8 }}
                                             fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
                                         />
                                     </div>
-                                </div>
-                                <Alert
-                                    message="Quét mã QR bằng ứng dụng ngân hàng"
-                                    description="Sử dụng ứng dụng ngân hàng di động để quét mã QR và thanh toán"
-                                    type="info"
-                                    showIcon={false}
-                                    className="text-center"
-                                />
                             </div>
                         </Col>
-                        <Col span={12}>
+                        <Col span={10}>
                             <div className="space-y-4">
                                 <Alert
                                     message="Thông tin chuyển khoản"
@@ -204,21 +195,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                             </div>
                         </Col>
                     </Row>
-                    <Divider />
-                    <div className="flex justify-between">
-                        <Button size="large" onClick={onBack}>
-                            Quay lại
-                        </Button>
-                        <Button
-                            type="primary"
-                            size="large"
-                            loading={isProcessing}
-                            onClick={onConfirmPayment}
-                            className="px-8"
-                        >
-                            Xác nhận đã thanh toán
-                        </Button>
-                    </div>
                 </Card>
             )}
 
