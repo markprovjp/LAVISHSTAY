@@ -116,17 +116,23 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     boxShadow: scrolled ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
     transition: "all 0.3s ease",
     backdropFilter: scrolled ? "blur(12px)" : "none",
-    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
-  };  // Navigation items
+    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",  };
+
+  // Navigation items
   const menuItems = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
-
     { key: "/about", label: "Về chúng tôi", icon: null },
+    // Reception page for hotel staff
+    ...(user?.role === 'hotel_reception' ? [
+      { key: "/reception", label: "🏨 Lễ tân", icon: null }
+    ] : []),
     // Development only - Auth test page
     ...(process.env.NODE_ENV === 'development' ? [
       { key: "/auth-test", label: "🔐 Auth Test", icon: null }
     ] : []),
-  ];// User menu dropdown
+  ];
+
+  // User menu dropdown
   const userMenu = (
     <Menu
       style={{

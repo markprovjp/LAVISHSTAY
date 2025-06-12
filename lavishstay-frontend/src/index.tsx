@@ -8,11 +8,12 @@ import App from "./App";
 import "./utils/performanceOptimization";
 
 // Khởi tạo Mirage server trong development mode
-if (process.env.NODE_ENV === 'development') {
-  import('./mirage/server').then(({ makeServer }) => {
-    makeServer();
-  });
-}
+// Tạm thời disable để test payment với backend thật
+// if (process.env.NODE_ENV === 'development') {
+//   import('./mirage/server').then(({ makeServer }) => {
+//     makeServer();
+//   });
+// }
 
 // Disable StrictMode in development to avoid findDOMNode warnings
 const AppWrapper = process.env.NODE_ENV === 'development' ?

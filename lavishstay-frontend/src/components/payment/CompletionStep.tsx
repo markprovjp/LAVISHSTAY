@@ -1,145 +1,95 @@
-import React from "react";
-import {
-    Card,
-    Button,
-    Row,
-    Col,
-    Space,
-    Typography,
-} from "antd";
-import { CheckCircleOutlined, EnvironmentOutlined } from "@ant-design/icons";
-import { formatCurrency, formatDate } from "../../utils/helpers";
-import { CompletionStepProps } from "./types";
+import React from 'react';
+import { Card, Typography, Alert, Button, Space, Result } from 'antd';
+import { CheckCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
+interface CompletionStepProps {
+    bookingCode: string;
+    selectedPaymentMethod: string;
+    onViewBookings: () => void;
+    onNewBooking: () => void;
+}
+
 const CompletionStep: React.FC<CompletionStepProps> = ({
-    bookingData,
-    bookingId,
-    onGoToBookings,
-    onGoToHome
+    bookingCode,
+    selectedPaymentMethod,
+    onViewBookings,
+    onNewBooking
 }) => {
+    const getSuccessMessage = () => {
+        if (selectedPaymentMethod === 'vietqr') {
+            return 'Thanh toán thành công!';
+        }
+        return 'Đặt phòng thành công!';
+    };
+
+    const getDescription = () => {
+        if (selectedPaymentMethod === 'vietqr') {
+            return 'Chúng tôi đã xác nhận thanh toán của bạn. Thông tin đặt phòng đã được gửi qua email.';
+        }
+        return 'Đặt phòng của bạn đã được xác nhận. Vui lòng thanh toán tại khách sạn khi nhận phòng.';
+    };
+
     return (
-        <div style={{ minHeight: '100vh', padding: '24px 0' }}>
-            <Row justify="center">
-                <Col span={24} md={16} lg={12}>
-                    <Card
-                        style={{
-                            border: '1px solid #e8e8e8',
-                            borderRadius: '8px',
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                            textAlign: 'center'
-                        }}
-                    >
-                        <div style={{ padding: '32px 0' }}>
-                            <CheckCircleOutlined
-                                style={{
-                                    fontSize: '64px',
-                                    color: '#52c41a',
-                                    marginBottom: 24
-                                }}
-                            />
+        <div className="text-center">
+            <Card className="max-w-2xl mx-auto">
+                <Result
+                    status="success"
+                    title={getSuccessMessage()}
+                    subTitle={getDescription()}
+                    icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                />
 
-                            <Title level={2} style={{ color: '#495057', marginBottom: 8 }}>
-                                Đặt phòng thành công!
-                            </Title>
-
-                            <Text style={{ color: '#6c757d', fontSize: '16px', display: 'block', marginBottom: 24 }}>
-                                Cảm ơn bạn đã tin tưởng và lựa chọn LavishStay Hotels.
-                                Chúng tôi đã gửi email xác nhận đến địa chỉ email của bạn.
+                <div className="mb-6">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-center justify-center mb-2">
+                            <CheckCircleOutlined className="text-green-600 mr-2" />
+                            <Text strong className="text-green-800">
+                                Mã đặt phòng của bạn: {bookingCode}
                             </Text>
-
-                            <Card
-                                size="small"
-                                style={{
-                                    backgroundColor: '#f8f9fa',
-                                    border: '1px solid #e9ecef',
-                                    marginBottom: 24,
-                                    textAlign: 'left'
-                                }}
-                            >
-                                <Row gutter={[16, 8]}>
-                                    <Col span={12}>
-                                        <div style={{ marginBottom: 8 }}>
-                                            <img
-                                                src={bookingData.images[0]}
-                                                alt={bookingData.roomType}
-                                                style={{
-                                                    width: '100%',
-                                                    height: '80px',
-                                                    objectFit: 'cover',
-                                                    borderRadius: '4px'
-                                                }}
-                                            />
-                                        </div>
-                                        <Title level={5} style={{ margin: 0 }}>{bookingData.hotelName}</Title>
-                                        <Text>{bookingData.roomType}</Text>
-                                        <div style={{ color: '#6c757d' }}>
-                                            <EnvironmentOutlined style={{ marginRight: 4 }} />
-                                            {bookingData.location}
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Space direction="vertical" style={{ width: '100%' }}>
-                                            <div>
-                                                <Text style={{ color: '#6c757d' }}>Mã đặt phòng:</Text>
-                                                <div style={{ fontWeight: 500 }}>{bookingId}</div>
-                                            </div>
-                                            <div>
-                                                <Text style={{ color: '#6c757d' }}>Nhận phòng:</Text>
-                                                <div>{formatDate(bookingData.checkIn)}</div>
-                                            </div>
-                                            <div>
-                                                <Text style={{ color: '#6c757d' }}>Trả phòng:</Text>
-                                                <div>{formatDate(bookingData.checkOut)}</div>
-                                            </div>
-                                            <div>
-                                                <Text style={{ color: '#6c757d' }}>Số khách:</Text>
-                                                <div>{bookingData.guests} người</div>
-                                            </div>
-                                            <div>
-                                                <Text style={{ color: '#6c757d' }}>Tổng tiền:</Text>
-                                                <div style={{ fontWeight: 500 }}>{formatCurrency(bookingData.total)}</div>
-                                            </div>
-                                        </Space>
-                                    </Col>
-                                </Row>
-                            </Card>
-
-                            <Space size="large">
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    onClick={onGoToBookings}
-                                    style={{
-                                        backgroundColor: '#1890ff',
-                                        borderColor: '#1890ff',
-                                        height: '48px',
-                                        padding: '0 32px',
-                                        fontSize: '16px',
-                                        fontWeight: 500
-                                    }}
-                                >
-                                    Xem đặt phòng của tôi
-                                </Button>
-
-                                <Button
-                                    size="large"
-                                    onClick={onGoToHome}
-                                    style={{
-                                        height: '48px',
-                                        padding: '0 32px',
-                                        fontSize: '16px',
-                                        borderColor: '#d9d9d9'
-                                    }}
-                                >
-                                    Về trang chủ
-                                </Button>
-                            </Space>
                         </div>
-                    </Card>
-                </Col>
-            </Row>
+                        <Text className="text-green-700 text-sm">
+                            Vui lòng lưu lại mã này để tra cứu thông tin đặt phòng
+                        </Text>
+                    </div>
+                </div>
+
+                <Alert
+                    message="Thông tin quan trọng"
+                    description={
+                        <div className="text-left">
+                            <p>• Vui lòng mang theo giấy tờ tùy thân và mã đặt phòng: <Text strong>{bookingCode}</Text></p>
+                            <p>• Thời gian check-in: 14:00 | Thời gian check-out: 12:00</p>
+                            <p>• Liên hệ: 0123456789 nếu có thắc mắc</p>
+                            {selectedPaymentMethod === 'pay_at_hotel' && (
+                                <p>• <Text strong>Lưu ý:</Text> Vui lòng thanh toán tại quầy lễ tân khi nhận phòng</p>
+                            )}
+                        </div>
+                    }
+                    type="info"
+                    showIcon
+                    className="mb-6 text-left"
+                />
+
+                <Space size="large">
+                    <Button
+                        type="primary"
+                        size="large"
+                        onClick={onViewBookings}
+                        className="min-w-[140px]"
+                    >
+                        Xem đặt phòng
+                    </Button>
+                    <Button
+                        size="large"
+                        onClick={onNewBooking}
+                        className="min-w-[140px]"
+                    >
+                        Đặt phòng mới
+                    </Button>
+                </Space>
+            </Card>
         </div>
     );
 };

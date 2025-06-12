@@ -207,6 +207,25 @@ const searchSlice = createSlice({
             }
         },
 
+        resetSearchForm: (state) => {
+            // Reset to default values but keep tomorrow + 1 night as default
+            const tomorrow = dayjs().add(1, 'day');
+            const dayAfter = tomorrow.add(1, 'day');
+
+            state.dateRange = [tomorrow, dayAfter];
+            state.checkIn = tomorrow.format('YYYY-MM-DD');
+            state.checkOut = dayAfter.format('YYYY-MM-DD');
+            state.guestDetails = { adults: 2, children: 0 };
+            state.guests = 2;
+            state.location = '';
+            state.guestType = 'couple';
+            state.searchDate = new Date().toISOString();
+            state.error = null;
+
+            // Save to localStorage
+            saveStateToStorage(state);
+        },
+
         resetError: (state) => {
             state.error = null;
         },
@@ -222,6 +241,7 @@ export const {
     setLoading,
     setError,
     clearSearchData,
+    resetSearchForm,
     resetError,
 } = searchSlice.actions;
 
