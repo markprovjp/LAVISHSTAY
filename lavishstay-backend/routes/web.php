@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingExtensionController;
+use App\Http\Controllers\BookingRescheduleController;
 use App\Http\Controllers\CancellationPolicyController;
 use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
+use App\Http\Controllers\CheckoutRequestController;
 use App\Http\Controllers\RoomTypeAmenityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataFeedController;
@@ -18,8 +21,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepositPolicyController;
-use App\Http\Controllers\RoomModificationController;
+use App\Http\Controllers\RoomPriceController;
+use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
+
 
 Route::redirect('/', 'login');
 
@@ -173,8 +178,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    // Bookings/////////////////////////////////////////////////////////////////
-    Route::get('/admin/bookings', [BookingController::class, 'index'])->name('admin.bookings');
+    //////////////// Bookings/////////////////////////////////////////////////////////////////
+    Route::get('/admin/bookings/trading', [BookingController::class, 'trading'])->name('admin.bookings.trading');
+    Route::get('/admin/bookings/transaction_history', [BookingController::class, 'transaction_history'])->name('admin.bookings.transaction_history');
 
 
 
@@ -182,14 +188,28 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    ////////////////////// YÊU CẦU ĐẶT PHÒNG /////////////////////////////////////////////////////
+
+    // Gia hạn phòng
+    Route::get('/admin/booking_extensions', [BookingExtensionController::class, 'index'])->name('admin.booking_extensions');
 
 
-    // Room modification
-    Route::get('/admin/room-modifications', [RoomModificationController::class, 'index'])->name('admin.room_modifications');
+    // Rời lịch
+    Route::get('/admin/booking_reschedules', [BookingRescheduleController::class, 'index'])->name('admin.booking_reschedules');
+
+    // Chuyển phòng
+    Route::get('/admin/room_transfers', [RoomTransferController::class, 'index'])->name('admin.room_transfers');
+
+
+    // Trả phòng sớm, muộn
+    Route::get('/admin/check_out_requests', [CheckoutRequestController::class, 'index'])->name('admin.check_out_requests');
 
 
 
 
+
+
+        ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
 
     // Chính sách hủy phòng///////////////////////////////////////////////////
     Route::get('/admin/cancellation-policies', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies');
@@ -231,6 +251,25 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+
+
+
+    /////////////////////// GIÁ PHÒNG /////////////////////////////////////////////////////
+
+    //Theo lễ hội, sự kiện
+    Route::get('/admin/event_festival', [RoomPriceController::class, 'event_festival'])->name('admin.room-prices.event_festival');
+
+
+
+    //Giá động
+    Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
+
+
+
+
+
+     //Giá cuối tuần
+    Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
 
 
 
