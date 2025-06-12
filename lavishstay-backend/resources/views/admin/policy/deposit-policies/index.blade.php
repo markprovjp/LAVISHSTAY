@@ -22,7 +22,6 @@
                     <span class="max-xs:sr-only">Thêm chính sách</span>
                 </a>
             </div>
-
         </div>
 
         <!-- Filters -->
