@@ -206,7 +206,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Chính sách đặt cọc///////////////////////////////////////////////////
     Route::get('/admin/deposit-policies', [DepositPolicyController::class, 'index'])->name('admin.deposit-policies');
-
+    Route::get('/admin/deposit-policies/create', [DepositPolicyController::class, 'create'])->name('admin.deposit-policies.create');
+    Route::post('/admin/deposit-policies', [DepositPolicyController::class, 'store'])->name('admin.deposit-policies.store');
+    Route::get('/admin/deposit-policies/{depositPolicy}', [DepositPolicyController::class, 'show'])->name('admin.deposit-policies.show');
+    Route::get('/admin/deposit-policies/{depositPolicy}/edit', [DepositPolicyController::class, 'edit'])->name('admin.deposit-policies.edit');
+    Route::put('/admin/deposit-policies/{depositPolicy}', [DepositPolicyController::class, 'update'])->name('admin.deposit-policies.update');
+    Route::delete('/admin/deposit-policies/{depositPolicy}', [DepositPolicyController::class, 'destroy'])->name('admin.deposit-policies.destroy');
+    Route::patch('/admin/deposit-policies/{depositPolicy}/toggle-status', [DepositPolicyController::class, 'toggleStatus'])->name('admin.deposit-policies.toggle-status');
 
 
 
