@@ -9,12 +9,14 @@ interface BookingInfoStepProps {
     form: any;
     onSubmit: (values: any) => void;
     isProcessing: boolean;
+    disabled?: boolean;
 }
 
 const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     form,
     onSubmit,
-    isProcessing
+    isProcessing,
+    disabled = false
 }) => {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
@@ -98,6 +100,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                         htmlType="submit"
                         size="large"
                         loading={isProcessing}
+                        disabled={disabled}
                         block
                         style={{
                             height: '50px',
@@ -106,7 +109,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                             borderRadius: '8px'
                         }}
                     >
-                        Tiếp tục thanh toán
+                        {disabled ? 'Không thể tiến hành' : 'Tiếp tục thanh toán'}
                     </Button>
                 </Form.Item>
             </Form>

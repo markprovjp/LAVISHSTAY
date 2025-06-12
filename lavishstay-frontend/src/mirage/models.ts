@@ -16,8 +16,7 @@ export interface Room {
     amenities: string[]; // Tất cả tiện ích của phòng
     mainAmenities?: string[]; // Tiện ích chính hiển thị ở home (4-5 tiện ích)
     discount?: number;
-    isSale?: boolean;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
+    isSale?: boolean; roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
     rating?: number;
     // thông báo sắp cháy phòng
     urgencyRoomMessage?: string; // Thông báo nếu phòng sắp hết
@@ -88,8 +87,7 @@ export const sampleRooms: Room[] = [{
     discount: 1,
     roomType: "deluxe",
     rating: 9.5,
-    urgencyRoomMessage: "Chỉ còn 7 phòng . Hãy nhanh tay đặt  !",
-    lavishPlusDiscount: 10, // Giảm 10% cho thành viên LavishPlus
+    urgencyRoomMessage: "Chỉ còn 7 phòng . Hãy nhanh tay đặt  !", lavishPlusDiscount: 10, // Giảm 10% cho thành viên LavishPlus
     maxGuests: 2,
     description: "Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.",
     images: [

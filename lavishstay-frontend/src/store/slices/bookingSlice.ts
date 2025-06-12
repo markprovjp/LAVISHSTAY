@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createSelector } from '@reduxjs/toolkit';
 
 // Types for booking
 export interface BookingRoomOption {
@@ -87,32 +87,28 @@ export interface BookingPreferences {
 }
 
 export interface BookingState {
-    // Selected rooms with quantities
-    selectedRooms: { [roomId: string]: { [optionId: string]: number } };
-
-    // Room data cache
+    selectedRooms: SelectedRooms;
     roomsData: BookingRoom[];
-
-    // Booking preferences
     preferences: BookingPreferences;
+    totals: BookingTotals;
+    currentStep: 'selection' | 'payment' | 'completion';
+    lastUpdated: string;
 
-    // Calculated totals
-    totals: {
-        roomsTotal: number;
-        breakfastTotal: number;
-        finalTotal: number;
-        nights: number;
-    };
-
-    // Booking progress
-    currentStep: 'selection' | 'summary' | 'payment' | 'confirmation';
-
-    // Loading states
-    isLoading: boolean;
-    error: string | null;
-
-    // Last updated timestamp
-    lastUpdated?: string;
+    // New field for extending existing bookings
+    extendingBooking?: {
+        originalBookingCode: string;
+        customerInfo: {
+            name: string;
+            email: string;
+            phone: string;
+        };
+        searchData: {
+            checkIn: string;
+            checkOut: string;
+            guests: number;
+        };
+        isExtending: boolean;
+    } | null;
 }
 
 const initialState: BookingState = {
@@ -121,17 +117,17 @@ const initialState: BookingState = {
     preferences: {
         breakfastOption: 'none',
         bedPreference: 'double',
-        specialRequests: '',
     },
     totals: {
         roomsTotal: 0,
         breakfastTotal: 0,
         finalTotal: 0,
-        nights: 0,
+        nights: 1,
+        guestCount: 2,
     },
     currentStep: 'selection',
-    isLoading: false,
-    error: null,
+    lastUpdated: new Date().toISOString(),
+    extendingBooking: null,
 };
 
 // Helper function to calculate totals
@@ -375,6 +371,55 @@ const bookingSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
+
+        // Start adding rooms to existing booking
+        startAddingRoomsToBooking: (
+            state,
+            action: PayloadAction<{
+                existingBookingCode: string;
+                customerInfo: {
+                    name: string;
+                    email: string;
+                    phone: string;
+                };
+                searchData: {
+                    checkIn: string;
+                    checkOut: string;
+                    guests: number;
+                };
+            }>
+        ) => {
+            const { existingBookingCode, customerInfo, searchData } = action.payload;
+
+            // Reset selected rooms but keep other info
+            state.selectedRooms = {};
+            state.currentStep = 'selection';
+            state.extendingBooking = {
+                originalBookingCode: existingBookingCode,
+                customerInfo,
+                searchData,
+                isExtending: true
+            };
+
+            // Recalculate totals
+            state.totals = calculateTotals(
+                state.selectedRooms,
+                state.roomsData,
+                state.preferences,
+                1, // will be updated with real nights
+                searchData.guests
+            );
+
+            state.lastUpdated = new Date().toISOString();
+            saveStateToStorage(state);
+        },
+
+        // Finish extending booking
+        finishExtendingBooking: (state) => {
+            state.extendingBooking = null;
+            state.currentStep = 'selection';
+            saveStateToStorage(state);
+        },
     },
 });
 
@@ -390,6 +435,8 @@ export const {
     setLoading,
     setError,
     clearError,
+    startAddingRoomsToBooking,
+    finishExtendingBooking,
 } = bookingSlice.actions;
 
 // Selectors
@@ -402,51 +449,63 @@ export const selectCurrentStep = (state: { booking: BookingState }) => state.boo
 export const selectBookingLoading = (state: { booking: BookingState }) => state.booking.isLoading;
 export const selectBookingError = (state: { booking: BookingState }) => state.booking.error;
 
-// Complex selectors
-export const selectSelectedRoomsSummary = (state: { booking: BookingState }) => {
-    const { selectedRooms, roomsData } = state.booking;
-    const summary: SelectedRoom[] = [];
+// Complex selectors with memoization
+const selectSelectedRoomsBase = (state: { booking: BookingState }) => state.booking.selectedRooms;
+const selectRoomsDataBase = (state: { booking: BookingState }) => state.booking.roomsData;
+const selectTotalsBase = (state: { booking: BookingState }) => state.booking.totals;
 
-    Object.entries(selectedRooms).forEach(([roomId, options]) => {
-        const room = roomsData.find(r => r.id.toString() === roomId);
-        if (!room) return;
+export const selectSelectedRoomsSummary = createSelector(
+    [selectSelectedRoomsBase, selectRoomsDataBase, selectTotalsBase],
+    (selectedRooms, roomsData, totals) => {
+        const summary: SelectedRoom[] = [];
 
-        Object.entries(options).forEach(([optionId, quantity]) => {
-            if (quantity > 0) {
-                const option = room.options.find(opt => opt.id === optionId);
-                if (option) {
-                    const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
-                    const totalPrice = pricePerNight * quantity * state.booking.totals.nights;
+        Object.entries(selectedRooms).forEach(([roomId, options]) => {
+            const room = roomsData.find(r => r.id.toString() === roomId);
+            if (!room) return;
 
-                    summary.push({
-                        roomId,
-                        optionId,
-                        quantity,
-                        room,
-                        option,
-                        pricePerNight,
-                        totalPrice,
-                    });
+            Object.entries(options).forEach(([optionId, quantity]) => {
+                if (quantity > 0) {
+                    const option = room.options.find(opt => opt.id === optionId);
+                    if (option) {
+                        const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
+                        const totalPrice = pricePerNight * quantity * totals.nights;
+
+                        summary.push({
+                            roomId,
+                            optionId,
+                            quantity,
+                            room,
+                            option,
+                            pricePerNight,
+                            totalPrice,
+                        });
+                    }
                 }
-            }
+            });
         });
-    });
 
-    return summary;
-};
+        return summary;
+    }
+);
 
-export const selectHasSelectedRooms = (state: { booking: BookingState }) => {
-    return Object.keys(state.booking.selectedRooms).length > 0;
-};
+export const selectHasSelectedRooms = createSelector(
+    [selectSelectedRoomsBase],
+    (selectedRooms) => {
+        return Object.keys(selectedRooms).length > 0;
+    }
+);
 
-export const selectSelectedRoomsCount = (state: { booking: BookingState }) => {
-    let count = 0;
-    Object.values(state.booking.selectedRooms).forEach(options => {
-        Object.values(options).forEach(quantity => {
-            count += quantity;
+export const selectSelectedRoomsCount = createSelector(
+    [selectSelectedRoomsBase],
+    (selectedRooms) => {
+        let count = 0;
+        Object.values(selectedRooms).forEach(options => {
+            Object.values(options).forEach(quantity => {
+                count += quantity;
+            });
         });
-    });
-    return count;
-};
+        return count;
+    }
+);
 
 export default bookingSlice.reducer;

@@ -72,11 +72,11 @@ class MockSearchService {
         // if (searchData.guestDetails) {
         //     const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
         //     filteredRooms = filteredRooms.filter(room => room.maxGuests >= totalGuests);
-        // }// Filter by availability (simplified for single hotel)
+        // }        // Filter by availability (simplified for single hotel)
         if (searchData.dateRange && searchData.dateRange.length === 2) {
             // For single hotel, we assume rooms are available unless specifically unavailable
             // You can add more complex availability logic here if needed
-            filteredRooms = filteredRooms.filter(room => room.availableRooms > 0);
+            // Removed availableRooms filter to show all rooms
         }
 
         // Filter by guest type preferences (adjusted for single hotel room types)
@@ -146,11 +146,10 @@ class MockSearchService {
         const room = sampleRooms.find((r: Room) => r.id.toString() === roomId);
         if (!room) {
             throw new Error('Room not found');
-        }
-
-        // For single hotel, simplified availability check
+        }        // For single hotel, simplified availability check
         // In real implementation, this would check actual booking database
-        const isAvailable = room.availableRooms > 0;
+        // Always assume available for now
+        const isAvailable = true;
 
         return {
             available: isAvailable,

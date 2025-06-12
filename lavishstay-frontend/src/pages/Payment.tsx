@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Layout, Typography, Form, Steps, Alert, Progress, message, Row, Col
+    Layout, Typography, Form, Steps, Alert, Progress, message, Row, Col, Button, Space
 } from 'antd';
 import { useSelector } from 'react-redux';
 import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms } from "../store/slices/bookingSlice";
 import { selectSearchData } from "../store/slices/searchSlice";
 import { BookingInfoStep, PaymentStep, PaymentSummary, CompletionStep } from '../components/payment';
+import { useBookingManager } from '../hooks/useBookingManager';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -66,8 +67,6 @@ const Payment: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr');
     const [countdown, setCountdown] = useState(900); // 15 minutes
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [bookingCode, setBookingCode] = useState('');
 
     // Redux state
     const bookingState = useSelector(selectBookingState);
@@ -75,11 +74,15 @@ const Payment: React.FC = () => {
     const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
     const hasSelectedRooms = useSelector(selectHasSelectedRooms);
 
-    // Generate booking code
-    useEffect(() => {
-        const code = `LAVISH${Date.now().toString().slice(-8)}`;
-        setBookingCode(code);
-    }, []);
+    // Anti-spam booking manager
+    const {
+        bookingCode,
+        isProcessing,
+        canProceed,
+        cooldownInfo,
+        createBooking,
+        resetBooking
+    } = useBookingManager();
 
     // Check if we have booking data from navigation or Redux
     useEffect(() => {
@@ -114,7 +117,11 @@ const Payment: React.FC = () => {
 
     // Handle form submission
     const handleSubmit = async (values: any) => {
-        setIsProcessing(true);
+        if (!canProceed) {
+            message.error('Không thể tiến hành đặt phòng lúc này');
+            return;
+        }
+
         try {
             // Combine firstName and lastName into fullName for backend
             const customerData = {
@@ -122,20 +129,17 @@ const Payment: React.FC = () => {
                 fullName: `${values.firstName || ''} ${values.lastName || ''}`.trim()
             };
 
-            // Create booking first
+            // Create booking using anti-spam service
             await createBooking(customerData);
             setCurrentStep(1);
             message.success('Đã xác nhận thông tin. Vui lòng thanh toán.');
         } catch (error) {
             message.error('Có lỗi xảy ra. Vui lòng thử lại.');
-        } finally {
-            setIsProcessing(false);
         }
     };
 
     // Handle payment
     const handlePayment = async () => {
-        setIsProcessing(true);
         try {
             // Simulate payment processing
             await new Promise(resolve => setTimeout(resolve, 3000));
@@ -143,8 +147,6 @@ const Payment: React.FC = () => {
             message.success('Thanh toán thành công!');
         } catch (error) {
             message.error('Thanh toán thất bại. Vui lòng thử lại.');
-        } finally {
-            setIsProcessing(false);
         }
     };
 
@@ -162,40 +164,40 @@ const Payment: React.FC = () => {
     // API Base URL
     const API_BASE_URL = 'http://localhost:8000/api';
 
-    // Create booking API call
-    const createBooking = async (customerData: any) => {
+    // Check payment status function
+    const checkPaymentStatus = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/payment/create-booking`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    booking_code: bookingCode,
-                    customer_name: customerData.fullName,
-                    customer_email: customerData.email,
-                    customer_phone: customerData.phone,
-                    rooms_data: JSON.stringify({
-                        rooms: selectedRoomsSummary,
-                        preferences: bookingState.preferences
-                    }),
-                    total_amount: totals.total,
-                    payment_method: selectedPaymentMethod,
-                    check_in: searchData.checkIn,
-                    check_out: searchData.checkOut,
-                }),
-            });
+            const response = await fetch(`${API_BASE_URL}/payment/status/${bookingCode}`);
+            const result = await response.json();
 
-            if (!response.ok) {
-                throw new Error('Failed to create booking');
+            if (result.success && result.payment_status === 'confirmed') {
+                setCurrentStep(2);
+                message.success('Thanh toán đã được xác nhận thành công!');
+                return true;
             }
-
-            return await response.json();
+            return false;
         } catch (error) {
-            console.error('Error creating booking:', error);
-            throw error;
+            console.error('Error checking payment status:', error);
+            return false;
         }
     };
+
+    // Auto-check payment status when on payment step
+    useEffect(() => {
+        if (currentStep === 1 && selectedPaymentMethod === 'vietqr') {
+            // Check immediately
+            checkPaymentStatus();
+
+            // Then check every 10 seconds
+            const interval = setInterval(() => {
+                checkPaymentStatus();
+            }, 10000);
+
+            return () => {
+                clearInterval(interval);
+            };
+        }
+    }, [currentStep, selectedPaymentMethod, bookingCode]);
 
     // Handle navigation functions
     const handleViewBookings = () => navigate('/bookings');
@@ -213,6 +215,7 @@ const Payment: React.FC = () => {
                                 form={form}
                                 onSubmit={handleSubmit}
                                 isProcessing={isProcessing}
+                                disabled={!canProceed || cooldownInfo.inCooldown}
                             />
                         </Col>
                         <Col span={8}>
@@ -279,6 +282,69 @@ const Payment: React.FC = () => {
                     {/* Header */}
                     <div className="text-center mb-8">
                         <Title level={2}>Thanh toán đặt phòng</Title>
+
+                        {/* Anti-spam warning */}
+                        {cooldownInfo.inCooldown && (
+                            <Alert
+                                message="Tạm thời không thể đặt phòng"
+                                description={`Bạn đã thực hiện quá nhiều lần đặt phòng. Vui lòng thử lại sau ${Math.ceil((cooldownInfo.remainingTime || 0) / (60 * 1000))} phút.`}
+                                type="warning"
+                                showIcon
+                                className="mb-4"
+                                action={
+                                    <Space>
+                                        {import.meta.env.DEV && (
+                                            <Button size="small" onClick={resetBooking}>
+                                                Xóa rate limit (Dev)
+                                            </Button>
+                                        )}
+                                        <Button size="small" onClick={() => navigate('/search')}>
+                                            Về trang chủ
+                                        </Button>
+                                    </Space>
+                                }
+                            />
+                        )}
+
+                        {!canProceed && !cooldownInfo.inCooldown && (
+                            <Alert
+                                message="Không thể tiến hành đặt phòng"
+                                description="Vui lòng kiểm tra lại thông tin hoặc thử lại sau."
+                                type="error"
+                                showIcon
+                                className="mb-4"
+                                action={
+                                    <Space>
+                                        {import.meta.env.DEV && (
+                                            <Button size="small" onClick={resetBooking}>
+                                                Reset (Dev)
+                                            </Button>
+                                        )}
+                                        <Button size="small" onClick={() => window.location.reload()}>
+                                            Tải lại trang
+                                        </Button>
+                                    </Space>
+                                }
+                            />
+                        )}
+
+                        {bookingCode && (
+                            <Alert
+                                message={`Mã đặt phòng: ${bookingCode}`}
+                                description="Mã này sẽ được sử dụng lại nếu bạn không thay đổi phòng hoặc ngày"
+                                type="info"
+                                showIcon
+                                className="mb-4"
+                                action={
+                                    import.meta.env.DEV ? (
+                                        <Button size="small" onClick={resetBooking}>
+                                            Reset booking (Dev)
+                                        </Button>
+                                    ) : undefined
+                                }
+                            />
+                        )}
+
                         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
                             <Progress
                                 percent={(currentStep + 1) * 33.33}
