@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CancellationPolicyController;
+use App\Http\Controllers\CheckinPolicyController;
+use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\RoomTypeAmenityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataFeedController;
@@ -13,6 +17,8 @@ use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\DepositPolicyController;
+use App\Http\Controllers\RoomModificationController;
 use App\Http\Controllers\TranslationController;
 
 Route::redirect('/', 'login');
@@ -164,6 +170,69 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::put('/update/{translationId}', [TranslationController::class, 'update'])->name('update');
         Route::post('/destroy/{translationId}', [TranslationController::class, 'destroy'])->name('destroy');
     });
+
+
+
+    // Bookings/////////////////////////////////////////////////////////////////
+    Route::get('/admin/bookings', [BookingController::class, 'index'])->name('admin.bookings');
+
+
+
+
+
+
+
+
+
+    // Room modification
+    Route::get('/admin/room-modifications', [RoomModificationController::class, 'index'])->name('admin.room_modifications');
+
+
+
+
+
+    // Chính sách hủy phòng///////////////////////////////////////////////////
+    Route::get('/admin/cancellation-policies', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies');
+    Route::get('/admin/cancellation-policies/show/{id}', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies.show');
+
+    Route::get('/admin/cancellation-policies/create', [CancellationPolicyController::class, 'create'])->name('admin.cancellation-policies.create');
+    Route::post('/admin/cancellation-policies/store', [CancellationPolicyController::class, 'store'])->name('admin.cancellation-policies.store');
+    Route::get('/admin/cancellation-policies/edit/{id}', [CancellationPolicyController::class, 'edit'])->name('admin.cancellation-policies.edit');
+    Route::put('/admin/cancellation-policies/update/{id}', [CancellationPolicyController::class, 'update'])->name('admin.cancellation-policies.update');
+    Route::post('/admin/cancellation-policies/destroy/{id}', [CancellationPolicyController::class, 'destroy'])->name('admin.cancellation-policies.destroy');
+    Route::patch('/admin/cancellation-policies/toggle-status/{id}', [CancellationPolicyController::class, 'toggleStatus'])->name('admin.cancellation-policies.toggle-status');
+
+
+
+    // Chính sách đặt cọc///////////////////////////////////////////////////
+    Route::get('/admin/deposit-policies', [DepositPolicyController::class, 'index'])->name('admin.deposit-policies');
+
+
+
+
+    // Chính sách checkin ///////////////////////////////////////////////////
+    Route::get('/admin/checkout-policies', [CheckinPolicyController::class, 'index'])->name('admin.checkin-policies');
+
+
+    // Chính sách checkout ///////////////////////////////////////////////////
+    Route::get('/admin/checkout-policies', [CheckoutPolicyController::class, 'index'])->name('admin.checkout-policies');
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
