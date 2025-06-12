@@ -20,10 +20,76 @@ class BookingController extends Controller
 {
 
 
-    public function index(){
-        // $bookings = Booking::with('option')->get();
-        return view('admin.bookings.index');
+    // public function index(){
+    //     // $bookings = Booking::with('option')->get();
+    //     return view('admin.bookings.index');
+    // }
+
+
+    //////////// Trading//////////////////////////////////////
+    public function trading(){
+        return view('admin.bookings.trading.index');
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //////////// Transaction History/////////////////////////////////////////
+    public function transaction_history(){
+        return view('admin.bookings.transaction_history.index');
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public function store(Request $request)
     {
