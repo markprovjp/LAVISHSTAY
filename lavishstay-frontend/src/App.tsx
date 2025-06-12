@@ -27,6 +27,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Payment from "./pages/Payment";
 import AdminPayment from "./pages/AdminPayment";
+import Reception from "./pages/Reception";
 import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
@@ -128,6 +129,7 @@ const App: React.FC = React.memo(() => {
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/admin/payment" element={<AdminPayment />} />
+            <Route path="/reception" element={<Reception />} />
             <Route path="/auth-test" element={<AuthTest />} />
 
             {/* 404 Route */}

@@ -9,7 +9,7 @@ export interface BookingRoomOption {
     };
     maxGuests: number;
     minGuests: number;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
     cancellationPolicy: {
         type: "free" | "non_refundable" | "conditional";
         freeUntil?: string;
@@ -63,7 +63,7 @@ export interface BookingRoom {
     bedType?: string;
     amenities?: string[];
     mainAmenities?: string[];
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
     rating?: number;
     maxGuests?: number;
     availableRooms?: number;

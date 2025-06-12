@@ -13,10 +13,10 @@ const LoginInfo: React.FC = () => {
                 <Space direction="vertical" size="small">
                     <Text strong>Tài khoản người dùng:</Text>
                     <Text code>Email: user@example.com | Mật khẩu: 123456</Text>
+                    <Text strong>Tài khoản lễ tân:</Text>
+                    <Text code>Email: reception@hotel.com | Mật khẩu: reception123</Text>
                     <Text strong>Tài khoản admin:</Text>
                     <Text code>Email: admin@example.com | Mật khẩu: admin123</Text>
-                    <Text strong>Tài khoản test:</Text>
-                    <Text code>Email: test@example.com | Mật khẩu: test123</Text>
                 </Space>
             }
             type="info"
