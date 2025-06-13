@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RoomPriceEventFestivalController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingExtensionController;
 use App\Http\Controllers\BookingRescheduleController;
@@ -279,6 +280,19 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    
+Route::prefix('admin/room-prices/event-festival')->name('admin.room-prices.event-festival.')->group(function () {
+    Route::get('/', [RoomPriceEventFestivalController::class, 'index'])->name('index');
+    Route::get('/statistics', [RoomPriceEventFestivalController::class, 'getStatistics'])->name('statistics');
+    Route::get('/data', [RoomPriceEventFestivalController::class, 'getData'])->name('data');
+    Route::get('/rooms', [RoomPriceEventFestivalController::class, 'getRooms'])->name('rooms'); 
+    Route::get('/events', [RoomPriceEventFestivalController::class, 'getEvents'])->name('events');
+    Route::get('/holidays', [RoomPriceEventFestivalController::class, 'getHolidays'])->name('holidays');
+    Route::get('/{id}', [RoomPriceEventFestivalController::class, 'show'])->name('show');
+    Route::post('/', [RoomPriceEventFestivalController::class, 'store'])->name('store');
+    Route::put('/{id}', [RoomPriceEventFestivalController::class, 'update'])->name('update');
+    Route::delete('/{id}', [RoomPriceEventFestivalController::class, 'destroy'])->name('destroy');
+});
 
 
 

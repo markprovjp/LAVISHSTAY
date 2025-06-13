@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
@@ -79,56 +79,95 @@ class RoomPriceEventFestivalController extends Controller
         }
     }
 
-    /**
-     * Get events for dropdown
-     */
     public function getEvents()
-    {
-        try {
-            $events = Event::active()
-                ->select('event_id', 'name')
-                ->orderBy('name')
-                ->get();
-
-            return response()->json($events);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to load events'], 500);
+{
+    try {
+        \Log::info('getEvents method called');
+        
+        // Kiểm tra bảng events có tồn tại không
+        if (!\Schema::hasTable('events')) {
+            \Log::error('Events table does not exist');
+            return response()->json(['error' => 'Events table not found'], 500);
         }
+        
+        $events = \DB::table('events')
+            ->select('event_id', 'name')
+            ->where('is_active', '1')
+            ->orderBy('name')
+            ->get();
+        
+        \Log::info('Events found:', ['count' => $events->count(), 'data' => $events->toArray()]);
+        
+        return response()->json($events);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error in getEvents:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Failed to load events', 'message' => $e->getMessage()], 500);
     }
+}
 
-    /**
-     * Get holidays for dropdown
-     */
-    public function getHolidays()
-    {
-        try {
-            $holidays = Holiday::active()
-                ->select('holiday_id', 'name')
-                ->orderBy('name')
-                ->get();
-
-            return response()->json($holidays);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to load holidays'], 500);
+public function getHolidays()
+{
+    try {
+        \Log::info('getHolidays method called');
+        
+        // Kiểm tra bảng holidays có tồn tại không
+        if (!\Schema::hasTable('holidays')) {
+            \Log::error('Holidays table does not exist');
+            return response()->json(['error' => 'Holidays table not found'], 500);
         }
+        
+        $holidays = \DB::table('holidays')
+            ->select('holiday_id', 'name')
+            ->where('is_active', '1')
+            ->orderBy('name')
+            ->get();
+        
+        \Log::info('Holidays found:', ['count' => $holidays->count(), 'data' => $holidays->toArray()]);
+        
+        return response()->json($holidays);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error in getHolidays:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Failed to load holidays', 'message' => $e->getMessage()], 500);
     }
+}
 
-    /**
-     * Get rooms for dropdown
-     */
-    public function getRooms()
-    {
-        try {
-            $rooms = Room::active()
-                ->select('room_id', 'room_name', 'room_type')
-                ->orderBy('room_name')
-                ->get();
-
-            return response()->json($rooms);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to load rooms'], 500);
+public function getRooms()
+{
+    try {
+        \Log::info('getRooms method called');
+        
+        // Kiểm tra bảng rooms có tồn tại không
+        if (!\Schema::hasTable('rooms')) {
+            \Log::error('Rooms table does not exist');
+            return response()->json(['error' => 'Rooms table not found'], 500);
         }
+        
+        $rooms = \DB::table('rooms')
+            ->select('room_id', 'room_name', 'room_type')
+            ->where('is_active', '1')
+            ->orderBy('room_name')
+            ->get();
+        
+        \Log::info('Rooms found:', ['count' => $rooms->count(), 'data' => $rooms->toArray()]);
+        
+        return response()->json($rooms);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error in getRooms:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['error' => 'Failed to load rooms', 'message' => $e->getMessage()], 500);
     }
+}
 
     /**
      * Store a new pricing
