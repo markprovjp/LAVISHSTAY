@@ -102,7 +102,7 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <button onclick="toggleStatus('{{ $table->table_name }}')"
-                                                    class="status-toggle px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $table->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                    class="status-toggle px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $table->is_active ? 'bg-green-600 text-green-800' : 'bg-red-600 text-red-800' }}">
                                                     {{ $table->is_active ? 'Hoạt động' : 'Không hoạt động' }}
                                                 </button>
                                             </td>
