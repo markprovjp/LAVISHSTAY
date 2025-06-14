@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2025 at 04:11 AM
+-- Generation Time: Jun 14, 2025 at 05:46 AM
 -- Server version: 8.3.0
 -- PHP Version: 8.2.12
 
@@ -178,7 +178,7 @@ CREATE TABLE `cancellation_policies` (
 
 INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Hủy miễn phí 7 ngày', 7, 0.00, 200000.00, 'Hủy miễn phí nếu trước 7 ngày', 1, '2025-06-11 02:26:26', '2025-06-11 01:24:04'),
-(2, 'Hủy có phí', 2, 50.00, NULL, 'Phạt 50% nếu hủy trong vòng 2 ngày', 1, '2025-06-11 02:26:26', '2025-06-11 01:16:38'),
+(2, 'Hủy có phí', 2, 50.00, NULL, 'Phạt 50% nếu hủy trong vòng 2 ngày', 0, '2025-06-11 02:26:26', '2025-06-13 00:23:30'),
 (9, 'Nguyễn Anh Đức', 3, 33.00, NULL, '33', 0, '2025-06-11 00:38:13', '2025-06-11 01:14:25');
 
 -- --------------------------------------------------------
@@ -204,7 +204,7 @@ CREATE TABLE `check_out_policies` (
 --
 
 INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Trả phòng muộn', 0.00, 200.00, 4, 'Phí 200,000 VND nếu trả phòng muộn tối đa 4 giờ', 1, '2025-06-11 02:36:00', '2025-06-11 02:36:00');
+(1, 'Trả phòng muộn', 0.00, 200.00, 4, 'Phí 200,000 VND nếu trả phòng muộn tối đa 4 giờ', 0, '2025-06-11 02:36:00', '2025-06-12 10:39:53');
 
 -- --------------------------------------------------------
 
@@ -284,7 +284,7 @@ CREATE TABLE `deposit_policies` (
 
 INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Đặt cọc 50%', 50.00, NULL, 'Yêu cầu đặt cọc 50% tổng giá', 1, '2025-06-11 02:24:24', '2025-06-11 02:24:24'),
-(5, 'Nguyễn Anh Đức', 32.00, 2000.00, 'uli', 1, '2025-06-11 07:49:09', '2025-06-11 07:49:09');
+(5, 'Nguyễn Anh Đức', 31.97, 2000.00, 'ulidd', 0, '2025-06-11 07:49:09', '2025-06-13 00:23:25');
 
 -- --------------------------------------------------------
 
@@ -376,7 +376,7 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 (1, 'Do you serve breakfast?', 'Họ có phục vụ bữa sáng không?', 'Yes, we offer an excellent buffet breakfast from 6:30 AM to 10:30 AM daily with both international and Vietnamese cuisine.', 'Có, chúng tôi cung cấp bữa sáng buffet tuyệt hảo từ 6:30 đến 10:30 hàng ngày với ẩm thực quốc tế và Việt Nam.', 5, 1, '2025-05-23 02:50:42', '2025-06-02 03:21:17'),
 (2, 'Is parking available?', 'Chỗ nghỉ có chỗ đỗ xe không?', 'Yes, we provide complimentary self-parking for hotel guests. Valet parking is also available for an additional charge.', 'Có, chúng tôi cung cấp chỗ đỗ xe tự phục vụ miễn phí cho khách khách sạn. Dịch vụ đỗ xe có người phục vụ cũng có sẵn với phí bổ sung.', 3, 1, '2025-05-23 02:50:42', '2025-06-02 03:33:00'),
 (3, 'Do you provide airport shuttle service?', 'Chỗ nghỉ có dịch vụ đưa đón sân bay không?', 'Yes, we offer airport transfer service for $25 per trip. Please contact our concierge to arrange your transfer.', 'Có, chúng tôi cung cấp dịch vụ đưa đón sân bay với giá $25 mỗi chuyến. Vui lòng liên hệ với lễ tân để sắp xếp chuyến đi.', 10, 1, '2025-05-23 02:50:42', '2025-06-02 03:33:16'),
-(4, 'What is your WiFi ?', 'Chỗ nghỉ có  Wi-Fi ra sao?', 'High-speed WiFi is complimentary throughout the hotel including all guest rooms and public areas.', 'Wi-Fi tốc độ cao miễn phí trong toàn bộ khách sạn bao gồm tất cả các phòng khách và khu vực công cộng.', 0, 0, '2025-05-23 02:50:42', '2025-06-05 00:34:42'),
+(4, 'What is your WiFi ?', 'Chỗ nghỉ có  Wi-Fi ra sao?', 'High-speed WiFi is complimentary throughout the hotel including all guest rooms and public areas.', 'Wi-Fi tốc độ cao miễn phí trong toàn bộ khách sạn bao gồm tất cả các phòng khách và khu vực công cộng.', 0, 1, '2025-05-23 02:50:42', '2025-06-12 00:57:25'),
 (7, 'Am i handsome?', 'Tôi có đẹp trai không?', 'Yes Sirrrrr', 'Chắc chắn  rồi broooo', 2, 1, '2025-06-02 02:14:43', '2025-06-02 03:01:20');
 
 -- --------------------------------------------------------
@@ -388,7 +388,8 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 CREATE TABLE `holidays` (
   `holiday_id` int NOT NULL,
   `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `date` date NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
   `description` text COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -399,9 +400,9 @@ CREATE TABLE `holidays` (
 -- Dumping data for table `holidays`
 --
 
-INSERT INTO `holidays` (`holiday_id`, `name`, `date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Tết Nguyên Đán', '2025-01-29', 'Tết Âm lịch Việt Nam', 1, '2025-06-11 02:21:39', '2025-06-11 02:21:39'),
-(2, 'Quốc khánh', '2025-09-02', 'Ngày Quốc khánh Việt Nam', 1, '2025-06-11 02:21:39', '2025-06-11 02:21:39');
+INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Tết Nguyên Đán', '2025-01-29', '2025-01-31', 'Tết Âm lịch Việt Nam', 1, '2025-06-11 02:21:39', '2025-06-13 09:05:57'),
+(2, 'Quốc khánh', '2025-09-02', NULL, 'Ngày Quốc khánh Việt Nam', 1, '2025-06-11 02:21:39', '2025-06-11 02:21:39');
 
 -- --------------------------------------------------------
 
@@ -506,7 +507,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (3, '2019_08_19_000000_create_failed_jobs_table', 1),
 (4, '2019_12_14_000001_create_personal_access_tokens_table', 1),
 (5, '2022_03_23_163443_create_sessions_table', 1),
-(6, '2022_05_11_154250_create_datafeeds_table', 1);
+(6, '2022_05_11_154250_create_datafeeds_table', 1),
+(7, '2025_06_12_074026_create_table_translation_table', 2);
 
 -- --------------------------------------------------------
 
@@ -719,6 +721,13 @@ CREATE TABLE `room_pricing` (
   `holiday_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã ngày lễ'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu giá phòng theo thời gian';
 
+--
+-- Dumping data for table `room_pricing`
+--
+
+INSERT INTO `room_pricing` (`pricing_id`, `room_id`, `start_date`, `end_date`, `price_vnd`, `reason`, `option_id`, `is_weekend`, `event_id`, `holiday_id`) VALUES
+(1, 2, '2025-06-13', '2025-06-15', 2600000.00, 'Không biết', NULL, NULL, 1, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -758,7 +767,7 @@ INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `t
 (1, 'deluxe', 'Phòng Loại Sang (Deluxe Room)', 'Chưa có mô tả', 20),
 (2, 'premium', 'Phòng cao cấp trong góc (Premium Corner Room)', 'Chưa có mô tả', 20),
 (3, 'suite', 'Phòng Suite (Suite Room)', 'Chưa có mô tả', 100),
-(4, 'the_level_1', 'Phòng The Level Cao cấp (The Level Premium Room)', 'Chưa luôn', NULL);
+(4, 'the_level_1', 'Phòng The Level Cao cấp (The Level Premium Room)', 'Chưa luônnn', NULL);
 
 -- --------------------------------------------------------
 
@@ -836,7 +845,31 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('9rfjCTHva3mGZH0kGaSOB7Ydvx7DsVy5LW5gJDz7', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiMFdOYnc1VjRkd2ttT2c3ejhkbGIwdWZLOHYzanpUUUZQZWhJOUJneCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ1OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vcm9vbS10eXBlcy9zaG93LzEiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1749654062);
+('mYCn2CBARbCW883d8Njmg9nafKUo48nCdOxB8IxO', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiVThQbEJ3OTlQU1MxT0ZjMlpENnFkNHFqUjdLRzRsd2lEMTdWaVBKMCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjY1OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vZXZlbnQtZmVzdGl2YWwtbWFuYWdlbWVudC9kYXRhP3BhZ2U9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1749810348),
+('ZrnMGV0Tu0bIqKca9bp4xWEAuEH0UPwoCakKKnZe', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoidFJZeFVpRXdKck1iV1I5eUxwMGwySldCUGJ5MFJrTEM2djR1aTd0QiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjc0OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vcm9vbXMvdHlwZS8xP3NvcnRfYnk9bWF4X2d1ZXN0cyZzb3J0X29yZGVyPWFzYyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1749833495);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_translation`
+--
+
+CREATE TABLE `table_translation` (
+  `id` bigint UNSIGNED NOT NULL,
+  `table_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `display_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `table_translation`
+--
+
+INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`, `created_at`, `updated_at`) VALUES
+(2, 'amenities', 'Tiện ích', 0, NULL, NULL),
+(3, 'currency', 'Tiền tệ', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -899,14 +932,6 @@ CREATE TABLE `weekend_days` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `weekend_days`
---
-
-INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Saturday', 1, '2025-06-11 02:02:45', '2025-06-11 02:02:45'),
-(2, 'Sunday', 1, '2025-06-11 02:02:45', '2025-06-11 02:02:45');
 
 --
 -- Indexes for dumped tables
@@ -1174,6 +1199,13 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
+-- Indexes for table `table_translation`
+--
+ALTER TABLE `table_translation`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `table_translation_table_name_unique` (`table_name`);
+
+--
 -- Indexes for table `translation`
 --
 ALTER TABLE `translation`
@@ -1262,7 +1294,7 @@ ALTER TABLE `datafeeds`
 -- AUTO_INCREMENT for table `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
-  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `dynamic_pricing_rules`
@@ -1274,7 +1306,7 @@ ALTER TABLE `dynamic_pricing_rules`
 -- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
-  MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -1310,7 +1342,7 @@ ALTER TABLE `meal_types`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -1352,7 +1384,7 @@ ALTER TABLE `room_option_promotion`
 -- AUTO_INCREMENT for table `room_pricing`
 --
 ALTER TABLE `room_pricing`
-  MODIFY `pricing_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã giá';
+  MODIFY `pricing_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã giá', AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `room_transfers`
@@ -1373,10 +1405,16 @@ ALTER TABLE `room_type_image`
   MODIFY `image_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã ảnh', AUTO_INCREMENT=22;
 
 --
+-- AUTO_INCREMENT for table `table_translation`
+--
+ALTER TABLE `table_translation`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `translation`
 --
 ALTER TABLE `translation`
-  MODIFY `translation_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bản dịch';
+  MODIFY `translation_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bản dịch', AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `users`
