@@ -222,8 +222,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Trả phòng sớm, muộn
     Route::get('/admin/check_out_requests', [CheckoutRequestController::class, 'index'])->name('admin.check_out_requests');
-
-
+    Route::post('/admin/check_out_requests', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
+    Route::post('/admin/check_out_requests/calculate_fee', [CheckoutRequestController::class, 'calculateFee'])->name('admin.check_out_requests.calculate_fee');
+    Route::patch('/admin/check_out_requests/{requestId}/approve', [CheckoutRequestController::class, 'approve'])->name('admin.check_out_requests.approve');
+    Route::get('/admin/check_out_requests/create', [CheckoutRequestController::class, 'create'])->name('admin.check_out_requests.create');
+    Route::post('/admin/check_out_requests/store', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
 
 
 
