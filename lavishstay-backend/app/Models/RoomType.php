@@ -85,4 +85,15 @@ class RoomType extends Model
         return $this->hasMany(RoomTypeImage::class, 'room_type_id', 'room_type_id')
             ->where('is_main', 0);
     }
+    public function bookings()
+    {
+        return $this->hasManyThrough(
+            Booking::class,
+            Room::class,
+            'room_type_id',
+            'room_id',
+            'room_type_id',
+            'room_id'
+        );
+    }
 }

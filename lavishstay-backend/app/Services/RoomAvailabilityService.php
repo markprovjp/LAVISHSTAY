@@ -19,56 +19,53 @@ class RoomAvailabilityService
         int $guestCount,
         ?int $roomTypeId = null
     ): Collection {
-        try {
-            \Log::info('Starting room availability search', [
-                'check_in' => $checkInDate,
-                'check_out' => $checkOutDate,
-                'guest_count' => $guestCount,
-                'room_type_id' => $roomTypeId
-            ]);
-
-            $checkIn = Carbon::parse($checkInDate);
-            $checkOut = Carbon::parse($checkOutDate);
+        $checkIn = Carbon::parse($checkInDate);
+        $checkOut = Carbon::parse($checkOutDate);
+        
+        // 1. Tìm phòng trống
+        $availableRooms = $this->findAvailableRooms($checkIn, $checkOut, $guestCount, $roomTypeId);
+        
+        // 2. Tính giá cho từng phòng
+        $roomsWithPricing = $availableRooms->map(function ($room) use ($checkIn, $checkOut) {
+            $pricingDetails = $this->calculateRoomPricing($room, $checkIn, $checkOut);
             
-            // 1. Test tìm phòng trống
-            $availableRooms = $this->findAvailableRooms($checkIn, $checkOut, $guestCount, $roomTypeId);
-            
-            \Log::info('Found available rooms', ['count' => $availableRooms->count()]);
+            return [
+                'room_id' => $room->id,
+                'room_number' => $room->room_number,
+                'room_type' => [
+                    'id' => $room->roomType->id,
+                    'name' => $room->roomType->name,
+                    'description' => $room->roomType->description,
+                    'max_guests' => $room->max_guests,
+                    'size' => $room->roomType->size,
+                    'bed_type' => $room->roomType->bed_type,
+                    'images' => $room->roomType->images->map(function ($image) {
+                        return [
+                            'id' => $image->id,
+                            'image_url' => $image->image_url,
+                            'is_main' => $image->is_main
+                        ];
+                    })
+                ],
+                'amenities' => $room->roomType->amenities->map(function ($amenity) {
+                    return [
+                        'id' => $amenity->id,
+                        'name' => $amenity->name,
+                        'icon' => $amenity->icon,
+                        'is_highlighted' => $amenity->pivot->is_highlighted ?? false
+                    ];
+                }),
+                'pricing' => $pricingDetails,
+                'policies' => [
+                    'cancellation_policy' => $room->roomType->cancellation_policy,
+                    'deposit_policy' => $room->roomType->deposit_policy,
+                    'check_in_time' => $room->roomType->check_in_time,
+                    'check_out_time' => $room->roomType->check_out_time
+                ]
+            ];
+        });
 
-            // 2. Nếu không có phòng trống, return empty
-            if ($availableRooms->isEmpty()) {
-                return collect([]);
-            }
-
-            // 3. Tính giá cho từng phòng (đơn giản hóa trước)
-            $roomsWithPricing = $availableRooms->map(function ($room) use ($checkIn, $checkOut) {
-                return [
-                    'room_id' => $room->room_id,
-                    'name' => $room->name,
-                    'room_type' => [
-                        'room_type_id' => $room->roomType->room_type_id,
-                        'name' => $room->roomType->name,
-                        'description' => $room->roomType->description ?? '',
-                        'max_guests' => $room->max_guests,
-                    ],
-                    'pricing' => [
-                        'base_total_price' => 1000000, // Test giá cố định
-                        'final_total_price' => 1000000,
-                        'currency' => 'VND'
-                    ]
-                ];
-            });
-
-            return $roomsWithPricing;
-
-        } catch (\Exception $e) {
-            \Log::error('Error in getAvailableRoomsWithPricing', [
-                'error' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile()
-            ]);
-            throw $e;
-        }
+        return $roomsWithPricing;
     }
 
     private function findAvailableRooms(
@@ -77,28 +74,21 @@ class RoomAvailabilityService
         int $guestCount,
         ?int $roomTypeId = null
     ): Collection {
-        try {
-            // Đơn giản hóa query trước
-            $query = Room::with(['roomType']);
+        $query = Room::with(['roomType.amenities', 'roomType.images', 'roomOptions'])
+            ->whereHas('roomType', function ($q) use ($guestCount) {
+                $q->where('max_guests', '>=', $guestCount);
+            });
 
-            // Kiểm tra room_type tồn tại
-            if ($roomTypeId) {
-                $query->where('room_type_id', $roomTypeId);
-            }
-
-            $rooms = $query->get();
-            
-            \Log::info('Total rooms found', ['count' => $rooms->count()]);
-
-            // Tạm thời return tất cả rooms để test
-            return $rooms;
-
-        } catch (\Exception $e) {
-            \Log::error('Error in findAvailableRooms', [
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
+        if ($roomTypeId) {
+            $query->where('room_type_id', $roomTypeId);
         }
+
+        $rooms = $query->get();
+
+        // Lọc phòng có sẵn trong khoảng thời gian
+        return $rooms->filter(function ($room) use ($checkIn, $checkOut) {
+            return $this->isRoomAvailable($room, $checkIn, $checkOut);
+        });
     }
 
     private function isRoomAvailable(Room $room, Carbon $checkIn, Carbon $checkOut): bool
@@ -107,7 +97,7 @@ class RoomAvailabilityService
         $currentDate = $checkIn->copy();
         
         while ($currentDate->lt($checkOut)) {
-            $availability = RoomAvailability::where('room_id', $room->id)
+            $availability = RoomAvailability::where('availability_id', $room->id)
                 ->whereDate('date', $currentDate)
                 ->first();
 
