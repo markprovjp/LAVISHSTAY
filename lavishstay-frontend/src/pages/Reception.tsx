@@ -10,8 +10,7 @@ import {
     Drawer,
     message
 } from 'antd';
-import { EyeOutlined, ShoppingCartOutlined, ClearOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { ShoppingCartOutlined, ClearOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 
@@ -26,8 +25,7 @@ import {
     updateRoomSelection,
     selectBookingState,
     setRoomsData,
-    clearBookingData,
-    setCurrentStep
+    clearBookingData
 } from '../store/slices/bookingSlice';
 
 import {
@@ -38,13 +36,12 @@ import {
 } from '../store/slices/searchSlice';
 
 // Import components
-import { ReceptionHeader, SearchForm, RoomCard } from '../components/reception';
+import { ReceptionHeader, SearchForm, RoomCard } from './reception/room-booking';
 import BookingSummary from '../components/search/BookingSummary';
 
 const { Content, Sider } = Layout;
 
 const Reception: React.FC = () => {
-    const navigate = useNavigate();
     const dispatch = useDispatch();
 
     // Redux states
@@ -58,9 +55,9 @@ const Reception: React.FC = () => {
     const [showBookingSummary, setShowBookingSummary] = useState(false);
 
     // Helper functions
-    const getSelectedRoomsCount = () => {
-        return Object.values(bookingState.selectedRooms).reduce((total, roomOptions) => {
-            return total + Object.values(roomOptions).reduce((sum, quantity) => sum + quantity, 0);
+    const getSelectedRoomsCount = (): number => {
+        return Object.values(bookingState.selectedRooms).reduce((total: number, roomOptions: any) => {
+            return total + Object.values(roomOptions).reduce((sum: number, quantity: any) => sum + (quantity as number), 0);
         }, 0);
     };
 
@@ -89,10 +86,8 @@ const Reception: React.FC = () => {
             message.error('Vui lòng chọn ít nhất một phòng');
             return;
         }
-        // Navigate directly to payment using BookingSummary logic
-        dispatch(setCurrentStep('payment'));
-        navigate('/payment');
-        message.success('Chuyển đến trang thanh toán');
+        // Show booking summary drawer for review before payment
+        setShowBookingSummary(true);
     };
 
     // Load rooms from Mirage on component mount
@@ -137,7 +132,7 @@ const Reception: React.FC = () => {
             };
 
             const { dateRange, guestDetails, budget, roomType, specialRequests } = criteria;
-            
+
             if (!dateRange) {
                 setRoomsWithOptions([]);
                 return;
@@ -292,7 +287,7 @@ const Reception: React.FC = () => {
                 budget: { min: 1000000, max: 10000000 }
             };
         }
-        
+
         return {
             dateRange: searchData.dateRange,
             guests: searchData.guestDetails,
@@ -330,15 +325,6 @@ const Reception: React.FC = () => {
                                         style={{ borderRadius: '8px' }}
                                     >
                                         Xóa tất cả
-                                    </Button>
-                                    <Button
-                                        icon={<EyeOutlined />}
-                                        onClick={() => setShowBookingSummary(true)}
-                                        disabled={getSelectedRoomsCount() === 0}
-                                        type="dashed"
-                                        style={{ borderRadius: '8px' }}
-                                    >
-                                        Xem tóm tắt đặt phòng
                                     </Button>
                                 </Space>
                             </Col>

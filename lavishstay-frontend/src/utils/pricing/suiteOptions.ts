@@ -25,8 +25,8 @@ export const createSuiteOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 10,
-            remaining: 8
+            total: 20, // Tầng 28-31: 5 phòng/tầng = 20 phòng Suite
+            remaining: 18
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -58,8 +58,8 @@ export const createSuiteOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 5,
-            remaining: 3
+            total: 20,
+            remaining: 17
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -96,8 +96,8 @@ export const createSuiteOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
         }, availability: {
-            total: 12,
-            remaining: 10
+            total: 20, // Tầng 28-31: 5 phòng/tầng = 20 phòng Suite
+            remaining: 15
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -132,8 +132,8 @@ export const createSuiteOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 7,
-            remaining: 5
+            total: 20, // Tầng 28-31: 5 phòng/tầng = 20 phòng Suite
+            remaining: 12
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -165,8 +165,8 @@ export const createSuiteOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 4,
-            remaining: 2
+            total: 20,
+            remaining: 8
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -199,8 +199,8 @@ export const createSuiteOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 1,
-            remaining: 1
+            total: 20,
+            remaining: 4
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -227,3 +227,9 @@ export const createSuiteOptions = (
 
     return options;
 };
+
+/**
+ * CẬP NHẬT AVAILABILITY SUITE OPTIONS THEO SƠ ĐỒ TẦNG:
+ * - Suite: 20 phòng (tầng 28-31: 5 phòng/tầng)
+ * Cập nhật tất cả total từ 5-12 thành 20
+ */

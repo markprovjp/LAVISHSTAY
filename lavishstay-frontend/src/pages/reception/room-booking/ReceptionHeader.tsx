@@ -23,7 +23,6 @@ const ReceptionHeader: React.FC<ReceptionHeaderProps> = ({
             padding: '16px 32px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
             position: 'sticky',
-            top: 80,
             zIndex: 10
         }}>
             <Row align="middle" justify="space-between" style={{ height: '94px' }}>
@@ -56,7 +55,7 @@ const ReceptionHeader: React.FC<ReceptionHeaderProps> = ({
                                 margin: 0,
                                 display: 'block'
                             }}>
-                                Quản lý đặt phòng khách sạn
+                                Quản lý đặt phòng khách sạn 
                             </Text>
                         </div>
                     </div>

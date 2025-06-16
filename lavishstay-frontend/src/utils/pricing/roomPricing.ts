@@ -61,8 +61,7 @@ export const ROOM_PRICING = {
             premium: 4200000,    // 4.2M
             luxury: 4700000      // 4.7M (đắt nhất)
         }
-    },
-    suiteTheLevel: {
+    }, theLevelSuite: {
         singleGuest: {
             basic: 3600000,      // 3.6M
             premium: 3600000     // 3.6M (chỉ có 1 loại)
@@ -98,8 +97,7 @@ export const ROOM_TYPE_MAPPING = {
     'premium': 'premium',
     'suite': 'suite',
     'presidential': 'presidential',
-    'theLevel': 'theLevelPremium',
     'theLevelPremium': 'theLevelPremium',
     'theLevelPremiumCorner': 'theLevelPremiumCorner',
-    'suiteTheLevel': 'suiteTheLevel'
+    'theLevelSuite': 'theLevelSuite'
 };
