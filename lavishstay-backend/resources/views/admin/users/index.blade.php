@@ -281,29 +281,7 @@
     </div>
 
     <script>
-        // Toggle user details
-        // function toggleDetails(userId) {
-        //     const detailsRow = document.getElementById(`details-${userId}`);
-        //     const isHidden = detailsRow.classList.contains('hidden');
-
-        //     // Close all other details first
-        //     const allDetails = document.querySelectorAll('[id^="details-"]');
-        //     allDetails.forEach(detail => {
-        //         detail.classList.add('hidden');
-        //     });
-
-        //     // Toggle current details
-        //     if (isHidden) {
-        //         detailsRow.classList.remove('hidden');
-        //         // Smooth scroll to the details
-        //         setTimeout(() => {
-        //             detailsRow.scrollIntoView({
-        //                 behavior: 'smooth',
-        //                 block: 'nearest'
-        //             });
-        //         }, 100);
-        //     }
-        // }
+        
 
         // Toggle dropdown menu
         function toggleDropdown(userId) {
