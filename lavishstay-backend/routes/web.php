@@ -121,7 +121,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    // Amenities Management Kiệt //////////////////////////////////
+    // Amenities Management //////////////////////////////////
     Route::get('/admin/services/amenities', [ServiceAmenityController::class, 'index'])->name('admin.services.amenities');
     Route::get('/admin/services/amenities/create', [ServiceAmenityController::class, 'create'])->name('admin.services.amenities.create');
     Route::post('/admin/services/amenities/store', [ServiceAmenityController::class, 'store'])->name('admin.services.amenities.store');
@@ -132,7 +132,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    //  Meals Management Công //////////////////////////////////
+    //  Meals Management //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
     Route::get('/admin/services/meals/create', [ServiceMealController::class, 'create'])->name('admin.services.meals.create');
     Route::post('/admin/services/meals/store', [ServiceMealController::class, 'store'])->name('admin.services.meals.store');
@@ -143,7 +143,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    //  Meals Management Tuyên //////////////////////////////////
+    //  Meals Management  //////////////////////////////////
     Route::get('/admin/services/beds', [ServiceBedController::class, 'index'])->name('admin.services.beds');
     Route::get('/admin/services/beds/create', [ServiceBedController::class, 'create'])->name('admin.services.beds.create');
     Route::post('/admin/services/beds/store', [ServiceBedController::class, 'store'])->name('admin.services.beds.store');
