@@ -6,7 +6,7 @@
             <div class="sm:flex sm:justify-between sm:items-center">
                 <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl md:text-4xl text-white font-bold flex items-center gap-3">
-                        <span class="icon-bounce">🏨</span>
+                        {{-- <span class="icon-bounce">🏨</span> --}}
                         Yêu cầu trả phòng sớm/muộn
                     </h1>
                     <p class="text-gray-300 text-lg mt-2">Quản lý các yêu cầu thay đổi thời gian trả phòng</p>
@@ -176,11 +176,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center">
-                                    <div class="mx-auto h-24 w-24 text-gray-400 mb-4">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                        </svg>
+                                <td colspan="6" class="px-6  text-center py-5">
+                                    <div class="mx-auto h-24 w-24  text-gray-400 mb-4">
+
                                     </div>
                                     <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Không có yêu cầu nào</h3>
                                     <p class="text-gray-500 dark:text-gray-400">Chưa có yêu cầu trả phòng sớm/muộn nào được tạo.</p>
