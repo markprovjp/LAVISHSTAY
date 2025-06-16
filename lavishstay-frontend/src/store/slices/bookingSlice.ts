@@ -9,7 +9,7 @@ export interface BookingRoomOption {
     };
     maxGuests: number;
     minGuests: number;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevelPremium" | "theLevelPremiumCorner" | "theLevelSuite";
     cancellationPolicy: {
         type: "free" | "non_refundable" | "conditional";
         freeUntil?: string;
@@ -63,7 +63,7 @@ export interface BookingRoom {
     bedType?: string;
     amenities?: string[];
     mainAmenities?: string[];
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevelPremium" | "theLevelPremiumCorner" | "theLevelSuite";
     rating?: number;
     maxGuests?: number;
     availableRooms?: number;
@@ -80,6 +80,24 @@ export interface SelectedRoom {
     totalPrice: number;
 }
 
+// Define SelectedRooms as a record/dictionary
+export interface SelectedRooms {
+    [roomId: string]: {
+        [optionId: string]: number; // quantity
+    };
+}
+
+// Define BookingTotals interface
+export interface BookingTotals {
+    roomsTotal: number;
+    breakfastTotal: number;
+    serviceFee: number;
+    taxAmount: number;
+    discountAmount: number;
+    finalTotal: number;
+    nights: number;
+}
+
 export interface BookingPreferences {
     breakfastOption: 'none' | 'standard' | 'premium';
     bedPreference: 'double' | 'single';
@@ -93,6 +111,8 @@ export interface BookingState {
     totals: BookingTotals;
     currentStep: 'selection' | 'payment' | 'completion';
     lastUpdated: string;
+    isLoading?: boolean;
+    error?: string | null;
 
     // New field for extending existing bookings
     extendingBooking?: {
@@ -121,9 +141,11 @@ const initialState: BookingState = {
     totals: {
         roomsTotal: 0,
         breakfastTotal: 0,
+        serviceFee: 0,
+        taxAmount: 0,
+        discountAmount: 0,
         finalTotal: 0,
         nights: 1,
-        guestCount: 2,
     },
     currentStep: 'selection',
     lastUpdated: new Date().toISOString(),
@@ -137,7 +159,7 @@ const calculateTotals = (
     preferences: BookingPreferences,
     nights: number,
     guestCount: number
-) => {
+): BookingTotals => {
     let roomsTotal = 0;
 
     // Calculate rooms total
@@ -146,11 +168,12 @@ const calculateTotals = (
         if (!room) return;
 
         Object.entries(options).forEach(([optionId, quantity]) => {
-            if (quantity > 0) {
+            const numericQuantity = Number(quantity);
+            if (numericQuantity > 0) {
                 const option = room.options.find(opt => opt.id === optionId);
                 if (option) {
                     const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
-                    roomsTotal += pricePerNight * quantity * nights;
+                    roomsTotal += pricePerNight * numericQuantity * nights;
                 }
             }
         });
@@ -169,11 +192,17 @@ const calculateTotals = (
             breakfastTotal = 0;
     }
 
-    const finalTotal = roomsTotal + breakfastTotal;
+    const serviceFee = 0; // Removed service fee
+    const taxAmount = 0; // Removed VAT tax
+    const discountAmount = 0; // Can be updated later
+    const finalTotal = roomsTotal + breakfastTotal - discountAmount;
 
     return {
         roomsTotal,
         breakfastTotal,
+        serviceFee,
+        taxAmount,
+        discountAmount,
         finalTotal,
         nights,
     };
@@ -464,16 +493,17 @@ export const selectSelectedRoomsSummary = createSelector(
             if (!room) return;
 
             Object.entries(options).forEach(([optionId, quantity]) => {
-                if (quantity > 0) {
+                const numericQuantity = Number(quantity);
+                if (numericQuantity > 0) {
                     const option = room.options.find(opt => opt.id === optionId);
                     if (option) {
                         const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
-                        const totalPrice = pricePerNight * quantity * totals.nights;
+                        const totalPrice = pricePerNight * numericQuantity * totals.nights;
 
                         summary.push({
                             roomId,
                             optionId,
-                            quantity,
+                            quantity: numericQuantity,
                             room,
                             option,
                             pricePerNight,
@@ -501,7 +531,7 @@ export const selectSelectedRoomsCount = createSelector(
         let count = 0;
         Object.values(selectedRooms).forEach(options => {
             Object.values(options).forEach(quantity => {
-                count += quantity;
+                count += Number(quantity);
             });
         });
         return count;

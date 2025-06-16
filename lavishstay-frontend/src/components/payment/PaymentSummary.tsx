@@ -42,9 +42,12 @@ interface PaymentSummaryProps {
     nights: number;
     totals: {
         roomsTotal: number;
-        breakfastTotal?: number;
-        finalTotal?: number;
-        total: number;
+        breakfastTotal: number;
+        serviceFee: number;
+        taxAmount: number;
+        discountAmount: number;
+        finalTotal: number;
+        nights: number;
     };
     preferences?: BookingPreferences;
     formatVND: (amount: number) => string;
@@ -186,18 +189,24 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
                         <Text>Tổng tiền phòng:</Text>
                         <Text>{formatVND(totals.roomsTotal)}</Text>
                     </div>
-                    <div className="flex justify-between mb-2">
-                        <Text>Phụ thu bữa sáng:</Text>
-                    {totals.breakfastTotal && totals.breakfastTotal > 0 && (
+                    {totals.breakfastTotal > 0 && (
+                        <div className="flex justify-between mb-2">
+                            <Text>Phụ thu bữa sáng:</Text>
                             <Text className="text-amber-600">{formatVND(totals.breakfastTotal)}</Text>
-                        )}
                         </div>
+                    )}
+                    {totals.discountAmount > 0 && (
+                        <div className="flex justify-between mb-2">
+                            <Text>Giảm giá:</Text>
+                            <Text className="text-green-600">-{formatVND(totals.discountAmount)}</Text>
+                        </div>
+                    )}
 
                     <Divider />
                     <div className="flex justify-between">
                         <Text strong>Tổng thanh toán:</Text>
                         <Text strong style={{ color: '#f5222d', fontSize: '1.1em' }}>
-                            {formatVND(totals.total)}
+                            {formatVND(totals.finalTotal)}
                         </Text>
                     </div>
                 </div>

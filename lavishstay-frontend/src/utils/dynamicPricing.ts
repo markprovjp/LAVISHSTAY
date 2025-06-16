@@ -10,7 +10,7 @@ import {
     createSuiteOptions,
     createTheLevelPremiumOptions,
     createTheLevelPremiumCornerOptions,
-    createSuiteTheLevelOptions,
+    createTheLevelSuiteOptions,
     createPresidentialOptions
 } from './pricing';
 
@@ -28,7 +28,7 @@ import {
 
 export interface DynamicPricingConfig {
     basePrice: number;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevelPremium" | "theLevelPremiumCorner" | "theLevelSuite";
     maxGuests: number;
     minGuests: number;
 }
@@ -424,17 +424,14 @@ export class RoomOptionGenerator {
             case 'presidential':
                 options = createPresidentialOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
                 break;
-            case 'theLevel':
-                options = createTheLevelPremiumOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
-                break;
             case 'theLevelPremium':
                 options = createTheLevelPremiumOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
                 break;
             case 'theLevelPremiumCorner':
                 options = createTheLevelPremiumCornerOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
                 break;
-            case 'suiteTheLevel':
-                options = createSuiteTheLevelOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
+            case 'theLevelSuite':
+                options = createTheLevelSuiteOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
                 break;
             default:
                 options = createDeluxeOptions(baseConfig, context, isUrgentBooking, priceMultiplier);
@@ -521,7 +518,7 @@ export class RoomOptionGenerator {
  */
 export const generateRoomOptionsWithDynamicPricing = (
     basePrice: number,
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel" | "theLevelPremium" | "theLevelPremiumCorner" | "suiteTheLevel",
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevelPremium" | "theLevelPremiumCorner" | "theLevelSuite",
     maxGuests: number,
     checkInDate: Dayjs,
     checkOutDate: Dayjs,

@@ -27,11 +27,19 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Payment from "./pages/Payment";
 import AdminPayment from "./pages/AdminPayment";
-import Reception from "./pages/Reception";
 import NotFound from "./pages/NotFound";
 import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
 import SearchResults from "./pages/SearchResults";
+
+// Import reception components
+import Reception from "./pages/Reception"; // Trang đặt phòng dùm khách (có logic cũ)
+import ReceptionLayout from "./components/reception/ReceptionLayout";
+import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
+import RoomManagementToday from "./pages/reception/room-management/RoomManagementToday";
+import CheckInManagement from "./pages/reception/room-management/CheckInManagement";
+import CheckOutManagement from "./pages/reception/room-management/CheckOutManagement";
+import MaintenanceManagement from "./pages/reception/room-management/MaintenanceManagement";
 
 // Import profile components
 import {
@@ -124,12 +132,22 @@ const App: React.FC = React.memo(() => {
               <Route path="change-password" element={<ChangePassword />} />
             </Route>                    {/* Standalone routes */}
 
-            {/* Legacy routes for backward compatibility */}            {/* Other routes */}
+            {/* Legacy routes for backward compatibility */}            {/* Reception Routes with nested routing */}
+            <Route path="/reception" element={<ReceptionLayout />}>
+              <Route index element={<ReceptionDashboard />} />
+              <Route path="dashboard" element={<ReceptionDashboard />} />
+              <Route path="room-booking" element={<Reception />} />
+              <Route path="room-management" element={<RoomManagementToday />} />
+              <Route path="room-management/check-in" element={<CheckInManagement />} />
+              <Route path="room-management/check-out" element={<CheckOutManagement />} />
+              <Route path="room-management/maintenance" element={<MaintenanceManagement />} />
+            </Route>
+
+            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/admin/payment" element={<AdminPayment />} />
-            <Route path="/reception" element={<Reception />} />
             <Route path="/auth-test" element={<AuthTest />} />
 
             {/* 404 Route */}

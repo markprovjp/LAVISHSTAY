@@ -153,9 +153,12 @@ const Payment: React.FC = () => {
     // Use totals directly from Redux state (already calculated in BookingSummary)
     const totals = {
         roomsTotal: bookingState.totals.roomsTotal,
-        breakfastTotal: bookingState.totals.breakfastTotal || 0,
-        finalTotal: bookingState.totals.finalTotal || bookingState.totals.roomsTotal,
-        total: bookingState.totals.finalTotal || bookingState.totals.roomsTotal // Use finalTotal from Redux
+        breakfastTotal: bookingState.totals.breakfastTotal,
+        serviceFee: bookingState.totals.serviceFee,
+        taxAmount: bookingState.totals.taxAmount,
+        discountAmount: bookingState.totals.discountAmount,
+        finalTotal: bookingState.totals.finalTotal,
+        nights: bookingState.totals.nights
     };
     const nights = searchData.checkIn && searchData.checkOut
         ? Math.ceil((new Date(searchData.checkOut).getTime() - new Date(searchData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
@@ -242,7 +245,7 @@ const Payment: React.FC = () => {
                                 onConfirmPayment={handlePayment}
                                 isProcessing={isProcessing}
                                 bookingCode={bookingCode}
-                                totalAmount={totals.total}
+                                totalAmount={totals.finalTotal}
                                 countdown={countdown}
                                 formatTime={formatTime}
                                 generateVietQRUrl={generateVietQRUrl}
