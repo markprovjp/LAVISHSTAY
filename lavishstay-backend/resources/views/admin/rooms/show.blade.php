@@ -43,21 +43,29 @@
                 </nav>
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">{{ $room->name }}</h1>
                 <p class="text-gray-600 dark:text-gray-400">
-                    Phòng {{ $room->room_number }} • Tầng {{ $room->floor }} • {{ $room->roomType->name }}
+                    Phòng {{ $room->room_number }} • Tầng {{ $room->floor }} • {{ $room->roomType->name }} 
                 </p>
             </div>
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <button onclick="showComingSoon('Chỉnh sửa phòng')"
-                    class="btn bg-yellow-500 hover:bg-yellow-600 text-white">
-                    <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="24px" height="24px">
+                <a href="{{ route('admin.rooms.edit', $room->room_id) }}"
+                    class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                    <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="18px" height="18px">
                         <path
                             d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z" />
                     </svg>
                     <span class="ml-2">Chỉnh sửa</span>
+                </a>
+                    
+
+                <!-- Delete Button (optional) -->
+                <button onclick="confirmDelete()" class="btn bg-red-500 hover:bg-red-600 text-white">
+                    <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="16" height="16">
+                        <path d="M5 7h6v6H5V7zm4-4v1h5v2h-1v7a1 1 0 01-1 1H4a1 1 0 01-1-1V6H2V4h5V3a1 1 0 011-1h2a1 1 0 011 1z"/>
+                    </svg>
+                    <span class="ml-2">Xóa phòng</span>
                 </button>
-                
             </div>
         </div>
 
@@ -470,6 +478,29 @@
                     showRoomCalendar({{ $room->room_id }});
                 } else {
                     alert(`Chức năng "${feature}" đang được phát triển và sẽ sớm ra mắt!`);
+                }
+            }
+            function confirmDelete() {
+                if (confirm('Bạn có chắc chắn muốn xóa phòng {{ $room->name }}? Hành động này không thể hoàn tác!')) {
+                    // Create form to delete
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("admin.rooms.destroy", $room->room_id) }}';
+                    
+                    const csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = '_token';
+                    csrfToken.value = '{{ csrf_token() }}';
+                    
+                    const methodField = document.createElement('input');
+                    methodField.type = 'hidden';
+                    methodField.name = '_method';
+                    methodField.value = 'DELETE';
+                    
+                    form.appendChild(csrfToken);
+                    form.appendChild(methodField);
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             }
         </script>

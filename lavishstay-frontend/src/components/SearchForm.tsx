@@ -14,6 +14,7 @@ import {
   Affix,
   Input,
   message,
+  Select,
 } from "antd";
 import {
   SearchOutlined,
@@ -57,30 +58,31 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
 }) => {
   const [form] = Form.useForm();
   const { token } = useToken();
-  const navigate = useNavigate(); const {
+  const navigate = useNavigate();  const {
     searchData,
     isValidSearchData,
     setSearchDateRange,
     setSearchGuestType,
     updateGuests,
+    updateChildAgeHandler,
     performSearch,
     clearError,
   } = useSearch();
   const [guestPopoverVisible, setGuestPopoverVisible] = useState<boolean>(false);
-
   // Local state for guest details editing (for family_young and group types)
   const [localGuestDetails, setLocalGuestDetails] = useState({
     adults: searchData.guestDetails.adults,
-    children: searchData.guestDetails.children
+    children: searchData.guestDetails.children,
+    childrenAges: searchData.guestDetails.childrenAges || []
   });
-
   // Update local state when searchData changes (from external sources)
   useEffect(() => {
     setLocalGuestDetails({
       adults: searchData.guestDetails.adults,
-      children: searchData.guestDetails.children
+      children: searchData.guestDetails.children,
+      childrenAges: searchData.guestDetails.childrenAges || []
     });
-  }, [searchData.guestDetails.adults, searchData.guestDetails.children]);
+  }, [searchData.guestDetails.adults, searchData.guestDetails.children, searchData.guestDetails.childrenAges]);
 
   // Handle local guest count change (doesn't update Redux store immediately) - memoized
   const handleLocalGuestCountChange = useCallback((
