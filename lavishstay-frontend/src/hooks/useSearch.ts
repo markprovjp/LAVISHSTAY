@@ -6,6 +6,7 @@ import {
     setDateRange,
     setGuestType,
     updateGuestDetails,
+    updateChildAge,
     setLoading,
     setError,
     clearSearchData,
@@ -199,10 +200,13 @@ export const useSearch = () => {
             newDetails[type] > (type === "adults" ? 1 : 0)
         ) {
             newDetails[type] -= 1;
-        }
-
-        dispatch(updateGuestDetails(newDetails));
+        }        dispatch(updateGuestDetails(newDetails));
     }, [searchData.guestDetails, dispatch]);
+
+    // Update child age
+    const updateChildAgeHandler = useCallback((childId: string, age: number) => {
+        dispatch(updateChildAge({ childId, age }));
+    }, [dispatch]);
 
     return {
         // State
@@ -213,9 +217,7 @@ export const useSearch = () => {
         isLoading,
         error,
         hasSearchData,
-        isValidSearchData,
-
-        // Actions
+        isValidSearchData,        // Actions
         updateSearch,
         setSearchDateRange,
         setSearchGuestType,
@@ -223,6 +225,7 @@ export const useSearch = () => {
         clearSearch,
         clearError,
         handleGuestCountChange,
+        updateChildAgeHandler,
 
         // API functions
         performSearch,

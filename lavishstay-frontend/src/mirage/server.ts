@@ -6,7 +6,11 @@ export function makeServer() {
   return createServer({
     routes() {
       this.namespace = "api";
-      this.timing = 4; // Thêm độ trễ để mô phỏng API thật
+      this.timing = 1; // Thêm độ trễ để mô phỏng API thật
+
+      // Passthrough cho payment API - để gọi thẳng Laravel backend
+      this.passthrough('http://localhost:8000/api/payment/**');
+      this.passthrough('http://localhost:8000/api/payment/*');
 
       // API endpoint để lấy tất cả các phòng
       this.get("/rooms", () => {
@@ -36,14 +40,6 @@ export function makeServer() {
           return new Response(404, {}, { error: "Phòng không tồn tại" });
         }
 
-        // Add some mock data for display purposes
-        const roomWithDetails = {
-          ...room,
-          rating: 9.2,
-          reviewCount: Math.floor(Math.random() * 100) + 50,
-          originalPriceVND: room.discount ? Math.round(room.priceVND / (1 - room.discount / 100)) : undefined
-        };
-        return { room: roomWithDetails };
       });      // API endpoint để lấy các tùy chọn/gói dịch vụ cho phòng
       this.get("/rooms/:id/options", (_, request) => {
         const roomId = parseInt(request.params.id, 10);

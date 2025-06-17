@@ -16,7 +16,6 @@ import {
     ShoppingCartOutlined,
 } from "@ant-design/icons";
 import { RoomOption } from "../../mirage/roomoption";
-import './RoomServiceOptions.css';
 
 const { Title, Text } = Typography;
 

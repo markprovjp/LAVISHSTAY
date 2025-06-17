@@ -2,14 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-
-class RoomOptionController extends Controller
-{
-    //
-}
-=======
 use App\Http\Resources\RoomOptionResource;
 use App\Models\RoomOption;
 use Illuminate\Http\Request;
@@ -53,4 +45,3 @@ class RoomOptionController extends Controller
         return new RoomOptionResource($option);
     }
 }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc

@@ -1,131 +1,276 @@
-import React, { useEffect } from "react";
-import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { Layout, Steps, Form } from "antd";
-import { 
-    BookingInfoStep, 
-    QRPaymentStep, 
-    CompletionStep, 
-    BookingSummary,
-    usePaymentFlow,
-    VietQRService
-} from "../components/payment";
-import type { BookingData } from "../components/payment/types";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+    Layout, Typography, Form, Steps, Alert, Progress, message, Row, Col, Button, Space
+} from 'antd';
+import { useSelector } from 'react-redux';
+import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms } from "../store/slices/bookingSlice";
+import { selectSearchData } from "../store/slices/searchSlice";
+import { BookingInfoStep, PaymentStep, PaymentSummary, CompletionStep } from '../components/payment';
+import { useBookingManager } from '../hooks/useBookingManager';
 
 const { Content } = Layout;
+const { Title } = Typography;
+
+// Format VND Currency
+const formatVND = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount);
+};
+
+// VietQR Configuration
+const VIETQR_CONFIG = {
+    bankId: 'MB',
+    bankBin: '970422',
+    accountNo: '0335920306',
+    accountName: 'NGUYEN VAN QUYEN',
+    template: 'compact2'
+};
+
+// Generate VietQR URL
+const generateVietQRUrl = (amount: number, content: string) => {
+    const baseUrl = 'https://img.vietqr.io/image';
+    const imagePath = `${VIETQR_CONFIG.bankId}-${VIETQR_CONFIG.accountNo}-${VIETQR_CONFIG.template}.png`;
+
+    const params = new URLSearchParams({
+        amount: amount.toString(),
+        addInfo: encodeURIComponent(content),
+        accountName: encodeURIComponent(VIETQR_CONFIG.accountName)
+    });
+
+    return `${baseUrl}/${imagePath}?${params.toString()}`;
+};
+
+// Steps configuration
+const steps = [
+    {
+        title: 'Thông tin',
+        description: 'Nhập thông tin khách hàng',
+    },
+    {
+        title: 'Thanh toán',
+        description: 'Chọn phương thức thanh toán',
+    },
+    {
+        title: 'Hoàn tất',
+        description: 'Xác nhận đặt phòng',
+    },
+];
 
 const Payment: React.FC = () => {
-    const { bookingId: paramBookingId } = useParams<{ bookingId: string }>();
-    const location = useLocation();
     const navigate = useNavigate();
-    const [form] = Form.useForm();    // Initialize payment flow hook
+    const [form] = Form.useForm();
+    const [currentStep, setCurrentStep] = useState(0);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr');
+    const [countdown, setCountdown] = useState(900); // 15 minutes
+
+    // Redux state
+    const bookingState = useSelector(selectBookingState);
+    const searchData = useSelector(selectSearchData);
+    const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
+    const hasSelectedRooms = useSelector(selectHasSelectedRooms);
+
+    // Anti-spam booking manager
     const {
-        currentStep,
-        setCurrentStep,
-        bookingData,
-        setBookingData,
-        customerInfo,
-        qrUrl,
-        countdown,
-        paymentStatus,
-        loading,
-        error,
-        handleSubmitBooking,
-        handlePaymentCheck,
-        copyToClipboard,
-        bookingId
-    } = usePaymentFlow();
+        bookingCode,
+        isProcessing,
+        canProceed,
+        cooldownInfo,
+        createBooking,
+        resetBooking
+    } = useBookingManager();
 
-    // Extract booking data from location state or URL params
+    // Check if we have booking data from navigation or Redux
     useEffect(() => {
-        if (location.state?.bookingData) {
-            setBookingData(location.state.bookingData);
-        } else if (paramBookingId) {
-            // If booking ID is provided in URL, you might want to fetch booking data
-            // This is a placeholder for fetching existing booking data
-            const defaultBookingData: BookingData = {
-                id: paramBookingId,
-                hotelName: "LavishStay Thanh Hóa",
-                roomType: "Deluxe Double Room",
-                checkIn: new Date().toISOString().split('T')[0],
-                checkOut: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-                guests: 2,
-                nights: 1,
-                price: 2400000,
-                tax: 240000,
-                total: 2640000,
-                images: [
-                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3",
-                    "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3"
-                ],
-                description: "Phòng Deluxe với view thành phố tuyệt đẹp, đầy đủ tiện nghi cao cấp",
-                location: "Thanh Hóa, Việt Nam",
-                amenities: ["Wi-Fi miễn phí", "Điều hòa", "TV 55 inch", "Minibar", "Két an toàn", "Ban công riêng"]
-            };
-            setBookingData(defaultBookingData);
-        } else {
-            // Redirect to search if no booking data
+        if (!hasSelectedRooms || selectedRoomsSummary.length === 0) {
+            message.error('Không có thông tin đặt phòng. Vui lòng chọn phòng trước.');
+            navigate('/search');
+            return;
         }
-    }, [location.state, paramBookingId, navigate, setBookingData]);
 
-    // Steps configuration
-    const steps = [
-        {
-            title: 'Thông tin đặt phòng',
-            description: 'Xác nhận thông tin'
-        },
-        {
-            title: 'Thanh toán',
-            description: 'Quét mã QR'
-        },
-        {
-            title: 'Hoàn thành',
-            description: 'Xác nhận đặt phòng'
+        // Start countdown timer
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    message.warning('Phiên đặt phòng đã hết hạn. Vui lòng đặt lại.');
+                    navigate('/search');
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [hasSelectedRooms, selectedRoomsSummary, navigate]);
+
+    // Format countdown time
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Handle form submission
+    const handleSubmit = async (values: any) => {
+        if (!canProceed) {
+            message.error('Không thể tiến hành đặt phòng lúc này');
+            return;
         }
-    ];    // Render step content based on current step
+
+        try {
+            // Combine firstName and lastName into fullName for backend
+            const customerData = {
+                ...values,
+                fullName: `${values.firstName || ''} ${values.lastName || ''}`.trim()
+            };
+
+            // Create booking using anti-spam service
+            await createBooking(customerData);
+            setCurrentStep(1);
+            message.success('Đã xác nhận thông tin. Vui lòng thanh toán.');
+        } catch (error) {
+            message.error('Có lỗi xảy ra. Vui lòng thử lại.');
+        }
+    };
+
+    // Handle payment
+    const handlePayment = async () => {
+        try {
+            // Simulate payment processing
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            setCurrentStep(2);
+            message.success('Thanh toán thành công!');
+        } catch (error) {
+            message.error('Thanh toán thất bại. Vui lòng thử lại.');
+        }
+    };
+
+    // Use totals directly from Redux state (already calculated in BookingSummary)
+    const totals = {
+        roomsTotal: bookingState.totals.roomsTotal,
+        breakfastTotal: bookingState.totals.breakfastTotal,
+        serviceFee: bookingState.totals.serviceFee,
+        taxAmount: bookingState.totals.taxAmount,
+        discountAmount: bookingState.totals.discountAmount,
+        finalTotal: bookingState.totals.finalTotal,
+        nights: bookingState.totals.nights
+    };
+    const nights = searchData.checkIn && searchData.checkOut
+        ? Math.ceil((new Date(searchData.checkOut).getTime() - new Date(searchData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+        : 1;
+
+    // API Base URL
+    const API_BASE_URL = 'http://localhost:8000/api';
+
+    // Check payment status function
+    const checkPaymentStatus = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/payment/status/${bookingCode}`);
+            const result = await response.json();
+
+            if (result.success && result.payment_status === 'confirmed') {
+                setCurrentStep(2);
+                message.success('Thanh toán đã được xác nhận thành công!');
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error checking payment status:', error);
+            return false;
+        }
+    };
+
+    // Auto-check payment status when on payment step
+    useEffect(() => {
+        if (currentStep === 1 && selectedPaymentMethod === 'vietqr') {
+            // Check immediately
+            checkPaymentStatus();
+
+            // Then check every 10 seconds
+            const interval = setInterval(() => {
+                checkPaymentStatus();
+            }, 10000);
+
+            return () => {
+                clearInterval(interval);
+            };
+        }
+    }, [currentStep, selectedPaymentMethod, bookingCode]);
+
+    // Handle navigation functions
+    const handleViewBookings = () => navigate('/bookings');
+    const handleNewBooking = () => navigate('/search');
+    const handleBack = () => setCurrentStep(0);
+
+    // Render step content
     const renderStepContent = () => {
-        if (!bookingData) return null;
-        
-        switch (currentStep) {            case 0:
+        switch (currentStep) {
+            case 0:
                 return (
-                    <BookingInfoStep
-                        currentStep={currentStep}
-                        bookingData={bookingData}
-                        form={form}
-                        loading={loading}
-                        onSubmit={handleSubmitBooking}
-                        user={{
-                            name: customerInfo.name,
-                            email: customerInfo.email
-                        }}
-                    />
+                    <Row gutter={[24, 24]}>
+                        <Col span={16}>
+                            <BookingInfoStep
+                                form={form}
+                                onSubmit={handleSubmit}
+                                isProcessing={isProcessing}
+                                disabled={!canProceed || cooldownInfo.inCooldown}
+                            />
+                        </Col>
+                        <Col span={8}>
+                            <PaymentSummary
+                                bookingCode={bookingCode}
+                                selectedRoomsSummary={selectedRoomsSummary}
+                                searchData={searchData}
+                                nights={nights}
+                                totals={totals}
+                                preferences={bookingState.preferences}
+                                formatVND={formatVND}
+                            />
+                        </Col>
+                    </Row>
                 );
             case 1:
                 return (
-                    <QRPaymentStep
-                        currentStep={currentStep}
-                        bookingData={bookingData}
-                        bookingId={bookingId}
-                        countdown={countdown}
-                        paymentStatus={paymentStatus}
-                        qrUrl={qrUrl}
-                        vietQRConfig={VietQRService.getConfig()}
-                        loading={loading}
-                        onManualCheck={handlePaymentCheck}
-                        onCopyToClipboard={copyToClipboard}
-                        onNext={() => setCurrentStep(2)}
-                        onPrev={() => setCurrentStep(0)}
-                    />
+                    <Row gutter={[24, 24]}>
+                        <Col span={16}>
+                            <PaymentStep
+                                selectedPaymentMethod={selectedPaymentMethod}
+                                onPaymentMethodChange={setSelectedPaymentMethod}
+                                onBack={handleBack}
+                                onConfirmPayment={handlePayment}
+                                isProcessing={isProcessing}
+                                bookingCode={bookingCode}
+                                totalAmount={totals.finalTotal}
+                                countdown={countdown}
+                                formatTime={formatTime}
+                                generateVietQRUrl={generateVietQRUrl}
+                            />
+                        </Col>
+                        <Col span={8}>
+                            <PaymentSummary
+                                bookingCode={bookingCode}
+                                selectedRoomsSummary={selectedRoomsSummary}
+                                searchData={searchData}
+                                nights={nights}
+                                totals={totals}
+                                preferences={bookingState.preferences}
+                                formatVND={formatVND}
+                            />
+                        </Col>
+                    </Row>
                 );
             case 2:
                 return (
                     <CompletionStep
-                        currentStep={currentStep}
-                        bookingData={bookingData}
-                        bookingId={bookingId}
-                        onGoToBookings={() => navigate('/bookings')}
-                        onGoToHome={() => navigate('/search')}
-                        onNext={() => {}}
-                        onPrev={() => setCurrentStep(1)}
+                        bookingCode={bookingCode}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        onViewBookings={handleViewBookings}
+                        onNewBooking={handleNewBooking}
                     />
                 );
             default:
@@ -133,52 +278,104 @@ const Payment: React.FC = () => {
         }
     };
 
-    if (!bookingData) {
-        return <div>Loading...</div>;
-    }
-
     return (
-        <Layout style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
-            <Content style={{ padding: '24px 0' }}>
-                <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-                    {/* Progress Steps */}
-                    <div style={{ marginBottom: 32 }}>
-                        <Steps
-                            current={currentStep}
-                            items={steps}
-                            style={{ maxWidth: 600, margin: '0 auto' }}
-                        />
-                    </div>
+        <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+            <Content style={{ padding: '24px' }}>
+                <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <Title level={2}>Thanh toán đặt phòng</Title>
 
-                    {/* Main Content */}
-                    <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-                        {/* Step Content */}
-                        <div style={{ flex: 1 }}>
-                            {renderStepContent()}
-                        </div>                        {/* Booking Summary Sidebar */}
-                        {currentStep < 2 && (
-                            <div style={{ width: 350, flexShrink: 0 }}>
-                                <BookingSummary 
-                                    bookingData={bookingData} 
-                                    bookingId={bookingId}
-                                />
-                            </div>
+                        {/* Anti-spam warning */}
+                        {cooldownInfo.inCooldown && (
+                            <Alert
+                                message="Tạm thời không thể đặt phòng"
+                                description={`Bạn đã thực hiện quá nhiều lần đặt phòng. Vui lòng thử lại sau ${Math.ceil((cooldownInfo.remainingTime || 0) / (60 * 1000))} phút.`}
+                                type="warning"
+                                showIcon
+                                className="mb-4"
+                                action={
+                                    <Space>
+                                        {import.meta.env.DEV && (
+                                            <Button size="small" onClick={resetBooking}>
+                                                Xóa rate limit (Dev)
+                                            </Button>
+                                        )}
+                                        <Button size="small" onClick={() => navigate('/search')}>
+                                            Về trang chủ
+                                        </Button>
+                                    </Space>
+                                }
+                            />
                         )}
+
+                        {!canProceed && !cooldownInfo.inCooldown && (
+                            <Alert
+                                message="Không thể tiến hành đặt phòng"
+                                description="Vui lòng kiểm tra lại thông tin hoặc thử lại sau."
+                                type="error"
+                                showIcon
+                                className="mb-4"
+                                action={
+                                    <Space>
+                                        {import.meta.env.DEV && (
+                                            <Button size="small" onClick={resetBooking}>
+                                                Reset (Dev)
+                                            </Button>
+                                        )}
+                                        <Button size="small" onClick={() => window.location.reload()}>
+                                            Tải lại trang
+                                        </Button>
+                                    </Space>
+                                }
+                            />
+                        )}
+
+                        {bookingCode && (
+                            <Alert
+                                message={`Mã đặt phòng: ${bookingCode}`}
+                                description="Mã này sẽ được sử dụng lại nếu bạn không thay đổi phòng hoặc ngày"
+                                type="info"
+                                showIcon
+                                className="mb-4"
+                                action={
+                                    import.meta.env.DEV ? (
+                                        <Button size="small" onClick={resetBooking}>
+                                            Reset booking (Dev)
+                                        </Button>
+                                    ) : undefined
+                                }
+                            />
+                        )}
+
+                        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+                            <Progress
+                                percent={(currentStep + 1) * 33.33}
+                                showInfo={false}
+                                strokeColor="#1890ff"
+                            />
+                            <Steps
+                                current={currentStep}
+                                items={steps}
+                                className="mt-4"
+                            />
+                        </div>
                     </div>
 
-                    {/* Error Display */}
-                    {error && (
-                        <div style={{
-                            marginTop: 24,
-                            padding: 16,
-                            backgroundColor: '#fff2f0',
-                            border: '1px solid #ffccc7',
-                            borderRadius: 8,
-                            color: '#a8071a'
-                        }}>
-                            {error}
-                        </div>
+                    {/* Time remaining alert */}
+                    {currentStep < 2 && (
+                        <Alert
+                            message={`Thời gian còn lại: ${formatTime(countdown)}`}
+                            description="Vui lòng hoàn tất thanh toán trong thời gian quy định"
+                            type="warning"
+                            showIcon
+                            closable
+                            className="mb-6"
+                        />
                     )}
+
+                    {/* Step Content */}
+                    {renderStepContent()}
                 </div>
             </Content>
         </Layout>

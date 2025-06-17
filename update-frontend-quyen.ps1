@@ -1,5 +1,5 @@
 # Script tu dong cap nhat frontend len nhanh QUYEN
-# Tac gia: GitHub Copilot
+# Tac gia: NGUYEN VAN QUYEN
 # Ngay tao: 29/05/2025
 
 param(

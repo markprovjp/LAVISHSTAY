@@ -29,11 +29,9 @@ import {
   CigaretteOff,
   Projector,
   Sparkles,
-  Settings,
-  Heart,
+  Settings, Heart,
   Clock3,
 } from "lucide-react";
-import "./HotelAmenities.css";
 
 const { Title, Text } = Typography;
 

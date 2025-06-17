@@ -40,16 +40,6 @@
             </div>
 
             <!-- Right: Actions -->
-<<<<<<< HEAD
-            <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <button onclick="openAddAmenityModal()"
-                    class="btn bg-blue-600 hover:bg-blue-700 text-white">
-                    <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16">
-                        <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                    </svg>
-                    <span>Thêm tiện ích</span>
-                </button>
-=======
             
             <div class="grid cursor-pointer grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                 <!-- Add room type button -->
@@ -62,7 +52,6 @@
                         <span class="max-xs:sr-only">Thêm tiện ích</span>
                     </button>
               
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
             </div>
         </div>
 
@@ -78,11 +67,7 @@
                             <div class="relative">
                                 <input type="text" id="amenitySearch" placeholder="Tìm kiếm tiện ích..."
                                     class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100">
-<<<<<<< HEAD
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-=======
                                 <div class="absolute inset-y-3 top-0 mt-3 left-0 pl-3 flex items-center pointer-events-none">
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                     </svg>
@@ -137,41 +122,15 @@
                         </div>
                     </div>
 
-<<<<<<< HEAD
-                    <div class="p-5">
-                        @if ($roomType->amenities->count() > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-=======
                     <div class="p-6">
                         @if ($roomType->amenities->count() > 0)
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                 @foreach ($roomType->amenities as $amenity)
                                     <div class="amenity-item relative p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200 {{ $amenity->pivot->is_highlighted ? 'ring-2 ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' : '' }}"
                                          data-amenity-id="{{ $amenity->amenity_id }}"
                                          data-highlighted="{{ $amenity->pivot->is_highlighted ? 'true' : 'false' }}"
                                          data-category="{{ $amenity->category }}">
                                         
-<<<<<<< HEAD
-                                        <!-- Selection checkbox -->
-                                        <div class="absolute top-3 left-3">
-                                            <input type="checkbox" 
-                                                   class="amenity-checkbox" 
-                                                   value="{{ $amenity->amenity_id }}"
-                                                   onchange="toggleAmenitySelection({{ $amenity->amenity_id }})">
-                                        </div>
-
-                                        <!-- Highlight badge -->
-                                        @if($amenity->pivot->is_highlighted)
-                                            <div class="absolute top-3 right-3">
-                                                <span class="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                                    ⭐ Nổi bật
-                                                </span>
-                                            </div>
-                                        @endif
-
-                                        <div class="flex items-start space-x-3 mt-6">
-=======
                                         <div class="flex justify-between items-center gap-6 ">
                                             <!-- Selection checkbox -->
                                             <div class="">
@@ -192,7 +151,6 @@
                                         </div>
 
                                         <div class="flex items-start space-x-3 mt-2">
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                             <div class="flex-shrink-0">
                                                 @if ($amenity->icon)
                                                     <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
@@ -311,11 +269,7 @@
     <!-- Add Amenity Modal -->
     <div id="addAmenityModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
-<<<<<<< HEAD
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-=======
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl mt-10 w-full max-w-7xl max-h-[90vh] flex flex-col">
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                 
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">

@@ -4,10 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-<<<<<<< HEAD
-class RoomType extends Model
-{
-=======
 trait HasTranslations
 {
     public function getTranslatedAttribute($column, $lang)
@@ -22,7 +18,6 @@ trait HasTranslations
 class RoomType extends Model
 {
     use HasTranslations;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     protected $table = 'room_types';
     protected $primaryKey = 'room_type_id';
     public $timestamps = false;
@@ -34,24 +29,21 @@ class RoomType extends Model
         'total_room'
     ];
 
-<<<<<<< HEAD
-=======
 
     public function translations()
     {
         return $this->hasMany(Translation::class, 'record_id')
             ->where('table_name', $this->getTable());
     }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     public function amenities()
     {
         return $this->belongsToMany(
-            Amenity::class, 
+            Amenity::class,
             'room_type_amenity',     // Pivot table
             'room_type_id',          // Foreign key của RoomType trong pivot
             'amenity_id'             // Foreign key của Amenity trong pivot
         )->withPivot('is_highlighted')  // Lấy thêm field từ pivot
-         ->withTimestamps();            // Nếu pivot có created_at, updated_at
+            ->withTimestamps();            // Nếu pivot có created_at, updated_at
     }
 
     public function highlightedAmenities()
@@ -62,6 +54,11 @@ class RoomType extends Model
     public function rooms()
     {
         return $this->hasMany(Room::class, 'room_type_id', 'room_type_id');
+    }
+
+    public function dynamicPricingRules()
+    {
+        return $this->hasMany(DynamicPricingRule::class, 'room_type_id', 'room_type_id');
     }
     /**
      * Relationship với bảng room_type_image
@@ -77,7 +74,7 @@ class RoomType extends Model
     public function mainImage()
     {
         return $this->hasOne(RoomTypeImage::class, 'room_type_id', 'room_type_id')
-                    ->where('is_main', 1);
+            ->where('is_main', 1);
     }
 
     /**
@@ -86,7 +83,17 @@ class RoomType extends Model
     public function otherImages()
     {
         return $this->hasMany(RoomTypeImage::class, 'room_type_id', 'room_type_id')
-                    ->where('is_main', 0);
+            ->where('is_main', 0);
     }
-    
+    public function bookings()
+    {
+        return $this->hasManyThrough(
+            Booking::class,
+            Room::class,
+            'room_type_id',
+            'room_id',
+            'room_type_id',
+            'room_id'
+        );
+    }
 }

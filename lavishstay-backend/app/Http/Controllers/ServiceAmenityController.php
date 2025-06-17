@@ -2,16 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-
-class ServiceAmenityController extends Controller
-{
-    public function index(){
-        return view('admin.services.amenities.index');
-    }
-}
-=======
 use App\Models\Amenity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -126,4 +116,3 @@ class ServiceAmenityController extends Controller
         ]);
     }
 }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc

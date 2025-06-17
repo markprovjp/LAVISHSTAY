@@ -24,7 +24,6 @@ interface MirageRoom {
     amenities: string[];
     images: string[];
     maxGuests: number;
-    availableRooms: number;
     discount?: number;
 }
 
@@ -151,8 +150,7 @@ class SearchService {
                 ...room,
                 _preferenceScore: 5
             }));
-        }        // Filter by availability (only show rooms with available inventory)
-        filtered = filtered.filter(room => room.availableRooms > 0);
+        }
 
         // Sort rooms by preference and capacity match
         filtered.sort((a, b) => {

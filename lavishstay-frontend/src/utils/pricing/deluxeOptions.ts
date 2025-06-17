@@ -26,8 +26,8 @@ export const createDeluxeOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 25,
-            remaining: 18
+            total: 90, // Cập nhật theo sơ đồ tầng: 90 phòng Deluxe
+            remaining: 78 // Phòng basic - còn nhiều
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
@@ -54,7 +54,7 @@ export const createDeluxeOptions = (
             description: "Thanh toán tại khách sạn"
         }, availability: {
             total: 15,
-            remaining: 12
+            remaining: 75
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -84,7 +84,7 @@ export const createDeluxeOptions = (
             description: "Thanh toán ngay - Giá tốt nhất"
         }, availability: {
             total: 30,
-            remaining: 25
+            remaining: 72
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
@@ -116,7 +116,7 @@ export const createDeluxeOptions = (
             description: "Thanh toán ngay"
         }, availability: {
             total: 20,
-            remaining: 15
+            remaining: 585
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
@@ -145,7 +145,7 @@ export const createDeluxeOptions = (
             description: "Thanh toán tại khách sạn"
         }, availability: {
             total: 10,
-            remaining: 6
+            remaining: 58
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -176,7 +176,7 @@ export const createDeluxeOptions = (
             description: "Thanh toán tại khách sạn"
         }, availability: {
             total: 10,
-            remaining: 2
+            remaining: 45
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },

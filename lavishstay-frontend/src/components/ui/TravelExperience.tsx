@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import { Card, Typography, Button, Space, List } from "antd";
 import { motion } from "framer-motion";
 import {
-  ArrowRightOutlined,
-  EyeOutlined,
+  ArrowRightOutlined, EyeOutlined,
   BookOutlined,
 } from "@ant-design/icons";
-import "./TravelExperience.css";
 
 const { Title, Paragraph } = Typography;
 
