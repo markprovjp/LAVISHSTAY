@@ -61,13 +61,6 @@
                                     class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->images->count() }})</span>
                             </h2>
                         </div>
-<<<<<<< HEAD
-                        <button onclick="openImageManager({{ $roomType->room_type_id }})"
-                            class="btn me-3 cursor-pointer bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
-                            <svg class="shrink-0 me-2" width="16px" height="16px" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-=======
 
                         <button onclick="openImageManager({{ $roomType->room_type_id }})"
                             class="btn cursor-pointer bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200">
@@ -77,7 +70,6 @@
                                     d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                             </svg>
                             <span class="max-xs:sr-only content-center">Quản lý ảnh</span>
                         </button>
@@ -89,26 +81,12 @@
                                 @php
                                     $mainImage = $roomType->images->where('is_main', 1)->first();
                                     $otherImages = $roomType->images->where('is_main', 0)->take(4);
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                     // Nếu không có ảnh chính, lấy ảnh đầu tiên làm ảnh chính
                                     if (!$mainImage) {
                                         $mainImage = $roomType->images->first();
                                         $otherImages = $roomType->images->skip(1)->take(4);
                                     }
-<<<<<<< HEAD
-    
-                                    $totalImages = $roomType->images->count();
-                                    $remainingImages = $totalImages - 5; // Trừ đi 1 ảnh chính + 4 ảnh phụ
-                                @endphp
-    
-                                <!-- Gallery Layout -->
-                                <div class="flex gap-4 h-96">
-    
-=======
 
                                     $totalImages = $roomType->images->count();
                                     $remainingImages = $totalImages - 5; // Trừ đi 1 ảnh chính + 4 ảnh phụ
@@ -117,31 +95,20 @@
                                 <!-- Gallery Layout -->
                                 <div class="flex gap-4 h-96">
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                     <!-- Main Image (Left Half) -->
                                     <div class="w-1/2 relative">
                                         <div class="relative h-full group cursor-pointer overflow-hidden rounded-xl"
                                             onclick="viewSingleImage('{{ $mainImage->image_url }}', '{{ $roomType->name }} - Ảnh chính')">
-<<<<<<< HEAD
-                                            <img src="{{ $mainImage->image_url }}" alt="Ảnh chính - {{ $roomType->name }}"
-                                                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
-    
-=======
                                             <img src="{{ $mainImage->image_url }}"
                                                 alt="Ảnh chính - {{ $roomType->name }}"
                                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                             <!-- Main Image Badge -->
                                             <div
                                                 class="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg z-10">
                                                 ⭐ Ảnh chính
                                             </div>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                             <!-- Hover Overlay -->
                                             <div
                                                 class="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300">
@@ -160,11 +127,7 @@
                                             </div>
                                         </div>
                                     </div>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                     <!-- Other Images (Right Half) -->
                                     <div class="w-1/2 flex flex-col gap-2">
                                         <!-- Top Row -->
@@ -174,12 +137,8 @@
                                                 @if ($otherImages->count() > 0)
                                                     <div class="relative h-full group cursor-pointer overflow-hidden rounded-lg"
                                                         onclick="viewSingleImage('{{ $otherImages->first()->image_url }}', '{{ $roomType->name }} - Ảnh 2')">
-<<<<<<< HEAD
-                                                        <img src="{{ $otherImages->first()->image_url }}" alt="Ảnh 2"
-=======
                                                         <img src="{{ $otherImages->first()->image_url }}"
                                                             alt="Ảnh 2"
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                                                         <div
                                                             class="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300">
@@ -199,11 +158,7 @@
                                                     </div>
                                                 @endif
                                             </div>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                             <!-- Image 3 -->
                                             <div class="w-1/2 relative">
                                                 @if ($otherImages->count() > 1)
@@ -231,11 +186,7 @@
                                                 @endif
                                             </div>
                                         </div>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                         <!-- Bottom Row -->
                                         <div class="flex gap-2 h-1/2">
                                             <!-- Image 4 -->
@@ -264,16 +215,6 @@
                                                     </div>
                                                 @endif
                                             </div>
-<<<<<<< HEAD
-    
-                                            <!-- Image 5 / View All -->
-                                            <div class="w-1/2 relative">
-                                                @if ($otherImages->count() > 3)
-                                                    <div class="relative h-full cursor-pointer overflow-hidden rounded-lg">
-                                                        <img src="{{ $otherImages->skip(3)->first()->image_url }}"
-                                                            alt="Ảnh 5" class="w-full h-full object-cover">
-    
-=======
 
                                             <!-- Image 5 / View All -->
                                             <div class="w-1/2 relative">
@@ -283,7 +224,6 @@
                                                         <img src="{{ $otherImages->skip(3)->first()->image_url }}"
                                                             alt="Ảnh 5" class="w-full h-full object-cover">
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                                         @if ($remainingImages > 0)
                                                             <!-- "+X more" overlay -->
                                                             <div class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center cursor-pointer"
@@ -321,11 +261,7 @@
                                         </div>
                                     </div>
                                 </div>
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                 <!-- View All Images Button -->
                                 <div class="mt-4 text-center">
                                     <button onclick="openAllImagesModal()"
@@ -347,17 +283,11 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-<<<<<<< HEAD
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Chưa có ảnh
-                                            nào</h3>
-                                        <p class="text-gray-500 dark:text-gray-400 mb-6">Thêm ảnh để khách hàng có thể xem
-=======
                                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Chưa có
                                             ảnh
                                             nào</h3>
                                         <p class="text-gray-500 dark:text-gray-400 mb-6">Thêm ảnh để khách hàng có thể
                                             xem
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                                             loại phòng này</p>
                                         <button onclick="openImageManager({{ $roomType->room_type_id }})"
                                             class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
@@ -402,7 +332,7 @@
                 </div>
 
                 <!-- All Images Gallery Modal -->
-                <div id="allImagesModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden">
+                <div id="allImagesModal" class="fixed modal-overlay inset-0 bg-black bg-opacity-95 z-50 hidden">
                     <div class="h-full flex flex-col">
 
                         <!-- Header -->
@@ -554,11 +484,7 @@
                             </div>
                         </div>
                     </div>
-<<<<<<< HEAD
-                     <!-- Statistics -->
-=======
                     <!-- Statistics -->
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                     <div class="bg-white h-full flex-1 dark:bg-gray-800 shadow-sm rounded-xl">
                         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
                             <h2 class="font-semibold text-gray-800 dark:text-gray-100">Thông tin loại phòng</h2>
@@ -595,11 +521,7 @@
                             </div>
                         </div>
                     </div>
-<<<<<<< HEAD
-                </div >
-=======
                 </div>
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
                 <!-- Amenities -->
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
@@ -610,15 +532,6 @@
                                 class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->amenities->count() }})</span>
                         </h2>
                         <button onclick="openAmenityManager({{ $roomType->room_type_id }})"
-<<<<<<< HEAD
-            class="btn cursor-pointer bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200">
-            <svg class="shrink-0 me-2" width="16px" height="16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span class="max-xs:sr-only content-center">Quản lý tiện ích</span>
-        </button>
-=======
                             class="btn cursor-pointer bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200">
                             <svg class="shrink-0 me-2" width="16px" height="16px"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -630,7 +543,6 @@
                             </svg>
                             <span class="max-xs:sr-only content-center">Quản lý tiện ích</span>
                         </button>
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                     </div>
                     <div class="p-5">
                         @if ($roomType->amenities->count() > 0)
@@ -690,11 +602,7 @@
             <!-- Sidebar -->
             <div class="space-y-6">
 
-<<<<<<< HEAD
-               
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
                 <!-- Quick Actions -->
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
@@ -1013,11 +921,7 @@
             alert(`Chức năng quản lý ảnh cho loại phòng ID: ${roomTypeId} đang được phát triển!`);
         }
 
-<<<<<<< HEAD
-                // Thêm function hiển thị loading overlay
-=======
         // Thêm function hiển thị loading overlay
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
         function showLoadingOverlay(message = 'Đang tải...') {
             // Tạo overlay nếu chưa có
             let overlay = document.getElementById('pageLoadingOverlay');
@@ -1033,11 +937,7 @@
                 `;
                 document.body.appendChild(overlay);
             }
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
             overlay.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -1048,11 +948,7 @@
             setTimeout(() => {
                 window.location.href = `/admin/room-types/${roomTypeId}/amenities`;
                 console.log(`Redirecting to /admin/room-types/${roomTypeId}/amenities`);
-<<<<<<< HEAD
-                
-=======
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
             }, 500);
         }
 
@@ -1273,6 +1169,10 @@
     </script>
     <!-- CSS với tỷ lệ cố định -->
     <style>
+        .modal-overlay {
+            z-index: 50;
+            background-color: rgba(0, 0, 0, 0.768)
+        }
         /* Gallery Container - Main Layout */
         .gallery-container {
             display: flex;

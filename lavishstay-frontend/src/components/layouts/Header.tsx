@@ -44,6 +44,13 @@ interface HeaderProps {
   transparent?: boolean;
 }
 
+interface MenuItem {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  children?: MenuItem[];
+}
+
 const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -116,17 +123,23 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     boxShadow: scrolled ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
     transition: "all 0.3s ease",
     backdropFilter: scrolled ? "blur(12px)" : "none",
-    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
-  };  // Navigation items
-  const menuItems = [
+    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",  };  // Navigation items
+  const menuItems: MenuItem[] = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
-
     { key: "/about", label: "Về chúng tôi", icon: null },
+    // Reception menu with dropdown
+    {
+      key: "/reception",
+      label: "🏨 Lễ tân",
+      icon: null,
+    },
     // Development only - Auth test page
     ...(process.env.NODE_ENV === 'development' ? [
       { key: "/auth-test", label: "🔐 Auth Test", icon: null }
     ] : []),
-  ];// User menu dropdown
+  ];
+
+  // User menu dropdown
   const userMenu = (
     <Menu
       style={{
@@ -224,24 +237,60 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
         <div className="hidden lg:flex flex-1 justify-center mx-8">
           <div className="flex items-center space-x-8">
             {menuItems.map((item) => (
-              <Link
-                key={item.key}
-                to={item.key}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
-                  ? `bg-opacity-20 font-semibold`
-                  : 'font-medium'
-                  }`}
-                style={{
-                  color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
-                }}
-              >
-                {item.icon && (
-                  <span style={{ fontSize: "16px" }}>{item.icon}</span>
-                )}
-                <span style={{ fontFamily: token.fontFamily }}>
-                  {item.label}
-                </span>
-              </Link>
+              item.children ? (
+                <Dropdown
+                  key={item.key}
+                  overlay={
+                    <Menu>
+                      {item.children.map((child) => (
+                        <Menu.Item key={child.key}>
+                          <Link to={child.key} style={{ color: token.colorTextBase }}>
+                            {child.label}
+                          </Link>
+                        </Menu.Item>
+                      ))}
+                    </Menu>
+                  }
+                  trigger={["hover"]}
+                  placement="bottomCenter"
+                >
+                  <span
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 cursor-pointer ${location.pathname.startsWith(item.key)
+                      ? `bg-opacity-20 font-semibold`
+                      : 'font-medium'
+                      }`}
+                    style={{
+                      color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+                    }}
+                  >
+                    {item.icon && (
+                      <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                    )}
+                    <span style={{ fontFamily: token.fontFamily }}>
+                      {item.label}
+                    </span>
+                  </span>
+                </Dropdown>
+              ) : (
+                <Link
+                  key={item.key}
+                  to={item.key}
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
+                    ? `bg-opacity-20 font-semibold`
+                    : 'font-medium'
+                    }`}
+                  style={{
+                    color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+                  }}
+                >
+                  {item.icon && (
+                    <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                  )}
+                  <span style={{ fontFamily: token.fontFamily }}>
+                    {item.label}
+                  </span>
+                </Link>
+              )
             ))}
           </div>
         </div>{" "}        {/* Desktop Right Menu */}
@@ -346,28 +395,45 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
             header: { background: token.colorBgBase },
             body: { background: token.colorBgBase, padding: "16px" },
           }}
-        >
-          <Menu
+        >          <Menu
             mode="vertical"
             selectedKeys={[location.pathname]}
             style={{ border: "none", background: token.colorBgBase }}
-          >
-            {menuItems.map((item) => (
-              <Menu.Item
-                key={item.key}
-                icon={item.icon}
-                style={{ color: token.colorTextBase }}
-              >
-                <Link
-                  to={item.key}
-                  onClick={() => setMobileMenuOpen(false)}
-                  style={{ color: token.colorTextBase }}
-                >
-                  {item.label}
-                </Link>
-              </Menu.Item>
-            ))}
-          </Menu>
+            items={menuItems.map((item) => {
+              if (item.children) {
+                return {
+                  key: item.key,
+                  label: item.label,
+                  icon: item.icon,
+                  children: item.children.map((child) => ({
+                    key: child.key,
+                    label: (
+                      <Link
+                        to={child.key}
+                        onClick={() => setMobileMenuOpen(false)}
+                        style={{ color: token.colorTextBase }}
+                      >
+                        {child.label}
+                      </Link>
+                    ),
+                  })),
+                };
+              }
+              return {
+                key: item.key,
+                label: (
+                  <Link
+                    to={item.key}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: token.colorTextBase }}
+                  >
+                    {item.label}
+                  </Link>
+                ),
+                icon: item.icon,
+              };
+            })}
+          />
 
           <Divider />
 

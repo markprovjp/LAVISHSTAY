@@ -9,23 +9,22 @@ import {
     Space,
     message,
     Tag,
-    Image,
     Skeleton,
     Empty,
-    Modal,
-    Carousel,
-    Divider,
     Drawer,
     notification
 } from 'antd';
 import {
-    LeftOutlined,
-    RightOutlined,
-    StarFilled,
     ShoppingCartOutlined
 } from '@ant-design/icons';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
+import {
+    setRoomsData,
+    updateRoomSelection,
+    selectBookingState,
+    selectSelectedRoomsCount
+} from '../store/slices/bookingSlice';
 import { Room } from '../mirage/models';
 import { searchService } from '../services/searchService';
 import SearchForm from '../components/SearchForm';
@@ -36,32 +35,36 @@ import dayjs from 'dayjs';
 // Import new components
 import BookingSummary from '../components/search/BookingSummary';
 import RoomTypeSection from '../components/search/RoomTypeSection';
-import AnchorNavigation from '../components/search/AnchorNavigation';
 import BookingFloatButton from '../components/search/BookingFloatButton';
+import AnchorNavigation from '../components/search/AnchorNavigation';
+import ImageGalleryModal from '../components/search/ImageGalleryModal';
+import RoomDetailModal from '../components/search/RoomDetailModal';
 import { showAddRoomNotification } from '../components/search/NotificationSystem';
-
-
 
 const { Title, Text } = Typography;
 
-interface SelectedRooms {
-    [roomId: string]: {
-        [optionId: string]: number;
-    };
-}
-
 const SearchResults: React.FC = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const searchData = useSelector((state: RootState) => state.search);
+    const bookingState = useSelector(selectBookingState);
+    const selectedRoomsCount = useSelector(selectSelectedRoomsCount);
+
     const [loading, setLoading] = useState(true);
     const [rooms, setRooms] = useState<Room[]>([]);
-    const [selectedRooms, setSelectedRooms] = useState<SelectedRooms>({});
-    const [total, setTotal] = useState(0);
-    const [isRoomDetailModalVisible, setIsRoomDetailModalVisible] = useState(false);
-    const [selectedRoomDetail, setSelectedRoomDetail] = useState<Room | null>(null);
-
-    // Drawer state for booking summary
     const [isBookingDrawerVisible, setIsBookingDrawerVisible] = useState(false);
+
+    // Modal states
+    const [imageGalleryState, setImageGalleryState] = useState({
+        visible: false,
+        images: [] as string[],
+        currentIndex: 0,
+        roomName: ''
+    });
+    const [roomDetailState, setRoomDetailState] = useState({
+        visible: false,
+        room: null as Room | null
+    });
 
     // Notification API
     const [api, contextHolder] = notification.useNotification();
@@ -69,27 +72,29 @@ const SearchResults: React.FC = () => {
     // Calculate number of nights from search data
     const getNights = () => {
         return calculateNightsFromRange(searchData.dateRange) || 1;
-    };    // Format VND currency
+    };
+
+    // Format VND currency
     const formatVND = (price: number) => {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
         }).format(price);
-    };    // Check if room suggestion should be shown - now always shows all rooms
-    const shouldShowSuggestion = () => {
-        // Always return true to show all rooms regardless of guest count
-        // Capacity warnings will be handled by the room options themselves
-        return true;
-    };    // Handle room quantity change with notification
-    const handleQuantityChange = (roomId: string, optionId: string, quantity: number) => {
-        const prevQuantity = selectedRooms[roomId]?.[optionId] || 0;
+    };
 
-        setSelectedRooms(prev => ({
-            ...prev,
-            [roomId]: {
-                ...prev[roomId],
-                [optionId]: quantity
-            }
+    // Handle room quantity change with notification
+    const handleQuantityChange = (roomId: string, optionId: string, quantity: number) => {
+        const prevQuantity = bookingState.selectedRooms[roomId]?.[optionId] || 0;
+        const nights = getNights();
+        const guestCount = (searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0);
+
+        // Update Redux store
+        dispatch(updateRoomSelection({
+            roomId,
+            optionId,
+            quantity,
+            nights,
+            guestCount
         }));
 
         // Show notification when adding rooms
@@ -101,38 +106,79 @@ const SearchResults: React.FC = () => {
                 showAddRoomNotification(api, room.name, option.name, quantity);
             }
         }
-    };    // Handle room detail modal
-    const showRoomDetail = (room: Room) => {
-        setSelectedRoomDetail(room);
-        setIsRoomDetailModalVisible(true);
     };
 
-    // Handle image gallery - simplified to just show room detail
-    const showImageGallery = (room: Room) => {
-        showRoomDetail(room);
-    };// Helper function to get display name for room type
+    // Helper function to get display name for room type
     const getRoomTypeDisplayName = (roomType: string) => {
         const typeMap: { [key: string]: string } = {
             'deluxe': 'Deluxe',
             'premium': 'Premium',
             'suite': 'Suite',
-            'theLevel': 'The Level Premium',
             'theLevelSuite': 'The Level Suite',
             'theLevelCorner': 'The Level Corner',
             'corner': 'Corner Suite',
             'presidential': 'Presidential Suite'
         };
         return typeMap[roomType] || roomType.charAt(0).toUpperCase() + roomType.slice(1);
-    };// Get total selected items count
-    const getTotalSelectedItems = () => {
-        return Object.values(selectedRooms).reduce((total, roomOptions) => {
-            return total + Object.values(roomOptions).reduce((sum, quantity) => sum + quantity, 0);
-        }, 0);
     };
 
-    // Handle room detail page navigation
-    const navigateToRoomDetail = (roomId: string) => {
-        navigate(`/rooms/${roomId}`);
+    // Get total selected items count
+    const getTotalSelectedItems = () => {
+        return selectedRoomsCount;
+    };
+
+    // Check if room suggestion should be shown - now always shows all rooms
+    const shouldShowSuggestion = () => {
+        return true;
+    };
+
+    // Handle image gallery
+    const showImageGallery = (room: Room) => {
+        setImageGalleryState({
+            visible: true,
+            images: room.images || [room.image || ''],
+            currentIndex: 0,
+            roomName: room.name
+        });
+    };
+
+    // Handle image gallery navigation
+    const handleImageGalleryNext = () => {
+        setImageGalleryState(prev => ({
+            ...prev,
+            currentIndex: (prev.currentIndex + 1) % prev.images.length
+        }));
+    };
+
+    const handleImageGalleryPrevious = () => {
+        setImageGalleryState(prev => ({
+            ...prev,
+            currentIndex: prev.currentIndex === 0 ? prev.images.length - 1 : prev.currentIndex - 1
+        }));
+    };
+
+    const closeImageGallery = () => {
+        setImageGalleryState(prev => ({ ...prev, visible: false }));
+    };
+
+    // Handle room detail modal (for future use)
+    // const showRoomDetail = (room: Room) => {
+    //     setRoomDetailState({
+    //         visible: true,
+    //         room: room
+    //     });
+    // };
+
+    const closeRoomDetail = () => {
+        setRoomDetailState({ visible: false, room: null });
+    };
+
+    const handleViewDetail = (roomId: string) => {
+        navigate(`/room/${roomId}`);
+    };
+
+    const handleBookNow = () => {
+        navigate('/booking');
     };
 
     // Fetch search results
@@ -140,10 +186,12 @@ const SearchResults: React.FC = () => {
         const fetchResults = async () => {
             try {
                 setLoading(true);
+                console.log('Fetching search results with data:', searchData);
                 const results = await searchService.searchRooms(searchData);
+                console.log('Search results:', results);
 
                 // Apply dynamic pricing to each room
-                const roomsWithDynamicPricing = results.rooms.map(room => {
+                const roomsWithDynamicPricing = results.rooms.map((room: any) => {
                     // Safe date handling with defaults - convert to dayjs
                     const checkInDate = searchData.dateRange && searchData.dateRange[0] ?
                         searchData.dateRange[0] : dayjs();
@@ -157,7 +205,7 @@ const SearchResults: React.FC = () => {
 
                     // Generate dynamic room options using dayjs dates với guest count
                     const dynamicOptions = generateRoomOptionsWithDynamicPricing(
-                        room.priceVND || 1900000, // TĂNG FALLBACK PRICE LÊN 3M
+                        1900000, // Base price
                         room.roomType, // roomType
                         room.maxGuests, // maxGuests
                         checkInDate, // checkInDate as dayjs
@@ -173,7 +221,40 @@ const SearchResults: React.FC = () => {
                 });
 
                 setRooms(roomsWithDynamicPricing);
-                setTotal(results.total);
+
+                // Update Redux store with rooms data
+                dispatch(setRoomsData(roomsWithDynamicPricing.map((room: any) => ({
+                    id: room.id,
+                    name: room.name,
+                    image: room.image || '',
+                    images: room.images || [],
+                    size: room.size,
+                    view: room.view,
+                    bedType: typeof room.bedType === 'string' ? room.bedType : room.bedType?.default,
+                    amenities: room.amenities || [],
+                    mainAmenities: room.mainAmenities || [],
+                    roomType: room.roomType,
+                    rating: room.rating,
+                    maxGuests: room.maxGuests,
+                    options: room.options.map((option: any) => ({
+                        id: option.id,
+                        name: option.name,
+                        pricePerNight: {
+                            vnd: option.pricePerNight?.vnd || 1900000
+                        },
+                        maxGuests: option.maxGuests || room.maxGuests,
+                        minGuests: option.minGuests || 1,
+                        roomType: room.roomType,
+                        cancellationPolicy: option.cancellationPolicy,
+                        paymentPolicy: option.paymentPolicy,
+                        availability: option.availability,
+                        additionalServices: option.additionalServices,
+                        promotion: option.promotion,
+                        recommended: option.recommended,
+                        mostPopular: option.mostPopular,
+                        dynamicPricing: option.dynamicPricing
+                    }))
+                }))));
             } catch (error: any) {
                 message.error('Có lỗi xảy ra khi tải kết quả tìm kiếm');
                 console.error('Search error:', error);
@@ -183,7 +264,7 @@ const SearchResults: React.FC = () => {
         };
 
         fetchResults();
-    }, [searchData]);
+    }, [searchData, dispatch]);
 
     if (loading) {
         return (
@@ -229,7 +310,9 @@ const SearchResults: React.FC = () => {
                 </div>
             </div>
         );
-    } return (
+    }
+
+    return (
         <div className="min-h-screen">
             {contextHolder}
 
@@ -238,7 +321,7 @@ const SearchResults: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="mb-4">
                         <Title level={2} className="mb-2">
-                            Kết quả tìm kiếm phòng ({total} phòng)
+                            Kết quả tìm kiếm phòng ({rooms.length} phòng)
                         </Title>
                         <Space size="middle">
                             {searchData.dateRange && (
@@ -263,40 +346,46 @@ const SearchResults: React.FC = () => {
                         <SearchForm className="search-form-compact" />
                     </div>
                 </div>
-            </div>            {/* Main Content Layout */}
+            </div>
+
+            {/* Main Content Layout */}
             <div className="relative">
+                {/* Anchor Navigation - fixed position cho desktop */}
+                {rooms.length > 0 && (
+                    <AnchorNavigation
+                        rooms={rooms}
+                        getRoomTypeDisplayName={getRoomTypeDisplayName}
+                    />
+                )}
+
                 {/* Room Cards Container - Full Width */}
-                <div className="max-w-7xl mx-auto px-4 py-8">                    <Space direction="vertical" size="large" className="w-full">
-                    {/* Group rooms by type and create sections */}
-                    {Array.from(new Set(rooms.map(room => room.roomType))).map((roomType) => {
-                        const roomsOfType = rooms.filter(room => room.roomType === roomType);
-                        return (
-                            <RoomTypeSection
-                                key={roomType}
-                                roomType={roomType}
-                                rooms={roomsOfType}
-                                selectedRooms={selectedRooms}
-                                onQuantityChange={handleQuantityChange}
-                                onShowImageGallery={showImageGallery}
-                                shouldShowSuggestion={shouldShowSuggestion}
-                                searchData={searchData}
-                                formatVND={formatVND}
-                                getNights={getNights}
-                                getRoomTypeDisplayName={getRoomTypeDisplayName}
-                            />
-                        );
-                    })}
-                </Space>
-                </div>                {/* Sticky Anchor Navigation - Outside Container */}
-                <AnchorNavigation
-                    rooms={rooms}
-                    getRoomTypeDisplayName={getRoomTypeDisplayName}
-                />
-            </div>            {/* Floating Action Button for Booking Summary */}
-            <BookingFloatButton
-                totalItems={getTotalSelectedItems()}
-                onClick={() => setIsBookingDrawerVisible(true)}
-            />            {/* Booking Summary Drawer */}
+                <div className="max-w-7xl mx-auto px-4 py-8">
+                    <Space direction="vertical" size="large" className="w-full">
+                        {/* Group rooms by type and create sections */}
+                        {Array.from(new Set(rooms.map(room => room.roomType))).map((roomType) => {
+                            const roomsOfType = rooms.filter(room => room.roomType === roomType);
+                            return (
+                                <RoomTypeSection
+                                    key={roomType}
+                                    roomType={roomType}
+                                    rooms={roomsOfType}
+                                    onQuantityChange={handleQuantityChange}
+                                    onShowImageGallery={showImageGallery}
+                                    shouldShowSuggestion={shouldShowSuggestion}
+                                    searchData={searchData}
+                                    formatVND={formatVND}
+                                    getNights={getNights}
+                                    getRoomTypeDisplayName={getRoomTypeDisplayName}
+                                />
+                            );
+                        })}
+                    </Space>
+                </div>
+            </div>
+
+
+
+            {/* Booking Summary Drawer */}
             <Drawer
                 title={
                     <div className="flex items-center gap-3 py-2">
@@ -329,150 +418,41 @@ const SearchResults: React.FC = () => {
                     borderBottom: '1px solid #e8e8e8',
                     padding: '16px 24px'
                 }}
-            >
-                <BookingSummary
-                    selectedRooms={selectedRooms}
-                    rooms={rooms}
+            >            <BookingSummary
                     formatVND={formatVND}
                     getNights={getNights}
-                    searchData={searchData}
-                    onQuantityChange={handleQuantityChange}
                 />
             </Drawer>
-       
-     
 
-    <Modal
-        title={selectedRoomDetail?.name}
-        open={isRoomDetailModalVisible}
-        onCancel={() => setIsRoomDetailModalVisible(false)}
-        footer={[
-            <Button key="back" onClick={() => setIsRoomDetailModalVisible(false)}>
-                Đóng
-            </Button>,
-            <Button
-                key="detail"
-                type="default"
-                onClick={() => {
-                    if (selectedRoomDetail) {
-                        navigateToRoomDetail(selectedRoomDetail.id.toString());
-                    }
-                }}
-            >
-                Xem chi tiết phòng
-            </Button>,
-            <Button
-                key="book"
-                type="primary"
-                onClick={() => {
-                    if (selectedRoomDetail) {
-                        navigateToRoomDetail(selectedRoomDetail.id.toString());
-                    }
-                }}
-            >
-                Đặt phòng ngay
-            </Button>
-        ]}
-        width={1000}
-    >
-        {selectedRoomDetail && (
-            <div>
-                {/* Room Images Carousel */}
-                {selectedRoomDetail.images && selectedRoomDetail.images.length > 0 ? (
-                    <Carousel
-                        dots={{ className: '' }}
-                        arrows
-                        prevArrow={<LeftOutlined />}
-                        nextArrow={<RightOutlined />}
-                        className="mb-4"
-                    >
-                        {selectedRoomDetail.images.map((img, index) => (
-                            <div key={index}>
-                                <Image
-                                    src={img}
-                                    alt={`${selectedRoomDetail.name} ${index + 1}`}
-                                    className="w-full h-54 object-cover rounded"
-                                    fallback="https://via.placeholder.com/800x300?text=Room+Image"
-                                />
-                            </div>
-                        ))}
-                    </Carousel>
-                ) : (
-                    <Image
-                        src={selectedRoomDetail.image}
-                        alt={selectedRoomDetail.name}
-                        className="w-full h-64 object-cover rounded mb-4"
-                        fallback="https://via.placeholder.com/800x300?text=Room+Image"
-                    />
-                )}
+            {/* Booking Float Button - hiển thị khi có phòng được chọn */}
+            {getTotalSelectedItems() > 0 && (
+                <BookingFloatButton
+                    totalItems={getTotalSelectedItems()}
+                    onClick={() => setIsBookingDrawerVisible(true)}
+                />
+            )}
 
-                {/* Room Details */}
-                <Row gutter={[16, 16]}>
-                    <Col span={12}>
-                        <Space direction="vertical" size="small" className="w-full">
-                            <div>
-                                <Text strong>Diện tích: </Text>
-                                <Text>{selectedRoomDetail.size}m²</Text>
-                            </div>
-                            <div>
-                                <Text strong>View: </Text>
-                                <Text>{selectedRoomDetail.view}</Text>
-                            </div>
-                            <div>
-                                <Text strong>Số khách tối đa: </Text>
-                                <Text>{selectedRoomDetail.maxGuests} khách</Text>
-                            </div>
-                            {selectedRoomDetail.rating && (
-                                <div>
-                                    <Text strong>Đánh giá: </Text>
-                                    <Space>
-                                        <StarFilled className="text-yellow-500" />
-                                        <Text>{selectedRoomDetail.rating}/10</Text>
-                                    </Space>
-                                </div>
-                            )}
-                        </Space>
-                    </Col>
-                    <Col span={12}>
-                        <div className="text-right">
-                            <Text type="secondary">Giá từ</Text>
-                            <div>
-                                <Title level={3} className="text-blue-600 mb-0">
-                                    {formatVND(selectedRoomDetail.priceVND)}
-                                </Title>
-                                <Text type="secondary">/đêm</Text>
-                            </div>
-                        </div>
-                    </Col>
-                </Row>
+            {/* Image Gallery Modal */}
+            <ImageGalleryModal
+                visible={imageGalleryState.visible}
+                images={imageGalleryState.images}
+                currentIndex={imageGalleryState.currentIndex}
+                roomName={imageGalleryState.roomName}
+                onClose={closeImageGallery}
+                onNext={handleImageGalleryNext}
+                onPrevious={handleImageGalleryPrevious}
+            />
 
-                <Divider />
-
-                {/* All Amenities */}
-                <div>
-                    <Text strong className="block mb-3">Tiện ích đầy đủ:</Text>
-                    <Space size="small" wrap>
-                        {selectedRoomDetail.amenities.map((amenity, index) => (
-                            <Tag key={index} className="rounded-full">
-                                {amenity}
-                            </Tag>
-                        ))}
-                    </Space>
-                </div>
-
-                {selectedRoomDetail.description && (
-                    <>
-                        <Divider />
-                        <div>
-                            <Text strong className="block mb-2">Mô tả:</Text>
-                            <Text>{selectedRoomDetail.description}</Text>
-                        </div>
-                    </>
-                )}
-            </div>
-        )}
-    </Modal>
-        </div >
+            {/* Room Detail Modal */}
+            <RoomDetailModal
+                visible={roomDetailState.visible}
+                room={roomDetailState.room}
+                onClose={closeRoomDetail}
+                onViewDetail={handleViewDetail}
+                onBookNow={handleBookNow}
+                formatVND={formatVND}
+            />
+        </div>
     );
 };
 

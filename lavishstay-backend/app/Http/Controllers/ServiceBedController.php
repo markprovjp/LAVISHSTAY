@@ -2,16 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-
-class ServiceBedController extends Controller
-{
-    public function index(){
-        return view('admin.services.beds.index');
-    }
-}
-=======
 use App\Models\BedType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -118,4 +108,3 @@ class ServiceBedController extends Controller
         ]);
     }
 }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc

@@ -3,9 +3,15 @@ import { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
 // Types for search data
+export interface ChildAgeInfo {
+    age: number;
+    id: string; // unique identifier for each child
+}
+
 export interface GuestDetails {
     adults: number;
     children: number;
+    childrenAges: ChildAgeInfo[]; // Array to store each child's age
 }
 
 export interface SearchData {
@@ -33,10 +39,10 @@ const initialState: SearchState = {
     dateRange: null,
     checkIn: undefined,
     checkOut: undefined,
-    guests: 2,
-    guestDetails: {
+    guests: 2,    guestDetails: {
         adults: 2,
         children: 0,
+        childrenAges: [],
     },
     guestType: 'couple',
     searchDate: undefined,
@@ -155,25 +161,27 @@ const searchSlice = createSlice({
 
         setGuestType: (state, action: PayloadAction<SearchData['guestType']>) => {
             const guestType = action.payload;
-            state.guestType = guestType;
-
-            // Auto-update guest details based on type
+            state.guestType = guestType;            // Auto-update guest details based on type
             switch (guestType) {
                 case 'business':
                 case 'solo':
-                    state.guestDetails = { adults: 1, children: 0 };
+                    state.guestDetails = { adults: 1, children: 0, childrenAges: [] };
                     state.guests = 1;
                     break;
                 case 'couple':
-                    state.guestDetails = { adults: 2, children: 0 };
+                    state.guestDetails = { adults: 2, children: 0, childrenAges: [] };
                     state.guests = 2;
                     break;
                 case 'family_young':
-                    state.guestDetails = { adults: 2, children: 1 };
+                    state.guestDetails = { 
+                        adults: 2, 
+                        children: 1, 
+                        childrenAges: [{ age: 5, id: 'child_1' }] 
+                    };
                     state.guests = 3;
                     break;
                 case 'group':
-                    state.guestDetails = { adults: 4, children: 0 };
+                    state.guestDetails = { adults: 4, children: 0, childrenAges: [] };
                     state.guests = 4;
                     break;
             }
@@ -181,14 +189,44 @@ const searchSlice = createSlice({
             state.searchDate = new Date().toISOString();
             state.error = null;
             saveStateToStorage(state);
-        },
-
-        updateGuestDetails: (state, action: PayloadAction<Partial<GuestDetails>>) => {
-            state.guestDetails = { ...state.guestDetails, ...action.payload };
+        },        updateGuestDetails: (state, action: PayloadAction<Partial<GuestDetails>>) => {
+            const updatedDetails = { ...state.guestDetails, ...action.payload };
+            
+            // If children count changes, adjust childrenAges array
+            if (action.payload.children !== undefined) {
+                const newChildrenCount = action.payload.children;
+                const currentAges = state.guestDetails.childrenAges || [];
+                
+                if (newChildrenCount > currentAges.length) {
+                    // Add new children with default age
+                    const newAges = [...currentAges];
+                    for (let i = currentAges.length; i < newChildrenCount; i++) {
+                        newAges.push({ age: 5, id: `child_${i + 1}` });
+                    }
+                    updatedDetails.childrenAges = newAges;
+                } else if (newChildrenCount < currentAges.length) {
+                    // Remove excess children
+                    updatedDetails.childrenAges = currentAges.slice(0, newChildrenCount);
+                }
+            }
+            
+            state.guestDetails = updatedDetails;
             state.guests = state.guestDetails.adults + state.guestDetails.children;
             state.searchDate = new Date().toISOString();
             state.error = null;
             saveStateToStorage(state);
+        },
+
+        updateChildAge: (state, action: PayloadAction<{ childId: string; age: number }>) => {
+            const { childId, age } = action.payload;
+            const childIndex = state.guestDetails.childrenAges.findIndex(child => child.id === childId);
+            
+            if (childIndex !== -1) {
+                state.guestDetails.childrenAges[childIndex].age = age;
+                state.searchDate = new Date().toISOString();
+                state.error = null;
+                saveStateToStorage(state);
+            }
         },
 
         setLoading: (state, action: PayloadAction<boolean>) => {
@@ -207,6 +245,25 @@ const searchSlice = createSlice({
             }
         },
 
+        resetSearchForm: (state) => {
+            // Reset to default values but keep tomorrow + 1 night as default
+            const tomorrow = dayjs().add(1, 'day');
+            const dayAfter = tomorrow.add(1, 'day');
+
+            state.dateRange = [tomorrow, dayAfter];
+            state.checkIn = tomorrow.format('YYYY-MM-DD');
+            state.checkOut = dayAfter.format('YYYY-MM-DD');
+            state.guestDetails = { adults: 2, children: 0, childrenAges: [] };
+            state.guests = 2;
+            state.location = '';
+            state.guestType = 'couple';
+            state.searchDate = new Date().toISOString();
+            state.error = null;
+
+            // Save to localStorage
+            saveStateToStorage(state);
+        },
+
         resetError: (state) => {
             state.error = null;
         },
@@ -219,9 +276,11 @@ export const {
     setDateRange,
     setGuestType,
     updateGuestDetails,
+    updateChildAge,
     setLoading,
     setError,
     clearSearchData,
+    resetSearchForm,
     resetError,
 } = searchSlice.actions;
 

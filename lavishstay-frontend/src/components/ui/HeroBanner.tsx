@@ -3,7 +3,6 @@ import { Typography } from "antd";
 import { Link } from "react-router-dom";
 import "animate.css";
 import StyledTitle from "./StyledTitle"; // Import component StyledTitle
-import "../../assets/css/StyledTitleAnimations.css"; // Import CSS cho hiệu ứng
 import { useTranslation } from "react-i18next"; //lần đầu là phải iu trước
 
 const { Title, Paragraph } = Typography;

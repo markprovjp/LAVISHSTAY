@@ -2,17 +2,6 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-use Illuminate\Http\Request;
-
-class UserController extends Controller
-{
-    public function index()
-    {
-        return view('admin.users.index');
-    }
-}
-=======
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * UserController - Quản lý người dùng trong hệ thống
- */         
+ */
 class UserController extends Controller
 {
     /**
@@ -74,7 +63,8 @@ class UserController extends Controller
         // Xử lý upload profile photo (sử dụng Jetstream)
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
             $photoPath = $request->file('profile_photo')->storePublicly(
-                'profile-photos', ['disk' => 'public']
+                'profile-photos',
+                ['disk' => 'public']
             );
             $validated['profile_photo_path'] = $photoPath;
         }
@@ -143,16 +133,51 @@ class UserController extends Controller
             if ($user->profile_photo_path && Storage::disk('public')->exists($user->profile_photo_path)) {
                 Storage::disk('public')->delete($user->profile_photo_path);
             }
-            
+
             $photoPath = $request->file('profile_photo')->storePublicly(
-                'profile-photos', ['disk' => 'public']
+                'profile-photos',
+                ['disk' => 'public']
             );
             $validated['profile_photo_path'] = $photoPath;
         }
 
         $user->update($validated);
 
-        return redirect()->route('admin.users')->with('success', 'Thông tin người dùng đã được cập nhật!');
+        return redirect()->route('admin.users.show', $user->id)->with('success', 'Thông tin người dùng đã được cập nhật!');
+    }
+
+
+    /**
+     * Đổi mật khẩu người dùng
+     */
+    public function changePassword(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
+            ],
+        ], [
+            'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
+        ]);
+
+        // Kiểm tra mật khẩu hiện tại
+        if (!Hash::check($request->current_password, $user->password)) {
+            return redirect()->back()->with('error', 'Mật khẩu hiện tại không chính xác.');
+        }
+
+        // Cập nhật mật khẩu mới
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return redirect()->back()->with('success', 'Mật khẩu đã được thay đổi thành công.');
     }
 
     /**
@@ -177,4 +202,3 @@ class UserController extends Controller
         return redirect()->route('admin.users')->with('success', 'Người dùng đã được xóa thành công!');
     }
 }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc

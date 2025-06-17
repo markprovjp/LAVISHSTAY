@@ -7,7 +7,6 @@ export interface Room {
     room_code: string; // Mã phòng, có thể để trống nếu không cần thiết
     name: string;
     image: string;
-    priceVND: number; // Giá thấp nhất từ các options
     size: number;
     view: string;
     bedType: string | {
@@ -18,18 +17,18 @@ export interface Room {
     mainAmenities?: string[]; // Tiện ích chính hiển thị ở home (4-5 tiện ích)
     discount?: number;
     isSale?: boolean;
-    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
+    roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevelPremium" | "theLevelPremiumCorner" | "theLevelSuite";
     rating?: number;
     // thông báo sắp cháy phòng
     urgencyRoomMessage?: string; // Thông báo nếu phòng sắp hết
     maxGuests: number; // Số khách tối đa mà loại phòng này có thể chứa
     description: string;
     images: string[];
-    totalRooms: number; // Tổng số phòng có sẵn của loại này
-    availableRooms: number; // Số phòng còn lại
     options: RoomOption[]; // Các lựa chọn giá và dịch vụ cho loại phòng này
-    lavishPlusDiscount?: number; // Giảm giá cho thành viên LavishPlus
-
+    lavishPlusDiscount?: number; // Giảm giá cho thành viên LavishPlus    // Thông tin tầng và số lượng phòng
+    totalRooms?: number; // Tổng số phòng loại này trong khách sạn
+    floors?: number[]; // Các tầng có loại phòng này
+    roomsPerFloor?: number | number[]; // Số phòng mỗi tầng (có thể là số cố định hoặc mảng số cho từng tầng)
 }
 
 // Hotel Rating Details Interface
@@ -53,7 +52,6 @@ export const sampleRooms: Room[] = [{
     room_code: "DELUXE",
     name: "Phòng Loại Sang (Deluxe Room)",
     image: "/images/room/Deluxe_Room/1.jpg",
-    priceVND: 2000000, // TĂNG GIÁ GỐC LÊN 2.5M// Giá thấp nhất từ các options
     size: 32,
     view: "Nhìn ra thành phố",
     bedType: {
@@ -91,12 +89,12 @@ export const sampleRooms: Room[] = [{
     ],
     discount: 1,
     roomType: "deluxe",
-    rating: 9.5,
-    urgencyRoomMessage: "Chỉ còn 7 phòng . Hãy nhanh tay đặt  !",
+    rating: 9.5, urgencyRoomMessage: "Chỉ còn 12 phòng. Hãy nhanh tay đặt!",
     lavishPlusDiscount: 10, // Giảm 10% cho thành viên LavishPlus
     maxGuests: 2,
-    totalRooms: 23, // Tổng số phòng deluxe
-    availableRooms: 18, // Số phòng còn lại
+    totalRooms: 90, // Tổng 90 phòng Deluxe (tầng 2-5, 8-9: 15 phòng/tầng)
+    floors: [2, 3, 4, 5, 8, 9], // Các tầng có phòng Deluxe
+    roomsPerFloor: 15, // 15 phòng mỗi tầng
     description: "Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.",
     images: [
         "/images/room/Deluxe_Room/1.jpg",
@@ -108,12 +106,11 @@ export const sampleRooms: Room[] = [{
     ]
 }, {
     id: 2,
-    room_code: "PREMIUM",
+    room_code: "PREMIUM_CORNER",
     name: "Phòng cao cấp trong góc (Premium Corner Room)",
     image: "/images/room/Premium_Corner_Room/1.jpg",
-    priceVND: 1600000,
-    size: 55,
-    view: "Tầm nhìn thành phố",
+    size: 42, // Theo sơ đồ: Premium Corner = 42 m²
+    view: "Tầm nhìn góc thành phố",
     bedType: {
         default: "1 giường đôi cực lớn  hoặc 2 giường đơn",
         options: ["Giường đôi", "2 giường đơn"]
@@ -150,12 +147,13 @@ export const sampleRooms: Room[] = [{
     ],
     discount: 2,
     roomType: "premium",
-    rating: 9.4,
-    urgencyRoomMessage: "Chỉ còn 5 phòng . Hãy nhanh tay đặt  !",
+    rating: 9.4, urgencyRoomMessage: "Chỉ còn 8 phòng. Hãy nhanh tay đặt!",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
-    totalRooms: 8, // Tổng số phòng premium
-    availableRooms: 15, // Số phòng còn lại
+    totalRooms: 96, // Tổng 96 phòng Premium Corner (tầng 10-17: 12 phòng/tầng)
+    floors: [10, 11, 12, 13, 14, 15, 16, 17], // Các tầng có phòng Premium Corner
+    roomsPerFloor: 12, // 12 phòng mỗi tầng
+
     description: "Phòng giường đôi rộng rãi này có máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm.",
     images: [
         "/images/room/Premium_Corner_Room/1.jpg",
@@ -172,7 +170,6 @@ export const sampleRooms: Room[] = [{
     room_code: "THE_LEVEL_PREMIUM",
     name: "Phòng The Level Cao cấp (The Level Premium Room)",
     image: "/images/room/The_Level_Premium_Room/1.jpg",
-    priceVND: 3900000,
     size: 33,
     view: "Nhìn ra thành phố",
     bedType: {
@@ -209,13 +206,14 @@ export const sampleRooms: Room[] = [{
         "Máy pha cà phê",
     ],
     discount: 7,
-    roomType: "theLevel",
+    roomType: "theLevelPremium",
     rating: 9.8,
-    urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
+    urgencyRoomMessage: "Chỉ còn 6 phòng. Hãy nhanh tay đặt!",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
-    totalRooms: 8, // Tổng số phòng The Level
-    availableRooms: 13, // Số phòng còn lại
+    totalRooms: 30, // Tổng 30 phòng The Level Premium (tầng 18-19, 24: 10 phòng/tầng)
+    floors: [18, 19, 24], // Các tầng có phòng The Level Premium
+    roomsPerFloor: 10, // 10 phòng mỗi tầng
     description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
     images: [
         "/images/room/The_Level_Premium_Room/1.jpg",
@@ -235,10 +233,8 @@ export const sampleRooms: Room[] = [{
     id: 4,
     room_code: "SUITE",
     name: "Phòng Suite (Suite Room)",
-    image: "/images/room/Suite/1.webp",
-    priceVND: 6200000,
-    size: 78,
-    view: "Tầm nhìn toàn cảnh biển",
+    image: "/images/room/Suite/1.webp", size: 93, // Theo sơ đồ: Suite = 93 m²
+    view: "Tầm nhìn thành phố",
     bedType: {
         default: "1 giường đôi cực lớn  ",
         options: ["Giường đôi", "2 giường đơn"]
@@ -273,15 +269,15 @@ export const sampleRooms: Room[] = [{
         "Suite riêng tư",
         "Có cung cấp nôi/cũi theo yêu cầu"
 
-    ],
-    discount: 15,
+    ], discount: 15,
     roomType: "suite",
     rating: 9.8,
-    urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
+    urgencyRoomMessage: "Chỉ còn 6 phòng. Hãy nhanh tay đặt!",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
-    totalRooms: 11, // Tổng số phòng The Level
-    availableRooms: 9, // Số phòng còn lại
+    totalRooms: 20, // Tổng 20 phòng Suite (tầng 28-31: 5 phòng/tầng)
+    floors: [28, 29, 30, 31], // Các tầng có phòng Suite
+    roomsPerFloor: 5, // 5 phòng mỗi tầng
     description: "Suite rộng rãi này được bố trí 1 phòng ngủ, khu vực ghế ngồi và 1 phòng tắm với buồng tắm đứng cùng bồn tắm. Suite này có máy điều hòa, TV màn hình phẳng, tường cách âm, minibar, khu vực ăn uống cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
     images: [
         "/images/room/Suite/1.webp",
@@ -301,7 +297,6 @@ export const sampleRooms: Room[] = [{
     room_code: "THE_LEVEL_PREMIUM_CORNER",
     name: "Phòng The Level Hảo Hạng Ở Góc (The Level Premium Corner Room)",
     image: "/images/room/The_Level_Premium_Corner_Room/1.webp",
-    priceVND: 3244000,
     size: 45,
     view: "Nhìn ra thành phố",
     bedType: {
@@ -337,16 +332,16 @@ export const sampleRooms: Room[] = [{
         "WiFi miễn phí",
         "Máy pha cà phê",
 
-    ],
-    discount: 17,
-    roomType: "theLevel",
+    ], discount: 17,
+    roomType: "theLevelPremiumCorner",
     rating: 10,
     urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
-    totalRooms: 13, // Tổng số phòng The Level
-    availableRooms: 7, // Số phòng còn lại
-    description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
+    totalRooms: 32, // Tổng 32 phòng The Level Premium Corner (tầng 20-23: 8 phòng/tầng)
+    floors: [20, 21, 22, 23], // Các tầng có phòng The Level Premium Corner
+    roomsPerFloor: 8, // 8 phòng mỗi tầng
+    description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
     images: [
         "/images/room/The_Level_Premium_Corner_Room/1.webp",
         "/images/room/The_Level_Premium_Corner_Room/2.jpg",
@@ -364,7 +359,6 @@ export const sampleRooms: Room[] = [{
     room_code: "THE_LEVEL_SUITE",
     name: "Phòng Suite The Level (The Level Suite Room)",
     image: "/images/room/The_Level_Suite_Room/1.webp",
-    priceVND: 14681000,
     size: 93,
     view: "Nhìn ra thành phố",
     bedType: {
@@ -398,16 +392,17 @@ export const sampleRooms: Room[] = [{
         "Minibar",
         "WiFi miễn phí",
         "Máy pha cà phê",
-    ],
-    discount: 75,
-    roomType: "theLevel",
+    ], discount: 75,
+    roomType: "theLevelSuite",
     rating: 10,
     urgencyRoomMessage: "Chỉ còn 8 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 2,
-    totalRooms: 12, // Tổng số phòng The Level
-    availableRooms: 13, // Số phòng còn lại
-    description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
+    totalRooms: 20, // Tổng 20 phòng The Level Suite (tầng 25-27: 7, 7, 6 phòng)
+    floors: [25, 26, 27], // Các tầng có phòng The Level Suite
+    roomsPerFloor: [7, 7, 6], // Tầng 25: 7 phòng, tầng 26: 7 phòng, tầng 27: 6 phòng
+
+    description: "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
     images: [
         "/images/room/The_Level_Suite_Room/1.webp",
         "/images/room/The_Level_Suite_Room/2.webp",
@@ -416,7 +411,7 @@ export const sampleRooms: Room[] = [{
         "/images/room/The_Level_Suite_Room/5.jpg",
         "/images/room/The_Level_Suite_Room/6.jpg",
         "/images/room/The_Level_Suite_Room/7.webp",
-        "/images/room/The_Level_Suite_Room/8.webp",
+        "/images/room/The_Level_Suite_Room/8.jpg",
     ],
     options: [
 
@@ -427,9 +422,8 @@ export const sampleRooms: Room[] = [{
     room_code: "PRESIDENTIAL_SUITE",
     name: "Suite Hạng Tổng Thống (Presidential Suite)",
     image: "/images/room/Presidential_Suite/1.webp",
-    priceVND: 50000000,
     size: 270,
-    view: "Hướng ngoài trời",
+    view: "Tầm nhìn toàn cảnh 360° thành phố",
     bedType: {
         default: "Mỗi phòng có 1 giường cực lớn",
     },
@@ -471,8 +465,10 @@ export const sampleRooms: Room[] = [{
     urgencyRoomMessage: "Chỉ còn 1 phòng duy nhất . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
     maxGuests: 4,
-    totalRooms: 8,
-    availableRooms: 13, // Số phòng còn lại
+    totalRooms: 1, // Chỉ có 1 phòng Presidential Suite duy nhất
+    floors: [32], // Tầng 32
+    roomsPerFloor: 1, // 1 phòng duy nhất
+
     description: "Suite rộng rãi này được bố trí 1 phòng khách, 2 phòng ngủ riêng biệt và 2 phòng tắm với buồng tắm đứng cùng đồ vệ sinh cá nhân miễn phí. Suite này có máy điều hòa, khu vực ghế ngồi với TV màn hình phẳng, tường cách âm, minibar, máy pha cà phê cũng như khu vực ăn uống. Căn này được trang bị 2 giường.",
     images: [
         "/images/room/Presidential_Suite/1.webp",

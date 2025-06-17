@@ -30,7 +30,10 @@ interface RoomCardProps {
     room: Room;
     selectedRooms: { [roomId: string]: { [optionId: string]: number } };
     onQuantityChange: (roomId: string, optionId: string, quantity: number) => void;
-    onShowImageGallery: (room: Room, index: number) => void;
+    onShowImageGallery: (room: Room, index?: number) => void;
+    onShowRoomDetail?: (room: Room) => void;
+    onViewDetail?: (roomId: string) => void;
+    onBookNow?: (roomId: string) => void;
     shouldShowSuggestion: () => boolean;
     searchData: any;
     formatVND: (price: number) => string;

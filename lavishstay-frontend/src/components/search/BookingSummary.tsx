@@ -1,74 +1,62 @@
-import React, { useState } from 'react';
-import { Card, Typography, Divider, Button, Tag, Badge, Radio, Collapse, Space } from 'antd';
+import React, { useEffect, useMemo } from 'react';
+import { Card, Typography, Divider, Button, Tag, Badge, Radio, Collapse, Space, message } from 'antd';
 import {
     GiftOutlined,
     CalendarOutlined,
-    CheckCircleOutlined,
     CloseOutlined,
     EyeOutlined
 } from '@ant-design/icons';
 import { Coffee, Users, Bed, ShoppingBag } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { RootState } from '../../store';
+import {
+    updatePreferences,
+    removeRoomSelection,
+    setCurrentStep,
+    recalculateTotals,
+    selectBookingState,
+    selectSelectedRoomsSummary,
+    selectHasSelectedRooms,
+    selectSelectedRoomsCount,
+} from '../../store/slices/bookingSlice';
 
 const { Title, Text } = Typography;
 
 interface BookingSummaryProps {
-    selectedRooms: { [roomId: string]: { [optionId: string]: number } };
-    rooms: any[];
     formatVND: (price: number) => string;
     getNights: () => number;
-    searchData: any;
-    onQuantityChange: (roomId: string, optionId: string, quantity: number) => void;
 }
 
 const BookingSummary: React.FC<BookingSummaryProps> = ({
-    selectedRooms,
-    rooms,
     formatVND,
-    getNights,
-    searchData,
-    onQuantityChange
+    getNights
 }) => {
-    const [breakfastOption, setBreakfastOption] = useState('none');
-    const [bedPreference, setBedPreference] = useState('double');
-    const [showRoomDetails, setShowRoomDetails] = useState(false);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    // Redux state
+    const searchData = useSelector((state: RootState) => state.search);
+    const booking = useSelector(selectBookingState);
+    const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
+    const hasSelectedRooms = useSelector(selectHasSelectedRooms);
+    const selectedRoomsCount = useSelector(selectSelectedRoomsCount);
+
+    // Local state for UI
+    const [showRoomDetails, setShowRoomDetails] = React.useState(false);
+
     const nights = getNights();
+    const guestCount = (searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0);    // Update totals when dependency data changes
+    useEffect(() => {
+        if (nights !== booking.totals.nights) {
+            // Dispatch action to recalculate totals when nights change
+            dispatch(recalculateTotals({ nights, guestCount }));
+        }
+    }, [nights, guestCount, dispatch, booking.totals.nights]);
 
-    const handleRemoveRoom = (roomId: string, optionId: string) => {
-        onQuantityChange(roomId, optionId, 0);
-    }; const getSelectedRoomsSummary = () => {
-        const summary: any[] = [];
-        let totalPrice = 0;
-
-        Object.entries(selectedRooms).forEach(([roomId, options]) => {
-            const room = rooms.find(r => r.id.toString() === roomId);
-            if (!room) return;
-
-            Object.entries(options).forEach(([optionId, quantity]) => {
-                if (quantity > 0) {
-                    const option = room.options.find((opt: any) => opt.id === optionId);
-                    if (option) {                        // Use correct price: dynamicPricing.finalPrice or fallback to pricePerNight.vnd
-                        const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight?.vnd || option.price || 0;
-                        const roomTotal = pricePerNight * quantity * nights;
-                        totalPrice += roomTotal; summary.push({
-                            roomName: room.name,
-                            optionName: option.name,
-                            quantity,
-                            pricePerNight,
-                            total: roomTotal,
-                            roomId: roomId,
-                            optionId: optionId
-                        });
-                    }
-                }
-            });
-        });
-
-        return { summary, totalPrice };
-    };
-
-    const getBreakfastPrice = () => {
-        const guestCount = (searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0);
-        switch (breakfastOption) {
+    // Memoized computed values
+    const breakfastPrice = useMemo(() => {
+        switch (booking.preferences.breakfastOption) {
             case 'standard':
                 return 260000 * guestCount * nights;
             case 'premium':
@@ -76,11 +64,70 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             default:
                 return 0;
         }
+    }, [booking.preferences.breakfastOption, guestCount, nights]);
+
+    const finalTotal = useMemo(() => {
+        return booking.totals.roomsTotal + breakfastPrice;
+    }, [booking.totals.roomsTotal, breakfastPrice]);
+
+    // Handle preference changes
+    const handleBreakfastChange = (e: any) => {
+        dispatch(updatePreferences({
+            preferences: { breakfastOption: e.target.value },
+            nights,
+            guestCount
+        }));
     };
 
-    const { summary, totalPrice } = getSelectedRoomsSummary();
-    const breakfastPrice = getBreakfastPrice();
-    const finalTotal = totalPrice + breakfastPrice; if (summary.length === 0) {
+    const handleBedPreferenceChange = (e: any) => {
+        dispatch(updatePreferences({
+            preferences: { bedPreference: e.target.value },
+            nights,
+            guestCount
+        }));
+    };
+
+    // Handle remove room
+    const handleRemoveRoom = (roomId: string, optionId: string) => {
+        dispatch(removeRoomSelection({ roomId, optionId, nights, guestCount }));
+    };
+
+    // Handle proceed to payment
+    const handleProceedToPayment = () => {
+        if (!hasSelectedRooms) {
+            message.error('Vui lòng chọn ít nhất một phòng');
+            return;
+        }
+
+        try {
+            // Set booking step to payment
+            dispatch(setCurrentStep('payment'));
+
+            // Navigate to payment page with booking data in Redux store
+            navigate('/payment', {
+                state: {
+                    fromBooking: true,
+                    bookingData: {
+                        id: `BK${Date.now()}`,
+                        hotelName: "LavishStay Thanh Hóa",
+                        selectedRooms: selectedRoomsSummary,
+                        checkIn: searchData.checkIn,
+                        checkOut: searchData.checkOut,
+                        guests: guestCount,
+                        nights: nights,
+                        roomsTotal: booking.totals.roomsTotal,
+                        breakfastTotal: breakfastPrice,
+                        total: finalTotal,
+                        preferences: booking.preferences,
+                        searchData: searchData
+                    }
+                }
+            });
+        } catch (error) {
+            message.error('Có lỗi xảy ra khi chuyển đến trang thanh toán');
+            console.error('Payment navigation error:', error);
+        }
+    }; if (!hasSelectedRooms) {
         return (
             <div className="text-center py-12">
                 <ShoppingBag size={48} className="text-gray-300 mx-auto mb-4" />
@@ -88,7 +135,9 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 <Text type="secondary">Hãy chọn phòng yêu thích của bạn</Text>
             </div>
         );
-    } return (
+    }
+
+    return (
         <div className="space-y-4">
             {/* Booking Info Header */}
             <Card
@@ -103,7 +152,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                     <div className="flex items-center gap-2">
                         <Users size={14} className="text-blue-600" />
                         <Text className="font-medium">
-                            {(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} khách
+                            {guestCount} khách
                         </Text>
                     </div>
                 </div>
@@ -115,7 +164,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                     <div className="flex items-center gap-2">
                         <Text strong className="text-lg">Phòng đã chọn</Text>
                         <Badge
-                            count={summary.length}
+                            count={selectedRoomsCount}
                             style={{
                                 backgroundColor: '#1890ff',
                                 fontSize: '11px',
@@ -136,26 +185,25 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
 
                 <Collapse
                     activeKey={showRoomDetails ? ['1'] : []}
-                    
                     ghost
                     size="small"
                     items={[{
                         key: '1',
-                        label: `Chi tiết ${summary.length} phòng đã chọn`,
+                        label: `Chi tiết ${selectedRoomsCount} phòng đã chọn`,
                         children: (
                             <div className="space-y-3 max-h-60 overflow-y-auto">
-                                {summary.map((item, index) => (
-                                    <div key={index} className="group bg-white border border-gray-200 p-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+                                {selectedRoomsSummary.map((item) => (
+                                    <div key={`${item.roomId}-${item.optionId}`} className="group bg-white border border-gray-200 p-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <Bed size={14} className="text-indigo-600 flex-shrink-0" />
                                                     <Text strong className="font-semibold truncate text-sm">
-                                                        {item.roomName}
+                                                        {item.room.name}
                                                     </Text>
                                                 </div>
                                                 <Text className="text-xs text-gray-600 ml-5 truncate">
-                                                    {item.optionName}
+                                                    {item.option.name}
                                                 </Text>
                                             </div>
                                             <div className="flex items-center gap-2 ml-3">
@@ -176,7 +224,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                                                 {formatVND(item.pricePerNight)}/đêm
                                             </Text>
                                             <Text strong className="text-sm font-bold text-green-600">
-                                                {formatVND(item.total)}
+                                                {formatVND(item.totalPrice)}
                                             </Text>
                                         </div>
                                     </div>
@@ -191,7 +239,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             <Card size="small" className="bg-gray-50">
                 <div className="text-center">
                     <Text strong className="text-lg text-gray-800">
-                        Tổng phòng: {formatVND(totalPrice)}
+                        Tổng phòng: {formatVND(booking.totals.roomsTotal)}
                     </Text>
                 </div>
             </Card>
@@ -206,8 +254,8 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                     </div>
                 }>
                     <Radio.Group
-                        value={breakfastOption}
-                        onChange={(e) => setBreakfastOption(e.target.value)}
+                        value={booking.preferences.breakfastOption}
+                        onChange={handleBreakfastChange}
                         className="w-full"
                     >
                         <div className="grid grid-cols-1 gap-3">
@@ -229,7 +277,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                         <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                             <div className="flex justify-between items-center">
                                 <Text className="text-sm text-amber-700">
-                                    Tổng bữa sáng ({(searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0)} người × {nights} đêm)
+                                    Tổng bữa sáng ({guestCount} người × {nights} đêm)
                                 </Text>
                                 <Text strong className="text-amber-700">{formatVND(breakfastPrice)}</Text>
                             </div>
@@ -245,8 +293,8 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                     </div>
                 }>
                     <Radio.Group
-                        value={bedPreference}
-                        onChange={(e) => setBedPreference(e.target.value)}
+                        value={booking.preferences.bedPreference}
+                        onChange={handleBedPreferenceChange}
                         className="w-full"
                     >
                         <div className="flex gap-4">
@@ -255,7 +303,9 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                         </div>
                     </Radio.Group>
                 </Card>
-            </Space>            {/* Total Section */}
+            </Space>
+
+            {/* Total Section */}
             <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                 <div className="space-y-3">
                     {breakfastPrice > 0 && (
@@ -284,14 +334,14 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 <Button
                     type="primary"
                     size="large"
-                    className="w-full h-12  border-none shadow-lg rounded-xl font-bold text-white"
+                    className="w-full h-12 border-none shadow-lg rounded-xl font-bold text-white"
                     icon={<GiftOutlined />}
+                    onClick={handleProceedToPayment}
+                    disabled={!hasSelectedRooms}
                 >
                     TIẾP TỤC ĐẶT PHÒNG
                 </Button>
-
-            </Space>
-        </div>
+            </Space>        </div>
     );
 };
 

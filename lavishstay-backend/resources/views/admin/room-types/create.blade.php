@@ -98,7 +98,7 @@
                                         Hủy
                                     </a>
                                     <button type="submit"
-                                        class="btn bg-indigo-500 hover:bg-indigo-600 text-white">
+                                        class="btn cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white">
                                         Tạo Loại Phòng
                                     </button>
                                 </div>

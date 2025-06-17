@@ -2,35 +2,63 @@
 
 namespace App\Http\Controllers;
 
-<<<<<<< HEAD
-=======
 use App\Models\Hotel;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 use App\Models\Room;
 use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-<<<<<<< HEAD
-=======
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 class RoomController extends Controller
 {
     public function index()
     {
+        // Lấy tổng số phòng (đếm bản ghi trong bảng rooms)
+        $totalRooms = Room::count();
+        
+        // Lấy tổng số loại phòng
+        $totalRoomTypes = RoomType::count();
+        
+        // Lấy số phòng đã được đặt (có booking active) - sửa lỗi ambiguous column
+        $bookedRooms = Room::whereHas('bookings', function($query) {
+            $query->where('booking.status', 'confirmed')
+                ->where('booking.check_in_date', '<=', now())
+                ->where('booking.check_out_date', '>=', now());
+        })->count();
+        
+        // Lấy số phòng trống
+        $availableRooms = $totalRooms - $bookedRooms;
 
-        //Lấy tất cả các loại phòng và tổng các phòng trong mỗi loại
-        $allrooms = RoomType::withCount('rooms')
-            ->with(['rooms' => function ($query) {
+        // Lấy tất cả các loại phòng với thông tin chi tiết - sửa lỗi ambiguous column
+        $allrooms = RoomType::with([
+            'rooms' => function ($query) {
                 $query->orderBy('room_type_id', 'asc');
-            }])
-            ->paginate(7);
-            // dd($allrooms);
-        return view('admin.rooms.index', compact('allrooms'));
+            },
+            'images' => function ($query) {
+                $query->where('room_type_image.is_main', true);
+            }
+        ])
+        ->withCount([
+            'rooms',
+            'bookings as active_bookings_count' => function ($query) {
+                $query->where('booking.status', 'confirmed')
+                    ->where('booking.check_in_date', '<=', now())
+                    ->where('booking.check_out_date', '>=', now());
+            }
+        ])
+        ->paginate(9);
+
+        return view('admin.rooms.index', compact(
+            'allrooms', 
+            'totalRooms', 
+            'totalRoomTypes', 
+            'bookedRooms', 
+            'availableRooms'
+        ));
     }
+
     
     public function roomsByType(Request $request, $roomTypeId)
     {
@@ -154,106 +182,6 @@ class RoomController extends Controller
     }
 
 
-<<<<<<< HEAD
-    /**
- * Get room availability calendar data
- */
-public function getCalendarData($roomId)
-{
-    try {
-        // Tìm phòng
-        $room = Room::with('roomType')->where('room_id', $roomId)->first();
-        
-        if (!$room) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy phòng với ID: ' . $roomId
-            ], 404);
-        }
-
-        // Tạo range 3 tháng: tháng trước, tháng hiện tại, tháng sau
-        $startDate = now()->startOfMonth()->subMonth();
-        $endDate = now()->addMonths(2)->endOfMonth();
-        
-        \Log::info('Calendar date range:', [
-            'start' => $startDate->format('Y-m-d'),
-            'end' => $endDate->format('Y-m-d')
-        ]);
-
-        // Tạo dữ liệu cho mỗi ngày trong khoảng thời gian
-        $calendarData = [];
-        $current = $startDate->copy();
-        
-        while ($current <= $endDate) {
-            $dateStr = $current->format('Y-m-d');
-            
-            // Lấy dữ liệu thực từ database (nếu có)
-            $realData = $this->getRealBookingData($roomId, $dateStr);
-            
-            
-            // Nếu không có dữ liệu thực, tạo dữ liệu mẫu
-            if (!$realData) {
-                $realData = $this->generateSampleData($dateStr);
-            }
-            
-
-            $calendarData[] = $realData;
-            $current->addDay();
-        }
-
-        // Tính summary
-        $summary = $this->calculateSummary($calendarData);
-
-        $response = [
-            'success' => true,
-            'room' => [
-                'id' => $room->room_id,
-                'name' => $room->name,
-                'room_number' => $room->room_number ?? 'N/A',
-                'type' => $room->roomType->name ?? 'Standard Room'
-            ],
-            'date_range' => [
-                'start' => $startDate->format('Y-m-d'),
-                'end' => $endDate->format('Y-m-d')
-            ],
-            'calendar_data' => $calendarData,
-            'summary' => $summary
-        ];
-
-        \Log::info('Calendar response:', [
-            'room_id' => $response['room']['id'],
-            'data_count' => count($response['calendar_data']),
-            'date_range' => $response['date_range']
-        ]);
-
-        return response()->json($response);
-
-    } catch (\Exception $e) {
-        \Log::error('Calendar error: ' . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Lỗi server: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-private function getRealBookingData($roomId, $date)
-{
-    // Thử lấy dữ liệu thực từ database
-    $bookings = DB::table('booking as b')
-        ->join('room_option as ro', 'b.option_id', '=', 'ro.option_id')
-        ->where('ro.room_id', $roomId)
-        ->where('b.check_in_date', '<=', $date)
-        ->where('b.check_out_date', '>', $date)
-        ->whereIn('b.status', ['confirmed', 'pending'])
-        ->count();
-    
-    // Nếu có dữ liệu booking thì return, không thì return null
-    if ($bookings > 0) {
-        $totalRooms = 10; // Giả sử mỗi room type có 10 phòng
-        $occupiedRooms = min($bookings, $totalRooms);
-=======
     public function create(RoomType $roomType)
     {
         $viewOptions = [
@@ -676,18 +604,13 @@ private function getRealBookingData($roomId, $date)
             $occupiedRooms = rand(2, 8);
         }
         
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
         $availableRooms = $totalRooms - $occupiedRooms;
         $occupancyRate = ($occupiedRooms / $totalRooms) * 100;
         
         $status = 'available';
         if ($availableRooms == 0) {
             $status = 'full';
-<<<<<<< HEAD
-        } elseif ($availableRooms <= ($totalRooms * 0.3)) {
-=======
         } elseif ($availableRooms <= 3) {
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
             $status = 'partial';
         }
         
@@ -696,87 +619,11 @@ private function getRealBookingData($roomId, $date)
             'total_rooms' => $totalRooms,
             'available_rooms' => $availableRooms,
             'occupied_rooms' => $occupiedRooms,
-<<<<<<< HEAD
-            'active_bookings' => $bookings,
-=======
             'active_bookings' => rand(0, $occupiedRooms),
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
             'status' => $status,
             'occupancy_rate' => round($occupancyRate, 1)
         ];
     }
-<<<<<<< HEAD
-    
-    return null;
-}
-
-private function generateSampleData($date)
-{
-    // Tạo dữ liệu mẫu ngẫu nhiên nhưng có logic
-    $totalRooms = 10;
-    $dayOfWeek = date('N', strtotime($date)); // 1=Monday, 7=Sunday
-    $isWeekend = in_array($dayOfWeek, [6, 7]); // Saturday, Sunday
-    
-    // Cuối tuần thường đông hơn
-    if ($isWeekend) {
-        $occupiedRooms = rand(6, 10);
-    } else {
-        $occupiedRooms = rand(2, 8);
-    }
-    
-    $availableRooms = $totalRooms - $occupiedRooms;
-    $occupancyRate = ($occupiedRooms / $totalRooms) * 100;
-    
-    $status = 'available';
-    if ($availableRooms == 0) {
-        $status = 'full';
-    } elseif ($availableRooms <= 3) {
-        $status = 'partial';
-    }
-    
-    return [
-        'date' => $date,
-        'total_rooms' => $totalRooms,
-        'available_rooms' => $availableRooms,
-        'occupied_rooms' => $occupiedRooms,
-        'active_bookings' => rand(0, $occupiedRooms),
-        'status' => $status,
-        'occupancy_rate' => round($occupancyRate, 1)
-    ];
-}
-
-private function calculateSummary($calendarData)
-{
-    $totalDays = count($calendarData);
-    $availableDays = 0;
-    $fullDays = 0;
-    $partialDays = 0;
-    $totalOccupancy = 0;
-    
-    foreach ($calendarData as $day) {
-        switch ($day['status']) {
-            case 'available':
-                $availableDays++;
-                break;
-            case 'full':
-                $fullDays++;
-                break;
-            case 'partial':
-                $partialDays++;
-                break;
-        }
-        $totalOccupancy += $day['occupancy_rate'];
-    }
-    
-    return [
-        'total_days' => $totalDays,
-        'available_days' => $availableDays,
-        'full_days' => $fullDays,
-        'partial_days' => $partialDays,
-        'average_occupancy' => $totalDays > 0 ? round($totalOccupancy / $totalDays, 1) : 0
-    ];
-}
-=======
 
     private function calculateSummary($calendarData)
     {
@@ -809,7 +656,6 @@ private function calculateSummary($calendarData)
             'average_occupancy' => $totalDays > 0 ? round($totalOccupancy / $totalDays, 1) : 0
         ];
     }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
     
     private function getActiveBookings($roomId, $date)

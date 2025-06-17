@@ -113,6 +113,96 @@ html.dark {
   }
 }
 
+/* ================================
+   COMPONENT STYLES - Consolidated 
+   ================================ */
+
+/* RoomCard Component Styles */
+.room-card {
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  min-height: 520px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.room-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15), 0 8px 8px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Room Type Specific Styles */
+.deluxe-room {
+  --room-shadow: rgba(99, 102, 241, 0.15);
+}
+
+.deluxe-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(99, 102, 241, 0.08) !important;
+}
+
+.premium-room {
+  --room-shadow: rgba(5, 150, 105, 0.15);
+}
+
+.premium-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(5, 150, 105, 0.08) !important;
+}
+
+.suite-room {
+  --room-shadow: rgba(220, 38, 38, 0.15);
+}
+
+.suite-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(220, 38, 38, 0.08) !important;
+}
+
+.presidential-room {
+  --room-shadow: rgba(217, 119, 6, 0.15);
+}
+
+.presidential-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(217, 119, 6, 0.08) !important;
+}
+
+.the-level-room {
+  --room-shadow: rgba(14, 165, 233, 0.15);
+}
+
+.the-level-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(14, 165, 233, 0.08) !important;
+}
+
+/* HotelActivities Component Styles */
+.activities-swiper {
+  padding: 40px 0px !important;
+  contain: layout style paint;
+  will-change: transform;
+}
+
+.activities-swiper .swiper-slide {
+  display: flex;
+  align-items: stretch;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform;
+}
+
+.activities-swiper .swiper-slide .activity-card {
+  position: relative;
+  will-change: transform, box-shadow;
+}
+
+/* Performance Optimizations for Animations */
+.swiper-container,
+.swiper-wrapper,
+.swiper-slide {
+  will-change: transform;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+}
+
 /* Common UI Elements - Default Styles */
 .btn {
   display: inline-flex;
@@ -206,4 +296,125 @@ html.dark {
 @keyframes slideDown {
   from { transform: translateY(-20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* TravelExperience Component Styles */
+.travel-experience-container {
+  max-width: 100%;
+  padding: 0 1rem;
+}
+
+.travel-experience-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.travel-experience-card:hover {
+  transform: translateY(-2px);
+}
+
+.travel-experience-card .ant-typography {
+  font-size: inherit !important;
+}
+
+.travel-experience-card .ant-typography p {
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+
+/* HotelAmenities Component Styles */
+.hotel-amenities-container {
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.amenity-category-card {
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+}
+
+.amenity-category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.amenity-category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 10px;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* RoomReviews Component Styles */
+.custom-pagination .ant-pagination-item {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.custom-pagination .ant-pagination-item:hover {
+  border-color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.custom-pagination .ant-pagination-item-active {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.review-list .ant-list-item {
+  border: none !important;
+}
+
+/* RoomServiceOptions Component Styles */
+.room-service-options-container {
+  margin-top: 1.5rem;
+}
+
+.room-service-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.room-option-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.room-option-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* StyledTitleAnimations Component Styles */
+.auto-fill .hover-text {
+  width: 100% !important;
+  filter: drop-shadow(0 0 23px var(--animation-color)) !important;
+}
+
+.my-2:hover .hover-text {
+  transition: 0.7s;
+  filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8));
+}
+
+@media (prefers-color-scheme: dark) {
+  .my-2 .title {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  }
+  
+  .my-2:hover .hover-text {
+    filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9));
+  }
 }

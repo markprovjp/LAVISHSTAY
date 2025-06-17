@@ -1,5 +1,13 @@
 <?php
 
+use App\Http\Controllers\RoomPriceEventFestivalController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingExtensionController;
+use App\Http\Controllers\BookingRescheduleController;
+use App\Http\Controllers\CancellationPolicyController;
+use App\Http\Controllers\CheckinPolicyController;
+use App\Http\Controllers\CheckoutPolicyController;
+use App\Http\Controllers\CheckoutRequestController;
 use App\Http\Controllers\RoomTypeAmenityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataFeedController;
@@ -11,12 +19,15 @@ use App\Http\Controllers\ServiceAmenityController;
 use App\Http\Controllers\ServiceBedController;
 use App\Http\Controllers\ServiceMealController;
 use App\Http\Controllers\UserController;
-<<<<<<< HEAD
-=======
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\DepositPolicyController;
+use App\Http\Controllers\DynamicPricingController;
+use App\Http\Controllers\EventFestivalManagementController;
+use App\Http\Controllers\RoomPriceController;
+use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
+use App\Http\Controllers\WeekendPriceController;
 
 Route::redirect('/', 'login');
 
@@ -47,9 +58,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-<<<<<<< HEAD
-    //Rooms Types
-=======
 
     //User//////////////////////////////////
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
@@ -59,10 +67,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/users/update/{id}', [UserController::class, 'update'])->name('admin.users.update');
     Route::get('/admin/users/show/{id}', [UserController::class, 'show'])->name('admin.users.show');
     Route::delete('/admin/users/destroy/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    Route::put('/admin/users/change-password/{id}', [UserController::class, 'changePassword'])->name('admin.users.change-password');
 
 
     //Rooms Types/////////////////////////////////
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     Route::get('/admin/room-types', [RoomTypeController::class, 'index'])->name('admin.room-types');
     Route::get('/admin/room-types/create', [RoomTypeController::class, 'create'])->name('admin.room-types.create');
     Route::post('/admin/room-types/store', [RoomTypeController::class, 'store'])->name('admin.room-types.store');
@@ -73,14 +81,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
         
 
-<<<<<<< HEAD
-    Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
-    Route::get('/admin/rooms/show/{room_id}', [RoomController::class, 'show'])->name('admin.rooms.show');
-
-    Route::get('/admin/rooms/{room_id}/calendar-data', [RoomController::class, 'getCalendarData'])->name('rooms.calendar-data');
-
-
-=======
     
 
     // Room //////////////////////////////////////////
@@ -93,7 +93,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/rooms/type/{room}/edit', [RoomController::class, 'edit'])->name('admin.rooms.edit');
     Route::put('/admin/rooms/type/{room}', [RoomController::class, 'update'])->name('admin.rooms.update');
     Route::delete('/admin/rooms/type/{room}/delete', [RoomController::class, 'destroy'])->name('admin.rooms.destroy');
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
     // Cách liiiiiiiiiiiiiiiiiiii
@@ -122,49 +121,30 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    // Amenities Management Kiệt //////////////////////////////////
+    // Amenities Management //////////////////////////////////
     Route::get('/admin/services/amenities', [ServiceAmenityController::class, 'index'])->name('admin.services.amenities');
-<<<<<<< HEAD
-
-=======
     Route::get('/admin/services/amenities/create', [ServiceAmenityController::class, 'create'])->name('admin.services.amenities.create');
     Route::post('/admin/services/amenities/store', [ServiceAmenityController::class, 'store'])->name('admin.services.amenities.store');
     Route::get('/admin/services/amenities/edit/{amenityId}', [ServiceAmenityController::class, 'edit'])->name('admin.services.amenities.edit');
     Route::put('/admin/services/amenities/update/{amenityId}', [ServiceAmenityController::class, 'update'])->name('admin.services.amenities.update');
     Route::post('/admin/services/amenities/destroy/{amenityId}', [ServiceAmenityController::class, 'destroy'])->name('admin.services.amenities.destroy');
     Route::patch('/admin/services/amenities/toggle-status/{amenity}', [ServiceAmenityController::class, 'toggleStatus'])->name('admin.services.amenities.toggle-status');
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
-    //  Meals Management Công //////////////////////////////////
+    //  Meals Management //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
-<<<<<<< HEAD
-
-=======
     Route::get('/admin/services/meals/create', [ServiceMealController::class, 'create'])->name('admin.services.meals.create');
     Route::post('/admin/services/meals/store', [ServiceMealController::class, 'store'])->name('admin.services.meals.store');
     Route::get('/admin/services/meals/edit/{id}', [ServiceMealController::class, 'edit'])->name('admin.services.meals.edit');
     Route::put('/admin/services/meals/update/{id}', [ServiceMealController::class, 'update'])->name('admin.services.meals.update');
     Route::post('/admin/services/meals/destroy/{id}', [ServiceMealController::class, 'destroy'])->name('admin.services.meals.destroy');
     Route::patch('/admin/services/meals/toggle-status/{mealType}', [ServiceMealController::class, 'toggleStatus'])->name('admin.services.meals.toggle-status');
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 
 
 
-    //  Meals Management Tuyên //////////////////////////////////
+    //  Meals Management  //////////////////////////////////
     Route::get('/admin/services/beds', [ServiceBedController::class, 'index'])->name('admin.services.beds');
-<<<<<<< HEAD
-
-
-
-
-
-
-
-
-
-=======
     Route::get('/admin/services/beds/create', [ServiceBedController::class, 'create'])->name('admin.services.beds.create');
     Route::post('/admin/services/beds/store', [ServiceBedController::class, 'store'])->name('admin.services.beds.store');
     Route::get('/admin/services/beds/edit/{id}', [ServiceBedController::class, 'edit'])->name('admin.services.beds.edit');
@@ -189,16 +169,183 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/multinational/currencies/update/{currency_code}', [CurrencyController::class, 'update'])->name('admin.multinational.currencies.update');
     Route::post('/admin/multinational/currencies/destroy/{currency_code}', [CurrencyController::class, 'destroy'])->name('admin.multinational.currencies.destroy');
 
-    // Translation
-    Route::prefix('admin/translation')->name('admin.translation.')->group(function () {
-        Route::get('/', [TranslationController::class, 'index'])->name('index');
-        Route::get('/create', [TranslationController::class, 'create'])->name('create');
-        Route::post('/store', [TranslationController::class, 'store'])->name('store');
-        Route::get('/edit/{translationId}', [TranslationController::class, 'edit'])->name('edit');
-        Route::put('/update/{translationId}', [TranslationController::class, 'update'])->name('update');
-        Route::post('/destroy/{translationId}', [TranslationController::class, 'destroy'])->name('destroy');
+  
+  
+    // Multinational Translation
+    Route::get('/admin/multinational/translation', [TranslationController::class, 'index'])->name('admin.multinational.translation');
+    // Translation Management
+    Route::prefix('admin/translation')->group(function () {
+        Route::get('/get-tables', [TranslationController::class, 'getTables'])->name('admin.translation.get-tables');
+        Route::get('/manage-tables', [TranslationController::class, 'manageTables'])->name('admin.translation.manage-tables');
+        Route::post('/manage-tables/toggle-status/{table}', [TranslationController::class, 'toggleTableStatusInTable'])->name('admin.translation.manage-tables.toggle-status');
+        Route::delete('/manage-tables/{table}', [TranslationController::class, 'destroyTable'])->name('admin.translation.manage-tables.destroy');
+
+        Route::get('/', [TranslationController::class, 'index'])->name('admin.translation.index');
+        Route::get('/{table}', [TranslationController::class, 'show'])->name('admin.translation.show');
+        Route::get('/create', [TranslationController::class, 'create'])->name('admin.translation.create');
+        Route::post('/', [TranslationController::class, 'store'])->name('admin.translation.store');
+        Route::patch('/{translationId}/update-value', [TranslationController::class, 'updateValue'])->name('admin.translation.update-value');
+        Route::delete('/destroy/{translationId}/language/{languageCode}', [TranslationController::class, 'destroyByLanguage'])->name('admin.translation.destroy-by-language');
+        Route::delete('/{table}/destroy-record/{recordId}', [TranslationController::class, 'destroyRecord'])->name('admin.translation.destroy-record');
+        Route::get('/translate', [TranslationController::class, 'translate'])->name('admin.translation.translate');
+        Route::post('/{table}/store', [TranslationController::class, 'storeForTable'])->name('admin.translation.store-for-table');
+        Route::get('/get-value/{table}/{column}/{recordId}/{languageCode}', [TranslationController::class, 'getTranslationValue'])->name('admin.translation.get-value');
+        Route::post('/{table}/add', [TranslationController::class, 'storeForTable'])->name('admin.translation.add-for-table');
+        Route::post('/toggle-status/{table}', [TranslationController::class, 'toggleTableStatus'])->name('admin.translation.toggle-status');
+        Route::post('/store-table', [TranslationController::class, 'storeTable'])->name('admin.translation.store-table');
     });
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
+
+
+
+    //////////////// Bookings/////////////////////////////////////////////////////////////////
+    Route::get('/admin/bookings/trading', [BookingController::class, 'trading'])->name('admin.bookings.trading');
+    Route::get('/admin/bookings/transaction_history', [BookingController::class, 'transaction_history'])->name('admin.bookings.transaction_history');
+
+
+
+
+
+
+
+    ////////////////////// YÊU CẦU ĐẶT PHÒNG /////////////////////////////////////////////////////
+
+    // Gia hạn phòng
+    Route::get('/admin/booking_extensions', [BookingExtensionController::class, 'index'])->name('admin.booking_extensions');
+
+
+    // Rời lịch
+    Route::get('/admin/booking_reschedules', [BookingRescheduleController::class, 'index'])->name('admin.booking_reschedules');
+
+    // Chuyển phòng
+    Route::get('/admin/room_transfers', [RoomTransferController::class, 'index'])->name('admin.room_transfers');
+
+
+    // Trả phòng sớm, muộn
+    Route::get('/admin/check_out_requests', [CheckoutRequestController::class, 'index'])->name('admin.check_out_requests');
+    Route::post('/admin/check_out_requests', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
+    Route::post('/admin/check_out_requests/calculate_fee', [CheckoutRequestController::class, 'calculateFee'])->name('admin.check_out_requests.calculate_fee');
+    Route::patch('/admin/check_out_requests/{requestId}/approve', [CheckoutRequestController::class, 'approve'])->name('admin.check_out_requests.approve');
+    Route::get('/admin/check_out_requests/create', [CheckoutRequestController::class, 'create'])->name('admin.check_out_requests.create');
+    Route::post('/admin/check_out_requests/store', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
+
+
+
+
+        ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
+
+    // Chính sách hủy phòng///////////////////////////////////////////////////
+    Route::get('/admin/cancellation-policies', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies');
+    Route::get('/admin/cancellation-policies/show/{id}', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies.show');
+    Route::get('/admin/cancellation-policies/create', [CancellationPolicyController::class, 'create'])->name('admin.cancellation-policies.create');
+    Route::post('/admin/cancellation-policies/store', [CancellationPolicyController::class, 'store'])->name('admin.cancellation-policies.store');
+    Route::get('/admin/cancellation-policies/edit/{id}', [CancellationPolicyController::class, 'edit'])->name('admin.cancellation-policies.edit');
+    Route::put('/admin/cancellation-policies/update/{id}', [CancellationPolicyController::class, 'update'])->name('admin.cancellation-policies.update');
+    Route::post('/admin/cancellation-policies/destroy/{id}', [CancellationPolicyController::class, 'destroy'])->name('admin.cancellation-policies.destroy');
+    Route::patch('/admin/cancellation-policies/toggle-status/{id}', [CancellationPolicyController::class, 'toggleStatus'])->name('admin.cancellation-policies.toggle-status');
+
+
+
+    // Chính sách đặt cọc///////////////////////////////////////////////////
+    Route::get('/admin/deposit-policies', [DepositPolicyController::class, 'index'])->name('admin.deposit-policies');
+    Route::get('/admin/deposit-policies/create', [DepositPolicyController::class, 'create'])->name('admin.deposit-policies.create');
+    Route::post('/admin/deposit-policies', [DepositPolicyController::class, 'store'])->name('admin.deposit-policies.store');
+    Route::get('/admin/deposit-policies/{depositPolicy}', [DepositPolicyController::class, 'show'])->name('admin.deposit-policies.show');
+    Route::get('/admin/deposit-policies/{depositPolicy}/edit', [DepositPolicyController::class, 'edit'])->name('admin.deposit-policies.edit');
+    Route::put('/admin/deposit-policies/{depositPolicy}', [DepositPolicyController::class, 'update'])->name('admin.deposit-policies.update');
+    Route::delete('/admin/deposit-policies/{depositPolicy}', [DepositPolicyController::class, 'destroy'])->name('admin.deposit-policies.destroy');
+    Route::patch('/admin/deposit-policies/{depositPolicy}/toggle-status', [DepositPolicyController::class, 'toggleStatus'])->name('admin.deposit-policies.toggle-status');
+
+
+
+    // Chính sách checkin ///////////////////////////////////////////////////
+    Route::get('/admin/checkout-policies', [CheckinPolicyController::class, 'index'])->name('admin.checkin-policies');
+
+
+    // Chính sách checkout ///////////////////////////////////////////////////
+    Route::get('/admin/checkout-policies', [CheckoutPolicyController::class, 'index'])->name('admin.checkout-policies');
+    Route::get('/admin/checkout-policies/create', [CheckoutPolicyController::class, 'create'])->name('admin.checkout-policies.create');
+    Route::post('/admin/checkout-policies', [CheckoutPolicyController::class, 'store'])->name('admin.checkout-policies.store');
+    Route::get('/admin/checkout-policies/{checkoutPolicy}/edit', [CheckoutPolicyController::class, 'edit'])->name('admin.checkout-policies.edit');
+    Route::put('/admin/checkout-policies/{checkoutPolicy}', [CheckoutPolicyController::class, 'update'])->name('admin.checkout-policies.update');
+    Route::delete('/admin/checkout-policies/{checkoutPolicy}', [CheckoutPolicyController::class, 'destroy'])->name('admin.checkout-policies.destroy');
+    Route::patch('/admin/checkout-policies/{checkoutPolicy}/toggle-status', [CheckoutPolicyController::class, 'toggleStatus'])->name('admin.checkout-policies.toggle-status');
+
+
+    
+
+
+
+
+
+
+
+
+    /////////////////////// GIÁ PHÒNG /////////////////////////////////////////////////////
+
+    //Theo lễ hội, sự kiện
+    Route::get('/admin/event_festival', [RoomPriceController::class, 'event_festival'])->name('admin.room-prices.event_festival');
+    Route::prefix('admin/event-festival-management')->name('admin.event-festival-management.')->group(function () {
+        Route::get('/statistics', [EventFestivalManagementController::class, 'getStatistics'])->name('statistics');
+        Route::get('/upcoming', [EventFestivalManagementController::class, 'getUpcoming'])->name('upcoming');
+        Route::get('/data', [EventFestivalManagementController::class, 'getData'])->name('data');
+        Route::post('/', [EventFestivalManagementController::class, 'store'])->name('store');
+        Route::get('/export', [EventFestivalManagementController::class, 'export'])->name('export');
+        
+        // Event routes
+        Route::get('/event/{id}', [EventFestivalManagementController::class, 'showEvent'])->name('event.show');
+        Route::put('/event/{id}', [EventFestivalManagementController::class, 'updateEvent'])->name('event.update');
+        Route::delete('/event/{id}', [EventFestivalManagementController::class, 'destroyEvent'])->name('event.destroy');
+        
+        // Holiday routes
+        Route::get('/holiday/{id}', [EventFestivalManagementController::class, 'showHoliday'])->name('holiday.show');
+        Route::put('/holiday/{id}', [EventFestivalManagementController::class, 'updateHoliday'])->name('holiday.update');
+        Route::delete('/holiday/{id}', [EventFestivalManagementController::class, 'destroyHoliday'])->name('holiday.destroy');
+    });
+
+
+    //Giá động
+    Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
+    // Thêm vào phần routes admin
+    Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+        Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
+        Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
+        Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
+        Route::get('/occupancy-stats', [DynamicPricingController::class, 'getOccupancyStats'])->name('occupancy-stats');
+        Route::post('/calculate', [DynamicPricingController::class, 'calculateDynamicPrice'])->name('calculate');
+        Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
+        Route::post('/', [DynamicPricingController::class, 'store'])->name('store');
+        Route::put('/{id}', [DynamicPricingController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-status', [DynamicPricingController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{id}', [DynamicPricingController::class, 'destroy'])->name('destroy');
+    });
+
+
+
+
+     //Giá cuối tuần
+    Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
+    Route::prefix('admin/room-prices/weekend')->name('admin.weekend-price.')->group(function () {
+        Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
+        Route::get('/weekend-days', [WeekendPriceController::class, 'getWeekendDays'])->name('weekend-days');
+        Route::post('/weekend-days', [WeekendPriceController::class, 'updateWeekendDays'])->name('update-weekend-days');
+        Route::get('/data', [WeekendPriceController::class, 'getData'])->name('data');
+        Route::get('/rooms', [WeekendPriceController::class, 'getRooms'])->name('rooms');
+        Route::get('/{id}', [WeekendPriceController::class, 'show'])->name('show');
+        Route::post('/', [WeekendPriceController::class, 'store'])->name('store');
+        Route::put('/{id}', [WeekendPriceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [WeekendPriceController::class, 'destroy'])->name('destroy');
+    });
+
+
+
+
+
+
+
+    
+
+    
+
 
 
 
