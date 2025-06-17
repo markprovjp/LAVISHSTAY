@@ -20,7 +20,7 @@ interface StatsProps {
 }
 
 const formatter = (value: number) => (
-  <CountUp end={value} separator="," duration={2.5} />
+  <CountUp end={value} separator="," duration={5.5} />
 );
 
 const Stats: React.FC<StatsProps> = ({
@@ -34,12 +34,12 @@ const Stats: React.FC<StatsProps> = ({
       {(title || subtitle) && (
         <div className="text-center mb-10">
           {title && (
-            <Title level={2} className="font-bevietnam font-bold text-gray-800">
+            <Title level={2} className="font-bevietnam font-bold ">
               {title}
             </Title>
           )}
           {subtitle && (
-            <p className="font-bevietnam text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="font-bevietnam  text-lg max-w-2xl mx-auto">
               {subtitle}
             </p>
           )}
@@ -51,14 +51,14 @@ const Stats: React.FC<StatsProps> = ({
           <Col xs={24} sm={12} md={stats.length === 4 ? 6 : 8} key={index}>
             <Card
               className="text-center h-full hover:shadow-md transition-shadow duration-300"
-              bordered={false}
+              variant="borderless"
             >
               {stat.icon && (
                 <div className="text-4xl text-blue-500 mb-4">{stat.icon}</div>
               )}
               <Statistic
                 title={
-                  <span className="font-bevietnam text-gray-600 text-base">
+                  <span className="font-bevietnam  text-base">
                     {stat.title}
                   </span>
                 }

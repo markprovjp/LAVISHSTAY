@@ -20,7 +20,7 @@ class WeekendDay extends Model
         'is_active' => 'boolean'
     ];
 
-    // Scope for active weekend days
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -30,5 +30,6 @@ class WeekendDay extends Model
     public static function getActiveWeekendDays()
     {
         return self::active()->pluck('day_of_week')->toArray();
+
     }
 }

@@ -99,7 +99,7 @@
                                         Hủy
                                     </a>
                                     <button type="submit"
-                                        class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                                        class="btn cursor-pointer bg-violet-500 hover:bg-violet-600 text-white">
                                         Cập Nhật Loại Phòng
                                     </button>
                                 </div>

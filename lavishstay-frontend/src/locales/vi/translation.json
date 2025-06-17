@@ -1,0 +1,57 @@
+{
+  "header": {
+    "home": "Trang chủ",
+    "destinations": "Điểm đến",
+    "hotels": "Khách sạn",
+    "login": "Đăng nhập"
+  },
+  "footer": {
+    "quickLinks": "Liên kết nhanh",
+    "about": "Về chúng tôi",
+    "services": "Dịch vụ",
+    "blogs": "Blogs",
+    "terms": "Điều khoản sử dụng",
+    "privacy": "Chính sách riêng tư",
+    "contact": "Liên hệ"
+  },
+  "user": {
+    "profile": "Hồ sơ cá nhân",
+    "bookings": "Đặt phòng của tôi",
+    "wishlist": "Danh sách yêu thích",
+    "settings": "Cài đặt",
+    "logout": "Đăng xuất",
+    "notifications": "Thông báo",
+    "viewAll": "Xem tất cả"
+  },  "home": {
+    "banner": {
+        "title": "Biểu Tượng Đẳng Cấp Phố Thanh",
+      "subtitle": "Biểu tượng sống động giữa lòng Thanh Hóa. Khám phá không gian nghỉ dưỡng sang trọng, tiện nghi đẳng cấp và vị trí kết nối hoàn hảo cho mọi hành trình.",
+      "cta": "Khám phá ngay"
+    },
+    "search": {
+      "destination": "Bạn muốn đi đâu?",
+      "checkin": "Ngày nhận phòng",
+      "checkout": "Ngày trả phòng",
+      "guests": "Khách",
+      "search": "Tìm kiếm"
+    },
+    "featured": {
+      "title": "Chỗ nghỉ nổi bật",
+      "subtitle": "Khám phá những chỗ nghỉ được yêu thích nhất của chúng tôi"
+    },
+    "testimonials": {
+      "title": "Khách hàng nói gì về chúng tôi",
+      "subtitle": "Những đánh giá từ khách hàng đã trải nghiệm dịch vụ của LavishStay"
+    }
+  },
+  "newsletter": {
+    "title": "Bạn muốn tiết kiệm tới 20% khi đặt phòng khách sạn?",
+    "subtitle": "Nhập email để Mytour có thể gửi đến bạn những chương trình khuyến mại mới nhất!",
+    "button": "Đăng ký ngay",
+    "privacy": "Chúng tôi tôn trọng quyền riêng tư của bạn. Bạn có thể hủy đăng ký bất cứ lúc nào.",
+    "features": {
+      "exclusive": "Ưu đãi độc quyền",
+      "priority": "Ưu tiên đặt phòng"
+    }
+  }
+}

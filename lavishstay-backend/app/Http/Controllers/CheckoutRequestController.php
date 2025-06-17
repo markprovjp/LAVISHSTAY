@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CheckoutRequestController extends Controller
 {
+
     public function index(Request $request){
         $filter = $request->input('filter', 'all'); // Lấy tham số filter từ query string, mặc định là 'all'
 
