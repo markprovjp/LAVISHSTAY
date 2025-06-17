@@ -114,7 +114,6 @@ const SearchResults: React.FC = () => {
             'deluxe': 'Deluxe',
             'premium': 'Premium',
             'suite': 'Suite',
-            'theLevel': 'The Level Premium',
             'theLevelSuite': 'The Level Suite',
             'theLevelCorner': 'The Level Corner',
             'corner': 'Corner Suite',

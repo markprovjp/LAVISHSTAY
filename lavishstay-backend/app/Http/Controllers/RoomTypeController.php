@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
+use function Psy\debug;
+
 class RoomTypeController extends Controller
 {
     public function index()
@@ -117,6 +119,7 @@ class RoomTypeController extends Controller
     public function images(RoomType $roomType)
     {
         $images = $roomType->images()->orderBy('is_main', 'desc')->orderBy('created_at', 'desc')->get();
+        // dd($images);
         
         return view('admin.room-types.images', compact('roomType', 'images'));
     }

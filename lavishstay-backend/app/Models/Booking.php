@@ -38,4 +38,13 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'booking_id');
+    }
+
+    public function checkoutRequests()
+    {
+        return $this->hasMany(CheckoutRequest::class, 'booking_id', 'booking_id');
+    }
 }
