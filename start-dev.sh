@@ -231,7 +231,7 @@ EOF
     fi
     
     if [ "$choice" = "2" ] || [ "$choice" = "3" ]; then
-        echo -e "${COLOR_CYAN}Backend: http://localhost:8000${COLOR_RESET}"
+        echo -e "${COLOR_CYAN}Backend: http://localhost:8888${COLOR_RESET}"
     fi
     
     echo -e "${COLOR_MAGENTA}${COLOR_BOLD}>>> He thong truc tuyen. San sang thong tri!${COLOR_RESET}"
@@ -277,10 +277,10 @@ echo    LAVISHSTAY BACKEND
 echo ================================
 echo.
 cd /d "$(cygpath -w "$BACKEND_PATH" 2>/dev/null || echo "$BACKEND_PATH" | sed 's|^/d/|D:/|' | sed 's|/|\\|g')"
-echo [+] Laravel Backend dang chay tai http://localhost:8000
+echo [+] Laravel Backend dang chay tai http://localhost:8888
 echo [+] Thu muc hien tai: %CD%
 echo.
-php artisan serve
+php artisan serve --port=8888
 echo.
 echo [!] Backend da dung. Nhan phim bat ky de dong...
 pause
@@ -371,7 +371,7 @@ if [ "$choice" = "1" ] || [ "$choice" = "3" ]; then
 fi
 
 if [ "$choice" = "2" ] || [ "$choice" = "3" ]; then
-    echo "[*] Khoi dong Laravel Backend tai http://localhost:8000..."
+    echo "[*] Khoi dong Laravel Backend tai http://localhost:8888..."
     if command -v powershell.exe &> /dev/null; then
         powershell.exe -Command "Start-Process cmd -ArgumentList '/c', 'start_backend.bat' -WindowStyle Maximized" 2>/dev/null &
         echo "[+] Backend terminal da duoc mo qua PowerShell!"

@@ -281,7 +281,7 @@ class BookingAntiSpamService {
             const bookingCode = `LAVISH${Date.now().toString().slice(-8)}`;
 
             // Make actual API call to backend
-            const response = await fetch('http://localhost:8000/api/payment/create-booking', {
+            const response = await fetch('http://localhost:8888/api/payment/create-booking', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

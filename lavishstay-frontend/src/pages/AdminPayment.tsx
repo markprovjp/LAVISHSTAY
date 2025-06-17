@@ -41,7 +41,7 @@ const AdminPayment: React.FC = () => {
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    const API_BASE_URL = 'http://localhost:8000/api';
+    const API_BASE_URL = 'http://localhost:8888/api';
 
     // Fetch pending payments
     const fetchPendingPayments = async () => {

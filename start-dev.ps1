@@ -148,9 +148,8 @@ if ($choice -eq "1" -or $choice -eq "3") {
 }
 
 if ($choice -eq "2" -or $choice -eq "3") {
-    # Khoi dong Backend
-    Write-Host "[*] Launching Laravel Backend at http://localhost:8000..." -ForegroundColor Yellow
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; Write-Host '[+] Laravel Backend running at http://localhost:8000' -ForegroundColor Cyan; php artisan serve"
+    # Khoi dong Backend    Write-Host "[*] Launching Laravel Backend at http://localhost:8888..." -ForegroundColor Yellow
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$backendPath'; Write-Host '[+] Laravel Backend running at http://localhost:8888' -ForegroundColor Cyan; php artisan serve --port=8888"
 }
 
 # Hien thi thong bao thanh cong
@@ -163,9 +162,9 @@ Write-Host @"
 if ($choice -eq "1") {
     Write-Host "Frontend: http://localhost:5173" -ForegroundColor Cyan
 } elseif ($choice -eq "2") {
-    Write-Host "Backend: http://localhost:8000" -ForegroundColor Cyan
+    Write-Host "Backend: http://localhost:8888" -ForegroundColor Cyan
 } else {
     Write-Host "Frontend: http://localhost:5173" -ForegroundColor Cyan
-    Write-Host "Backend: http://localhost:8000" -ForegroundColor Cyan
+    Write-Host "Backend: http://localhost:8888" -ForegroundColor Cyan
 }
 Write-Host ">>> System online. Ready to dominate!" -ForegroundColor Magenta
