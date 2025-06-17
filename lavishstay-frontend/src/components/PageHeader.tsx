@@ -91,9 +91,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
           <Title
             level={1}
-            className={`font-bevietnam font-bold mb-2 ${
-              coverImage ? "text-white" : "text-blue-700"
-            }`}
+            className={`font-bevietnam font-bold mb-2 ${coverImage ? "" : ""}`}
           >
             {title}
           </Title>

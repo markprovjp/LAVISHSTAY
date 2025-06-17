@@ -1,0 +1,57 @@
+{
+  "header": {
+    "home": "Home",
+    "destinations": "Destinations",
+    "hotels": "Hotels",
+    "login": "Login"
+  },
+  "footer": {
+    "quickLinks": "Quick Links",
+    "about": "About Us",
+    "services": "Services",
+    "blogs": "Blogs",
+    "terms": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "contact": "Contact"
+  },
+  "user": {
+    "profile": "Profile",
+    "bookings": "My Bookings",
+    "wishlist": "Wishlist",
+    "settings": "Settings",
+    "logout": "Logout",
+    "notifications": "Notifications",
+    "viewAll": "View All"
+  },  "home": {
+     "banner": {
+      "title": " Thanh Hoa's Icon of Luxury",
+      "subtitle": "A vibrant icon in the heart of Thanh Hoa. Discover luxurious accommodations, premium amenities, and a perfectly connected location for every journey.",
+      "cta": "Explore Now"
+    },
+    "search": {
+      "destination": "Where are you going?",
+      "checkin": "Check-in",
+      "checkout": "Check-out",
+      "guests": "Guests",
+      "search": "Search"
+    },
+    "featured": {
+      "title": "Featured Properties",
+      "subtitle": "Discover our most popular stays"
+    },
+    "testimonials": {
+      "title": "What Our Customers Say",
+      "subtitle": "Reviews from customers who have experienced LavishStay services"
+    }
+  },
+  "newsletter": {
+    "title": "Want to save up to 20% on hotel bookings?",
+    "subtitle": "Enter your email to receive our latest promotions!",
+    "button": "Subscribe Now",
+    "privacy": "We respect your privacy. You can unsubscribe at any time.",
+    "features": {
+      "exclusive": "Exclusive offers",
+      "priority": "Priority booking"
+    }
+  }
+}

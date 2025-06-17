@@ -332,7 +332,7 @@
                 </div>
 
                 <!-- All Images Gallery Modal -->
-                <div id="allImagesModal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden">
+                <div id="allImagesModal" class="fixed modal-overlay inset-0 bg-black bg-opacity-95 z-50 hidden">
                     <div class="h-full flex flex-col">
 
                         <!-- Header -->
@@ -1169,6 +1169,10 @@
     </script>
     <!-- CSS với tỷ lệ cố định -->
     <style>
+        .modal-overlay {
+            z-index: 50;
+            background-color: rgba(0, 0, 0, 0.768)
+        }
         /* Gallery Container - Main Layout */
         .gallery-container {
             display: flex;

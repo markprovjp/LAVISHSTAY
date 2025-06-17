@@ -25,6 +25,7 @@ use App\Http\Controllers\DepositPolicyController;
 use App\Http\Controllers\RoomPriceController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
+use App\Http\Controllers\WeekendPriceController;
 
 
 Route::redirect('/', 'login');
@@ -119,7 +120,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    // Amenities Management Kiệt //////////////////////////////////
+    // Amenities Management //////////////////////////////////
     Route::get('/admin/services/amenities', [ServiceAmenityController::class, 'index'])->name('admin.services.amenities');
     Route::get('/admin/services/amenities/create', [ServiceAmenityController::class, 'create'])->name('admin.services.amenities.create');
     Route::post('/admin/services/amenities/store', [ServiceAmenityController::class, 'store'])->name('admin.services.amenities.store');
@@ -130,7 +131,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    //  Meals Management Công //////////////////////////////////
+    //  Meals Management //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
     Route::get('/admin/services/meals/create', [ServiceMealController::class, 'create'])->name('admin.services.meals.create');
     Route::post('/admin/services/meals/store', [ServiceMealController::class, 'store'])->name('admin.services.meals.store');
@@ -141,7 +142,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    //  Meals Management Tuyên //////////////////////////////////
+    //  Meals Management  //////////////////////////////////
     Route::get('/admin/services/beds', [ServiceBedController::class, 'index'])->name('admin.services.beds');
     Route::get('/admin/services/beds/create', [ServiceBedController::class, 'create'])->name('admin.services.beds.create');
     Route::post('/admin/services/beds/store', [ServiceBedController::class, 'store'])->name('admin.services.beds.store');
@@ -167,6 +168,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/multinational/currencies/update/{currency_code}', [CurrencyController::class, 'update'])->name('admin.multinational.currencies.update');
     Route::post('/admin/multinational/currencies/destroy/{currency_code}', [CurrencyController::class, 'destroy'])->name('admin.multinational.currencies.destroy');
 
+
     // Multinational Translation
     Route::get('/admin/multinational/translation', [TranslationController::class, 'index'])->name('admin.multinational.translation');
 
@@ -174,6 +176,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Translation Management
     Route::prefix('admin/translation')->group(function () {
         
+
         Route::get('/get-tables', [TranslationController::class, 'getTables'])->name('admin.translation.get-tables');
         Route::get('/manage-tables', [TranslationController::class, 'manageTables'])->name('admin.translation.manage-tables');
         Route::post('/manage-tables/toggle-status/{table}', [TranslationController::class, 'toggleTableStatusInTable'])->name('admin.translation.manage-tables.toggle-status');
@@ -183,7 +186,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/{table}', [TranslationController::class, 'show'])->name('admin.translation.show');
         Route::get('/create', [TranslationController::class, 'create'])->name('admin.translation.create');
         Route::post('/', [TranslationController::class, 'store'])->name('admin.translation.store');
-        // Route::get('/{translationId}/edit', [TranslationController::class, 'edit'])->name('admin.translation.edit');
+
         Route::patch('/{translationId}/update-value', [TranslationController::class, 'updateValue'])->name('admin.translation.update-value');
         Route::delete('/destroy/{translationId}/language/{languageCode}', [TranslationController::class, 'destroyByLanguage'])->name('admin.translation.destroy-by-language');
         Route::delete('/{table}/destroy-record/{recordId}', [TranslationController::class, 'destroyRecord'])->name('admin.translation.destroy-record');
@@ -286,14 +289,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/event_festival', [RoomPriceController::class, 'event_festival'])->name('admin.room-prices.event_festival');
 
 
-
     //Giá động
     Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
 
 
 
+
      //Giá cuối tuần
     Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
+
 
 
 
@@ -314,6 +318,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::put('/{id}', [RoomPriceEventFestivalController::class, 'update'])->name('update');
         Route::delete('/{id}', [RoomPriceEventFestivalController::class, 'destroy'])->name('destroy');
     });
+
 
 
 

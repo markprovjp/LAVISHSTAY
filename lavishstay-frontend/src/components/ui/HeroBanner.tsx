@@ -1,9 +1,9 @@
-import React from "react";
-import { Typography, Card, Button } from "antd";
+import React, { useMemo } from "react";
+import { Typography } from "antd";
 import { Link } from "react-router-dom";
 import "animate.css";
 import StyledTitle from "./StyledTitle"; // Import component StyledTitle
-import "../../assets/css/StyledTitleAnimations.css"; // Import CSS cho hiệu ứng
+import { useTranslation } from "react-i18next"; //lần đầu là phải iu trước
 
 const { Title, Paragraph } = Typography;
 
@@ -15,62 +15,129 @@ interface HeroBannerProps {
   backgroundImage?: string;
   image?: string;
   height?: string;
+  titleKey?: string;
+  subtitleKey?: string;
+  ctaTextKey?: string;
+  // Đạo cụ mới cho tích hợp phụ trợ trong tương laiơng lai
+  bannerData?: {
+    id: number;
+    title: string;
+    subtitle: string;
+    ctaText: string;
+    imageUrl: string;
+    translatedContent?: {
+      [key: string]: {
+        title: string;
+        subtitle: string;
+        ctaText: string;
+      };
+    };
+  };
 }
 
-const HeroBanner: React.FC<HeroBannerProps> = ({
-  title = "–Trải nghiệm đặt phòng tiện ích, tận hưởng kỳ nghỉ như tại chính ngôi nhà bạn",
-  subtitle = "Vô vàn lựa chọn từ nhà nghỉ, biệt thự, homestay đến khách sạn sang trọng – Tất cả trong một hệ thống đặt phòng trực tuyến đa tiện ích",
+const HeroBanner: React.FC<HeroBannerProps> = React.memo(({
   ctaText = "Khám phá ngay",
   ctaLink = "/",
-  image = "/images/luxury-hotel-room-banner.jpg",
-  height = "80vh",
+  image = "/images/home/melia-banner.avif",
+  titleKey = "home.banner.title",
+  subtitleKey = "home.banner.subtitle",
+  ctaTextKey = "home.banner.cta",
+  bannerData,
 }) => {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
+
+  // Memoize display content to prevent recalculation on each render
+  const displayContent = useMemo(() => {
+    if (bannerData) {
+      // Sử dụng nội dung dịch nếu có sẵn cho ngôn ngữ hiện tại
+      if (
+        bannerData.translatedContent &&
+        bannerData.translatedContent[currentLang]
+      ) {
+        const translatedContent = bannerData.translatedContent[currentLang];
+        return {
+          title: translatedContent.title,
+          subtitle: translatedContent.subtitle,
+          ctaText: translatedContent.ctaText,
+          image: bannerData.imageUrl || image
+        };
+      } else {
+        // Sử dụng nội dung mặc định từ phụ trợ
+        return {
+          title: bannerData.title,
+          subtitle: bannerData.subtitle,
+          ctaText: bannerData.ctaText,
+          image: bannerData.imageUrl || image
+        };
+      }
+    } else {      // Use translation keys if no backend data
+      return {
+        title: titleKey ? t(titleKey) : '',
+        subtitle: subtitleKey ? t(subtitleKey) : '',
+        ctaText: ctaTextKey ? t(ctaTextKey) : ctaText,
+        image: image
+      };
+    }
+  }, [bannerData, currentLang, titleKey, subtitleKey, ctaTextKey, ctaText, image, t]);
+
+  // Memoize animation classes
+  const animationClasses = useMemo(() => ({
+    title: "font-bevietnam font-bold text-3xl md:text-4xl lg:text-7xl mb-6 text-gray-800 animate__animated animate__fadeInLeft",
+    styledTitle: "my-5 animate__animated animate__fadeIn animate__delay-0.3s",
+    subtitle: "text-sm md:text-base font-bevietnam mb-10 text-gray-500 font-light animate__animated animate__fadeInLeft animate__delay-0.5s",
+    cta: "animate__animated animate__fadeInUp animate__delay-1s",
+    imageContainer: "w-full md:w-1/2 relative flex items-center justify-center p-8",
+    imageFrame: "absolute border-2 border-gray-200 rounded-xl w-4/5 h-4/5 -bottom-4 -right-4 animate__animated animate__fadeIn animate__delay-1.5s",
+    image: "w-full h-full object-cover rounded-xl transition-transform duration-700 hover:scale-105 z-10"
+  }), []);
+
+  // Memoize button styles
+  const buttonStyle = useMemo(() => ({
+    WebkitBoxReflect: "below 0px linear-gradient(to bottom, rgba(0,0,0,0.0), rgba(0,0,0,0.4))"
+  }), []);
+
   return (
-    <div className=" py-1">
+    <div className=" my-10 ">
       <div
         className="container mx-auto flex flex-col md:flex-row items-center"
-        style={{ minHeight: height }}
+
       >
         {/* Phần bên trái - Nội dung & Call to Action */}
-        <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12 lg:p-16">
+        <div className="w-full md:w-1/2 flex items-center justify-center p-1 md:p-5">
           <div className="max-w-xl">
-            {" "}
-            <Title
+            {" "}            <Title
               level={1}
-              className="font-bevietnam font-bold text-3xl md:text-4xl lg:text-7xl mb-6 text-gray-800 animate__animated animate__fadeInLeft"
+              className={animationClasses.title}
             >
               {" "}
               <div className="flex flex-col">
                 <StyledTitle
                   text="LAVISHSTAY"
                   fontSize="1.5em"
-                  className="my-2 animate__animated animate__fadeIn animate__delay-0.3s"
+                  className={animationClasses.styledTitle}
                 />
-                <span>{title}</span>
+                <span>{displayContent.title}</span>
               </div>
             </Title>{" "}
-            <Paragraph className="text-sm md:text-base font-bevietnam mb-10 text-gray-500 font-light animate__animated animate__fadeInLeft animate__delay-0.5s">
-              {subtitle}
-            </Paragraph>
-            {ctaText && (
-              <div className="animate__animated animate__fadeInUp animate__delay-1s">
+            <Paragraph className={animationClasses.subtitle}>
+              {displayContent.subtitle}
+            </Paragraph>            {displayContent.ctaText && (
+              <div className={animationClasses.cta}>
                 <Link to={ctaLink}>
                   {" "}
                   <button
-                    style={{
-                      WebkitBoxReflect:
-                        "below 0px linear-gradient(to bottom, rgba(0,0,0,0.0), rgba(0,0,0,0.4))",
-                    }}
+                    style={buttonStyle}
                     className="px-12 py-4 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full shadow-xl group hover:shadow-2xl hover:shadow-blue-600 shadow-blue-600 uppercase font-serif tracking-widest relative overflow-hidden group text-transparent cursor-pointer z-10 after:absolute after:rounded-full after:bg-blue-200 after:h-[85%] after:w-[95%] after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-1/2 hover:saturate-[1.15] active:saturate-[1.4]"
                   >
                     {" "}
-                    <p className="absolute z-40 font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent top-1/2 left-1/2 -translate-x-1/2 group-hover:-translate-y-full h-full w-full transition-all duration-300 -translate-y-[30%] tracking-widest">
-                      KHÁM PHÁ
+                    <p className="absolute z-40 font-semibold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent top-1/2 left-1/2 -translate-x-1/2 group-hover:-translate-y-full h-full w-full transition-all duration-300 -translate-y-[35%] tracking-widest">
+                      {i18n.language === "vi" ? "ĐẶT PHÒNG" : "BOOKING"}
                     </p>{" "}
                     <p className="absolute z-40 top-1/2 left-1/2 -translate-x-1/2 translate-y-full h-full w-full transition-all duration-300 group-hover:-translate-y-[50%] tracking-widest font-extrabold">
                       {" "}
                       <span className="text-white font-bold text-lg tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]">
-                        XEM 
+                        {i18n.language === "vi" ? "NGAY" : "NOW"}
                       </span>
                     </p>
                     <svg
@@ -156,22 +223,21 @@ const HeroBanner: React.FC<HeroBannerProps> = ({
               </div>
             )}
           </div>
-        </div>
-
-        {/* Phần bên phải - Hình ảnh */}
-        <div className="w-full md:w-1/2 relative flex items-center justify-center p-8">
+        </div>        {/* Phần bên phải - Hình ảnh */}
+        <div className={animationClasses.imageContainer}>
           {" "}
-          <div className="absolute border-2 border-gray-200 rounded-xl w-4/5 h-4/5 -bottom-4 -right-4 animate__animated animate__fadeIn animate__delay-1.5s"></div>
+          <div className={animationClasses.imageFrame}></div>
           <img
-            src={image}
+            src={displayContent.image}
             alt="Luxury accommodation"
-            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 z-10"
+            className={animationClasses.image}
             style={{ minHeight: "450px" }}
           />
         </div>
       </div>
-    </div>
-  );
-};
+    </div>);
+});
+
+HeroBanner.displayName = 'HeroBanner';
 
 export default HeroBanner;

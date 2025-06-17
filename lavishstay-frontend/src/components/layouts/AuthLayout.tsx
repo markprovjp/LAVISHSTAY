@@ -20,7 +20,7 @@ const AuthLayout: React.FC = () => {
 
           <Card
             className="w-full shadow-lg rounded-lg overflow-hidden"
-            bordered={false}
+            variant="borderless"
           >
             <div className="py-4">
               <Outlet />
