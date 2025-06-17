@@ -4,12 +4,12 @@
         <!-- Page header -->
         <div class="flex justify-between items-center">
             <div class="mb-8">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa người dùng</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cập nhật thông tin người dùng
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa thông tin nhân viên</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cập nhật thông tin nhân viên
                     {{ $user->name }}</p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-                <a href="{{ route('admin.users') }}">
+                <a href="{{ route('admin.staffs') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -45,7 +45,7 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl dark:border-gray-700">
-            <form action="{{ route('admin.users.update', $user->id) }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('admin.staffs.update', $user->id) }}" method="POST" enctype="multipart/form-data"
                 class="p-6">
                 @csrf
                 @method('PUT')
@@ -153,23 +153,25 @@
 
                         <!-- Vai trò -->
                         <div>
-                            <label for="role"
+                            <label for="role_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
                                 Vai trò <span class="text-red-500">*</span>
                             </label>
-                            <select id="role" name="role" required
+
+                            <select id="role_id" name="role_id" required
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                                <option value="">-- Chọn vai trò --</option>
-                                @foreach ($roles as $role)
-                                    <option value="{{ $role->name }}"
-                                        {{ old('role', $currentRole) === $role->name ? 'selected' : '' }}>
+                                <option value="">Chọn vai trò</option>
+
+                                @foreach ($staffRoles as $role)
+                                    <option value="{{ $role->id }}"
+                                        {{ old('role_id', $user->roles->first()->id ?? '') == $role->id ? 'selected' : '' }}>
                                         {{ \App\Models\Role::getRoleLabel($role->name) }}
                                     </option>
                                 @endforeach
                             </select>
 
-                            @error('role')
+                            @error('role_id')
                                 <p class="mt-2 text-sm text-red-600 dark:text-red-400">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
                                     {{ $message }}

@@ -5,13 +5,13 @@
         <div class="flex justify-between items-center">
             <div class="mb-8">
 
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thêm người dùng mới</h1>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thêm nhân viên mới</h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tạo tài khoản mới cho hệ thống quản lý khách sạn
                 </p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
 
-                <a href="{{ route('admin.users') }}">
+                <a href="{{ route('admin.staffs') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -46,7 +46,8 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl  dark:border-gray-700">
-            <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form action="{{ route('admin.staffs.store') }}" method="POST" enctype="multipart/form-data"
+                class="p-6">
                 @csrf
 
                 <!-- Avatar Section -->
@@ -161,23 +162,21 @@
                     <!-- Vai trò -->
 
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label for="role_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
                             Vai trò <span class="text-red-500">*</span>
                         </label>
-                        <!-- Thay thế phần select role trong form -->
+
                         <select id="role_id" name="role_id" required
                             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                             <option value="">Chọn vai trò</option>
-                            @foreach ($roles as $role)
+                            @foreach ($staffRoles as $role)
                                 <option value="{{ $role->id }}"
                                     {{ old('role_id') == $role->id ? 'selected' : '' }}>
                                     {{ \App\Models\Role::getRoleLabel($role->name) }}
                                 </option>
                             @endforeach
                         </select>
-
-
                     </div>
 
                     <!-- Địa chỉ -->

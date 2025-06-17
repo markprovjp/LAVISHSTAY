@@ -38,6 +38,11 @@
             <li>
                 <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1 px-3" href="{{ route('profile.show') }}" @click="open = false" @focus="open = true" @focusout="open = false">Settings</a>
             </li>
+            @if(Auth()->user()?->hasAnyRole(['admin', 'manager']))
+            <li>
+                <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1 px-3" href="{{ route('admin.roles', Auth::user()->role_id) }}" @click="open = false" @focus="open = true" @focusout="open = false">Phân quyền</a>
+            </li>
+            @endif
             <li>
                 <form method="POST" action="{{ route('logout') }}" x-data>
                     @csrf
