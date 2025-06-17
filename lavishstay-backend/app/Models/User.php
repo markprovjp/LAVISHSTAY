@@ -13,42 +13,18 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
-    use HasFactory;
-    use Notifiable;
-    use HasProfilePhoto;
-    use HasTeams;
-    use TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, Notifiable, HasProfilePhoto, HasTeams, TwoFactorAuthenticatable;
 
-    /**
-     * Định nghĩa các role constants
-     */
-    const ROLE_GUEST = 'guest';
-    const ROLE_RECEPTIONIST = 'receptionist';
-    const ROLE_MANAGER = 'manager';
-    const ROLE_ADMIN = 'admin';
-
-    /**
-     * Các trường có thể gán hàng loạt.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'phone',
         'address',
-        'role',
         'current_team_id',
         'profile_photo_path',
     ];
 
-    /**
-     * Các trường bị ẩn khi chuyển sang mảng hoặc JSON.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -56,90 +32,117 @@ class User extends Authenticatable
         'two_factor_recovery_codes',
     ];
 
-    /**
-     * Ép kiểu dữ liệu cho các trường.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'two_factor_confirmed_at' => 'datetime',
         'current_team_id' => 'integer',
     ];
 
-    /**
-     * Các accessor sẽ tự động thêm vào khi model được chuyển sang mảng.
-     *
-     * @var array<int, string>
-     */
     protected $appends = [
         'profile_photo_url',
     ];
 
-    /**
-     * Lấy danh sách tất cả các role có thể
-     */
-    public static function getRoles()
-    {
-        return [
-            self::ROLE_GUEST => 'Khách',
-            self::ROLE_RECEPTIONIST => 'Lễ tân',
-            self::ROLE_MANAGER => 'Quản lý',
-            self::ROLE_ADMIN => 'Quản trị viên',
-        ];
-    }
+    
 
     /**
-     * Lấy tên role bằng tiếng Việt
+     * Đường dẫn ảnh đại diện
      */
-    public function getRoleNameAttribute()
-    {
-        return self::getRoles()[$this->role] ?? $this->role;
-    }
-
-    /**
-     * Kiểm tra role
-     */
-    public function isAdmin()
-    {
-        return $this->role === self::ROLE_ADMIN;
-    }
-
-    public function isManager()
-    {
-        return $this->role === self::ROLE_MANAGER;
-    }
-
-    public function isReceptionist()
-    {
-        return $this->role === self::ROLE_RECEPTIONIST;
-    }
-
-    public function isGuest()
-    {
-        return $this->role === self::ROLE_GUEST;
-    }
-
-    /**
-     * Kiểm tra quyền quản lý (admin hoặc manager)
-     */
-    public function canManage()
-    {
-        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER]);
-    }
-
-    /**
-     * (Tùy chọn) Quan hệ đến team hiện tại nếu bạn muốn gọi thủ công
-     */
-    public function currentTeam()
-    {
-        return $this->belongsTo(Team::class, 'current_team_id');
-    }
-
     public function getProfilePhotoUrlAttribute()
     {
         return $this->profile_photo_path
             ? asset('storage/' . $this->profile_photo_path)
             : null;
     }
+
+    /**
+     * Quan hệ: user thuộc nhiều role
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'role_user');
+    }
+
+    /**
+     * Lấy danh sách permission từ tất cả vai trò
+     */
+    public function permissions()
+    {
+        return $this->roles->flatMap(function ($role) {
+            return $role->permissions;
+        })->unique('id');
+    }
+
+    /**
+     * Kiểm tra user có vai trò cụ thể không
+     */
+    public function hasRole($roleName)
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+
+    /**
+     * Kiểm tra user có bất kỳ role nào trong danh sách
+     */
+    public function hasAnyRole($roles)
+    {
+        return $this->roles()->whereIn('name', (array) $roles)->exists();
+    }
+
+    /**
+     * Kiểm tra user có permission cụ thể không
+     */
+    // public function hasPermission($permissionName)
+    // {
+    //     return $this->permissions()->contains('name', $permissionName);
+    // }
+
+    public function hasPermission($permissionName)
+{
+    foreach ($this->roles as $role) {
+        if ($role->permissions->contains('name', $permissionName)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+    /**
+     * Gán vai trò cho user (nếu chưa có)
+     */
+    public function assignRole($roleName)
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role && !$this->hasRole($roleName)) {
+            $this->roles()->attach($role->id);
+        }
+    }
+
+    /**
+     * Gỡ vai trò ra khỏi user
+     */
+    public function removeRole($roleName)
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role) {
+            $this->roles()->detach($role->id);
+        }
+    }
+
+    /**
+     * Thay thế toàn bộ vai trò
+     */
+    public function syncRoles(array $roleIds)
+    {
+        $this->roles()->sync($roleIds);
+    }
+
+    /**
+     * Nếu bạn dùng team Jetstream
+     */
+    public function currentTeam()
+    {
+        return $this->belongsTo(Team::class, 'current_team_id');
+    }
+
+    
 }
