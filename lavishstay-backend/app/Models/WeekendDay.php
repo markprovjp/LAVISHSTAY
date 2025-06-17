@@ -20,25 +20,16 @@ class WeekendDay extends Model
         'is_active' => 'boolean'
     ];
 
-    // Scopes
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
-    // Get day name in Vietnamese
-    public function getDayNameViAttribute()
+    // Get weekend days as array
+    public static function getActiveWeekendDays()
     {
-        $days = [
-            'Monday' => 'Thứ Hai',
-            'Tuesday' => 'Thứ Ba',
-            'Wednesday' => 'Thứ Tư',
-            'Thursday' => 'Thứ Năm',
-            'Friday' => 'Thứ Sáu',
-            'Saturday' => 'Thứ Bảy',
-            'Sunday' => 'Chủ Nhật'
-        ];
+        return self::active()->pluck('day_of_week')->toArray();
 
-        return $days[$this->day_of_week] ?? $this->day_of_week;
     }
 }

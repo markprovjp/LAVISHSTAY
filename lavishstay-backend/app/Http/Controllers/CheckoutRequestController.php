@@ -12,12 +12,23 @@ use Illuminate\Support\Facades\Auth;
 
 class CheckoutRequestController extends Controller
 {
-    public function index()
-{
-    $requests = CheckoutRequest::with('booking')->orderBy('created_at', 'desc')->get();
-    $bookings = Booking::where('check_out_date', '>=', now()->toDateString())->get(); // Lấy booking còn hiệu lực
-    return view('admin.room_modification.checkout_requests.index', compact('requests', 'bookings'));
-}
+
+    public function index(Request $request){
+        $filter = $request->input('filter', 'all'); // Lấy tham số filter từ query string, mặc định là 'all'
+
+        $query = CheckoutRequest::with('booking')->orderBy('created_at', 'desc');
+        if ($filter !== 'all') {
+            if (in_array($filter, ['approved', 'rejected'])) {
+                $query->where('status', $filter);
+            } elseif (in_array($filter, ['early', 'late'])) {
+                $query->where('type', $filter);
+            }
+        }
+        $requests = $query->get();
+
+        $bookings = Booking::where('check_out_date', '>=', now()->toDateString())->get();
+        return view('admin.room_modification.checkout_requests.index', compact('requests', 'bookings'));
+    }
 
     public function create(){
         $bookings = Booking::where('check_out_date', '>=', now()->toDateString())->get(); // Chỉ lấy booking còn hiệu lực
