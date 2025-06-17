@@ -11,9 +11,27 @@
                     </h1>
                     <p class="text-gray-300 text-lg mt-2">Quản lý các yêu cầu thay đổi thời gian trả phòng</p>
                 </div>
-                <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                    <a href="{{ route('admin.check_out_requests.create') }}" class="btn-enhanced btn bg-violet-500 hover:bg-violet-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center sm:auto-cols-max gap-2">
+                    <!-- Bộ lọc bên ngoài -->
+                    <div class=" flex justify-end">
+                        <div class="relative">
+                            <button id="filterButton" class="btn-enhanced btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                </svg>
+                                Lọc
+                            </button>
+                            <div id="filterDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg hidden z-50">
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" data-filter="all">Tất cả</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" data-filter="approved">Đã phê duyệt</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" data-filter="rejected">Bị từ chối</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" data-filter="early">Trả phòng sớm</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100" data-filter="late">Trả phòng muộn</a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.check_out_requests.create') }}" class="btn-enhanced btn bg-violet-500 hover:bg-violet-600 text-white px-3 py-2 font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Thêm Yêu cầu
@@ -24,14 +42,22 @@
 
         <!-- Success/Error Messages với enhanced styling -->
         @if (session('success'))
-            <div class="mb-4 p-4 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-xl border-l-4 border-green-500 shadow-lg fade-in">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                    </svg>
-                    {{ session('success') }}
-                </div>
+        <div id="notification" class="transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md">
+            <div class="flex items-center justify-center w-8 h-8 text-green-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
             </div>
+            <div class="ml-3 mr-8">
+                <h3 class="font-semibold text-green-700">Thành công!</h3>
+                <div class="text-sm text-green-600">{{ session('success') }}</div>
+            </div>
+            <button onclick="closeNotification()" class="absolute right-2 top-2 text-green-600 hover:text-green-800">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
         @endif
         @if ($errors->any())
             <div class="mb-4 p-4 bg-gradient-to-r from-red-100 to-pink-100 text-red-700 rounded-xl border-l-4 border-red-500 shadow-lg fade-in">
@@ -48,8 +74,70 @@
             </div>
         @endif
 
+        <!-- Thống kê -->
+        <div class="flex flex-wrap gap-4 mb-6">
+            <div class="p-4 rounded-lg shadow flex-1 min-w-[200px] border-l-4 border-blue-500">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                    <div>
+                        <h4 class="text-lg font-semibold text-blue-800">Tổng yêu cầu</h4>
+                        <p class="text-2xl font-bold text-blue-900">{{ $requests->count() }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg shadow flex-1 min-w-[200px] border-l-4 border-green-500">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <h4 class="text-lg font-semibold text-green-800">Đã phê duyệt</h4>
+                        <p class="text-2xl font-bold text-green-900">{{ $requests->where('status', 'approved')->count() }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg shadow flex-1 min-w-[200px] border-l-4 border-red-500">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-red-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <h4 class="text-lg font-semibold text-red-800">Bị từ chối</h4>
+                        <p class="text-2xl font-bold text-red-900">{{ $requests->where('status', 'rejected')->count() }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg shadow flex-1 min-w-[200px] border-l-4 border-yellow-500">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <h4 class="text-lg font-semibold text-yellow-800">Trả phòng sớm</h4>
+                        <p class="text-2xl font-bold text-yellow-900">{{ $requests->where('type', 'early')->count() }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 rounded-lg shadow flex-1 min-w-[200px] border-l-4 border-indigo-500">
+                <div class="flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                        <h4 class="text-lg font-semibold text-indigo-800">Trả phòng muộn</h4>
+                        <p class="text-2xl font-bold text-indigo-900">{{ $requests->where('type', 'late')->count() }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+
         <!-- Table với enhanced styling -->
-        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl dark:border-gray-700 overflow-hidden card-hover fade-in">            <!-- Table Header -->
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl dark:border-gray-700 overflow-hidden card-hover fade-in">
+            <!-- Table Header -->
             <div class="table-header-gradient px-6 py-4">
                 <h3 class="text-xl font-semibold text-white flex items-center gap-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,16 +201,16 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm divide-y divide-gray-100 dark:divide-gray-700">
+                    <tbody class="text-sm divide-y divide-gray-100 dark:divide-gray-700" id="requestTableBody">
                         @forelse ($requests as $request)
-                            <tr class="table-row {{ $request->status === 'rejected' ? 'bg-red-600' : '' }}">
+                            <tr class="table-row {{ $request->status === 'rejected' ? 'bg-red-600' : '' }}" data-status="{{ $request->status }}" data-type="{{ $request->type }}">
                                 <td class="px-6 py-4">
                                     <div class="font-semibold text-gray-900 dark:text-gray-100 {{ $request->status === 'rejected' ? 'text-white' : '' }}">{{ $request->booking_id }}</div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
                                         {{ $request->type === 'early' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}
-                                        {{-- {{ $request->status === 'rejected' ? 'bg-gray-500 text-white' : '' }}"> --}}
+                                        {{ $request->status === 'rejected' ? 'bg-gray-500 text-white' : '' }}">
                                         <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd"></path>
                                         </svg>
@@ -227,6 +315,48 @@
                     }, 600);
                 });
             });
+
+            // Handle filter dropdown
+            const filterButton = document.getElementById('filterButton');
+            const filterDropdown = document.getElementById('filterDropdown');
+            const filterLinks = filterDropdown.getElementsByTagName('a');
+            const requestTableBody = document.getElementById('requestTableBody');
+
+            filterButton.addEventListener('click', function() {
+                filterDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!filterButton.contains(event.target) && !filterDropdown.contains(event.target)) {
+                    filterDropdown.classList.add('hidden');
+                }
+            });
+
+            // Filter logic
+            Array.from(filterLinks).forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const filter = this.getAttribute('data-filter');
+                    filterRequests(filter);
+                    filterDropdown.classList.add('hidden');
+                });
+            });
+
+            function filterRequests(filter) {
+                const rows = requestTableBody.getElementsByTagName('tr');
+                Array.from(rows).forEach(row => {
+                    const status = row.getAttribute('data-status');
+                    const type = row.getAttribute('data-type');
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else if (filter === 'approved' || filter === 'rejected') {
+                        row.style.display = status === filter ? '' : 'none';
+                    } else if (filter === 'early' || filter === 'late') {
+                        row.style.display = type === filter ? '' : 'none';
+                    }
+                });
+            }
         });
     </script>
 
@@ -252,5 +382,32 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+
+        /* Đảm bảo dropdown đè lên danh sách */
+        #filterDropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 50;
+            min-width: 48px; /* Đảm bảo chiều rộng đủ */
+        }
     </style>
+    <script>
+        // Animation khi hiển thị
+        document.getElementById('notification').classList.add('translate-y-0', 'opacity-100');
+        document.getElementById('notification').classList.remove('-translate-y-full', 'opacity-0');
+
+        // Tự động ẩn sau 5 giây
+        setTimeout(() => {
+            closeNotification();
+        }, 5000);
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }
+    </script>
 </x-app-layout>
