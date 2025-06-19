@@ -4,7 +4,7 @@ import { message } from 'antd';
 import { useSelector } from 'react-redux';
 import { selectBookingState } from '../store/slices/bookingSlice';
 import { selectSearchData } from '../store/slices/searchSlice';
-import { bookingAntiSpamService } from '../services/bookingAntiSpamService';
+import bookingAntiSpamService from '../services/bookingAntiSpamService';
 import {
     showRateLimitNotification,
     showBookingReuseNotification,
@@ -30,31 +30,21 @@ export const useBookingManager = (): UseBookingManagerResult => {
 
     // Redux state
     const bookingState = useSelector(selectBookingState);
-    const searchData = useSelector(selectSearchData);
-
-    // Check eligibility on mount and when data changes
+    const searchData = useSelector(selectSearchData);    // Check eligibility on mount and when data changes
     useEffect(() => {
         const checkEligibility = () => {
-            const eligibility = bookingAntiSpamService.checkBookingEligibility(
-                bookingState.selectedRooms,
-                searchData,
-                bookingState.preferences,
-                bookingState.totals
-            );
-
-            setCanProceed(eligibility.canProceed);
-
-            if (eligibility.existingBookingCode) {
-                setBookingCode(eligibility.existingBookingCode);
-            }
-
-            // Update cooldown info
+            // Kiểm tra cooldown đơn giản thay vì method phức tạp
             const cooldown = bookingAntiSpamService.getCooldownInfo();
             setCooldownInfo(cooldown);
+            setCanProceed(!cooldown.inCooldown);            // Lấy session info để check existing booking
+            const currentSession = bookingAntiSpamService.getSessionInfo();
+            if (currentSession.session) {
+                setBookingCode(currentSession.session.bookingCode);
+            }
 
             // Show appropriate notifications
-            if (!eligibility.canProceed && eligibility.reason && eligibility.remainingTime) {
-                showRateLimitNotification(eligibility.remainingTime, () => {
+            if (cooldown.inCooldown && cooldown.remainingTime) {
+                showRateLimitNotification(cooldown.remainingTime, () => {
                     bookingAntiSpamService.clearRateLimit();
                     checkEligibility();
                 });
@@ -73,12 +63,10 @@ export const useBookingManager = (): UseBookingManagerResult => {
                         checkEligibility();
                     }
                 );
-            }
-
-            // Show spam warning if approaching limit
-            const sessionInfo = bookingAntiSpamService.getSessionInfo();
-            if (sessionInfo.rateLimit && sessionInfo.rateLimit.attempts >= 3 && sessionInfo.rateLimit.attempts < 5) {
-                const attemptsLeft = 5 - sessionInfo.rateLimit.attempts;
+            }            // Show spam warning if approaching limit
+            const latestSession = bookingAntiSpamService.getSessionInfo();
+            if (latestSession.rateLimit && latestSession.rateLimit.attempts >= 3 && latestSession.rateLimit.attempts < 5) {
+                const attemptsLeft = 5 - latestSession.rateLimit.attempts;
                 showSpamAttemptWarning(attemptsLeft);
             }
         };
@@ -99,14 +87,10 @@ export const useBookingManager = (): UseBookingManagerResult => {
             const customerDataWithTotal = {
                 ...customerData,
                 totalAmount: bookingState.totals.finalTotal || bookingState.totals.roomsTotal
-            };
-
-            const result = await bookingAntiSpamService.processBooking(
+            }; const result = await bookingAntiSpamService.createBooking(
                 bookingState.selectedRooms,
                 searchData,
-                customerDataWithTotal,
-                bookingState.preferences,
-                bookingState.totals
+                customerDataWithTotal
             );
 
             setBookingCode(result.bookingCode);
@@ -128,22 +112,18 @@ export const useBookingManager = (): UseBookingManagerResult => {
     const resetBooking = useCallback(() => {
         bookingAntiSpamService.clearSession();
         bookingAntiSpamService.clearRateLimit(); // Also clear rate limit for dev testing
-        setBookingCode('');
-        setCanProceed(true);
+        setBookingCode(''); setCanProceed(true);
         setCooldownInfo({ inCooldown: false });
 
         // Force re-check eligibility
         setTimeout(() => {
-            const eligibility = bookingAntiSpamService.checkBookingEligibility(
-                bookingState.selectedRooms,
-                searchData,
-                bookingState.preferences,
-                bookingState.totals
-            );
-            setCanProceed(eligibility.canProceed);
+            const cooldown = bookingAntiSpamService.getCooldownInfo();
+            setCooldownInfo(cooldown);
+            setCanProceed(!cooldown.inCooldown);
 
-            if (eligibility.existingBookingCode) {
-                setBookingCode(eligibility.existingBookingCode);
+            const info = bookingAntiSpamService.getSessionInfo();
+            if (info.session) {
+                setBookingCode(info.session.bookingCode);
             }
         }, 100);
 

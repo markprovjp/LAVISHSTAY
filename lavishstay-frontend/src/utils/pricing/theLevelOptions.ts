@@ -307,11 +307,12 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 85
         }
-    });    // 4 options cho 2 người (tương tự như Premium nhưng giá cao hơn)
+    });    // 4 options cho 3 người (tương tự như Premium nhưng giá cao hơn)
     options.push({
-        id: `theLevel_corner_double_basic`, name: `The Level Premium Corner Basic - 2 khách`,
+        id: `theLevel_corner_double_basic`, 
+        name: `The Level Premium Corner Basic - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3, // Cập nhật theo model: TheLevelPremiumCorner có thể chứa 3 khách
         minGuests: 1,
         roomType: 'theLevelPremiumCorner',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
@@ -344,11 +345,11 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 95
         }
-    }); options.push({
+    });    options.push({
         id: `theLevel_corner_double_standard`,
-        name: `The Level Premium Corner Standard - 2 khách`,
+        name: `The Level Premium Corner Standard - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'theLevelPremiumCorner',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
@@ -378,11 +379,11 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 88
         }
-    }); options.push({
+    });    options.push({
         id: `theLevel_plus_double_premium`,
-        name: `The Level Premium Corner Plus - 2 khách`,
+        name: `The Level Premium Corner Plus - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'theLevelPremiumCorner',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
@@ -412,13 +413,11 @@ export const createTheLevelPremiumCornerOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 90
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `theLevel_corner_double_luxury`,
-        name: `The Level Premium Corner Luxury - 2 khách`,
+        name: `The Level Premium Corner Luxury - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'theLevelPremiumCorner',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),
@@ -547,11 +546,10 @@ export const createTheLevelSuiteOptions = (
         }
     });    // 4 options cho 2 người
 
-    options.push({
-        id: `suite_theLevel_double_basic`,
-        name: `Suite The Level Basic - 2 khách`,
+    options.push({        id: `suite_theLevel_double_basic`,
+        name: `Suite The Level Basic - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4, // Cập nhật theo model: TheLevelSuite có thể chứa 4 khách
         minGuests: 1,
         roomType: 'theLevelSuite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
@@ -585,11 +583,11 @@ export const createTheLevelSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 95
         }
-    }); options.push({
+    });    options.push({
         id: `suite_theLevel_double_standard`,
-        name: `Suite The Level Standard - 2 khách`,
+        name: `Suite The Level Standard - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'theLevelSuite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
@@ -619,13 +617,11 @@ export const createTheLevelSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 88
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `suite_theLevel_double_premium`,
-        name: `Suite The Level Premium - 2 khách`,
+        name: `Suite The Level Premium - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'theLevelSuite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
@@ -658,13 +654,11 @@ export const createTheLevelSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'high',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `suite_theLevel_double_luxury`,
-        name: `Suite The Level Luxury - 2 khách`,
+        name: `Suite The Level Luxury - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'theLevelSuite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),

@@ -20,6 +20,7 @@ import {
     selectHasSelectedRooms,
     selectSelectedRoomsCount,
 } from '../../store/slices/bookingSlice';
+import ValidationSummary from '../booking/ValidationSummary';
 
 const { Title, Text } = Typography;
 
@@ -43,10 +44,20 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
     const selectedRoomsCount = useSelector(selectSelectedRoomsCount);
 
     // Local state for UI
-    const [showRoomDetails, setShowRoomDetails] = React.useState(false);
+    const [showRoomDetails, setShowRoomDetails] = React.useState(false);    const nights = getNights();
+    const guestCount = (searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0);
+    const totalAdults = searchData.guestDetails?.adults || 0;
+    const totalChildren = searchData.guestDetails?.children || 0;
 
-    const nights = getNights();
-    const guestCount = (searchData.guestDetails?.adults || 0) + (searchData.guestDetails?.children || 0);    // Update totals when dependency data changes
+    // Calculate total capacity from selected rooms
+    const totalCapacity = useMemo(() => {
+        return selectedRoomsSummary.reduce((total, summary) => {
+            // Extract capacity from option name (simplified approach)
+            const capacityMatch = summary.option.name.match(/(\d+)\s*khách/);
+            const roomCapacity = capacityMatch ? parseInt(capacityMatch[1]) : 2; // Default to 2
+            return total + (roomCapacity * summary.quantity);
+        }, 0);
+    }, [selectedRoomsSummary]);// Update totals when dependency data changes
     useEffect(() => {
         if (nights !== booking.totals.nights) {
             // Dispatch action to recalculate totals when nights change
@@ -135,10 +146,19 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 <Text type="secondary">Hãy chọn phòng yêu thích của bạn</Text>
             </div>
         );
-    }
-
-    return (
+    }    return (
         <div className="space-y-4">
+            {/* Validation Summary */}
+            <ValidationSummary
+                totalGuests={guestCount}
+                totalAdults={totalAdults}
+                totalChildren={totalChildren}
+                totalCapacity={totalCapacity}
+                selectedRoomsCount={selectedRoomsCount}
+            />
+
+            <Divider className="my-2" />
+
             {/* Booking Info Header */}
             <Card
                 size="small"
@@ -327,9 +347,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                         </Text>
                     )}
                 </div>
-            </Card>
-
-            {/* Action Buttons */}
+            </Card>            {/* Action Buttons */}
             <Space direction="vertical" size="middle" className="w-full">
                 <Button
                     type="primary"
@@ -337,11 +355,19 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                     className="w-full h-12 border-none shadow-lg rounded-xl font-bold text-white"
                     icon={<GiftOutlined />}
                     onClick={handleProceedToPayment}
-                    disabled={!hasSelectedRooms}
+                    disabled={!hasSelectedRooms || totalCapacity < guestCount}
                 >
-                    TIẾP TỤC ĐẶT PHÒNG
+                    {totalCapacity < guestCount 
+                        ? `THIẾU ${guestCount - totalCapacity} CHỖ - CHỌN THÊM PHÒNG`
+                        : 'TIẾP TỤC ĐẶT PHÒNG'
+                    }
                 </Button>
-            </Space>        </div>
+                {totalCapacity < guestCount && (
+                    <div className="text-center text-xs text-red-500">
+                        Vui lòng chọn thêm phòng hoặc loại phòng lớn hơn
+                    </div>
+                )}
+            </Space></div>
     );
 };
 

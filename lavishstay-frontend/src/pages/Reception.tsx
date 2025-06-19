@@ -8,9 +8,10 @@ import {
     Spin,
     Empty,
     Drawer,
-    message
+    message,
+    Alert
 } from 'antd';
-import { ShoppingCartOutlined, ClearOutlined } from '@ant-design/icons';
+import { ShoppingCartOutlined, ClearOutlined, TeamOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 
@@ -19,6 +20,7 @@ import { Room } from '../mirage/models';
 import { RoomOption } from '../mirage/roomoption';
 import { generateRoomOptionsWithDynamicPricing } from '../utils/dynamicPricing';
 import { formatVND } from '../utils/helpers';
+import { calculateRoomAllocation } from '../utils/roomAllocation';
 
 // Import Redux
 import {
@@ -38,6 +40,7 @@ import {
 // Import components
 import { ReceptionHeader, SearchForm, RoomCard } from './reception/room-booking';
 import BookingSummary from '../components/search/BookingSummary';
+import ValidationSummary from '../components/booking/ValidationSummary';
 
 const { Content, Sider } = Layout;
 
@@ -46,13 +49,12 @@ const Reception: React.FC = () => {
 
     // Redux states
     const bookingState = useSelector(selectBookingState);
-    const searchData = useSelector(selectSearchData);
-
-    // Local states
+    const searchData = useSelector(selectSearchData);    // Local states
     const [loading, setLoading] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
     const [roomsWithOptions, setRoomsWithOptions] = useState<(Room & { options: RoomOption[] })[]>([]);
     const [showBookingSummary, setShowBookingSummary] = useState(false);
+    const [allocationResult, setAllocationResult] = useState<any>(null);
 
     // Helper functions
     const getSelectedRoomsCount = (): number => {
@@ -79,13 +81,30 @@ const Reception: React.FC = () => {
     const clearAllSelections = () => {
         dispatch(clearBookingData());
         message.success('Đã xóa tất cả lựa chọn');
-    };
-
-    const handleCheckout = () => {
+    };    const handleCheckout = () => {
         if (getSelectedRoomsCount() === 0) {
             message.error('Vui lòng chọn ít nhất một phòng');
             return;
         }
+
+        // Calculate total capacity from selected rooms
+        const totalCapacity = Object.entries(bookingState.selectedRooms).reduce((total, [roomId, options]) => {
+            const room = roomsWithOptions.find(r => r.id.toString() === roomId);
+            if (!room) return total;
+            return total + Object.values(options).reduce((sum: number, quantity: any) => {
+                return sum + (room.maxGuests * (quantity as number));
+            }, 0);
+        }, 0);
+
+        const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
+
+        // Validate capacity
+        if (totalCapacity < totalGuests) {
+            const missingCapacity = totalGuests - totalCapacity;
+            message.error(`Không đủ chỗ! Thiếu ${missingCapacity} chỗ. Vui lòng chọn thêm phòng.`);
+            return;
+        }
+
         // Show booking summary drawer for review before payment
         setShowBookingSummary(true);
     };
@@ -93,14 +112,23 @@ const Reception: React.FC = () => {
     // Load rooms from Mirage on component mount
     useEffect(() => {
         loadRoomsFromMirage();
-    }, []);
-
-    // Filter and generate room options when search data or form criteria changes
+    }, []);    // Filter and generate room options when search data or form criteria changes
     useEffect(() => {
         if (rooms.length > 0 && searchData.dateRange) {
             filterAndGenerateRoomOptions();
         }
     }, [rooms, searchData]);
+
+    // Update allocation result whenever guest details change
+    useEffect(() => {
+        if (searchData.guestDetails.adults > 0 || searchData.guestDetails.children > 0) {
+            const newAllocationResult = calculateRoomAllocation(
+                { adults: searchData.guestDetails.adults, children: searchData.guestDetails.children }
+            );
+            setAllocationResult(newAllocationResult);
+            console.log('Updated Allocation Result:', newAllocationResult);
+        }
+    }, [searchData.guestDetails]);
 
     const loadRoomsFromMirage = async () => {
         setLoading(true);
@@ -117,9 +145,7 @@ const Reception: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const filterAndGenerateRoomOptions = (filterCriteria?: any) => {
+    };    const filterAndGenerateRoomOptions = (filterCriteria?: any) => {
         setLoading(true);
         try {
             // Use filter criteria if provided, otherwise use Redux search data
@@ -140,9 +166,15 @@ const Reception: React.FC = () => {
 
             const [checkIn, checkOut] = dateRange;
             const totalGuests = guestDetails.adults + guestDetails.children;
-            const nights = checkOut.diff(checkIn, 'day');
+            const nights = checkOut.diff(checkIn, 'day');            // Calculate room allocation suggestions
+            const allocationResult = calculateRoomAllocation(
+                { adults: guestDetails.adults, children: guestDetails.children }
+            );
 
-            // Filter rooms by criteria
+            console.log('Reception Room Allocation Result:', allocationResult);
+            setAllocationResult(allocationResult);
+
+            // Always show ALL rooms regardless of guest count - no guest filtering
             let filtered = rooms.filter(room => {
                 // Filter by room type if specified
                 if (roomType && room.roomType !== roomType) {
@@ -180,13 +212,17 @@ const Reception: React.FC = () => {
                     const finalPrice = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
                     const totalPrice = finalPrice * nights;
                     return totalPrice >= budget.min && totalPrice <= budget.max;
-                });
+                });                // Add allocation suggestions to room data
+                const roomSuggestion = allocationResult.suggestions.find((s: any) => s.roomType === room.roomType);
 
                 return {
                     ...room,
-                    options: filteredOptions
+                    options: filteredOptions,
+                    allocationSuggestion: roomSuggestion
                 };
             }).filter(room => room.options.length > 0); // Only include rooms with available options
+
+            console.log('Reception Generated Rooms with Options:', roomsWithGeneratedOptions.length, roomsWithGeneratedOptions);
 
             setRoomsWithOptions(roomsWithGeneratedOptions);
 
@@ -220,10 +256,10 @@ const Reception: React.FC = () => {
         const searchCriteria = {
             dateRange: values.dateRange,
             checkIn: values.dateRange?.[0]?.format('YYYY-MM-DD'),
-            checkOut: values.dateRange?.[1]?.format('YYYY-MM-DD'),
-            guestDetails: {
+            checkOut: values.dateRange?.[1]?.format('YYYY-MM-DD'),            guestDetails: {
                 adults: values.adults || 2,
-                children: values.children || 0
+                children: values.children || 0,
+                childrenAges: values.childrenAges || []
             },
             guests: (values.adults || 2) + (values.children || 0)
         };
@@ -296,11 +332,15 @@ const Reception: React.FC = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>
-            {/* Sidebar - Tìm kiếm */}
+        <Layout style={{ minHeight: '100vh', background: '#f5f5f5' }}>            {/* Sidebar - Tìm kiếm */}
             <Sider width={380} style={{ background: '#fff' }}>
                 <SearchForm
                     onSearch={handleSearch}
+                    allocationSummary={allocationResult ? {
+                        totalGuests: allocationResult.totalGuests,
+                        minimumRoomsNeeded: allocationResult.minimumRoomsNeeded,
+                        notes: allocationResult.notes
+                    } : undefined}
                 />
             </Sider>
 
@@ -310,10 +350,35 @@ const Reception: React.FC = () => {
                     availableRoomsCount={roomsWithOptions.length}
                     selectedRoomsCount={getSelectedRoomsCount()}
                     totalAmount={calculateTotal()}
-                />
-
-                {/* Content - Danh sách phòng */}
+                />                {/* Content - Danh sách phòng */}
                 <Content style={{ padding: '24px' }}>
+                    {/* Smart Room Allocation Info */}
+                    {allocationResult && allocationResult.totalGuests > 0 && (
+                        <div style={{ marginBottom: '20px' }}>
+                            <Alert
+                                type="info"
+                                showIcon
+                                icon={<TeamOutlined />}
+                                message={
+                                    <div>
+                                        <strong>Gợi ý phân bổ phòng:</strong> {allocationResult.totalGuests} khách cần tối thiểu {allocationResult.minimumRoomsNeeded} phòng
+                                    </div>
+                                }
+                                description={
+                                    allocationResult.notes.length > 0 && (
+                                        <div style={{ fontSize: '13px' }}>
+                                            {allocationResult.notes.slice(0, 2).map((note: string, index: number) => (
+                                                <div key={index}>• {note}</div>
+                                            ))}
+                                        </div>
+                                    )
+                                }
+                                style={{ borderRadius: '8px' }}
+                                closable
+                            />
+                        </div>
+                    )}
+
                     <div style={{ marginBottom: '20px' }}>
                         <Row justify="space-between" align="middle">
                             <Col>
@@ -376,8 +441,7 @@ const Reception: React.FC = () => {
                 </Content>
             </Layout>
 
-            {/* Booking Summary Drawer */}
-            <Drawer
+            {/* Booking Summary Drawer */}            <Drawer
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <ShoppingCartOutlined />
@@ -391,7 +455,22 @@ const Reception: React.FC = () => {
                 styles={{
                     body: { padding: '16px' }
                 }}
-            >
+            >                {/* Room Capacity Validation Summary */}
+                <div style={{ marginBottom: '20px' }}>
+                    <ValidationSummary
+                        totalGuests={searchData.guestDetails.adults + searchData.guestDetails.children}
+                        totalAdults={searchData.guestDetails.adults}
+                        totalChildren={searchData.guestDetails.children}                        totalCapacity={Object.entries(bookingState.selectedRooms).reduce((total, [roomId, options]) => {
+                            const room = roomsWithOptions.find(r => r.id.toString() === roomId);
+                            if (!room) return total;
+                            return total + Object.values(options).reduce((sum: number, quantity: any) => {
+                                return sum + (room.maxGuests * (quantity as number));
+                            }, 0);
+                        }, 0)}
+                        selectedRoomsCount={getSelectedRoomsCount()}
+                    />
+                </div>
+
                 <BookingSummary
                     formatVND={formatVND}
                     getNights={() => {

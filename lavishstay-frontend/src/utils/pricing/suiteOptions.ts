@@ -81,14 +81,12 @@ export const createSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 85
         }
-    });
-
-    // 4 options cho 2 người
+    });    // 4 options cho 4 người (cập nhật theo model data)
     options.push({
         id: `suite_double_basic`,
-        name: `Suite Basic - 2 khách`,
+        name: `Suite Basic - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4, // Cập nhật theo model: Suite có thể chứa 4 khách
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
@@ -118,13 +116,11 @@ export const createSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `suite_double_standard`,
-        name: `Suite Standard - 2 khách`,
+        name: `Suite Standard - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
@@ -151,13 +147,11 @@ export const createSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 88
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `suite_double_premium`,
-        name: `Suite Premium - 2 khách`,
+        name: `Suite Premium - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
@@ -187,11 +181,10 @@ export const createSuiteOptions = (
         }
     });
 
-    options.push({
-        id: `suite_double_luxury`,
-        name: `Suite Luxury - 2 khách`,
+    options.push({        id: `suite_double_luxury`,
+        name: `Suite Luxury - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),

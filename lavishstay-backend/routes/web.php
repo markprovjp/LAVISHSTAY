@@ -26,6 +26,7 @@ use App\Http\Controllers\RoomPriceController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\WeekendPriceController;
+use App\Http\Controllers\PaymentController;
 
 
 Route::redirect('/', 'login');
@@ -332,5 +333,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 
-
+    // Payment Management Routes
+    Route::get('/admin/bookings/trading', [PaymentController::class, 'adminIndex'])->name('admin.payment.index');
 });

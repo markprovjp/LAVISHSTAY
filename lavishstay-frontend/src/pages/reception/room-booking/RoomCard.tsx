@@ -9,7 +9,7 @@ import { formatVND } from '../../../utils/helpers';
 const { Title, Text } = Typography;
 
 interface RoomCardProps {
-    room: Room & { options: RoomOption[] };
+    room: Room & { options: RoomOption[]; allocationSuggestion?: any };
     selectedRooms: { [roomId: string]: { [optionId: string]: number } };
     searchFormData: any;
     onRoomOptionSelect: (roomId: string, optionId: string, quantity: number) => void;
@@ -108,8 +108,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
 
                 {/* Room Info */}
                 <Col span={11}>
-                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                        <div>
+                    <Space direction="vertical" style={{ width: '100%' }} size="middle">                        <div>
                             <Title level={4} style={{ margin: 0, color: '#262626' }}>
                                 {room.name}
                             </Title>
@@ -119,7 +118,22 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                 <Tag color="orange">
                                     <TeamOutlined /> {room.maxGuests} khách
                                 </Tag>
+                                {/* Room Allocation Suggestion */}
+                                {room.allocationSuggestion && room.allocationSuggestion.isRecommended && (
+                                    <Tag color="red" style={{ fontWeight: 'bold' }}>
+                                        💡 Gợi ý: {room.allocationSuggestion.suggestedQuantity} phòng
+                                    </Tag>
+                                )}
+                                {room.allocationSuggestion && room.allocationSuggestion.reasonCode === 'PERFECT_FIT' && (
+                                    <Tag color="green">✨ Vừa vặn</Tag>
+                                )}
                             </Space>
+                            {/* Allocation Reason */}
+                            {room.allocationSuggestion && (
+                                <div style={{ marginTop: '6px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
+                                    {room.allocationSuggestion.reason}
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
