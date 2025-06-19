@@ -1,21 +1,35 @@
 /**
- * ===== BẢNG CHUẨN AVAILABILITY THEO SƠ ĐỒ TẦNG =====
+ * ===== BẢNG CHUẨN AVAILABILITY THEO SƠ ĐỒ TẦNG (CẬP NHẬT THEO MODELS.TS) =====
  * 
  * 1. Deluxe Room: 90 phòng (tầng 2-5, 8-9: 15 phòng/tầng) ✅ ĐÃ CẬP NHẬT
  * 2. Premium Corner: 96 phòng (tầng 10-17: 12 phòng/tầng) ✅ ĐÃ CẬP NHẬT  
- * 3. The Level Premium: 36 phòng (tầng 18,19,22: 12 phòng/tầng) ✅ ĐÃ CẬP NHẬT
+ * 3. The Level Premium: 30 phòng (tầng 18-19, 24: 10 phòng/tầng) ✅ CẬP NHẬT THEO MODEL
  * 4. The Level Premium Corner: 32 phòng (tầng 20-23: 8 phòng/tầng) ✅ ĐÃ CẬP NHẬT
  * 5. The Level Suite: 20 phòng (tầng 25-27: 7+7+6 phòng) ✅ ĐÃ CẬP NHẬT
  * 6. Suite: 20 phòng (tầng 28-31: 5 phòng/tầng) ✅ ĐÃ CẬP NHẬT
  * 7. Presidential Suite: 1 phòng (tầng 32) ✅ ĐÃ CẬP NHẬT
  * 
- * 🎯 TỔNG: 295 phòng
+ * 🎯 TỔNG: 289 phòng (đã cập nhật theo models.ts)
  * 
+ * CÁC TẦNG TIỆN ÍCH (KHÔNG CÓ PHÒNG)
+•	Tầng 1: Lobby + Lobby Bar
+•	Tầng 6: Nhà hàng Orchid (buffet Á-Âu, ~260 khách)
+•	Tầng 7: Bể bơi trong nhà + Spa YHI + Gym
+•	Tầng 33: Panoramic Lounge (~36 khách VIP)
+•	Tầng 34: Nhà hàng Lotus + Skyview Bar (~95 khách)
+
  * ===== LOGIC REMAINING =====
  * - Basic options: remaining cao (70-85% total)
  * - Standard options: remaining trung bình (60-75% total)  
  * - Premium options: remaining thấp hơn (40-60% total)
  * - Luxury options: remaining thấp nhất (20-40% total)
+ * 
+ * ===== ROOM ALLOCATION LOGIC =====
+ * - Hiển thị TẤT CẢ phòng trong search results
+ * - Logic thông minh để gợi ý phòng phù hợp
+ * - Gia đình 2 người + 1 trẻ: có thể chọn phòng 2 người
+ * - Nhóm 3 người lớn: bắt buộc chọn phòng 3 người hoặc 2 phòng
+ * - Mỗi phòng 2 người có thể chứa thêm 1 trẻ em
  */
 
 export { ROOM_PRICING, PRICING_MULTIPLIERS, ROOM_TYPE_MAPPING } from './roomPricing';

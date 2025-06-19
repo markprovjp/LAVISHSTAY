@@ -1,15 +1,15 @@
 // Anti-spam booking service
 import { message } from 'antd';
+import { ApiService, API_ENDPOINTS } from './apiService';
 
+// Interface definitions
 interface BookingSession {
-    bookingCode: string;
+    id: string;
     roomsHash: string;
-    searchDataHash: string;
-    preferencesHash: string; // Add preferences hash
-    totalsHash: string; // Add totals hash
+    searchHash: string;
     timestamp: number;
-    attempts: number;
-    lastAttempt: number;
+    bookingCode: string;
+    expiresAt: number;
 }
 
 interface RateLimitConfig {
@@ -31,67 +31,46 @@ class BookingAntiSpamService {
 
     // Generate hash for rooms and search data to detect changes
     private generateHash(data: any): string {
-        return btoa(JSON.stringify(data)).slice(0, 16);
+        return btoa(JSON.stringify(data)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
     }
 
-    // Get current booking session
-    private getCurrentSession(): BookingSession | null {
-        try {
-            const session = localStorage.getItem(this.STORAGE_KEY);
-            return session ? JSON.parse(session) : null;
-        } catch {
-            return null;
-        }
-    }
-
-    // Save booking session
-    private saveSession(session: BookingSession): void {
-        try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(session));
-        } catch (error) {
-            console.error('Failed to save booking session:', error);
-        }
-    }
-
-    // Check rate limiting
-    private checkRateLimit(): { allowed: boolean; remainingTime?: number } {
+    // Check if we're in rate limit cooldown
+    private checkRateLimit(): boolean {
         try {
             const rateLimitData = localStorage.getItem(this.RATE_LIMIT_KEY);
-            if (!rateLimitData) {
-                return { allowed: true };
-            }
+            if (!rateLimitData) return false;
 
             const { attempts, firstAttempt } = JSON.parse(rateLimitData);
             const now = Date.now();
 
-            // Check if we're in cooldown period
+            // Reset if time window has passed
+            if (now - firstAttempt > this.rateLimitConfig.timeWindow) {
+                localStorage.removeItem(this.RATE_LIMIT_KEY);
+                return false;
+            }
+
+            // Check if exceeded max attempts
             if (attempts >= this.rateLimitConfig.maxAttempts) {
-                const timeSinceFirst = now - firstAttempt;
-                if (timeSinceFirst < this.rateLimitConfig.cooldownPeriod) {
-                    const remainingTime = this.rateLimitConfig.cooldownPeriod - timeSinceFirst;
-                    return { allowed: false, remainingTime };
+                const timeRemaining = this.rateLimitConfig.cooldownPeriod - (now - firstAttempt);
+                if (timeRemaining > 0) {
+                    const minutes = Math.ceil(timeRemaining / (60 * 1000));
+                    message.warning(`Bạn đã thực hiện quá nhiều yêu cầu. Vui lòng thử lại sau ${minutes} phút.`);
+                    return true;
                 }
-                // Cooldown period passed, reset
+                // Cooldown period has passed
                 localStorage.removeItem(this.RATE_LIMIT_KEY);
-                return { allowed: true };
+                return false;
             }
 
-            // Check if we're within time window
-            const timeWindow = now - firstAttempt;
-            if (timeWindow > this.rateLimitConfig.timeWindow) {
-                // Time window passed, reset
-                localStorage.removeItem(this.RATE_LIMIT_KEY);
-                return { allowed: true };
-            }
-
-            return { allowed: true };
-        } catch {
-            return { allowed: true };
+            return false;
+        } catch (error) {
+            console.error('Error checking rate limit:', error);
+            return false;
         }
     }
 
-    // Record booking attempt
-    private recordAttempt(): void {
+    // Update rate limit counter
+    private updateRateLimit(): void {
         try {
             const now = Date.now();
             const rateLimitData = localStorage.getItem(this.RATE_LIMIT_KEY);
@@ -99,172 +78,114 @@ class BookingAntiSpamService {
             if (!rateLimitData) {
                 localStorage.setItem(this.RATE_LIMIT_KEY, JSON.stringify({
                     attempts: 1,
-                    firstAttempt: now,
-                    lastAttempt: now
+                    firstAttempt: now
                 }));
-                return;
+            } else {
+                const { attempts, firstAttempt } = JSON.parse(rateLimitData);
+                localStorage.setItem(this.RATE_LIMIT_KEY, JSON.stringify({
+                    attempts: attempts + 1,
+                    firstAttempt
+                }));
             }
-
-            const data = JSON.parse(rateLimitData);
-            data.attempts += 1;
-            data.lastAttempt = now;
-
-            localStorage.setItem(this.RATE_LIMIT_KEY, JSON.stringify(data));
         } catch (error) {
-            console.error('Failed to record attempt:', error);
+            console.error('Error updating rate limit:', error);
         }
     }
 
-    // Check if user can create booking
-    public checkBookingEligibility(
+    // Get existing session
+    private getSession(): BookingSession | null {
+        try {
+            const sessionData = localStorage.getItem(this.STORAGE_KEY);
+            if (!sessionData) return null;
+
+            const session: BookingSession = JSON.parse(sessionData);
+
+            // Check if session has expired
+            if (Date.now() > session.expiresAt) {
+                localStorage.removeItem(this.STORAGE_KEY);
+                return null;
+            }
+
+            return session;
+        } catch (error) {
+            console.error('Error getting session:', error);
+            localStorage.removeItem(this.STORAGE_KEY);
+            return null;
+        }
+    }
+
+    // Save session
+    private saveSession(session: BookingSession): void {
+        try {
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(session));
+        } catch (error) {
+            console.error('Error saving session:', error);
+        }
+    }
+
+    // Main booking method with anti-spam protection
+    public async createBooking(
         selectedRooms: any,
         searchData: any,
-        preferences?: any,
-        totals?: any
-    ): {
-        canProceed: boolean;
-        reason?: string;
-        remainingTime?: number;
-        existingBookingCode?: string;
-    } {
+        customerData?: any
+    ): Promise<{ bookingCode: string; isReused: boolean }> {
         // Check rate limiting first
-        const rateLimitCheck = this.checkRateLimit();
-        if (!rateLimitCheck.allowed) {
-            return {
-                canProceed: false,
-                reason: 'Bạn đã vượt quá giới hạn đặt phòng',
-                remainingTime: rateLimitCheck.remainingTime
-            };
+        if (this.checkRateLimit()) {
+            throw new Error('Đã vượt quá giới hạn thử nghiệm. Vui lòng thử lại sau.');
         }
 
-        // Generate hashes for current data - include ALL state components that affect pricing
+        // Generate hashes for rooms and search data
         const roomsHash = this.generateHash(selectedRooms);
-        const searchDataHash = this.generateHash({
-            location: searchData.location,
-            dateRange: searchData.dateRange,
+        const searchHash = this.generateHash({
             checkIn: searchData.checkIn,
             checkOut: searchData.checkOut,
             guests: searchData.guests,
-            guestDetails: searchData.guestDetails,
-            guestType: searchData.guestType
+            roomType: searchData.roomType
         });
-        const preferencesHash = this.generateHash(preferences || {});
-        const totalsHash = this.generateHash(totals || {});
 
-        // Debug logging (dev only)
-        if (import.meta.env.DEV) {
-            console.log('🔍 Anti-spam hash check:', {
-                roomsHash,
-                searchDataHash,
-                preferencesHash,
-                totalsHash,
-                selectedRooms,
-                searchData,
-                preferences,
-                totals
-            });
-        }
+        // Check existing session
+        const existingSession = this.getSession();
 
-        // Get current session
-        const currentSession = this.getCurrentSession();
+        if (existingSession &&
+            existingSession.roomsHash === roomsHash &&
+            existingSession.searchHash === searchHash) {
 
-        // If no session exists, can proceed with new booking
-        if (!currentSession) {
-            return { canProceed: true };
-        }
+            console.log('Reusing existing booking session:', existingSession.bookingCode);
+            message.info('Đang sử dụng lại phiên đặt phòng hiện tại.');
 
-        // Check if session is expired (older than 30 minutes)
-        const sessionAge = Date.now() - currentSession.timestamp;
-        if (sessionAge > 30 * 60 * 1000) {
-            this.clearSession();
-            return { canProceed: true };
-        }
-
-        // Check if ANY data changed - rooms, search, preferences, or totals
-        if (currentSession.roomsHash !== roomsHash ||
-            currentSession.searchDataHash !== searchDataHash ||
-            currentSession.preferencesHash !== preferencesHash ||
-            currentSession.totalsHash !== totalsHash) {
-
-            // Debug which part changed (dev only)
-            if (import.meta.env.DEV) {
-                console.log('🔄 Data changed, clearing old session:', {
-                    roomsChanged: currentSession.roomsHash !== roomsHash,
-                    searchChanged: currentSession.searchDataHash !== searchDataHash,
-                    preferencesChanged: currentSession.preferencesHash !== preferencesHash,
-                    totalsChanged: currentSession.totalsHash !== totalsHash,
-                    oldSession: currentSession,
-                    newHashes: { roomsHash, searchDataHash, preferencesHash, totalsHash }
-                });
-            }
-
-            // Clear old session since data changed
-            this.clearSession();
-            return { canProceed: true };
-        }
-
-        // Same data - reuse existing booking
-        return {
-            canProceed: true,
-            existingBookingCode: currentSession.bookingCode
-        };
-    }
-
-    // Create or get booking code
-    public async processBooking(
-        selectedRooms: any,
-        searchData: any,
-        customerData?: any,
-        preferences?: any,
-        totals?: any
-    ): Promise<{ bookingCode: string; isReused: boolean }> {
-        const eligibility = this.checkBookingEligibility(selectedRooms, searchData, preferences, totals);
-
-        if (!eligibility.canProceed) {
-            throw new Error(eligibility.reason || 'Không thể tạo đặt phòng');
-        }
-
-        // Record this attempt
-        this.recordAttempt();
-
-        // If we can reuse existing booking
-        if (eligibility.existingBookingCode) {
-            message.info('Sử dụng lại thông tin đặt phòng trước đó');
             return {
-                bookingCode: eligibility.existingBookingCode,
+                bookingCode: existingSession.bookingCode,
                 isReused: true
             };
         }
 
+        // Update rate limit counter
+        this.updateRateLimit();
+
         // Create new booking
-        const bookingCode = await this.createNewBooking(selectedRooms, searchData, customerData);
+        try {
+            const bookingCode = await this.createNewBooking(selectedRooms, searchData, customerData);
 
-        // Save session with all hash components
-        const session: BookingSession = {
-            bookingCode,
-            roomsHash: this.generateHash(selectedRooms),
-            searchDataHash: this.generateHash({
-                location: searchData.location,
-                dateRange: searchData.dateRange,
-                checkIn: searchData.checkIn,
-                checkOut: searchData.checkOut,
-                guests: searchData.guests,
-                guestDetails: searchData.guestDetails,
-                guestType: searchData.guestType
-            }),
-            preferencesHash: this.generateHash(preferences || {}),
-            totalsHash: this.generateHash(totals || {}),
-            timestamp: Date.now(),
-            attempts: 1,
-            lastAttempt: Date.now()
-        };
+            // Save new session
+            const newSession: BookingSession = {
+                id: Date.now().toString(),
+                roomsHash,
+                searchHash,
+                timestamp: Date.now(),
+                bookingCode,
+                expiresAt: Date.now() + (30 * 60 * 1000) // 30 minutes
+            };
 
-        this.saveSession(session);
+            this.saveSession(newSession);
 
-        return {
-            bookingCode,
-            isReused: false
-        };
+            return {
+                bookingCode,
+                isReused: false
+            };
+        } catch (error) {
+            console.error('Booking creation failed:', error);
+            throw error;
+        }
     }
 
     // Create new booking (actual API call)
@@ -280,36 +201,23 @@ class BookingAntiSpamService {
             // Generate booking code
             const bookingCode = `LAVISH${Date.now().toString().slice(-8)}`;
 
-            // Make actual API call to backend
-            const response = await fetch('http://localhost:8888/api/payment/create-booking', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    booking_code: bookingCode,
-                    customer_name: customerData?.fullName || 'Guest User',
-                    customer_email: customerData?.email || 'guest@example.com',
-                    customer_phone: customerData?.phone || '0000000000',
-                    rooms_data: JSON.stringify({
-                        rooms: selectedRooms,
-                        searchData: searchData
-                    }),
-                    total_amount: customerData?.totalAmount || 0, // Use passed total amount
-                    payment_method: 'vietqr',
-                    check_in: searchData.checkIn,
-                    check_out: searchData.checkOut,
-                })
+            // Make API call using ApiService (bypasses Mirage for payment)
+            const responseData = await ApiService.post(API_ENDPOINTS.PAYMENT.CREATE_BOOKING, {
+                booking_code: bookingCode,
+                customer_name: customerData?.fullName || 'Guest User',
+                customer_email: customerData?.email || 'guest@example.com',
+                customer_phone: customerData?.phone || '0000000000',
+                rooms_data: JSON.stringify({
+                    rooms: selectedRooms,
+                    searchData: searchData
+                }),
+                total_amount: customerData?.totalAmount || 0,
+                payment_method: 'vietqr',
+                check_in: searchData.checkIn,
+                check_out: searchData.checkOut,
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            await response.json(); // Consume response but don't need to use it
-
+            console.log('✅ Booking created successfully:', responseData);
             return bookingCode;
         } catch (error) {
             console.error('Failed to create booking:', error);
@@ -322,61 +230,62 @@ class BookingAntiSpamService {
         try {
             localStorage.removeItem(this.STORAGE_KEY);
         } catch (error) {
-            console.error('Failed to clear session:', error);
+            console.error('Error clearing session:', error);
         }
     }
 
-    // Clear rate limit data
+    // Clear rate limit
     public clearRateLimit(): void {
         try {
             localStorage.removeItem(this.RATE_LIMIT_KEY);
         } catch (error) {
-            console.error('Failed to clear rate limit:', error);
+            console.error('Error clearing rate limit:', error);
         }
     }
 
-    // Get session info for debugging
+    // Get current session info (for debugging)
     public getSessionInfo(): { session: BookingSession | null; rateLimit: any } {
         try {
-            const session = this.getCurrentSession();
+            const session = this.getSession();
             const rateLimitData = localStorage.getItem(this.RATE_LIMIT_KEY);
-            const rateLimit = rateLimitData ? JSON.parse(rateLimitData) : null;
 
-            return { session, rateLimit };
-        } catch {
+            return {
+                session,
+                rateLimit: rateLimitData ? JSON.parse(rateLimitData) : null
+            };
+        } catch (error) {
             return { session: null, rateLimit: null };
         }
     }
 
-    // Get cooldown info
+    // Check cooldown status
     public getCooldownInfo(): { inCooldown: boolean; remainingTime?: number } {
-        const rateLimitCheck = this.checkRateLimit();
-        return {
-            inCooldown: !rateLimitCheck.allowed,
-            remainingTime: rateLimitCheck.remainingTime
-        };
-    }
+        try {
+            const rateLimitData = localStorage.getItem(this.RATE_LIMIT_KEY);
+            if (!rateLimitData) return { inCooldown: false };
 
-    // Force rate limit for testing (dev only)
-    public forceRateLimit(): void {
-        if (import.meta.env.DEV) {
+            const { attempts, firstAttempt } = JSON.parse(rateLimitData);
             const now = Date.now();
-            localStorage.setItem(this.RATE_LIMIT_KEY, JSON.stringify({
-                attempts: this.rateLimitConfig.maxAttempts,
-                firstAttempt: now,
-                lastAttempt: now
-            }));
+
+            if (attempts >= this.rateLimitConfig.maxAttempts) {
+                const timeRemaining = this.rateLimitConfig.cooldownPeriod - (now - firstAttempt);
+                if (timeRemaining > 0) {
+                    return { inCooldown: true, remainingTime: timeRemaining };
+                }
+            }
+
+            return { inCooldown: false };
+        } catch (error) {
+            return { inCooldown: false };
         }
     }
 
-    // Simulate spam attempts for testing (dev only)
-    public simulateSpamAttempts(count: number = 3): void {
+    // Force rate limit (for testing)
+    public forceRateLimit(): void {
         if (import.meta.env.DEV) {
-            const now = Date.now();
             localStorage.setItem(this.RATE_LIMIT_KEY, JSON.stringify({
-                attempts: count,
-                firstAttempt: now - (this.rateLimitConfig.timeWindow / 2), // Half window ago
-                lastAttempt: now
+                attempts: this.rateLimitConfig.maxAttempts,
+                firstAttempt: Date.now()
             }));
         }
     }
@@ -384,3 +293,4 @@ class BookingAntiSpamService {
 
 // Export singleton instance
 export const bookingAntiSpamService = new BookingAntiSpamService();
+export default bookingAntiSpamService;

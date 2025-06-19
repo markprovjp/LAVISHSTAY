@@ -3,6 +3,7 @@ import { SearchData } from '../store/slices/searchSlice';
 
 // Import mock service for fallback
 import { mockSearchService } from './mockSearchService';
+import { ApiService, API_ENDPOINTS } from './apiService';
 import type {
     SearchResponse,
     AvailabilityResponse,
@@ -12,7 +13,6 @@ import type {
 
 // Configuration
 const USE_MIRAGE_API = true; // Set to false to use mockSearchService directly
-const API_BASE_URL = '/api'; // Mirage intercepts this
 
 // Room interface from Mirage (adjusted for single hotel)
 interface MirageRoom {
@@ -33,16 +33,19 @@ class SearchService {
     async searchRooms(searchData: SearchData, page: number = 1, limit: number = 10): Promise<SearchResponse> {
         if (!USE_MIRAGE_API) {
             return mockSearchService.searchRooms(searchData, page, limit);
-        }
+        } try {
+            // Fetch all rooms using ApiService
+            const data = await ApiService.get(API_ENDPOINTS.ROOMS.LIST);
+            console.log('🏠 Raw API data:', data);
+            console.log('🏠 Raw rooms count:', data.rooms?.length);
 
-        try {
-            // Fetch all rooms from Mirage
-            const response = await fetch(`${API_BASE_URL}/rooms`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            } const data = await response.json();
-            let filteredRooms = data.rooms || [];            // Apply client-side filtering to match search criteria
+            let filteredRooms = data.rooms || [];
+            console.log('🏠 Before filtering:', filteredRooms.length, 'rooms'); console.log('🏠 Room types before filtering:', filteredRooms.map((r: any) => r.roomType));
+
+            // Apply client-side filtering to match search criteria
             filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);
+            console.log('🏠 After filtering:', filteredRooms.length, 'rooms');
+            console.log('🏠 Room types after filtering:', filteredRooms.map((r: any) => r.roomType));
 
             // Pagination
             const total = filteredRooms.length;
@@ -65,16 +68,21 @@ class SearchService {
         }
     }    // Helper method to filter rooms based on search criteria (adjusted for single hotel)
     private filterRoomsBySearchData(rooms: MirageRoom[], searchData: SearchData): MirageRoom[] {
+        console.log('🔍 Starting filterRoomsBySearchData with:', rooms.length, 'rooms');
+        console.log('🔍 SearchData:', searchData);
+
         let filtered = [...rooms];
 
         // Filter by location field (used as room search in single hotel context)
         if (searchData.location && searchData.location.trim()) {
+            const beforeLocationFilter = filtered.length;
             const searchTerm = searchData.location.toLowerCase();
             filtered = filtered.filter(room =>
                 room.name.toLowerCase().includes(searchTerm) ||
                 room.roomType.toLowerCase().includes(searchTerm)
             );
-        }        // DON'T FILTER by guest count - just prioritize in sorting later
+            console.log(`🔍 Location filter: ${beforeLocationFilter} -> ${filtered.length} rooms`);
+        }// DON'T FILTER by guest count - just prioritize in sorting later
         // Allow all rooms to be shown, warnings will be handled in dynamic pricing
         // The filtering below was preventing 5+ guests from seeing any rooms
 
@@ -210,16 +218,9 @@ class SearchService {
     async getSearchSuggestions(query: string): Promise<SearchSuggestionsResponse> {
         if (!USE_MIRAGE_API) {
             return mockSearchService.getSearchSuggestions(query);
-        }
-
-        try {
-            // Generate suggestions based on available room types and names from Mirage
-            const response = await fetch(`${API_BASE_URL}/rooms`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+        } try {
+            // Generate suggestions based on available room types and names using ApiService
+            const data = await ApiService.get(API_ENDPOINTS.ROOMS.LIST);
             const rooms = data.rooms || [];
 
             if (!query || query.length < 2) {

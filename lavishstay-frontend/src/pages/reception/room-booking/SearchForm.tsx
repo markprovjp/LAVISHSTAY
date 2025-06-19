@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Form, Input, DatePicker, Select, Button, Row, Col, Typography, InputNumber } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Form, Input, DatePicker, Select, Button, Row, Col, Typography, InputNumber, Alert } from 'antd';
+import { SearchOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 
@@ -19,9 +19,14 @@ const { Option } = Select;
 
 interface SearchFormProps {
     onSearch: (values: any) => void;
+    allocationSummary?: {
+        totalGuests: number;
+        minimumRoomsNeeded: number;
+        notes: string[];
+    };
 }
 
-const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
+const SearchForm: React.FC<SearchFormProps> = ({ onSearch, allocationSummary }) => {
     const [form] = Form.useForm();
     const dispatch = useDispatch();
     const searchData = useSelector(selectSearchData);
@@ -46,10 +51,10 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
         const searchCriteria = {
             dateRange: values.dateRange,
             checkIn: values.dateRange?.[0]?.format('YYYY-MM-DD'),
-            checkOut: values.dateRange?.[1]?.format('YYYY-MM-DD'),
-            guestDetails: {
+            checkOut: values.dateRange?.[1]?.format('YYYY-MM-DD'),            guestDetails: {
                 adults: values.adults || 2,
-                children: values.children || 0
+                children: values.children || 0,
+                childrenAges: values.childrenAges || []
             },
             guests: (values.adults || 2) + (values.children || 0)
         };
@@ -185,15 +190,35 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
                             />
                         </Form.Item>
                     </Col>
-                </Row>
-
-                <Form.Item label={<span style={{ fontWeight: 500, color: '#262626' }}>Yêu cầu đặc biệt</span>} name="specialRequests">
+                </Row>                <Form.Item label={<span style={{ fontWeight: 500, color: '#262626' }}>Yêu cầu đặc biệt</span>} name="specialRequests">
                     <Input.TextArea
                         rows={3}
                         placeholder="Tìm theo tiện ích: wifi, tv, café, view biển, giường đôi..."
                         style={{ borderRadius: '6px' }}
                     />
                 </Form.Item>
+
+                {/* Allocation Summary Display */}
+                {allocationSummary && allocationSummary.totalGuests > 0 && (
+                    <div style={{ marginBottom: '16px' }}>
+                        <Alert
+                            type="info"
+                            showIcon
+                            icon={<TeamOutlined />}
+                            message={
+                                <div>
+                                    <div><strong>{allocationSummary.totalGuests} khách</strong> - Tối thiểu cần <strong>{allocationSummary.minimumRoomsNeeded} phòng</strong></div>
+                                    {allocationSummary.notes.length > 0 && (
+                                        <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.8 }}>
+                                            {allocationSummary.notes[0]}
+                                        </div>
+                                    )}
+                                </div>
+                            }
+                            style={{ borderRadius: '6px' }}
+                        />
+                    </div>
+                )}
 
                 <Form.Item style={{ marginBottom: 0 }}>
                     <Row gutter={12}>

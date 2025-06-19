@@ -82,12 +82,17 @@ const Payment: React.FC = () => {
         cooldownInfo,
         createBooking,
         resetBooking
-    } = useBookingManager();
-
-    // Check if we have booking data from navigation or Redux
+    } = useBookingManager();    // Check if we have booking data from navigation or Redux
     useEffect(() => {
         if (!hasSelectedRooms || selectedRoomsSummary.length === 0) {
             message.error('Không có thông tin đặt phòng. Vui lòng chọn phòng trước.');
+            navigate('/search');
+            return;
+        }
+
+        // Check if search data is valid
+        if (!searchData?.checkIn || !searchData?.checkOut) {
+            message.error('Thông tin tìm kiếm không hợp lệ. Vui lòng tìm kiếm lại.');
             navigate('/search');
             return;
         }
@@ -106,7 +111,7 @@ const Payment: React.FC = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [hasSelectedRooms, selectedRoomsSummary, navigate]);
+    }, [hasSelectedRooms, selectedRoomsSummary, navigate, searchData]);
 
     // Format countdown time
     const formatTime = (seconds: number) => {
@@ -148,21 +153,24 @@ const Payment: React.FC = () => {
         } catch (error) {
             message.error('Thanh toán thất bại. Vui lòng thử lại.');
         }
-    };
+    };    // Calculate nights from search data
+    const nights = React.useMemo(() => {
+        if (searchData.checkIn && searchData.checkOut) {
+            return Math.ceil((new Date(searchData.checkOut).getTime() - new Date(searchData.checkIn).getTime()) / (1000 * 60 * 60 * 24));
+        }
+        return bookingState.totals?.nights || 1;
+    }, [searchData.checkIn, searchData.checkOut, bookingState.totals?.nights]);
 
     // Use totals directly from Redux state (already calculated in BookingSummary)
-    const totals = {
-        roomsTotal: bookingState.totals.roomsTotal,
-        breakfastTotal: bookingState.totals.breakfastTotal,
-        serviceFee: bookingState.totals.serviceFee,
-        taxAmount: bookingState.totals.taxAmount,
-        discountAmount: bookingState.totals.discountAmount,
-        finalTotal: bookingState.totals.finalTotal,
-        nights: bookingState.totals.nights
-    };
-    const nights = searchData.checkIn && searchData.checkOut
-        ? Math.ceil((new Date(searchData.checkOut).getTime() - new Date(searchData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
-        : 1;
+    const totals = React.useMemo(() => ({
+        roomsTotal: bookingState.totals?.roomsTotal || 0,
+        breakfastTotal: bookingState.totals?.breakfastTotal || 0,
+        serviceFee: bookingState.totals?.serviceFee || 0,
+        taxAmount: bookingState.totals?.taxAmount || 0,
+        discountAmount: bookingState.totals?.discountAmount || 0,
+        finalTotal: bookingState.totals?.finalTotal || 0,
+        nights: nights
+    }), [bookingState.totals, nights]);
 
     // API Base URL
     const API_BASE_URL = 'http://localhost:8888/api';
