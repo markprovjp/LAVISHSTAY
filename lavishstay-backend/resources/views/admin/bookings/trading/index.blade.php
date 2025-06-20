@@ -138,7 +138,7 @@
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Không có booking nào</h3>
                     <p class="text-gray-600 dark:text-gray-400">Hiện tại chưa có booking nào phù hợp với bộ lọc.</p>
                 </div>                <!-- Table Content -->
-                <div x-show="!loading && filteredBookings.length > 0" class="overflow-x-auto">
+                <div x-show="!loading && filteredBookings.length > 0" class="overflow-x-auto mt-2">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700/50">
                             <tr>

@@ -335,4 +335,18 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Payment Management Routes
     Route::get('/admin/bookings/trading', [PaymentController::class, 'adminIndex'])->name('admin.payment.index');
+    
+    // VNPay Web Routes (cho callback từ VNPay)
+    Route::prefix('vnpay')->name('vnpay.')->group(function () {
+        // VNPay return URL (callback sau khi thanh toán)
+        Route::get('/return', [PaymentController::class, 'handleVNPayReturn'])->name('return');
+        Route::post('/return', [PaymentController::class, 'handleVNPayReturn'])->name('return.post');
+        
+        // VNPay IPN (Instant Payment Notification)
+        Route::post('/ipn', [PaymentController::class, 'handleVNPayIPN'])->name('ipn');
+        
+        // Test payment page (optional - for testing)
+        Route::get('/test', [PaymentController::class, 'showTestPaymentForm'])->name('test');
+        Route::post('/test', [PaymentController::class, 'processTestPayment'])->name('test.process');
+    });
 });
