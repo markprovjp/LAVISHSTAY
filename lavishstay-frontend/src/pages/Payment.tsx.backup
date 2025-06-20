@@ -64,8 +64,8 @@ const steps = [
 const Payment: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [form] = Form.useForm(); const [currentStep, setCurrentStep] = useState(0);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr'); // Back to default VietQR
+    const [form] = Form.useForm();    const [currentStep, setCurrentStep] = useState(0);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr');
     const [countdown, setCountdown] = useState(900); // 15 minutes
     const [backendBookingCode, setBackendBookingCode] = useState<string | null>(null); // Store booking code from backend
     const [paymentProcessing, setPaymentProcessing] = useState(false); // Processing state for payment
@@ -117,7 +117,7 @@ const Payment: React.FC = () => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };    // Handle form submission (Step 0 -> Step 1)
+    };    // Handle form submission
     const handleSubmit = async (values: any) => {
         if (!canProceed) {
             message.error('Không thể tiến hành đặt phòng lúc này');
@@ -125,8 +125,6 @@ const Payment: React.FC = () => {
         }
 
         try {
-            setPaymentProcessing(true);
-
             // Prepare booking data
             const bookingData = {
                 customer_name: `${values.firstName || ''} ${values.lastName || ''}`.trim(),
@@ -134,15 +132,13 @@ const Payment: React.FC = () => {
                 customer_phone: values.phone,
                 rooms_data: selectedRoomsSummary,
                 total_amount: totals.finalTotal,
-                payment_method: 'pending', // Don't set payment method yet
+                payment_method: selectedPaymentMethod,
                 check_in: searchData.checkIn,
                 check_out: searchData.checkOut,
                 special_requests: values.specialRequests || null
             };
 
-            console.log('Sending booking data:', bookingData);
-
-            // Send to backend to create booking (without payment method)
+            // Send to backend
             const response = await fetch(`${API_BASE_URL}/payment/create-booking`, {
                 method: 'POST',
                 headers: {
@@ -151,130 +147,108 @@ const Payment: React.FC = () => {
                 body: JSON.stringify(bookingData)
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            console.log('Backend response:', result);
-
-            if (result.success) {
+            const result = await response.json();            if (result.success) {
                 // Store booking code from backend
                 if (result.booking_code) {
                     setBackendBookingCode(result.booking_code);
                 }
 
-                // Move to payment method selection step
+                // Handle VNPay redirect
+                if (selectedPaymentMethod === 'vnpay' && result.vnpay_url) {
+                    message.success('Đang chuyển hướng đến VNPay...');
+                    window.location.href = result.vnpay_url;
+                    return;
+                }
+
+                // For other payment methods, proceed to payment step
                 setCurrentStep(1);
-                message.success('Đã xác nhận thông tin. Vui lòng chọn phương thức thanh toán.');
+                message.success('Đã xác nhận thông tin. Vui lòng thanh toán.');
             } else {
-                console.error('Backend error:', result);
                 throw new Error(result.message || 'Có lỗi xảy ra khi tạo booking');
             }
 
         } catch (error) {
             console.error('Error creating booking:', error);
-
-            // More specific error messages
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                message.error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet.');
-            } else if (error instanceof Error) {
-                message.error(`Lỗi: ${error.message}`);
-            } else {
-                message.error('Có lỗi xảy ra. Vui lòng thử lại.');
-            }
-        } finally {
-            setPaymentProcessing(false);
+            message.error('Có lỗi xảy ra. Vui lòng thử lại.');
         }
-    };    // Handle payment method selection and processing
+    };    // Helper function to create booking
+    const createBookingRequest = async (formData: any) => {
+        const bookingData = {
+            customer_name: `${formData.firstName || ''} ${formData.lastName || ''}`.trim(),
+            customer_email: formData.email,
+            customer_phone: formData.phone,
+            rooms_data: selectedRoomsSummary,
+            total_amount: totals.finalTotal,
+            payment_method: selectedPaymentMethod,
+            check_in: searchData.checkIn,
+            check_out: searchData.checkOut,
+            special_requests: formData.specialRequests || null
+        };
+
+        const response = await fetch(`${API_BASE_URL}/payment/create-booking`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookingData)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            // Store booking code from backend
+            if (result.booking_code) {
+                setBackendBookingCode(result.booking_code);
+            }
+            return result;
+        } else {
+            throw new Error(result.message || 'Có lỗi xảy ra khi tạo booking');
+        }
+    };    // Handle payment from PaymentStep
     const handlePayment = async () => {
         try {
             setPaymentProcessing(true);
-
+            
+            // At this point, we should already have booking created from step 0
+            // If not, something went wrong, go back to step 0
             if (!backendBookingCode) {
-                message.error('Không tìm thấy thông tin đặt phòng. Vui lòng thử lại từ đầu.');
+                message.warning('Vui lòng hoàn tất thông tin đặt phòng trước');
+                setCurrentStep(0);
                 return;
             }
-
+            
             if (selectedPaymentMethod === 'vnpay') {
-                // Create VNPay payment URL
-                console.log('Creating VNPay payment for booking:', backendBookingCode);
-
-                const vnpayData = {
-                    booking_code: backendBookingCode,
-                    amount: totals.finalTotal,
+                // For VNPay, we need to get the form data and create VNPay booking
+                const formData = form.getFieldsValue();
+                
+                // Create VNPay booking (will override previous booking with vnpay method)
+                const bookingData = await createBookingRequest({
+                    ...formData,
                     payment_method: 'vnpay'
-                };
-
-                console.log('VNPay request data:', vnpayData);
-
-                const response = await fetch(`${API_BASE_URL}/payment/vnpay`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(vnpayData)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                console.log('VNPay response:', result);
-
-                if (result.success && result.vnpay_url) {
+                
+                if (bookingData && bookingData.vnpay_url) {
                     message.success('Đang chuyển hướng đến VNPay...');
-                    // Redirect to VNPay
-                    window.location.href = result.vnpay_url;
+                    window.location.href = bookingData.vnpay_url;
+                    return;
                 } else {
-                    throw new Error(result.message || 'Không thể tạo thanh toán VNPay');
+                    throw new Error('Không thể tạo liên kết thanh toán VNPay');
                 }
-
             } else if (selectedPaymentMethod === 'vietqr') {
-                // For VietQR, just show the QR code (already displayed)
                 message.info('Vui lòng quét mã QR để thanh toán');
-                // Move to completion step to show QR
-                setCurrentStep(2);
                 return;
-
             } else if (selectedPaymentMethod === 'pay_at_hotel') {
-                // For pay at hotel, just complete the booking
-                const updateData = {
-                    booking_code: backendBookingCode,
-                    payment_method: 'pay_at_hotel'
-                };
-
-                const response = await fetch(`${API_BASE_URL}/payment/update-method`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(updateData)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const result = await response.json();
-                if (result.success) {
-                    setCurrentStep(2);
-                    message.success('Đặt phòng thành công! Bạn sẽ thanh toán tại khách sạn.');
-                } else {
-                    throw new Error(result.message || 'Không thể cập nhật phương thức thanh toán');
-                }
+                setCurrentStep(2);
+                message.success('Đặt phòng thành công! Bạn sẽ thanh toán tại khách sạn.');
                 return;
             }
-
         } catch (error) {
             console.error('Payment error:', error);
-
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                message.error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet.');
-            } else if (error instanceof Error) {
-                message.error(`Lỗi thanh toán: ${error.message}`);
-            } else {
+            message.error(error.message || 'Có lỗi xảy ra khi thanh toán');
+        } finally {
+            setPaymentProcessing(false);
+        }
+    };
                 message.error('Thanh toán thất bại. Vui lòng thử lại.');
             }
         } finally {
@@ -300,55 +274,19 @@ const Payment: React.FC = () => {
     }), [bookingState.totals, nights]);
 
     // API Base URL
-    const API_BASE_URL = 'http://localhost:8888/api';
-
-    // Test backend connection (for debugging)
-    const testBackendConnection = async () => {
-        try {
-            const response = await fetch(`http://localhost:8888/api/test`, {
-                method: 'GET',
-            });
-            console.log('Backend test response status:', response.status);
-        } catch (error) {
-            console.error('Backend connection test failed:', error);
-        }
-    };
-
-    // Test connection once when component mounts
-    useEffect(() => {
-        if (import.meta.env.DEV) {
-            testBackendConnection();
-        }
-    }, []);    // Check payment status function
+    const API_BASE_URL = 'http://localhost:8888/api';    // Check payment status function
     const checkPaymentStatus = async () => {
         try {
             // Use the booking code from backend response or fallback to local booking code
             const currentBookingCode = backendBookingCode || bookingCode;
-
+            
             if (!currentBookingCode) {
                 console.log('No booking code available for status check');
                 return false;
             }
 
-            console.log('Checking payment status for:', currentBookingCode);
-
             const response = await fetch(`${API_BASE_URL}/payment/status/${currentBookingCode}`);
-
-            // Check if response is ok
-            if (!response.ok) {
-                console.error(`Payment status check failed with status: ${response.status}`);
-                return false;
-            }
-
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                console.error('Response is not JSON:', await response.text());
-                return false;
-            }
-
             const result = await response.json();
-            console.log('Payment status response:', result);
 
             if (result.success && result.payment_status === 'confirmed') {
                 setCurrentStep(2);
@@ -362,9 +300,7 @@ const Payment: React.FC = () => {
         }
     };    // Auto-check payment status when on payment step
     useEffect(() => {
-        if (currentStep === 1 && selectedPaymentMethod === 'vietqr' && backendBookingCode) {
-            console.log('Starting payment status monitoring for VietQR');
-
+        if (currentStep === 1 && selectedPaymentMethod === 'vietqr') {
             // Check immediately
             checkPaymentStatus();
 
@@ -374,11 +310,10 @@ const Payment: React.FC = () => {
             }, 10000);
 
             return () => {
-                console.log('Stopping payment status monitoring');
                 clearInterval(interval);
             };
         }
-    }, [currentStep, selectedPaymentMethod, backendBookingCode]);
+    }, [currentStep, selectedPaymentMethod, backendBookingCode, bookingCode]);
 
     // Handle VNPay return
     useEffect(() => {
@@ -405,7 +340,7 @@ const Payment: React.FC = () => {
                     });
 
                     const result = await response.json();
-
+                    
                     if (result.success) {
                         // Store booking code and proceed to completion
                         if (result.booking_code) {
@@ -413,7 +348,7 @@ const Payment: React.FC = () => {
                         }
                         setCurrentStep(2);
                         message.success('Thanh toán VNPay thành công!');
-
+                        
                         // Clear URL parameters
                         window.history.replaceState({}, '', '/payment');
                     } else {
@@ -445,9 +380,8 @@ const Payment: React.FC = () => {
                             <BookingInfoStep
                                 form={form}
                                 onSubmit={handleSubmit}
-                                isProcessing={isProcessing || paymentProcessing}
+                                isProcessing={isProcessing}
                                 disabled={!canProceed || cooldownInfo.inCooldown}
-                                selectedPaymentMethod={selectedPaymentMethod}
                             />
                         </Col>                        <Col span={8}>
                             <PaymentSummary
@@ -464,20 +398,19 @@ const Payment: React.FC = () => {
                 );
             case 1:
                 return (
-                    <Row gutter={[24, 24]}>                        <Col span={16}>
-                        <PaymentStep
-                            selectedPaymentMethod={selectedPaymentMethod}
-                            onPaymentMethodChange={setSelectedPaymentMethod}
-                            onBack={handleBack}
-                            onConfirmPayment={handlePayment}
-                            isProcessing={isProcessing}
-                            bookingCode={backendBookingCode || bookingCode}
-                            totalAmount={totals.finalTotal}
-                            countdown={countdown}
-                            formatTime={formatTime}
-                            generateVietQRUrl={generateVietQRUrl}
-                        />
-                    </Col>
+                    <Row gutter={[24, 24]}>                        <Col span={16}>                            <PaymentStep
+                                selectedPaymentMethod={selectedPaymentMethod}
+                                onPaymentMethodChange={setSelectedPaymentMethod}
+                                onBack={handleBack}
+                                onConfirmPayment={handlePayment}
+                                isProcessing={paymentProcessing}
+                                bookingCode={backendBookingCode || bookingCode}
+                                totalAmount={totals.finalTotal}
+                                countdown={countdown}
+                                formatTime={formatTime}
+                                generateVietQRUrl={generateVietQRUrl}
+                            />
+                        </Col>
                         <Col span={8}>
                             <PaymentSummary
                                 bookingCode={backendBookingCode || bookingCode}
@@ -489,16 +422,16 @@ const Payment: React.FC = () => {
                                 formatVND={formatVND}
                             />
                         </Col>
-                    </Row>
+                    </Row>                );
+            case 2:
+                return (
+                    <CompletionStep
+                        bookingCode={backendBookingCode || bookingCode}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        onViewBookings={handleViewBookings}
+                        onNewBooking={handleNewBooking}
+                    />
                 );
-            case 2: return (
-                <CompletionStep
-                    bookingCode={backendBookingCode || bookingCode}
-                    selectedPaymentMethod={selectedPaymentMethod}
-                    onViewBookings={handleViewBookings}
-                    onNewBooking={handleNewBooking}
-                />
-            );
             default:
                 return null;
         }

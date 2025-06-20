@@ -7,15 +7,32 @@ export function makeServer() {
     routes() {
       // Restore namespace cho các API thông thường
       this.namespace = "api";
-      this.timing = 1; // Thêm độ trễ để mô phỏng API thật
-
-      // PASSTHROUGH TẤT CẢ PAYMENT APIs TRƯỚC KHI ĐỊNH NGHĨA ROUTES KHÁC
+      this.timing = 1; // Thêm độ trễ để mô phỏng API thật      // PASSTHROUGH TẤT CẢ PAYMENT APIs TRƯỚC KHI ĐỊNH NGHĨA ROUTES KHÁC
+      // Passthrough cho tất cả API payment đến Laravel backend
       this.passthrough('http://localhost:8888/api/payment/**');
+      this.passthrough('http://localhost:8888/api/payment/*');
+      this.passthrough('http://127.0.0.1:8888/api/payment/**');
+      this.passthrough('http://127.0.0.1:8888/api/payment/*');
+      this.passthrough('/api/payment/**');
+      this.passthrough('/api/payment/*');
       this.passthrough('/payment/**');
+      this.passthrough('/payment/*');
+
+      // Passthrough condition function để catch tất cả payment requests
       this.passthrough((request) => {
-        // Check if URL contains payment
-        return request.url.includes('/payment/') || request.url.includes('payment');
-      });      // API endpoint để lấy tất cả các phòng
+        const url = request.url.toLowerCase();
+        const isPaymentRequest = url.includes('/payment/') ||
+          url.includes('/payment') ||
+          url.includes('payment/status') ||
+          url.includes('payment/create-booking') ||
+          url.includes('vnpay');
+
+        if (isPaymentRequest) {
+          console.log('Mirage: Passing through payment request:', request.url);
+        }
+
+        return isPaymentRequest;
+      });// API endpoint để lấy tất cả các phòng
       this.get("/rooms", () => {
         return {
           rooms: sampleRooms,

@@ -19,6 +19,7 @@ class Payment extends Model
         'total_amount', 
         'payment_method', 
         'payment_status', 
+        'booking_status',
         'payment_confirmed_at',
         'check_in',
         'check_out',
