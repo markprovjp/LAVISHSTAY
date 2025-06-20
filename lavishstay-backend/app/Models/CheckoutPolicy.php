@@ -13,6 +13,7 @@ class CheckoutPolicy extends Model
         'name',
         'early_check_out_fee_vnd',
         'late_check_out_fee_vnd',
+        'early_check_out_max_hours',
         'late_check_out_max_hours',
         'description',
         'is_active',

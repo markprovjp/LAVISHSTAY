@@ -121,7 +121,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    // Amenities Management Kiệt //////////////////////////////////
+    // Amenities Management //////////////////////////////////
     Route::get('/admin/services/amenities', [ServiceAmenityController::class, 'index'])->name('admin.services.amenities');
     Route::get('/admin/services/amenities/create', [ServiceAmenityController::class, 'create'])->name('admin.services.amenities.create');
     Route::post('/admin/services/amenities/store', [ServiceAmenityController::class, 'store'])->name('admin.services.amenities.store');
@@ -132,7 +132,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    //  Meals Management Công //////////////////////////////////
+    //  Meals Management //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
     Route::get('/admin/services/meals/create', [ServiceMealController::class, 'create'])->name('admin.services.meals.create');
     Route::post('/admin/services/meals/store', [ServiceMealController::class, 'store'])->name('admin.services.meals.store');
@@ -143,7 +143,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    //  Meals Management Tuyên //////////////////////////////////
+    //  Meals Management  //////////////////////////////////
     Route::get('/admin/services/beds', [ServiceBedController::class, 'index'])->name('admin.services.beds');
     Route::get('/admin/services/beds/create', [ServiceBedController::class, 'create'])->name('admin.services.beds.create');
     Route::post('/admin/services/beds/store', [ServiceBedController::class, 'store'])->name('admin.services.beds.store');
@@ -222,8 +222,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Trả phòng sớm, muộn
     Route::get('/admin/check_out_requests', [CheckoutRequestController::class, 'index'])->name('admin.check_out_requests');
-
-
+    Route::post('/admin/check_out_requests', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
+    Route::post('/admin/check_out_requests/calculate_fee', [CheckoutRequestController::class, 'calculateFee'])->name('admin.check_out_requests.calculate_fee');
+    Route::patch('/admin/check_out_requests/{requestId}/approve', [CheckoutRequestController::class, 'approve'])->name('admin.check_out_requests.approve');
+    Route::get('/admin/check_out_requests/create', [CheckoutRequestController::class, 'create'])->name('admin.check_out_requests.create');
+    Route::post('/admin/check_out_requests/store', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
 
 
 
