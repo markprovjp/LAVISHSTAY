@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Translation;
+use App\Models\RoomType;
+use App\Models\RoomOption;
+use App\Models\RoomAvailability;
 
 class Room extends Model
 {
-<<<<<<< HEAD
-=======
-
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     protected $table = 'room';
     protected $primaryKey = 'room_id';
     public $timestamps = false;
@@ -39,8 +39,6 @@ class Room extends Model
         'floor' => 'integer'
     ];
 
-<<<<<<< HEAD
-=======
 
     public function translations()
     {
@@ -56,7 +54,6 @@ class Room extends Model
 
         return $translation ? $translation->value : $this->$column;
     }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     /**
      * Relationship with room type
      */
