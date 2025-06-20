@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RoomPriceEventFestivalController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingExtensionController;
 use App\Http\Controllers\BookingRescheduleController;
@@ -21,10 +22,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepositPolicyController;
+use App\Http\Controllers\DynamicPricingController;
+use App\Http\Controllers\EventFestivalManagementController;
 use App\Http\Controllers\RoomPriceController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
-
+use App\Http\Controllers\WeekendPriceController;
 
 Route::redirect('/', 'login');
 
@@ -166,14 +169,30 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/multinational/currencies/update/{currency_code}', [CurrencyController::class, 'update'])->name('admin.multinational.currencies.update');
     Route::post('/admin/multinational/currencies/destroy/{currency_code}', [CurrencyController::class, 'destroy'])->name('admin.multinational.currencies.destroy');
 
-    // Translation
-    Route::prefix('admin/translation')->name('admin.translation.')->group(function () {
-        Route::get('/', [TranslationController::class, 'index'])->name('index');
-        Route::get('/create', [TranslationController::class, 'create'])->name('create');
-        Route::post('/store', [TranslationController::class, 'store'])->name('store');
-        Route::get('/edit/{translationId}', [TranslationController::class, 'edit'])->name('edit');
-        Route::put('/update/{translationId}', [TranslationController::class, 'update'])->name('update');
-        Route::post('/destroy/{translationId}', [TranslationController::class, 'destroy'])->name('destroy');
+  
+  
+    // Multinational Translation
+    Route::get('/admin/multinational/translation', [TranslationController::class, 'index'])->name('admin.multinational.translation');
+    // Translation Management
+    Route::prefix('admin/translation')->group(function () {
+        Route::get('/get-tables', [TranslationController::class, 'getTables'])->name('admin.translation.get-tables');
+        Route::get('/manage-tables', [TranslationController::class, 'manageTables'])->name('admin.translation.manage-tables');
+        Route::post('/manage-tables/toggle-status/{table}', [TranslationController::class, 'toggleTableStatusInTable'])->name('admin.translation.manage-tables.toggle-status');
+        Route::delete('/manage-tables/{table}', [TranslationController::class, 'destroyTable'])->name('admin.translation.manage-tables.destroy');
+
+        Route::get('/', [TranslationController::class, 'index'])->name('admin.translation.index');
+        Route::get('/{table}', [TranslationController::class, 'show'])->name('admin.translation.show');
+        Route::get('/create', [TranslationController::class, 'create'])->name('admin.translation.create');
+        Route::post('/', [TranslationController::class, 'store'])->name('admin.translation.store');
+        Route::patch('/{translationId}/update-value', [TranslationController::class, 'updateValue'])->name('admin.translation.update-value');
+        Route::delete('/destroy/{translationId}/language/{languageCode}', [TranslationController::class, 'destroyByLanguage'])->name('admin.translation.destroy-by-language');
+        Route::delete('/{table}/destroy-record/{recordId}', [TranslationController::class, 'destroyRecord'])->name('admin.translation.destroy-record');
+        Route::get('/translate', [TranslationController::class, 'translate'])->name('admin.translation.translate');
+        Route::post('/{table}/store', [TranslationController::class, 'storeForTable'])->name('admin.translation.store-for-table');
+        Route::get('/get-value/{table}/{column}/{recordId}/{languageCode}', [TranslationController::class, 'getTranslationValue'])->name('admin.translation.get-value');
+        Route::post('/{table}/add', [TranslationController::class, 'storeForTable'])->name('admin.translation.add-for-table');
+        Route::post('/toggle-status/{table}', [TranslationController::class, 'toggleTableStatus'])->name('admin.translation.toggle-status');
+        Route::post('/store-table', [TranslationController::class, 'storeTable'])->name('admin.translation.store-table');
     });
 
 
@@ -262,16 +281,57 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     //Theo lễ hội, sự kiện
     Route::get('/admin/event_festival', [RoomPriceController::class, 'event_festival'])->name('admin.room-prices.event_festival');
-
+    Route::prefix('admin/event-festival-management')->name('admin.event-festival-management.')->group(function () {
+        Route::get('/statistics', [EventFestivalManagementController::class, 'getStatistics'])->name('statistics');
+        Route::get('/upcoming', [EventFestivalManagementController::class, 'getUpcoming'])->name('upcoming');
+        Route::get('/data', [EventFestivalManagementController::class, 'getData'])->name('data');
+        Route::post('/', [EventFestivalManagementController::class, 'store'])->name('store');
+        Route::get('/export', [EventFestivalManagementController::class, 'export'])->name('export');
+        
+        // Event routes
+        Route::get('/event/{id}', [EventFestivalManagementController::class, 'showEvent'])->name('event.show');
+        Route::put('/event/{id}', [EventFestivalManagementController::class, 'updateEvent'])->name('event.update');
+        Route::delete('/event/{id}', [EventFestivalManagementController::class, 'destroyEvent'])->name('event.destroy');
+        
+        // Holiday routes
+        Route::get('/holiday/{id}', [EventFestivalManagementController::class, 'showHoliday'])->name('holiday.show');
+        Route::put('/holiday/{id}', [EventFestivalManagementController::class, 'updateHoliday'])->name('holiday.update');
+        Route::delete('/holiday/{id}', [EventFestivalManagementController::class, 'destroyHoliday'])->name('holiday.destroy');
+    });
 
 
     //Giá động
     Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
+    // Thêm vào phần routes admin
+    Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+        Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
+        Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
+        Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
+        Route::get('/occupancy-stats', [DynamicPricingController::class, 'getOccupancyStats'])->name('occupancy-stats');
+        Route::post('/calculate', [DynamicPricingController::class, 'calculateDynamicPrice'])->name('calculate');
+        Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
+        Route::post('/', [DynamicPricingController::class, 'store'])->name('store');
+        Route::put('/{id}', [DynamicPricingController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-status', [DynamicPricingController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{id}', [DynamicPricingController::class, 'destroy'])->name('destroy');
+    });
+
 
 
 
      //Giá cuối tuần
     Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
+    Route::prefix('admin/room-prices/weekend')->name('admin.weekend-price.')->group(function () {
+        Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
+        Route::get('/weekend-days', [WeekendPriceController::class, 'getWeekendDays'])->name('weekend-days');
+        Route::post('/weekend-days', [WeekendPriceController::class, 'updateWeekendDays'])->name('update-weekend-days');
+        Route::get('/data', [WeekendPriceController::class, 'getData'])->name('data');
+        Route::get('/rooms', [WeekendPriceController::class, 'getRooms'])->name('rooms');
+        Route::get('/{id}', [WeekendPriceController::class, 'show'])->name('show');
+        Route::post('/', [WeekendPriceController::class, 'store'])->name('store');
+        Route::put('/{id}', [WeekendPriceController::class, 'update'])->name('update');
+        Route::delete('/{id}', [WeekendPriceController::class, 'destroy'])->name('destroy');
+    });
 
 
 
@@ -279,6 +339,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    
+
+    
 
 
 
