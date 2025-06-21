@@ -59,6 +59,7 @@ class CheckoutPolicyController extends Controller
                 'early_check_out_fee_vnd' => 'nullable|numeric|min:0|max:999999999999.99',
                 'late_check_out_fee_vnd' => 'nullable|numeric|min:0|max:999999999999.99',
                 'late_check_out_max_hours' => 'nullable|integer|min:0',
+                'early_check_out_max_hours' => 'nullable|integer|min:0',
                 'description' => 'nullable|string|max:1000',
             ], [
                 'name.required' => 'Tên chính sách là bắt buộc.',
@@ -70,6 +71,8 @@ class CheckoutPolicyController extends Controller
                 'late_check_out_fee_vnd.min' => 'Phí trả muộn không được âm.',
                 'late_check_out_max_hours.integer' => 'Giờ tối đa muộn phải là số nguyên.',
                 'late_check_out_max_hours.min' => 'Giờ tối đa muộn không được âm.',
+                'early_check_out_max_hours.integer' => 'Giờ tối đa sớm phải là số nguyên.',
+                'early_check_out_max_hours.min' => 'Giờ tối đa sớm không được âm.',
             ]);
 
             \Log::info("Validated data: " . json_encode($validated));
@@ -123,6 +126,7 @@ class CheckoutPolicyController extends Controller
             'early_check_out_fee_vnd' => 'nullable|numeric|min:0|max:999999999999.99',
             'late_check_out_fee_vnd' => 'nullable|numeric|min:0|max:999999999999.99',
             'late_check_out_max_hours' => 'nullable|integer|min:0',
+            'early_check_out_max_hours' => 'nullable|integer|min:0',
             'description' => 'nullable|string|max:1000',
         ], [
             'name.required' => 'Tên chính sách là bắt buộc.',
@@ -134,6 +138,8 @@ class CheckoutPolicyController extends Controller
             'late_check_out_fee_vnd.min' => 'Phí trả muộn không được âm.',
             'late_check_out_max_hours.integer' => 'Giờ tối đa muộn phải là số nguyên.',
             'late_check_out_max_hours.min' => 'Giờ tối đa muộn không được âm.',
+            'early_check_out_max_hours.integer' => 'Giờ tối đa sớm phải là số nguyên.',
+            'early_check_out_max_hours.min' => 'Giờ tối đa sớm không được âm.',
             'description.max' => 'Mô tả không được vượt quá 1000 ký tự.',
         ]);
 
