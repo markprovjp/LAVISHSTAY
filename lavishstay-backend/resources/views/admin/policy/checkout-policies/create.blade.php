@@ -46,6 +46,17 @@
                             @enderror
                         </div>
 
+                         <!-- Late Check-Out Max Hours -->
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="early_check_out_max_hours">Giờ tối đa sớm</label>
+                            <input id="early_check_out_max_hours" name="early_check_out_max_hours" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('early_check_out_max_hours') border-red-500 @enderror" type="number" min="0" step="1" value="{{ old('early_check_out_max_hours') }}" />
+                            <div class="text-xs mt-1 text-gray-500">Số giờ tối đa cho phép trả phòng sớm</div>
+                            @error('early_check_out_max_hours')
+                                <div class="text-xs mt-1 text-red-500">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Late Check-Out Fee -->
                         <div>
                             <label class="block text-sm font-medium mb-1" for="late_check_out_fee_vnd">Phí trả muộn (VND)</label>
@@ -55,17 +66,19 @@
                                 <div class="text-xs mt-1 text-red-500">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
+                        <!-- Late Check-Out Max Hours -->
+                        <div>
+                            <label class="block text-sm font-medium mb-1" for="late_check_out_max_hours">Giờ tối đa muộn</label>
+                            <input id="late_check_out_max_hours" name="late_check_out_max_hours" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('late_check_out_max_hours') border-red-500 @enderror" type="number" min="0" step="1" value="{{ old('late_check_out_max_hours') }}" />
+                            <div class="text-xs mt-1 text-gray-500">Số giờ tối đa cho phép trả phòng muộn</div>
+                            @error('late_check_out_max_hours')
+                                <div class="text-xs mt-1 text-red-500">{{ $message }}</div>
+                            @enderror
+                        </div>
 
-                    <!-- Late Check-Out Max Hours -->
-                    <div>
-                        <label class="block text-sm font-medium mb-1" for="late_check_out_max_hours">Giờ tối đa muộn</label>
-                        <input id="late_check_out_max_hours" name="late_check_out_max_hours" class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('late_check_out_max_hours') border-red-500 @enderror" type="number" min="0" step="1" value="{{ old('late_check_out_max_hours') }}" />
-                        <div class="text-xs mt-1 text-gray-500">Số giờ tối đa cho phép trả phòng muộn</div>
-                        @error('late_check_out_max_hours')
-                            <div class="text-xs mt-1 text-red-500">{{ $message }}</div>
-                        @enderror
+                       
                     </div>
+                   
 
                     <!-- Description -->
                     <div>
