@@ -114,6 +114,7 @@
                             <th class="px-6 py-4 text-left">Tên chính sách</th>
                             <th class="px-6 py-4 text-left">Phí trả sớm</th>
                             <th class="px-6 py-4 text-left">Phí trả muộn</th>
+                            <th class="px-6 py-4 text-left">Giờ tối đa sớm</th>
                             <th class="px-6 py-4 text-left">Giờ tối đa muộn</th>
                             <th class="px-6 py-4 text-left">Trạng thái</th>
                             <th class="px-6 py-4 text-left">Ngày tạo</th>
@@ -142,6 +143,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     {{ $policy->late_check_out_fee_vnd ? number_format($policy->late_check_out_fee_vnd, 0, ',', '.') . ' VND' : '-' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    {{ $policy->early_check_out_max_hours ?? '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     {{ $policy->late_check_out_max_hours ?? '-' }}
