@@ -92,7 +92,6 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       !searchData.dateRange[0] ||
       searchData.dateRange[0].isBefore(now, 'day')) {
 
-      console.log('🗓️ Auto-updating dates to today and tomorrow');
       setSearchDateRange([now, tomorrow]);
     }
   }, []); // Run only on component mount
@@ -231,7 +230,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
         onSearch(results);
       }
 
-      message.success(`Tìm thấy ${results.total} phòng phù hợp`);
+      message.success(`Tìm thấy ${results.total} phòng phù hợp cho bạn`);
     } catch (error: any) {
       message.error(error.message || 'Có lỗi xảy ra khi tìm kiếm');
     }
@@ -240,7 +239,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   // Guest selection dropdown content
   const guestPopoverContent = (
     <div
-      className="p-6 bg-white"
+      className="p-6 "
       style={{ width: "100%", maxWidth: "400px" }}
     >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -264,7 +263,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "solo"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UserOutlined className="mr-2" /> Đi một mình
@@ -285,7 +284,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "couple"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UsersRound className="mr-2" /> Cặp đôi
@@ -306,7 +305,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "business"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UserCheck className="mr-2" /> Công tác
@@ -322,7 +321,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "family_young"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <Users className="mr-2" /> Gia đình trẻ
@@ -338,7 +337,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "group"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UsergroupAddOutlined className="mr-2" /> Đi theo nhóm
@@ -460,7 +459,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 <p className="text-sm mb-3 flex items-start text-gray-700">
                   <UsergroupAddOutlined className="mr-2 text-blue-600 flex-shrink-0 mt-0.5" />
                   <span className="font-medium">
-                    Cần đặt nhiều phòng? Chat với LAVISHSTAY để nhận ưu đãi đặc biệt!
+                    Cần đặt nhiều hơn 16 phòng ? Chat với LAVISHSTAY để nhận ưu đãi đặc biệt!
                   </span>
                 </p>
                 <Button
@@ -468,7 +467,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                   icon={<MessageOutlined />}
                   size="small"
                   block
-                  className="rounded-lg bg-blue-600 hover:bg-blue-700 border-0"
+                  className="rounded-lg   border-0"
                   onClick={() => console.log("Chat with support")}
                 >
                   Chat ngay

@@ -206,9 +206,7 @@ const SearchResults: React.FC = () => {
                 setLoading(true);
                 console.log('Fetching search results with data:', searchData);
                 const results = await searchService.searchRooms(searchData);
-                console.log('Search results:', results);
-                console.log('Number of rooms returned:', results.rooms?.length || 0);
-                console.log('Room types found:', results.rooms?.map((r: any) => r.roomType) || []);
+
 
                 // Apply dynamic pricing to each room
                 const roomsWithDynamicPricing = results.rooms.map((room: any) => {
@@ -340,34 +338,12 @@ const SearchResults: React.FC = () => {
 
             {/* Search Form Header */}
             <div className="shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-4 py-6">
-                    <div className="mb-4">
-                        <Title level={2} className="mb-2">
-                            Kết quả tìm kiếm phòng ({rooms.length} phòng)
-                        </Title>
-                        <Space size="middle">
-                            {searchData.dateRange && (
-                                <Text type="secondary">
-                                    📅 {searchData.checkIn} - {searchData.checkOut} ({getNights()} đêm)
-                                </Text>
-                            )}
-                            {searchData.guestDetails && (
-                                <Text type="secondary">
-                                    👥 {searchData.guestDetails.adults + searchData.guestDetails.children} khách
-                                </Text>
-                            )}
-                            {searchData.guestType && (
-                                <Tag color="blue">{searchData.guestType}</Tag>
-                            )}
-                        </Space>
-                    </div>
+
 
                     {/* Embedded Search Form for easy re-searching */}
                     <div className="p-4 rounded-lg">
-                        <Text strong className="block mb-3">Thay đổi tìm kiếm:</Text>
                         <SearchForm className="search-form-compact" />
                     </div>
-                </div>
             </div>
 
             {/* Main Content Layout */}
@@ -383,10 +359,10 @@ const SearchResults: React.FC = () => {
                 {/* Room Cards Container - Full Width */}
                 <div className="max-w-7xl mx-auto px-4 py-8">                    <Space direction="vertical" size="large" className="w-full">                        {/* Room Allocation Summary */}
                         {searchData.guestDetails && (
-                            <Card className="bg-blue-50 border-blue-200">
+                            <Card className=" border-blue-200">
                                 <div className="text-center">
                                     <Title level={4} className="mb-2 text-blue-800">
-                                        🎯 Gợi ý phòng cho {getRoomAllocationSuggestions().totalGuests} khách
+                                        Gợi ý phòng cho {getRoomAllocationSuggestions().totalGuests} khách
                                     </Title>
                                     <div className="space-y-2">
                                         {getRoomAllocationSuggestions().suggestions
@@ -482,7 +458,6 @@ const SearchResults: React.FC = () => {
                     backgroundColor: '#fafafa'
                 }}
                 headerStyle={{
-                    background: 'white',
                     borderBottom: '1px solid #e8e8e8',
                     padding: '16px 24px'
                 }}

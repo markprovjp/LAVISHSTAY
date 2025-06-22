@@ -31,15 +31,16 @@ class PaymentController extends Controller
 
     /**
      * Tạo booking mới từ frontend
-     */
-    public function createBooking(Request $request)
+     */    public function createBooking(Request $request)
     {
         try {
             $request->validate([
                 'customer_name' => 'required|string|max:255',
                 'customer_email' => 'required|email|max:255',
                 'customer_phone' => 'required|string|max:20',
-                'rooms_data' => 'required|array',
+                'room_id' => 'required|exists:room,room_id',
+                'room_type_id' => 'required|exists:room_types,room_type_id',
+                'quantity' => 'required|integer|min:1',
                 'total_amount' => 'required|numeric|min:0',
                 'payment_method' => 'required|in:vietqr,vnpay,pay_at_hotel,pending',
                 'check_in' => 'required|date|after_or_equal:today',
@@ -61,7 +62,9 @@ class PaymentController extends Controller
                 'customer_name' => $request->customer_name,
                 'customer_email' => $request->customer_email,
                 'customer_phone' => $request->customer_phone,
-                'rooms_data' => $request->rooms_data,
+                'room_id' => $request->room_id,
+                'room_type_id' => $request->room_type_id,
+                'quantity' => $request->quantity,
                 'total_amount' => $request->total_amount,
                 'payment_method' => $request->payment_method,
                 'payment_status' => 'pending',
@@ -441,11 +444,10 @@ class PaymentController extends Controller
 
     /**
      * Admin: Lấy danh sách booking chờ thanh toán
-     */
-    public function getPendingPayments(Request $request)
+     */    public function getPendingPayments(Request $request)
     {
         try {
-            $query = Payment::query();
+            $query = Payment::with(['room', 'roomType']);
 
             // Filter by status
             if ($request->has('status') && $request->status !== '') {
@@ -620,11 +622,12 @@ class PaymentController extends Controller
 
     /**
      * Get booking details by booking code
-     */
-    public function getBookingDetails($bookingCode)
+     */    public function getBookingDetails($bookingCode)
     {
         try {
-            $booking = Payment::where('booking_code', $bookingCode)->first();
+            $booking = Payment::with(['room', 'roomType'])
+                            ->where('booking_code', $bookingCode)
+                            ->first();
 
             if (!$booking) {
                 return response()->json([
@@ -640,7 +643,9 @@ class PaymentController extends Controller
                     'customer_name' => $booking->customer_name,
                     'customer_email' => $booking->customer_email,
                     'customer_phone' => $booking->customer_phone,
-                    'rooms_data' => $booking->rooms_data,
+                    'room' => $booking->room,
+                    'room_type' => $booking->roomType,
+                    'quantity' => $booking->quantity,
                     'total_amount' => $booking->total_amount,
                     'payment_method' => $booking->payment_method,
                     'payment_status' => $booking->payment_status,

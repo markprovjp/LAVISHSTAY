@@ -25,11 +25,6 @@ const ReceptionLayout: React.FC = () => {
             label: <Link to="/reception/dashboard">Tổng quan</Link>,
         },
         {
-            key: '/reception/room-booking',
-            icon: <BookOutlined />,
-            label: <Link to="/reception/room-booking">Đặt phòng dùm khách</Link>,
-        },
-        {
             key: '/reception/room-management',
             icon: <HomeOutlined />,
             label: 'Quản lý phòng',
@@ -95,8 +90,13 @@ const ReceptionLayout: React.FC = () => {
                 <div className="p-4 border-b">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                <span className="text-white font-bold">🏨</span>
+                            <div className="w-8 h-8  rounded-lg flex items-center justify-center mr-3">
+                                <img
+                                    src="../../../public/images/logo.png"
+                                    alt="Logo"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    className='rounded-lg'
+                                />
                             </div>
                             {!collapsed && (
                                 <Title level={4} className="mb-0">

@@ -116,15 +116,47 @@ export const bookingsAPI = {
   },
 };
 
-// Rooms API Functions
-export const roomsAPI = {
-  getAll: async () => {
-    const response = await api.get('/rooms');
+// Room Types API Functions
+export const roomTypesAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/room-types', { params });
     return response.data;
   },
 
-  getByType: async (roomType: string) => {
-    const response = await api.get(`/rooms-type/${roomType}`);
+  getById: async (id: number) => {
+    const response = await api.get(`/room-types/${id}`);
+    return response.data;
+  },
+
+  create: async (data: any) => {
+    const response = await api.post('/room-types', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/room-types/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    const response = await api.delete(`/room-types/${id}`);
+    return response.data;
+  }
+};
+
+// Rooms API Functions
+export const roomsAPI = {
+  getAll: async (params?: any) => {
+    const response = await api.get('/rooms', { params });
+    return response.data;
+  },
+  getByType: async (roomTypeId: number, params?: any) => {
+    const response = await api.get(`/rooms/type/${roomTypeId}`, { params });
+    return response.data;
+  },
+
+  getByTypeSlug: async (slug: string, params?: any) => {
+    const response = await api.get(`/rooms/type-slug/${slug}`, { params });
     return response.data;
   },
 
@@ -133,27 +165,61 @@ export const roomsAPI = {
     return response.data;
   },
 
-  // Get room options/packages
-  getRoomOptions: async (roomId: string | number) => {
-    const response = await api.get(`/rooms/${roomId}/options`);
+  create: async (data: any) => {
+    const response = await api.post('/rooms', data);
     return response.data;
   },
 
-  // Get room reviews
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/rooms/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    const response = await api.delete(`/rooms/${id}`);
+    return response.data;
+  },
+
+  // Get room calendar data
+  getCalendarData: async (roomId: number, params?: any) => {
+    const response = await api.get(`/rooms/${roomId}/calendar`, { params });
+    return response.data;
+  },
+
+  // Get room options/packages (kept for compatibility)
+  getRoomOptions: async (roomId: string | number) => {
+    const response = await api.get(`/room-options?room_id=${roomId}`);
+    return response.data;
+  },
+
+  // Get room reviews (kept for compatibility)
   getRoomReviews: async (roomId: string | number) => {
     const response = await api.get(`/rooms/${roomId}/reviews`);
     return response.data;
   },
 
-  // Get similar rooms
+  // Get similar rooms (kept for compatibility)
   getSimilarRooms: async (roomId: string | number) => {
     const response = await api.get(`/rooms/${roomId}/similar`);
     return response.data;
   },
 
-  // Get service packages
+  // Get service packages (kept for compatibility)
   getServicePackages: async () => {
     const response = await api.get('/service-packages');
+    return response.data;
+  }
+};
+
+// Dashboard API Functions
+export const dashboardAPI = {
+  getRoomStatistics: async () => {
+    const response = await api.get('/dashboard/room-statistics');
+    return response.data;
+  },
+
+  getFilterOptions: async () => {
+    const response = await api.get('/dashboard/filter-options');
     return response.data;
   }
 };
