@@ -197,18 +197,18 @@
                                         <div class="min-w-0">
                                             <!-- Compact Room Summary -->
                                             <div class="text-sm text-gray-900 dark:text-white font-medium">
-                                                <span x-text="getRoomSummary(booking.rooms_data)"></span>
-                                                <template x-if="getRoomCount(booking.rooms_data) > 1">
+                                                <span x-text="getRoomSummary(booking)"></span>
+                                                <template x-if="getRoomCount(booking) > 1">
                                                     <button @click="expanded = !expanded" 
                                                             class="ml-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 underline">
-                                                        <span x-text="expanded ? 'ẩn' : '+' + (getRoomCount(booking.rooms_data) - 1) + ' phòng khác'"></span>
+                                                        <span x-text="expanded ? 'ẩn' : '+' + (getRoomCount(booking) - 1) + ' phòng khác'"></span>
                                                     </button>
                                                 </template>
                                             </div>
                                             
                                             <!-- Expanded Room Details -->
                                             <div x-show="expanded" x-transition class="mt-2 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded border">
-                                                <span x-text="getRoomInfo(booking.rooms_data)"></span>
+                                                <span x-text="getRoomInfo(booking)"></span>
                                             </div>
                                             
                                             <!-- Compact Date & Nights -->
@@ -348,11 +348,10 @@
                                     <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
                                 </svg>
                                 Thông tin phòng
-                            </h4>
-                            <div class="space-y-3">
+                            </h4>                            <div class="space-y-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chi tiết phòng</label>
-                                    <p class="text-gray-900 dark:text-white font-medium" x-text="getRoomInfo(selectedBooking?.rooms_data)"></p>
+                                    <p class="text-gray-900 dark:text-white font-medium" x-text="getRoomInfo(selectedBooking)"></p>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
@@ -568,88 +567,71 @@
                 showDetails(booking) {
                     this.selectedBooking = booking;
                     this.showModal = true;
-                },
-
-                getRoomInfo(roomsData) {
-                    if (!roomsData) return 'N/A';
+                },                getRoomInfo(booking) {
+                    if (!booking) return 'N/A';
                     
                     try {
-                        // Parse if it's a string
-                        const data = typeof roomsData === 'string' ? JSON.parse(roomsData) : roomsData;
+                        let roomInfo = '';
                         
-                        if (data.rooms) {
-                            let roomInfo = [];
+                        // Hiển thị theo format: Room Type - Room Name (x quantity)
+                        if (booking.room_type && booking.room_type.name) {
+                            const roomTypeName = booking.room_type.name;
+                            const quantity = booking.quantity || 1;
                             
-                            // Iterate through rooms object
-                            Object.keys(data.rooms).forEach(roomId => {
-                                const roomTypes = data.rooms[roomId];
-                                Object.keys(roomTypes).forEach(roomType => {
-                                    const quantity = roomTypes[roomType];
-                                    // Format room type name
-                                    const formattedType = roomType.replace(/_/g, ' ')
-                                                                 .replace(/\b\w/g, l => l.toUpperCase());
-                                    roomInfo.push(`${formattedType} (x${quantity})`);
-                                });
-                            });
+                            // Format chính: Room Type
+                            roomInfo = roomTypeName;
                             
-                            return roomInfo.join(', ') || 'N/A';
-                        }
-                        
-                        return 'N/A';
-                    } catch (e) {
-                        console.error('Error parsing room data:', e);
-                        return 'N/A';
-                    }                },
-
-                getRoomSummary(roomsData) {
-                    if (!roomsData) return 'N/A';
-                    
-                    try {
-                        const data = typeof roomsData === 'string' ? JSON.parse(roomsData) : roomsData;
-                        
-                        if (data.rooms) {
-                            const firstRoom = Object.keys(data.rooms)[0];
-                            if (firstRoom) {
-                                const roomTypes = data.rooms[firstRoom];
-                                const firstRoomType = Object.keys(roomTypes)[0];
-                                const quantity = roomTypes[firstRoomType];
-                                
-                                // Format first room type name
-                                const formattedType = firstRoomType.replace(/_/g, ' ')
-                                                                 .replace(/\b\w/g, l => l.toUpperCase());
-                                return `${formattedType} (x${quantity})`;
+                            // Thêm room name nếu có
+                            if (booking.room && booking.room.name) {
+                                roomInfo += ` - ${booking.room.name}`;
                             }
+                            
+                            // Thêm số lượng nếu > 1
+                            if (quantity > 1) {
+                                roomInfo += ` (x${quantity})`;
+                            }
+                        } else if (booking.room && booking.room.name) {
+                            const roomName = booking.room.name;
+                            const quantity = booking.quantity || 1;
+                            roomInfo = roomName;
+                            if (quantity > 1) {
+                                roomInfo += ` (x${quantity})`;
+                            }
+                        } else {
+                            const quantity = booking.quantity || 1;
+                            roomInfo = `${quantity} phòng`;
                         }
                         
-                        return 'N/A';
+                        return roomInfo;
                     } catch (e) {
                         console.error('Error parsing room data:', e);
                         return 'N/A';
                     }
                 },
 
-                getRoomCount(roomsData) {
-                    if (!roomsData) return 0;
+                getRoomSummary(booking) {
+                    if (!booking) return 'N/A';
                     
                     try {
-                        const data = typeof roomsData === 'string' ? JSON.parse(roomsData) : roomsData;
-                        
-                        if (data.rooms) {
-                            let totalRooms = 0;
-                            Object.keys(data.rooms).forEach(roomId => {
-                                const roomTypes = data.rooms[roomId];
-                                Object.keys(roomTypes).forEach(roomType => {
-                                    totalRooms += roomTypes[roomType];
-                                });
-                            });
-                            return totalRooms;
+                        // Hiển thị ngắn gọn cho table
+                        if (booking.room_type && booking.room_type.name) {
+                            const quantity = booking.quantity || 1;
+                            return `${booking.room_type.name} (${quantity})`;
+                        } else if (booking.room && booking.room.name) {
+                            const quantity = booking.quantity || 1;
+                            return `${booking.room.name} (${quantity})`;
                         }
                         
-                        return 0;
+                        return `${booking.quantity || 1} phòng`;
                     } catch (e) {
-                        return 0;
+                        console.error('Error getting room summary:', e);
+                        return 'N/A';
                     }
                 },
+
+                getRoomCount(booking) {
+                    if (!booking) return 0;
+                    return booking.quantity || 0;                },
 
                 formatDateRange(checkIn, checkOut) {
                     if (!checkIn || !checkOut) return 'N/A';

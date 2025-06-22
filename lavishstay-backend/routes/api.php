@@ -24,9 +24,20 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Dashboard API
+Route::get('/dashboard/room-statistics', [\App\Http\Controllers\Api\DashboardController::class, 'getRoomStatistics']);
+Route::get('/dashboard/filter-options', [\App\Http\Controllers\Api\DashboardController::class, 'getFilterOptions']);
 
 // Room Types API
 Route::apiResource('room-types', RoomTypeController::class);
+
+// Rooms API  
+Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
+
+// Additional Room Routes
+Route::get('/rooms/type/{roomTypeId}', [\App\Http\Controllers\Api\RoomController::class, 'roomsByType']);
+Route::get('/rooms/type-slug/{slug}', [\App\Http\Controllers\Api\RoomController::class, 'roomsByTypeSlug']);
+Route::get('/rooms/{roomId}/calendar', [\App\Http\Controllers\Api\RoomController::class, 'getCalendarData']);
 
 
 

@@ -9,13 +9,14 @@ class Payment extends Model
 {
     protected $table = 'bookings';
     protected $primaryKey = 'id';
-    
-    protected $fillable = [
+      protected $fillable = [
         'booking_code',
         'customer_name', 
         'customer_email', 
         'customer_phone', 
-        'rooms_data', 
+        'room_id',
+        'room_type_id',
+        'quantity',
         'total_amount', 
         'payment_method', 
         'payment_status', 
@@ -24,14 +25,12 @@ class Payment extends Model
         'check_in',
         'check_out',
         'special_requests'
-    ];
-
-    protected $casts = [
+    ];    protected $casts = [
         'check_in' => 'date',
         'check_out' => 'date',
         'payment_confirmed_at' => 'datetime',
         'total_amount' => 'decimal:2',
-        'rooms_data' => 'json'
+        'quantity' => 'integer'
     ];
 
     // Scope cho pending payments
@@ -50,14 +49,23 @@ class Payment extends Model
     public function getFormattedBookingCodeAttribute()
     {
         return 'LAVISH' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
-    }
-
-    // Confirm payment method
+    }    // Confirm payment method
     public function confirmPayment()
     {
         $this->update([
             'payment_status' => 'confirmed',
             'payment_confirmed_at' => now()
         ]);
+    }
+
+    // Relationships
+    public function room()
+    {
+        return $this->belongsTo(Room::class, 'room_id', 'room_id');
+    }
+
+    public function roomType()
+    {
+        return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
     }
 }

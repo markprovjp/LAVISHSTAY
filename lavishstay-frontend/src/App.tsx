@@ -11,10 +11,7 @@ import { createAntdTheme } from "./styles/theme";
 // Import i18n configuration
 import "./i18n";
 
-// Nhập và khởi động máy chủ MirageJS
-import makeServer from "./mirage/server";
-// Khởi tạo server Mirage
-makeServer();
+
 
 // Import layouts
 import Header from "./components/layouts/Header";
@@ -28,12 +25,11 @@ import About from "./pages/About";
 import Payment from "./pages/Payment";
 import AdminPayment from "./pages/AdminPayment";
 import NotFound from "./pages/NotFound";
-import RoomDetailsPage from "./pages/RoomDetailsPage";
 import AuthTest from "./pages/AuthTest";
 import SearchResults from "./pages/SearchResults";
+import RoomTypesDetailsPage from "./pages/RoomTypesDetailsPage";
 
 // Import reception components
-import Reception from "./pages/Reception"; // Trang đặt phòng dùm khách (có logic cũ)
 import ReceptionLayout from "./components/reception/ReceptionLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
 import RoomManagementToday from "./pages/reception/room-management/RoomManagementToday";
@@ -113,11 +109,10 @@ const App: React.FC = React.memo(() => {
             minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
           }}
         >
-          <Routes>
-            {/* Main Pages */}
+          <Routes>            {/* Main Pages */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
-            <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+            <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
 
             {/* Profile Routes with nested routing */}
@@ -136,7 +131,6 @@ const App: React.FC = React.memo(() => {
             <Route path="/reception" element={<ReceptionLayout />}>
               <Route index element={<ReceptionDashboard />} />
               <Route path="dashboard" element={<ReceptionDashboard />} />
-              <Route path="room-booking" element={<Reception />} />
               <Route path="room-management" element={<RoomManagementToday />} />
               <Route path="room-management/check-in" element={<CheckInManagement />} />
               <Route path="room-management/check-out" element={<CheckOutManagement />} />

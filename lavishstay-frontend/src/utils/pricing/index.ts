@@ -1,15 +1,15 @@
 /**
  * ===== BẢNG CHUẨN AVAILABILITY THEO SƠ ĐỒ TẦNG (CẬP NHẬT THEO MODELS.TS) =====
  * 
- * 1. Deluxe Room: 90 phòng (tầng 2-5, 8-9: 15 phòng/tầng) ✅ ĐÃ CẬP NHẬT
- * 2. Premium Corner: 96 phòng (tầng 10-17: 12 phòng/tầng) ✅ ĐÃ CẬP NHẬT  
- * 3. The Level Premium: 30 phòng (tầng 18-19, 24: 10 phòng/tầng) ✅ CẬP NHẬT THEO MODEL
- * 4. The Level Premium Corner: 32 phòng (tầng 20-23: 8 phòng/tầng) ✅ ĐÃ CẬP NHẬT
- * 5. The Level Suite: 20 phòng (tầng 25-27: 7+7+6 phòng) ✅ ĐÃ CẬP NHẬT
- * 6. Suite: 20 phòng (tầng 28-31: 5 phòng/tầng) ✅ ĐÃ CẬP NHẬT
- * 7. Presidential Suite: 1 phòng (tầng 32) ✅ ĐÃ CẬP NHẬT
+ * 1. Deluxe Room: 90 phòng (tầng 2-5, 8-9: 15 phòng/tầng) 
+ * 2. Premium Corner: 96 phòng (tầng 10-17: 12 phòng/tầng)   
+ * 3. The Level Premium: 36 phòng (tầng 18-20: 12 phòng/tầng) 
+ * 4. The Level Premium Corner: 32 phòng (tầng 21-24: 8 phòng/tầng) 
+ * 5. The Level Suite: 20 phòng (tầng 25-27: 7+7+6 phòng) 
+ * 6. Suite: 20 phòng (tầng 28-31: 5 phòng/tầng) 
+ * 7. Presidential Suite: 1 phòng (tầng 32) 
  * 
- * 🎯 TỔNG: 289 phòng (đã cập nhật theo models.ts)
+ * 🎯 TỔNG: 295 phòng 
  * 
  * CÁC TẦNG TIỆN ÍCH (KHÔNG CÓ PHÒNG)
 •	Tầng 1: Lobby + Lobby Bar
