@@ -42,4 +42,9 @@ class Booking extends Model
     {
         return $this->hasMany(Payment::class, 'booking_id');
     }
+
+    public function checkoutRequests()
+    {
+        return $this->hasMany(CheckoutRequest::class, 'booking_id', 'booking_id');
+    }
 }

@@ -3,23 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-trait HasTranslations
-{
-    public function getTranslatedAttribute($column, $lang)
-    {
-        return Translation::where('table_name', $this->getTable())
-            ->where('column_name', $column)
-            ->where('record_id', $this->getKey())
-            ->where('language_code', $lang)
-            ->value('value') ?? $this->$column;
-    }
-}
+// trait HasTranslations
+// {
+//     public function getTranslatedAttribute($column, $lang)
+//     {
+//         return Translation::where('table_name', $this->getTable())
+//             ->where('column_name', $column)
+//             ->where('record_id', $this->getKey())
+//             ->where('language_code', $lang)
+//             ->value('value') ?? $this->$column;
+//     }
+// }
 class RoomOption extends Model
 {
-    use HasTranslations;
+    // use HasTranslations;
     protected $primaryKey = 'option_id';
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $table = 'room_option';
     protected $fillable = [
         'option_id', 'room_id', 'name', 'price_per_night_vnd', 'max_guests', 'min_guests',
         'cancellation_policy_type', 'cancellation_penalty', 'cancellation_description',
