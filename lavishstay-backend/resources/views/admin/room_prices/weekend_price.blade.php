@@ -5,7 +5,7 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <div class="mb-4 sm:mb-0">
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý giá cuối tuần</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Cấu hình ngày cuối tuần và quản lý giá phòng cuối tuần</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Cấu hình ngày cuối tuần và quản lý quy tắc giá cuối tuần</p>
             </div>
         </div>
 
@@ -13,7 +13,7 @@
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-8">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                                       <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Cấu hình ngày cuối tuần</h2>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Cấu hình ngày cuối tuần</h2>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Chọn những ngày nào được coi là cuối tuần</p>
                 </div>
                 <button onclick="saveWeekendDays()" 
@@ -33,17 +33,18 @@
             </div>
         </div>
 
+
         <!-- Weekend Pricing Section -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl relative">
             <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Giá phòng cuối tuần</h2>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Quy tắc giá cuối tuần</h2>
                     <button onclick="showModal()" 
                         class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="16" height="16">
                             <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="ml-2">Thêm giá cuối tuần</span>
+                        <span class="ml-2">Thêm quy tắc cuối tuần</span>
                     </button>
                 </div>
             </div>
@@ -54,18 +55,19 @@
                     <thead class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-b border-gray-100 dark:border-gray-700/60">
                         <tr>
                             <th class="px-6 py-4 text-left">ID</th>
-                            <th class="px-6 py-4 text-left">Phòng</th>
+                            <th class="px-6 py-4 text-left">Loại phòng</th>
+                            <th class="px-6 py-4 text-left">Ngày cuối tuần</th>
                             <th class="px-6 py-4 text-left">Ngày bắt đầu</th>
                             <th class="px-6 py-4 text-left">Ngày kết thúc</th>
-                            <th class="px-6 py-4 text-left">Giá (VND)</th>
-                            <th class="px-6 py-4 text-left">Lý do</th>
+                            <th class="px-6 py-4 text-left">Điều chỉnh giá (%)</th>
                             <th class="px-6 py-4 text-left">Trạng thái</th>
                             <th class="px-6 py-4 text-center">Thao tác</th>
                         </tr>
                     </thead>
-                    <tbody id="weekendPricingTableBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
+                    <tbody id="weekendRulesTableBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
                         <!-- Data will be loaded here -->
                     </tbody>
+
                 </table>
             </div>
 
@@ -76,11 +78,11 @@
         </div>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div id="weekendPricingModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <!-- Add/Edit Modal -->
+    <div id="weekendRuleModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
             <div class="flex items-center justify-between mb-4">
-                <h3 id="modalTitle" class="text-lg font-semibold text-gray-800 dark:text-gray-100">Thêm giá cuối tuần</h3>
+                <h3 id="modalTitle" class="text-lg font-semibold text-gray-800 dark:text-gray-100">Thêm quy tắc cuối tuần</h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -88,55 +90,69 @@
                 </button>
             </div>
 
-            <form id="weekendPricingForm" onsubmit="handleSubmit(event)">
-                <input type="hidden" id="pricingId" name="pricing_id">
+            <form id="weekendRuleForm" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="ruleId" name="rule_id">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phòng <span class="text-red-500">*</span>
+                            Loại phòng
                         </label>
-                        <select id="roomId" name="room_id" required 
+                        <select id="roomTypeId" name="room_type_id" 
                             class="form-select w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Chọn phòng</option>
+                            <option value="">Áp dụng cho tất cả loại phòng</option>
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Giá cuối tuần (VND) <span class="text-red-500">*</span>
+                            Điều chỉnh giá (%) <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" id="priceVnd" name="price_vnd" required min="0" step="1000"
+                        <input type="number" id="priceAdjustment" name="price_adjustment" required step="0.01" min="-100" max="1000"
                             class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="Nhập giá phòng cuối tuần">
+                            placeholder="Nhập tỷ lệ điều chỉnh giá (VD: 20 = tăng 20%, -10 = giảm 10%)">
+                        <p class="text-xs text-gray-500 mt-1">Số dương để tăng giá, số âm để giảm giá</p>
+                        <div id="pricePreview" class="text-xs text-blue-600 mt-1"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Ngày cuối tuần áp dụng <span class="text-red-500">*</span>
+                    </label>
+                    <div id="weekendDaysSelection" class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <!-- Weekend days checkboxes will be loaded here -->
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Ngày bắt đầu <span class="text-red-500">*</span>
+                            Ngày bắt đầu
                         </label>
-                        <input type="date" id="startDate" name="start_date" required
+                        <input type="date" id="startDate" name="start_date"
                             class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Để trống nếu áp dụng vô thời hạn</p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Ngày kết thúc <span class="text-red-500">*</span>
+                            Ngày kết thúc
                         </label>
-                        <input type="date" id="endDate" name="end_date" required
+                        <input type="date" id="endDate" name="end_date"
                             class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <p class="text-xs text-gray-500 mt-1">Để trống nếu áp dụng vô thời hạn</p>
                     </div>
                 </div>
 
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Lý do
-                    </label>
-                    <textarea id="reason" name="reason" rows="3"
-                        class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="Nhập lý do áp dụng giá cuối tuần (tùy chọn)"></textarea>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="isActive" name="is_active" checked
+                            class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="isActive" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Kích hoạt quy tắc
+                        </label>
+                    </div>
                 </div>
 
                 <div class="flex justify-end space-x-3">
@@ -160,15 +176,23 @@
         </div>
     </div>
 
+
     <script>
         let currentPage = 1;
         let isEditMode = false;
         let editingId = null;
 
+        // Debug function
+        function debugLog(message, data = null) {
+            console.log(`[Weekend Price Debug] ${message}`, data);
+        }
+
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
+            debugLog('Initializing page...');
             loadWeekendDays();
-            loadRooms();
+            loadRoomTypes();
+            loadWeekendDaysForModal();
             loadData(1);
             
             // Set minimum date to today
@@ -178,15 +202,24 @@
             
             // Update end date minimum when start date changes
             document.getElementById('startDate').addEventListener('change', function() {
-                document.getElementById('endDate').min = this.value;
+                if (this.value) {
+                    document.getElementById('endDate').min = this.value;
+                }
             });
         });
 
         // Load weekend days configuration
         async function loadWeekendDays() {
             try {
+                debugLog('Loading weekend days...');
                 const response = await fetch('{{ route("admin.weekend-price.weekend-days") }}');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const weekendDays = await response.json();
+                debugLog('Weekend days loaded:', weekendDays);
                 
                 const container = document.getElementById('weekendDaysContainer');
                 container.innerHTML = '';
@@ -219,7 +252,7 @@
                                     id="day_${day.id}" 
                                     value="${day.day_of_week}"
                                     ${day.is_active ? 'checked' : ''}
-                                                                        class="w-5 h-5 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                    class="w-5 h-5 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                             </div>
                         </div>
                     `;
@@ -239,23 +272,463 @@
                 });
                 
             } catch (error) {
-                console.error('Error loading weekend days:', error);
-                showNotification('Có lỗi xảy ra khi tải cấu hình ngày cuối tuần', 'error');
+                debugLog('Error loading weekend days:', error);
+                showNotification('Có lỗi xảy ra khi tải cấu hình ngày cuối tuần: ' + error.message, 'error');
             }
         }
 
-        // Update day card style
-        function updateDayCardStyle(card, isChecked) {
-            if (isChecked) {
-                card.className = card.className.replace(
-                    'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500',
-                    'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                );
-            } else {
-                card.className = card.className.replace(
-                    'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20',
-                    'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                );
+        // Load room types for dropdown
+        async function loadRoomTypes() {
+            try {
+                debugLog('Loading room types...');
+                const response = await fetch('{{ route("admin.weekend-price.room-types") }}');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const roomTypes = await response.json();
+                debugLog('Room types loaded:', roomTypes);
+                
+                const select = document.getElementById('roomTypeId');
+                select.innerHTML = '<option value="">Áp dụng cho tất cả loại phòng</option>';
+                
+                roomTypes.forEach(roomType => {
+                    const option = document.createElement('option');
+                    option.value = roomType.room_type_id;
+                    option.textContent = roomType.name;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                debugLog('Error loading room types:', error);
+                showNotification('Có lỗi xảy ra khi tải danh sách loại phòng: ' + error.message, 'error');
+            }
+        }
+
+        // Load weekend days for modal selection
+        async function loadWeekendDaysForModal() {
+            try {
+                debugLog('Loading weekend days for modal...');
+                const container = document.getElementById('weekendDaysSelection');
+                container.innerHTML = '';
+                
+                const dayNames = [
+                    { key: 'Monday', name: 'Thứ Hai' },
+                    { key: 'Tuesday', name: 'Thứ Ba' },
+                    { key: 'Wednesday', name: 'Thứ Tư' },
+                    { key: 'Thursday', name: 'Thứ Năm' },
+                    { key: 'Friday', name: 'Thứ Sáu' },
+                    { key: 'Saturday', name: 'Thứ Bảy' },
+                    { key: 'Sunday', name: 'Chủ Nhật' }
+                ];
+                
+                dayNames.forEach(day => {
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'flex items-center p-2 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700';
+                    
+                    dayDiv.innerHTML = `
+                        <input type="checkbox" 
+                            id="modal_day_${day.key}" 
+                            name="days_of_week[]"
+                            value="${day.key}"
+                            class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="modal_day_${day.key}" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                            ${day.name}
+                        </label>
+                    `;
+                    
+                    container.appendChild(dayDiv);
+                });
+                
+            } catch (error) {
+                debugLog('Error loading weekend days for modal:', error);
+            }
+        }
+
+        // Load weekend pricing rules data
+        async function loadData(page = 1) {
+            try {
+                debugLog('Loading data for page:', page);
+                const response = await fetch(`{{ route("admin.weekend-price.data") }}?page=${page}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                debugLog('Data loaded:', data);
+                
+                renderTable(data.data);
+                renderPagination(data);
+                
+            } catch (error) {
+                debugLog('Error loading data:', error);
+                showNotification('Có lỗi xảy ra khi tải dữ liệu: ' + error.message, 'error');
+            }
+        }
+
+        // Show modal
+        function showModal() {
+            debugLog('Showing modal...');
+            isEditMode = false;
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Thêm quy tắc cuối tuần';
+            document.getElementById('submitText').textContent = 'Thêm mới';
+            document.getElementById('weekendRuleForm').reset();
+            
+            // Uncheck all days
+            const dayCheckboxes = document.querySelectorAll('#weekendDaysSelection input[type="checkbox"]');
+            dayCheckboxes.forEach(checkbox => checkbox.checked = false);
+            
+            document.getElementById('weekendRuleModal').classList.remove('hidden');
+        }
+
+        // Close modal
+        function closeModal() {
+            debugLog('Closing modal...');
+            document.getElementById('weekendRuleModal').classList.add('hidden');
+            document.getElementById('weekendRuleForm').reset();
+        }
+
+        // Handle form submit
+        async function handleSubmit(event) {
+            event.preventDefault();
+            debugLog('Form submitted');
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            
+            // Show loading
+            submitBtn.disabled = true;
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            
+            try {
+                // Get form data
+                const formData = new FormData(event.target);
+                
+                // Get selected days of week
+                const selectedDays = [];
+                const dayCheckboxes = document.querySelectorAll('#weekendDaysSelection input[type="checkbox"]:checked');
+                dayCheckboxes.forEach(checkbox => {
+                    selectedDays.push(checkbox.value);
+                });
+                
+                if (selectedDays.length === 0) {
+                    throw new Error('Vui lòng chọn ít nhất một ngày cuối tuần');
+                }
+                
+                // Build request data
+                const requestData = {
+                    room_type_id: formData.get('room_type_id') || null,
+                    price_adjustment: parseFloat(formData.get('price_adjustment')),
+                    days_of_week: selectedDays,
+                    start_date: formData.get('start_date') || null,
+                    end_date: formData.get('end_date') || null,
+                    is_active: document.getElementById('isActive').checked
+                };
+                
+                debugLog('Request data:', requestData);
+                
+                const url = isEditMode 
+                    ? `{{ route("admin.weekend-price.update", ":id") }}`.replace(':id', editingId)
+                    : '{{ route("admin.weekend-price.store") }}';
+                
+                const method = isEditMode ? 'PUT' : 'POST';
+                
+                debugLog('Making request to:', url, 'with method:', method);
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                debugLog('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    debugLog('Error response text:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                debugLog('Response result:', result);
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    closeModal();
+                    loadData(currentPage);
+                } else {
+                    if (result.errors) {
+                        // Show validation errors
+                        let errorMessage = 'Vui lòng kiểm tra lại thông tin:\n';
+                        Object.values(result.errors).forEach(errors => {
+                            errors.forEach(error => {
+                                errorMessage += '• ' + error + '\n';
+                            });
+                        });
+                        showNotification(errorMessage, 'error');
+                    } else {
+                        showNotification(result.message || 'Có lỗi xảy ra', 'error');
+                    }
+                }
+                
+            } catch (error) {
+                debugLog('Error submitting form:', error);
+                showNotification('Có lỗi xảy ra khi gửi dữ liệu: ' + error.message, 'error');
+            } finally {
+                // Hide loading
+                submitBtn.disabled = false;
+                submitText.classList.remove('hidden');
+                                submitLoading.classList.add('hidden');
+            }
+        }
+
+        // Render table
+        function renderTable(rules) {
+            const tbody = document.getElementById('weekendRulesTableBody');
+            
+            if (rules.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                <p class="text-lg font-medium">Chưa có quy tắc cuối tuần nào</p>
+                                <p class="text-sm">Nhấn "Thêm quy tắc cuối tuần" để bắt đầu</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = rules.map(rule => {
+                const now = new Date().toISOString().split('T')[0];
+                let status = '';
+                let statusClass = '';
+                
+                if (!rule.is_active) {
+                    status = 'Tạm dừng';
+                    statusClass = 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+                } else if (rule.start_date && rule.end_date) {
+                    if (now < rule.start_date) {
+                        status = 'Sắp áp dụng';
+                        statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+                    } else if (now >= rule.start_date && now <= rule.end_date) {
+                        status = 'Đang áp dụng';
+                        statusClass = 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+                    } else {
+                        status = 'Đã hết hạn';
+                        statusClass = 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+                    }
+                } else {
+                    status = 'Đang áp dụng';
+                    statusClass = 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+                }
+                
+                // Format days of week
+                let displayDays = '';
+                try {
+                    const daysOfWeek = rule.days_of_week ? JSON.parse(rule.days_of_week) : [];
+                    const dayNames = {
+                        'Monday': 'T2',
+                        'Tuesday': 'T3',
+                        'Wednesday': 'T4',
+                        'Thursday': 'T5',
+                        'Friday': 'T6',
+                        'Saturday': 'T7',
+                        'Sunday': 'CN'
+                    };
+                    displayDays = daysOfWeek.map(day => dayNames[day] || day).join(', ');
+                } catch (e) {
+                    displayDays = rule.days_of_week || '-';
+                }
+                
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            ${rule.rule_id}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                            ${rule.room_type_name || 'Tất cả loại phòng'}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                            ${displayDays}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            ${rule.start_date ? formatDate(rule.start_date) : '-'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            ${rule.end_date ? formatDate(rule.end_date) : '-'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-medium">
+                            ${rule.price_adjustment > 0 ? '+' : ''}${rule.price_adjustment}%
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                                ${status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="editRule(${rule.rule_id})" 
+                                    class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    title="Chỉnh sửa">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                <button onclick="toggleRuleStatus(${rule.rule_id}, ${rule.is_active ? 0 : 1})" 
+                                    class="${rule.is_active ? 'text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300' : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'}"
+                                    title="${rule.is_active ? 'Tạm dừng' : 'Kích hoạt'}">
+                                    ${rule.is_active ? 
+                                        '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
+                                        '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-9-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                                    }
+                                </button>
+                                <button onclick="deleteRule(${rule.rule_id})" 
+                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                    title="Xóa">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Edit rule
+        async function editRule(id) {
+            try {
+                debugLog('Editing rule:', id);
+                const response = await fetch(`{{ route("admin.weekend-price.show", ":id") }}`.replace(':id', id));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                debugLog('Edit rule response:', result);
+                
+                if (result.success) {
+                    const rule = result.data;
+                    isEditMode = true;
+                    editingId = id;
+                    
+                    document.getElementById('modalTitle').textContent = 'Cập nhật quy tắc cuối tuần';
+                    document.getElementById('submitText').textContent = 'Cập nhật';
+                    document.getElementById('ruleId').value = rule.rule_id;
+                    document.getElementById('roomTypeId').value = rule.room_type_id || '';
+                    document.getElementById('priceAdjustment').value = rule.price_adjustment;
+                    document.getElementById('startDate').value = rule.start_date || '';
+                    document.getElementById('endDate').value = rule.end_date || '';
+                    document.getElementById('isActive').checked = rule.is_active;
+                    
+                    // Set selected days
+                    const dayCheckboxes = document.querySelectorAll('#weekendDaysSelection input[type="checkbox"]');
+                    dayCheckboxes.forEach(checkbox => checkbox.checked = false);
+                    
+                    if (rule.days_of_week) {
+                        const selectedDays = typeof rule.days_of_week === 'string' ? 
+                            JSON.parse(rule.days_of_week) : rule.days_of_week;
+                        
+                        selectedDays.forEach(day => {
+                            const checkbox = document.querySelector(`#weekendDaysSelection input[value="${day}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                    
+                    document.getElementById('weekendRuleModal').classList.remove('hidden');
+                } else {
+                    showNotification(result.message || 'Không thể tải dữ liệu', 'error');
+                }
+                
+            } catch (error) {
+                debugLog('Error loading rule data:', error);
+                showNotification('Có lỗi xảy ra khi tải dữ liệu: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle rule status
+        async function toggleRuleStatus(id, newStatus) {
+            try {
+                debugLog('Toggling rule status:', id, newStatus);
+                const response = await fetch(`{{ route("admin.weekend-price.toggle-status", ":id") }}`.replace(':id', id), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ is_active: newStatus })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    loadData(currentPage);
+                } else {
+                    showNotification(result.message || 'Có lỗi xảy ra', 'error');
+                }
+                
+            } catch (error) {
+                debugLog('Error toggling rule status:', error);
+                showNotification('Có lỗi xảy ra khi thay đổi trạng thái: ' + error.message, 'error');
+            }
+        }
+
+        // Delete rule
+        async function deleteRule(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa quy tắc cuối tuần này?')) {
+                return;
+            }
+            
+            try {
+                debugLog('Deleting rule:', id);
+                const response = await fetch(`{{ route("admin.weekend-price.destroy", ":id") }}`.replace(':id', id), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    loadData(currentPage);
+                } else {
+                    showNotification(result.message || 'Có lỗi xảy ra', 'error');
+                }
+                
+            } catch (error) {
+                debugLog('Error deleting rule:', error);
+                showNotification('Có lỗi xảy ra khi xóa dữ liệu: ' + error.message, 'error');
             }
         }
 
@@ -270,25 +743,33 @@
             
             try {
                 const checkboxes = document.querySelectorAll('#weekendDaysContainer input[type="checkbox"]:checked');
-                const selectedDays = Array.from(checkboxes).map(cb => cb.value);
+                                const selectedDays = Array.from(checkboxes).map(cb => cb.value);
                 
                 if (selectedDays.length === 0) {
                     showNotification('Vui lòng chọn ít nhất một ngày cuối tuần', 'error');
                     return;
                 }
                 
+                debugLog('Saving weekend days:', selectedDays);
+                
                 const response = await fetch('{{ route("admin.weekend-price.update-weekend-days") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({
                         weekend_days: selectedDays
                     })
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                debugLog('Save weekend days response:', result);
                 
                 if (result.success) {
                     showNotification(result.message, 'success');
@@ -297,133 +778,13 @@
                 }
                 
             } catch (error) {
-                console.error('Error saving weekend days:', error);
-                showNotification('Có lỗi xảy ra khi lưu cấu hình', 'error');
+                debugLog('Error saving weekend days:', error);
+                showNotification('Có lỗi xảy ra khi lưu cấu hình: ' + error.message, 'error');
             } finally {
                 // Hide loading
                 saveBtn.classList.remove('hidden');
                 loading.classList.add('hidden');
             }
-        }
-
-        // Load rooms for dropdown
-        async function loadRooms() {
-            try {
-                const response = await fetch('{{ route("admin.weekend-price.rooms") }}');
-                const rooms = await response.json();
-                
-                const select = document.getElementById('roomId');
-                select.innerHTML = '<option value="">Chọn phòng</option>';
-                
-                rooms.forEach(room => {
-                    const option = document.createElement('option');
-                    option.value = room.room_id;
-                    option.textContent = room.name;
-                    select.appendChild(option);
-                });
-                
-            } catch (error) {
-                console.error('Error loading rooms:', error);
-                showNotification('Có lỗi xảy ra khi tải danh sách phòng', 'error');
-            }
-        }
-
-        // Load weekend pricing data
-        async function loadData(page = 1) {
-            try {
-                const response = await fetch(`{{ route("admin.weekend-price.data") }}?page=${page}`);
-                const data = await response.json();
-                
-                renderTable(data.data);
-                renderPagination(data);
-                
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showNotification('Có lỗi xảy ra khi tải dữ liệu', 'error');
-            }
-        }
-
-        // Render table
-        function renderTable(pricings) {
-            const tbody = document.getElementById('weekendPricingTableBody');
-            
-            if (pricings.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                            <div class="flex flex-col items-center">
-                                <svg class="w-12 h-12 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                                <p class="text-lg font-medium">Chưa có giá cuối tuần nào</p>
-                                <p class="text-sm">Nhấn "Thêm giá cuối tuần" để bắt đầu</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = pricings.map(pricing => {
-                const now = new Date().toISOString().split('T')[0];
-                let status = '';
-                let statusClass = '';
-                
-                if (now < pricing.start_date) {
-                    status = 'Sắp áp dụng';
-                    statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-                } else if (now >= pricing.start_date && now <= pricing.end_date) {
-                    status = 'Đang áp dụng';
-                    statusClass = 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-                } else {
-                    status = 'Đã hết hạn';
-                    statusClass = 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-                }
-                
-                return `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            ${pricing.pricing_id}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                            ${pricing.room_name || 'N/A'}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            ${formatDate(pricing.start_date)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            ${formatDate(pricing.end_date)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-medium">
-                            ${formatCurrency(pricing.price_vnd)}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                            ${pricing.reason || '-'}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                                ${status}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                            <div class="flex items-center justify-center space-x-2">
-                                <button onclick="editPricing(${pricing.pricing_id})" 
-                                    class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                </button>
-                                <button onclick="deletePricing(${pricing.pricing_id})" 
-                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
         }
 
         // Render pagination
@@ -485,143 +846,18 @@
             container.innerHTML = paginationHTML;
         }
 
-        // Show modal
-        function showModal() {
-            isEditMode = false;
-            editingId = null;
-            document.getElementById('modalTitle').textContent = 'Thêm giá cuối tuần';
-            document.getElementById('submitText').textContent = 'Thêm mới';
-            document.getElementById('weekendPricingForm').reset();
-            document.getElementById('weekendPricingModal').classList.remove('hidden');
-        }
-
-        // Close modal
-        function closeModal() {
-            document.getElementById('weekendPricingModal').classList.add('hidden');
-            document.getElementById('weekendPricingForm').reset();
-        }
-
-        // Edit pricing
-        async function editPricing(id) {
-            try {
-                const response = await fetch(`{{ route("admin.weekend-price.show", ":id") }}`.replace(':id', id));
-                const result = await response.json();
-                
-                if (result.success) {
-                    const pricing = result.data;
-                                        isEditMode = true;
-                    editingId = id;
-                    
-                    document.getElementById('modalTitle').textContent = 'Cập nhật giá cuối tuần';
-                    document.getElementById('submitText').textContent = 'Cập nhật';
-                    document.getElementById('pricingId').value = pricing.pricing_id;
-                    document.getElementById('roomId').value = pricing.room_id;
-                    document.getElementById('startDate').value = pricing.start_date;
-                    document.getElementById('endDate').value = pricing.end_date;
-                    document.getElementById('priceVnd').value = pricing.price_vnd;
-                    document.getElementById('reason').value = pricing.reason || '';
-                    
-                    document.getElementById('weekendPricingModal').classList.remove('hidden');
-                } else {
-                    showNotification(result.message || 'Không thể tải dữ liệu', 'error');
-                }
-                
-            } catch (error) {
-                console.error('Error loading pricing data:', error);
-                showNotification('Có lỗi xảy ra khi tải dữ liệu', 'error');
-            }
-        }
-
-        // Delete pricing
-        async function deletePricing(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa giá cuối tuần này?')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`{{ route("admin.weekend-price.destroy", ":id") }}`.replace(':id', id), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(result.message, 'success');
-                    loadData(currentPage);
-                } else {
-                    showNotification(result.message || 'Có lỗi xảy ra', 'error');
-                }
-                
-            } catch (error) {
-                console.error('Error deleting pricing:', error);
-                showNotification('Có lỗi xảy ra khi xóa dữ liệu', 'error');
-            }
-        }
-
-        // Handle form submit
-        async function handleSubmit(event) {
-            event.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
-            const submitLoading = document.getElementById('submitLoading');
-            
-            // Show loading
-            submitBtn.disabled = true;
-            submitText.classList.add('hidden');
-            submitLoading.classList.remove('hidden');
-            
-            try {
-                const formData = new FormData(event.target);
-                const data = Object.fromEntries(formData.entries());
-                
-                const url = isEditMode 
-                    ? `{{ route("admin.weekend-price.update", ":id") }}`.replace(':id', editingId)
-                    : '{{ route("admin.weekend-price.store") }}';
-                
-                const method = isEditMode ? 'PUT' : 'POST';
-                
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showNotification(result.message, 'success');
-                    closeModal();
-                    loadData(currentPage);
-                } else {
-                    if (result.errors) {
-                        // Show validation errors
-                        let errorMessage = 'Vui lòng kiểm tra lại thông tin:\n';
-                        Object.values(result.errors).forEach(errors => {
-                            errors.forEach(error => {
-                                errorMessage += '• ' + error + '\n';
-                            });
-                        });
-                        showNotification(errorMessage, 'error');
-                    } else {
-                        showNotification(result.message || 'Có lỗi xảy ra', 'error');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error submitting form:', error);
-                showNotification('Có lỗi xảy ra khi gửi dữ liệu', 'error');
-            } finally {
-                // Hide loading
-                submitBtn.disabled = false;
-                submitText.classList.remove('hidden');
-                submitLoading.classList.add('hidden');
+        // Update day card style
+        function updateDayCardStyle(card, isChecked) {
+            if (isChecked) {
+                card.className = card.className.replace(
+                    'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500',
+                    'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                );
+            } else {
+                card.className = card.className.replace(
+                    'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20',
+                    'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                );
             }
         }
 
@@ -685,7 +921,7 @@
         }
 
         // Close modal when clicking outside
-        document.getElementById('weekendPricingModal').addEventListener('click', function(e) {
+        document.getElementById('weekendRuleModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal();
             }
@@ -698,7 +934,8 @@
             }
         });
     </script>
+
+
 </x-app-layout>
-
-                    
-
+			
+	

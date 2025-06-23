@@ -321,17 +321,32 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
      //Giá cuối tuần
     Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
-    Route::prefix('admin/room-prices/weekend')->name('admin.weekend-price.')->group(function () {
-        Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
-        Route::get('/weekend-days', [WeekendPriceController::class, 'getWeekendDays'])->name('weekend-days');
-        Route::post('/weekend-days', [WeekendPriceController::class, 'updateWeekendDays'])->name('update-weekend-days');
-        Route::get('/data', [WeekendPriceController::class, 'getData'])->name('data');
-        Route::get('/rooms', [WeekendPriceController::class, 'getRooms'])->name('rooms');
-        Route::get('/{id}', [WeekendPriceController::class, 'show'])->name('show');
-        Route::post('/', [WeekendPriceController::class, 'store'])->name('store');
-        Route::put('/{id}', [WeekendPriceController::class, 'update'])->name('update');
-        Route::delete('/{id}', [WeekendPriceController::class, 'destroy'])->name('destroy');
-    });
+    // Weekend Price Management Routes
+// Weekend Price Management Routes
+Route::prefix('admin/weekend-price')->name('admin.weekend-price.')->group(function () {
+    Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
+    
+    // Weekend days configuration
+    Route::get('/weekend-days', [WeekendPriceController::class, 'getWeekendDays'])->name('weekend-days');
+    Route::post('/update-weekend-days', [WeekendPriceController::class, 'updateWeekendDays'])->name('update-weekend-days');
+    
+    // Data and resources
+    Route::get('/data', [WeekendPriceController::class, 'getData'])->name('data');
+    Route::get('/room-types', [WeekendPriceController::class, 'getRoomTypes'])->name('room-types');
+    Route::get('/statistics', [WeekendPriceController::class, 'getStatistics'])->name('statistics');
+    Route::get('/export', [WeekendPriceController::class, 'export'])->name('export');
+    
+    // CRUD operations
+    Route::post('/store', [WeekendPriceController::class, 'store'])->name('store');
+    Route::get('/show/{id}', [WeekendPriceController::class, 'show'])->name('show');
+    Route::put('/update/{id}', [WeekendPriceController::class, 'update'])->name('update');
+    Route::delete('/destroy/{id}', [WeekendPriceController::class, 'destroy'])->name('destroy');
+    
+    // Additional operations
+    Route::post('/toggle-status/{id}', [WeekendPriceController::class, 'toggleStatus'])->name('toggle-status');
+    Route::post('/bulk-update-status', [WeekendPriceController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
+});
+
 
 
 

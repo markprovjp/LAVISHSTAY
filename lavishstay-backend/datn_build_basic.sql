@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Jun 14, 2025 at 05:46 AM
--- Server version: 8.3.0
--- PHP Version: 8.2.12
+-- Host: localhost:3306
+-- Generation Time: Jun 23, 2025 at 03:07 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,10 +29,10 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `amenities` (
   `amenity_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `icon` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `category` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `category` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -60,10 +60,10 @@ INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `category`, `description`
 CREATE TABLE `audit_logs` (
   `log_id` int NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `action` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `table_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `table_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `record_id` int NOT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -98,26 +98,19 @@ INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created
 CREATE TABLE `booking` (
   `booking_id` int NOT NULL COMMENT 'Khóa chính, mã đặt phòng',
   `user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Khóa ngoại, mã người dùng (nếu có)',
-  `option_id` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
+  `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
   `check_in_date` date NOT NULL COMMENT 'Ngày nhận phòng',
   `check_out_date` date NOT NULL COMMENT 'Ngày trả phòng',
   `total_price_vnd` decimal(15,2) NOT NULL COMMENT 'Tổng giá (VND)',
   `guest_count` int NOT NULL COMMENT 'Số khách',
-  `status` enum('pending','confirmed','cancelled','completed') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái đặt phòng',
+  `status` enum('pending','confirmed','cancelled','completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái đặt phòng',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật',
-  `guest_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên khách',
-  `guest_email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Email khách',
-  `guest_phone` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số điện thoại khách',
+  `guest_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên khách',
+  `guest_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Email khách',
+  `guest_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số điện thoại khách',
   `room_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin đặt phòng';
-
---
--- Dumping data for table `booking`
---
-
-INSERT INTO `booking` (`booking_id`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `status`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`) VALUES
-(1, 1, 'OPT_R1_STANDARD', '2025-06-07', '2025-06-11', 2000000.00, 3, 'pending', '2025-06-06 03:50:52', '2025-06-06 03:50:52', 'Duc', 'nguyenanhduc2909@gmail.com', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -130,8 +123,8 @@ CREATE TABLE `booking_extensions` (
   `booking_id` int NOT NULL,
   `new_check_out_date` date NOT NULL,
   `additional_fee_vnd` decimal(15,2) DEFAULT '0.00',
-  `status` enum('pending','approved','rejected') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `reason` text COLLATE utf8mb4_general_ci,
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -148,8 +141,8 @@ CREATE TABLE `booking_reschedules` (
   `new_check_in_date` date NOT NULL,
   `new_check_out_date` date NOT NULL,
   `additional_fee_vnd` decimal(15,2) DEFAULT '0.00',
-  `status` enum('pending','approved','rejected') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `reason` text COLLATE utf8mb4_general_ci,
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -162,11 +155,11 @@ CREATE TABLE `booking_reschedules` (
 
 CREATE TABLE `cancellation_policies` (
   `policy_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `free_cancellation_days` int DEFAULT NULL COMMENT 'Số ngày trước check-in được hủy miễn phí',
   `penalty_percentage` decimal(5,2) DEFAULT NULL COMMENT 'Phạt hủy (%)',
   `penalty_fixed_amount_vnd` decimal(15,2) DEFAULT NULL COMMENT 'Phạt hủy cố định (VND)',
-  `description` text COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -178,8 +171,7 @@ CREATE TABLE `cancellation_policies` (
 
 INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Hủy miễn phí 7 ngày', 7, 0.00, 200000.00, 'Hủy miễn phí nếu trước 7 ngày', 1, '2025-06-11 02:26:26', '2025-06-11 01:24:04'),
-(2, 'Hủy có phí', 2, 50.00, NULL, 'Phạt 50% nếu hủy trong vòng 2 ngày', 0, '2025-06-11 02:26:26', '2025-06-13 00:23:30'),
-(9, 'Nguyễn Anh Đức', 3, 33.00, NULL, '33', 0, '2025-06-11 00:38:13', '2025-06-11 01:14:25');
+(2, 'Hủy có phí', 2, 50.00, NULL, 'Phạt 50% nếu hủy trong vòng 2 ngày', 0, '2025-06-11 02:26:26', '2025-06-13 00:23:30');
 
 -- --------------------------------------------------------
 
@@ -189,11 +181,12 @@ INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_day
 
 CREATE TABLE `check_out_policies` (
   `policy_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `early_check_out_fee_vnd` decimal(15,2) DEFAULT NULL,
   `late_check_out_fee_vnd` decimal(15,2) DEFAULT NULL,
   `late_check_out_max_hours` int DEFAULT NULL COMMENT 'Số giờ tối đa trả phòng muộn',
-  `description` text COLLATE utf8mb4_general_ci,
+  `early_check_out_max_hours` int DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -203,8 +196,9 @@ CREATE TABLE `check_out_policies` (
 -- Dumping data for table `check_out_policies`
 --
 
-INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Trả phòng muộn', 0.00, 200.00, 4, 'Phí 200,000 VND nếu trả phòng muộn tối đa 4 giờ', 0, '2025-06-11 02:36:00', '2025-06-12 10:39:53');
+INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `early_check_out_max_hours`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Trả phòng muộn sau 4 giờ', 0.00, 200000.00, 4, NULL, 'Phí 200,000 VND nếu trả phòng muộn tối đa 4 giờ', 1, '2025-06-11 02:36:00', '2025-06-16 18:37:57'),
+(3, 'e', NULL, 0.00, NULL, 4, 'e', 1, '2025-06-16 18:40:33', '2025-06-16 18:40:56');
 
 -- --------------------------------------------------------
 
@@ -215,10 +209,10 @@ INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`
 CREATE TABLE `check_out_requests` (
   `request_id` int NOT NULL,
   `booking_id` int NOT NULL,
-  `type` enum('early','late') COLLATE utf8mb4_general_ci NOT NULL,
+  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `requested_check_out_time` datetime NOT NULL,
   `fee_vnd` decimal(15,2) DEFAULT '0.00',
-  `status` enum('pending','approved','rejected') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -230,11 +224,11 @@ CREATE TABLE `check_out_requests` (
 --
 
 CREATE TABLE `currency` (
-  `currency_code` varchar(3) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Khóa chính, mã tiền tệ (VND, USD, v.v.)',
-  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên tiền tệ',
+  `currency_code` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Khóa chính, mã tiền tệ (VND, USD, v.v.)',
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên tiền tệ',
   `exchange_rate` decimal(10,4) DEFAULT NULL COMMENT 'Tỷ giá so với VND',
-  `symbol` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Ký hiệu tiền tệ (₫, $, v.v.)',
-  `format` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Định dạng (ví dụ: {amount} ₫)'
+  `symbol` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Ký hiệu tiền tệ (₫, $, v.v.)',
+  `format` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Định dạng (ví dụ: {amount} ₫)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin tiền tệ và tỷ giá';
 
 --
@@ -269,10 +263,10 @@ CREATE TABLE `datafeeds` (
 
 CREATE TABLE `deposit_policies` (
   `policy_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `deposit_percentage` decimal(5,2) DEFAULT NULL,
   `deposit_fixed_amount_vnd` decimal(15,2) DEFAULT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -283,8 +277,7 @@ CREATE TABLE `deposit_policies` (
 --
 
 INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Đặt cọc 50%', 50.00, NULL, 'Yêu cầu đặt cọc 50% tổng giá', 1, '2025-06-11 02:24:24', '2025-06-11 02:24:24'),
-(5, 'Nguyễn Anh Đức', 31.97, 2000.00, 'ulidd', 0, '2025-06-11 07:49:09', '2025-06-13 00:23:25');
+(1, 'Đặt cọc 50%', 50.00, NULL, 'Yêu cầu đặt cọc 50% tổng giá', 1, '2025-06-11 02:24:24', '2025-06-11 02:24:24');
 
 -- --------------------------------------------------------
 
@@ -308,7 +301,9 @@ CREATE TABLE `dynamic_pricing_rules` (
 
 INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_threshold`, `price_adjustment`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 1, 80.00, 10.00, 1, '2025-06-11 02:44:33', '2025-06-11 02:44:33'),
-(2, 1, 90.00, 20.00, 1, '2025-06-11 02:44:33', '2025-06-11 02:44:33');
+(2, 1, 90.00, 20.00, 1, '2025-06-11 02:44:33', '2025-06-11 02:44:33'),
+(3, 2, 80.00, 20.00, 1, '2025-06-14 03:41:08', '2025-06-14 03:42:03'),
+(4, 2, 90.00, 30.00, 1, '2025-06-14 04:17:32', '2025-06-14 04:17:32');
 
 -- --------------------------------------------------------
 
@@ -318,10 +313,10 @@ INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_thres
 
 CREATE TABLE `events` (
   `event_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -382,15 +377,66 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `flexible_pricing_rules`
+--
+
+CREATE TABLE `flexible_pricing_rules` (
+  `rule_id` int NOT NULL,
+  `room_type_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã loại phòng (NULL: áp dụng cho tất cả loại phòng)',
+  `rule_type` enum('weekend','event','holiday','season') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại quy tắc: cuối tuần, sự kiện, ngày lễ, mùa',
+  `days_of_week` json DEFAULT NULL COMMENT 'Danh sách ngày cuối tuần áp dụng (JSON, dùng cho rule_type=weekend)',
+  `event_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã sự kiện (dùng cho rule_type=event)',
+  `holiday_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã ngày lễ (dùng cho rule_type=holiday)',
+  `season_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên mùa (dùng cho rule_type=season)',
+  `start_date` date DEFAULT NULL COMMENT 'Ngày bắt đầu áp dụng (dùng cho rule_type=season hoặc giới hạn thời gian)',
+  `end_date` date DEFAULT NULL COMMENT 'Ngày kết thúc áp dụng (dùng cho rule_type=season hoặc giới hạn thời gian)',
+  `price_adjustment` decimal(5,2) NOT NULL COMMENT 'Tỷ lệ điều chỉnh giá (%, dương để tăng, âm để giảm)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái kích hoạt',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Quy tắc giá linh động cho cuối tuần, sự kiện, ngày lễ, mùa';
+
+--
+-- Dumping data for table `flexible_pricing_rules`
+--
+
+INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `days_of_week`, `event_id`, `holiday_id`, `season_name`, `start_date`, `end_date`, `price_adjustment`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, NULL, 'weekend', '[\"Saturday\", \"Sunday\"]', NULL, NULL, NULL, NULL, NULL, 15.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(2, 1, 'weekend', '[\"Saturday\"]', NULL, NULL, NULL, '2025-07-01', '2025-08-31', 20.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(3, NULL, 'event', NULL, 1, NULL, NULL, NULL, NULL, 25.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(4, NULL, 'holiday', NULL, NULL, 1, NULL, NULL, NULL, 30.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(5, NULL, 'season', NULL, NULL, NULL, 'Mùa cao điểm', '2025-06-01', '2025-08-31', 20.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(6, 1, 'season', NULL, NULL, NULL, 'Mùa thấp điểm', '2025-11-01', '2026-02-28', -10.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `guests`
+--
+
+CREATE TABLE `guests` (
+  `guest_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `gender` enum('male','female','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `dob` date DEFAULT NULL COMMENT 'Ngày sinh',
+  `nationality` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Quốc tịch',
+  `passport_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số hộ chiếu / CMND',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `holidays`
 --
 
 CREATE TABLE `holidays` (
   `holiday_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date DEFAULT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -412,9 +458,9 @@ INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `descrip
 
 CREATE TABLE `hotel` (
   `hotel_id` int NOT NULL COMMENT 'Khóa chính, mã khách sạn',
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên khách sạn',
-  `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Địa chỉ khách sạn',
-  `description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả khách sạn'
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên khách sạn',
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Địa chỉ khách sạn',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả khách sạn'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin khách sạn';
 
 --
@@ -434,8 +480,8 @@ CREATE TABLE `hotel_rating` (
   `hotel_id` int NOT NULL COMMENT 'Khóa chính, mã khách sạn',
   `overall_rating` decimal(3,1) NOT NULL COMMENT 'Điểm đánh giá tổng thể',
   `total_reviews` int NOT NULL COMMENT 'Tổng số lượt đánh giá',
-  `rating_text` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả đánh giá',
-  `location` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Vị trí khách sạn',
+  `rating_text` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả đánh giá',
+  `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Vị trí khách sạn',
   `cleanliness` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá sự sạch sẽ',
   `location_rating` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá vị trí',
   `facilities` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá cơ sở vật chất',
@@ -450,8 +496,8 @@ CREATE TABLE `hotel_rating` (
 --
 
 CREATE TABLE `language` (
-  `language_code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Khóa chính, mã ngôn ngữ (vi, en, v.v.)',
-  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên ngôn ngữ (Vietnamese, English, v.v.)'
+  `language_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Khóa chính, mã ngôn ngữ (vi, en, v.v.)',
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên ngôn ngữ (Vietnamese, English, v.v.)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ngôn ngữ hỗ trợ';
 
 --
@@ -508,7 +554,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (4, '2019_12_14_000001_create_personal_access_tokens_table', 1),
 (5, '2022_03_23_163443_create_sessions_table', 1),
 (6, '2022_05_11_154250_create_datafeeds_table', 1),
-(7, '2025_06_12_074026_create_table_translation_table', 2);
+(7, '2025_06_12_074026_create_table_translation_table', 2),
+(8, '2025_06_16_014026_change_type_column_in_checkout_requests', 3),
+(9, '2025_06_16_094513_add_early_checkout_fields_to_check_out_policies_table', 3);
 
 -- --------------------------------------------------------
 
@@ -520,9 +568,9 @@ CREATE TABLE `notifications` (
   `notification_id` int NOT NULL,
   `booking_id` int DEFAULT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `type` enum('cancellation','extension','reschedule','transfer','check_out') COLLATE utf8mb4_general_ci NOT NULL,
-  `message` text COLLATE utf8mb4_general_ci NOT NULL,
-  `status` enum('pending','sent','failed') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `type` enum('cancellation','extension','reschedule','transfer','check_out') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `status` enum('pending','sent','failed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -537,9 +585,9 @@ CREATE TABLE `payment` (
   `payment_id` int NOT NULL COMMENT 'Khóa chính, mã thanh toán',
   `booking_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã đặt phòng',
   `amount_vnd` decimal(15,2) NOT NULL COMMENT 'Số tiền thanh toán (VND)',
-  `payment_type` enum('deposit','full','qr_code','at_hotel') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại thanh toán',
-  `status` enum('pending','completed','failed','refunded') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái thanh toán',
-  `transaction_id` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mã giao dịch (từ cổng thanh toán)',
+  `payment_type` enum('deposit','full','qr_code','at_hotel','pay_now_with_vietQR') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại thanh toán',
+  `status` enum('pending','completed','failed','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái thanh toán',
+  `transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mã giao dịch (từ cổng thanh toán)',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin thanh toán';
@@ -573,17 +621,17 @@ CREATE TABLE `room` (
   `room_id` int NOT NULL COMMENT 'Khóa chính, mã phòng',
   `hotel_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã khách sạn',
   `room_type_id` int NOT NULL COMMENT 'Khóa ngoại, mã loại phòng',
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên phòng',
-  `image` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Đường dẫn ảnh chính',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên phòng',
+  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Đường dẫn ảnh chính',
   `floor` int DEFAULT NULL,
-  `status` enum('available','occupied','maintenance','cleaning') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` enum('available','occupied','maintenance','cleaning') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `base_price_vnd` decimal(15,2) NOT NULL COMMENT 'Giá cơ bản (VND)',
   `size` int NOT NULL COMMENT 'Diện tích phòng (m²)',
-  `view` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tầm nhìn phòng',
+  `view` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tầm nhìn phòng',
   `rating` decimal(3,1) DEFAULT NULL COMMENT 'Điểm đánh giá (0-10)',
   `lavish_plus_discount` decimal(5,2) DEFAULT NULL COMMENT 'Giảm giá LavishPlus (%)',
   `max_guests` int NOT NULL COMMENT 'Số khách tối đa',
-  `description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết phòng'
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết phòng'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin phòng';
 
 --
@@ -591,8 +639,96 @@ CREATE TABLE `room` (
 --
 
 INSERT INTO `room` (`room_id`, `hotel_id`, `room_type_id`, `name`, `image`, `floor`, `status`, `base_price_vnd`, `size`, `view`, `rating`, `lavish_plus_discount`, `max_guests`, `description`) VALUES
-(2, NULL, 1, 'Deluxe 001', 'https://images.squarespace-cdn.com/content/v1/5aadf482aa49a1d810879b88/1626698419120-J7CH9BPMB2YI728SLFPN/1.jpg', 2, NULL, 200000.00, 3000, 'Biển', 5.0, NULL, 4, NULL),
-(3, NULL, 1, 'Deluxe 002', 'https://lh3.googleusercontent.com/proxy/WR_6J0_1BhUfSZCkm_zaJ8EjSxxv57ME8-qIofxe0VIrgZ9RpP1jSBLj8feXZ2xx2OcV39348VjCHHL1c0vLzK3Pld_xckbn-1veyPld2VrvdutW0sBbnG6RWTJrwJtgmrpso-ZyuX3wN5YSZiiWc40iRDgXPtMVi_qCrTGcXxY3URg', 2, NULL, 200000.00, 3000, 'Bờ hồ', NULL, NULL, 3, 'Không');
+(6, NULL, 1, '0201', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(7, NULL, 1, '0202', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(8, NULL, 1, '0203', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(9, NULL, 1, '0204', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(10, NULL, 1, '0205', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(11, NULL, 1, '0206', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(12, NULL, 1, '0207', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(13, NULL, 1, '0208', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(14, NULL, 1, '0209', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(15, NULL, 1, '0210', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(16, NULL, 1, '0211', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(17, NULL, 1, '0212', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(18, NULL, 1, '0213', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(19, NULL, 1, '0214', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(20, NULL, 1, '0215', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(21, NULL, 1, '0301', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(22, NULL, 1, '0302', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(23, NULL, 1, '0303', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(24, NULL, 1, '0304', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(25, NULL, 1, '0305', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(26, NULL, 1, '0306', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(27, NULL, 1, '0307', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(28, NULL, 1, '0308', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(29, NULL, 1, '0309', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(30, NULL, 1, '0310', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(31, NULL, 1, '0311', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(32, NULL, 1, '0312', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(33, NULL, 1, '0313', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(34, NULL, 1, '0314', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(35, NULL, 1, '0315', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(36, NULL, 1, '0401', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(37, NULL, 1, '0402', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(38, NULL, 1, '0403', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(39, NULL, 1, '0404', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(40, NULL, 1, '0405', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(41, NULL, 1, '0406', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(42, NULL, 1, '0407', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(43, NULL, 1, '0408', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(44, NULL, 1, '0409', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(45, NULL, 1, '0410', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(46, NULL, 1, '0411', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(47, NULL, 1, '0412', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(48, NULL, 1, '0413', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(49, NULL, 1, '0414', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(50, NULL, 1, '0415', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(51, NULL, 1, '0501', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(52, NULL, 1, '0502', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(53, NULL, 1, '0503', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(54, NULL, 1, '0504', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(55, NULL, 1, '0505', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(56, NULL, 1, '0506', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(57, NULL, 1, '0507', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(58, NULL, 1, '0508', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(59, NULL, 1, '0509', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(60, NULL, 1, '0510', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(61, NULL, 1, '0511', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(62, NULL, 1, '0512', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(63, NULL, 1, '0513', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(64, NULL, 1, '0514', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(65, NULL, 1, '0515', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(66, NULL, 1, '0801', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(67, NULL, 1, '0802', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(68, NULL, 1, '0803', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(69, NULL, 1, '0804', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(70, NULL, 1, '0805', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(71, NULL, 1, '0806', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(72, NULL, 1, '0807', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(73, NULL, 1, '0808', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(74, NULL, 1, '0809', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(75, NULL, 1, '0810', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(76, NULL, 1, '0811', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(77, NULL, 1, '0812', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(78, NULL, 1, '0813', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(79, NULL, 1, '0814', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(80, NULL, 1, '0815', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(81, NULL, 1, '0901', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(82, NULL, 1, '0902', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(83, NULL, 1, '0903', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(84, NULL, 1, '0904', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(85, NULL, 1, '0905', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(86, NULL, 1, '0906', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(87, NULL, 1, '0907', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(88, NULL, 1, '0908', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(89, NULL, 1, '0909', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(90, NULL, 1, '0910', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(91, NULL, 1, '0911', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(92, NULL, 1, '0912', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(93, NULL, 1, '0913', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(94, NULL, 1, '0914', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(95, NULL, 1, '0915', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room');
 
 -- --------------------------------------------------------
 
@@ -602,25 +738,11 @@ INSERT INTO `room` (`room_id`, `hotel_id`, `room_type_id`, `name`, `image`, `flo
 
 CREATE TABLE `room_availability` (
   `availability_id` int NOT NULL COMMENT 'Khóa chính, mã lịch',
-  `option_id` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
+  `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
   `date` date NOT NULL COMMENT 'Ngày áp dụng',
   `total_rooms` int NOT NULL COMMENT 'Tổng số phòng',
   `available_rooms` int NOT NULL COMMENT 'Số phòng còn trống'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu lịch đặt phòng theo ngày';
-
---
--- Dumping data for table `room_availability`
---
-
-INSERT INTO `room_availability` (`availability_id`, `option_id`, `date`, `total_rooms`, `available_rooms`) VALUES
-(1, 'OPT_R1_STANDARD', '2025-06-06', 10, 8),
-(2, 'OPT_R1_STANDARD', '2025-06-07', 10, 6),
-(3, 'OPT_R1_STANDARD', '2025-06-08', 10, 9),
-(4, 'OPT_R1_STANDARD', '2025-06-09', 10, 4),
-(5, 'OPT_R1_STANDARD', '2025-06-10', 10, 2),
-(6, 'OPT_R1_STANDARD', '2025-06-11', 10, 0),
-(7, 'OPT_R1_STANDARD', '2025-06-12', 10, 3),
-(8, 'OPT_R1_STANDARD', '2025-06-13', 10, 7);
 
 -- --------------------------------------------------------
 
@@ -658,19 +780,19 @@ CREATE TABLE `room_meal_types` (
 --
 
 CREATE TABLE `room_option` (
-  `option_id` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Khóa chính, mã tùy chọn',
+  `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Khóa chính, mã tùy chọn',
   `room_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã phòng',
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên tùy chọn',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên tùy chọn',
   `price_per_night_vnd` decimal(15,2) NOT NULL COMMENT 'Giá mỗi đêm (VND)',
   `max_guests` int NOT NULL COMMENT 'Số khách tối đa',
   `min_guests` int NOT NULL COMMENT 'Số khách tối thiểu',
-  `cancellation_policy_type` enum('free','non_refundable','partial_refunded') COLLATE utf8mb4_general_ci NOT NULL,
+  `cancellation_policy_type` enum('free','non_refundable','partial_refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `cancellation_penalty` decimal(5,2) DEFAULT NULL COMMENT 'Phạt hủy (%)',
-  `cancellation_description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả chính sách hủy',
+  `cancellation_description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả chính sách hủy',
   `free_until` datetime DEFAULT NULL COMMENT 'Hủy miễn phí đến thời điểm',
-  `payment_policy_type` enum('pay_now','pay_at_hotel','pay_partial') COLLATE utf8mb4_general_ci NOT NULL,
-  `payment_description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả thanh toán',
-  `urgency_message` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Thông báo khan hiếm',
+  `payment_policy_type` enum('pay_now','pay_at_hotel','pay_partial') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `payment_description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả thanh toán',
+  `urgency_message` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Thông báo khan hiếm',
   `most_popular` tinyint(1) DEFAULT '0' COMMENT 'Tùy chọn phổ biến nhất',
   `recommended` tinyint(1) DEFAULT '0' COMMENT 'Tùy chọn được đề xuất',
   `meal_type` int DEFAULT NULL COMMENT 'Khóa ngoại, mã bữa ăn',
@@ -681,13 +803,6 @@ CREATE TABLE `room_option` (
   `cancellation_policy_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu tùy chọn giá và dịch vụ của phòng';
 
---
--- Dumping data for table `room_option`
---
-
-INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `cancellation_policy_type`, `cancellation_penalty`, `cancellation_description`, `free_until`, `payment_policy_type`, `payment_description`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `deposit_policy_id`, `cancellation_policy_id`) VALUES
-('OPT_R1_STANDARD', 2, 'OPT 01', 2000000.00, 3, 1, 'non_refundable', NULL, NULL, NULL, 'pay_partial', NULL, NULL, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -696,37 +811,11 @@ INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`
 
 CREATE TABLE `room_option_promotion` (
   `promotion_id` int NOT NULL COMMENT 'Khóa chính, mã khuyến mãi',
-  `option_id` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn',
-  `type` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại khuyến mãi (hot, limited)',
-  `message` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Thông điệp khuyến mãi',
+  `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn',
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại khuyến mãi (hot, limited)',
+  `message` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Thông điệp khuyến mãi',
   `discount` decimal(5,2) DEFAULT NULL COMMENT 'Mức giảm giá (%)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu khuyến mãi của tùy chọn phòng';
-
--- --------------------------------------------------------
-
---
--- Table structure for table `room_pricing`
---
-
-CREATE TABLE `room_pricing` (
-  `pricing_id` int NOT NULL COMMENT 'Khóa chính, mã giá',
-  `room_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã phòng',
-  `start_date` date NOT NULL COMMENT 'Ngày bắt đầu áp dụng giá',
-  `end_date` date NOT NULL COMMENT 'Ngày kết thúc áp dụng giá',
-  `price_vnd` decimal(15,2) NOT NULL COMMENT 'Giá phòng (VND)',
-  `reason` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Lý do (mùa cao điểm, lễ hội, v.v.)',
-  `option_id` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
-  `is_weekend` tinyint(1) DEFAULT '0' COMMENT 'Giá áp dụng cho cuối tuần',
-  `event_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã sự kiện',
-  `holiday_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã ngày lễ'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu giá phòng theo thời gian';
-
---
--- Dumping data for table `room_pricing`
---
-
-INSERT INTO `room_pricing` (`pricing_id`, `room_id`, `start_date`, `end_date`, `price_vnd`, `reason`, `option_id`, `is_weekend`, `event_id`, `holiday_id`) VALUES
-(1, 2, '2025-06-13', '2025-06-15', 2600000.00, 'Không biết', NULL, NULL, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -739,7 +828,7 @@ CREATE TABLE `room_transfers` (
   `booking_id` int NOT NULL,
   `old_room_id` int NOT NULL,
   `new_room_id` int NOT NULL,
-  `reason` text COLLATE utf8mb4_general_ci,
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `additional_fee_vnd` decimal(15,2) DEFAULT '0.00',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -754,8 +843,8 @@ CREATE TABLE `room_transfers` (
 CREATE TABLE `room_types` (
   `room_type_id` int NOT NULL COMMENT 'Khóa chính, mã loại phòng',
   `room_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Code loại phòng',
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên loại phòng',
-  `description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả loại phòng',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên loại phòng',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả loại phòng',
   `total_room` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách loại phòng';
 
@@ -764,10 +853,13 @@ CREATE TABLE `room_types` (
 --
 
 INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `total_room`) VALUES
-(1, 'deluxe', 'Phòng Loại Sang (Deluxe Room)', 'Chưa có mô tả', 20),
-(2, 'premium', 'Phòng cao cấp trong góc (Premium Corner Room)', 'Chưa có mô tả', 20),
-(3, 'suite', 'Phòng Suite (Suite Room)', 'Chưa có mô tả', 100),
-(4, 'the_level_1', 'Phòng The Level Cao cấp (The Level Premium Room)', 'Chưa luônnn', NULL);
+(1, 'deluxe', 'Phòng Loại Sang (Deluxe Room)', 'Chưa có mô tả', 90),
+(2, 'premium_corner', 'Phòng cao cấp trong góc (Premium Corner Room)', 'Chưa có mô tả', 96),
+(3, 'suite', 'Phòng Suite (Suite Room)', 'Chưa có mô tả', 20),
+(4, 'the_level_premium', 'Phòng The Level Cao cấp (The Level Premium Room)', 'Chưa luônnn', 30),
+(5, 'the_level_suite', 'The Level Suite', 'Không', 20),
+(6, 'the_level_premium_corner', 'The Level Premium Corner (Phòng cao cấp trong góc)', 'Không', 32),
+(7, 'presidential_suite', 'Presidential Suite (Phòng Tổng thống)', 'Không', 1);
 
 -- --------------------------------------------------------
 
@@ -788,12 +880,16 @@ CREATE TABLE `room_type_amenity` (
 --
 
 INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`, `created_at`, `updated_at`) VALUES
+(1, 1, 0, '2025-06-13 21:03:56', '2025-06-13 21:03:56'),
 (1, 2, 0, '2025-06-08 23:56:30', '2025-06-08 23:56:30'),
+(1, 3, 0, '2025-06-15 09:34:39', '2025-06-15 09:34:39'),
 (1, 4, 1, '2025-06-09 02:44:59', '2025-06-09 02:44:59'),
 (1, 5, 1, '2025-06-09 00:07:12', '2025-06-09 00:07:12'),
 (1, 6, 0, '2025-06-08 23:56:30', '2025-06-08 23:56:30'),
+(1, 7, 0, '2025-06-15 09:34:39', '2025-06-15 09:34:39'),
 (2, 1, 0, '2025-06-09 02:55:28', '2025-06-09 02:55:28'),
 (2, 2, 0, '2025-06-09 02:55:28', '2025-06-09 02:55:28'),
+(2, 3, 0, '2025-06-15 09:35:30', '2025-06-15 09:35:30'),
 (2, 7, 0, '2025-06-09 03:04:52', '2025-06-09 03:04:52');
 
 -- --------------------------------------------------------
@@ -805,8 +901,8 @@ INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`,
 CREATE TABLE `room_type_image` (
   `image_id` int NOT NULL COMMENT 'Khóa chính, mã ảnh',
   `room_type_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã phòng',
-  `alt_text` text COLLATE utf8mb4_general_ci,
-  `image_url` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn ảnh',
+  `alt_text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn ảnh',
   `is_main` tinyint(1) DEFAULT '0' COMMENT 'Ảnh chính',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
@@ -845,8 +941,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('mYCn2CBARbCW883d8Njmg9nafKUo48nCdOxB8IxO', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiVThQbEJ3OTlQU1MxT0ZjMlpENnFkNHFqUjdLRzRsd2lEMTdWaVBKMCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjY1OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vZXZlbnQtZmVzdGl2YWwtbWFuYWdlbWVudC9kYXRhP3BhZ2U9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1749810348),
-('ZrnMGV0Tu0bIqKca9bp4xWEAuEH0UPwoCakKKnZe', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoidFJZeFVpRXdKck1iV1I5eUxwMGwySldCUGJ5MFJrTEM2djR1aTd0QiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjc0OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vcm9vbXMvdHlwZS8xP3NvcnRfYnk9bWF4X2d1ZXN0cyZzb3J0X29yZGVyPWFzYyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1749833495);
+('ORYn2FNStdEGJOnzvLfeGeZiFXQH3DYHaxBxG3Ye', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiMU1xOXJrY1BYa29oRjhiZVB5OTRaU21NbGJpSzZNU0xNMnl4T0dNWCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjY1OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vZXZlbnQtZmVzdGl2YWwtbWFuYWdlbWVudC9kYXRhP3BhZ2U9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1750647896);
 
 -- --------------------------------------------------------
 
@@ -856,8 +951,8 @@ INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, 
 
 CREATE TABLE `table_translation` (
   `id` bigint UNSIGNED NOT NULL,
-  `table_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `display_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `table_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `display_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -879,11 +974,11 @@ INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`
 
 CREATE TABLE `translation` (
   `translation_id` int NOT NULL COMMENT 'Khóa chính, mã bản dịch',
-  `table_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên bảng (room, hotel, v.v.)',
-  `column_name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên cột (name, description, v.v.)',
+  `table_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên bảng (room, hotel, v.v.)',
+  `column_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên cột (name, description, v.v.)',
   `record_id` int NOT NULL COMMENT 'Mã bản ghi',
-  `language_code` varchar(10) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Mã ngôn ngữ (vi, en, v.v.)',
-  `value` text COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Giá trị bản dịch'
+  `language_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Mã ngôn ngữ (vi, en, v.v.)',
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Giá trị bản dịch'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu bản dịch cho các trường văn bản';
 
 -- --------------------------------------------------------
@@ -898,9 +993,9 @@ CREATE TABLE `users` (
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(12) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số điện thoại',
-  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Địa chỉ',
-  `role` enum('guest','receptionist','manager','admin') COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Vai trò',
+  `phone` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số điện thoại',
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Địa chỉ',
+  `role` enum('guest','receptionist','manager','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Vai trò',
   `two_factor_secret` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `two_factor_recovery_codes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `two_factor_confirmed_at` timestamp NULL DEFAULT NULL,
@@ -927,11 +1022,24 @@ INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `ph
 
 CREATE TABLE `weekend_days` (
   `id` int NOT NULL,
-  `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') COLLATE utf8mb4_general_ci NOT NULL,
+  `day_of_week` enum('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `weekend_days`
+--
+
+INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `updated_at`) VALUES
+(3, 'Monday', 0, '2025-06-14 02:38:18', '2025-06-16 09:03:15'),
+(4, 'Tuesday', 0, '2025-06-14 02:38:18', '2025-06-16 09:03:15'),
+(5, 'Wednesday', 0, '2025-06-14 02:38:18', '2025-06-16 09:03:15'),
+(6, 'Thursday', 0, '2025-06-14 02:38:18', '2025-06-16 09:03:15'),
+(7, 'Friday', 0, '2025-06-14 02:38:18', '2025-06-16 09:03:15'),
+(8, 'Saturday', 1, '2025-06-14 02:38:18', '2025-06-16 09:03:15'),
+(9, 'Sunday', 1, '2025-06-14 02:38:18', '2025-06-16 09:03:15');
 
 --
 -- Indexes for dumped tables
@@ -1043,6 +1151,22 @@ ALTER TABLE `faqs`
   ADD PRIMARY KEY (`faq_id`);
 
 --
+-- Indexes for table `flexible_pricing_rules`
+--
+ALTER TABLE `flexible_pricing_rules`
+  ADD PRIMARY KEY (`rule_id`),
+  ADD KEY `flexible_pricing_room_type_id_index` (`room_type_id`),
+  ADD KEY `flexible_pricing_event_id_index` (`event_id`),
+  ADD KEY `flexible_pricing_holiday_id_index` (`holiday_id`);
+
+--
+-- Indexes for table `guests`
+--
+ALTER TABLE `guests`
+  ADD PRIMARY KEY (`guest_id`),
+  ADD KEY `fk_guests_user` (`user_id`);
+
+--
 -- Indexes for table `holidays`
 --
 ALTER TABLE `holidays`
@@ -1150,16 +1274,6 @@ ALTER TABLE `room_option`
 ALTER TABLE `room_option_promotion`
   ADD PRIMARY KEY (`promotion_id`),
   ADD KEY `option_id` (`option_id`);
-
---
--- Indexes for table `room_pricing`
---
-ALTER TABLE `room_pricing`
-  ADD PRIMARY KEY (`pricing_id`),
-  ADD KEY `idx_room_date` (`room_id`,`start_date`,`end_date`),
-  ADD KEY `option_id` (`option_id`),
-  ADD KEY `fk_room_pricing_event` (`event_id`),
-  ADD KEY `fk_room_pricing_holiday` (`holiday_id`);
 
 --
 -- Indexes for table `room_transfers`
@@ -1276,7 +1390,7 @@ ALTER TABLE `cancellation_policies`
 -- AUTO_INCREMENT for table `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
-  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `check_out_requests`
@@ -1300,7 +1414,7 @@ ALTER TABLE `deposit_policies`
 -- AUTO_INCREMENT for table `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
-  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `events`
@@ -1319,6 +1433,18 @@ ALTER TABLE `failed_jobs`
 --
 ALTER TABLE `faqs`
   MODIFY `faq_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `flexible_pricing_rules`
+--
+ALTER TABLE `flexible_pricing_rules`
+  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `guests`
+--
+ALTER TABLE `guests`
+  MODIFY `guest_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `holidays`
@@ -1342,7 +1468,7 @@ ALTER TABLE `meal_types`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -1366,7 +1492,7 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT for table `room`
 --
 ALTER TABLE `room`
-  MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=6;
+  MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=96;
 
 --
 -- AUTO_INCREMENT for table `room_availability`
@@ -1381,12 +1507,6 @@ ALTER TABLE `room_option_promotion`
   MODIFY `promotion_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khuyến mãi';
 
 --
--- AUTO_INCREMENT for table `room_pricing`
---
-ALTER TABLE `room_pricing`
-  MODIFY `pricing_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã giá', AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT for table `room_transfers`
 --
 ALTER TABLE `room_transfers`
@@ -1396,7 +1516,7 @@ ALTER TABLE `room_transfers`
 -- AUTO_INCREMENT for table `room_types`
 --
 ALTER TABLE `room_types`
-  MODIFY `room_type_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã loại phòng', AUTO_INCREMENT=5;
+  MODIFY `room_type_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã loại phòng', AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `room_type_image`
@@ -1426,7 +1546,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `weekend_days`
 --
 ALTER TABLE `weekend_days`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Constraints for dumped tables
@@ -1468,6 +1588,20 @@ ALTER TABLE `check_out_requests`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD CONSTRAINT `dynamic_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `flexible_pricing_rules`
+--
+ALTER TABLE `flexible_pricing_rules`
+  ADD CONSTRAINT `flexible_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `flexible_pricing_rules_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `flexible_pricing_rules_ibfk_3` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `guests`
+--
+ALTER TABLE `guests`
+  ADD CONSTRAINT `fk_guests_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `hotel_rating`
@@ -1530,15 +1664,6 @@ ALTER TABLE `room_option`
 --
 ALTER TABLE `room_option_promotion`
   ADD CONSTRAINT `room_option_promotion_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `room_pricing`
---
-ALTER TABLE `room_pricing`
-  ADD CONSTRAINT `fk_room_pricing_event` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_room_pricing_holiday` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `room_pricing_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `room_pricing_ibfk_2` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `room_transfers`
