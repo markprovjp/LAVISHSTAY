@@ -40,7 +40,15 @@ class FlexiblePricingRule extends Model
     {
         return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
     }
+    public function event()
+        {
+            return $this->belongsTo(Event::class, 'event_id', 'event_id');
+        }
 
+        public function holiday()
+        {
+            return $this->belongsTo(Holiday::class, 'holiday_id', 'holiday_id');
+        }
     /**
      * Scope for weekend rules
      */
