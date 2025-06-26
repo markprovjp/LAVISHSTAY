@@ -15,7 +15,7 @@
                         </li>
                         <li>
                             <div class="flex items-center">
-                                <svg class="w-6 h-6 text-gray-400" f    ill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
                                         d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                                         clip-rule="evenodd"></path>
@@ -31,27 +31,23 @@
                                         d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                                         clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="ml-1 text-gray-500 dark:text-gray-400">Quản lý tiện ích</span>
+                                <span class="ml-1 text-gray-500 dark:text-gray-400">Quản lý dịch vụ</span>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý tiện ích - {{ $roomType->name }}</h1>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý dịch vụ - {{ $roomType->name }}</h1>
             </div>
 
             <!-- Right: Actions -->
-            
             <div class="grid cursor-pointer grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <!-- Add room type button -->
-              
-                    <button onclick="openAddAmenityModal()"
-                        class="btn items-center cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
-                        <svg class="fill-current items-center shrink-0 w-4 h-4 me-2" viewBox="0 0 12 12" width="24" height="24">
+                <button onclick="openAddServiceModal()"
+                    class="btn items-center cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
+                    <svg class="fill-current items-center shrink-0 w-4 h-4 me-2" viewBox="0 0 12 12" width="24" height="24">
                         <path d="M7 4V2a1 1 0 012 0v2h2a1 1 0 010 2H9v2a1 1 0 01-2 0V6H5a1 1 0 010-2h2z"/>
                     </svg>
-                        <span class="max-xs:sr-only">Thêm tiện ích</span>
-                    </button>
-              
+                    <span class="max-xs:sr-only">Thêm dịch vụ</span>
+                </button>
             </div>
         </div>
 
@@ -65,7 +61,7 @@
                         <!-- Search -->
                         <div class="flex-1">
                             <div class="relative">
-                                <input type="text" id="amenitySearch" placeholder="Tìm kiếm tiện ích..."
+                                <input type="text" id="serviceSearch" placeholder="Tìm kiếm dịch vụ..."
                                     class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100">
                                 <div class="absolute inset-y-3 top-0 mt-3 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,37 +78,38 @@
                                 Tất cả
                             </button>
                             @php
-                                $categories = $roomType->amenities->pluck('category')->unique()->filter();
+                                $categories = $roomType->services->pluck('unit')->unique()->filter();
                             @endphp
-                            @foreach($categories as $category)
-                                <button onclick="filterByCategory('{{ $category }}')" 
+                            @foreach($categories as $unit)
+                                <button onclick="filterByCategory('{{ $unit }}')" 
                                     class="filter-btn px-3 py-2 text-sm rounded-lg transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
-                                    {{ $category }}
+                                    {{ $unit }}
                                 </button>
                             @endforeach
                         </div>
                     </div>
                 </div>
-                <!-- Current Amenities -->
+                <!-- Current Services -->
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
                     <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
                         <div class="flex justify-between items-center">
                             <h2 class="font-semibold text-gray-800 dark:text-gray-100">
-                                Tiện ích hiện tại
-                                <span class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->amenities->count() }})</span>
+                                Dịch vụ hiện tại
+                                <span class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->services->count() }})</span>
                             </h2>
-                            
-                            @if($roomType->amenities->count() > 0)
+                            @if($roomType->services->count() > 0)
                                 <div class="flex items-center space-x-2">
                                     <label class="flex items-center">
                                         <input type="checkbox" id="selectAll" onchange="selectAll()" class="mr-2">
                                         <span class="text-sm text-gray-600 dark:text-gray-400">Chọn tất cả</span>
                                     </label>
-                                    
                                     <div id="bulkActions" class="hidden space-x-2">
-                                        <button onclick="highlightSelected()" class="btn-sm bg-yellow-500 hover:bg-yellow-600 text-white">
-                                            Đánh dấu nổi bật
+                                        <button onclick="activateSelected()" class="btn-sm bg-green-500 hover:bg-green-600 text-white">
+                                            Kích hoạt
                                         </button>
+                                        {{-- <button onclick="deactivateSelected()" class="btn-sm bg-red-500 hover:bg-red-600 text-white">
+                                            Ngưng hoạt động
+                                        </button> --}}
                                         <button onclick="removeSelected()" class="btn-sm bg-red-500 hover:bg-red-600 text-white">
                                             Xóa đã chọn
                                         </button>
@@ -123,38 +120,24 @@
                     </div>
 
                     <div class="p-6">
-                        @if ($roomType->amenities->count() > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                @foreach ($roomType->amenities as $amenity)
-                                    <div class="amenity-item relative p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200 {{ $amenity->pivot->is_highlighted ? 'ring-2 ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' : '' }}"
-                                         data-amenity-id="{{ $amenity->amenity_id }}"
-                                         data-highlighted="{{ $amenity->pivot->is_highlighted ? 'true' : 'false' }}"
-                                         data-category="{{ $amenity->category }}">
-                                        
-                                        <div class="flex justify-between items-center gap-6 ">
-                                            <!-- Selection checkbox -->
-                                            <div class="">
-                                                <input type="checkbox" 
-                                                       class="amenity-checkbox" 
-                                                       value="{{ $amenity->amenity_id }}"
-                                                       onchange="toggleAmenitySelection({{ $amenity->amenity_id }})">
-                                            </div>
-    
-                                            <!-- Highlight badge -->
-                                            @if($amenity->pivot->is_highlighted)
-                                                <div class="">
-                                                    <span class="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                                        ⭐ Nổi bật
-                                                    </span>
-                                                </div>
-                                            @endif
+                        @if ($roomType->services->count() > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                @foreach ($roomType->services as $service)
+                                    <div class="service-item relative p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200 {{ $service->is_active ? 'ring-2 ring-green-400 bg-green-50 dark:bg-green-900/20' : '' }}"
+                                        data-service-id="{{ $service->service_id }}"
+                                        data-active="{{ $service->is_active ? 'true' : 'false' }}"
+                                        data-unit="{{ $service->unit }}">
+                                        <div class="flex justify-between items-start gap-6">
+                                            <input type="checkbox" class="service-checkbox" value="{{ $service->service_id }}" onchange="toggleServiceSelection({{ $service->service_id }})">
+                                            <span class="bg-{{ $service->is_active ? 'green' : 'red' }}-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                                {{ $service->is_active ? 'Hoạt động' : 'Ngưng' }}
+                                            </span>
                                         </div>
-
-                                        <div class="flex items-start space-x-3 mt-2">
+                                        <div class="mt-2 flex items-start space-x-3">
                                             <div class="flex-shrink-0">
-                                                @if ($amenity->icon)
-                                                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                                                        <span class="text-blue-600 dark:text-blue-400 text-lg">{{ $amenity->icon }}</span>
+                                                @if ($service->unit)
+                                                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                                        {{-- <span class="text-green-600 dark:text-green-400 text-lg">{{ substr($service->unit, 0, 1) }}</span> --}}
                                                     </div>
                                                 @else
                                                     <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
@@ -164,30 +147,20 @@
                                                     </div>
                                                 @endif
                                             </div>
-
                                             <div class="flex-1 min-w-0">
-                                                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{{ $amenity->name }}</h3>
-                                                @if ($amenity->description)
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">{{ $amenity->description }}</p>
-                                                @endif
-                                                
+                                                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{{ $service->name }}</h3>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ $service->price_with_unit }}</p>
                                                 <div class="flex items-center space-x-2">
-                                                    <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $amenity->category }}</span>
+                                                    <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $service->unit }}</span>
                                                 </div>
                                             </div>
-
                                             <div class="flex-shrink-0 flex flex-col space-y-1">
-                                                <button onclick="toggleHighlight({{ $amenity->amenity_id }})"
-                                                    class="p-1 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded transition-colors"
-                                                    title="{{ $amenity->pivot->is_highlighted ? 'Bỏ nổi bật' : 'Đánh dấu nổi bật' }}">
-                                                    <svg class="w-4 h-4" fill="{{ $amenity->pivot->is_highlighted ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                                <button onclick="toggleStatus({{ $service->service_id }})" class="p-1 text-{{ $service->is_active ? 'red' : 'green' }}-600 hover:text-{{ $service->is_active ? 'red' : 'green' }}-700 hover:bg-{{ $service->is_active ? 'red' : 'green' }}-50 rounded transition-colors">
+                                                    <svg class="w-4 h-4" fill="{{ $service->is_active ? 'none' : 'currentColor' }}" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                                     </svg>
                                                 </button>
-                                                
-                                                <button onclick="removeAmenity({{ $amenity->amenity_id }})"
-                                                    class="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                                                    title="Xóa tiện ích">
+                                                <button onclick="removeService({{ $service->service_id }})" class="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                     </svg>
@@ -197,19 +170,20 @@
                                     </div>
                                 @endforeach
                             </div>
+
                         @else
                             <div class="text-center py-12">
                                 <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                 </svg>
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Chưa có tiện ích nào</h3>
-                                <p class="text-gray-500 dark:text-gray-400 mb-6">Thêm tiện ích để khách hàng có thể xem thông tin về loại phòng này</p>
-                                <button onclick="openAddAmenityModal()"
-                                    class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Chưa có dịch vụ nào</h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-6">Thêm dịch vụ để khách hàng có thể xem thông tin về loại phòng này</p>
+                                <button onclick="openAddServiceModal()"
+                                    class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Thêm tiện ích đầu tiên
+                                    Thêm dịch vụ đầu tiên
                                 </button>
                             </div>
                         @endif
@@ -226,36 +200,36 @@
                     <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-4">Thống kê</h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Tổng số tiện ích</span>
-                            <span class="text-lg font-semibold text-blue-600 dark:text-blue-400" data-stat="total">{{ $roomType->amenities->count() }}</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Tổng số dịch vụ</span>
+                            <span class="text-lg font-semibold text-green-600 dark:text-green-400" data-stat="total">{{ $roomType->services->count() }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600 dark:text-gray-400">Tiện ích nổi bật</span>
-                            <span class="text-lg font-semibold text-yellow-600 dark:text-yellow-400" data-stat="highlighted">{{ $roomType->amenities->where('pivot.is_highlighted', 1)->count() }}</span>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Dịch vụ hoạt động</span>
+                            <span class="text-lg font-semibold text-green-600 dark:text-green-400" data-stat="active">{{ $roomType->services->where('is_active', 1)->count() }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600 dark:text-gray-400">Có thể thêm</span>
-                            <span class="text-lg font-semibold text-green-600 dark:text-green-400">{{ $availableAmenities->flatten()->count() }}</span>
+                            <span class="text-lg font-semibold text-blue-600 dark:text-blue-400">{{ $availableServices->flatten()->count() }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
-                @if($roomType->amenities->count() > 0)
+                @if($roomType->services->count() > 0)
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
                     <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-4">Hành động nhanh</h3>
                     <div class="space-y-3">
-                        <button onclick="highlightAll()" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                            <svg class="w-4 h-4 inline-block mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" width="24px" height="24px">
+                        <button onclick="activateAll()" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                            <svg class="w-4 h-4 inline-block mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" width="24px" height="24px">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.922-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                             </svg>
-                            Đánh dấu nổi bật tất cả
+                            Kích hoạt tất cả
                         </button>
-                        <button onclick="removeAllHighlights()" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                            <svg class="w-4 h-4 inline-block mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24px" height="24px">>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                        <button onclick="deactivateAll()" class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                            <svg class="w-4 h-4 inline-block mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24px" height="24px">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
                             </svg>
-                            Bỏ nổi bật tất cả
+                            Ngưng hoạt động tất cả
                         </button>
                     </div>
                 </div>
@@ -266,18 +240,18 @@
 
     </div>
 
-    <!-- Add Amenity Modal -->
-    <div id="addAmenityModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <!-- Add Service Modal -->
+    <div id="addServiceModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl mt-10 w-full max-w-7xl max-h-[90vh] flex flex-col">
                 
                 <!-- Modal Header -->
                 <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Thêm tiện ích</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Chọn các tiện ích muốn thêm vào loại phòng</p>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Thêm dịch vụ</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Chọn các dịch vụ muốn thêm vào loại phòng</p>
                     </div>
-                    <button onclick="closeAddAmenityModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <button onclick="closeAddServiceModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -285,71 +259,73 @@
                 </div>
 
                 <!-- Modal Body -->
-                <div class="flex-1 overflow-y-auto p-6">
-                    @if($availableAmenities->flatten()->count() > 0)
-                        @foreach($availableAmenities as $category => $amenities)
+                <div class="flex-1 overflow-y-auto p-6 modal-body">
+                    @if($availableServices->flatten()->count() > 0)
+                        @foreach($availableServices as $unit => $services)
                             <div class="mb-8">
                                 <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                                    <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 px-3 py-1 rounded-full text-sm mr-3">{{ $category }}</span>
-                                    <span class="text-sm text-gray-500">({{ $amenities->count() }} tiện ích)</span>
+                                    <span class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 px-3 py-1 rounded-full text-sm mr-3">{{ $unit }}</span>
+                                    <span class="text-sm text-gray-500">({{ $services->filter()->count() }} dịch vụ)</span>
                                 </h4>
                                 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    @foreach($amenities as $amenity)
-                                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                                            <div class="flex items-start space-x-3">
-                                                <!-- Selection checkbox -->
-                                                <div class="flex-shrink-0 mt-1">
-                                                    <input type="checkbox" 
-                                                           class="modal-amenity-checkbox" 
-                                                           value="{{ $amenity->amenity_id }}"
-                                                           data-amenity-id="{{ $amenity->amenity_id }}"
-                                                           onchange="toggleModalSelection({{ $amenity->amenity_id }})">
-                                                </div>
+                                    @foreach($services as $service)
+                                        @if(is_object($service) && $service instanceof \App\Models\Service)
+                                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all duration-200 service-item">
+                                                <div class="flex items-start space-x-3">
+                                                    <!-- Selection checkbox -->
+                                                    <div class="flex-shrink-0 mt-1">
+                                                        <input type="checkbox"
+                                                            class="modal-service-checkbox"
+                                                            value="{{ $service->service_id }}"
+                                                            data-service-id="{{ $service->service_id }}"
+                                                            onchange="toggleModalSelection({{ $service->service_id }})">
+                                                    </div>
 
-                                                <!-- Icon -->
-                                                <div class="flex-shrink-0">
-                                                    @if ($amenity->icon)
-                                                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                                                            <span class="text-blue-600 dark:text-blue-400 text-lg">{{ $amenity->icon }}</span>
-                                                        </div>
-                                                    @else
-                                                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd"></path>
+                                                    <!-- Icon -->
+                                                    <div class="flex-shrink-0">
+                                                        @if ($service->unit)
+                                                            <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                                                <span class="text-green-600 dark:text-green-400 text-lg">{{ substr($service->unit, 0, 1) }}</span>
+                                                            </div>
+                                                        @else
+                                                            <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                                                                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd"></path>
+                                                                </svg>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <!-- Content -->
+                                                    <div class="flex-1 min-w-0">
+                                                        <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{{ $service->name }}</h5>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ $service->price_with_unit }}</p>
+                                                        <label class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                            <input type="checkbox" 
+                                                                class="active-checkbox mr-2" 
+                                                                data-service-id="{{ $service->service_id }}">
+                                                            <span>Kích hoạt</span>
+                                                        </label>
+                                                    </div>
+
+                                                    <!-- Quick add button -->
+                                                    <div class="flex-shrink-0">
+                                                        <button onclick="quickAddService({{ $service->service_id }})"
+                                                                class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                                                                title="Thêm nhanh">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                                             </svg>
-                                                        </div>
-                                                    @endif
-                                                </div>
-
-                                                <!-- Content -->
-                                                <div class="flex-1 min-w-0">
-                                                    <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{{ $amenity->name }}</h5>
-                                                    @if ($amenity->description)
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ $amenity->description }}</p>
-                                                    @endif
-                                                    
-                                                    <!-- Highlight option -->
-                                                    <label class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                        <input type="checkbox" 
-                                                               class="highlight-checkbox mr-2" 
-                                                               data-amenity-id="{{ $amenity->amenity_id }}">
-                                                        <span>Đánh dấu nổi bật</span>
-                                                    </label>
-                                                </div>
-
-                                                <!-- Quick add button -->
-                                                <div class="flex-shrink-0">
-                                                    <button onclick="quickAddAmenity({{ $amenity->amenity_id }})"
-                                                        class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                                                        title="Thêm nhanh">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                                        </svg>
-                                                    </button>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        @else
+                                            @php
+                                                \Log::warning('Invalid service data found in availableServices: ', ['service' => $service, 'unit' => $unit]);
+                                            @endphp
+                                        @endif
                                     @endforeach
                                 </div>
                             </div>
@@ -359,14 +335,14 @@
                             <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Không có tiện ích nào để thêm</h3>
-                            <p class="text-gray-500 dark:text-gray-400">Tất cả tiện ích có sẵn đã được thêm vào loại phòng này.</p>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Không có dịch vụ nào để thêm</h3>
+                            <p class="text-gray-500 dark:text-gray-400">Tất cả dịch vụ có sẵn đã được thêm vào loại phòng này.</p>
                         </div>
                     @endif
                 </div>
 
                 <!-- Modal Footer -->
-                @if($availableAmenities->flatten()->count() > 0)
+                @if($availableServices->flatten()->count() > 0)
                 <div class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <div class="flex items-center space-x-4">
                         <label class="flex items-center">
@@ -377,12 +353,12 @@
                     </div>
                     
                     <div class="flex space-x-3">
-                        <button onclick="closeAddAmenityModal()" 
+                        <button onclick="closeAddServiceModal()" 
                             class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors">
                             Hủy
                         </button>
-                        <button onclick="addSelectedAmenities()" 
-                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        <button onclick="addSelectedServices()" 
+                            class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                             Thêm đã chọn
                         </button>
                     </div>
@@ -395,7 +371,7 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
             <span class="text-gray-700 dark:text-gray-300">Đang xử lý...</span>
         </div>
     </div>
@@ -404,52 +380,52 @@
     <script>
         // Global variables
         const roomTypeId = {{ $roomType->room_type_id }};
-        let selectedAmenities = new Set();
-        let modalSelectedAmenities = new Set();
+        let selectedServices = new Set();
+        let modalSelectedServices = new Set();
 
         // CSRF Token
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         // Modal functions
-        function openAddAmenityModal() {
-            document.getElementById('addAmenityModal').classList.remove('hidden');
+        function openAddServiceModal() {
+            document.getElementById('addServiceModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            modalSelectedAmenities.clear();
+            modalSelectedServices.clear();
             updateModalSelectionUI();
         }
 
-        function closeAddAmenityModal() {
-            document.getElementById('addAmenityModal').classList.add('hidden');
+        function closeAddServiceModal() {
+            document.getElementById('addServiceModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
             
             // Reset modal state
-            modalSelectedAmenities.clear();
-            document.querySelectorAll('.modal-amenity-checkbox').forEach(cb => cb.checked = false);
-            document.querySelectorAll('.highlight-checkbox').forEach(cb => cb.checked = false);
+            modalSelectedServices.clear();
+            document.querySelectorAll('.modal-service-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.active-checkbox').forEach(cb => cb.checked = false);
             document.getElementById('selectAllModal').checked = false;
             updateModalSelectionUI();
         }
 
         // Modal selection functions
-        function toggleModalSelection(amenityId) {
-            if (modalSelectedAmenities.has(amenityId)) {
-                modalSelectedAmenities.delete(amenityId);
+        function toggleModalSelection(serviceId) {
+            if (modalSelectedServices.has(serviceId)) {
+                modalSelectedServices.delete(serviceId);
             } else {
-                modalSelectedAmenities.add(amenityId);
+                modalSelectedServices.add(serviceId);
             }
             updateModalSelectionUI();
         }
 
         function selectAllInModal() {
             const selectAllCheckbox = document.getElementById('selectAllModal');
-            const checkboxes = document.querySelectorAll('.modal-amenity-checkbox');
+            const checkboxes = document.querySelectorAll('.modal-service-checkbox');
             
-            modalSelectedAmenities.clear();
+            modalSelectedServices.clear();
             
             checkboxes.forEach(checkbox => {
                 checkbox.checked = selectAllCheckbox.checked;
                 if (selectAllCheckbox.checked) {
-                    modalSelectedAmenities.add(parseInt(checkbox.value));
+                    modalSelectedServices.add(parseInt(checkbox.value));
                 }
             });
             
@@ -459,38 +435,37 @@
         function updateModalSelectionUI() {
             const counter = document.getElementById('modalSelectionCounter');
             if (counter) {
-                counter.textContent = `${modalSelectedAmenities.size} đã chọn`;
+                counter.textContent = `${modalSelectedServices.size} đã chọn`;
             }
         }
 
-        // Add amenities functions
-        async function addSelectedAmenities() {
-            if (modalSelectedAmenities.size === 0) {
-                showNotification('Vui lòng chọn ít nhất một tiện ích.', 'warning');
+        
+        async function addSelectedServices() {
+            if (modalSelectedServices.size === 0) {
+                showNotification('Vui lòng chọn ít nhất một dịch vụ.', 'warning');
                 return;
             }
 
             showLoading();
             
             try {
-                // Get highlighted amenities
-                const highlightedIds = [];
-                modalSelectedAmenities.forEach(amenityId => {
-                    const highlightCheckbox = document.querySelector(`.highlight-checkbox[data-amenity-id="${amenityId}"]`);
-                    if (highlightCheckbox && highlightCheckbox.checked) {
-                        highlightedIds.push(amenityId);
+                const activeIds = [];
+                modalSelectedServices.forEach(serviceId => {
+                    const activeCheckbox = document.querySelector(`.active-checkbox[data-service-id="${serviceId}"]`);
+                    if (activeCheckbox && activeCheckbox.checked) {
+                        activeIds.push(serviceId);
                     }
                 });
 
-                const response = await fetch(`/admin/room-types/${roomTypeId}/amenities`, {
+                const response = await fetch(`/admin/room-types/${roomTypeId}/services`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                     },
                     body: JSON.stringify({
-                        amenity_ids: Array.from(modalSelectedAmenities),
-                        highlighted_ids: highlightedIds
+                        service_ids: Array.from(modalSelectedServices),
+                        active_ids: activeIds
                     })
                 });
 
@@ -498,32 +473,32 @@
                 
                 if (data.success) {
                     showNotification(data.message, 'success');
-                    closeAddAmenityModal();
-                    setTimeout(() => location.reload(), 1000);
+                    closeAddServiceModal();
+                    setTimeout(() => location.reload(), 1000); // Reload để cập nhật giao diện
                 } else {
                     showNotification(data.message, 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi thêm tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi thêm dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        async function quickAddAmenity(amenityId) {
+        async function quickAddService(serviceId) {
             showLoading();
             
             try {
-                const response = await fetch(`/admin/room-types/${roomTypeId}/amenities`, {
+                const response = await fetch(`/admin/room-types/${roomTypeId}/services`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                     },
                     body: JSON.stringify({
-                        amenity_ids: [amenityId],
-                        highlighted_ids: []
+                        service_ids: [serviceId],
+                        active_ids: [serviceId] // Mặc định kích hoạt khi thêm nhanh
                     })
                 });
 
@@ -537,32 +512,32 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi thêm tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi thêm dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        // Current amenities management
-        function toggleAmenitySelection(amenityId) {
-            if (selectedAmenities.has(amenityId)) {
-                selectedAmenities.delete(amenityId);
+        // Current services management
+        function toggleServiceSelection(serviceId) {
+            if (selectedServices.has(serviceId)) {
+                selectedServices.delete(serviceId);
             } else {
-                selectedAmenities.add(amenityId);
+                selectedServices.add(serviceId);
             }
             updateBulkActionsUI();
         }
 
         function selectAll() {
             const selectAllCheckbox = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.amenity-checkbox');
+            const checkboxes = document.querySelectorAll('.service-checkbox');
             
-            selectedAmenities.clear();
+            selectedServices.clear();
             
             checkboxes.forEach(checkbox => {
                 checkbox.checked = selectAllCheckbox.checked;
                 if (selectAllCheckbox.checked) {
-                    selectedAmenities.add(parseInt(checkbox.value));
+                    selectedServices.add(parseInt(checkbox.value));
                 }
             });
             
@@ -572,7 +547,7 @@
         function updateBulkActionsUI() {
             const bulkActions = document.getElementById('bulkActions');
             if (bulkActions) {
-                if (selectedAmenities.size > 0) {
+                if (selectedServices.size > 0) {
                     bulkActions.classList.remove('hidden');
                 } else {
                     bulkActions.classList.add('hidden');
@@ -580,12 +555,12 @@
             }
         }
 
-        // Individual amenity actions
-        async function toggleHighlight(amenityId) {
+        // Individual service actions
+        async function toggleStatus(serviceId) {
             showLoading();
             
             try {
-                const response = await fetch(`/admin/room-types/${roomTypeId}/amenities/${amenityId}/highlight`, {
+                const response = await fetch(`/admin/room-types/${roomTypeId}/services/${serviceId}/toggle-status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -603,21 +578,21 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi cập nhật trạng thái nổi bật.', 'error');
+                showNotification('Có lỗi xảy ra khi cập nhật trạng thái.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        async function removeAmenity(amenityId) {
-            if (!confirm('Bạn có chắc chắn muốn xóa tiện ích này?')) {
+        async function removeService(serviceId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa dịch vụ này?')) {
                 return;
             }
 
             showLoading();
             
             try {
-                const response = await fetch(`/admin/room-types/${roomTypeId}/amenities/${amenityId}`, {
+                const response = await fetch(`/admin/room-types/${roomTypeId}/services/${serviceId}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
@@ -634,30 +609,30 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi xóa tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi xóa dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
         // Bulk actions
-        async function highlightSelected() {
-            if (selectedAmenities.size === 0) {
-                showNotification('Vui lòng chọn ít nhất một tiện ích.', 'warning');
+        async function activateSelected() {
+            if (selectedServices.size === 0) {
+                showNotification('Vui lòng chọn ít nhất một dịch vụ.', 'warning');
                 return;
             }
 
             showLoading();
             
             try {
-                const promises = Array.from(selectedAmenities).map(amenityId => 
-                    fetch(`/admin/room-types/${roomTypeId}/amenities/${amenityId}/highlight`, {
+                const promises = Array.from(selectedServices).map(serviceId => 
+                    fetch(`/admin/room-types/${roomTypeId}/services/${serviceId}/toggle-status`, {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': csrfToken,
                         },
-                        body: JSON.stringify({ is_highlighted: true })
+                        body: JSON.stringify({ is_active: true })
                     })
                 );
 
@@ -667,34 +642,77 @@
                 const successCount = results.filter(r => r.success).length;
                 
                 if (successCount > 0) {
-                    showNotification(`Đã đánh dấu nổi bật ${successCount} tiện ích!`, 'success');
+                    showNotification(`Đã kích hoạt ${successCount} dịch vụ!`, 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showNotification('Không có tiện ích nào được cập nhật.', 'warning');
+                    showNotification('Không có dịch vụ nào được kích hoạt.', 'warning');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi đánh dấu tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi kích hoạt dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        async function removeSelected() {
-            if (selectedAmenities.size === 0) {
-                showNotification('Vui lòng chọn ít nhất một tiện ích.', 'warning');
+        async function deactivateSelected() {
+            if (selectedServices.size === 0) {
+                showNotification('Vui lòng chọn ít nhất một dịch vụ.', 'warning');
                 return;
             }
 
-            if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedAmenities.size} tiện ích đã chọn?`)) {
+            if (!confirm(`Bạn có chắc chắn muốn ngưng hoạt động ${selectedServices.size} dịch vụ đã chọn?`)) {
                 return;
             }
 
             showLoading();
             
             try {
-                const promises = Array.from(selectedAmenities).map(amenityId => 
-                    fetch(`/admin/room-types/${roomTypeId}/amenities/${amenityId}`, {
+                const promises = Array.from(selectedServices).map(serviceId => 
+                    fetch(`/admin/room-types/${roomTypeId}/services/${serviceId}/toggle-status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({ is_active: false })
+                    })
+                );
+
+                const responses = await Promise.all(promises);
+                const results = await Promise.all(responses.map(r => r.json()));
+                
+                const successCount = results.filter(r => r.success).length;
+                
+                if (successCount > 0) {
+                    showNotification(`Đã ngưng hoạt động ${successCount} dịch vụ!`, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('Không có dịch vụ nào được ngưng hoạt động.', 'warning');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Có lỗi xảy ra khi ngưng hoạt động dịch vụ.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function removeSelected() {
+            if (selectedServices.size === 0) {
+                showNotification('Vui lòng chọn ít nhất một dịch vụ.', 'warning');
+                return;
+            }
+
+            if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedServices.size} dịch vụ đã chọn?`)) {
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const promises = Array.from(selectedServices).map(serviceId => 
+                    fetch(`/admin/room-types/${roomTypeId}/services/${serviceId}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
@@ -708,35 +726,35 @@
                 const successCount = results.filter(r => r.success).length;
                 
                 if (successCount > 0) {
-                    showNotification(`Đã xóa ${successCount} tiện ích!`, 'success');
+                    showNotification(`Đã xóa ${successCount} dịch vụ!`, 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    showNotification('Không có tiện ích nào được xóa.', 'warning');
+                    showNotification('Không có dịch vụ nào được xóa.', 'warning');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi xóa tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi xóa dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
         // Quick actions
-        async function highlightAll() {
-            if (!confirm('Bạn có chắc chắn muốn đánh dấu nổi bật tất cả tiện ích?')) {
+        async function activateAll() {
+            if (!confirm('Bạn có chắc chắn muốn kích hoạt tất cả dịch vụ?')) {
                 return;
             }
 
             showLoading();
             
             try {
-                const response = await fetch(`/admin/room-types/${roomTypeId}/amenities/highlight-all`, {
+                const response = await fetch(`/admin/room-types/${roomTypeId}/services/toggle-all-status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                     },
-                    body: JSON.stringify({ is_highlighted: true })
+                    body: JSON.stringify({ status: true })
                 });
 
                 const data = await response.json();
@@ -749,27 +767,27 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi đánh dấu tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi kích hoạt dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        async function removeAllHighlights() {
-            if (!confirm('Bạn có chắc chắn muốn bỏ đánh dấu nổi bật tất cả tiện ích?')) {
+        async function deactivateAll() {
+            if (!confirm('Bạn có chắc chắn muốn ngưng hoạt động tất cả dịch vụ?')) {
                 return;
             }
 
             showLoading();
             
             try {
-                const response = await fetch(`/admin/room-types/${roomTypeId}/amenities/highlight-all`, {
+                const response = await fetch(`/admin/room-types/${roomTypeId}/services/toggle-all-status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
                     },
-                    body: JSON.stringify({ is_highlighted: false })
+                    body: JSON.stringify({ status: false })
                 });
 
                 const data = await response.json();
@@ -782,7 +800,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showNotification('Có lỗi xảy ra khi bỏ đánh dấu tiện ích.', 'error');
+                showNotification('Có lỗi xảy ra khi ngưng hoạt động dịch vụ.', 'error');
             } finally {
                 hideLoading();
             }
@@ -798,17 +816,14 @@
         }
 
         function showNotification(message, type = 'info') {
-            // Remove existing notifications
             document.querySelectorAll('.notification').forEach(n => n.remove());
             
-            // Create notification element
             const notification = document.createElement('div');
             notification.className = `notification fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full max-w-sm`;
             
-            // Set colors based on type
             switch (type) {
                 case 'success':
-                                        notification.className += ' bg-green-500 text-white';
+                    notification.className += ' bg-green-500 text-white';
                     break;
                 case 'error':
                     notification.className += ' bg-red-500 text-white';
@@ -833,12 +848,10 @@
             
             document.body.appendChild(notification);
             
-            // Animate in
             setTimeout(() => {
                 notification.classList.remove('translate-x-full');
             }, 100);
             
-            // Auto remove after 5 seconds
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
                 setTimeout(() => notification.remove(), 300);
@@ -847,41 +860,38 @@
 
         // Event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            // Close modal when clicking outside
-            document.getElementById('addAmenityModal').addEventListener('click', function(e) {
+            document.getElementById('addServiceModal').addEventListener('click', function(e) {
                 if (e.target === this) {
-                    closeAddAmenityModal();
+                    closeAddServiceModal();
                 }
             });
 
-            // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    const modal = document.getElementById('addAmenityModal');
+                    const modal = document.getElementById('addServiceModal');
                     if (!modal.classList.contains('hidden')) {
-                        closeAddAmenityModal();
+                        closeAddServiceModal();
                     }
                 }
             });
 
-            // Initialize UI state
             updateBulkActionsUI();
             updateModalSelectionUI();
         });
 
-        // Search functionality (optional enhancement)
-        function filterAmenities(searchTerm) {
-            const amenityItems = document.querySelectorAll('.amenity-item');
-            const modalItems = document.querySelectorAll('.modal-amenity-item');
+        // Search functionality
+        function filterServices(searchTerm) {
+            const serviceItems = document.querySelectorAll('.service-item');
+            const modalItems = document.querySelectorAll('.modal-service-item');
             
             const filter = searchTerm.toLowerCase();
             
-            [...amenityItems, ...modalItems].forEach(item => {
+            [...serviceItems, ...modalItems].forEach(item => {
                 const name = item.querySelector('h3, h5')?.textContent.toLowerCase() || '';
-                const description = item.querySelector('p')?.textContent.toLowerCase() || '';
-                const category = item.dataset.category?.toLowerCase() || '';
+                const price = item.querySelector('p')?.textContent.toLowerCase() || '';
+                const unit = item.dataset.unit?.toLowerCase() || '';
                 
-                if (name.includes(filter) || description.includes(filter) || category.includes(filter)) {
+                if (name.includes(filter) || price.includes(filter) || unit.includes(filter)) {
                     item.style.display = '';
                 } else {
                     item.style.display = 'none';
@@ -889,56 +899,36 @@
             });
         }
 
+        const debouncedFilter = debounce(filterServices, 300);
+
+        const searchInput = document.getElementById('serviceSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                debouncedFilter(e.target.value);
+            });
+        }
+
         // Statistics update
         function updateStatistics() {
             const totalElement = document.querySelector('[data-stat="total"]');
-            const highlightedElement = document.querySelector('[data-stat="highlighted"]');
+            const activeElement = document.querySelector('[data-stat="active"]');
             
             if (totalElement) {
-                const totalCount = document.querySelectorAll('.amenity-item').length;
+                const totalCount = document.querySelectorAll('.service-item').length;
                 totalElement.textContent = totalCount;
             }
             
-            if (highlightedElement) {
-                const highlightedCount = document.querySelectorAll('.amenity-item[data-highlighted="true"]').length;
-                highlightedElement.textContent = highlightedCount;
+            if (activeElement) {
+                const activeCount = document.querySelectorAll('.service-item[data-active="true"]').length;
+                activeElement.textContent = activeCount;
             }
         }
 
-        // Auto-save functionality (optional)
-        let autoSaveTimeout;
-        function scheduleAutoSave() {
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(() => {
-                // Auto-save logic here if needed
-                console.log('Auto-save triggered');
-            }, 2000);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+        });
 
-        // Export/Import functionality (future enhancement)
-        function exportAmenities() {
-            const amenities = Array.from(document.querySelectorAll('.amenity-item')).map(item => ({
-                id: item.dataset.amenityId,
-                highlighted: item.dataset.highlighted === 'true',
-                category: item.dataset.category
-            }));
-            
-            const dataStr = JSON.stringify(amenities, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `room-type-${roomTypeId}-amenities.json`;
-            link.click();
-        }
-
-        // Drag and drop reordering (future enhancement)
-        function initializeDragAndDrop() {
-            // Implementation for drag and drop reordering
-            console.log('Drag and drop initialized');
-        }
-
-        // Performance optimization
+        // Debounce function
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -950,88 +940,10 @@
                 timeout = setTimeout(later, wait);
             };
         }
-
-        // Optimized search with debouncing
-        const debouncedFilter = debounce(filterAmenities, 300);
-
-        // Add search input event listener if search box exists
-        const searchInput = document.getElementById('amenitySearch');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                debouncedFilter(e.target.value);
-            });
-        }
-
-        // Accessibility improvements
-        function initializeAccessibility() {
-            // Add ARIA labels and keyboard navigation
-            document.querySelectorAll('button').forEach(button => {
-                if (!button.getAttribute('aria-label') && button.title) {
-                    button.setAttribute('aria-label', button.title);
-                }
-            });
-
-            // Add keyboard navigation for modal
-            document.addEventListener('keydown', function(e) {
-                const modal = document.getElementById('addAmenityModal');
-                if (!modal.classList.contains('hidden')) {
-                    if (e.key === 'Tab') {
-                        // Handle tab navigation within modal
-                        const focusableElements = modal.querySelectorAll(
-                            'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                        );
-                        const firstElement = focusableElements[0];
-                        const lastElement = focusableElements[focusableElements.length - 1];
-
-                        if (e.shiftKey && document.activeElement === firstElement) {
-                            e.preventDefault();
-                            lastElement.focus();
-                        } else if (!e.shiftKey && document.activeElement === lastElement) {
-                            e.preventDefault();
-                            firstElement.focus();
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initialize everything when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeAccessibility();
-            updateStatistics();
-            
-            // Add smooth scrolling for better UX
-            document.documentElement.style.scrollBehavior = 'smooth';
-            
-            // Initialize tooltips if needed
-            const tooltipElements = document.querySelectorAll('[title]');
-            tooltipElements.forEach(element => {
-                element.addEventListener('mouseenter', function() {
-                    // Custom tooltip implementation if needed
-                });
-            });
-        });
-
-        // Error handling for network issues
-        window.addEventListener('online', function() {
-            showNotification('Kết nối internet đã được khôi phục.', 'success');
-        });
-
-        window.addEventListener('offline', function() {
-            showNotification('Mất kết nối internet. Vui lòng kiểm tra kết nối của bạn.', 'warning');
-        });
-
-        // Cleanup function
-        window.addEventListener('beforeunload', function() {
-            // Cleanup any pending operations
-            clearTimeout(autoSaveTimeout);
-        });
-
     </script>
 
-    <!-- Additional CSS for better styling -->
+    <!-- Additional CSS -->
     <style>
-        /* Custom scrollbar for modal */
         .modal-body::-webkit-scrollbar {
             width: 6px;
         }
@@ -1050,7 +962,6 @@
             background: #a8a8a8;
         }
 
-        /* Dark mode scrollbar */
         .dark .modal-body::-webkit-scrollbar-track {
             background: #374151;
         }
@@ -1063,16 +974,27 @@
             background: #9ca3af;
         }
 
-        /* Smooth transitions */
-        .amenity-item {
-            transition: all 0.2s ease-in-out;
+        .service-item {
+            min-height: 150px; /* Đảm bảo chiều cao tối thiểu */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        .amenity-item:hover {
+        .grid {
+            grid-gap: 1.5rem; /* Tăng khoảng cách giữa các cột */
+        }
+
+        @media (max-width: 768px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: 1fr; /* Đảm bảo chỉ 1 cột trên màn hình nhỏ */
+            }
+        }
+
+        .service-item:hover {
             transform: translateY(-1px);
         }
 
-        /* Loading animation */
         @keyframes pulse {
             0%, 100% {
                 opacity: 1;
@@ -1086,7 +1008,6 @@
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        /* Notification animations */
         .notification {
             animation: slideIn 0.3s ease-out;
         }
@@ -1102,22 +1023,19 @@
             }
         }
 
-        /* Focus styles for accessibility */
         button:focus,
         input:focus,
         select:focus {
-            outline: 2px solid #3b82f6;
+            outline: 2px solid #10b981;
             outline-offset: 2px;
         }
 
-        /* Custom checkbox styles */
         input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            accent-color: #3b82f6;
+            accent-color: #10b981;
         }
 
-        /* Responsive improvements */
         @media (max-width: 768px) {
             .grid-cols-1.md\\:grid-cols-2 {
                 grid-template-columns: 1fr;
@@ -1129,19 +1047,15 @@
             }
         }
 
-        /* Print styles */
         @media print {
             .btn, button {
                 display: none;
             }
             
-            .amenity-item {
+            .service-item {
                 break-inside: avoid;
                 page-break-inside: avoid;
             }
         }
     </style>
-
 </x-app-layout>
-
-
