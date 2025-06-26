@@ -108,4 +108,8 @@ class Room extends Model
             'option_id' // Local key on room_option table
         );
     }
+
+    public function bookings(){
+        return $this->hasMany(Booking::class, 'room_id', 'room_id');
+    }
 }

@@ -121,17 +121,17 @@ export const buttonStyle = css`
   }
 `;
 
-export const inputStyle = css`
-  background-color: ${(props) => (props.theme.isDark ? darkColors.colorBgContainer : lightColors.colorBgContainer)};
-  border: 1px solid ${(props) => (props.theme.isDark ? darkColors.colorBorder : lightColors.colorBorder)};
-  color: ${(props) => (props.theme.isDark ? darkColors.colorTextBase : lightColors.colorTextBase)};
-  border-radius: 8px;
-  padding: 10px 16px;
-  transition: all ${transitions.fast};
+// export const inputStyle = css`
+//   background-color: ${(props) => (props.theme.isDark ? darkColors.colorBgContainer : lightColors.colorBgContainer)};
+//   border: 1px solid ${(props) => (props.theme.isDark ? darkColors.colorBorder : lightColors.colorBorder)};
+//   color: ${(props) => (props.theme.isDark ? darkColors.colorTextBase : lightColors.colorTextBase)};
+//   border-radius: 8px;
+//   padding: 10px 16px;
+//   transition: all ${transitions.fast};
   
-  &:focus {
-    border-color: ${(props) => (props.theme.isDark ? darkColors.colorPrimary : lightColors.colorPrimary)};
-    box-shadow: 0 0 0 2px ${(props) => (props.theme.isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(21, 44, 91, 0.2)')};
-    outline: none;
-  }
-`;
+//   &:focus {
+//     border-color: ${(props) => (props.theme.isDark ? darkColors.colorPrimary : lightColors.colorPrimary)};
+//     box-shadow: 0 0 0 2px ${(props) => (props.theme.isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(21, 44, 91, 0.2)')};
+//     outline: none;
+//   }
+// `;

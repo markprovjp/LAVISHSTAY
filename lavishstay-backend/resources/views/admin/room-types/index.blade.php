@@ -25,7 +25,7 @@
                 <!-- Add room type button -->
                 <a href="{{ route('admin.room-types.create') }}">
                     <button
-                        class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
+                        class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
@@ -49,14 +49,30 @@
 
         <div class="py-12">
             <div class="">
+                @if (session('success'))
+                    <div id="notification"
+                        class="transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md">
+                        <div class="flex items-center justify-center w-8 h-8 text-green-500">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3 mr-8">
+                            <h3 class="font-semibold text-green-700">Thành công!</h3>
+                            <div class="text-sm text-green-600">{{ session('success') }}</div>
+                        </div>
+                        <button onclick="closeNotification()"
+                            class="absolute right-2 top-2 text-green-600 hover:text-green-800">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                @endif
                 <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900 dark:text-gray-100">
-                        @if (session('success'))
-                            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                                {{ session('success') }}
-                            </div>
-                        @endif
-
                         <div class="">
                             <table class="w-full table-auto">
                                 <thead>
@@ -160,15 +176,16 @@
                                                                 onclick="deleteRoomType({{ $roomType->room_type_id }}); closeDropdown({{ $roomType->room_type_id }})"
                                                                 class="flex mt-2 items-center w-full px-4 py-2 cursor-pointer text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
                                                                 role="menuitem">
-                                                                <svg style="width: 20px; align-items: center" class="mr-3"
-                                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <svg style="width: 20px; align-items: center"
+                                                                    class="mr-3" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                                         stroke-width="2"
                                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                                     </path>
                                                                 </svg>
                                                                 Delete Room Type
-                                                            </button>   
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -200,7 +217,8 @@
                                                                 @if ($roomType->total_room)
                                                                     <div>
                                                                         <span
-                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Room:</span>
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Total
+                                                                            Room:</span>
                                                                         <p
                                                                             class="text-sm text-green-600 dark:text-green-400">
                                                                             {{ $roomType->total_room }}
@@ -244,7 +262,24 @@
             </div>
         </div>
     </div>
+    <script>
+        // Animation khi hiển thị
+        document.getElementById('notification').classList.add('translate-y-0', 'opacity-100');
+        document.getElementById('notification').classList.remove('-translate-y-full', 'opacity-0');
 
+        // Tự động ẩn sau 5 giây
+        setTimeout(() => {
+            closeNotification();
+        }, 5000);
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }
+    </script>
     <script>
         // Toggle Room Type details
         function toggleDetails(roomTypeId) {
@@ -333,24 +368,24 @@
                 document.body.appendChild(form);
 
                 fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'X-CSRF-Token': csrfToken.value
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        showNotification(data.error || 'Lỗi khi xóa loại phòng', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Delete failed:', error);
-                    showNotification('Lỗi khi xóa loại phòng', 'error');
-                });
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'X-CSRF-Token': csrfToken.value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            showNotification(data.error || 'Lỗi khi xóa loại phòng', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete failed:', error);
+                        showNotification('Lỗi khi xóa loại phòng', 'error');
+                    });
             }
         }
 
@@ -360,11 +395,12 @@
             existingNotifications.forEach(notification => notification.remove());
 
             const notification = document.createElement('div');
-            notification.className = `notification fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-            
+            notification.className =
+                `notification fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+
             const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
             notification.className += ` ${bgColor} text-white`;
-            
+
             notification.innerHTML = `
                 <div class="flex items-center">
                     <span class="mr-2">
@@ -378,13 +414,13 @@
                     </button>
                 </div>
             `;
-            
+
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
                 notification.classList.remove('translate-x-full');
             }, 100);
-            
+
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
                 setTimeout(() => {

@@ -28,7 +28,7 @@ const DashboardLayout: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login");
+    navigate("/");
   };
 
   const userMenuItems = [

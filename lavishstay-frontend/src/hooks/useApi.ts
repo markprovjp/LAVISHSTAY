@@ -1,65 +1,86 @@
 // src/hooks/useApi.ts
 import { useQuery, useMutation, QueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { propertiesAPI, authAPI, bookingsAPI } from '../utils/api';
+import { propertiesAPI, authAPI, bookingsAPI, roomsAPI } from '../utils/api';
+import axios from 'axios';
 
 // Create a client to use for invalidation
 const queryClient = new QueryClient();
 
-// Properties related hooks
-export const useGetFeaturedProperties = () => {
-  return useQuery({
-    queryKey: ['featuredProperties'],
-    queryFn: propertiesAPI.getFeatured,
-  });
-};
 
-export const useGetPropertyById = (id: number) => {
+// Rooms related hooks
+export const useGetAllRooms = () => {
   return useQuery({
-    queryKey: ['property', id],
-    queryFn: () => propertiesAPI.getById(id),
-    enabled: !!id,
-  });
-};
-
-export const useSearchProperties = (searchParams: any) => {
-  return useQuery({
-    queryKey: ['properties', searchParams],
-    queryFn: () => propertiesAPI.search(searchParams),
-    enabled: !!searchParams.destination || !!searchParams.checkIn,
-  });
-};
-
-// Booking related hooks
-export const useCreateBooking = () => {
-  return useMutation({
-    mutationFn: bookingsAPI.create,
-    onSuccess: () => {
-      message.success('Đặt phòng thành công!');
-      queryClient.invalidateQueries({ queryKey: ['userBookings'] });
-    },
-    onError: (error: any) => {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra khi đặt phòng');
+    queryKey: ['rooms'],
+    queryFn: async () => {
+      const response = await axios.get('/api/rooms');
+      return response.data;
     },
   });
 };
 
-export const useGetUserBookings = () => {
+export const useGetRoomsByType = (roomType: string) => {
   return useQuery({
-    queryKey: ['userBookings'],
-    queryFn: bookingsAPI.getByUser,
+    queryKey: ['rooms', roomType],
+    queryFn: async () => {
+      const response = await axios.get(`/api/rooms-type/${roomType}`);
+      return response.data;
+    },
+    enabled: !!roomType,
   });
 };
 
-export const useCancelBooking = () => {
-  return useMutation({
-    mutationFn: bookingsAPI.cancel,
-    onSuccess: () => {
-      message.success('Hủy đặt phòng thành công!');
-      queryClient.invalidateQueries({ queryKey: ['userBookings'] });
+// Room details hooks
+export const useGetRoomById = (roomId: string | number) => {
+  return useQuery({
+    queryKey: ['room', roomId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/rooms/${roomId}`);
+      return response.data;
     },
-    onError: (error: any) => {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra khi hủy đặt phòng');
+    enabled: !!roomId,
+  });
+};
+
+export const useGetRoomOptions = (roomId: string | number) => {
+  return useQuery({
+    queryKey: ['roomOptions', roomId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/rooms/${roomId}/options`);
+      return response.data;
+    },
+    enabled: !!roomId,
+  });
+};
+
+export const useGetRoomReviews = (roomId: string | number) => {
+  return useQuery({
+    queryKey: ['roomReviews', roomId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/rooms/${roomId}/reviews`);
+      return response.data;
+    },
+    enabled: !!roomId,
+  });
+};
+
+export const useGetSimilarRooms = (roomId: string | number) => {
+  return useQuery({
+    queryKey: ['similarRooms', roomId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/rooms/${roomId}/similar`);
+      return response.data;
+    },
+    enabled: !!roomId,
+  });
+};
+
+export const useGetServicePackages = () => {
+  return useQuery({
+    queryKey: ['servicePackages'],
+    queryFn: async () => {
+      const response = await axios.get('/api/service-packages');
+      return response.data;
     },
   });
 };
@@ -115,3 +136,4 @@ export const useGetUserProfile = () => {
     enabled: !!localStorage.getItem('accessToken'),
   });
 };
+

@@ -15,16 +15,50 @@ class RoomController extends Controller
 {
     public function index()
     {
+        // Lấy tổng số phòng (đếm bản ghi trong bảng rooms)
+        $totalRooms = Room::count();
+        
+        // Lấy tổng số loại phòng
+        $totalRoomTypes = RoomType::count();
+        
+        // Lấy số phòng đã được đặt (có booking active) - sửa lỗi ambiguous column
+        $bookedRooms = Room::whereHas('bookings', function($query) {
+            $query->where('booking.status', 'confirmed')
+                ->where('booking.check_in_date', '<=', now())
+                ->where('booking.check_out_date', '>=', now());
+        })->count();
+        
+        // Lấy số phòng trống
+        $availableRooms = $totalRooms - $bookedRooms;
 
-        //Lấy tất cả các loại phòng và tổng các phòng trong mỗi loại
-        $allrooms = RoomType::withCount('rooms')
-            ->with(['rooms' => function ($query) {
+        // Lấy tất cả các loại phòng với thông tin chi tiết - sửa lỗi ambiguous column
+        $allrooms = RoomType::with([
+            'rooms' => function ($query) {
                 $query->orderBy('room_type_id', 'asc');
-            }])
-            ->paginate(7);
-            // dd($allrooms);
-        return view('admin.rooms.index', compact('allrooms'));
+            },
+            'images' => function ($query) {
+                $query->where('room_type_image.is_main', true);
+            }
+        ])
+        ->withCount([
+            'rooms',
+            'bookings as active_bookings_count' => function ($query) {
+                $query->where('booking.status', 'confirmed')
+                    ->where('booking.check_in_date', '<=', now())
+                    ->where('booking.check_out_date', '>=', now());
+            }
+        ])
+        ->paginate(9);
+
+        return view('admin.rooms.index', compact(
+            'allrooms', 
+            'totalRooms', 
+            'totalRoomTypes', 
+            'bookedRooms', 
+            'availableRooms'
+        ));
     }
+
     
     public function roomsByType(Request $request, $roomTypeId)
     {

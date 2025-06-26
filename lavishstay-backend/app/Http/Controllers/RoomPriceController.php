@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 
 class RoomPriceController extends Controller
 {
+
     public function index()
     {
         return view('admin.room_prices.event_festival.index');
@@ -504,6 +505,8 @@ class RoomPriceController extends Controller
             ], 500);
         }
     }
+
+
 }
 
             
