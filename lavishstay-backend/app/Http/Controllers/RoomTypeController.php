@@ -80,6 +80,9 @@ class RoomTypeController extends Controller
             'amenities' => function($query) {
                 $query->orderBy('is_highlighted', 'desc')->orderBy('name', 'asc');
             },
+            'services' => function($query) {
+            $query->orderBy('is_active', 'desc')->orderBy('name', 'asc');
+            },
             'rooms'
         ])->findOrFail($id);
 
