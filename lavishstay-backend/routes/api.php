@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\FAQController;
 use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
+use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\PaymentController;
 
 use Illuminate\Http\Request;
@@ -30,6 +31,13 @@ Route::get('/dashboard/filter-options', [\App\Http\Controllers\Api\DashboardCont
 
 // Room Types API
 Route::apiResource('room-types', RoomTypeController::class);
+
+// Search API
+Route::prefix('search')->group(function () {
+    Route::post('/rooms', [SearchController::class, 'searchRooms']);
+    Route::get('/room-types/{roomTypeId}/pricing', [SearchController::class, 'getRoomTypePricing']);
+    Route::get('/pricing-rules', [SearchController::class, 'getPricingRules']);
+});
 
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);

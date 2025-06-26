@@ -8,7 +8,7 @@ import {
     UserOutlined,
     HomeOutlined
 } from '@ant-design/icons';
-import { Room } from '../../mirage/models';
+import { Room } from '../../types/room';
 import { formatAmenitiesForDisplay } from '../../constants/amenities';
 
 const { Title, Text } = Typography;

@@ -8,7 +8,7 @@ import { env } from '../config/env';
 // Base API configuration
 export const API_CONFIG = {
     BASE_URL: env.API_URL, // http://localhost:8888/api
-    TIMEOUT: 30000, // 30 seconds
+    TIMEOUT: 5000, // 5 seconds
     HEADERS: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -99,6 +99,13 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}): Pro
 
 // API endpoints constants
 export const API_ENDPOINTS = {
+    // Search endpoints
+    SEARCH: {
+        ROOMS: 'search/rooms',
+        PRICING: (roomTypeId: string) => `search/room-types/${roomTypeId}/pricing`,
+        PRICING_RULES: 'search/pricing-rules',
+    },
+
     // Payment endpoints
     PAYMENT: {
         CREATE_BOOKING: 'payment/create-booking',
@@ -133,7 +140,9 @@ export const API_ENDPOINTS = {
     // Availability endpoints
     AVAILABILITY: {
         ROOMS: 'rooms/available',
-    }
+    },
+
+
 };
 
 // Utility functions for common API patterns

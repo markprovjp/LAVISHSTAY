@@ -25,7 +25,7 @@ const RoomImageGallery: React.FC<RoomImageGalleryProps> = ({
     }; return (
         <div className="room-image-gallery w-full">
             {/* Layout đơn giản: 50% trái - 50% phải */}
-            <div className="flex gap-2 h-[480px] rounded-lg overflow-hidden">
+            <div className="flex gap-2 h-[410px] rounded-lg overflow-hidden">
                 {/* Ảnh chính bên trái - 50% */}
                 <div className="w-1/2 relative group">
                     <Image.PreviewGroup
@@ -90,18 +90,6 @@ const RoomImageGallery: React.FC<RoomImageGalleryProps> = ({
                         </div>
                     ))}
                 </div>
-            </div>
-
-            {/* Nút xem tất cả ảnh */}
-            <div className="mt-4 text-center">
-                <Button
-                    type="primary"
-                    icon={<ExpandOutlined />}
-                    size="large"
-                    onClick={() => handleImageClick(0)}
-                >
-                    Xem tất cả {images.length} ảnh
-                </Button>
             </div>
         </div>
     );
