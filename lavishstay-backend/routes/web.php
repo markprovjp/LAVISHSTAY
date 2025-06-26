@@ -32,10 +32,10 @@ use App\Http\Controllers\FlexiblePricingController;
 use App\Http\Controllers\RoomPriceController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
-use App\Http\Controllers\WeekendPriceController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\RoomTypeServiceController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\WeekendPriceController;
 
 Route::redirect('/', 'login');
 
@@ -48,12 +48,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/dashboard/analytics/{id}', [DashboardController::class, 'analytics'])->name('analytics_id');
     Route::get('/settings/account', function () {
         return view('pages/settings/account');
-    })->name('account');  
+    })->name('account');
     Route::get('/settings/notifications', function () {
         return view('pages/settings/notifications');
-    })->name('notifications');  
-    
-    
+    })->name('notifications');
+
+
 
 
 
@@ -67,7 +67,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-   
     //Roles//////////////////////////////////
     Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
@@ -120,7 +119,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         // Route::put('/admin/staffs/change-password/{id}', [StaffController::class, 'changePassword'])->name('admin.staffs.change-password'); // thay đổi mật khẩu nhân viên
         Route::put('/admin/staffs/reset-password/{id}', [StaffController::class, 'resetPassword'])->name('admin.staffs.reset-password');
 
+
     });
+    
 
 
     //Rooms Types/////////////////////////////////
@@ -132,9 +133,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/room-types/update/{roomTypeId}', [RoomTypeController::class, 'update'])->name('admin.room-types.update');
     Route::post('/admin/room-types/destroy/{roomTypeId}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy');
     Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
-        
 
-    
+
+
 
     // Room //////////////////////////////////////////
     Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
@@ -150,13 +151,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Cách liiiiiiiiiiiiiiiiiiii
 
-   //Room Types Images Management
+    //Room Types Images Management
     Route::get('/admin/room-types/{roomType}/images', [RoomTypeController::class, 'images'])->name('admin.room-types.images');
     Route::post('/admin/room-types/{roomType}/images/upload', [RoomTypeController::class, 'uploadImages'])->name('admin.room-types.images.upload');
     Route::patch('/admin/room-types/{roomType}/images/{imageId}/update', [RoomTypeController::class, 'updateImage'])->name('admin.room-types.images.update');
     Route::patch('/admin/room-types/{roomType}/images/{imageId}/set-main', [RoomTypeController::class, 'setMainImage'])->name('admin.room-types.images.set-main');
     Route::delete('/admin/room-types/{roomType}/images/{imageId}', [RoomTypeController::class, 'deleteImage'])->name('admin.room-types.images.delete');
-    
+
     // Room Type Amenities Management
     Route::get('/admin/room-types/{roomType}/amenities', [RoomTypeAmenityController::class, 'index'])
         ->name('admin.room-types.amenities');
@@ -343,7 +344,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::patch('/admin/checkout-policies/{checkoutPolicy}/toggle-status', [CheckoutPolicyController::class, 'toggleStatus'])->name('admin.checkout-policies.toggle-status');
 
 
-    
+
 
 
 
@@ -443,7 +444,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/faqs', [FAQController::class, 'index'])->name('admin.faqs');
     Route::get('/admin/faqs/create', [FAQController::class, 'create'])->name('admin.faqs.create');
     Route::post('/admin/faqs/store', [FAQController::class, 'store'])->name('admin.faqs.store');
-    Route::get('/admin/faqs/edit/{faqId}', [FAQController::class, 'edit'])->name('admin.faqs.edit');    
+    Route::get('/admin/faqs/edit/{faqId}', [FAQController::class, 'edit'])->name('admin.faqs.edit');
     Route::put('/admin/faqs/updat/{faqId}', [FAQController::class, 'update'])->name('admin.faqs.update');
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');

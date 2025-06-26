@@ -5,13 +5,13 @@
         <div class="flex justify-between items-center">
             <div class="mb-8">
 
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thêm người dùng mới</h1>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thêm nhân viên mới</h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tạo tài khoản mới cho hệ thống quản lý khách sạn
                 </p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
 
-                <a href="{{ route('admin.users') }}">
+                <a href="{{ route('admin.staffs') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -46,7 +46,8 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl  dark:border-gray-700">
-            <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form action="{{ route('admin.staffs.store') }}" method="POST" enctype="multipart/form-data"
+                class="p-6">
                 @csrf
 
                 <!-- Avatar Section -->
@@ -158,35 +159,31 @@
                         @enderror
                     </div>
 
-                    <!-- Vai trò -->
-
+                    <!-- Căn cước/Hộ chiếu -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
-                            Vai trò <span class="text-red-500">*</span>
+                        <label for="identity_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fas fa-id-card mr-2 text-violet-600"></i>
+                            Số CCCD/Hộ chiếu
                         </label>
-                        <!-- Thay thế phần select role trong form -->
-                        <select id="role_id" name="role_id" required
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                            <option value="">Chọn vai trò</option>
-                            @foreach ($roles as $role)
-                                <option value="{{ $role->id }}"
-                                    {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                    {{ \App\Models\Role::getRoleLabel($role->name) }}
-                                </option>
-                            @endforeach
-                        </select>
-
-
+                        <input type="text" id="identity_code" name="identity_code" value="{{ old('identity_code') }}"
+                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                            placeholder="Nhập số CCCD hoặc hộ chiếu">
+                        @error('identity_code')
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                {{ $message }}
+                            </p>
+                        @enderror
                     </div>
 
-                    <!-- Địa chỉ -->
-                    <div class="mt-6">
+
+                      <!-- Địa chỉ -->
+                    <div >
                         <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <i class="fas fa-map-marker-alt mr-2 text-violet-600"></i>
                             Địa chỉ
                         </label>
-                        <textarea id="address" name="address" rows="5"
+                        <textarea id="address" name="address" rows="9"
                             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                             placeholder="Nhập địa chỉ đầy đủ...">{{ old('address') }}</textarea>
                         @error('address')
@@ -197,31 +194,49 @@
                         @enderror
                     </div>
 
-                    <!-- Mật khẩu -->
-                    <div class=" gap-6 mt-6">
-                        <div class="w-full">
-                            <label for="password"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-lock mr-2 text-violet-600"></i>
-                                Mật khẩu <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input type="text" id="password" name="password" required
-                                    class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                                    placeholder="Nhập mật khẩu">
-                                <button type="button" onclick="togglePassword('password', 'password-eye')"
-                                    class="absolute inset-y-0 top-0 mt-3 right-0 pr-3 flex items-center">
-                                    <i id="password-eye"
-                                        class="fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"></i>
-                                </button>
+                    <!-- Vai trò -->
+
+                    <div>
+                        <label for="role_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
+                            Vai trò <span class="text-red-500">*</span>
+                        </label>
+
+                        <select id="role_id" name="role_id" required
+                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+                            <option value="">Chọn vai trò</option>
+                            @foreach ($staffRoles as $role)
+                                <option value="{{ $role->id }}"
+                                    {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                    {{ \App\Models\Role::getRoleLabel($role->name) }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <div class=" gap-6 mt-6">
+                            <div class="w-full">
+                                <label for="password"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <i class="fas fa-lock mr-2 text-violet-600"></i>
+                                    Mật khẩu <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="text" id="password" name="password" required
+                                        class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                        placeholder="Nhập mật khẩu">
+                                    <button type="button" onclick="togglePassword('password', 'password-eye')"
+                                        class="absolute inset-y-0 top-0 mt-3 right-0 pr-3 flex items-center">
+                                        <i id="password-eye"
+                                            class="fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"></i>
+                                    </button>
+                                </div>
+                                @error('password')
+                                    <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        {{ $message }}
+                                    </p>
+                                @enderror
                             </div>
-                            @error('password')
-                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    {{ $message }}
-                                </p>
-                            @enderror
-                        </div>
 
                         <div class="w-full mt-5">
                             <label for="password_confirmation"
@@ -250,9 +265,15 @@
                         </div>
                     </div>
 
+                    </div>
+
+                  
+                    <!-- Mật khẩu -->
+                    <div></div>
+                    
                     <!-- Ghi chú mật khẩu -->
 
-                    <div></div>
+                    {{-- <div></div> --}}
                     <!-- Action Buttons -->
                     <div class="flex items-center justify-end space-x-4 mt-8 pt-6 ">
 
@@ -261,6 +282,7 @@
                         </button>
 
                     </div>
+                </div>
             </form>
         </div>
     </div>

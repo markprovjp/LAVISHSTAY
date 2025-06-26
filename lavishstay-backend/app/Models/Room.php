@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Translation;
+use App\Models\RoomType;
+use App\Models\RoomOption;
+use App\Models\RoomAvailability;
 
 class Room extends Model
 {
-
     protected $table = 'room';
     protected $primaryKey = 'room_id';
     public $timestamps = false;

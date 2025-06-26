@@ -9,10 +9,11 @@
         <div class="flex justify-between items-center">
             <div class="mb-8">
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thông tin người dùng</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Xem chi tiết thông tin của {{ $user->name }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Xem chi tiết thông tin của {{ $user->name }}
+                </p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-                <a href="{{ route('admin.users') }}">
+                <a href="{{ route('admin.customers') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -45,18 +46,19 @@
             <div id="personal-info" class="tab-content">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <!-- Personal Information -->
-                    <div class="lg:col-span-8">
+                    <div class="lg:col-span-12 w-full max-w-none">
                         <div
-                            class="bg-white dark:bg-gray-800 shadow-md rounded-xl  dark:border-gray-700 p-6">
+                            class="bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                             <div class="flex items-end justify-between mb-4">
                                 <div class="flex items-center">
                                     <div
                                         class="w-7 h-7 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
                                         <i class="fas fa-user fa-xs text-blue-600 dark:text-blue-400"></i>
                                     </div>
-                                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Thông tin cá nhân</h3>
+                                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Thông tin cá
+                                        nhân</h3>
                                 </div>
-                                <a href="{{ route('admin.users.edit', $user->id) }}">
+                                <a href="{{ route('admin.customers.edit', $user->id) }}">
                                     <button
                                         class="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                                         <i class="fas fa-edit fa-xs mr-1.5"></i> Chỉnh sửa
@@ -64,7 +66,7 @@
                                 </a>
                             </div>
 
-                            
+
 
                             <div class="lg:col-span-4">
                                 <div class="bg-white dark:bg-gray-800">
@@ -92,22 +94,25 @@
                                                     class="text-lg font-bold text-gray-900 dark:text-gray-100 pl-3 pt-6">
                                                     {{ $user->name }}
                                                 </h2>
+                                                @php $role = $user->roles->first()?->name; @endphp
+
                                                 <span
                                                     class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 ml-3">
-                                                    @if ($user->role === 'admin')
+                                                    @if ($role === 'admin')
                                                         <i class="fas fa-shield-alt fa-xs mr-1"></i> Administrator
-                                                    @elseif($user->role === 'manager')
+                                                    @elseif ($role === 'manager')
                                                         <i class="fas fa-user-tie fa-xs mr-1"></i> Manager
-                                                    @elseif($user->role === 'staff')
+                                                    @elseif ($role === 'staff')
                                                         <i class="fas fa-users fa-xs mr-1"></i> Staff
-                                                    @elseif($user->role === 'receptionist')
+                                                    @elseif ($role === 'receptionist')
                                                         <i class="fas fa-headset fa-xs mr-1"></i> Receptionist
-                                                    @elseif($user->role === 'guest')
+                                                    @elseif ($role === 'guest')
                                                         <i class="fas fa-user fa-xs mr-1"></i> Guest
                                                     @else
-                                                        <i class="fas fa-user fa-xs mr-1"></i> Customer
+                                                        <i class="fas fa-user fa-xs mr-1"></i> {{ ucfirst($role) }}
                                                     @endif
                                                 </span>
+
                                             </div>
                                         </div>
 
@@ -120,14 +125,16 @@
                                                         class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                                         <i
                                                             class="fas fa-check-circle fa-xs mr-1 text-green-600 dark:text-green-400"></i>
-                                                        <span class="text-green-600 dark:text-green-400">Email đã xác thực</span>
+                                                        <span class="text-green-600 dark:text-green-400">Email đã xác
+                                                            thực</span>
                                                     </div>
                                                 @else
                                                     <div
                                                         class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                                                         <i
                                                             class="fas fa-exclamation-circle fa-xs mr-1 text-amber-600 dark:text-amber-400"></i>
-                                                        <span class="text-amber-600 dark:text-amber-400">Email chưa xác thực</span>
+                                                        <span class="text-amber-600 dark:text-amber-400">Email chưa xác
+                                                            thực</span>
                                                     </div>
                                                 @endif
                                             </div>
@@ -155,7 +162,9 @@
                                             <div class="pt-2 border-t border-gray-200 dark:border-gray-700 mt-4">
                                                 @php
                                                     $timezone = 'Asia/Ho_Chi_Minh';
-                                                    $created = $user->created_at ? $user->created_at->setTimezone($timezone) : null;
+                                                    $created = $user->created_at
+                                                        ? $user->created_at->setTimezone($timezone)
+                                                        : null;
                                                     $now = now()->setTimezone($timezone);
                                                     $days = 0;
                                                     $hours = 0;
@@ -188,7 +197,8 @@
                                 <div class="space-y-4">
                                     <div>
                                         <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Họ và tên</label>
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Họ
+                                            và tên</label>
                                         <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                                             <i class="fas fa-user fa-xs text-gray-400 mr-2"></i>
                                             <span
@@ -206,7 +216,8 @@
                                     </div>
                                     <div>
                                         <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Số
+                                            điện thoại</label>
                                         <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                                             <i class="fas fa-phone fa-xs text-gray-400 mr-2"></i>
                                             <span
@@ -216,17 +227,20 @@
                                 </div>
                                 <div class="space-y-4">
                                     <div>
-                                        <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Vai trò</label>
+                                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Số CCCD / Hộ chiếu
+                                        </label>
                                         <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-                                            <i class="fas fa-user-shield fa-xs text-gray-400 mr-2"></i>
-                                            <span
-                                                class="text-sm text-gray-900 dark:text-gray-100 capitalize">{{ $user->role }}</span>
+                                            <i class="fas fa-id-card fa-xs text-gray-400 mr-2"></i>
+                                            <span class="text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $user->identity_number ?? 'Chưa cập nhật' }}
+                                            </span>
                                         </div>
                                     </div>
                                     <div>
                                         <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày tham gia</label>
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày
+                                            tham gia</label>
                                         <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                                             <i class="fas fa-calendar-alt fa-xs text-gray-400 mr-2"></i>
                                             <span class="text-sm text-gray-900 dark:text-gray-100">
@@ -236,7 +250,8 @@
                                     </div>
                                     <div>
                                         <label
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Cập nhật lần cuối</label>
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Cập
+                                            nhật lần cuối</label>
                                         <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                                             <i class="fas fa-clock fa-xs text-gray-400 mr-2"></i>
                                             <span class="text-sm text-gray-900 dark:text-gray-100">
@@ -248,7 +263,8 @@
                             </div>
                             @if ($user->address)
                                 <div class="mt-4">
-                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Địa
+                                        chỉ</label>
                                     <div class="flex items-start p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                                         <i class="fas fa-map-marker-alt fa-xs text-gray-400 mr-2 mt-0.5"></i>
                                         <span
@@ -264,7 +280,7 @@
             <!-- Security Tab -->
             <div id="security" class="tab-content hidden">
                 <div
-                    class="bg-white dark:bg-gray-800 shadow-md rounded-xl  dark:border-gray-700 p-6">
+                    class="bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                     <!-- Success/Error Messages -->
                     @if (session('success'))
                         <div
@@ -298,7 +314,8 @@
                             <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-md">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Xác thực email</h4>
+                                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Xác thực email
+                                        </h4>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             @if ($user->email_verified_at)
                                                 Đã xác thực vào {{ $user->email_verified_at->format('d/m/Y H:i') }}
@@ -324,10 +341,12 @@
                             <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-md">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Xác thực 2 bước</h4>
+                                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Xác thực 2
+                                            bước</h4>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             @if ($user->two_factor_confirmed_at)
-                                                Đã kích hoạt vào {{ $user->two_factor_confirmed_at->format('d/m/Y H:i') }}
+                                                Đã kích hoạt vào
+                                                {{ $user->two_factor_confirmed_at->format('d/m/Y H:i') }}
                                             @else
                                                 Chưa kích hoạt xác thực 2 bước
                                             @endif
@@ -348,89 +367,41 @@
                                 </div>
                             </div>
                         </div>
+
                         <!-- Password Change Form -->
                         <div class="space-y-4">
                             <div class="p-4 border border-gray-200 dark:border-gray-600 rounded-md">
-                                <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Đổi mật khẩu</h4>
-                                <form action="{{ route('admin.users.change-password', $user->id) }}" method="POST">
+                                <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
+                                    Đặt lại mật khẩu nhân viên
+                                </h4>
+
+                                @if (session('new_password'))
+                                    <div class="text-green-600 dark:text-green-400 text-sm mb-3">
+                                        <i class="fas fa-key mr-1"></i>
+                                        Mật khẩu mới đã được gửi tới email:
+                                        <span class="font-semibold">{{ $user->email }}</span>
+                                    </div>
+                                @endif
+
+                                @if (session('error'))
+                                    <div class="text-red-500 text-sm mb-3">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i> {{ session('error') }}
+                                    </div>
+                                @endif
+
+                                <form action="{{ route('admin.customers.reset-password', $user->id) }}" method="POST"
+                                    onsubmit="return confirm('Bạn có chắc chắn muốn đặt lại mật khẩu không?')">
                                     @csrf
                                     @method('PUT')
-                                    <!-- Current Password -->
-                                    <div class="mb-4">
-                                        <label for="current_password"
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            <i class="fas fa-lock mr-2 text-violet-600"></i>
-                                            Mật khẩu hiện tại <span class="text-red-500">*</span>
-                                        </label>
-                                        <div class="relative">
-                                            <input type="text" id="current_password" name="current_password"
-                                                required
-                                                class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                                                placeholder="Nhập mật khẩu hiện tại">
-                                            <button type="button"
-                                                onclick="togglePassword('current_password', 'current-password-eye')"
-                                                class="absolute inset-y-0 top-0 mt-3 right-0 pr-3 flex items-center">
-                                                <i id="current-password-eye"
-                                                    class="fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    
-                                    <!-- New Password -->
-                                    <div class="mb-4">
-                                        <label for="password"
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            <i class="fas fa-lock mr-2 text-violet-600"></i>
-                                            Mật khẩu mới <span class="text-red-500">*</span>
-                                        </label>
-                                        <div class="relative">
-                                            <input type="text" id="password" name="password" required
-                                                class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                                                placeholder="Nhập mật khẩu mới">
-                                            <button type="button"
-                                                onclick="togglePassword('password', 'password-eye')"
-                                                class="absolute inset-y-0 top-0 mt-3 right-0 pr-3 flex items-center">
-                                                <i id="password-eye"
-                                                    class="fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"></i>
-                                            </button>
-                                        </div>
-                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
-                                        </p>
-                                    </div>
-
-                                    <!-- Confirm New Password -->
-                                    <div class="mb-4">
-                                        <label for="password_confirmation"
-                                            class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            <i class="fas fa-lock mr-2 text-violet-600"></i>
-                                            Xác nhận mật khẩu mới <span class="text-red-500">*</span>
-                                        </label>
-                                        <div class="relative">
-                                            <input type="text" id="password_confirmation"
-                                                name="password_confirmation" required
-                                                class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                                                placeholder="Nhập lại mật khẩu mới">
-                                            <button type="button"
-                                                onclick="togglePassword('password_confirmation', 'confirm-password-eye')"
-                                                class="absolute inset-y-0 top-0 mt-3 right-0 pr-3 flex items-center">
-                                                <i id="confirm-password-eye"
-                                                    class="fas fa-eye text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Submit Button -->
-                                    <div class="flex justify-end">
-                                        <button type="submit"
-                                            class="btn bg-violet-500 hover:bg-violet-600 text-white text-xs font-medium rounded-md px-4 py-2">
-                                            <i class="fas fa-save mr-2"></i> Đổi mật khẩu
-                                        </button>
-                                    </div>
+                                    <button type="submit"
+                                        class="btn bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md px-4 py-2">
+                                        <i class="fas fa-redo mr-1"></i> Đặt lại mật khẩu và gửi về email
+                                    </button>
                                 </form>
                             </div>
                         </div>
+
+
                     </div>
                 </div>
             </div>
@@ -485,7 +456,7 @@
                 eyeIcon.classList.add('fa-eye');
             }
         }
-        
+
 
         // Form validation
         document.querySelector('form').addEventListener('submit', function(e) {
