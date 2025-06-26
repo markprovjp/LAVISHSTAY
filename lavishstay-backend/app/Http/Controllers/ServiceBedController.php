@@ -104,7 +104,8 @@ class ServiceBedController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Trạng thái Bed Type đã được cập nhật!',
-            'is_active' => $bedType->is_active
+            'is_active' => $bedType->is_active,
         ]);
     }
 }
+

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Role;
 
 /**
  * UserController - Quản lý người dùng trong hệ thống
@@ -18,21 +19,20 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::paginate(8);
+        $users = User::with('roles')->paginate(8); // eager loading roles
         return view('admin.users.index', compact('users'));
     }
+
 
     /**
      * Hiển thị form tạo người dùng mới
      */
     public function create()
     {
-        return view('admin.users.create');
+        $roles = Role::all(); // Lấy tất cả vai trò để hiển thị trong form
+        return view('admin.users.create', compact('roles'));
     }
 
-    /**
-     * Lưu người dùng mới vào database
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -47,8 +47,7 @@ class UserController extends Controller
             ],
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
-            'role' => 'required|in:' . implode(',', array_keys(User::getRoles())),
-
+            'role_id' => 'required|exists:roles,id', // đổi từ role → role_id
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
@@ -59,8 +58,8 @@ class UserController extends Controller
 
         // Mã hóa mật khẩu
         $validated['password'] = Hash::make($validated['password']);
-        // dd($validated);
-        // Xử lý upload profile photo (sử dụng Jetstream)
+
+        // Xử lý upload ảnh
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
             $photoPath = $request->file('profile_photo')->storePublicly(
                 'profile-photos',
@@ -69,7 +68,11 @@ class UserController extends Controller
             $validated['profile_photo_path'] = $photoPath;
         }
 
-        User::create($validated);
+        // Tạo user
+        $user = User::create($validated);
+
+        // Gán vai trò vào bảng role_user
+        $user->roles()->attach($request->role_id); // <- Đây là gán vai trò
 
         return redirect()->route('admin.users')->with('success', 'Người dùng đã được tạo thành công!');
     }
@@ -88,9 +91,14 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $user = User::findOrFail($id);
-        return view('admin.users.edit', compact('user'));
+        $user = User::with('roles')->findOrFail($id);
+        $roles = Role::all();
+        // Kiểm tra xem người dùng có vai trò nào không
+        $currentRole = $user->roles->first()->name ?? null;
+
+        return view('admin.users.edit', compact('user', 'roles', 'currentRole'));
     }
+
 
     /**
      * Cập nhật thông tin người dùng
@@ -143,9 +151,18 @@ class UserController extends Controller
 
         $user->update($validated);
 
+
+        if ($request->filled('role')) {
+            $role = Role::where('name', $request->role)->first();
+
+            if ($role) {
+                $user->roles()->sync([$role->id]); // Xóa vai trò cũ và gán vai trò mới
+            }
+        }
+
+
         return redirect()->route('admin.users.show', $user->id)->with('success', 'Thông tin người dùng đã được cập nhật!');
     }
-
 
     /**
      * Đổi mật khẩu người dùng
