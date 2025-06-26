@@ -14,9 +14,9 @@ import {
     ThunderboltOutlined
 } from '@ant-design/icons';
 import { Eye } from 'lucide-react';
-import { Room } from '../../mirage/models';
 import { formatAmenitiesForDisplay } from '../../constants/amenities';
 import RoomOptionsSection from './RoomOptionsSection';
+import { Room } from '../../types/room';
 
 // Import Swiper styles
 import 'swiper/css';

@@ -7,8 +7,6 @@ import { useGetRoomTypeById } from '../hooks/useApi';
 // Import components từ roomTypes folder
 import RoomImageGallery from '../components/roomTypes/RoomImageGallery';
 import RoomAmenities from '../components/roomTypes/RoomAmenities';
-import RoomAvailabilityFilter from '../components/roomTypes/RoomAvailabilityFilter';
-import RoomBookingForm from '../components/roomTypes/RoomBookingForm';
 import SimilarRooms from '../components/roomTypes/SimilarRooms';
 
 const { Title, Paragraph, Text } = Typography;
@@ -56,30 +54,22 @@ const RoomTypesDetailsPage: React.FC = () => {
             <div className="container mx-auto px-4 py-8">
                 {/* Header với nút back */}
                 <div className="mb-6">
-                    <Button
-                        icon={<ArrowLeftOutlined />}
-                        onClick={() => navigate(-1)}
-                        className="mb-4"
-                    >
-                        Quay lại
-                    </Button>
                     <Title level={1} className="mb-2">{roomType.name}</Title>
-                    <Text type="secondary" className="text-lg">
-                        Mã loại phòng: {roomType.room_code}
-                    </Text>
+                </div>
+
+                {/* Gallery ảnh full width */}
+                <div className="mb-8">
+                    <RoomImageGallery
+                        images={images}
+                        roomName={roomType.name}
+                    />
                 </div>
 
                 <Row gutter={[24, 24]}>
-                    {/* Cột trái - Ảnh */}
+                    {/* Cột trái - Mô tả và tiện nghi */}
                     <Col xs={24} lg={16}>
-                        {/* Gallery ảnh sử dụng component */}
-                        <RoomImageGallery
-                            images={images}
-                            roomName={roomType.name}
-                        />
-
                         {/* Mô tả chi tiết */}
-                        <Card title="Mô tả loại phòng" className="mt-6">
+                        <Card title="Mô tả loại phòng" className="mb-6">
                             <Paragraph className="text-gray-700 leading-relaxed">
                                 {roomType.description || 'Chưa có mô tả chi tiết cho loại phòng này.'}
                             </Paragraph>
@@ -91,90 +81,57 @@ const RoomTypesDetailsPage: React.FC = () => {
                         )}
                     </Col>
 
-                    {/* Cột phải - Thông tin */}
+                    {/* Cột phải - Thông tin cơ bản */}
                     <Col xs={24} lg={8}>
-                        {/* Form đặt phòng */}
-                        <RoomBookingForm room={roomType} />
-
                         {/* Thông tin cơ bản */}
-                        <Card title="Thông tin cơ bản" className="mb-6">
+                        <Card title="Thông tin phòng" className="mb-6">
                             <Space direction="vertical" className="w-full" size="middle">
+                                {/* Giá phòng */}
+                                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <Text className="block text-sm text-gray-600 mb-1">Giá phòng</Text>
+                                    <Text className="text-2xl font-bold text-green-600">
+                                        {new Intl.NumberFormat('vi-VN', {
+                                            style: 'currency',
+                                            currency: 'VND'
+                                        }).format(roomType.base_price || roomType.min_price)}
+                                    </Text>
+                                    <Text className="block text-xs text-gray-500">mỗi đêm</Text>
+                                </div>
+
+                                <Divider className="my-3" />
+
+                                {/* Thông tin chi tiết */}
                                 <div className="flex justify-between items-center">
                                     <Text strong>Tổng số phòng:</Text>
                                     <Tag color="blue">{roomType.rooms_count || 'N/A'}</Tag>
                                 </div>
 
                                 <div className="flex justify-between items-center">
-                                    <Text strong>Phòng còn trống:</Text>
-                                    <Tag color="green">{roomType.available_rooms_count || 'N/A'}</Tag>
+                                    <Text strong>Số khách tối đa:</Text>
+                                    <Tag color="purple">{roomType.max_guests} khách</Tag>
                                 </div>
-
-                                <div className="flex justify-between items-center">
-                                    <Text strong>Phòng đã đặt:</Text>
-                                    <Tag color="red">{(roomType.rooms_count - roomType.available_rooms_count) || 'N/A'}</Tag>
-                                </div>
-
-                                <Divider className="my-3" />
-
-                                {/* Thông tin giá từ dữ liệu thực tế */}
-                                <div className="flex justify-between items-center">
-                                    <Text strong>Giá thấp nhất:</Text>
-                                    <Text className="text-lg font-semibold text-green-600">
-                                        {new Intl.NumberFormat('vi-VN', {
-                                            style: 'currency',
-                                            currency: 'VND'
-                                        }).format(roomType.min_price)}
-                                    </Text>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                    <Text strong>Giá cao nhất:</Text>
-                                    <Text className="text-lg font-semibold text-orange-600">
-                                        {new Intl.NumberFormat('vi-VN', {
-                                            style: 'currency',
-                                            currency: 'VND'
-                                        }).format(roomType.max_price)}
-                                    </Text>
-                                </div>
-
-                                <div className="flex justify-between items-center">
-                                    <Text strong>Giá trung bình:</Text>
-                                    <Text className="text-lg font-semibold text-blue-600">
-                                        {new Intl.NumberFormat('vi-VN', {
-                                            style: 'currency',
-                                            currency: 'VND'
-                                        }).format(roomType.avg_price)}
-                                    </Text>
-                                </div>
-
-                                <Divider className="my-3" />
 
                                 {/* Thông tin từ bảng room */}
                                 {roomType.avg_size && (
                                     <div className="flex justify-between items-center">
-                                        <Text strong>Diện tích trung bình:</Text>
+                                        <Text strong>Diện tích:</Text>
                                         <Tag color="cyan">{roomType.avg_size}m²</Tag>
                                     </div>
                                 )}
 
                                 {roomType.avg_rating && (
                                     <div className="flex justify-between items-center">
-                                        <Text strong>Điểm đánh giá trung bình:</Text>
+                                        <Text strong>Đánh giá:</Text>
                                         <Tag color="gold">{roomType.avg_rating}/10</Tag>
                                     </div>
                                 )}
-
-                                <div className="flex justify-between items-center">
-                                    <Text strong>Số khách tối đa:</Text>
-                                    <Tag color="purple">{roomType.max_guests} khách</Tag>
-                                </div>
 
                                 {/* Tầm nhìn có sẵn */}
                                 {roomType.common_views && roomType.common_views.length > 0 && (
                                     <div>
                                         <Text strong>Tầm nhìn:</Text>
                                         <div className="mt-2 flex flex-wrap gap-1">
-                                            {roomType.common_views.map((view, index) => (
+                                            {roomType.common_views.map((view: string, index: number) => (
                                                 <Tag key={index} color="geekblue">{view}</Tag>
                                             ))}
                                         </div>
@@ -186,7 +143,7 @@ const RoomTypesDetailsPage: React.FC = () => {
                                     <div>
                                         <Text strong>Tầng có sẵn:</Text>
                                         <div className="mt-2 flex flex-wrap gap-1">
-                                            {roomType.available_floors.map((floor, index) => (
+                                            {roomType.available_floors.map((floor: number, index: number) => (
                                                 <Tag key={index} color="magenta">Tầng {floor}</Tag>
                                             ))}
                                         </div>
@@ -195,48 +152,7 @@ const RoomTypesDetailsPage: React.FC = () => {
                             </Space>
                         </Card>
 
-                        {/* Bộ lọc tình trạng phòng */}
-                        <RoomAvailabilityFilter
-                            maxGuests={roomType.max_guests || 2}
-                            onSearch={(dates, guests) => {
-                                console.log("Search availability:", dates, guests);
-                            }}
-                        />
 
-                        {/* Tiện nghi nổi bật */}
-                        {roomType.highlighted_amenities && roomType.highlighted_amenities.length > 0 && (
-                            <Card title="Tiện nghi nổi bật" className="mb-6">
-                                <div className="space-y-2">
-                                    {roomType.highlighted_amenities.map((amenity: any) => (
-                                        <div key={amenity.id} className="flex items-center space-x-2">
-                                            {amenity.icon && (
-                                                <span dangerouslySetInnerHTML={{ __html: amenity.icon }} />
-                                            )}
-                                            <Text>{amenity.name}</Text>
-                                        </div>
-                                    ))}
-                                </div>
-                            </Card>
-                        )}
-
-                        {/* Tất cả tiện nghi */}
-                        {roomType.amenities && roomType.amenities.length > 0 && (
-                            <Card title="Tất cả tiện nghi">
-                                <div className="flex flex-wrap gap-2">
-                                    {roomType.amenities.map((amenity: any) => (
-                                        <Tag key={amenity.id} className="mb-2">
-                                            {amenity.icon && (
-                                                <span
-                                                    dangerouslySetInnerHTML={{ __html: amenity.icon }}
-                                                    className="mr-1"
-                                                />
-                                            )}
-                                            {amenity.name}
-                                        </Tag>
-                                    ))}
-                                </div>
-                            </Card>
-                        )}
                     </Col>
                 </Row>
 

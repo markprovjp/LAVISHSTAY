@@ -25,7 +25,6 @@
  * - Luxury options: remaining thấp nhất (20-40% total)
  * 
  * ===== ROOM ALLOCATION LOGIC =====
- * - Hiển thị TẤT CẢ phòng trong search results
  * - Logic thông minh để gợi ý phòng phù hợp
  * - Gia đình 2 người + 1 trẻ: có thể chọn phòng 2 người
  * - Nhóm 3 người lớn: bắt buộc chọn phòng 3 người hoặc 2 phòng

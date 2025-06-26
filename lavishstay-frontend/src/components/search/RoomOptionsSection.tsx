@@ -19,7 +19,7 @@ import {
     WarningOutlined,
     InfoCircleOutlined
 } from '@ant-design/icons';
-import { Room } from '../../mirage/models';
+import { Room } from '../../types/room';
 
 const { Text, Title } = Typography;
 

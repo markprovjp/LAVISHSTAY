@@ -25,13 +25,11 @@ import {
     selectBookingState,
     selectSelectedRoomsCount
 } from '../store/slices/bookingSlice';
-import { Room } from '../mirage/models';
 import { searchService } from '../services/searchService';
 import SearchForm from '../components/SearchForm';
 import { calculateNightsFromRange } from '../utils/helpers';
-import { generateRoomOptionsWithDynamicPricing } from '../utils/dynamicPricing';
 import { calculateRoomAllocation, type GuestDetails } from '../utils/roomAllocation';
-import dayjs from 'dayjs';
+import { Room } from '../types/room';
 
 // Import new components
 import BookingSummary from '../components/search/BookingSummary';
@@ -134,12 +132,12 @@ const SearchResults: React.FC = () => {
         if (!searchData.guestDetails) {
             return calculateRoomAllocation({ adults: 2, children: 0 });
         }
-        
+
         const guestDetails: GuestDetails = {
             adults: searchData.guestDetails.adults || 2,
             children: searchData.guestDetails.children || 0
         };
-        
+
         return calculateRoomAllocation(guestDetails);
     };
 
@@ -179,14 +177,6 @@ const SearchResults: React.FC = () => {
         setImageGalleryState(prev => ({ ...prev, visible: false }));
     };
 
-    // Handle room detail modal (for future use)
-    // const showRoomDetail = (room: Room) => {
-    //     setRoomDetailState({
-    //         visible: true,
-    //         room: room
-    //     });
-    // };
-
     const closeRoomDetail = () => {
         setRoomDetailState({ visible: false, room: null });
     };
@@ -197,83 +187,36 @@ const SearchResults: React.FC = () => {
 
     const handleBookNow = () => {
         navigate('/booking');
-    };
-
-    // Fetch search results
+    };    // Fetch search results
     useEffect(() => {
         const fetchResults = async () => {
             try {
                 setLoading(true);
                 console.log('Fetching search results with data:', searchData);
+
+                // Use backend API directly - no more mock data
                 const results = await searchService.searchRooms(searchData);
+                console.log('Backend API results:', results);
 
+                // Use rooms directly from backend without additional processing
+                setRooms(results.rooms);
+                console.log('Final rooms from backend:', results.rooms);
 
-                // Apply dynamic pricing to each room
-                const roomsWithDynamicPricing = results.rooms.map((room: any) => {
-                    // Safe date handling with defaults - convert to dayjs
-                    const checkInDate = searchData.dateRange && searchData.dateRange[0] ?
-                        searchData.dateRange[0] : dayjs();
-                    const checkOutDate = searchData.dateRange && searchData.dateRange[1] ?
-                        searchData.dateRange[1] : dayjs().add(1, 'day');
-
-                    // Calculate actual guest count
-                    const actualGuestCount = searchData.guestDetails
-                        ? searchData.guestDetails.adults + searchData.guestDetails.children
-                        : 2; // Default to 2 guests
-
-                    // Generate dynamic room options using dayjs dates với guest count
-                    const dynamicOptions = generateRoomOptionsWithDynamicPricing(
-                        1900000, // Base price
-                        room.roomType, // roomType
-                        room.maxGuests, // maxGuests
-                        checkInDate, // checkInDate as dayjs
-                        checkOutDate,  // checkOutDate as dayjs
-                        dayjs(), // bookingDate
-                        actualGuestCount // guestCount for prioritization
-                    );
-
-                    return {
-                        ...room,
-                        options: dynamicOptions
-                    };
-                });
-
-                setRooms(roomsWithDynamicPricing);
-                console.log('Final rooms state:', roomsWithDynamicPricing);
-                console.log('Final room types:', roomsWithDynamicPricing.map((r: any) => r.roomType));
-
-                // Update Redux store with rooms data
-                dispatch(setRoomsData(roomsWithDynamicPricing.map((room: any) => ({
+                // Update Redux store with backend data
+                dispatch(setRoomsData(results.rooms.map((room: any) => ({
                     id: room.id,
                     name: room.name,
                     image: room.image || '',
                     images: room.images || [],
-                    size: room.size,
-                    view: room.view,
-                    bedType: typeof room.bedType === 'string' ? room.bedType : room.bedType?.default,
+                    size: room.size || room.roomSize,
+                    view: room.view || room.viewType,
+                    bedType: room.bedType,
                     amenities: room.amenities || [],
                     mainAmenities: room.mainAmenities || [],
                     roomType: room.roomType,
                     rating: room.rating,
                     maxGuests: room.maxGuests,
-                    options: room.options.map((option: any) => ({
-                        id: option.id,
-                        name: option.name,
-                        pricePerNight: {
-                            vnd: option.pricePerNight?.vnd || 1900000
-                        },
-                        maxGuests: option.maxGuests || room.maxGuests,
-                        minGuests: option.minGuests || 1,
-                        roomType: room.roomType,
-                        cancellationPolicy: option.cancellationPolicy,
-                        paymentPolicy: option.paymentPolicy,
-                        availability: option.availability,
-                        additionalServices: option.additionalServices,
-                        promotion: option.promotion,
-                        recommended: option.recommended,
-                        mostPopular: option.mostPopular,
-                        dynamicPricing: option.dynamicPricing
-                    }))
+                    options: room.options || []
                 }))));
             } catch (error: any) {
                 message.error('Có lỗi xảy ra khi tải kết quả tìm kiếm');
@@ -340,10 +283,10 @@ const SearchResults: React.FC = () => {
             <div className="shadow-sm border-b">
 
 
-                    {/* Embedded Search Form for easy re-searching */}
-                    <div className="p-4 rounded-lg">
-                        <SearchForm className="search-form-compact" />
-                    </div>
+                {/* Embedded Search Form for easy re-searching */}
+                <div className="p-4 rounded-lg">
+                    <SearchForm className="search-form-compact" />
+                </div>
             </div>
 
             {/* Main Content Layout */}
@@ -358,18 +301,18 @@ const SearchResults: React.FC = () => {
 
                 {/* Room Cards Container - Full Width */}
                 <div className="max-w-7xl mx-auto px-4 py-8">                    <Space direction="vertical" size="large" className="w-full">                        {/* Room Allocation Summary */}
-                        {searchData.guestDetails && (
-                            <Card className=" border-blue-200">
-                                <div className="text-center">
-                                    <Title level={4} className="mb-2 text-blue-800">
-                                        Gợi ý phòng cho {getRoomAllocationSuggestions().totalGuests} khách
-                                    </Title>
-                                    <div className="space-y-2">
-                                        {getRoomAllocationSuggestions().suggestions
-                                            .filter(s => s.isRecommended)
-                                            .slice(0, 3)
-                                            .map((suggestion, index) => (
-                                            <Tag 
+                    {searchData.guestDetails && (
+                        <Card className=" border-blue-200">
+                            <div className="text-center">
+                                <Title level={4} className="mb-2 text-blue-800">
+                                    Gợi ý phòng cho {getRoomAllocationSuggestions().totalGuests} khách
+                                </Title>
+                                <div className="space-y-2">
+                                    {getRoomAllocationSuggestions().suggestions
+                                        .filter(s => s.isRecommended)
+                                        .slice(0, 3)
+                                        .map((suggestion, index) => (
+                                            <Tag
                                                 key={suggestion.roomType}
                                                 color={index === 0 ? 'gold' : index === 1 ? 'blue' : 'green'}
                                                 className="mx-1 mb-2"
@@ -378,28 +321,28 @@ const SearchResults: React.FC = () => {
                                                 {getRoomTypeDisplayName(suggestion.roomType)}: {suggestion.reason}
                                             </Tag>
                                         ))}
-                                    </div>
-                                    {getRoomAllocationSuggestions().notes.length > 0 && (
-                                        <div className="mt-3 text-sm text-blue-600 space-y-1">
-                                            {getRoomAllocationSuggestions().notes.slice(0, 2).map((note, index) => (
-                                                <div key={index}>💡 {note}</div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className="mt-2 text-xs text-gray-500">
-                                        Tối thiểu cần {getRoomAllocationSuggestions().minimumRoomsNeeded} phòng cho {getRoomAllocationSuggestions().totalAdults} người lớn
-                                    </div>
                                 </div>
-                            </Card>
-                        )}                        {/* Group rooms by type and create sections */}
-                        {Array.from(new Set(rooms.map(room => room.roomType)))
-                            .sort((a, b) => getRoomPriority(a) - getRoomPriority(b)) // Sort by priority
-                            .map((roomType) => {
+                                {getRoomAllocationSuggestions().notes.length > 0 && (
+                                    <div className="mt-3 text-sm text-blue-600 space-y-1">
+                                        {getRoomAllocationSuggestions().notes.slice(0, 2).map((note, index) => (
+                                            <div key={index}>💡 {note}</div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="mt-2 text-xs text-gray-500">
+                                    Tối thiểu cần {getRoomAllocationSuggestions().minimumRoomsNeeded} phòng cho {getRoomAllocationSuggestions().totalAdults} người lớn
+                                </div>
+                            </div>
+                        </Card>
+                    )}                        {/* Group rooms by type and create sections */}
+                    {Array.from(new Set(rooms.map(room => room.roomType)))
+                        .sort((a, b) => getRoomPriority(a) - getRoomPriority(b)) // Sort by priority
+                        .map((roomType) => {
                             const roomsOfType = rooms.filter(room => room.roomType === roomType);
                             const priority = getRoomPriority(roomType);
                             const suggestion = getRoomAllocationSuggestions().suggestions.find(s => s.roomType === roomType);
                             const isRecommended = suggestion?.isRecommended || false;
-                            
+
                             return (
                                 <div key={roomType} className={isRecommended ? 'relative' : ''}>
                                     {isRecommended && (
@@ -423,7 +366,7 @@ const SearchResults: React.FC = () => {
                                 </div>
                             );
                         })}
-                    </Space>
+                </Space>
                 </div>
             </div>
 
