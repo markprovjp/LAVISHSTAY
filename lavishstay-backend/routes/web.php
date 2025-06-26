@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\RolePermissionController;
+use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\RoomPriceEventFestivalController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingExtensionController;
