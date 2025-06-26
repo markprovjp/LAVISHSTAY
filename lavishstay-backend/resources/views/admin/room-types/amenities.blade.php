@@ -1,4 +1,10 @@
 <x-app-layout>
+    <style>
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+    </style>
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
@@ -285,7 +291,7 @@
                 </div>
 
                 <!-- Modal Body -->
-                <div class="flex-1 overflow-y-auto p-6">
+                <div class="flex-1 overflow-y-auto p-6 modal-body">
                     @if($availableAmenities->flatten()->count() > 0)
                         @foreach($availableAmenities as $category => $amenities)
                             <div class="mb-8">
