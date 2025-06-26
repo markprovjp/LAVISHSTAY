@@ -88,11 +88,11 @@
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hướng nhìn</label>
                         <select name="view" class="form-select w-full">
                             <option value="">Tất cả hướng</option>
-                            @foreach($viewOptions as $view)
+                            {{-- @foreach($viewOptions as $view)
                                 <option value="{{ $view }}" {{ request('view') == $view ? 'selected' : '' }}>
                                     {{ $view }}
                                 </option>
-                            @endforeach
+                            @endforeach --}}
                         </select>
                     </div>
                 </div>
@@ -116,12 +116,12 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giá phòng (VND)</label>
                         <div class="flex space-x-2 gap-4">
-                            <input type="number" name="min_price" value="{{ request('min_price') }}" 
+                            {{-- <input type="number" name="min_price" value="{{ request('min_price') }}" 
                                    placeholder="Từ {{ number_format($priceRange['min'], 0, ',', '.') }}" 
                                    class="form-input w-full">
                             <input type="number" name="max_price" value="{{ request('max_price') }}" 
                                    placeholder="Đến {{ number_format($priceRange['max'], 0, ',', '.') }}" 
-                                   class="form-input w-full">
+                                   class="form-input w-full"> --}}
                         </div>
                     </div>
 
@@ -132,12 +132,12 @@
                     <div>
                         {{-- <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diện tích (m²)</label> --}}
                         <div class="flex space-x-2 gap-4">
-                            <input type="number" name="min_size" value="{{ request('min_size') }}" 
+                            {{-- <input type="number" name="min_size" value="{{ request('min_size') }}" 
                                    placeholder="Từ {{ $sizeRange['min'] }}" 
                                    class="form-input w-full">
                             <input type="number" name="max_size" value="{{ request('max_size') }}" 
                                    placeholder="Đến {{ $sizeRange['max'] }}" 
-                                   class="form-input w-full">
+                                   class="form-input w-full"> --}}
                         </div>
                     </div>
                 </div>
@@ -253,7 +253,7 @@
                                     {{ $room->max_guests }} khách • {{ $room->size }}m²
                                 </div>
 
-                                @if($room->view)
+                                {{-- @if($room->view)
                                     <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
                                             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
@@ -261,7 +261,7 @@
                                         </svg>
                                         {{ $room->view }}
                                     </div>
-                                @endif
+                                @endif --}}
                             </div>
 
                             <div class="flex items-center justify-between">

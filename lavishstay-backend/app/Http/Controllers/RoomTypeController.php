@@ -14,9 +14,33 @@ use function Psy\debug;
 
 class RoomTypeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $roomTypes = RoomType::with(['amenities', 'rooms'])->paginate(7);
+        $query = RoomType::with(['rooms', 'mainImage', 'amenities']);
+
+        // Search by name or code
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('room_code', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Filter by price range
+        if ($request->filled('min_price')) {
+            $query->where('base_price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('base_price', '<=', $request->max_price);
+        }
+
+        // Filter by guest capacity
+        if ($request->filled('max_guests')) {
+            $query->where('max_guests', '>=', $request->max_guests);
+        }
+
+        $roomTypes = $query->paginate(12);
+
         return view('admin.room-types.index', compact('roomTypes'));
     }
 
