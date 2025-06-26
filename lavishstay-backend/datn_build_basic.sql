@@ -2,10 +2,17 @@
 -- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
+<<<<<<< HEAD
 -- Máy chủ: localhost:3306
 -- Thời gian đã tạo: Th6 19, 2025 lúc 07:32 AM
 -- Phiên bản máy phục vụ: 8.0.30
 -- Phiên bản PHP: 8.1.10
+=======
+-- Host: localhost:3306
+-- Generation Time: Jun 23, 2025 at 03:07 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -112,6 +119,7 @@ CREATE TABLE `booking` (
   `room_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin đặt phòng';
 
+<<<<<<< HEAD
 --
 -- Đang đổ dữ liệu cho bảng `booking`
 --
@@ -119,6 +127,8 @@ CREATE TABLE `booking` (
 INSERT INTO `booking` (`booking_id`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `status`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`) VALUES
 (8, NULL, NULL, '2025-06-17', '2025-06-18', 999999.00, 1, 'pending', '2025-06-17 09:25:16', '2025-06-17 09:25:16', NULL, NULL, NULL, 1706);
 
+=======
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 -- --------------------------------------------------------
 
 --
@@ -498,7 +508,45 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 -- --------------------------------------------------------
 
 --
+<<<<<<< HEAD
 -- Cấu trúc bảng cho bảng `guests`
+=======
+-- Table structure for table `flexible_pricing_rules`
+--
+
+CREATE TABLE `flexible_pricing_rules` (
+  `rule_id` int NOT NULL,
+  `room_type_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã loại phòng (NULL: áp dụng cho tất cả loại phòng)',
+  `rule_type` enum('weekend','event','holiday','season') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại quy tắc: cuối tuần, sự kiện, ngày lễ, mùa',
+  `days_of_week` json DEFAULT NULL COMMENT 'Danh sách ngày cuối tuần áp dụng (JSON, dùng cho rule_type=weekend)',
+  `event_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã sự kiện (dùng cho rule_type=event)',
+  `holiday_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã ngày lễ (dùng cho rule_type=holiday)',
+  `season_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên mùa (dùng cho rule_type=season)',
+  `start_date` date DEFAULT NULL COMMENT 'Ngày bắt đầu áp dụng (dùng cho rule_type=season hoặc giới hạn thời gian)',
+  `end_date` date DEFAULT NULL COMMENT 'Ngày kết thúc áp dụng (dùng cho rule_type=season hoặc giới hạn thời gian)',
+  `price_adjustment` decimal(5,2) NOT NULL COMMENT 'Tỷ lệ điều chỉnh giá (%, dương để tăng, âm để giảm)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái kích hoạt',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Quy tắc giá linh động cho cuối tuần, sự kiện, ngày lễ, mùa';
+
+--
+-- Dumping data for table `flexible_pricing_rules`
+--
+
+INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `days_of_week`, `event_id`, `holiday_id`, `season_name`, `start_date`, `end_date`, `price_adjustment`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, NULL, 'weekend', '[\"Saturday\", \"Sunday\"]', NULL, NULL, NULL, NULL, NULL, 15.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(2, 1, 'weekend', '[\"Saturday\"]', NULL, NULL, NULL, '2025-07-01', '2025-08-31', 20.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(3, NULL, 'event', NULL, 1, NULL, NULL, NULL, NULL, 25.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(4, NULL, 'holiday', NULL, NULL, 1, NULL, NULL, NULL, 30.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(5, NULL, 'season', NULL, NULL, NULL, 'Mùa cao điểm', '2025-06-01', '2025-08-31', 20.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08'),
+(6, 1, 'season', NULL, NULL, NULL, 'Mùa thấp điểm', '2025-11-01', '2026-02-28', -10.00, 1, '2025-06-23 03:03:08', '2025-06-23 03:03:08');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `guests`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 
 CREATE TABLE `guests` (
@@ -515,7 +563,11 @@ CREATE TABLE `guests` (
 -- --------------------------------------------------------
 
 --
+<<<<<<< HEAD
 -- Cấu trúc bảng cho bảng `holidays`
+=======
+-- Table structure for table `holidays`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 
 CREATE TABLE `holidays` (
@@ -644,8 +696,12 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (6, '2022_05_11_154250_create_datafeeds_table', 1),
 (7, '2025_06_12_074026_create_table_translation_table', 2),
 (8, '2025_06_16_014026_change_type_column_in_checkout_requests', 3),
+<<<<<<< HEAD
 (9, '2025_06_16_094513_add_early_checkout_fields_to_check_out_policies_table', 3),
 (10, '2025_06_18_014501_create_cache_table', 4);
+=======
+(9, '2025_06_16_094513_add_early_checkout_fields_to_check_out_policies_table', 3);
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 
 -- --------------------------------------------------------
 
@@ -674,7 +730,11 @@ CREATE TABLE `payment` (
   `payment_id` int NOT NULL COMMENT 'Khóa chính, mã thanh toán',
   `booking_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã đặt phòng',
   `amount_vnd` decimal(15,2) NOT NULL COMMENT 'Số tiền thanh toán (VND)',
+<<<<<<< HEAD
   `payment_type` enum('deposit','full','qr_code','at_hotel') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại thanh toán',
+=======
+  `payment_type` enum('deposit','full','qr_code','at_hotel','pay_now_with_vietQR') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại thanh toán',
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
   `status` enum('pending','completed','failed','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái thanh toán',
   `transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mã giao dịch (từ cổng thanh toán)',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
@@ -728,6 +788,7 @@ CREATE TABLE `room` (
 --
 
 INSERT INTO `room` (`room_id`, `hotel_id`, `room_type_id`, `name`, `image`, `floor`, `status`, `base_price_vnd`, `size`, `view`, `rating`, `lavish_plus_discount`, `max_guests`, `description`) VALUES
+<<<<<<< HEAD
 (1706, NULL, 1, '0201', NULL, 2, 'available', 1200000.00, 33, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
 (1707, NULL, 1, '0202', NULL, 2, 'available', 1200000.00, 33, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
 (1708, NULL, 1, '0203', NULL, 2, 'available', 1200000.00, 33, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
@@ -1023,6 +1084,98 @@ INSERT INTO `room` (`room_id`, `hotel_id`, `room_type_id`, `name`, `image`, `flo
 (1998, NULL, 6, '3104', NULL, 31, 'available', 3000000.00, 93, 'Suite sang trọng, view đẹp', 10.0, NULL, 2, 'Đây là phòng thuộc loại Suite'),
 (1999, NULL, 6, '3105', NULL, 31, 'available', 3000000.00, 93, 'Suite sang trọng, view đẹp', 10.0, NULL, 2, 'Đây là phòng thuộc loại Suite'),
 (2000, NULL, 7, '3201', NULL, 32, 'available', 10000000.00, 270, 'Suite tổng thống, sang trọng nhất, view panorama', 10.0, NULL, 2, 'Đây là phòng thuộc loại Presidential Suite');
+=======
+(6, NULL, 1, '0201', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(7, NULL, 1, '0202', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(8, NULL, 1, '0203', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(9, NULL, 1, '0204', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(10, NULL, 1, '0205', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(11, NULL, 1, '0206', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(12, NULL, 1, '0207', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(13, NULL, 1, '0208', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(14, NULL, 1, '0209', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(15, NULL, 1, '0210', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(16, NULL, 1, '0211', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(17, NULL, 1, '0212', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(18, NULL, 1, '0213', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(19, NULL, 1, '0214', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(20, NULL, 1, '0215', NULL, 2, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(21, NULL, 1, '0301', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(22, NULL, 1, '0302', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(23, NULL, 1, '0303', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(24, NULL, 1, '0304', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(25, NULL, 1, '0305', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(26, NULL, 1, '0306', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(27, NULL, 1, '0307', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(28, NULL, 1, '0308', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(29, NULL, 1, '0309', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(30, NULL, 1, '0310', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(31, NULL, 1, '0311', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(32, NULL, 1, '0312', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(33, NULL, 1, '0313', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(34, NULL, 1, '0314', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(35, NULL, 1, '0315', NULL, 3, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(36, NULL, 1, '0401', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(37, NULL, 1, '0402', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(38, NULL, 1, '0403', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(39, NULL, 1, '0404', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(40, NULL, 1, '0405', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(41, NULL, 1, '0406', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(42, NULL, 1, '0407', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(43, NULL, 1, '0408', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(44, NULL, 1, '0409', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(45, NULL, 1, '0410', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(46, NULL, 1, '0411', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(47, NULL, 1, '0412', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(48, NULL, 1, '0413', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(49, NULL, 1, '0414', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(50, NULL, 1, '0415', NULL, 4, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(51, NULL, 1, '0501', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(52, NULL, 1, '0502', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(53, NULL, 1, '0503', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(54, NULL, 1, '0504', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(55, NULL, 1, '0505', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(56, NULL, 1, '0506', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(57, NULL, 1, '0507', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(58, NULL, 1, '0508', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(59, NULL, 1, '0509', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(60, NULL, 1, '0510', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(61, NULL, 1, '0511', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(62, NULL, 1, '0512', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(63, NULL, 1, '0513', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(64, NULL, 1, '0514', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(65, NULL, 1, '0515', NULL, 5, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(66, NULL, 1, '0801', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(67, NULL, 1, '0802', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(68, NULL, 1, '0803', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(69, NULL, 1, '0804', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(70, NULL, 1, '0805', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(71, NULL, 1, '0806', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(72, NULL, 1, '0807', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(73, NULL, 1, '0808', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(74, NULL, 1, '0809', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(75, NULL, 1, '0810', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(76, NULL, 1, '0811', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(77, NULL, 1, '0812', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(78, NULL, 1, '0813', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(79, NULL, 1, '0814', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(80, NULL, 1, '0815', NULL, 8, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(81, NULL, 1, '0901', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(82, NULL, 1, '0902', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(83, NULL, 1, '0903', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(84, NULL, 1, '0904', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(85, NULL, 1, '0905', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(86, NULL, 1, '0906', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(87, NULL, 1, '0907', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(88, NULL, 1, '0908', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(89, NULL, 1, '0909', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(90, NULL, 1, '0910', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(91, NULL, 1, '0911', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(92, NULL, 1, '0912', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(93, NULL, 1, '0913', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(94, NULL, 1, '0914', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room'),
+(95, NULL, 1, '0915', NULL, 9, NULL, 1200000.00, 32, 'View thành phố, bồn tắm, cửa kính lớn', 10.0, NULL, 2, 'Đây là phòng thuộc loại Deluxe Room');
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 
 -- --------------------------------------------------------
 
@@ -1114,6 +1267,7 @@ CREATE TABLE `room_option_promotion` (
 -- --------------------------------------------------------
 
 --
+<<<<<<< HEAD
 -- Cấu trúc bảng cho bảng `room_pricing`
 --
 
@@ -1134,6 +1288,9 @@ CREATE TABLE `room_pricing` (
 
 --
 -- Cấu trúc bảng cho bảng `room_transfers`
+=======
+-- Table structure for table `room_transfers`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 
 CREATE TABLE `room_transfers` (
@@ -1254,7 +1411,11 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
+<<<<<<< HEAD
 ('SH3OzhVi847T2peaGQVuwvh4qaKwSKzK6pEhMkTm', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiUXpKc21ScktWalg0YXZMSHVYYmliZGtTUU9BYm5nVVBOaFVna3dXayI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDM6Imh0dHA6Ly8xMjcuMC4wLjE6ODg4OC9hZG1pbi9yb29tcy9zaG93LzE3MDciO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1750318289);
+=======
+('ORYn2FNStdEGJOnzvLfeGeZiFXQH3DYHaxBxG3Ye', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiMU1xOXJrY1BYa29oRjhiZVB5OTRaU21NbGJpSzZNU0xNMnl4T0dNWCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjY1OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vZXZlbnQtZmVzdGl2YWwtbWFuYWdlbWVudC9kYXRhP3BhZ2U9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1750647896);
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 
 -- --------------------------------------------------------
 
@@ -1342,7 +1503,11 @@ CREATE TABLE `weekend_days` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+<<<<<<< HEAD
 -- Đang đổ dữ liệu cho bảng `weekend_days`
+=======
+-- Dumping data for table `weekend_days`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 
 INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1355,7 +1520,11 @@ INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `upd
 (9, 'Sunday', 1, '2025-06-14 02:38:18', '2025-06-16 09:03:15');
 
 --
+<<<<<<< HEAD
 -- Chỉ mục cho các bảng đã đổ
+=======
+-- Indexes for dumped tables
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 
 --
@@ -1486,14 +1655,31 @@ ALTER TABLE `faqs`
   ADD PRIMARY KEY (`faq_id`);
 
 --
+<<<<<<< HEAD
 -- Chỉ mục cho bảng `guests`
+=======
+-- Indexes for table `flexible_pricing_rules`
+--
+ALTER TABLE `flexible_pricing_rules`
+  ADD PRIMARY KEY (`rule_id`),
+  ADD KEY `flexible_pricing_room_type_id_index` (`room_type_id`),
+  ADD KEY `flexible_pricing_event_id_index` (`event_id`),
+  ADD KEY `flexible_pricing_holiday_id_index` (`holiday_id`);
+
+--
+-- Indexes for table `guests`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `guests`
   ADD PRIMARY KEY (`guest_id`),
   ADD KEY `fk_guests_user` (`user_id`);
 
 --
+<<<<<<< HEAD
 -- Chỉ mục cho bảng `holidays`
+=======
+-- Indexes for table `holidays`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `holidays`
   ADD PRIMARY KEY (`holiday_id`);
@@ -1602,6 +1788,7 @@ ALTER TABLE `room_option_promotion`
   ADD KEY `option_id` (`option_id`);
 
 --
+<<<<<<< HEAD
 -- Chỉ mục cho bảng `room_pricing`
 --
 ALTER TABLE `room_pricing`
@@ -1613,6 +1800,9 @@ ALTER TABLE `room_pricing`
 
 --
 -- Chỉ mục cho bảng `room_transfers`
+=======
+-- Indexes for table `room_transfers`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `room_transfers`
   ADD PRIMARY KEY (`transfer_id`),
@@ -1777,13 +1967,27 @@ ALTER TABLE `faqs`
   MODIFY `faq_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
+<<<<<<< HEAD
 -- AUTO_INCREMENT cho bảng `guests`
+=======
+-- AUTO_INCREMENT for table `flexible_pricing_rules`
+--
+ALTER TABLE `flexible_pricing_rules`
+  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `guests`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `guests`
   MODIFY `guest_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+<<<<<<< HEAD
 -- AUTO_INCREMENT cho bảng `holidays`
+=======
+-- AUTO_INCREMENT for table `holidays`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `holidays`
   MODIFY `holiday_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
@@ -1804,7 +2008,11 @@ ALTER TABLE `meal_types`
 -- AUTO_INCREMENT cho bảng `migrations`
 --
 ALTER TABLE `migrations`
+<<<<<<< HEAD
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+=======
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 
 --
 -- AUTO_INCREMENT cho bảng `notifications`
@@ -1828,7 +2036,11 @@ ALTER TABLE `personal_access_tokens`
 -- AUTO_INCREMENT cho bảng `room`
 --
 ALTER TABLE `room`
+<<<<<<< HEAD
   MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=2001;
+=======
+  MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=96;
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 
 --
 -- AUTO_INCREMENT cho bảng `room_availability`
@@ -1843,6 +2055,7 @@ ALTER TABLE `room_option_promotion`
   MODIFY `promotion_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khuyến mãi';
 
 --
+<<<<<<< HEAD
 -- AUTO_INCREMENT cho bảng `room_pricing`
 --
 ALTER TABLE `room_pricing`
@@ -1850,6 +2063,9 @@ ALTER TABLE `room_pricing`
 
 --
 -- AUTO_INCREMENT cho bảng `room_transfers`
+=======
+-- AUTO_INCREMENT for table `room_transfers`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `room_transfers`
   MODIFY `transfer_id` int NOT NULL AUTO_INCREMENT;
@@ -1932,13 +2148,29 @@ ALTER TABLE `dynamic_pricing_rules`
   ADD CONSTRAINT `dynamic_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
+<<<<<<< HEAD
 -- Ràng buộc cho bảng `guests`
+=======
+-- Constraints for table `flexible_pricing_rules`
+--
+ALTER TABLE `flexible_pricing_rules`
+  ADD CONSTRAINT `flexible_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `flexible_pricing_rules_ibfk_2` FOREIGN KEY (`event_id`) REFERENCES `events` (`event_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `flexible_pricing_rules_ibfk_3` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `guests`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `guests`
   ADD CONSTRAINT `fk_guests_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
+<<<<<<< HEAD
 -- Ràng buộc cho bảng `hotel_rating`
+=======
+-- Constraints for table `hotel_rating`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `hotel_rating`
   ADD CONSTRAINT `hotel_rating_ibfk_1` FOREIGN KEY (`hotel_id`) REFERENCES `hotel` (`hotel_id`) ON DELETE CASCADE;
@@ -2000,6 +2232,7 @@ ALTER TABLE `room_option_promotion`
   ADD CONSTRAINT `room_option_promotion_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
+<<<<<<< HEAD
 -- Ràng buộc cho bảng `room_pricing`
 --
 ALTER TABLE `room_pricing`
@@ -2010,6 +2243,9 @@ ALTER TABLE `room_pricing`
 
 --
 -- Ràng buộc cho bảng `room_transfers`
+=======
+-- Constraints for table `room_transfers`
+>>>>>>> 4c850614f986cc347ca4902350d21b5ae481d508
 --
 ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
