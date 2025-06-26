@@ -1,28 +1,23 @@
 <x-app-layout>
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-4xl mx-auto">
+    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
         <div class="flex justify-between items-center">
             <div class="mb-8">
-
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thêm khách hàng mới</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tạo tài khoản mới cho hệ thống quản lý khách sạn
-                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tạo tài khoản khách hàng mới cho hệ thống quản lý khách sạn</p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-
                 <a href="{{ route('admin.customers') }}">
                     <button
-                        class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
-                        <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
-                            <path
-                                d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                        </svg>
+                        class="btn cursor-pointer bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
+                        <i class="fas fa-arrow-left fa-xs mr-2"></i>
                         <span class="max-xs:sr-only">Quay lại danh sách</span>
                     </button>
                 </a>
             </div>
         </div>
+
         <!-- Success/Error Messages -->
         @if (session('success'))
             <div
@@ -45,16 +40,16 @@
         @endif
 
         <!-- Form -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl  dark:border-gray-700">
-            <form action="{{ route('admin.customers.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
+        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl dark:border-gray-700">
+            <form action="{{ route('admin.customers.store') }}" method="POST" enctype="multipart/form-data"
+                class="p-6">
                 @csrf
 
                 <!-- Avatar Section -->
-                <!-- Avatar Section - Chỉ cần thay đổi phần này -->
-                <div class="mb-8 flex justify-between items-cente">
-                    <div class="r">
+                <div class="mb-8 flex justify-between items-center">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                            <i class="fas fa-camera mr-2 text-violet-600"></i>
+                            <i class="fas fa-camera mr-2 text-blue-600"></i>
                             Ảnh đại diện
                         </label>
                         <div class="flex items-center space-x-6 gap-6">
@@ -90,7 +85,7 @@
                         @enderror
                     </div>
                     <div
-                        class="mt-4 p-4  bg-blue-50 dark:bg-blue-900/20 border border-gray-200 dark:border-blue-800 rounded-lg">
+                        class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-gray-200 dark:border-blue-800 rounded-lg">
                         <div class="flex items-start">
                             <i class="fas fa-info-circle text-blue-500 mr-3 mt-0.5"></i>
                             <div class="text-sm text-blue-700 dark:text-blue-300">
@@ -106,104 +101,106 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 ">
-                    <!-- Họ và tên -->
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-user mr-2 text-violet-600"></i>
-                            Họ và tên <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="name" name="name" value="{{ old('name') }}" required
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                            placeholder="Nhập họ và tên">
-                        @error('name')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column: Name, Email, Phone, Identity Number -->
+                    <div class="space-y-6">
+                        <!-- Name -->
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-user mr-2 text-blue-600"></i>
+                                Họ và tên <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Nhập họ và tên">
+                            @error('name')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Email -->
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-envelope mr-2 text-blue-600"></i>
+                                Email <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="example@email.com">
+                            @error('email')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Phone -->
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-phone mr-2 text-blue-600"></i>
+                                Số điện thoại
+                            </label>
+                            <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0123456789">
+                            @error('phone')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <!-- Identity Number -->
+                        <div>
+                            <label for="identity_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-id-card mr-2 text-blue-600"></i>
+                                Số CCCD/Hộ chiếu
+                            </label>
+                            <input type="text" id="identity_number" name="identity_number" value="{{ old('identity_number') }}"
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Nhập số CCCD hoặc hộ chiếu">
+                            @error('identity_number')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
                     </div>
 
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-envelope mr-2 text-violet-600"></i>
-                            Email <span class="text-red-500">*</span>
-                        </label>
-                        <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                            placeholder="example@email.com">
-                        @error('email')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
+                    <!-- Right Column: Password, Address -->
+                    <div class="space-y-6">
+                         <!-- Address -->
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2 text-blue-600"></i>
+                                Địa chỉ
+                            </label>
+                            <textarea id="address" name="address" rows="5"
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Nhập địa chỉ đầy đủ...">{{ old('address') }}</textarea>
+                            @error('address')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
 
-                    <!-- Số điện thoại -->
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-phone mr-2 text-violet-600"></i>
-                            Số điện thoại
-                        </label>
-                        <input type="tel" id="phone" name="phone" value="{{ old('phone') }}"
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                            placeholder="0123456789">
-                        @error('phone')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    <!-- Vai trò -->
-
-                    <div>
-                        <label for="role_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
-                            Vai trò <span class="text-red-500">*</span>
-                        </label>
-
-                        {{-- Dropdown hiển thị (disabled) --}}
-                        <select disabled
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed">
-                            <option selected>Khách hàng</option>
-                        </select>
-
-                        {{-- Truyền giá trị thực qua hidden input --}}
-                        <input type="hidden" name="role_id" value="{{ $guestRoleId }}">
-                    </div>
-
-                    <!-- Địa chỉ -->
-                    <div class="mt-6">
-                        <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-map-marker-alt mr-2 text-violet-600"></i>
-                            Địa chỉ
-                        </label>
-                        <textarea id="address" name="address" rows="5"
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                            placeholder="Nhập địa chỉ đầy đủ...">{{ old('address') }}</textarea>
-                        @error('address')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    <!-- Mật khẩu -->
-                    <div class=" gap-6 mt-6">
-                        <div class="w-full">
-                            <label for="password"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-lock mr-2 text-violet-600"></i>
+                        <!-- Password -->
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-lock mr-2 text-blue-600"></i>
                                 Mật khẩu <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
-                                <input type="text" id="password" name="password" required
-                                    class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                <input type="password" id="password" name="password" required
+                                    class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Nhập mật khẩu">
                                 <button type="button" onclick="togglePassword('password', 'password-eye')"
                                     class="absolute inset-y-0 top-0 mt-3 right-0 pr-3 flex items-center">
@@ -219,16 +216,16 @@
                             @enderror
                         </div>
 
-                        <div class="w-full mt-5">
-                            <label for="password_confirmation"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fas fa-lock mr-2 text-violet-600"></i>
+                        <!-- Confirm Password -->
+                        <div>
+                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-lock mr-2 text-blue-600"></i>
                                 Xác nhận mật khẩu <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
-                                <input type="text" id="password_confirmation" name="password_confirmation"
+                                <input type="password" id="password_confirmation" name="password_confirmation"
                                     required
-                                    class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                    class="block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="Nhập lại mật khẩu">
                                 <button type="button"
                                     onclick="togglePassword('password_confirmation', 'confirm-password-eye')"
@@ -244,26 +241,25 @@
                                 </p>
                             @enderror
                         </div>
+
+                       
                     </div>
 
-                    <!-- Ghi chú mật khẩu -->
-
-                    <div></div>
                     <!-- Action Buttons -->
-                    <div class="flex items-center justify-end space-x-4 mt-8 pt-6 ">
-
-                        <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
-                            <i class="fas fa-plus mr-2"></i> Tạo người dùng
+                    <div></div>
+                    <div class="flex items-center justify-end space-x-4 mt-8 pt-6">
+                        <button type="submit" class="btn bg-blue-500 hover:bg-blue-600 text-white">
+                            <i class="fas fa-plus mr-2"></i> Tạo khách hàng
                         </button>
-
                     </div>
+                </div>
             </form>
         </div>
     </div>
 
     <!-- JavaScript -->
     <script>
-        // Xem trước ảnh avatar
+        // Preview avatar image
         function previewImage(input) {
             const preview = document.getElementById('avatar-preview');
             const placeholder = document.getElementById('avatar-placeholder');
@@ -284,7 +280,7 @@
             }
         }
 
-        // Hiện/ẩn mật khẩu
+        // Toggle password visibility
         function togglePassword(inputId, eyeId) {
             const passwordInput = document.getElementById(inputId);
             const eyeIcon = document.getElementById(eyeId);
@@ -300,7 +296,7 @@
             }
         }
 
-        // Validate form trước khi submit
+        // Validate form before submission
         document.querySelector('form').addEventListener('submit', function(e) {
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('password_confirmation').value;
@@ -311,26 +307,13 @@
                 return false;
             }
 
-            // Kiểm tra độ mạnh mật khẩu
+            // Check password strength
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
             if (!passwordRegex.test(password)) {
                 e.preventDefault();
                 alert('Mật khẩu không đáp ứng yêu cầu bảo mật!');
                 return false;
             }
-        });
-
-        // Thay thế phần role descriptions trong script
-        document.getElementById('role').addEventListener('change', function() {
-            const roleDescriptions = {
-                'guest': 'Khách có quyền hạn cơ bản nhất trong hệ thống',
-                'receptionist': 'Lễ tân có thể xử lý booking và quản lý khách hàng',
-                'manager': 'Quản lý có thể giám sát hoạt động và báo cáo',
-                'admin': 'Quản trị viên có toàn quyền truy cập hệ thống'
-            };
-
-            // Bạn có thể thêm element để hiển thị mô tả này nếu cần
-            console.log(roleDescriptions[this.value]);
         });
     </script>
 </x-app-layout>

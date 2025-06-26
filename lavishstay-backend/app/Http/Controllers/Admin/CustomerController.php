@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Role;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Str;
 
 class CustomerController extends Controller
 {
@@ -19,22 +23,31 @@ class CustomerController extends Controller
         return view('admin.customers.index', compact('users'));
     }
 
+    public function show($id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+        if (!$user->hasRole('guest')) {
+            abort(403, 'Người dùng không phải là khách hàng');
+        }
+        return view('admin.customers.show', compact('user'));
+    }
+
     public function create()
     {
         $guestRole = Role::where('name', 'guest')->firstOrFail();
-        return view('admin.customers.create', ['guestRoleId' => $guestRole->id]);
+        return view('admin.customers.create', compact('guestRole'));
     }
 
     public function store(Request $request)
     {
-        // 1. Validate form (không có role_id nữa)
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'identity_code' => 'nullable|string|max:50|unique:users,identity_code',
             'password' => [
                 'required',
                 'string',
-                'min:6',
+                'min:8',
                 'confirmed',
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
             ],
@@ -42,16 +55,16 @@ class CustomerController extends Controller
             'address' => 'nullable|string|max:500',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
-            'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
-            'profile_photo.image' => 'File phải là hình ảnh.',
-            'profile_photo.mimes' => 'Chỉ chấp nhận file PNG, JPG, JPEG, GIF.',
-            'profile_photo.max' => 'Kích thước file không được vượt quá 2MB.',
+            'password.regex' => 'Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
         ]);
 
-        // 2. Mã hóa mật khẩu
+        // Get the guest role
+        $role = Role::where('name', 'guest')->firstOrFail();
+
+        // Hash password
         $validated['password'] = Hash::make($validated['password']);
 
-        // 3. Xử lý ảnh đại diện nếu có
+        // Handle profile photo
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
             $photoPath = $request->file('profile_photo')->storePublicly(
                 'profile-photos',
@@ -60,46 +73,28 @@ class CustomerController extends Controller
             $validated['profile_photo_path'] = $photoPath;
         }
 
-        // 4. Tạo user
+        // Create user
         $user = User::create($validated);
 
-        // 5. Gán role mặc định là "guest"
-        $guestRole = Role::where('name', 'guest')->firstOrFail();
-        $user->roles()->attach($guestRole->id);
+        // Assign guest role
+        $user->roles()->attach($role->id);
 
         return redirect()->route('admin.customers')->with('success', 'Khách hàng đã được tạo thành công!');
     }
 
-
-    public function show($id)
-    {
-        $user = User::findOrFail($id);
-        return view('admin.customers.show', compact('user'));
-    }
-
-
-
     public function edit($id)
     {
         $user = User::with('roles')->findOrFail($id);
-
-        // Đảm bảo user này là khách hàng
         if (!$user->hasRole('guest')) {
             abort(403, 'Không thể sửa người không phải là khách hàng');
         }
-
         $guestRole = Role::where('name', 'guest')->firstOrFail();
-
-        return view('admin.customers.edit', [
-            'user' => $user,
-            'guestRoleId' => $guestRole->id,
-        ]);
+        return view('admin.customers.edit', compact('user', 'guestRole'));
     }
 
     public function update(Request $request, $id)
     {
-        $user = User::findOrFail($id);
-
+        $user = User::with('roles')->findOrFail($id);
         if (!$user->hasRole('guest')) {
             abort(403, 'Không thể cập nhật người không phải là khách hàng');
         }
@@ -107,46 +102,39 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => [
-                'nullable',
-                'string',
-                'min:6',
-                'confirmed',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/'
-            ],
+            'identity_code' => 'nullable|string|max:50|unique:users,identity_code,' . $user->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ], [
-            'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
         ]);
 
-        if (!empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
+        // Handle profile photo
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
-            $photoPath = $request->file('profile_photo')->storePublicly(
+            $validated['profile_photo_path'] = $request->file('profile_photo')->storePublicly(
                 'profile-photos',
                 ['disk' => 'public']
             );
-            $validated['profile_photo_path'] = $photoPath;
         }
 
+        // Update user
         $user->update($validated);
+
+        // Ensure guest role is maintained
+        $role = Role::where('name', 'guest')->firstOrFail();
+        $user->roles()->sync([$role->id]);
 
         return redirect()->route('admin.customers')->with('success', 'Khách hàng đã được cập nhật thành công!');
     }
 
-
-     public function changePassword(Request $request, $id)
+    public function changePassword(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        if (!$user->hasRole('guest')) {
+            abort(403, 'Không thể đổi mật khẩu cho người không phải khách hàng');
+        }
 
-        $request->validate([
-            'current_password' => ['required', 'string'],
+        $validated = $request->validate([
+            'current_password' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -155,39 +143,62 @@ class CustomerController extends Controller
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
             ],
         ], [
-            'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
+            'password.regex' => 'Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.',
         ]);
 
-        // Kiểm tra mật khẩu hiện tại
-        if (!Hash::check($request->current_password, $user->password)) {
-            return redirect()->back()->with('error', 'Mật khẩu hiện tại không chính xác.');
+        // Verify current password
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return redirect()->back()->with('error', 'Mật khẩu hiện tại không đúng.');
         }
 
-        // Cập nhật mật khẩu mới
+        // Update password
         $user->update([
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
         ]);
 
-        return redirect()->back()->with('success', 'Mật khẩu đã được thay đổi thành công.');
+        return redirect()->back()->with('success', 'Mật khẩu đã được cập nhật thành công!');
     }
 
-
-     public function destroy($id)
+    public function resetPassword($id)
     {
         $user = User::findOrFail($id);
+        if (!$user->hasRole('guest')) {
+            abort(403, 'Không thể đặt lại mật khẩu cho người không phải khách hàng');
+        }
 
-        // Không cho phép xóa chính mình
+        if (empty($user->email)) {
+            return redirect()->back()->with('error', 'Tài khoản chưa được đăng ký bằng email. Vui lòng thêm email trước khi đặt lại mật khẩu.');
+        }
+
+        $newPassword = Str::random(10);
+        $user->update([
+            'password' => Hash::make($newPassword),
+            'must_change_password' => true,
+        ]);
+
+        Mail::to($user->email)->send(new ResetPasswordMail($newPassword));
+
+        return redirect()->back()->with('success', 'Mật khẩu đã được đặt lại và gửi về email của khách hàng.');
+    }
+    
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        if (!$user->hasRole('guest')) {
+            abort(403, 'Không thể xóa người không phải khách hàng');
+        }
+
         if ($user->id === auth()->id()) {
             return redirect()->route('admin.customers')->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
         }
 
-        // Xóa ảnh đại diện nếu có (sử dụng method của Jetstream)
         if ($user->profile_photo_path) {
             $user->deleteProfilePhoto();
         }
 
         $user->delete();
 
-        return redirect()->route('admin.customers')->with('success', 'Người dùng đã được xóa thành công!');
+        return redirect()->route('admin.customers')->with('success', 'Khách hàng đã được xóa thành công!');
     }
 }

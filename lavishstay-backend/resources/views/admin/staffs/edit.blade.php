@@ -1,10 +1,11 @@
 <x-app-layout>
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-4xl mx-auto">
+    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
         <div class="flex justify-between items-center">
             <div class="mb-8">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa thông tin nhân viên</h1>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa thông tin nhân viên
+                </h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cập nhật thông tin nhân viên
                     {{ $user->name }}</p>
             </div>
@@ -151,7 +152,27 @@
                             @enderror
                         </div>
 
-                        <!-- Vai trò -->
+                        <!-- Số CCCD / Hộ chiếu -->
+                        <div>
+                            <label for="identity_code"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-id-card mr-2 text-violet-600"></i>
+                                Số CCCD / Hộ chiếu
+                            </label>
+                            <input type="text" id="identity_code" name="identity_code"
+                                value="{{ old('identity_code', $user->identity_code) }}"
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                placeholder="Nhập số CCCD hoặc Hộ chiếu">
+                            @error('identity_code')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+
+                        {{-- <!-- Vai trò -->
                         <div>
                             <label for="role_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -177,26 +198,59 @@
                                     {{ $message }}
                                 </p>
                             @enderror
+                        </div> --}}
+
+                    </div>
+
+
+                    <div class="space-y-6">
+                        <!-- Vai trò -->
+                        <div>
+                            <label for="role_id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
+                                Vai trò <span class="text-red-500">*</span>
+                            </label>
+
+                            <select id="role_id" name="role_id" required
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+                                <option value="">Chọn vai trò</option>
+                                @foreach ($staffRoles as $role)
+                                    <option value="{{ $role->id }}"
+                                        {{ old('role_id', $user->roles->first()->id ?? '') == $role->id ? 'selected' : '' }}>
+                                        {{ \App\Models\Role::getRoleLabel($role->name) }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @error('role_id')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
                         </div>
 
+                        <!-- Địa chỉ -->
+                        <div>
+                            <label for="address"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <i class="fas fa-map-marker-alt mr-2 text-violet-600"></i>
+                                Địa chỉ
+                            </label>
+                            <textarea id="address" name="address" rows="9"
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                                placeholder="Nhập địa chỉ đầy đủ...">{{ old('address', $user->address) }}</textarea>
+
+                            @error('address')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
                     </div>
 
-                    <!-- Cột phải: Địa chỉ -->
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <i class="fas fa-map-marker-alt mr-2 text-violet-600"></i>
-                            Địa chỉ
-                        </label>
-                        <textarea id="address" name="address" rows="13"
-                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
-                            placeholder="Nhập địa chỉ đầy đủ...">{{ old('address', $user->address) }}</textarea>
-                        @error('address')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
 
                     <!-- Action Buttons -->
                     <div></div>

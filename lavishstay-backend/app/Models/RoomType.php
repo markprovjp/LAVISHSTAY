@@ -4,10 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-<<<<<<< HEAD
-class RoomType extends Model
-{
-=======
 trait HasTranslations
 {
     public function getTranslatedAttribute($column, $lang)
@@ -22,7 +18,6 @@ trait HasTranslations
 class RoomType extends Model
 {
     use HasTranslations;
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     protected $table = 'room_types';
     protected $primaryKey = 'room_type_id';
     public $timestamps = false;
@@ -34,15 +29,12 @@ class RoomType extends Model
         'total_room'
     ];
 
-<<<<<<< HEAD
-=======
 
     public function translations()
     {
         return $this->hasMany(Translation::class, 'record_id')
             ->where('table_name', $this->getTable());
     }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     public function amenities()
     {
         return $this->belongsToMany(

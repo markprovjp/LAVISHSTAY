@@ -119,10 +119,7 @@ class RoomTypeController extends Controller
     public function images(RoomType $roomType)
     {
         $images = $roomType->images()->orderBy('is_main', 'desc')->orderBy('created_at', 'desc')->get();
-<<<<<<< HEAD
-=======
         // dd($images);
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
         
         return view('admin.room-types.images', compact('roomType', 'images'));
     }
