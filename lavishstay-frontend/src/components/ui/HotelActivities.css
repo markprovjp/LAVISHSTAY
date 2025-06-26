@@ -1,0 +1,211 @@
+/* HotelActivities.css - Optimized styles for Hotel Activities component */
+
+.activities-swiper {
+  padding: 40px 0px !important;
+  /* Performance optimizations */
+  contain: layout style paint;
+  will-change: transform;
+}
+
+.activities-swiper .swiper-slide {
+  display: flex;
+  align-items: stretch;
+  /* Optimized transitions */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: transform;
+}
+
+.activities-swiper .swiper-slide .activity-card {
+  position: relative;
+  /* Performance optimizations */
+  will-change: transform, box-shadow;
+}
+
+.activities-swiper .swiper-pagination {
+  bottom: 20px !important;
+}
+
+.activities-swiper .swiper-pagination-bullet {
+  opacity: 0.5 !important;
+  width: 12px !important;
+  height: 12px !important;
+  /* Faster transitions */
+  transition: all 0.2s ease !important;
+  will-change: transform, opacity;
+}
+
+.activities-swiper .swiper-pagination-bullet-active {
+  opacity: 1 !important;
+  background: #1d4ed8 !important;
+}
+
+.activities-swiper .swiper-button-next,
+.activities-swiper .swiper-button-prev {
+  color: #3b82f6 !important;
+  background: white !important;
+  border-radius: 50% !important;
+  width: 50px !important;
+  height: 50px !important;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15) !important;
+  transition: all 0.2s ease !important;
+  margin-top: -25px !important;
+  /* Performance optimizations */
+  will-change: transform, background-color, color;
+}
+
+.activities-swiper .swiper-button-next:hover,
+.activities-swiper .swiper-button-prev:hover {
+  background: #3b82f6 !important;
+  color: white !important;
+  transform: scale(1.05) !important;
+}
+
+.activities-swiper .swiper-button-next:after,
+.activities-swiper .swiper-button-prev:after {
+  font-size: 18px !important;
+  font-weight: bold !important;
+}
+
+.activity-card {
+  /* Optimized transitions */
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  will-change: transform, box-shadow;
+}
+
+.activity-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.25) !important;
+}
+
+
+.activities-swiper .swiper-slide-active .activity-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Smooth transitions for all slides */
+.activities-swiper .swiper-slide {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Dark mode adjustments */
+.dark .activities-swiper .swiper-button-next,
+.dark .activities-swiper .swiper-button-prev {
+  background: rgba(51, 65, 85, 0.9) !important;
+  color: #60a5fa !important;
+}
+
+.dark .activities-swiper .swiper-button-next:hover,
+.dark .activities-swiper .swiper-button-prev:hover {
+  background: #60a5fa !important;
+  color: white !important;
+}
+
+/* Animation delays */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.3;
+  }
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.activity-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.activity-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.activity-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .activities-swiper {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+  
+  .activities-swiper .swiper-button-next,
+  .activities-swiper .swiper-button-prev {
+    width: 40px !important;
+    height: 40px !important;
+    margin-top: -20px !important;
+  }
+  
+  .activities-swiper .swiper-button-next:after,
+  .activities-swiper .swiper-button-prev:after {
+    font-size: 14px !important;
+  }
+}
+
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  /* Simplified animations on mobile */
+  .activity-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  .activities-swiper .swiper-button-next:hover,
+  .activities-swiper .swiper-button-prev:hover {
+    transform: scale(1.02) !important;
+  }
+  
+  /* Disable heavy animations on mobile */
+  .activity-card {
+    animation: none !important;
+  }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .activities-swiper .swiper-slide,
+  .activity-card,
+  .activities-swiper .swiper-pagination-bullet,
+  .activities-swiper .swiper-button-next,
+  .activities-swiper .swiper-button-prev {
+    transition: none !important;
+  }
+  
+  .activity-card:hover {
+    transform: none !important;
+  }
+  
+  .activity-card {
+    animation: none !important;
+  }
+}

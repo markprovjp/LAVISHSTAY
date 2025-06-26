@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined" className="shadow-sm">
             <Statistic
               title="Tổng lượt đặt phòng"
               value={0}
@@ -31,7 +31,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined" className="shadow-sm">
             <Statistic
               title="Đã hoàn thành"
               value={0}
@@ -40,7 +40,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined" className="shadow-sm">
             <Statistic title="Yêu thích" value={0} prefix={<HeartOutlined />} />
           </Card>
         </Col>
@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
       <Title level={4} className="mt-8 mb-4">
         Đặt phòng đang chờ
       </Title>
-      <Card bordered={false} className="shadow-sm">
+      <Card variant="outlined" className="shadow-sm">
         <div className="text-center py-8 text-gray-500">
           Bạn chưa có đặt phòng nào. Hãy khám phá các lựa chọn phòng mới ngay
           bây giờ!
@@ -59,7 +59,7 @@ const Dashboard: React.FC = () => {
       <Title level={4} className="mt-8 mb-4">
         Gợi ý cho bạn
       </Title>
-      <Card bordered={false} className="shadow-sm">
+      <Card variant="outlined" className="shadow-sm">
         <div className="text-center py-8 text-gray-500">
           Quay lại sau để xem các gợi ý được cá nhân hóa dành cho bạn.
         </div>

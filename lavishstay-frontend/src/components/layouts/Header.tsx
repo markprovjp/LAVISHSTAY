@@ -7,17 +7,16 @@ import {
   Drawer,
   Dropdown,
   Avatar,
-  Input,
   Badge,
   Space,
   Divider,
   Typography,
   ConfigProvider,
   theme,
+  message,
 } from "antd";
 import {
   UserOutlined,
-  SearchOutlined,
   MenuOutlined,
   BellOutlined,
   HeartOutlined,
@@ -25,18 +24,20 @@ import {
   BookOutlined,
   SettingOutlined,
   HomeOutlined,
-  GlobalOutlined,
   ShoppingOutlined,
-  PhoneOutlined,
 } from "@ant-design/icons";
 import ThemeToggle from "../ui/ThemeToggle";
-import { useSelector } from "react-redux";
+import LanguageSwitcher from "../ui/LanguageSwitcher";
+import RainbowButton from "../ui/RainbowButton";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../store";
+import { logout } from "../../store/slices/authSlice";
+import authService from "../../services/authService";
+import { useTranslation } from "react-i18next";
 import logoLight from "../../assets/images/logo-light.png";
 import logoDark from "../../assets/images/logo-dark.png";
-
+import AuthModal from "../auth/AuthModal";
 const { Header: AntHeader } = Layout;
-const { Search } = Input;
 const { Text } = Typography;
 
 interface HeaderProps {
@@ -45,13 +46,30 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const location = useLocation();
+  const dispatch = useDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { isDarkMode } = useSelector((state: RootState) => state.theme);
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
   const { token } = theme.useToken(); // Lấy token từ theme
+  const { t } = useTranslation();
+
+  // Xử lý đăng xuất
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      dispatch(logout());
+      message.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Vẫn logout trên client side ngay cả khi API có lỗi
+      dispatch(logout());
+      message.success("Đăng xuất thành công!");
+    }
+  };
 
   // Sample notification data
   const notifications = [
@@ -99,18 +117,16 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     transition: "all 0.3s ease",
     backdropFilter: scrolled ? "blur(12px)" : "none",
     borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
-  };
-
-  // Navigation items
+  };  // Navigation items
   const menuItems = [
-    { key: "/", label: "Trang chủ", icon: <HomeOutlined /> },
-    { key: "/destinations", label: "Điểm đến", icon: <GlobalOutlined /> },
-    { key: "/hotels", label: "Khách sạn", icon: <ShoppingOutlined /> },
-    { key: "/about", label: "Về chúng tôi", icon: null },
-    // { key: "/contact", label: "Liên hệ", icon: <PhoneOutlined /> }, 
-  ];
+    { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
 
-  // User menu dropdown
+    { key: "/about", label: "Về chúng tôi", icon: null },
+    // Development only - Auth test page
+    ...(process.env.NODE_ENV === 'development' ? [
+      { key: "/auth-test", label: "🔐 Auth Test", icon: null }
+    ] : []),
+  ];// User menu dropdown
   const userMenu = (
     <Menu
       style={{
@@ -118,26 +134,30 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
         background: token.colorBgContainer,
         boxShadow: token.boxShadowTertiary,
       }}
+      onClick={({ key }) => {
+        if (key === 'logout') {
+          handleLogout();
+        }
+      }}
     >
       <Menu.Item key="profile" icon={<UserOutlined />}>
-        <Link to="/profile">Hồ sơ cá nhân</Link>
+        <Link to="/profile">{t("user.profile")}</Link>
       </Menu.Item>
       <Menu.Item key="bookings" icon={<BookOutlined />}>
-        <Link to="/bookings">Đặt phòng của tôi</Link>
+        <Link to="/bookings">{t("user.bookings")}</Link>
       </Menu.Item>
       <Menu.Item key="wishlist" icon={<HeartOutlined />}>
-        <Link to="/wishlist">Danh sách yêu thích</Link>
+        <Link to="/wishlist">{t("user.wishlist")}</Link>
       </Menu.Item>
       <Menu.Item key="settings" icon={<SettingOutlined />}>
-        <Link to="/settings">Cài đặt</Link>
+        <Link to="/settings">{t("user.settings")}</Link>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="logout" icon={<LogoutOutlined />}>
-        Đăng xuất
+        {t("user.logout")}
       </Menu.Item>
     </Menu>
   );
-
   // Notification dropdown
   const notificationMenu = (
     <Menu
@@ -149,10 +169,10 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       }}
     >
       <div className="px-4 py-2 flex justify-between items-center">
-        <Text strong>Thông báo</Text>
+        <Text strong>{t("user.notifications")}</Text>
         <Link to="/notifications">
           <Text type="secondary" className="text-sm">
-            Xem tất cả
+            {t("user.viewAll")}
           </Text>
         </Link>
       </div>
@@ -188,63 +208,52 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     <ConfigProvider theme={{ token }}>
       <AntHeader
         style={headerStyle}
-        className="flex items-center justify-between px-4 md:px-6 lg:px-8"
+        className="flex items-center justify-between px-4 md:px-6 lg:px-10"
       >
         {/* Logo */}
         <div className="logo flex items-center h-16">
           <Link to="/" className="flex items-center h-full">
+            {" "}
             <img
               src={isDarkMode ? logoDark : logoLight}
               alt="LavishStay"
-              className="h-12 mr-3"
+              className="h-10 mr-3"
             />
           </Link>
-        </div>
-
-        {/* Desktop Menu */}
+        </div>        {/* Desktop Menu */}
         <div className="hidden lg:flex flex-1 justify-center mx-8">
-          <Menu
-            mode="horizontal"
-            selectedKeys={[location.pathname]}
-            items={menuItems.map((item) => ({
-              key: item.key,
-              icon: item.icon,
-              label: (
-                <Link to={item.key}>
-                  <span
-                    style={{
-                      fontFamily: token.fontFamily,
-                      fontWeight: 500,
-                      color:
-                        transparent && !scrolled
-                          ? "#ffffff"
-                          : token.colorTextBase,
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              ),
-            }))}
-            style={{
-              background: "transparent",
-              borderBottom: "none",
-              color:
-                transparent && !scrolled ? "#ffffff" : token.colorTextBase,
-              lineHeight: "64px",
-            }}
-            className="min-w-[400px] flex justify-center"
-          />
-        </div>
-
-        {/* Desktop Right Menu */}
+          <div className="flex items-center space-x-8">
+            {menuItems.map((item) => (
+              <Link
+                key={item.key}
+                to={item.key}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
+                  ? `bg-opacity-20 font-semibold`
+                  : 'font-medium'
+                  }`}
+                style={{
+                  color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+                }}
+              >
+                {item.icon && (
+                  <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                )}
+                <span style={{ fontFamily: token.fontFamily }}>
+                  {item.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>{" "}        {/* Desktop Right Menu */}
         <div className="hidden lg:flex items-center space-x-3">
           {/* Theme Toggle */}
           <ThemeToggle />
-
+          {/* Language Switcher */}
+          <LanguageSwitcher mode="icon-only" />
           {/* Notifications */}
           <Dropdown
             overlay={notificationMenu}
+            
             trigger={["hover"]}
             placement="bottomRight"
           >
@@ -255,18 +264,15 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
             >
               <Button
                 type="text"
-                icon={<BellOutlined style={{ fontSize: 15 }} />}
+                icon={<BellOutlined style={{ fontSize: 18 }} />}
                 style={{
                   color:
-                    transparent && !scrolled
-                      ? "#ffffff"
-                      : token.colorTextBase,
+                    transparent && !scrolled ? "#ffffff" : token.colorTextBase,
                 }}
-                className="hover:bg-opacity-10 rounded-full w-5 h-5 flex items-center justify-center"
+                className="hover:bg-opacity-10 rounded-lg w-10 h-10 flex items-center justify-center"
               />
             </Badge>
           </Dropdown>
-
           {/* User Menu */}
           {isAuthenticated ? (
             <Dropdown
@@ -274,21 +280,18 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
               trigger={["hover"]}
               placement="bottomRight"
             >
-              <Space
-                className="cursor-pointer hover:bg-opacity-10 rounded-full px-2 py-1"
+              <div
+                className="cursor-pointer flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-black hover:bg-opacity-5"
                 style={{
-                  background:
-                    transparent && !scrolled
-                      ? "rgba(255,255,255,0.1)"
-                      : token.colorPrimary + "10",
+                  background: "transparent",
                 }}
               >
                 <Avatar
                   src={user?.avatar}
                   icon={!user?.avatar ? <UserOutlined /> : undefined}
+                  size={32}
                   style={{
                     backgroundColor: token.colorPrimary,
-                    border: `1px solid ${token.colorBorderSecondary}`,
                   }}
                 />
                 <Text
@@ -298,33 +301,26 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                       transparent && !scrolled
                         ? "#ffffff"
                         : token.colorTextBase,
+                    fontWeight: 500,
                   }}
                   className="hidden xl:inline"
                 >
                   {user?.name || "Người dùng"}
                 </Text>
-              </Space>
-            </Dropdown>
-          ) : (
-            <Link to="/login">
-              <Button
-                type="primary"
-                style={{
-                  borderRadius: token.borderRadius,
-                  background: token.colorPrimary,
-                  borderColor: token.colorPrimary,
-                }}
-                className="font-medium"
-              >
-                Đăng nhập
-              </Button>
-            </Link>
+              </div>
+            </Dropdown>) : (
+            <RainbowButton
+              onClick={() => setAuthModalOpen(true)}
+              size="medium"
+            >
+              Đăng nhập
+            </RainbowButton>
           )}
-        </div>
-
+        </div>{" "}
         {/* Mobile Menu Button */}
         <div className="lg:hidden flex items-center space-x-3">
           <ThemeToggle />
+          <LanguageSwitcher mode="icon-only" />
           <Button
             type="text"
             icon={<MenuOutlined style={{ fontSize: "20px" }} />}
@@ -335,7 +331,6 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
             className="hover:bg-opacity-10 rounded-full w-10 h-10 flex items-center justify-center"
           />
         </div>
-
         {/* Mobile Menu Drawer */}
         <Drawer
           title={
@@ -352,8 +347,6 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
             body: { background: token.colorBgBase, padding: "16px" },
           }}
         >
-
-
           <Menu
             mode="vertical"
             selectedKeys={[location.pathname]}
@@ -392,17 +385,30 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                 <div>
                   <Text
                     strong
-                    style={{ color: token.colorTextBase, fontFamily: token.fontFamily }}
+                    style={{
+                      color: token.colorTextBase,
+                      fontFamily: token.fontFamily,
+                    }}
                   >
                     {user?.name || "Người dùng"}
                   </Text>
-                  <Text style={{ color: token.colorTextSecondary }} className="text-xs">
+                  <Text
+                    style={{ color: token.colorTextSecondary }}
+                    className="text-xs"
+                  >
                     {user?.email}
                   </Text>
                 </div>
-              </div>
-
-              <Menu mode="vertical" style={{ border: "none", background: token.colorBgBase }}>
+              </div>              <Menu
+                mode="vertical"
+                style={{ border: "none", background: token.colorBgBase }}
+                onClick={({ key }) => {
+                  if (key === 'logout') {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }
+                }}
+              >
                 <Menu.Item key="profile" icon={<UserOutlined />}>
                   <Link
                     to="/profile"
@@ -434,26 +440,23 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                   Đăng xuất
                 </Menu.Item>
               </Menu>
-            </>
-          ) : (
+            </>) : (
             <div className="space-y-3 px-4">
-              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                <Button
-                  type="primary"
-                  block
-                  style={{
-                    borderRadius: token.borderRadius,
-                    background: token.colorPrimary,
-                    borderColor: token.colorPrimary,
-                  }}
-                >
-                  Đăng nhập
-                </Button>
-              </Link>
+              <RainbowButton
+                onClick={() => {
+                  setAuthModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full"
+                size="medium"
+              >
+                Đăng nhập
+              </RainbowButton>
             </div>
           )}
         </Drawer>
       </AntHeader>
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </ConfigProvider>
   );
 };

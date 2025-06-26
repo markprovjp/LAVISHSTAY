@@ -32,14 +32,23 @@
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col cursor-pointer sm:auto-cols-max justify-start sm:justify-end gap-2">
+<<<<<<< HEAD
+                <button onclick="showComingSoon('Thêm phòng mới')" class="btn bg-violet-500 hover:bg-violet-600 text-white">
+=======
                 <a href="{{ route('admin.rooms.create', $roomType->room_type_id) }}" class="btn bg-violet-500 hover:bg-violet-600 text-white">
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
                     <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="16" height="16">
                         <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                     </svg>
                     <span class="ml-2">Thêm phòng: {{ $roomType->name }}</span>
+<<<<<<< HEAD
+                </button>
+            </div>
+=======
                 </a>
             </div>
 
+>>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
         </div>
 
         <!-- Filters -->

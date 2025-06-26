@@ -18,115 +18,23 @@
                 </div>
             </div>
 
-        </div>
+            <!-- Right: Actions -->
+            <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
 
-        <!-- Rooms Grid -->
-        @if($allrooms->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                @foreach($allrooms as $room)
-                    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-200">
-                        <!-- Room Image -->
-                        <div class="relative h-48 bg-gray-200 dark:bg-gray-700">
-                            @if($room->images && $room->images->count() > 0)
-                                <img src="{{ asset( $room->images->first()->image_url) }}" 
-                                     alt="{{ $room->name }}" 
-                                     class="w-full h-full object-cover">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">>
-                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                            @endif
-                            
-                            <!-- Room Code Badge -->
-                            @if($room->room_code)
-                                <div class="absolute top-3 left-3">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-gray-800 shadow-sm">
-                                        {{ $room->room_code }}
-                                    </span>
-                                </div>
-                            @endif
+                <!-- Filter button -->
+                <x-dropdown-filter align="right" />
 
-                            <!-- Status Badge -->
-                            <div class="absolute top-3 right-3">
-                                @php
-                                    $totalRooms = $room->total_room ?? $room->rooms_count;
-                                    $bookedRooms = $room->active_bookings_count ?? 0;
-                                    $availableRooms = $totalRooms - $bookedRooms;
-                                @endphp
-                                
-                            </div>
-                        </div>
+                <!-- Datepicker built with flatpickr -->
+                <x-datepicker />
 
-                        <!-- Room Info -->
-                        <div class="p-4">
-                            <div class="flex items-start justify-between mb-2">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-                                    {{ $room->name }}
-                                </h3>
-                            </div>
 
-                            @if($room->description)
-                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                                    {{ Str::limit($room->description, 80) }}
-                                </p>
-                            @endif
-
-                            <div class="space-y-2 mb-4">
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
-                                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
-                                    </svg>
-                                    Tổng: {{ $totalRooms }} phòng
-                                </div>
-                                
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Trống: <span class="text-green-600 font-medium ml-1">{{ $availableRooms }}</span>
-                                </div>
-
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
-                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Đã đặt: <span class="text-orange-600 font-medium ml-1">{{ $bookedRooms }}</span>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-end">
-                                <a href="{{ route('admin.rooms.by-type', $room->room_type_id) }}" 
-                                   class="btn bg-violet-500 hover:bg-violet-600 text-white text-sm px-4 py-2">
-                                    Xem chi tiết
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <!-- Pagination -->
-            <div class="mt-8">
-                {{ $allrooms->links() }}
-            </div>
-        @else
-            <!-- Empty State -->
-            <div class="text-center py-12">
-                <svg class="w-24 h-24 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    Chưa có loại phòng nào
-                </h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-6">
-                    Hãy thêm loại phòng đầu tiên để bắt đầu quản lý.
-                </p>
                 
-                <button class="btn bg-violet-500 hover:bg-violet-600 text-white">
-                    <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="20px" height="20px">
-                        <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
+                <!-- Add view button -->
+                <button
+                    class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
+                    <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
+                        <path
+                            d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                     </svg>
                     <span class="ml-2">Thêm loại phòng</span>
                 </button>

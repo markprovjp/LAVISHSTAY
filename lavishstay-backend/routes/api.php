@@ -39,3 +39,6 @@ Route::post('bookings', [BookingController::class, 'store']);
 Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);
 
 Route::get('/rooms/available', [RoomAvailabilityController::class, 'getAvailableRooms']);
+// Route::apiResource('room-options', RoomOptionController::class);
+// Route::post('bookings', [BookingController::class, 'store']);
+// Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);

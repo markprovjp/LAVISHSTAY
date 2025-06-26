@@ -1,15 +1,16 @@
 <x-app-layout>
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-4xl mx-auto">
+    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
         <div class="flex justify-between items-center">
             <div class="mb-8">
-                
+
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Thêm người dùng mới</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tạo tài khoản mới cho hệ thống quản lý khách sạn</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Tạo tài khoản mới cho hệ thống quản lý khách sạn
+                </p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-               
+
                 <a href="{{ route('admin.users') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
@@ -165,23 +166,18 @@
                             Vai trò <span class="text-red-500">*</span>
                         </label>
                         <!-- Thay thế phần select role trong form -->
-                        <select id="role" name="role" required
+                        <select id="role_id" name="role_id" required
                             class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                             <option value="">Chọn vai trò</option>
-                            <option value="guest" {{ old('role') == 'guest' ? 'selected' : '' }}>
-                                Khách
-                            </option>
-                            <option value="receptionist" {{ old('role') == 'receptionist' ? 'selected' : '' }}>
-                                Lễ tân
-                            </option>
-                            <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>
-                                Quản lý
-                            </option>
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
-                                Quản trị viên
-                            </option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role->id }}"
+                                    {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                    {{ \App\Models\Role::getRoleLabel($role->name) }}
+                                </option>
+                            @endforeach
                         </select>
-                      
+
+
                     </div>
 
                     <!-- Địa chỉ -->
@@ -255,16 +251,15 @@
                     </div>
 
                     <!-- Ghi chú mật khẩu -->
-                    
-                   <div></div>
-                    <!-- Action Buttons -->
-                    <div
-                        class="flex items-center justify-end space-x-4 mt-8 pt-6 ">
 
-                            <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
-                                <i class="fas fa-plus mr-2"></i> Tạo người dùng
-                            </button>
-                        
+                    <div></div>
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end space-x-4 mt-8 pt-6 ">
+
+                        <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                            <i class="fas fa-plus mr-2"></i> Tạo người dùng
+                        </button>
+
                     </div>
             </form>
         </div>

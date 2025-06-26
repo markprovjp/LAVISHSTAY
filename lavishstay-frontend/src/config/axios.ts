@@ -3,7 +3,8 @@ import env from './env';
 
 // Tạo một instance axios với cấu hình mặc định
 const axiosInstance = axios.create({
-  baseURL: env.API_URL,
+  // Trong development mode, Mirage sẽ intercept requests tại '/api'
+  baseURL: env.APP_ENV === 'development' ? '/api' : env.API_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
