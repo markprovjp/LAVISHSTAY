@@ -99,10 +99,8 @@ export const useSearch = () => {
 
     const clearError = useCallback(() => {
         dispatch(resetError());
-    }, [dispatch]);
-
-    // Search functions with API integration
-    const performSearch = useCallback(async (page = 1, perPage = 20) => {
+    }, [dispatch]);    // Search functions with backend API integration
+    const performSearch = useCallback(async () => {
         try {
             dispatch(setLoading(true));
             dispatch(resetError());
@@ -111,8 +109,12 @@ export const useSearch = () => {
             const validationErrors = validateSearchData(searchData);
             if (validationErrors.length > 0) {
                 throw new Error(validationErrors.join(', '));
-            }            // Perform search
-            const results = await searchService.searchRooms(searchData, page, perPage);
+            }
+
+            console.log('🔍 Search data being sent to backend:', searchData);
+
+            // Use backend API directly with current search data format
+            const results = await searchService.searchRooms(searchData);
 
             dispatch(setLoading(false));
             return results;
@@ -121,47 +123,50 @@ export const useSearch = () => {
             dispatch(setLoading(false));
             throw error;
         }
-    }, [searchData, dispatch]); const checkRoomAvailability = useCallback(async (roomId: string) => {
-        try {
-            dispatch(setLoading(true));
-
-            if (!searchData.dateRange) {
-                throw new Error('Date range is required');
-            }
-
-            const [checkIn, checkOut] = searchData.dateRange;
-            // Convert Dayjs objects to strings for the API call
-            const availability = await searchService.checkAvailability(
-                roomId,
-                checkIn.format('YYYY-MM-DD'),
-                checkOut.format('YYYY-MM-DD')
-            );
-            dispatch(setLoading(false));
-            return availability;
-        } catch (error: any) {
-            dispatch(setError(error.message));
-            dispatch(setLoading(false));
-            throw error;
-        }
     }, [searchData, dispatch]);
 
-    const getSearchSuggestions = useCallback(async (query: string) => {
-        try {
-            return await searchService.getSearchSuggestions(query);
-        } catch (error: any) {
-            console.warn('Could not get search suggestions:', error);
-            return [];
-        }
-    }, []);
+    // TODO: Implement these features with backend API later
+    // const checkRoomAvailability = useCallback(async (roomId: string) => {
+    //     try {
+    //         dispatch(setLoading(true));
 
-    const getSearchHistory = useCallback(async () => {
-        try {
-            return await searchService.getSearchHistory();
-        } catch (error: any) {
-            console.warn('Could not get search history:', error);
-            return [];
-        }
-    }, []);
+    //         if (!searchData.dateRange) {
+    //             throw new Error('Date range is required');
+    //         }
+
+    //         const [checkIn, checkOut] = searchData.dateRange;
+    //         // Convert Dayjs objects to strings for the API call
+    //         const availability = await searchService.checkAvailability(
+    //             roomId,
+    //             checkIn.format('YYYY-MM-DD'),
+    //             checkOut.format('YYYY-MM-DD')
+    //         );
+    //         dispatch(setLoading(false));
+    //         return availability;
+    //     } catch (error: any) {
+    //         dispatch(setError(error.message));
+    //         dispatch(setLoading(false));
+    //         throw error;
+    //     }
+    // }, [searchData, dispatch]);
+
+    // const getSearchSuggestions = useCallback(async (query: string) => {
+    //     try {
+    //         return await searchService.getSearchSuggestions(query);
+    //     } catch (error: any) {
+    //         console.warn('Could not get search suggestions:', error);
+    //         return [];
+    //     }
+    // }, []);
+
+    // const getSearchHistory = useCallback(async () => {
+    //     try {
+    //         return await searchService.getSearchHistory();
+    //     } catch (error: any) {
+    //         console.warn('Could not get search history:', error);
+    //         return [];
+    //     }
+    // }, []);
 
     // Helper functions
     const formatGuestSelection = useCallback(() => {
@@ -200,7 +205,7 @@ export const useSearch = () => {
             newDetails[type] > (type === "adults" ? 1 : 0)
         ) {
             newDetails[type] -= 1;
-        }        dispatch(updateGuestDetails(newDetails));
+        } dispatch(updateGuestDetails(newDetails));
     }, [searchData.guestDetails, dispatch]);
 
     // Update child age
@@ -225,13 +230,12 @@ export const useSearch = () => {
         clearSearch,
         clearError,
         handleGuestCountChange,
-        updateChildAgeHandler,
-
-        // API functions
+        updateChildAgeHandler,        // API functions
         performSearch,
-        checkRoomAvailability,
-        getSearchSuggestions,
-        getSearchHistory,
+        // TODO: Implement these features with backend API later
+        // checkRoomAvailability,
+        // getSearchSuggestions,
+        // getSearchHistory,
 
         // Helpers
         formatGuestSelection,

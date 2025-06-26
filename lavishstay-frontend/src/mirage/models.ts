@@ -2,6 +2,17 @@
 
 import { RoomOption } from './roomoption';
 
+// Interface cho Amenity dựa theo backend model
+export interface Amenity {
+    id: number;
+    name: string;
+    description?: string;
+    icon?: string;
+    category: string;
+    is_active: boolean;
+    is_highlighted?: boolean; // Từ pivot table room_type_amenities
+}
+
 export interface Room {
     id: number;
     room_code: string; // Mã phòng, có thể để trống nếu không cần thiết

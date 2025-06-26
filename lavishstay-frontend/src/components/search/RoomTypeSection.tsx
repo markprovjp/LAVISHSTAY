@@ -2,8 +2,8 @@ import React from 'react';
 import { Space, Typography } from 'antd';
 import { useSelector } from 'react-redux';
 import RoomCard from './RoomCard';
-import { Room } from '../../mirage/models';
 import { selectBookingState } from '../../store/slices/bookingSlice';
+import { Room } from '../../types/room';
 
 const { Title } = Typography;
 

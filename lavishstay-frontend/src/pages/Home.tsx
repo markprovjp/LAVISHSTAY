@@ -112,34 +112,29 @@ const Home: React.FC = () => {
               <Spin size="large" tip="Đang tải loại phòng..." />
             </div>
           ) : roomTypesData?.data?.length ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {roomTypesData.data.map((roomType: any) => (
-              <RoomTypeCard
-                key={roomType.id}
-                id={roomType.id}
-                name={roomType.name}
-                description={roomType.description}
-                base_price_vnd={roomType.base_price}
-                base_price={roomType.base_price}
-                min_price={roomType.min_price}
-                max_price={roomType.max_price}
-                avg_price={roomType.avg_price}
-                lavish_plus_discount={roomType.lavish_plus_discount}
-                room_code={roomType.room_code}
-                size={roomType.size}
-                avg_size={roomType.avg_size}
-                view={roomType.view}
-                common_views={roomType.common_views}
-                bedType={roomType.bed_type}
-                maxGuests={roomType.max_guests}
-                mainAmenities={roomType.main_amenities || []}
-                image={roomType.image}
-                images={roomType.images}
-                rating={roomType.rating}
-                avg_rating={roomType.avg_rating}
-                rooms_count={roomType.rooms_count}
-                available_rooms_count={roomType.available_rooms_count}
-                available_floors={roomType.available_floors}
-              />
+            {roomTypesData.data.map((roomType: any) => (<RoomTypeCard
+              key={roomType.id}
+              id={roomType.id}
+              name={roomType.name}
+              base_price={roomType.base_price}
+              avg_price={roomType.avg_price}
+              lavish_plus_discount={roomType.lavish_plus_discount}
+              room_code={roomType.room_code}
+              size={roomType.size}
+              avg_size={roomType.avg_size}
+              view={roomType.view}
+              common_views={roomType.common_views}
+              maxGuests={roomType.max_guests}
+              amenities={roomType.amenities || []}
+              highlighted_amenities={roomType.highlighted_amenities || []}
+              mainAmenities={roomType.main_amenities || []}
+              image={roomType.image}
+              images={roomType.images}
+              rating={roomType.rating}
+              avg_rating={roomType.avg_rating}
+              rooms_count={roomType.rooms_count}
+              available_rooms_count={roomType.available_rooms_count}
+            />
             ))}
           </div>
           ) : (

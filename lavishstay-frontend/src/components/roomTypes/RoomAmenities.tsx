@@ -5,12 +5,19 @@ import {
     UpOutlined,
     HeartOutlined,
 } from "@ant-design/icons";
-import { AmenityUtils } from "../../constants/amenities";
 
 const { Title } = Typography;
 
+interface Amenity {
+    id: number;
+    name: string;
+    icon: string;
+    category: string;
+    description?: string;
+}
+
 interface AmenitiesProps {
-    amenities: string[];
+    amenities: Amenity[];
 }
 
 const RoomAmenities: React.FC<AmenitiesProps> = ({ amenities }) => {
@@ -18,7 +25,6 @@ const RoomAmenities: React.FC<AmenitiesProps> = ({ amenities }) => {
 
     // Limit amenities shown initially
     const displayAmenities = showAllAmenities ? amenities : amenities.slice(0, 12);
-    const formattedAmenities = AmenityUtils.formatAmenitiesForDisplay(displayAmenities);
 
     return (
         <Card className="shadow-sm rounded-lg border-0">
@@ -32,8 +38,8 @@ const RoomAmenities: React.FC<AmenitiesProps> = ({ amenities }) => {
             </div>
 
             <Row gutter={[16, 16]}>
-                {formattedAmenities.map((amenity) => (
-                    <Col xs={24} sm={12} md={8} lg={12} xl={8} key={amenity.key}>
+                {displayAmenities.map((amenity) => (
+                    <Col xs={24} sm={12} md={8} lg={12} xl={8} key={amenity.id}>
                         <div className="flex items-center p-3 rounded-lg bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200 cursor-default">
                             <div className="text-2xl mr-3 flex-shrink-0">
                                 {amenity.icon}

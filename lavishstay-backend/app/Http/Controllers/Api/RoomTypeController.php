@@ -116,6 +116,11 @@ class RoomTypeController extends Controller
                     // Continue without room data if error
                 }
 
+                // Get amenities for this room type
+                $allAmenities = [];
+                $highlightedAmenities = [];
+                $this->getAmenitiesForRoomType($roomType->room_type_id, $allAmenities, $highlightedAmenities);
+
                 return [
                     'id' => $roomType->room_type_id,
                     'room_code' => $roomType->room_code,
@@ -135,6 +140,8 @@ class RoomTypeController extends Controller
                     'max_guests' => $maxGuests,
                     'common_views' => array_values($commonViews),
                     'available_floors' => array_values($floors),
+                    'amenities' => $allAmenities,
+                    'highlighted_amenities' => $highlightedAmenities,
                     'rooms_count' => $totalRoomsCount,
                     'available_rooms_count' => $availableRoomsCount,
                     'created_at' => $roomType->created_at,
@@ -267,6 +274,12 @@ class RoomTypeController extends Controller
                 error_log("Error fetching rooms: " . $e->getMessage());
             }
 
+            // Get amenities based on room type ID
+            $allAmenities = [];
+            $highlightedAmenities = [];
+            
+            $this->getAmenitiesForRoomType($roomType->room_type_id, $allAmenities, $highlightedAmenities);
+
             $data = [
                 'id' => $roomType->room_type_id,
                 'room_code' => $roomType->room_code,
@@ -286,8 +299,8 @@ class RoomTypeController extends Controller
                 'max_guests' => $maxGuests,
                 'common_views' => array_values($commonViews),
                 'available_floors' => array_values($floors),
-                'amenities' => [],
-                'highlighted_amenities' => [],
+                'amenities' => $allAmenities,
+                'highlighted_amenities' => $highlightedAmenities,
                 // Summary statistics only - no individual room details
                 'rooms_count' => $totalRoomsCount,
                 'available_rooms_count' => $availableRoomsCount,
@@ -421,6 +434,59 @@ class RoomTypeController extends Controller
                 'message' => 'Có lỗi xảy ra khi xóa loại phòng',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Get amenities for specific room type based on room type ID
+     */
+    private function getAmenitiesForRoomType($roomTypeId, &$allAmenities, &$highlightedAmenities)
+    {
+        try {
+            // Get all amenities for this room type from database
+            $roomTypeAmenities = \DB::table('room_type_amenity as rta')
+                ->join('amenities as a', 'rta.amenity_id', '=', 'a.amenity_id')
+                ->where('rta.room_type_id', $roomTypeId)
+                ->where('a.is_active', 1)
+                ->select('a.*', 'rta.is_highlighted')
+                ->get();
+
+            $allAmenities = [];
+            $highlightedAmenities = [];
+
+            foreach ($roomTypeAmenities as $amenity) {
+                $amenityData = [
+                    'id' => $amenity->amenity_id,
+                    'name' => trim($amenity->name),
+                    'icon' => $amenity->icon ?: '🏨',
+                    'category' => $amenity->category ?: 'general',
+                    'description' => $amenity->description
+                ];
+
+                $allAmenities[] = $amenityData;
+
+                if ($amenity->is_highlighted) {
+                    $highlightedAmenities[] = $amenityData;
+                }
+            }
+
+            // If no amenities found in database, fallback to basic default amenities
+            if (empty($allAmenities)) {
+                $allAmenities = [
+                    ['id' => 0, 'name' => 'WiFi miễn phí', 'icon' => '�', 'category' => 'basic'],
+                    ['id' => 0, 'name' => 'Điều hòa không khí', 'icon' => '❄️', 'category' => 'basic'],
+                ];
+                $highlightedAmenities = $allAmenities;
+            }
+
+        } catch (\Exception $e) {
+            // Fallback in case of database error
+            $allAmenities = [
+                ['id' => 0, 'name' => 'WiFi miễn phí', 'icon' => '📶', 'category' => 'basic'],
+                ['id' => 0, 'name' => 'Điều hòa không khí', 'icon' => '❄️', 'category' => 'basic'],
+            ];
+            $highlightedAmenities = $allAmenities;
+            error_log("Error getting amenities for room type {$roomTypeId}: " . $e->getMessage());
         }
     }
 }
