@@ -3,60 +3,64 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Role;
 use App\Models\Permission;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class RolePermissionController extends Controller
 {
-    public function index(Request $request)
-{
-    $roles = Role::all();
-    $permissions = Permission::all();
+    public function index($roleId)
+    {
+        $role = Role::findOrFail($roleId);
+        $permissions = Permission::all();
+        $rolePermissionIds = $role->permissions()->pluck('permissions.id')->toArray();
 
-    $rolePermissionsMap = [];
-    foreach ($roles as $role) {
-        $rolePermissionsMap[$role->id] = $role->permissions->pluck('id')->toArray();
+        return view('admin.roles.permissions.index', compact('role', 'permissions', 'rolePermissionIds'));
     }
 
-    return view('admin.roles.index', [
-        'roles' => $roles,
-        'permissions' => $permissions,
-        'rolePermissionsMap' => $rolePermissionsMap,
-    ]);
-}
+    public function update(Request $request, $roleId)
+    {
+        $role = Role::findOrFail($roleId);
+        $selected = $request->input('permissions', []); // Quyền được chọn từ UI
 
-public function add(Request $request, $id)
-{
-    $role = Role::findOrFail($id);
+        // Lấy toàn bộ quyền cha đệ quy để lưu cùng quyền con
+        $allPermissionIds = array_unique(array_merge($selected, $this->getAllParentPermissions($selected)));
 
-    $request->validate([
-        'permissions' => 'required|array',
-        'permissions.*' => 'exists:permissions,id',
-    ]);
+        // Nếu không có thay đổi gì thì không cập nhật
+        $currentPermissions = $role->permissions()->pluck('permissions.id')->toArray();
+        sort($currentPermissions);
+        sort($allPermissionIds);
 
-    $role->permissions()->syncWithoutDetaching($request->permissions);
+        if ($currentPermissions === $allPermissionIds) {
+            return redirect()->back()->with('error', 'Không có thay đổi nào để cập nhật!');
+        }
 
-    return redirect()->route('admin.roles', ['role_id' => $id])
-        ->with('success', 'Thêm quyền thành công.')
-        ->withInput(['selectedRoleId' => $id]);
-}
+        try {
+            $role->permissions()->sync($allPermissionIds);
+            return redirect()->back()->with('success', 'Cập nhật quyền thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Đã xảy ra lỗi khi cập nhật quyền!');
+        }
+    }
 
-public function remove(Request $request, $id)
-{
-    $role = Role::findOrFail($id);
+    // Lấy tất cả quyền cha đệ quy từ danh sách quyền con được chọn
+    private function getAllParentPermissions(array $permissionIds): array
+    {
+        $all = [];
 
-    $request->validate([
-        'permissions' => 'array',
-        'permissions.*' => 'exists:permissions,id',
-    ]);
+        foreach ($permissionIds as $id) {
+            $permission = Permission::find($id);
+            while ($permission && $permission->parent_id) {
+                $parentId = $permission->parent_id;
+                if (!in_array($parentId, $all)) {
+                    $all[] = $parentId;
+                    $permission = Permission::find($parentId);
+                } else {
+                    break; // Tránh vòng lặp vô hạn
+                }
+            }
+        }
 
-    $role->permissions()->detach($request->permissions);
-
-    return redirect()->route('admin.roles', ['role_id' => $id])
-        ->with('success', 'Xoá quyền thành công.')
-        ->withInput(['selectedRoleId' => $id]);
-}
-
+        return $all;
+    }
 }

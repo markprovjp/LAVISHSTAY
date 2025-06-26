@@ -72,6 +72,9 @@
                                         Phone</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Số CCCD / Hộ chiếu</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Role</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -123,6 +126,11 @@
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                             {{ $user->phone ?: 'Not provided' }}
+                                        </td>
+                                        <!-- Identity Code -->
+                                         <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                            {{ $user->identity_code ?: 'Not provided' }}
                                         </td>
 
                                         <!-- Role -->
@@ -342,7 +350,8 @@
                             <span class="text-4xl text-gray-400">👥</span>
                         </div>
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No customers found</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-6">Get started by creating the first customer in the
+                        <p class="text-gray-500 dark:text-gray-400 mb-6">Get started by creating the first customer in
+                            the
                             system.</p>
                         <a href="{{ route('admin.customers.create') }}"
                             class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-violet-600 hover:bg-violet-700 transition-colors duration-200">

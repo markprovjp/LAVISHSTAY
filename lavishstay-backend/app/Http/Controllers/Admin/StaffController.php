@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Role;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\Mail;
 
 class StaffController extends Controller
 {
@@ -22,7 +25,8 @@ class StaffController extends Controller
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('roles')->findOrFail($id);
+        // dd($user);
         return view('admin.staffs.show', compact('user'));
     }
 
@@ -38,7 +42,8 @@ class StaffController extends Controller
         // Validate
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'identity_code' => 'required|string|max:50|unique:users,identity_code', // chỉ để 1 dòng
             'password' => [
                 'required',
                 'string',
@@ -53,6 +58,7 @@ class StaffController extends Controller
         ], [
             'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
         ]);
+
 
         // Bảo vệ: không cho chọn vai trò không hợp lệ (guest)
         $role = Role::findOrFail($request->role_id);
@@ -77,6 +83,7 @@ class StaffController extends Controller
 
         // Gán role nhân viên
         $user->roles()->attach($role->id);
+        // dd($user);
 
         return redirect()->route('admin.staffs')->with('success', 'Nhân viên đã được tạo thành công!');
     }
@@ -106,12 +113,13 @@ class StaffController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'identity_code' => 'required|string|max:50|unique:users,identity_code,' . $user->id,
             'password' => [
                 'nullable',
                 'string',
                 'min:6',
                 'confirmed',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/'
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
             ],
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
@@ -121,20 +129,20 @@ class StaffController extends Controller
             'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
         ]);
 
-        // Lấy role và đảm bảo chỉ thuộc vai trò nhân viên
+        // Kiểm tra vai trò
         $role = Role::findOrFail($validated['role_id']);
         if (!in_array($role->name, ['admin', 'manager', 'receptionist'])) {
             abort(403, 'Vai trò không hợp lệ cho nhân viên');
         }
 
-        // Mã hóa mật khẩu nếu có
+        // Hash password nếu có nhập
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
         }
 
-        // Xử lý ảnh nếu có
+        // Xử lý ảnh
         if ($request->hasFile('profile_photo') && $request->file('profile_photo')->isValid()) {
             $validated['profile_photo_path'] = $request->file('profile_photo')->storePublicly(
                 'profile-photos',
@@ -142,48 +150,42 @@ class StaffController extends Controller
             );
         }
 
-        // Cập nhật user
+        // Cập nhật
         $user->update($validated);
 
-        // Đồng bộ vai trò
+        // Gán lại vai trò
         $user->roles()->sync([$role->id]);
 
         return redirect()->route('admin.staffs')->with('success', 'Nhân viên đã được cập nhật thành công!');
     }
 
 
-     public function changePassword(Request $request, $id)
+    public function resetPassword($id)
     {
         $user = User::findOrFail($id);
 
-        $request->validate([
-            'current_password' => ['required', 'string'],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
-            ],
-        ], [
-            'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
-        ]);
-
-        // Kiểm tra mật khẩu hiện tại
-        if (!Hash::check($request->current_password, $user->password)) {
-            return redirect()->back()->with('error', 'Mật khẩu hiện tại không chính xác.');
+        // Kiểm tra nếu không có email
+        if (empty($user->email)) {
+            return redirect()->back()->with('error', 'Tài khoản chưa được đăng ký bằng email. Vui lòng thêm email trước khi reset mật khẩu.');
         }
 
-        // Cập nhật mật khẩu mới
+        // Sinh mật khẩu ngẫu nhiên
+        $newPassword = Str::random(10);
+
+        // Cập nhật mật khẩu và yêu cầu đổi sau khi đăng nhập
         $user->update([
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($newPassword),
+            'must_change_password' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Mật khẩu đã được thay đổi thành công.');
+        // Gửi mật khẩu mới qua email
+        Mail::to($user->email)->send(new ResetPasswordMail($newPassword));
+
+        return redirect()->back()->with('success', 'Mật khẩu đã được reset và gửi về email của nhân viên.');
     }
 
 
-     public function destroy($id)
+    public function destroy($id)
     {
         $user = User::findOrFail($id);
 

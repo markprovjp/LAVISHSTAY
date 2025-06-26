@@ -3,27 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-<<<<<<< HEAD
-
-class RoomOption extends Model
-{
-    protected $table = 'room_option';
-    protected $primaryKey = 'option_id';
-    public $incrementing = false;
-    protected $keyType = 'string';
-    
-    protected $fillable = [
-        'option_id',
-        'room_id',
-        'name',
-        'price_per_night_vnd',
-        'max_guests',
-        'min_guests',
-        'cancellation_policy_type',
-        'payment_policy_type',
-        'most_popular',
-        'recommended'
-=======
 trait HasTranslations
 {
     public function getTranslatedAttribute($column, $lang)
@@ -46,7 +25,6 @@ class RoomOption extends Model
         'cancellation_policy_type', 'cancellation_penalty', 'cancellation_description',
         'free_until', 'payment_policy_type', 'payment_description', 'urgency_message',
         'most_popular', 'recommended', 'meal_id', 'bed_option_id', 'deposit_percentage'
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     ];
 
     protected $casts = [
@@ -55,8 +33,6 @@ class RoomOption extends Model
         'recommended' => 'boolean',
     ];
 
-<<<<<<< HEAD
-=======
 
 
     public function translations()
@@ -66,7 +42,6 @@ class RoomOption extends Model
     }
 
 
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
     public function room()
     {
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
@@ -81,8 +56,6 @@ class RoomOption extends Model
     {
         return $this->hasMany(Booking::class, 'option_id', 'option_id');
     }
-<<<<<<< HEAD
-=======
     public function promotions()
     {
         return $this->hasMany(RoomOptionPromotion::class, 'option_id');
@@ -96,5 +69,4 @@ class RoomOption extends Model
     {
         return $this->belongsTo(RoomBedOption::class, 'bed_option_id');
     }
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc
 }

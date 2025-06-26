@@ -139,6 +139,7 @@
                     </li>
 
                     {{-- User --}}
+                    @if(Auth::user()?->hasPermission('quan_ly_nhan_vien') || Auth::user()?->hasPermission('quan_ly_khach_hang'))
                     <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['users', 'staffs', 'customers']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -172,6 +173,7 @@
                                             class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">User</span>
                                     </a>
                                 </li>
+                                @if(Auth::user()?->hasPermission('quan_ly_nhan_vien'))
                                 <li class="mb-1 last:mb-0">
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate @if (Route::is('admin.staffs')) {{ 'text-violet-500!' }} @endif"
                                         href="{{ route('admin.staffs') }}">
@@ -179,6 +181,8 @@
                                             class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Staff</span>
                                     </a>
                                 </li>
+                                @endif
+                                @if(Auth::user()?->hasPermission('quan_ly_khach_hang'))
                                 <li class="mb-1 last:mb-0">
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate @if (Route::is('admin.customers')) {{ 'text-violet-500!' }} @endif"
                                         href="{{ route('admin.customers') }}">
@@ -187,10 +191,13 @@
                                             Customer</span>
                                     </a>
                                 </li>
+                                @endif
                             </ul>
                         </div>
                     </li>
+                    @endif
 
+                    {{-- Room --}}
                     {{-- Booking --}}
                     <li
                         class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['bookings'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">

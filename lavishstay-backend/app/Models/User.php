@@ -23,6 +23,7 @@ class User extends Authenticatable
         'address',
         'current_team_id',
         'profile_photo_path',
+        'identity_code',
     ];
 
     protected $hidden = [
