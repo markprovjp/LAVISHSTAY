@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\FAQController;
+use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
 
 use Illuminate\Http\Request;
@@ -36,3 +37,5 @@ Route::apiResource('faqs', FAQController::class);
 Route::apiResource('room-options', RoomOptionController::class);
 Route::post('bookings', [BookingController::class, 'store']);
 Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);
+
+Route::get('/rooms/available', [RoomAvailabilityController::class, 'getAvailableRooms']);

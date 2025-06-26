@@ -1,14 +1,14 @@
 // Export tất cả các cấu hình từ một file duy nhất
 import env from './env';
 import axiosInstance from './axios';
-import theme, { createTheme } from './theme';
+import theme from './theme';
 import * as constants from './constants';
 
 export {
   env,
   axiosInstance,
   theme,
-  createTheme,
+  
   constants,
 };
 
@@ -16,6 +16,6 @@ export default {
   env,
   axiosInstance,
   theme,
-  createTheme,
+  
   constants,
 };

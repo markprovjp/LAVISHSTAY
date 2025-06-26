@@ -13,11 +13,16 @@ const breadcrumbNameMap: Record<string, string> = {
   '/about': 'Về chúng tôi',
   '/contact': 'Liên hệ',
   '/destinations': 'Điểm đến',
-  '/login': 'Đăng nhập',
   '/register': 'Đăng ký',
   '/notifications': 'Thông báo',
-
-  '/payment': 'Thanh toán',
+  // Reception routes
+  '/reception': 'Lễ tân',
+  '/reception/dashboard': 'Tổng quan',
+  '/reception/room-booking': 'Đặt phòng dùm khách',
+  '/reception/room-management': 'Quản lý phòng',
+  '/reception/room-management/check-in': 'Quản lý Check-in',
+  '/reception/room-management/check-out': 'Quản lý Check-out',
+  '/reception/room-management/maintenance': 'Quản lý bảo trì',
   // Add other routes here
 };
 
@@ -38,9 +43,9 @@ const Breadcrumb: React.FC = () => {
         name = breadcrumbNameMap[genericUrl];
       } else if (isDynamic) {
         // Fallback for dynamic segments not explicitly mapped
-        name = pathSnippets[index-1] ? breadcrumbNameMap[`/${pathSnippets[index-1]}`] + ' Chi tiết' : 'Chi tiết';
+        name = pathSnippets[index - 1] ? breadcrumbNameMap[`/${pathSnippets[index - 1]}`] + ' Chi tiết' : 'Chi tiết';
       }
-       else {
+      else {
         name = pathSnippets[index].charAt(0).toUpperCase() + pathSnippets[index].slice(1);
       }
     }
@@ -65,9 +70,9 @@ const Breadcrumb: React.FC = () => {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800 py-3 px-4 md:px-8 shadow-sm">
-        <div className="container mx-auto">
-            <AntBreadcrumb items={breadcrumbItems} className="font-bevietnam" />
-        </div>
+      <div className="container mx-auto">
+        <AntBreadcrumb items={breadcrumbItems} className="font-bevietnam" />
+      </div>
     </div>
   );
 };

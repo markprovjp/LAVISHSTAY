@@ -6,10 +6,12 @@
             <div class="sm:flex sm:justify-between sm:items-center">
                 <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl md:text-4xl text-white font-bold flex items-center gap-3">
+                        <span class="icon-bounce">🏨</span>
                         Yêu cầu trả phòng sớm/muộn
                     </h1>
                     <p class="text-gray-300 text-lg mt-2">Quản lý các yêu cầu thay đổi thời gian trả phòng</p>
                 </div>
+
                 <div class="flex items-center sm:auto-cols-max gap-2">
                     <!-- Bộ lọc bên ngoài -->
                     <div class=" flex justify-end">
@@ -31,6 +33,7 @@
                     </div>
                     <a href="{{ route('admin.check_out_requests.create') }}" class="btn-enhanced btn bg-violet-500 hover:bg-violet-600 text-white px-3 py-2 font-semibold flex items-center gap-2">
                         <svg class="w-5 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                         Thêm Yêu cầu
@@ -41,6 +44,7 @@
 
         <!-- Success/Error Messages với enhanced styling -->
         @if (session('success'))
+
         <div id="notification" class="transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md">
             <div class="flex items-center justify-center w-8 h-8 text-green-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,6 +61,7 @@
                 </svg>
             </button>
         </div>
+
         @endif
         @if ($errors->any())
             <div class="mb-4 p-4 bg-gradient-to-r from-red-100 to-pink-100 text-red-700 rounded-xl border-l-4 border-red-500 shadow-lg fade-in">
@@ -72,6 +77,7 @@
                 </div>
             </div>
         @endif
+
 
         <!-- Thống kê -->
         <div class="flex flex-wrap gap-4 mb-6">
@@ -137,6 +143,7 @@
         <!-- Table với enhanced styling -->
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-xl dark:border-gray-700 overflow-hidden card-hover fade-in">
             <!-- Table Header -->
+
             <div class="table-header-gradient px-6 py-4">
                 <h3 class="text-xl font-semibold text-white flex items-center gap-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,16 +207,20 @@
                             </th>
                         </tr>
                     </thead>
+
                     <tbody class="text-sm divide-y divide-gray-100 dark:divide-gray-700" id="requestTableBody">
                         @forelse ($requests as $request)
                             <tr class="table-row {{ $request->status === 'rejected' ? 'bg-red-600' : '' }}" data-status="{{ $request->status }}" data-type="{{ $request->type }}">
+
                                 <td class="px-6 py-4">
                                     <div class="font-semibold text-gray-900 dark:text-gray-100 {{ $request->status === 'rejected' ? 'text-white' : '' }}">{{ $request->booking_id }}</div>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
                                         {{ $request->type === 'early' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}
+
                                         {{ $request->status === 'rejected' ? 'bg-gray-500 text-white' : '' }}">
+
                                         <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.414L11 9.586V6z" clip-rule="evenodd"></path>
                                         </svg>
@@ -268,6 +279,7 @@
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                                         </svg>
+
                                     </div>
                                     <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Không có yêu cầu nào</h3>
                                     <p class="text-gray-500 dark:text-gray-400">Chưa có yêu cầu trả phòng sớm/muộn nào được tạo.</p>
@@ -315,6 +327,7 @@
                 });
             });
 
+
             // Handle filter dropdown
             const filterButton = document.getElementById('filterButton');
             const filterDropdown = document.getElementById('filterDropdown');
@@ -356,6 +369,7 @@
                     }
                 });
             }
+
         });
     </script>
 
@@ -381,6 +395,7 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+
 
         /* Đảm bảo dropdown đè lên danh sách */
         #filterDropdown {
@@ -409,4 +424,5 @@
             }, 300);
         }
     </script>
+
 </x-app-layout>

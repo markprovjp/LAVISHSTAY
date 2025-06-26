@@ -283,7 +283,7 @@
             </div>
 
             <!-- Pagination -->
-            <div class="mt-8">
+            <div class="mt-8 p-6">
                 {{ $rooms->links() }}
             </div>
         @else
