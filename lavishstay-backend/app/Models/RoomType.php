@@ -26,9 +26,22 @@ class RoomType extends Model
         'room_code',
         'name',
         'description',
-        'total_room'
+        'total_room',
+        'base_price',
+        'room_area',
+        'view',
+        'rating',
+        'max_guests'
     ];
 
+
+    protected $casts = [
+        'total_room' => 'integer',
+        'base_price' => 'decimal:2',
+        'room_area' => 'integer',
+        'rating' => 'integer',
+        'max_guests' => 'integer'
+    ];
 
     public function translations()
     {
@@ -96,4 +109,174 @@ class RoomType extends Model
             'room_id'
         );
     }
+
+
+    /**
+     * Flexible pricing rules
+     */
+    public function flexiblePricingRules()
+    {
+        return $this->hasMany(FlexiblePricingRule::class, 'room_type_id', 'room_type_id');
+    }
+
+
+    /**
+     * Packages relationship
+     */
+    public function packages()
+    {
+        return $this->hasMany(RoomTypePackage::class, 'room_type_id', 'room_type_id');
+    }
+    
+
+    /**
+     * Get total available rooms count
+     */
+    public function getAvailableRoomsCountAttribute()
+    {
+        return $this->availableRooms()->count();
+    }
+
+    /**
+     * Get occupancy rate
+     */
+    public function getOccupancyRateAttribute()
+    {
+        $totalRooms = $this->total_room;
+        $occupiedRooms = $this->rooms()->where('status', Room::STATUS_OCCUPIED)->count();
+        
+        return $totalRooms > 0 ? ($occupiedRooms / $totalRooms) * 100 : 0;
+    }
+
+    /**
+     * Scope for room types with available rooms
+     */
+    public function scopeWithAvailableRooms($query)
+    {
+        return $query->whereHas('rooms', function($q) {
+            $q->where('status', Room::STATUS_AVAILABLE);
+        });
+    }
+
+    /**
+     * Scope for room types by price range
+     */
+    public function scopeByPriceRange($query, $minPrice, $maxPrice)
+    {
+        return $query->whereBetween('base_price', [$minPrice, $maxPrice]);
+    }
+
+    /**
+     * Scope for room types by guest capacity
+     */
+    public function scopeByGuestCapacity($query, $guests)
+    {
+        return $query->where('max_guests', '>=', $guests);
+    }
+
+    /**
+     * Services relationship
+     */
+    public function services()
+    {
+        return $this->belongsToMany(
+            Service::class,
+            'room_type_service',
+            'room_type_id',
+            'service_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Active services only
+     */
+    public function activeServices()
+    {
+        return $this->services()->where('services.is_active', true);
+    }
+
+    /**
+     * VIP packages
+     */
+    public function vipPackages()
+    {
+        return $this->packages()->vip();
+    }
+
+    /**
+     * Standard packages
+     */
+    public function standardPackages()
+    {
+        return $this->packages()->standard();
+    }
+
+    /**
+     * Get default VIP package
+     */
+    public function getDefaultVipPackageAttribute()
+    {
+        return $this->vipPackages()->first() ?: $this->createDefaultVipPackage();
+    }
+
+    /**
+     * Get default standard package
+     */
+    public function getDefaultStandardPackageAttribute()
+    {
+        return $this->standardPackages()->first() ?: $this->createDefaultStandardPackage();
+    }
+
+    /**
+     * Create default VIP package if not exists
+     */
+    protected function createDefaultVipPackage()
+    {
+        return $this->packages()->create([
+            'name' => 'Gói VIP',
+            'price_modifier_vnd' => $this->base_price * 0.3, // 30% increase
+            'include_all_services' => true,
+            'description' => 'Gói VIP bao gồm tất cả dịch vụ của loại phòng này'
+        ]);
+    }
+
+    /**
+     * Create default standard package if not exists
+     */
+    protected function createDefaultStandardPackage()
+    {
+        return $this->packages()->create([
+            'name' => 'Gói Tiêu chuẩn',
+            'price_modifier_vnd' => 0,
+            'include_all_services' => false,
+            'description' => 'Gói tiêu chuẩn không bao gồm dịch vụ bổ sung'
+        ]);
+    }
+
+    /**
+     * Get total services value
+     */
+    public function getTotalServicesValueAttribute()
+    {
+        return $this->activeServices()->sum('price_vnd');
+    }
+
+    /**
+     * Calculate VIP package price
+     */
+    public function getVipPriceAttribute()
+    {
+        $vipPackage = $this->default_vip_package;
+        return $this->base_price + $vipPackage->price_modifier_vnd;
+    }
+
+    /**
+     * Calculate standard package price
+     */
+    public function getStandardPriceAttribute()
+    {
+        $standardPackage = $this->default_standard_package;
+        return $this->base_price + $standardPackage->price_modifier_vnd;
+    }
+
 }
