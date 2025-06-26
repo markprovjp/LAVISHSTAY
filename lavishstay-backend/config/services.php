@@ -23,12 +23,17 @@ return [
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
-    ],
-
-    'ses' => [
+    ],    'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    'gmail' => [
+        'client_id' => env('GMAIL_CLIENT_ID'),
+        'client_secret' => env('GMAIL_CLIENT_SECRET'),
+        'redirect_uri' => env('GMAIL_REDIRECT_URI'),
+        'refresh_token' => env('GMAIL_REFRESH_TOKEN'),
     ],
 
 ];

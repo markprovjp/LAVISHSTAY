@@ -12,31 +12,27 @@ class Room extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'hotel_id',
         'room_type_id',
         'name',
-        'floor',
         'image',
-        'base_price_vnd',
-        'size',
-        'view',
-        'rating',
-        'lavish_plus_discount',
-        'max_guests',
-        'description',
-        'status'
+        'floor',
+        'status',
+        'description'
     ];
 
     protected $casts = [
-        'base_price_vnd' => 'decimal:2',
-        'rating' => 'decimal:1',
-        'lavish_plus_discount' => 'decimal:2',
-        'size' => 'integer',
-        'max_guests' => 'integer',
-        'floor' => 'integer'
+        'floor' => 'integer',
+        'room_type_id' => 'integer'
     ];
 
+      // Status constants
+    const STATUS_AVAILABLE = 'available';
+    const STATUS_OCCUPIED = 'occupied';
+    const STATUS_MAINTENANCE = 'maintenance';
+    const STATUS_CLEANING = 'cleaning';
 
+
+    
     public function translations()
     {
         return $this->hasMany(Translation::class, 'record_id')
@@ -112,4 +108,63 @@ class Room extends Model
     public function bookings(){
         return $this->hasMany(Booking::class, 'room_id', 'room_id');
     }
+
+    public function transfersAsOldRoom()
+    {
+        return $this->hasMany(RoomTransfer::class, 'old_room_id', 'room_id');
+    }
+
+    public function transfersAsNewRoom()
+    {
+        return $this->hasMany(RoomTransfer::class, 'new_room_id', 'room_id');
+    }
+    public function bedTypes()
+    {
+        return $this->belongsToMany(
+            BedType::class,
+            'room_bed_types',
+            'room_id',
+            'bed_type_id'
+        )->withPivot('quantity', 'is_default')
+          ->withTimestamps();
+    }
+
+    /**
+     * Meal types relationship
+     */
+    public function mealTypes()
+    {
+        return $this->belongsToMany(
+            MealType::class,
+            'room_meal_types',
+            'room_id',
+            'meal_type_id'
+        )->withPivot('is_default')
+          ->withTimestamps();
+    }
+
+    /**
+     * Scope for available rooms
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', self::STATUS_AVAILABLE);
+    }
+
+    /**
+     * Scope for rooms by floor
+     */
+    public function scopeByFloor($query, $floor)
+    {
+        return $query->where('floor', $floor);
+    }
+
+    /**
+     * Scope for rooms by type
+     */
+    public function scopeByType($query, $roomTypeId)
+    {
+        return $query->where('room_type_id', $roomTypeId);
+    }
+
 }

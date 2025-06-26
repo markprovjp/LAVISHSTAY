@@ -31,7 +31,7 @@ class RoomController extends Controller
         // Lấy số phòng trống
         $availableRooms = $totalRooms - $bookedRooms;
 
-        // Lấy tất cả các loại phòng với thông tin chi tiết - sửa lỗi ambiguous column
+        // Lấy tất cả các loại phòng với thông tin chi tiết 
         $allrooms = RoomType::with([
             'rooms' => function ($query) {
                 $query->orderBy('room_type_id', 'asc');
@@ -143,29 +143,29 @@ class RoomController extends Controller
         ];
         
         // Get unique values for this room type
-        $viewOptions = Room::where('room_type_id', $roomTypeId)
-            ->distinct()
-            ->pluck('view')
-            ->filter()
-            ->sort();
+        // $viewOptions = Room::where('room_type_id', $roomTypeId)
+        //     ->distinct()
+        //     // ->pluck('view')
+        //     ->filter()
+        //     ->sort();
             
-        $priceRange = [
-            'min' => Room::where('room_type_id', $roomTypeId)->min('base_price_vnd') ?? 0,
-            'max' => Room::where('room_type_id', $roomTypeId)->max('base_price_vnd') ?? 10000000
-        ];
+        // $priceRange = [
+        //     'min' => Room::where('room_type_id', $roomTypeId)->min('base_price_vnd') ?? 0,
+        //     'max' => Room::where('room_type_id', $roomTypeId)->max('base_price_vnd') ?? 10000000
+        // ];
         
-        $sizeRange = [
-            'min' => Room::where('room_type_id', $roomTypeId)->min('size') ?? 0,
-            'max' => Room::where('room_type_id', $roomTypeId)->max('size') ?? 200
-        ];
+        // $sizeRange = [
+        //     'min' => Room::where('room_type_id', $roomTypeId)->min('size') ?? 0,
+        //     'max' => Room::where('room_type_id', $roomTypeId)->max('size') ?? 200
+        // ];
 
         return view('admin.rooms.rooms', compact(
             'rooms', 
             'roomType', 
             'statusOptions', 
-            'viewOptions', 
-            'priceRange', 
-            'sizeRange'
+            // 'viewOptions', 
+            // 'priceRange', 
+            // 'sizeRange'
         ));
     }
 

@@ -26,7 +26,7 @@ const ReceptionDashboard: React.FC = () => {
   return (
     <div className="p-6">
       <Title level={2} className="mb-6">
-        🏨 Bảng điều khiển Lễ tân
+         Bảng điều khiển Lễ tân
       </Title>
 
       {/* Statistics Cards */}
@@ -95,35 +95,6 @@ const ReceptionDashboard: React.FC = () => {
         </Col>
       </Row>
 
-      {/* Quick Actions */}
-      <Card title="Thao tác nhanh" className="mb-6">
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Link to="/reception/room-booking">
-              <Button type="primary" size="large" block icon={<BookOutlined />}>
-                Đặt phòng dùm khách
-              </Button>
-            </Link>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Link to="/reception/room-management">
-              <Button size="large" block icon={<HomeOutlined />}>
-                Quản lý phòng hôm nay
-              </Button>
-            </Link>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Button size="large" block icon={<TeamOutlined />}>
-              Danh sách khách
-            </Button>
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Button size="large" block icon={<CalendarOutlined />}>
-              Lịch đặt phòng
-            </Button>
-          </Col>
-        </Row>
-      </Card>
 
       {/* Today's Schedule */}
       <Row gutter={[24, 24]}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Form,
   Button,
@@ -15,6 +15,7 @@ import {
   Input,
   message,
   Select,
+  InputNumber,
 } from "antd";
 import {
   SearchOutlined,
@@ -34,11 +35,10 @@ import { useSearch } from "../hooks/useSearch";
 
 dayjs.extend(customParseFormat);
 
-// Type definitions
-
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
 const { useToken } = theme;
+const { Option } = Select;
 
 // Disable dates in the past - memoized
 const disabledDate: RangePickerProps["disabledDate"] = (current) => {
@@ -58,7 +58,9 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
 }) => {
   const [form] = Form.useForm();
   const { token } = useToken();
-  const navigate = useNavigate();  const {
+  const navigate = useNavigate();
+
+  const {
     searchData,
     isValidSearchData,
     setSearchDateRange,
@@ -68,13 +70,32 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
     performSearch,
     clearError,
   } = useSearch();
+
   const [guestPopoverVisible, setGuestPopoverVisible] = useState<boolean>(false);
+
   // Local state for guest details editing (for family_young and group types)
   const [localGuestDetails, setLocalGuestDetails] = useState({
     adults: searchData.guestDetails.adults,
     children: searchData.guestDetails.children,
     childrenAges: searchData.guestDetails.childrenAges || []
   });
+
+  // Auto-update dates to today and tomorrow if dateRange is in the past
+  useEffect(() => {
+    const now = dayjs();
+    const tomorrow = dayjs().add(1, 'day');
+
+    // Check if current dateRange is in the past or not set
+    if (!searchData.dateRange ||
+      !Array.isArray(searchData.dateRange) ||
+      searchData.dateRange.length < 2 ||
+      !searchData.dateRange[0] ||
+      searchData.dateRange[0].isBefore(now, 'day')) {
+
+      setSearchDateRange([now, tomorrow]);
+    }
+  }, []); // Run only on component mount
+
   // Update local state when searchData changes (from external sources)
   useEffect(() => {
     setLocalGuestDetails({
@@ -83,6 +104,22 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       childrenAges: searchData.guestDetails.childrenAges || []
     });
   }, [searchData.guestDetails.adults, searchData.guestDetails.children, searchData.guestDetails.childrenAges]);
+
+  // Handle child age change
+  const handleChildAgeChange = useCallback((index: number, age: number) => {
+    setLocalGuestDetails(prev => {
+      const newAges = [...(prev.childrenAges || [])];
+      if (newAges[index]) {
+        newAges[index] = { ...newAges[index], age };
+      } else {
+        newAges[index] = { age, id: `child_${index + 1}` };
+      }
+      return {
+        ...prev,
+        childrenAges: newAges
+      };
+    });
+  }, []);
 
   // Handle local guest count change (doesn't update Redux store immediately) - memoized
   const handleLocalGuestCountChange = useCallback((
@@ -93,11 +130,23 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       const newDetails = { ...prev };
       if (operation === "increase") {
         newDetails[type] += 1;
+        // If adding children, add new child age entry
+        if (type === "children") {
+          const newAges = [...(prev.childrenAges || [])];
+          newAges.push({ age: 8, id: `child_${newAges.length + 1}` }); // Default age 8
+          newDetails.childrenAges = newAges;
+        }
       } else if (
         operation === "decrease" &&
         newDetails[type] > (type === "adults" ? 1 : 0)
       ) {
         newDetails[type] -= 1;
+        // If removing children, remove last child age entry
+        if (type === "children") {
+          const newAges = [...(prev.childrenAges || [])];
+          newAges.pop();
+          newDetails.childrenAges = newAges;
+        }
       }
       return newDetails;
     });
@@ -139,7 +188,9 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
     // Use local formatting for guest display
     formValues.guests = formatLocalGuestSelection();
     form.setFieldsValue(formValues);
-  }, [searchData, form, formatLocalGuestSelection]);// Handle search form submission - memoized
+  }, [searchData, form, formatLocalGuestSelection]);
+
+  // Handle search form submission - memoized
   const handleSearch = useCallback(async (values: any) => {
     try {
       // Clear any previous errors
@@ -147,7 +198,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
 
       // Sync local guest details with Redux store for family_young and group types
       if (searchData.guestType === "family_young" || searchData.guestType === "group") {
-        // Directly update Redux with local values
+        // Update Redux with local values including children ages
         updateGuests(localGuestDetails);
 
         // Wait a bit for Redux update to complete
@@ -163,7 +214,9 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       if (!isValidSearchData) {
         message.error('Kiểm tra lại ngày tháng và số lượng khách trước khi tìm kiếm');
         return;
-      }      // Perform search
+      }
+
+      // Perform search
       const results = await performSearch();
 
       // Close popover
@@ -177,15 +230,16 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
         onSearch(results);
       }
 
-      message.success(`Tìm thấy ${results.total} phòng phù hợp`);
+      message.success(`Tìm thấy ${results.total} phòng phù hợp cho bạn`);
     } catch (error: any) {
       message.error(error.message || 'Có lỗi xảy ra khi tìm kiếm');
     }
-  }, [form, searchData, localGuestDetails, navigate, onSearch]);
+  }, [searchData, localGuestDetails, navigate, onSearch, clearError, setSearchDateRange, updateGuests, isValidSearchData, performSearch]);
+
   // Guest selection dropdown content
   const guestPopoverContent = (
     <div
-      className="p-6 bg-white"
+      className="p-6 "
       style={{ width: "100%", maxWidth: "400px" }}
     >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
@@ -209,7 +263,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "solo"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UserOutlined className="mr-2" /> Đi một mình
@@ -230,7 +284,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "couple"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UsersRound className="mr-2" /> Cặp đôi
@@ -251,7 +305,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "business"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UserCheck className="mr-2" /> Công tác
@@ -267,7 +321,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "family_young"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <Users className="mr-2" /> Gia đình trẻ
@@ -283,14 +337,16 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                 }}
                 className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "group"
                     ? "bg-blue-600 border-blue-600 text-white"
-                    : "bg-white border-gray-200 text-gray-700 hover:border-gray-300"
+                    : " border-gray-200 text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <UsergroupAddOutlined className="mr-2" /> Đi theo nhóm
               </Button>
             </Col>
           </Row>
-        </div>        {(searchData.guestType === "family_young" || searchData.guestType === "group") && (
+        </div>
+
+        {(searchData.guestType === "family_young" || searchData.guestType === "group") && (
           <div>
             <Divider className="my-6" />
             <div className="p-4 space-y-6 bg-gray-50 rounded-lg">
@@ -328,6 +384,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                   />
                 </div>
               </div>
+
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-sm font-medium text-gray-700">Trẻ em</span>
@@ -362,13 +419,47 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                   />
                 </div>
               </div>
+
+              {/* Children Age Inputs */}
+              {localGuestDetails.children > 0 && (
+                <div className="mt-4">
+                  <div className="text-sm font-medium text-gray-700 mb-3">
+                    Tuổi của từng trẻ em:
+                  </div>
+                  <div className="space-y-3">
+                    {Array.from({ length: localGuestDetails.children }, (_, index) => {
+                      const childAge = localGuestDetails.childrenAges?.[index]?.age || 8;
+                      return (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">
+                            Trẻ em {index + 1}:
+                          </span>
+                          <Select
+                            value={childAge}
+                            style={{ width: 80 }}
+                            size="small"
+                            onChange={(age) => handleChildAgeChange(index, age)}
+                          >
+                            {Array.from({ length: 18 }, (_, ageIndex) => (
+                              <Option key={ageIndex} value={ageIndex}>
+                                {ageIndex} tuổi
+                              </Option>
+                            ))}
+                          </Select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
+
             {searchData.guestType === "group" && (
               <div className="mt-6 p-4 rounded-lg border border-gray-200 bg-blue-50">
                 <p className="text-sm mb-3 flex items-start text-gray-700">
                   <UsergroupAddOutlined className="mr-2 text-blue-600 flex-shrink-0 mt-0.5" />
                   <span className="font-medium">
-                    Cần đặt nhiều phòng? Chat với LAVISHSTAY để nhận ưu đãi đặc biệt!
+                    Cần đặt nhiều hơn 16 phòng ? Chat với LAVISHSTAY để nhận ưu đãi đặc biệt!
                   </span>
                 </p>
                 <Button
@@ -376,32 +467,51 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                   icon={<MessageOutlined />}
                   size="small"
                   block
-                  className="rounded-lg bg-blue-600 hover:bg-blue-700 border-0"
+                  className="rounded-lg   border-0"
                   onClick={() => console.log("Chat with support")}
                 >
                   Chat ngay
                 </Button>
               </div>
             )}
+
+            {/* Apply button for guest details */}
+            <div className="mt-4">
+              <Button
+                type="primary"
+                block
+                onClick={() => {
+                  setGuestPopoverVisible(false);
+                  setTimeout(() => {
+                    const formValues = form.getFieldsValue();
+                    handleSearch(formValues);
+                  }, 100);
+                }}
+                className="rounded-lg bg-blue-600 hover:bg-blue-700 border-0"
+              >
+                Áp dụng
+              </Button>
+            </div>
           </div>
         )}
       </Space>
     </div>
-  ); return (
+  );
+
+  return (
     <Affix offsetTop={88}>
       <div
         className={`mx-auto max-w-3xl ${className}`}
         style={{ ...style, zIndex: 1000 }}
       >
-        <Card
-          className="shadow-sm border border-gray-200 rounded-2xl "
-        >
+        <Card className="shadow-sm border border-gray-200 rounded-2xl">
           <Form
             form={form}
             layout="vertical"
             onFinish={handleSearch}
             className="w-full"
-          >            <Row gutter={[24, 24]} align="middle">
+          >
+            <Row gutter={[24, 24]} align="middle">
               {/* Date Range Field */}
               <Col xs={24} sm={12}>
                 <Form.Item name="dateRange" className="mb-0">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Radio, Space, Row, Col, Alert, Button, Divider, Descriptions, Typography, Image } from 'antd';
-import { QrcodeOutlined, BankOutlined } from '@ant-design/icons';
+import { QrcodeOutlined, BankOutlined, CreditCardOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -54,6 +54,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             description: 'Quét mã QR để thanh toán nhanh chóng',
             icon: <QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />,
             badge: 'Khuyến nghị'
+        },
+        {
+            id: 'vnpay',
+            name: 'VNPay',
+            description: 'Thanh toán qua cổng VNPay (thẻ ATM, Internet Banking)',
+            icon: <CreditCardOutlined style={{ fontSize: '20px', color: '#52c41a' }} />,
+            badge: 'Phổ biến'
         },
         {
             id: 'pay_at_hotel',
@@ -118,17 +125,17 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                     <Row gutter={24} align="top">
                         <Col span={14}>
                             <div className="text-center">
-                                    <div className=" p-2 rounded-lg border border-gray-200 inline-block">
-                                        <Image
-                                            src={generateVietQRUrl(totalAmount, generatePaymentContent())}
-                                            alt="VietQR Payment Code"
-                                            width={350}
-                                            height={480}
-                                            preview={false}
-                                            style={{ borderRadius: 8 }}
-                                            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                                        />
-                                    </div>
+                                <div className=" rounded-lg  inline-block">
+                                    <Image
+                                        src={generateVietQRUrl(totalAmount, generatePaymentContent())}
+                                        alt="VietQR Payment Code"
+                                        width={450}
+                                        height={500}
+                                        preview={false}
+                                        style={{ borderRadius: 8 }}
+                                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
+                                    />
+                                </div>
                             </div>
                         </Col>
                         <Col span={10}>
@@ -183,9 +190,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                                             {bookingCode}
                                         </Text>
                                     </div>
-                                </div>
-
-                                <Alert
+                                </div>                                <Alert
                                     message={`Thời gian còn lại: ${formatTime(countdown)}`}
                                     description="Vui lòng hoàn tất thanh toán trong thời gian quy định"
                                     type="warning"
@@ -195,6 +200,73 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                             </div>
                         </Col>
                     </Row>
+
+                    <Divider />
+
+                    <Space>
+                        <Button onClick={onBack}>
+                            Quay lại
+                        </Button>
+                        <Button
+                            type="primary"
+                            loading={isProcessing}
+                            onClick={onConfirmPayment}
+                        >
+                            Đã thanh toán
+                        </Button>
+                    </Space>
+                </Card>
+            )}
+
+            {/* VNPay Payment */}
+            {selectedPaymentMethod === 'vnpay' && (
+                <Card title="Thanh toán VNPay" className="shadow-sm">
+                    <Alert
+                        message="Thanh toán qua VNPay"
+                        description="Bạn sẽ được chuyển hướng đến trang thanh toán VNPay để hoàn tất giao dịch bằng thẻ ATM hoặc Internet Banking."
+                        type="info"
+                        showIcon
+                        className="mb-4"
+                    />
+
+                    <Descriptions column={1} size="small" className="mb-4">
+                        <Descriptions.Item label="Mã đặt phòng">
+                            <Text strong style={{ color: '#52c41a' }}>
+                                {bookingCode}
+                            </Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tổng tiền cần thanh toán">
+                            <Text strong style={{ color: '#f5222d', fontSize: '1.1em' }}>
+                                {formatVND(totalAmount)}
+                            </Text>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Phương thức">
+                            <Text>Thẻ ATM, Internet Banking, Ví điện tử</Text>
+                        </Descriptions.Item>
+                    </Descriptions>
+
+                    <Alert
+                        message={`Thời gian còn lại: ${formatTime(countdown)}`}
+                        description="Vui lòng hoàn tất thanh toán trong thời gian quy định"
+                        type="warning"
+                        showIcon
+                        className="mb-4"
+                    />
+
+                    <Divider />
+
+                    <Space>
+                        <Button onClick={onBack}>
+                            Quay lại
+                        </Button>
+                        <Button
+                            type="primary"
+                            loading={isProcessing}
+                            onClick={onConfirmPayment}
+                        >
+                            Thanh toán VNPay
+                        </Button>
+                    </Space>
                 </Card>
             )}
 

@@ -1,7 +1,7 @@
 // src/hooks/useApi.ts
 import { useQuery, useMutation, QueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { propertiesAPI, authAPI, bookingsAPI, roomsAPI } from '../utils/api';
+import { propertiesAPI, authAPI, bookingsAPI, roomsAPI, roomTypesAPI } from '../utils/api';
 import axios from 'axios';
 
 // Create a client to use for invalidation
@@ -16,6 +16,22 @@ export const useGetAllRooms = () => {
       const response = await axios.get('/api/rooms');
       return response.data;
     },
+  });
+};
+
+// Room Types related hooks
+export const useGetAllRoomTypes = () => {
+  return useQuery({
+    queryKey: ['roomTypes'],
+    queryFn: roomTypesAPI.getAll,
+  });
+};
+
+export const useGetRoomTypeById = (roomTypeId: string | number) => {
+  return useQuery({
+    queryKey: ['roomType', roomTypeId],
+    queryFn: () => roomTypesAPI.getById(Number(roomTypeId)),
+    enabled: !!roomTypeId,
   });
 };
 

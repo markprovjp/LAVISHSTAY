@@ -10,13 +10,15 @@ interface BookingInfoStepProps {
     onSubmit: (values: any) => void;
     isProcessing: boolean;
     disabled?: boolean;
+    selectedPaymentMethod?: string;
 }
 
 const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     form,
     onSubmit,
     isProcessing,
-    disabled = false
+    disabled = false,
+    selectedPaymentMethod = 'vietqr'
 }) => {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
@@ -35,8 +37,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                 phone: user.phone || '', // Use phone if available, otherwise empty
             });
         }
-    }, [isAuthenticated, user, form]);
-    return (
+    }, [isAuthenticated, user, form]); return (
         <Card title="Thông tin khách hàng" className="mb-4">
             <Form form={form} layout="vertical" onFinish={onSubmit}>
                 <Row gutter={16}>
@@ -92,25 +93,27 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                     <Checkbox>
                         Tôi đồng ý với <a href="/terms">điều khoản dịch vụ</a> và <a href="/privacy">chính sách bảo mật</a>
                     </Checkbox>
-                </Form.Item>
-
-                <Form.Item>
-                    <Button
-                        type="primary"
-                        htmlType="submit"
-                        size="large"
-                        loading={isProcessing}
-                        disabled={disabled}
-                        block
-                        style={{
-                            height: '50px',
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            borderRadius: '8px'
-                        }}
-                    >
-                        {disabled ? 'Không thể tiến hành' : 'Tiếp tục thanh toán'}
-                    </Button>
+                </Form.Item>                <Form.Item>                    <Button
+                    type="primary"
+                    htmlType="submit"
+                    size="large"
+                    loading={isProcessing}
+                    disabled={disabled}
+                    block
+                    style={{
+                        height: '50px',
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        borderRadius: '8px'
+                    }}
+                >
+                    {isProcessing
+                        ? 'Đang xử lý...'
+                        : disabled
+                            ? 'Không thể tiến hành'
+                            : 'Tiếp tục'
+                    }
+                </Button>
                 </Form.Item>
             </Form>
         </Card>

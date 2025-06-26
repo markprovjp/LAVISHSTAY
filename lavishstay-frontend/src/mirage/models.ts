@@ -149,7 +149,7 @@ export const sampleRooms: Room[] = [{
     roomType: "premium",
     rating: 9.4, urgencyRoomMessage: "Chỉ còn 8 phòng. Hãy nhanh tay đặt!",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
-    maxGuests: 2,
+    maxGuests: 3,
     totalRooms: 96, // Tổng 96 phòng Premium Corner (tầng 10-17: 12 phòng/tầng)
     floors: [10, 11, 12, 13, 14, 15, 16, 17], // Các tầng có phòng Premium Corner
     roomsPerFloor: 12, // 12 phòng mỗi tầng
@@ -274,7 +274,7 @@ export const sampleRooms: Room[] = [{
     rating: 9.8,
     urgencyRoomMessage: "Chỉ còn 6 phòng. Hãy nhanh tay đặt!",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
-    maxGuests: 2,
+    maxGuests: 4,
     totalRooms: 20, // Tổng 20 phòng Suite (tầng 28-31: 5 phòng/tầng)
     floors: [28, 29, 30, 31], // Các tầng có phòng Suite
     roomsPerFloor: 5, // 5 phòng mỗi tầng
@@ -337,7 +337,7 @@ export const sampleRooms: Room[] = [{
     rating: 10,
     urgencyRoomMessage: "Chỉ còn 6 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
-    maxGuests: 2,
+    maxGuests: 3,
     totalRooms: 32, // Tổng 32 phòng The Level Premium Corner (tầng 20-23: 8 phòng/tầng)
     floors: [20, 21, 22, 23], // Các tầng có phòng The Level Premium Corner
     roomsPerFloor: 8, // 8 phòng mỗi tầng
@@ -397,7 +397,7 @@ export const sampleRooms: Room[] = [{
     rating: 10,
     urgencyRoomMessage: "Chỉ còn 8 phòng . Hãy nhanh tay đặt  !",
     lavishPlusDiscount: 15, // Giảm 15% cho thành viên LavishPlus
-    maxGuests: 2,
+    maxGuests: 4,
     totalRooms: 20, // Tổng 20 phòng The Level Suite (tầng 25-27: 7, 7, 6 phòng)
     floors: [25, 26, 27], // Các tầng có phòng The Level Suite
     roomsPerFloor: [7, 7, 6], // Tầng 25: 7 phòng, tầng 26: 7 phòng, tầng 27: 6 phòng
