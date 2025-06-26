@@ -1,18 +1,18 @@
 import React, { useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
-import RoomCard, { RoomProps } from "./RoomCard";
+import RoomTypeCard, { RoomTypeProps } from "./RoomTypeCard";
 
 // Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 
 interface RoomSwiperProps {
-  rooms: RoomProps[];
+  roomTypes: RoomTypeProps[];
   className?: string;
 }
 
-const RoomSwiper: React.FC<RoomSwiperProps> = React.memo(({ rooms, className = "" }) => {
+const RoomSwiper: React.FC<RoomSwiperProps> = React.memo(({ roomTypes, className = "" }) => {
   // Memoize swiper configuration
   const swiperConfig = useMemo(() => ({
     modules: [Navigation, Autoplay],
@@ -37,9 +37,9 @@ const RoomSwiper: React.FC<RoomSwiperProps> = React.memo(({ rooms, className = "
   return (
     <div className={`room-swiper-container ${className}`}>
       <Swiper {...swiperConfig}>
-        {rooms.map((room) => (
+        {roomTypes.map((room) => (
           <SwiperSlide key={room.id}>
-            <RoomCard {...room} />
+            <RoomTypeCard {...room} />
           </SwiperSlide>
         ))}
       </Swiper>

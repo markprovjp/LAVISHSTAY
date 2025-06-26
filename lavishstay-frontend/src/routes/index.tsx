@@ -14,7 +14,7 @@ import AuthLayout from "../components/layouts/AuthLayout";
 import Home from "../pages/Home";
 import About from "../pages/About";
 import SearchResults from "../pages/SearchResults";
-import RoomDetailsPage from "../pages/RoomDetailsPage";
+import RoomDetailsPage from "../pages/RoomTypesDetailsPage";
 // import Login from "../pages/Login";
 // import Register from "../pages/Register";
 import Dashboard from "../pages/dashboard/Dashboard";

@@ -12,7 +12,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Process MBBank payment emails every 5 minutes
+        $schedule->command('payment:process-emails')
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->appendOutputTo(storage_path('logs/payment-email-processing.log'));
+            
+        // Backup and cleanup logs daily
+        $schedule->command('log:clear')
+            ->daily()
+            ->at('02:00');
     }
 
     /**

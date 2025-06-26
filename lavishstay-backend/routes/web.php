@@ -22,11 +22,15 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepositPolicyController;
+use App\Http\Controllers\DynamicPricingController;
+use App\Http\Controllers\EventFestivalManagementController;
+use App\Http\Controllers\FlexiblePricingController;
 use App\Http\Controllers\RoomPriceController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\WeekendPriceController;
-
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ServiceController;
 
 Route::redirect('/', 'login');
 
@@ -130,6 +134,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::patch('/admin/services/amenities/toggle-status/{amenity}', [ServiceAmenityController::class, 'toggleStatus'])->name('admin.services.amenities.toggle-status');
 
 
+    // Service Management //////////////////////////////////
+    Route::get('/admin/services/services', [ServiceController::class, 'index'])->name('admin.services.services');
+    Route::get('/admin/services/services/create', [ServiceController::class, 'create'])->name('admin.services.services.create');
+    Route::get('/admin/services/services/show', [ServiceController::class, 'show'])->name('admin.services.services.show');
+    Route::post('/admin/services/services/store', [ServiceController::class, 'store'])->name('admin.services.services.store');
+    Route::get('/admin/services/services/edit/{id}', [ServiceController::class, 'edit'])->name('admin.services.services.edit');
+    Route::put('/admin/services/services/update/{id}', [ServiceController::class, 'update'])->name('admin.services.services.update');
+    Route::post('/admin/services/services/destroy/{id}', [ServiceController::class, 'destroy'])->name('admin.services.services.destroy');
+    Route::patch('/admin/services/services/toggle-status/{service}', [ServiceController::class, 'toggleStatus'])->name('admin.services.services.toggle-status'); 
 
     //  Meals Management //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
@@ -285,39 +298,86 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     /////////////////////// GIÁ PHÒNG /////////////////////////////////////////////////////
 
-    //Theo lễ hội, sự kiện
+     //Theo lễ hội, sự kiện
     Route::get('/admin/event_festival', [RoomPriceController::class, 'event_festival'])->name('admin.room-prices.event_festival');
+    Route::prefix('admin/event-festival-management')->name('admin.event-festival-management.')->group(function () {
+        Route::get('/', [EventFestivalManagementController::class, 'index'])->name('index');
+        Route::get('/statistics', [EventFestivalManagementController::class, 'getStatistics'])->name('statistics');
+        Route::get('/upcoming', [EventFestivalManagementController::class, 'getUpcoming'])->name('upcoming');
+        Route::get('/data', [EventFestivalManagementController::class, 'getData'])->name('data');
+        Route::post('/store', [EventFestivalManagementController::class, 'store'])->name('store');
+        Route::get('/event/{id}', [EventFestivalManagementController::class, 'showEvent'])->name('show-event');
+        Route::get('/holiday/{id}', [EventFestivalManagementController::class, 'showHoliday'])->name('show-holiday');
+        Route::put('/event/{id}', [EventFestivalManagementController::class, 'updateEvent'])->name('update-event');
+        Route::put('/holiday/{id}', [EventFestivalManagementController::class, 'updateHoliday'])->name('update-holiday');
+        Route::delete('/event/{id}', [EventFestivalManagementController::class, 'destroyEvent'])->name('destroy-event');
+        Route::delete('/holiday/{id}', [EventFestivalManagementController::class, 'destroyHoliday'])->name('destroy-holiday');
+        Route::get('/export', [EventFestivalManagementController::class, 'export'])->name('export');
+    });
+    Route::prefix('admin/flexible-pricing')->name('admin.flexible-pricing.')->group(function () {
+        // Route::get('/', [FlexiblePricingController::class, 'index'])->name('index');
+        // Route::get('/statistics', [FlexiblePricingController::class, 'getStatistics'])->name('statistics');
+        Route::get('/data', [FlexiblePricingController::class, 'getData'])->name('data');
+        // Route::get('/room-types', [FlexiblePricingController::class, 'getRoomTypes'])->name('room-types');
+        // Route::get('/events', [FlexiblePricingController::class, 'getEvents'])->name('events');
+        // Route::get('/holidays', [FlexiblePricingController::class, 'getHolidays'])->name('holidays');
+        Route::post('/store', [FlexiblePricingController::class, 'store'])->name('store');
+        Route::get('/show/{id}', [FlexiblePricingController::class, 'show'])->name('show');
+        Route::put('/update/{id}', [FlexiblePricingController::class, 'update'])->name('update');
+        Route::post('/toggle-status/{id}', [FlexiblePricingController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/destroy/{id}', [FlexiblePricingController::class, 'destroy'])->name('destroy');
+        Route::get('/export', [FlexiblePricingController::class, 'export'])->name('export');
+    });
 
 
     //Giá động
     Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
-
-
-
-
-     //Giá cuối tuần
-    Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
-
-
-
-
-
-
-
-
-    
-    Route::prefix('admin/room-prices/event-festival')->name('admin.room-prices.event-festival.')->group(function () {
-        Route::get('/', [RoomPriceEventFestivalController::class, 'index'])->name('index');
-        Route::get('/statistics', [RoomPriceEventFestivalController::class, 'getStatistics'])->name('statistics');
-        Route::get('/data', [RoomPriceEventFestivalController::class, 'getData'])->name('data');
-        Route::get('/rooms', [RoomPriceEventFestivalController::class, 'getRooms'])->name('rooms'); 
-        Route::get('/events', [RoomPriceEventFestivalController::class, 'getEvents'])->name('events');
-        Route::get('/holidays', [RoomPriceEventFestivalController::class, 'getHolidays'])->name('holidays');
-        Route::get('/{id}', [RoomPriceEventFestivalController::class, 'show'])->name('show');
-        Route::post('/', [RoomPriceEventFestivalController::class, 'store'])->name('store');
-        Route::put('/{id}', [RoomPriceEventFestivalController::class, 'update'])->name('update');
-        Route::delete('/{id}', [RoomPriceEventFestivalController::class, 'destroy'])->name('destroy');
+    // Thêm vào phần routes admin
+    Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+        Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
+        Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
+        Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
+        Route::get('/occupancy-stats', [DynamicPricingController::class, 'getOccupancyStats'])->name('occupancy-stats');
+        Route::post('/calculate', [DynamicPricingController::class, 'calculateDynamicPrice'])->name('calculate');
+        Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
+        Route::post('/', [DynamicPricingController::class, 'store'])->name('store');
+        Route::put('/{id}', [DynamicPricingController::class, 'update'])->name('update');
+        Route::patch('/{id}/toggle-status', [DynamicPricingController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{id}', [DynamicPricingController::class, 'destroy'])->name('destroy');
     });
+
+
+
+
+    //Giá cuối tuần
+    Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
+    Route::prefix('admin/weekend-price')->name('admin.weekend-price.')->group(function () {
+        Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
+        
+        // Weekend days configuration
+        Route::get('/weekend-days', [WeekendPriceController::class, 'getWeekendDays'])->name('weekend-days');
+        Route::post('/update-weekend-days', [WeekendPriceController::class, 'updateWeekendDays'])->name('update-weekend-days');
+        
+        // Data and resources
+        Route::get('/data', [WeekendPriceController::class, 'getData'])->name('data');
+        Route::get('/room-types', [WeekendPriceController::class, 'getRoomTypes'])->name('room-types');
+        Route::get('/statistics', [WeekendPriceController::class, 'getStatistics'])->name('statistics');
+        Route::get('/export', [WeekendPriceController::class, 'export'])->name('export');
+        
+        // CRUD operations
+        Route::post('/store', [WeekendPriceController::class, 'store'])->name('store');
+        Route::get('/show/{id}', [WeekendPriceController::class, 'show'])->name('show');
+        Route::put('/update/{id}', [WeekendPriceController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [WeekendPriceController::class, 'destroy'])->name('destroy');
+        
+        // Additional operations
+        Route::post('/toggle-status/{id}', [WeekendPriceController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/bulk-update-status', [WeekendPriceController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
+    });
+
+
+
+
 
 
 
@@ -332,5 +392,20 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 
-
+    // Payment Management Routes
+    Route::get('/admin/bookings/trading', [PaymentController::class, 'adminIndex'])->name('admin.payment.index');
+    
+    // VNPay Web Routes (cho callback từ VNPay)
+    Route::prefix('vnpay')->name('vnpay.')->group(function () {
+        // VNPay return URL (callback sau khi thanh toán)
+        Route::get('/return', [PaymentController::class, 'handleVNPayReturn'])->name('return');
+        Route::post('/return', [PaymentController::class, 'handleVNPayReturn'])->name('return.post');
+        
+        // VNPay IPN (Instant Payment Notification)
+        Route::post('/ipn', [PaymentController::class, 'handleVNPayIPN'])->name('ipn');
+        
+        // Test payment page (optional - for testing)
+        Route::get('/test', [PaymentController::class, 'showTestPaymentForm'])->name('test');
+        Route::post('/test', [PaymentController::class, 'processTestPayment'])->name('test.process');
+    });
 });

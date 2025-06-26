@@ -71,13 +71,14 @@ export const createPremiumOptions = (
             savings: 0,
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 90
-        }
-    });    // 4 options cho 2 người
+        }    });
+
+    // 4 options cho 3 người (cập nhật theo model data)
     options.push({
         id: `premium_double_basic`,
-        name: `Premium Basic - 2 khách`,
+        name: `Premium Basic - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3, // Cập nhật theo model: Premium Corner có thể chứa 3 khách
         minGuests: 1,
         roomType: 'premium',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
@@ -106,13 +107,11 @@ export const createPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `premium_double_standard`,
-        name: `Premium Standard - 2 khách`,
+        name: `Premium Standard - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'premium',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
@@ -138,13 +137,11 @@ export const createPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 88
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `premium_double_premium`,
-        name: `Premium Plus - 2 khách`,
+        name: `Premium Plus - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'premium',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)), paymentPolicy: {
@@ -170,13 +167,11 @@ export const createPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 82
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `premium_double_luxury`,
-        name: `Premium Luxury - 2 khách`,
+        name: `Premium Luxury - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'premium',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)), paymentPolicy: {
