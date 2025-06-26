@@ -31,6 +31,7 @@ use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\WeekendPriceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\RoomTypeServiceController;
 
 Route::redirect('/', 'login');
 
@@ -118,8 +119,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         ->name('admin.room-types.amenities.highlight');
     Route::patch('/admin/room-types/{roomType}/amenities/highlight-all', [RoomTypeAmenityController::class, 'highlightAll'])
         ->name('admin.room-types.amenities.highlight-all');
-    // Cách liiiiiiiiiiiii
 
+        
+    // Room Type Services Management
+    Route::get('/admin/room-types/{roomType}/services', [RoomTypeServiceController::class, 'index'])->name('admin.room-types.services');
+    Route::post('/admin/room-types/{roomType}/services', [RoomTypeServiceController::class, 'store'])->name('admin.room-types.services.store');
+    Route::delete('/admin/room-types/{roomType}/services/{service}', [RoomTypeServiceController::class, 'destroy'])->name('admin.room-types.services.destroy');
+    Route::patch('/admin/room-types/{roomType}/services/{service}/toggle-status', [RoomTypeServiceController::class, 'toggleStatus'])->name('admin.room-types.services.toggle-status');
+    Route::patch('/admin/room-types/{roomType}/services/toggle-all-status', [RoomTypeServiceController::class, 'toggleAllStatus'])->name('admin.room-types.services.toggle-all-status');
 
 
 
