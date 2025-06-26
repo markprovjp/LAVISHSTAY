@@ -6,7 +6,6 @@
             <div class="sm:flex sm:justify-between sm:items-center">
                 <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl md:text-4xl text-white font-bold flex items-center gap-3">
-                        <span class="icon-bounce">🏨</span>
                         Yêu cầu trả phòng sớm/muộn
                     </h1>
                     <p class="text-gray-300 text-lg mt-2">Quản lý các yêu cầu thay đổi thời gian trả phòng</p>
