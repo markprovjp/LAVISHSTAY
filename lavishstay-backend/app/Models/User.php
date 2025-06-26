@@ -13,16 +13,12 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-<<<<<<< HEAD
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
     use HasProfilePhoto;
     use HasTeams;
     use TwoFactorAuthenticatable;
-=======
-    use HasApiTokens, HasFactory, Notifiable, HasProfilePhoto, HasTeams, TwoFactorAuthenticatable;
->>>>>>> origin/Phuoc
 
     protected $fillable = [
         'name',
@@ -42,21 +38,17 @@ class User extends Authenticatable
         'two_factor_recovery_codes',
     ];
 
-<<<<<<< HEAD
     /**
      * Ép kiểu dữ liệu cho các trường.
      *
      * @var array<string, string>
      */
-=======
->>>>>>> origin/Phuoc
     protected $casts = [
         'email_verified_at' => 'datetime',
         'two_factor_confirmed_at' => 'datetime',
         'current_team_id' => 'integer',
     ];
 
-<<<<<<< HEAD
     /**
      * Các accessor sẽ tự động thêm vào khi model được chuyển sang mảng.
      *
@@ -65,13 +57,6 @@ class User extends Authenticatable
     protected $appends = [
         'profile_photo_url',
     ];
-=======
-    protected $appends = [
-        'profile_photo_url',
-    ];
-
-    
->>>>>>> origin/Phuoc
 
     /**
      * Đường dẫn ảnh đại diện
@@ -82,100 +67,4 @@ class User extends Authenticatable
             ? asset('storage/' . $this->profile_photo_path)
             : null;
     }
-<<<<<<< HEAD
 }
-=======
-
-    /**
-     * Quan hệ: user thuộc nhiều role
-     */
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'role_user');
-    }
-
-    /**
-     * Lấy danh sách permission từ tất cả vai trò
-     */
-    public function permissions()
-    {
-        return $this->roles->flatMap(function ($role) {
-            return $role->permissions;
-        })->unique('id');
-    }
-
-    /**
-     * Kiểm tra user có vai trò cụ thể không
-     */
-    public function hasRole($roleName)
-    {
-        return $this->roles()->where('name', $roleName)->exists();
-    }
-
-    /**
-     * Kiểm tra user có bất kỳ role nào trong danh sách
-     */
-    public function hasAnyRole($roles)
-    {
-        return $this->roles()->whereIn('name', (array) $roles)->exists();
-    }
-
-    /**
-     * Kiểm tra user có permission cụ thể không
-     */
-    // public function hasPermission($permissionName)
-    // {
-    //     return $this->permissions()->contains('name', $permissionName);
-    // }
-
-    public function hasPermission($permissionName)
-{
-    foreach ($this->roles as $role) {
-        if ($role->permissions->contains('name', $permissionName)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-    /**
-     * Gán vai trò cho user (nếu chưa có)
-     */
-    public function assignRole($roleName)
-    {
-        $role = Role::where('name', $roleName)->first();
-        if ($role && !$this->hasRole($roleName)) {
-            $this->roles()->attach($role->id);
-        }
-    }
-
-    /**
-     * Gỡ vai trò ra khỏi user
-     */
-    public function removeRole($roleName)
-    {
-        $role = Role::where('name', $roleName)->first();
-        if ($role) {
-            $this->roles()->detach($role->id);
-        }
-    }
-
-    /**
-     * Thay thế toàn bộ vai trò
-     */
-    public function syncRoles(array $roleIds)
-    {
-        $this->roles()->sync($roleIds);
-    }
-
-    /**
-     * Nếu bạn dùng team Jetstream
-     */
-    public function currentTeam()
-    {
-        return $this->belongsTo(Team::class, 'current_team_id');
-    }
-
-    
-}
->>>>>>> origin/Phuoc
