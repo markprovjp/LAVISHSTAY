@@ -551,23 +551,6 @@
                                     <div
                                         class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg {{ $amenity->is_highlighted ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : '' }}">
                                         <div class="flex-shrink-0">
-                                            @if ($amenity->icon)
-                                                <div
-                                                    class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                                                    <span
-                                                        class="text-blue-600 dark:text-blue-400 text-lg">{{ $amenity->icon }}</span>
-                                                </div>
-                                            @else
-                                                <div
-                                                    class="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                                        fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd"
-                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z"
-                                                            clip-rule="evenodd"></path>
-                                                    </svg>
-                                                </div>
-                                            @endif
                                         </div>
 
                                         <div class="ml-3 flex-1">
@@ -599,6 +582,62 @@
 
             </div>
 
+            <!-- Services -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl mt-6">
+                <div class="px-5 flex justify-between py-4 border-b border-gray-100 dark:border-gray-700/60">
+                    <h2 class="font-semibold text-gray-800 dark:text-gray-100">
+                        Dịch vụ
+                        <span class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->services->count() }})</span>
+                    </h2>
+                    <button onclick="openServiceManager({{ $roomType->room_type_id }})"
+                        class="btn cursor-pointer bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-200">
+                        <svg class="shrink-0 me-2" width="16px" height="16px"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        <span class="max-xs:sr-only content-center">Quản lý dịch vụ</span>
+                    </button>
+                </div>
+                <div class="p-5">
+                    @if ($roomType->services->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+                            @foreach ($roomType->services as $service)
+                                <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg {{ $service->is_active ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20' : '' }}">
+                                    <div class="flex-shrink-0">
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            {{ $service->name }}
+                                            @if ($service->is_active)
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                    Hoạt động
+                                                </span>
+                                            @else
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-500 text-red-800 border border-red-700 dark:bg-red-900/30 dark:text-red-400 dark:border-red-500">
+                                                    Ngưng hoạt động
+                                                </span>
+                                            @endif
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $service->price_with_unit }}</p>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="text-gray-500 dark:text-gray-400">Chưa có dịch vụ nào</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <!-- Sidebar -->
             <div class="space-y-6">
 
@@ -611,26 +650,6 @@
                     </div>
                     <div class="p-5">
                         <div class="space-y-3">
-                            <button onclick="window.location.href='{{ route('admin.room-types.images', $roomType) }}'"
-                                class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24" width="24px" height="24px">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                Quản lý ảnh
-                            </button>
-
-                            <button onclick="openAmenityManager({{ $roomType->room_type_id }})"
-                                class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
-                                    width="24" height="24">
-                                    <path fill-rule="evenodd"
-                                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                Quản lý tiện ích
-                            </button>
                             <button onclick="viewRoomsList({{ $roomType->room_type_id }})"
                                 class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                 <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
@@ -1166,6 +1185,10 @@
         function openImageManager(roomTypeId) {
             window.location.href = `/admin/room-types/${roomTypeId}/images`;
         }
+
+        function openServiceManager(roomTypeId) {
+        window.location.href = '{{ route("admin.room-types.services", [":id"]) }}'.replace(':id', roomTypeId);
+    }
     </script>
     <!-- CSS với tỷ lệ cố định -->
     <style>

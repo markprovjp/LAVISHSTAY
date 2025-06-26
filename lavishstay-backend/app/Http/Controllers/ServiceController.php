@@ -9,21 +9,18 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceController extends Controller
 {
-    public function index(Request $request)
-    {
+    public function index(Request $request){
         $query = Service::query();
 
-        // Search by name
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Filter by active status
-        if ($request->filled('is_active')) {
+        // Chỉ áp dụng bộ lọc is_active nếu được gửi rõ ràng
+        if ($request->has('is_active') && $request->is_active !== null) {
             $query->where('is_active', $request->is_active);
         }
 
-        // Filter by price range
         if ($request->filled('min_price')) {
             $query->where('price_vnd', '>=', $request->min_price);
         }
@@ -44,14 +41,23 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         $rules = [
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'price_vnd' => 'required|numeric|min:0',
+            'name' => 'required|string|max:100|unique:services,name',
+            'description' => 'nullable|string|max:500',
+            'price_vnd' => 'required|numeric|min:0|max:999999999',
             'unit' => 'nullable|string|max:50',
             'is_active' => 'boolean'
         ];
 
-        $validator = Validator::make($request->all(), $rules);
+        $messages = [
+            'name.required' => 'Tên dịch vụ là bắt buộc.',
+            'name.unique' => 'Tên dịch vụ đã tồn tại, vui lòng chọn tên khác.',
+            'price_vnd.required' => 'Giá dịch vụ là bắt buộc.',
+            'price_vnd.numeric' => 'Giá phải là số.',
+            'price_vnd.min' => 'Giá không được nhỏ hơn 0.',
+            'price_vnd.max' => 'Giá không được vượt quá 999,999,999 VND.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -60,6 +66,7 @@ class ServiceController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             Service::create([
                 'name' => $request->name,
                 'description' => $request->description,
@@ -67,11 +74,12 @@ class ServiceController extends Controller
                 'unit' => $request->unit,
                 'is_active' => $request->has('is_active') ? 1 : 0
             ]);
+            DB::commit();
 
-            return redirect()->route('admin.services.index')
+            return redirect()->route('admin.services.services')
                 ->with('success', 'Dịch vụ đã được tạo thành công!');
-
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Error creating service: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Có lỗi xảy ra khi tạo dịch vụ!')
@@ -88,7 +96,7 @@ class ServiceController extends Controller
     public function edit($id)
     {
         $service = Service::findOrFail($id);
-        return view('admin.services.edit', compact('service'));
+        return view('admin.services.services.edit', compact('service'));
     }
 
     public function update(Request $request, $id)
@@ -96,14 +104,23 @@ class ServiceController extends Controller
         $service = Service::findOrFail($id);
 
         $rules = [
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string',
-            'price_vnd' => 'required|numeric|min:0',
+            'name' => 'required|string|max:100|unique:services,name,' . $id . ',service_id',
+            'description' => 'nullable|string|max:500',
+            'price_vnd' => 'required|numeric|min:0|max:999999999',
             'unit' => 'nullable|string|max:50',
             'is_active' => 'boolean'
         ];
 
-        $validator = Validator::make($request->all(), $rules);
+        $messages = [
+            'name.required' => 'Tên dịch vụ là bắt buộc.',
+            'name.unique' => 'Tên dịch vụ đã tồn tại, vui lòng chọn tên khác.',
+            'price_vnd.required' => 'Giá dịch vụ là bắt buộc.',
+            'price_vnd.numeric' => 'Giá phải là số.',
+            'price_vnd.min' => 'Giá không được nhỏ hơn 0.',
+            'price_vnd.max' => 'Giá không được vượt quá 999,999,999 VND.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             return redirect()->back()
@@ -112,6 +129,7 @@ class ServiceController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             $service->update([
                 'name' => $request->name,
                 'description' => $request->description,
@@ -119,11 +137,12 @@ class ServiceController extends Controller
                 'unit' => $request->unit,
                 'is_active' => $request->has('is_active') ? 1 : 0
             ]);
+            DB::commit();
 
-            return redirect()->route('admin.services.index')
+            return redirect()->route('admin.services.services')
                 ->with('success', 'Dịch vụ đã được cập nhật thành công!');
-
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('Error updating service: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Có lỗi xảy ra khi cập nhật dịch vụ!')
@@ -136,7 +155,6 @@ class ServiceController extends Controller
         try {
             $service = Service::findOrFail($id);
 
-            // Check if service is being used by any room types
             if ($service->roomTypes()->count() > 0) {
                 return redirect()->back()
                     ->with('error', 'Không thể xóa dịch vụ đang được sử dụng bởi các loại phòng!');
@@ -144,9 +162,8 @@ class ServiceController extends Controller
 
             $service->delete();
 
-            return redirect()->route('admin.services.index')
+            return redirect()->route('admin.services.services')
                 ->with('success', 'Dịch vụ đã được xóa thành công!');
-
         } catch (\Exception $e) {
             \Log::error('Error deleting service: ' . $e->getMessage());
             return redirect()->back()
@@ -154,9 +171,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * Toggle service status
-     */
     public function toggleStatus($id)
     {
         try {
@@ -168,7 +182,6 @@ class ServiceController extends Controller
                 'message' => 'Trạng thái dịch vụ đã được cập nhật!',
                 'is_active' => $service->is_active
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -177,9 +190,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * Get services for API
-     */
     public function getServices(Request $request)
     {
         $query = Service::active();
