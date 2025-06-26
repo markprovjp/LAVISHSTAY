@@ -2,7 +2,7 @@ import React from "react";
 import { Typography, Button, Spin, Alert } from "antd";
 import { ArrowRightOutlined } from "@ant-design/icons";
 import RoomSwiper from "../ui/RoomSwiper";
-import { useGetSimilarRooms } from "../../hooks/useApi";
+import { useGetAllRoomTypes } from "../../hooks/useApi";
 
 const { Title } = Typography;
 
@@ -12,33 +12,37 @@ interface SimilarRoomsProps {
 
 const SimilarRooms: React.FC<SimilarRoomsProps> = ({
     currentRoomId,
-}) => {    // Use hook to fetch similar rooms
-    const { data: similarRoomsData, isLoading: loading } = useGetSimilarRooms(currentRoomId);
-    const similarRooms = similarRoomsData?.similarRooms || [];
+}) => {
+    // Use hook to fetch all room types and filter out current one
+    const { data: roomTypesData, isLoading: loading } = useGetAllRoomTypes();
+    const allRooms = roomTypesData?.data || [];
+
+    // Filter out current room
+    const otherRooms = allRooms.filter((room: any) => room.id.toString() !== currentRoomId);
 
     if (loading) {
         return (
             <div className="similar-rooms">
                 <Title level={3} className="mb-4">
-                    Phòng tương tự
+                    Các loại phòng khác
                 </Title>
                 <div className="text-center py-8">
                     <Spin size="large" />
-                    <div className="mt-4">Đang tải phòng tương tự...</div>
+                    <div className="mt-4">Đang tải danh sách phòng...</div>
                 </div>
             </div>
         );
     }
 
-    if (similarRooms.length === 0) {
+    if (otherRooms.length === 0) {
         return (
             <div className="similar-rooms">
                 <Title level={3} className="mb-4">
-                    Phòng tương tự
+                    Các loại phòng khác
                 </Title>
                 <Alert
-                    message="Không có phòng tương tự"
-                    description="Hiện tại không có phòng nào tương tự để hiển thị."
+                    message="Không có phòng khác"
+                    description="Hiện tại không có loại phòng nào khác để hiển thị."
                     type="info"
                     showIcon
                 />
@@ -50,7 +54,7 @@ const SimilarRooms: React.FC<SimilarRoomsProps> = ({
         <div className="similar-rooms">
             <div className="flex items-center justify-between mb-8">
                 <Title level={3} className="mb-0">
-                    Phòng tương tự
+                    Các loại phòng khác
                 </Title>
                 <Button
                     type="link"
@@ -63,7 +67,7 @@ const SimilarRooms: React.FC<SimilarRoomsProps> = ({
                 </Button>
             </div>
 
-            <RoomSwiper rooms={similarRooms} />
+            <RoomSwiper roomTypes={otherRooms} />
         </div>
     );
 };

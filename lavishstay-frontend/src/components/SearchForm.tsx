@@ -159,8 +159,6 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
         return "1 người";
       case "couple":
         return "2 người";
-      case "business":
-        return "1 người (Công tác)";
       case "family_young":
       case "group":
         const totalPeople = localGuestDetails.adults + localGuestDetails.children;
@@ -288,27 +286,6 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                   }`}
               >
                 <UsersRound className="mr-2" /> Cặp đôi
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "business" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("business");
-                  form.setFieldsValue({ guests: "1 người (Công tác)" });
-                  setGuestPopoverVisible(false);
-                  setTimeout(() => {
-                    const formValues = form.getFieldsValue();
-                    handleSearch(formValues);
-                  }, 100);
-                }}
-                className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "business"
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : " border-gray-200 text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                <UserCheck className="mr-2" /> Công tác
               </Button>
             </Col>
             <Col span={12}>
@@ -475,23 +452,6 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
               </div>
             )}
 
-            {/* Apply button for guest details */}
-            <div className="mt-4">
-              <Button
-                type="primary"
-                block
-                onClick={() => {
-                  setGuestPopoverVisible(false);
-                  setTimeout(() => {
-                    const formValues = form.getFieldsValue();
-                    handleSearch(formValues);
-                  }, 100);
-                }}
-                className="rounded-lg bg-blue-600 hover:bg-blue-700 border-0"
-              >
-                Áp dụng
-              </Button>
-            </div>
           </div>
         )}
       </Space>

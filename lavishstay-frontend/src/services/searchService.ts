@@ -1,277 +1,181 @@
-// Search service with Mirage.js integration for development
 import { SearchData } from '../store/slices/searchSlice';
-
-// Import mock service for fallback
-import { mockSearchService } from './mockSearchService';
 import { ApiService, API_ENDPOINTS } from './apiService';
-import type {
-    SearchResponse,
-    AvailabilityResponse,
-    SearchSuggestionsResponse,
-    SearchHistoryResponse
-} from './mockSearchService';
 
-// Configuration
-const USE_MIRAGE_API = true; // Set to false to use mockSearchService directly
-
-// Room interface from Mirage (adjusted for single hotel)
-interface MirageRoom {
-    id: number;
-    name: string;
-    roomType: string;
-    description: string;
-    priceVND: number;
-    amenities: string[];
-    images: string[];
-    maxGuests: number;
-    discount?: number;
+interface BackendSearchResponse {
+    success: boolean;
+    message?: string;
+    data: {
+        results: any[];
+        search_params: {
+            check_in: string;
+            check_out: string;
+            nights: number;
+            guests: {
+                adults: number;
+                children: number;
+                guest_type: string;
+                total: number;
+            };
+        };
+    };
 }
 
-// Search service class
-class SearchService {
-    // Search for rooms using Mirage API
-    async searchRooms(searchData: SearchData, page: number = 1, limit: number = 10): Promise<SearchResponse> {
-        if (!USE_MIRAGE_API) {
-            return mockSearchService.searchRooms(searchData, page, limit);
-        } try {
-            // Fetch all rooms using ApiService
-            const data = await ApiService.get(API_ENDPOINTS.ROOMS.LIST);
-            console.log('🏠 Raw API data:', data);
-            console.log('🏠 Raw rooms count:', data.rooms?.length);
+interface FrontendSearchResult {
+    rooms: any[];
+    searchSummary: {
+        totalRooms: number;
+        nights: number;
+        checkIn: string;
+        checkOut: string;
+        adults: number;
+        children: number;
+        childrenAges: number[];
+        guestType: string;
+        totalGuests: number;
+    };
+}
 
-            let filteredRooms = data.rooms || [];
-            console.log('🏠 Before filtering:', filteredRooms.length, 'rooms'); console.log('🏠 Room types before filtering:', filteredRooms.map((r: any) => r.roomType));
+export const searchService = {
+    async searchRooms(searchData: SearchData): Promise<FrontendSearchResult> {
+        try {
+            console.log('🔍 Calling backend API with search data:', searchData);
 
-            // Apply client-side filtering to match search criteria
-            filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);
-            console.log('🏠 After filtering:', filteredRooms.length, 'rooms');
-            console.log('🏠 Room types after filtering:', filteredRooms.map((r: any) => r.roomType));
+            // Prepare search parameters for backend API
+            const searchParams = {
+                check_in: searchData.checkIn,
+                check_out: searchData.checkOut,
+                adults: searchData.guestDetails.adults,
+                children: searchData.guestDetails.children,
+                children_ages: searchData.guestDetails.childrenAges.map(child => child.age),
+                guest_type: searchData.guestType
+            };
 
-            // Pagination
-            const total = filteredRooms.length;
-            const totalPages = Math.ceil(total / limit);
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
-            const paginatedRooms = filteredRooms.slice(startIndex, endIndex);
+            console.log('📤 Backend API params:', searchParams);
+
+            // Call backend API using ApiService POST method
+            const response: BackendSearchResponse = await ApiService.post(API_ENDPOINTS.SEARCH.ROOMS, searchParams);
+            console.log('📥 Backend API response:', response);
+
+            if (!response.success) {
+                throw new Error(response.message || 'Search failed');
+            }
+
+            // Transform backend response to frontend format
+            const transformedRooms = this.transformBackendRooms(response.data.results);
 
             return {
-                rooms: paginatedRooms,
-                total,
-                page,
-                limit,
-                totalPages
+                rooms: transformedRooms,
+                searchSummary: {
+                    totalRooms: response.data.results.length,
+                    nights: response.data.search_params.nights,
+                    checkIn: response.data.search_params.check_in,
+                    checkOut: response.data.search_params.check_out,
+                    adults: response.data.search_params.guests.adults,
+                    children: response.data.search_params.guests.children,
+                    childrenAges: searchData.guestDetails.childrenAges.map(child => child.age),
+                    guestType: response.data.search_params.guests.guest_type,
+                    totalGuests: response.data.search_params.guests.total,
+                }
             };
         } catch (error) {
-            console.error('Error fetching rooms from Mirage:', error);
-            // Fallback to mock service
-            return mockSearchService.searchRooms(searchData, page, limit);
+            console.error('❌ Search service error:', error);
+            throw error;
         }
-    }    // Helper method to filter rooms based on search criteria (adjusted for single hotel)
-    private filterRoomsBySearchData(rooms: MirageRoom[], searchData: SearchData): MirageRoom[] {
-        console.log('🔍 Starting filterRoomsBySearchData with:', rooms.length, 'rooms');
-        console.log('🔍 SearchData:', searchData);
+    },
 
-        let filtered = [...rooms];
+    // Transform backend room data to frontend format
+    transformBackendRooms(backendRooms: any[]): any[] {
+        return backendRooms.map(result => {
+            const roomType = result.room_type;
+            const pricing = result.pricing;
+            const bookingDetails = result.booking_details;
 
-        // Filter by location field (used as room search in single hotel context)
-        if (searchData.location && searchData.location.trim()) {
-            const beforeLocationFilter = filtered.length;
-            const searchTerm = searchData.location.toLowerCase();
-            filtered = filtered.filter(room =>
-                room.name.toLowerCase().includes(searchTerm) ||
-                room.roomType.toLowerCase().includes(searchTerm)
-            );
-            console.log(`🔍 Location filter: ${beforeLocationFilter} -> ${filtered.length} rooms`);
-        }// DON'T FILTER by guest count - just prioritize in sorting later
-        // Allow all rooms to be shown, warnings will be handled in dynamic pricing
-        // The filtering below was preventing 5+ guests from seeing any rooms
-
-        // const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-        // filtered = filtered.filter(room => room.maxGuests >= totalGuests);
-
-        // Instead of filtering, we'll store guest count for prioritization
-        if (searchData.guestDetails) {
-            const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-            // Add guest count as property for later sorting, but don't filter
-            filtered = filtered.map(room => ({
-                ...room,
-                _searchGuestCount: totalGuests
-            }));
-        }        // DON'T FILTER by guest type preferences - show all rooms with prioritization
-        // This allows users to see all available options and make informed decisions
-        // Warnings and calculations will be handled in the room options
-
-        if (searchData.guestType) {
-            // Instead of filtering, we'll add preference scoring for sorting
-            switch (searchData.guestType) {
-                case 'business':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: (room.roomType === 'deluxe' || room.roomType === 'premium') ? 10 :
-                            room.amenities.some(amenity =>
-                                amenity.toLowerCase().includes('wifi') ||
-                                amenity.toLowerCase().includes('work') ||
-                                amenity.toLowerCase().includes('desk') ||
-                                amenity.toLowerCase().includes('bàn làm việc')
-                            ) ? 5 : 0
-                    }));
-                    break;
-                case 'couple':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: (room.roomType === 'suite' || room.roomType === 'presidential' || room.roomType === 'theLevel') ? 10 :
-                            room.maxGuests <= 2 ? 8 : 3
-                    }));
-                    break;
-                case 'solo':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: room.roomType === 'deluxe' ? 10 :
-                            room.maxGuests <= 2 ? 8 : 3
-                    }));
-                    break;
-                case 'family_young':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: (room.roomType === 'suite' || room.roomType === 'presidential') ? 10 :
-                            room.maxGuests >= 4 ? 8 : 5
-                    }));
-                    break;
-                case 'group':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: room.roomType === 'presidential' ? 10 :
-                            room.roomType === 'suite' ? 8 :
-                                room.maxGuests >= 4 ? 6 : 3
-                    }));
-                    break;
-                default:
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: 5 // Default neutral score
-                    }));
-                    break;
-            }
-        } else {
-            // No guest type specified, give all rooms equal preference
-            filtered = filtered.map(room => ({
-                ...room,
-                _preferenceScore: 5
-            }));
-        }
-
-        // Sort rooms by preference and capacity match
-        filtered.sort((a, b) => {
-            const aPreference = (a as any)._preferenceScore || 5;
-            const bPreference = (b as any)._preferenceScore || 5;
-            const aGuestCount = (a as any)._searchGuestCount || 2;
-
-            // First priority: preference score
-            if (aPreference !== bPreference) {
-                return bPreference - aPreference; // Higher preference first
-            }
-
-            // Second priority: capacity match (for guest count)
-            if (aGuestCount > 0) {
-                const aMatch = a.maxGuests >= aGuestCount;
-                const bMatch = b.maxGuests >= aGuestCount;
-
-                if (aMatch && !bMatch) return -1;
-                if (!aMatch && bMatch) return 1;
-
-                // If both match or both don't match, prefer Presidential (higher capacity)
-                if (a.roomType === 'presidential' && b.roomType !== 'presidential') return -1;
-                if (a.roomType !== 'presidential' && b.roomType === 'presidential') return 1;
-            }
-
-            // Third priority: price (ascending)
-            return a.priceVND - b.priceVND;
-        });
-
-        // Clean up temporary properties
-        filtered = filtered.map(room => {
-            const { _preferenceScore, _searchGuestCount, ...cleanRoom } = room as any;
-            return cleanRoom;
-        });
-
-        return filtered;
-    }// Check room availability
-    async checkAvailability(
-        roomId: string,
-        checkIn: string,
-        checkOut: string
-    ): Promise<AvailabilityResponse> {
-        if (!USE_MIRAGE_API) {
-            return mockSearchService.checkAvailability(roomId, checkIn, checkOut);
-        }
-
-        try {
-            // For Mirage, we'll use the mock service logic since Mirage doesn't have
-            // a specific availability endpoint yet
-            return mockSearchService.checkAvailability(roomId, checkIn, checkOut);
-        } catch (error) {
-            console.error('Error checking availability:', error);
-            // Fallback to mock service
-            return mockSearchService.checkAvailability(roomId, checkIn, checkOut);
-        }
-    }    // Get search suggestions (adjusted for single hotel room types)
-    async getSearchSuggestions(query: string): Promise<SearchSuggestionsResponse> {
-        if (!USE_MIRAGE_API) {
-            return mockSearchService.getSearchSuggestions(query);
-        } try {
-            // Generate suggestions based on available room types and names using ApiService
-            const data = await ApiService.get(API_ENDPOINTS.ROOMS.LIST);
-            const rooms = data.rooms || [];
-
-            if (!query || query.length < 2) {
-                return { suggestions: [] };
-            }
-
-            const queryLower = query.toLowerCase();
-            const roomSuggestions = new Set<string>();
-
-            // Extract unique room names and types that match the query
-            rooms.forEach((room: MirageRoom) => {
-                if (room.name && room.name.toLowerCase().includes(queryLower)) {
-                    roomSuggestions.add(room.name);
+            // Create room options for frontend (simplified to one main option per room type)
+            const mainOption = {
+                id: `${roomType.id}-main`,
+                name: 'Standard Booking',
+                pricePerNight: {
+                    vnd: pricing.total_per_night,
+                    originalVnd: pricing.base_price_per_night
+                },
+                maxGuests: roomType.max_guests,
+                minGuests: 1,
+                roomType: roomType.room_code || 'standard',
+                cancellationPolicy: 'Free cancellation before 24h',
+                paymentPolicy: 'Pay at hotel or online',
+                availability: roomType.available_rooms || 0,
+                additionalServices: [],
+                promotion: pricing.discount_amount > 0 ? {
+                    type: 'discount',
+                    value: pricing.discount_amount,
+                    description: `Giảm ${pricing.discount_amount.toLocaleString('vi-VN')}đ`
+                } : null,
+                recommended: false,
+                mostPopular: false,
+                pricing: {
+                    basePrice: pricing.base_price_per_night,
+                    totalPerNight: pricing.total_per_night,
+                    totalPrice: pricing.total_price,
+                    breakdown: pricing.breakdown,
+                    seasonalMultiplier: pricing.seasonal_multiplier,
+                    discountAmount: pricing.discount_amount,
+                    nights: bookingDetails.nights
                 }
-                if (room.roomType && room.roomType.toLowerCase().includes(queryLower)) {
-                    roomSuggestions.add(room.roomType);
+            };
+
+            // Get images from backend, fallback to default
+            const images = roomType.images && roomType.images.length > 0
+                ? roomType.images.map((img: string) => {
+                    // Handle relative paths from backend
+                    if (img.startsWith('/storage/')) {
+                        return `http://localhost:8888${img}`;
+                    }
+                    return img;
+                })
+                : ['/images/rooms/default.jpg'];
+
+            return {
+                id: roomType.id.toString(),
+                name: roomType.name,
+                roomType: roomType.room_code || 'standard',
+                room_code: roomType.room_code,
+                description: roomType.description || '',
+                image: images[0],
+                images: images,
+                size: roomType.room_size,
+                roomSize: roomType.room_size,
+                view: roomType.view_type,
+                viewType: roomType.view_type,
+                bedType: roomType.specifications?.bed_options?.[0] || 'King bed',
+                amenities: roomType.amenities?.map((a: any) => a.name || a.amenity_name) || [],
+                mainAmenities: roomType.highlighted_amenities ? Object.values(roomType.highlighted_amenities).map((a: any) => a.name) : [],
+                highlighted_amenities: roomType.highlighted_amenities ? Object.values(roomType.highlighted_amenities).map((a: any) => a.name) : [],
+                rating: 4.5, // Default rating
+                maxGuests: roomType.max_guests,
+                availableRooms: roomType.available_rooms || 0,
+                specifications: roomType.specifications || {},
+
+                // Pricing from backend
+                priceVND: pricing.total_price,
+                pricePerNight: pricing.total_per_night,
+                originalPrice: pricing.base_price_per_night,
+
+                // Main option for booking
+                options: [mainOption],
+
+                // Additional data for frontend
+                pricing: {
+                    ...pricing,
+                    nights: bookingDetails.nights,
+                    breakdown: pricing.breakdown
+                },
+                bookingDetails: {
+                    checkIn: bookingDetails.check_in,
+                    checkOut: bookingDetails.check_out,
+                    nights: bookingDetails.nights,
+                    guests: bookingDetails.guests
                 }
-            });
-
-            const suggestions = Array.from(roomSuggestions).slice(0, 8);
-            return { suggestions };
-        } catch (error) {
-            console.error('Error fetching search suggestions:', error);
-            // Fallback to mock service
-            return mockSearchService.getSearchSuggestions(query);
-        }
+            };
+        });
     }
-
-    // Get search history - delegate to mock service for now
-    async getSearchHistory(): Promise<SearchHistoryResponse> {
-        return mockSearchService.getSearchHistory();
-    }
-
-    // Save search to history - delegate to mock service for now
-    async saveSearchToHistory(location: string): Promise<void> {
-        return mockSearchService.saveSearchToHistory(location);
-    }
-
-    // Clear search history - delegate to mock service for now
-    async clearSearchHistory(): Promise<void> {
-        return mockSearchService.clearSearchHistory();
-    }
-}
-
-// Export singleton instance
-export const searchService = new SearchService();
-
-// Re-export types from mock service for convenience
-export type {
-    SearchResponse,
-    AvailabilityResponse,
-    SearchSuggestionsResponse,
-    SearchHistoryResponse
-} from './mockSearchService';
+};

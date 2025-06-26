@@ -10,7 +10,6 @@ import {
   FireOutlined,
   ThunderboltOutlined,
   CheckCircleOutlined,
-  CalendarOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
 import { theme } from "antd";
@@ -26,9 +25,21 @@ export interface RoomTypeProps {
   avg_size?: number; // Kích thước trung bình từ bảng room
   view?: string;
   common_views?: string[]; // Tầm nhìn phổ biến từ bảng room
-  bedType?: string;
-  amenities?: string[];
-  mainAmenities?: string[];
+  amenities?: Array<{
+    id: number;
+    name: string;
+    description?: string;
+    icon?: string;
+    category: string;
+  }>; // Amenities từ API backend
+  highlighted_amenities?: Array<{
+    id: number;
+    name: string;
+    description?: string;
+    icon?: string;
+    category: string;
+  }>; // Highlighted amenities từ API backend
+  mainAmenities?: string[]; // Legacy - để tương thích
   roomType?: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
   rating?: number;
   avg_rating?: number; // Đánh giá trung bình từ bảng room
@@ -37,15 +48,11 @@ export interface RoomTypeProps {
   style?: React.CSSProperties;
   base_price_vnd?: number;
   base_price?: number; // Giá từ API backend
-  min_price?: number;
-  max_price?: number;
   avg_price?: number;
   lavish_plus_discount?: number;
-  description?: string;
   room_code?: string;
   rooms_count?: number; // Tổng số phòng
   available_rooms_count?: number; // Số phòng còn trống
-  available_floors?: number[]; // Các tầng có sẵn
 }
 
 const RoomTypeCard: React.FC<RoomTypeProps> = ({
@@ -57,7 +64,8 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
   avg_size,
   view,
   common_views,
-  bedType,
+  amenities,
+  highlighted_amenities,
   mainAmenities,
   roomType = "deluxe",
   rating,
@@ -67,15 +75,9 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
   style = {},
   base_price_vnd,
   base_price,
-  min_price,
-  max_price,
   avg_price,
   lavish_plus_discount,
-  description,
   room_code,
-  rooms_count,
-  available_rooms_count,
-  available_floors,
 }) => {
   const { token } = theme.useToken();
   const navigate = useNavigate();
@@ -112,10 +114,6 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
     }
     return roomType;
   }, [room_code, roomType]);
-
-  const bedTypeText = useMemo(() => {
-    return bedType || 'King Bed';
-  }, [bedType]);
 
   const themeColors = useMemo(() => {
     // Màu sắc đơn giản, sang trọng và tinh tế
@@ -284,7 +282,7 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
         flexDirection: "column",
       }}
     >
-      <div className="relative overflow-hidden h-48 group">
+      <div className="relative overflow-hidden h-36 group">
         {displayImage && !imageError ? (
           <>
             <img
@@ -301,215 +299,145 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
             className="w-full h-full flex items-center justify-center text-white relative"
             style={{ backgroundColor: themeColors.primary }}
           >
-            <HomeOutlined className="text-4xl opacity-70" />
+            <HomeOutlined className="text-3xl opacity-70" />
           </div>
         )}
 
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-2 left-2">
           <Tag
-            className="px-3 py-1 rounded-full font-medium border-0"
+            className="px-2 py-1 rounded-full font-medium border-0 text-xs"
             style={{
               backgroundColor: themeColors.primary,
               color: 'white',
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
             }}
           >
-            <CrownOutlined className="mr-1" />
+            <CrownOutlined className="mr-1" style={{ fontSize: '12px' }} />
             {roomTypeDisplayName}
           </Tag>
-        </div>          {displayRating && displayRating > 0 && (
-          <div className="absolute top-3 right-3">
-            <Tag
-              className="px-2 py-1 rounded-full font-medium flex items-center gap-1 border-0"
-              style={{
-                backgroundColor: '#FFD700',
-                color: 'white',
-                boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
-              }}
-            >
-              <StarFilled className="text-xs" />
-              {displayRating}
-            </Tag>
-          </div>
-        )}
+        </div>
       </div>
 
-      <div className="p-6 flex-1 flex flex-col">
-        <div className="mb-4">
+      <div className="p-4 flex-1 flex flex-col">
+        <div className="mb-3">
           <Title
-            level={4}
-            className="mb-3 font-bold text-gray-800 leading-tight"
-            style={{ color: themeColors.text }}
+            level={5}
+            className="mb-2 font-bold text-gray-800 leading-tight"
+            style={{ color: themeColors.text, margin: 0 }}
           >
             {name}
           </Title>
-
         </div>
 
-        <div className="space-y-3 mb-4">
-          {displaySize && (
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full"
-                style={{ backgroundColor: `${themeColors.primary}20` }}>
-                <HomeOutlined style={{ color: themeColors.primary }} />
+        <div className="space-y-1 mb-3">
+          {/* Compact info row */}
+          <div className="flex items-center justify-between text-xs text-gray-600">
+            <div className="flex items-center gap-3">
+              {displaySize && (
+                <div className="flex items-center gap-1">
+                  <HomeOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
+                  <span>{displaySize}m²</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <TeamOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
+                <span>{maxGuestsDisplay} khách</span>
               </div>
-              <span className="text-gray-700 font-medium">{displaySize}m² · {bedTypeText}</span>
             </div>
-          )}
-
-          {displayView && (
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full"
-                style={{ backgroundColor: `${themeColors.primary}20` }}>
-                <EyeOutlined style={{ color: themeColors.primary }} />
+            {displayRating && displayRating > 0 && (
+              <div className="flex items-center gap-1">
+                <StarFilled style={{ color: '#FFD700', fontSize: '12px' }} />
+                <span className="text-yellow-600 font-medium">{displayRating}</span>
               </div>
-              <span className="text-gray-700 font-medium">{displayView}</span>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 text-sm">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full"
-              style={{ backgroundColor: `${themeColors.primary}20` }}>
-              <TeamOutlined style={{ color: themeColors.primary }} />
-            </div>
-            <span className="text-gray-700 font-medium">Tối đa {maxGuestsDisplay} khách</span>
+            )}
           </div>
 
-          {/* Hiển thị thông tin thống kê phòng với thiết kế đẹp */}
-          {(rooms_count !== undefined && available_rooms_count !== undefined) && (
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full"
-                style={{ backgroundColor: `${themeColors.accent}30` }}>
-                <CheckCircleOutlined style={{ color: themeColors.primary }} />
-              </div>
-              <div className="flex items-center gap-2">
-                <Tag color="success" className="rounded-full border-0 text-xs font-medium">
-                  {available_rooms_count} có sẵn
-                </Tag>
-                <span className="text-gray-500">/ {rooms_count} phòng</span>
-              </div>
-            </div>
-          )}
-
-          {/* Hiển thị tầng có sẵn với icon */}
-          {available_floors && available_floors.length > 0 && (
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full"
-                style={{ backgroundColor: `${themeColors.accent}30` }}>
-                <CalendarOutlined style={{ color: themeColors.primary }} />
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {available_floors.slice(0, 3).map((floor, index) => (
-                  <Tag key={index} color="geekblue" className="rounded-full text-xs border-0">
-                    Tầng {floor}
-                  </Tag>
-                ))}
-                {available_floors.length > 3 && (
-                  <Tag color="default" className="rounded-full text-xs border-0">
-                    +{available_floors.length - 3}
-                  </Tag>
-                )}
-              </div>
+          {displayView && (
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <EyeOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
+              <span className="truncate">{displayView}</span>
             </div>
           )}
         </div>
 
-        {(mainAmenities && mainAmenities.length > 0) && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <ThunderboltOutlined style={{ color: themeColors.primary }} />
-              <span className="text-sm font-semibold text-gray-700">Tiện nghi nổi bật</span>
+        {/* Tiện nghi nổi bật - Compact version */}
+        {((highlighted_amenities && highlighted_amenities.length > 0) || (mainAmenities && mainAmenities.length > 0)) && (
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <ThunderboltOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
+              <span className="text-xs font-medium text-gray-600">Tiện nghi nổi bật</span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {mainAmenities.slice(0, 4).map((amenity, index) => (
+            <div className="flex flex-wrap gap-1">
+              {/* Ưu tiên highlighted_amenities từ API, fallback về mainAmenities */}
+              {(highlighted_amenities && highlighted_amenities.length > 0
+                ? highlighted_amenities.slice(0, 8)
+                : (mainAmenities || []).slice(0, 8)
+              ).map((amenity, index) => (
                 <Tag
-                  key={index}
-                  className="rounded-full border-0 text-xs font-medium px-3 py-1"
+                  key={typeof amenity === 'string' ? index : amenity.id}
+                  className="text-xs px-2 py-0 rounded-full border-0 mb-1"
                   style={{
                     backgroundColor: themeColors.secondary,
                     color: themeColors.text,
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    fontSize: '12px'
                   }}
                 >
-                  {amenity}
+                  {typeof amenity === 'string' ? amenity : (
+                    <>
+                      {amenity.icon && <span className="mr-1" style={{ fontSize: '12px' }} dangerouslySetInnerHTML={{ __html: amenity.icon }} />}
+                      <span className="truncate max-w-20">{amenity.name}</span>
+                    </>
+                  )}
                 </Tag>
               ))}
-              {mainAmenities.length > 4 && (
-                <Tag className="rounded-full border-0 text-xs font-medium px-3 py-1 bg-gray-100 text-gray-600">
-                  +{mainAmenities.length - 4}
-                </Tag>
-              )}
+
             </div>
           </div>
         )}
 
-        <div className="mb-4 mt-auto">
-          <div className="text-center p-4 rounded-xl"
+        <div className="mt-auto">
+          {/* Compact pricing */}
+          <div className="text-center p-2 rounded-lg mb-3"
             style={{
               backgroundColor: themeColors.secondary,
               border: `1px solid ${themeColors.border}`
             }}>
-            {/* Hiển thị range giá nếu có min và max khác nhau */}
-            {min_price && max_price && min_price !== max_price ? (
-              <div>
-                <div className="text-lg font-bold" style={{ color: themeColors.primary }}>
-                  {new Intl.NumberFormat('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND'
-                  }).format(min_price)}
-                  <span className="text-gray-500 font-normal mx-1">đến</span>
-                  {new Intl.NumberFormat('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND'
-                  }).format(max_price)}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  /đêm • Chưa bao gồm thuế
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="text-xl font-bold" style={{ color: themeColors.primary }}>
-                  {formattedPrice}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  /đêm • Chưa bao gồm thuế
-                </div>
-              </div>
-            )}
+            <div className="text-lg font-bold" style={{ color: themeColors.primary }}>
+              {formattedPrice}
+            </div>
+            <div className="text-xs text-gray-500">mỗi đêm</div>
             {lavish_plus_discount && lavish_plus_discount > 0 && (
-              <div className="mt-2">
+              <div className="mt-1">
                 <Tag
                   className="rounded-full border-0 text-xs font-medium"
                   style={{
                     backgroundColor: '#FF4D4F',
-                    color: 'white'
+                    color: 'white',
+                    fontSize: '12px'
                   }}
                 >
                   <FireOutlined className="mr-1" />
-                  Giảm {lavish_plus_discount}% cho Lavish+
+                  -{lavish_plus_discount}%
                 </Tag>
               </div>
             )}
           </div>
-        </div>
 
-        <div className="pt-3">
+          {/* Compact button */}
           <Button
             type="primary"
             icon={<ArrowRightOutlined />}
             onClick={handleViewDetails}
-            size="large"
-            className="w-full transition-all duration-300 font-semibold hover:scale-105"
+            size="small"
+            className="w-full transition-all duration-300 font-medium"
             style={{
-              borderRadius: "12px",
+              borderRadius: "6px",
               backgroundColor: themeColors.primary,
               border: 'none',
-              boxShadow: `0 4px 15px ${themeColors.primary}40`,
-              height: "48px",
+              height: "32px",
             }}
           >
-            Xem chi tiết loại phòng
+            Xem chi tiết
           </Button>
         </div>
       </div>
