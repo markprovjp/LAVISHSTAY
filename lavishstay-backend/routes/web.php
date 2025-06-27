@@ -34,6 +34,7 @@ use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\WeekendPriceController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PricingManagementController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\RoomTypeServiceController;
 
@@ -430,6 +431,33 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::post('/toggle-status/{id}', [WeekendPriceController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/bulk-update-status', [WeekendPriceController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
     });
+
+
+    // Pricing Management Routes
+    Route::prefix('pricing')->name('pricing.')->group(function () {
+        Route::get('/', [PricingManagementController::class, 'index'])->name('index');
+        Route::get('/config', [PricingManagementController::class, 'config'])->name('config');
+        Route::post('/config', [PricingManagementController::class, 'updateConfig'])->name('config.update');
+        Route::get('/preview', [PricingManagementController::class, 'getPricingPreview'])->name('preview');
+        Route::get('/statistics', [PricingManagementController::class, 'getStatistics'])->name('statistics');
+        Route::get('/history', [PricingManagementController::class, 'history'])->name('history');
+        Route::get('/history/data', [PricingManagementController::class, 'getHistoryData'])->name('history.data');
+        Route::get('/calculator', [PricingManagementController::class, 'calculator'])->name('calculator');
+        Route::post('/clear-cache', [PricingManagementController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/test', [PricingManagementController::class, 'testPricing'])->name('test');
+    });
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
