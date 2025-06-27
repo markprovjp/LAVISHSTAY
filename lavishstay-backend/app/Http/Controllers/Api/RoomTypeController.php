@@ -40,7 +40,7 @@ class RoomTypeController extends Controller
                         return [
                             'id' => $img->image_id,
                             'room_type_id' => $img->room_type_id,
-                            'image_url' => asset($img->image_path), // Remove the extra 'storage' prefix
+                            'image_path' => asset($img->image_path), // Remove the extra 'storage' prefix
                             'alt_text' => $img->alt_text,
                             'is_main' => $img->is_main,
                         ];
