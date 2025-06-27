@@ -30,8 +30,12 @@ const ReceptionLayout: React.FC = () => {
             label: 'Quản lý phòng',
             children: [
                 {
+                    key: '/reception/room-management',
+                    label: <Link to="/reception/room-management-list">Danh sách phòng</Link>,
+                },
+                {
                     key: '/reception/room-management/today',
-                    label: <Link to="/reception/room-management">Phòng hôm nay</Link>,
+                    label: <Link to="/reception/room-management/today">Phòng hôm nay</Link>,
                 },
                 {
                     key: '/reception/room-management/check-in',

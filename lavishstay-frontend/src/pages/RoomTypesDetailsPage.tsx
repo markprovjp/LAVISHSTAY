@@ -1,3 +1,8 @@
+
+
+
+
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Typography, Spin, Alert, Button, Card, Tag, Divider, Space } from 'antd';
@@ -59,9 +64,9 @@ const RoomTypesDetailsPage: React.FC = () => {
 
                 {/* Gallery ảnh full width */}
                 <div className="mb-8">
-                    <RoomImageGallery
-                        images={images}
-                        roomName={roomType.name}
+                                       <RoomImageGallery
+                      images={images.map((img: any) => img.image_url)}
+                      roomName={roomType.name}
                     />
                 </div>
 
@@ -166,3 +171,5 @@ const RoomTypesDetailsPage: React.FC = () => {
 };
 
 export default RoomTypesDetailsPage;
+
+

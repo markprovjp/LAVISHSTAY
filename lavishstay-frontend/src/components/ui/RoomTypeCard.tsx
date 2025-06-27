@@ -1,3 +1,8 @@
+
+
+
+
+
 import React, { useCallback, useMemo } from "react";
 import { Card, Typography, Button, Tag } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -19,8 +24,20 @@ const { Title } = Typography;
 export interface RoomTypeProps {
   id: number;
   name: string;
-  image?: string;
-  images?: string[]; // Thêm trường images
+  images?: Array<{
+    id: number;
+    room_type_id: number;
+    image_url: string;
+    alt_text?: string;
+    is_main: boolean;
+  }>; // Updated image type to match backend response
+  main_image?: {
+    id: number;
+    room_type_id: number;
+    image_url: string;
+    alt_text?: string;
+    is_main: boolean;
+  }; // Add main_image from backend
   size?: number;
   avg_size?: number; // Kích thước trung bình từ bảng room
   view?: string;
@@ -58,8 +75,8 @@ export interface RoomTypeProps {
 const RoomTypeCard: React.FC<RoomTypeProps> = ({
   id,
   name,
-  image,
   images,
+  main_image,
   size,
   avg_size,
   view,
@@ -82,13 +99,30 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
   const { token } = theme.useToken();
   const navigate = useNavigate();
 
-  // Memoize image display - ưu tiên images[0] nếu có, fallback về image
   const displayImage = useMemo(() => {
-    if (images && images.length > 0) {
-      return images[0];
+    // First try to use main_image
+    if (main_image?.image_url) {
+      return main_image.image_url;
     }
-    return image;
-  }, [images, image]);
+    // Otherwise look through images array
+    if (images && images.length > 0) {
+      // First try to find a main image
+      const mainImg = images.find(img => img.is_main);
+      if (mainImg?.image_url) {
+        return mainImg.image_url;
+      }
+      // If no main image, use the first image with a valid URL
+      const validImg = images.find(img =>
+        img.image_url && img.image_url.match(/\.(jpg|jpeg|png|webp|gif)$/i)
+      );
+      if (validImg?.image_url) {
+        return validImg.image_url;
+      }
+      // Last resort - use first image's URL
+      return images[0].image_url;
+    }
+    return undefined;
+  }, [images, main_image]);
 
   // State để handle error loading ảnh
   const [imageError, setImageError] = React.useState(false);
@@ -446,3 +480,6 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
 };
 
 export default React.memo(RoomTypeCard);
+
+
+

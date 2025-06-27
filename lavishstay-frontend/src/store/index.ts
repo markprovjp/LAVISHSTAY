@@ -3,7 +3,7 @@ import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
 import searchReducer from './slices/searchSlice';
 import bookingReducer from './slices/bookingSlice';
-
+import ReceptionReducer from './slices/Reception';
 // Tạo store
 const store = configureStore({
   reducer: {
@@ -11,7 +11,7 @@ const store = configureStore({
     theme: themeReducer,
     search: searchReducer,
     booking: bookingReducer,
-    // Thêm các reducer khác ở đây
+    Reception:  ReceptionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

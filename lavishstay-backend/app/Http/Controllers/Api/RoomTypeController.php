@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\RoomType;
+use App\Models\RoomTypeImage;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -27,21 +28,35 @@ class RoomTypeController extends Controller
                 });
             }
 
+            
             // Pagination
             $perPage = $request->get('per_page', 10);
             $roomTypes = $query->paginate($perPage);
 
             $data = $roomTypes->getCollection()->map(function ($roomType) {
-                // Parse images from JSON string if exists
-                $imagesList = [];
-                if (!empty($roomType->images) && is_string($roomType->images)) {
-                    try {
-                        $imagesList = json_decode($roomType->images, true) ?: [];
-                    } catch (\Exception $e) {
-                        $imagesList = [];
-                    }
-                }
+                $imagesList = RoomTypeImage::where('room_type_id', $roomType->room_type_id)
+                    ->get(['image_id', 'room_type_id', 'image_url', 'image_path', 'alt_text', 'is_main'])
+                    ->map(function ($img) {
+                        return [
+                            'id' => $img->image_id,
+                            'room_type_id' => $img->room_type_id,
+                            'image_url' => asset($img->image_path), // Remove the extra 'storage' prefix
+                            'alt_text' => $img->alt_text,
+                            'is_main' => $img->is_main,
+                        ];
+                    })->toArray();
 
+// Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
+$mainImage = null;
+foreach ($imagesList as $img) {
+    if ($img['is_main']) {
+        $mainImage = $img;
+        break;
+    }
+}
+if (!$mainImage && !empty($imagesList)) {
+    $mainImage = $imagesList[0];
+}
                 // Get room statistics for this room type
                 $availableRoomsCount = 0;
                 $totalRoomsCount = 0;
@@ -127,8 +142,8 @@ class RoomTypeController extends Controller
                     'name' => $roomType->name,
                     'description' => $roomType->description,
                     'total_room' => $roomType->total_room,
-                    'images' => $imagesList,
-                    'main_image' => !empty($imagesList) ? $imagesList[0] : null,
+                     'images' => $imagesList,
+                    'main_image' => $mainImage,
                     'base_price' => $minPrice,
                     'min_price' => $minPrice,
                     'max_price' => $maxPrice,
@@ -165,7 +180,7 @@ class RoomTypeController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi lấy danh sách loại phòng',
+                'message' => 'Có lỗi xảy ra khi lấy danh sách loại phòng ',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -180,14 +195,28 @@ class RoomTypeController extends Controller
             $roomType = RoomType::where('room_type_id', $id)
                 ->firstOrFail();
 
-            // Parse images from JSON string if exists
-            $imagesList = [];
-            if (!empty($roomType->images) && is_string($roomType->images)) {
-                try {
-                    $imagesList = json_decode($roomType->images, true) ?: [];
-                } catch (\Exception $e) {
-                    $imagesList = [];
+           $imagesList = RoomTypeImage::where('room_type_id', $roomType->room_type_id)
+    ->get(['image_id', 'image_url', 'image_path', 'alt_text', 'is_main'])
+    ->map(function ($img) {
+        return [
+            'id' => $img->image_id,
+            'image_url' => asset($img->image_path), // Remove the extra 'storage' prefix
+            'image_path' => $img->image_path,
+            'alt_text' => $img->alt_text,
+            'is_main' => $img->is_main,
+        ];
+    })->toArray();
+
+            // Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
+            $mainImage = null;
+            foreach ($imagesList as $img) {
+                if ($img['is_main']) {
+                    $mainImage = $img;
+                    break;
                 }
+            }
+            if (!$mainImage && !empty($imagesList)) {
+                $mainImage = $imagesList[0];
             }
 
             // Get comprehensive information from both room_types and room tables
@@ -287,7 +316,7 @@ class RoomTypeController extends Controller
                 'description' => $roomType->description,
                 'total_room' => $roomType->total_room,
                 'images' => $imagesList,
-                'main_image' => !empty($imagesList) ? $imagesList[0] : null,
+                    'main_image' => $mainImage,
                 'base_price' => $minPrice,
                 'min_price' => $minPrice,
                 'max_price' => $maxPrice,
@@ -322,120 +351,6 @@ class RoomTypeController extends Controller
         }
     }
 
-    /**
-     * Store a newly created room type
-     */
-    public function store(Request $request): JsonResponse
-    {
-        try {
-            $request->validate([
-                'room_code' => 'required|string|max:255|unique:room_types,room_code',
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'total_room' => 'nullable|integer|min:0',
-            ]);
-
-            $roomType = RoomType::create([
-                'room_code' => $request->room_code,
-                'name' => $request->name,
-                'description' => $request->description,
-                'total_room' => $request->total_room
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Loại phòng đã được tạo thành công',
-                'data' => [
-                    'id' => $roomType->room_type_id,
-                    'room_code' => $roomType->room_code,
-                    'name' => $roomType->name,
-                    'description' => $roomType->description,
-                    'total_room' => $roomType->total_room
-                ]
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi tạo loại phòng',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Update the specified room type
-     */
-    public function update(Request $request, string $id): JsonResponse
-    {
-        try {
-            $roomType = RoomType::where('room_type_id', $id)->firstOrFail();
-
-            $request->validate([
-                'room_code' => 'required|string|max:255|unique:room_types,room_code,' . $id . ',room_type_id',
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'total_room' => 'nullable|integer|min:0',
-            ]);
-
-            $roomType->update([
-                'room_code' => $request->room_code,
-                'name' => $request->name,
-                'description' => $request->description,
-                'total_room' => $request->total_room
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Loại phòng đã được cập nhật thành công',
-                'data' => [
-                    'id' => $roomType->room_type_id,
-                    'room_code' => $roomType->room_code,
-                    'name' => $roomType->name,
-                    'description' => $roomType->description,
-                    'total_room' => $roomType->total_room
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi cập nhật loại phòng',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Remove the specified room type
-     */
-    public function destroy(string $id): JsonResponse
-    {
-        try {
-            $roomType = RoomType::where('room_type_id', $id)->firstOrFail();
-
-            if ($roomType->rooms()->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không thể xóa loại phòng này vì có phòng đang sử dụng nó'
-                ], 400);
-            }
-
-            $roomType->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Loại phòng đã được xóa thành công'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi xóa loại phòng',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
     /**
      * Get amenities for specific room type based on room type ID

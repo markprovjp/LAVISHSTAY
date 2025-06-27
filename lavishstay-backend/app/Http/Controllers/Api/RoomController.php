@@ -75,7 +75,7 @@ class RoomController extends Controller
             }
 
             // Pagination
-            $perPage = $request->get('per_page', 12);
+            $perPage = $request->get('per_page', 295);
             $rooms = $query->paginate($perPage);
 
             $data = $rooms->getCollection()->map(function ($room) {
