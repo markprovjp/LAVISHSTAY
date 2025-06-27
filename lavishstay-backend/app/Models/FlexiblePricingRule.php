@@ -22,15 +22,19 @@ class FlexiblePricingRule extends Model
         'start_date',
         'end_date',
         'price_adjustment',
-        'is_active'
+        'is_active',
+        'priority',
+        'is_exclusive'
     ];
 
     protected $casts = [
         'days_of_week' => 'array',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'price_adjustment' => 'decimal:2',
         'is_active' => 'boolean',
-        'start_date' => 'date',
-        'end_date' => 'date'
+        'is_exclusive' => 'boolean',
+        'priority' => 'integer'
     ];
 
     /**
@@ -65,6 +69,10 @@ class FlexiblePricingRule extends Model
         return $query->where('is_active', true);
     }
 
+    public function scopeByPriority($query)
+    {
+        return $query->orderBy('priority', 'asc');
+    }
     /**
      * Scope for rules applicable to a specific date
      */

@@ -462,7 +462,7 @@ class SearchController extends Controller
         $images = DB::table('room_type_image')
             ->where('room_type_id', $roomTypeId)
             ->orderBy('is_main', 'desc')
-            ->pluck('image_url')
+            ->pluck('image_path')
             ->toArray();
 
         // Get sample room for basic specs

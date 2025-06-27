@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Services\PricingService;
 use App\Http\Controllers\Controller;
 use App\Models\FlexiblePricingRule;
 use App\Models\RoomType;
@@ -14,9 +14,13 @@ use Carbon\Carbon;
 
 class FlexiblePricingController extends Controller
 {
-    /**
-     * Display the main page
-     */
+    protected $pricingService;
+
+    public function __construct(PricingService $pricingService)
+    {
+        $this->pricingService = $pricingService;
+    }
+
     public function index()
     {
         return view('admin.room_prices.event_festival');
@@ -103,6 +107,23 @@ class FlexiblePricingController extends Controller
             ], 422);
         }
 
+        // Validate rule conflicts for events and holidays
+        if (in_array($request->rule_type, ['event', 'holiday'])) {
+            $conflictValidation = $this->pricingService->validateRuleConflicts(
+                $request->rule_type,
+                $request->start_date,
+                $request->end_date
+            );
+
+            if (!$conflictValidation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $conflictValidation['message'],
+                    'conflicts' => $conflictValidation['conflicts'] ?? []
+                ], 422);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -112,7 +133,9 @@ class FlexiblePricingController extends Controller
                 'price_adjustment' => $request->price_adjustment,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
-                'is_active' => $request->is_active ?? true
+                'is_active' => $request->is_active ?? true,
+                'priority' => $request->priority ?? 5,
+                'is_exclusive' => $request->is_exclusive ?? false
             ];
 
             // Add rule-specific data
@@ -131,7 +154,10 @@ class FlexiblePricingController extends Controller
                     break;
             }
 
-            FlexiblePricingRule::create($data);
+            $rule = FlexiblePricingRule::create($data);
+
+            // Clear pricing cache for affected room types
+            $this->clearAffectedCache($rule);
 
             DB::commit();
 
@@ -144,7 +170,7 @@ class FlexiblePricingController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi thêm quy tắc giá'
+                'message' => 'Có lỗi xảy ra khi thêm quy tắc giá: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -184,6 +210,24 @@ class FlexiblePricingController extends Controller
             ], 422);
         }
 
+        // Validate rule conflicts for events and holidays
+        if (in_array($request->rule_type, ['event', 'holiday'])) {
+            $conflictValidation = $this->pricingService->validateRuleConflicts(
+                $request->rule_type,
+                $request->start_date,
+                $request->end_date,
+                $id // Exclude current rule from conflict check
+            );
+
+            if (!$conflictValidation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $conflictValidation['message'],
+                    'conflicts' => $conflictValidation['conflicts'] ?? []
+                ], 422);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -195,7 +239,9 @@ class FlexiblePricingController extends Controller
                 'price_adjustment' => $request->price_adjustment,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
-                'is_active' => $request->is_active ?? true
+                'is_active' => $request->is_active ?? true,
+                'priority' => $request->priority ?? $rule->priority,
+                'is_exclusive' => $request->is_exclusive ?? $rule->is_exclusive
             ];
 
             // Clear previous rule-specific data
@@ -222,6 +268,9 @@ class FlexiblePricingController extends Controller
 
             $rule->update($data);
 
+            // Clear pricing cache for affected room types
+            $this->clearAffectedCache($rule);
+
             DB::commit();
 
             return response()->json([
@@ -233,7 +282,7 @@ class FlexiblePricingController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi cập nhật quy tắc giá'
+                'message' => 'Có lỗi xảy ra khi cập nhật quy tắc giá: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -274,6 +323,10 @@ class FlexiblePricingController extends Controller
             DB::beginTransaction();
 
             $rule = FlexiblePricingRule::findOrFail($id);
+            
+            // Clear pricing cache before deleting
+            $this->clearAffectedCache($rule);
+            
             $rule->delete();
 
             DB::commit();
@@ -287,11 +340,72 @@ class FlexiblePricingController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi xóa quy tắc giá'
+                'message' => 'Có lỗi xảy ra khi xóa quy tắc giá: ' . $e->getMessage()
             ], 500);
         }
     }
 
+    private function clearAffectedCache($rule)
+    {
+        if ($rule->room_type_id) {
+            // Clear cache for specific room type
+            $this->pricingService->clearPricingCache(
+                $rule->room_type_id,
+                $rule->start_date,
+                $rule->end_date
+            );
+        } else {
+            // Clear cache for all room types
+            $roomTypes = RoomType::pluck('room_type_id');
+            foreach ($roomTypes as $roomTypeId) {
+                $this->pricingService->clearPricingCache(
+                    $roomTypeId,
+                    $rule->start_date,
+                    $rule->end_date
+                );
+            }
+        }
+    }
+
+    /**
+     * Validate rule conflicts (new method)
+     */
+    public function validateConflicts(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'rule_type' => 'required|in:event,holiday',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'exclude_rule_id' => 'nullable|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $result = $this->pricingService->validateRuleConflicts(
+                $request->rule_type,
+                $request->start_date,
+                $request->end_date,
+                $request->exclude_rule_id
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     /**
      * Get room types
      */

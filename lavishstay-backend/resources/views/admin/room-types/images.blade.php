@@ -70,10 +70,10 @@
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl mb-6">
             <div class="p-6">
                 <div class="flex items-center gap-6">
-                    <div class="flex-shrink-0 ">
+                    <div class="flex-shrink-0">
                         @if($roomType->images->where('is_main', true)->first())
                             <img class="w-30 h-20 rounded-lg object-cover" 
-                                 src="{{ $roomType->images->where('is_main', true)->first()->image_url }}" 
+                                 src="{{ $roomType->images->where('is_main', true)->first()->image_path }}" 
                                  alt="{{ $roomType->name }}">
                         @else
                             <div class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
@@ -180,8 +180,8 @@
 
                             <!-- Image Container -->
                             <div class="relative aspect-square overflow-hidden rounded-t-xl cursor-pointer"
-                                 onclick="viewImageFullSize('{{ $image->image_url }}', '{{ $image->alt_text }}')">
-                                <img src="{{ $image->image_url }}" 
+                                 onclick="viewImageFullSize('{{ $image->image_path }}', '{{ $image->alt_text }}')">
+                                <img src="{{ $image->image_path }}" 
                                      alt="{{ $image->alt_text }}"
                                      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                      onerror="handleImageError(this)">

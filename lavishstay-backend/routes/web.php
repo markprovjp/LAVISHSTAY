@@ -434,7 +434,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     // Pricing Management Routes
-    Route::prefix('pricing')->name('pricing.')->group(function () {
+    Route::prefix('/admin/pricing')->name('admin.pricing.')->group(function () {
         Route::get('/', [PricingManagementController::class, 'index'])->name('index');
         Route::get('/config', [PricingManagementController::class, 'config'])->name('config');
         Route::post('/config', [PricingManagementController::class, 'updateConfig'])->name('config.update');

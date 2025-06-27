@@ -179,11 +179,12 @@ class RoomTypeController extends Controller
                 
                 // Store image
                 $path = $image->storeAs('room-types/' . $roomType->room_type_id, $filename, 'public');
-                $imageUrl = Storage::url($path);
-
+                $imagePath = Storage::url($path);
+                $imageUrl = asset($imagePath);
                 // Create database record
                 $roomTypeImage = RoomTypeImage::create([
                     'room_type_id' => $roomType->room_type_id,
+                    'image_path' => $imagePath,
                     'image_url' => $imageUrl,
                     'alt_text' => $roomType->name . ' - Ảnh ' . ($index + 1),
                     'is_main' => !$hasMainImage && $index === 0 // First image becomes main if no main image exists
@@ -300,8 +301,8 @@ class RoomTypeController extends Controller
             }
 
             // Delete file from storage
-            if ($image->image_url) {
-                $path = str_replace('/storage/', '', $image->image_url);
+            if ($image->image_path) {
+                $path = str_replace('/storage/', '', $image->image_path);
                 Storage::disk('public')->delete($path);
             }
 

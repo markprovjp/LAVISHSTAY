@@ -60,6 +60,11 @@ return [
     */
 
     'providers' => [
+        App\Providers\AppServiceProvider::class,
+        App\Providers\AuthServiceProvider::class,
+        App\Providers\EventServiceProvider::class,
+        App\Providers\RouteServiceProvider::class,
+        App\Providers\PricingServiceProvider::class, 
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
