@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\FAQController;
+use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
 use App\Http\Controllers\Api\SearchController;
@@ -101,5 +102,20 @@ Route::prefix('payment')->group(function () {
         
         // Xác nhận thanh toán - sử dụng booking ID
         Route::post('/confirm/{bookingId}', [PaymentController::class, 'confirmPayment']);
+    });
+});
+
+// Pricing API Routes
+Route::prefix('pricing')->group(function () {
+    // Public pricing endpoints (for booking system)
+    Route::post('/calculate', [PricingController::class, 'calculatePrice']);
+    Route::post('/calculate-night', [PricingController::class, 'calculateNightPrice']);
+    Route::get('/occupancy-rate', [PricingController::class, 'getOccupancyRate']);
+    Route::get('/applicable-rules', [PricingController::class, 'getApplicableRules']);
+    
+    // Admin only endpoints
+    Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+        Route::post('/validate-conflicts', [PricingController::class, 'validateRuleConflicts']);
+        Route::post('/clear-cache', [PricingController::class, 'clearCache']);
     });
 });
