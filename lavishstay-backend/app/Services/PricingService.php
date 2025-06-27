@@ -502,37 +502,42 @@ class PricingService
      * Update occupancy data for a specific room type and date
      */
     public function updateOccupancyData($roomTypeId, $date)
-    {
-        // Get total rooms for this room type
-        $totalRooms = DB::table('room')
-            ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
-            ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
-            ->where('room.room_type_id', $roomTypeId)
-            ->where('room_availability.date', $date)
-            ->sum('room_availability.total_rooms');
+{
+    // Get total rooms for this room type
+    $totalRooms = DB::table('room')
+        ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
+        ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
+        ->where('room.room_type_id', $roomTypeId)
+        ->where('room_availability.date', $date)
+        ->sum('room_availability.total_rooms');
 
-        // Get available rooms
-        $availableRooms = DB::table('room')
-            ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
-            ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
-            ->where('room.room_type_id', $roomTypeId)
-            ->where('room_availability.date', $date)
-            ->sum('room_availability.available_rooms');
-
-        $bookedRooms = $totalRooms - $availableRooms;
-
-        // Update or create occupancy record
-        RoomOccupancy::updateOrCreate(
-            [
-                'room_type_id' => $roomTypeId,
-                'date' => $date
-            ],
-                        [
-                'total_rooms' => $totalRooms,
-                'booked_rooms' => $bookedRooms
-            ]
-        );
+    // Nếu không có phòng thì không lưu
+    if ($totalRooms == 0) {
+        \Log::info("Không cập nhật occupancy vì không có phòng (room_type_id={$roomTypeId}, date={$date})");
+        return;
     }
+
+    $availableRooms = DB::table('room')
+        ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
+        ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
+        ->where('room.room_type_id', $roomTypeId)
+        ->where('room_availability.date', $date)
+        ->sum('room_availability.available_rooms');
+
+    $bookedRooms = $totalRooms - $availableRooms;
+
+    RoomOccupancy::updateOrCreate(
+        [
+            'room_type_id' => $roomTypeId,
+            'date' => $date
+        ],
+        [
+            'total_rooms' => $totalRooms,
+            'booked_rooms' => $bookedRooms
+        ]
+    );
+}
+
 
     /**
      * Get base price for room type
