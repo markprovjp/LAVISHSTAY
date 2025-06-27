@@ -42,7 +42,7 @@ class RoomAvailabilityService
                     'images' => $room->roomType->images->map(function ($image) {
                         return [
                             'id' => $image->id,
-                            'image_url' => $image->image_url,
+                            'image_path' => $image->image_path,
                             'is_main' => $image->is_main
                         ];
                     })

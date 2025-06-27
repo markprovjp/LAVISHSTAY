@@ -28,7 +28,7 @@
                         <!-- Room Image -->
                         <div class="relative h-48 bg-gray-200 dark:bg-gray-700">
                             @if($room->images && $room->images->count() > 0)
-                                <img src="{{ asset( $room->images->first()->image_url) }}" 
+                                <img src="{{ asset( $room->images->first()->image_path) }}" 
                                      alt="{{ $room->name }}" 
                                      class="w-full h-full object-cover">
                             @else

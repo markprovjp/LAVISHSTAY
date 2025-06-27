@@ -13,18 +13,26 @@ class DynamicPricingRule extends Model
     protected $primaryKey = 'rule_id';
 
     protected $fillable = [
-        'room_type_id',
+       'room_type_id',
         'occupancy_threshold',
         'price_adjustment',
-        'is_active'
+        'is_active',
+        'priority',
+        'is_exclusive'
     ];
 
     protected $casts = [
         'occupancy_threshold' => 'decimal:2',
         'price_adjustment' => 'decimal:2',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_exclusive' => 'boolean',
+        'priority' => 'integer'
     ];
 
+    public function scopeByPriority($query)
+    {
+        return $query->orderBy('priority', 'asc');
+    }
     // Relationships
     public function roomType()
     {

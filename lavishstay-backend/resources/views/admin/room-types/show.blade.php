@@ -98,8 +98,8 @@
                                     <!-- Main Image (Left Half) -->
                                     <div class="w-1/2 relative">
                                         <div class="relative h-full group cursor-pointer overflow-hidden rounded-xl"
-                                            onclick="viewSingleImage('{{ $mainImage->image_url }}', '{{ $roomType->name }} - Ảnh chính')">
-                                            <img src="{{ $mainImage->image_url }}"
+                                            onclick="viewSingleImage('{{ $mainImage->image_path }}', '{{ $roomType->name }} - Ảnh chính')">
+                                            <img src="{{ $mainImage->image_path }}"
                                                 alt="Ảnh chính - {{ $roomType->name }}"
                                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
 
@@ -136,8 +136,8 @@
                                             <div class="w-1/2 relative">
                                                 @if ($otherImages->count() > 0)
                                                     <div class="relative h-full group cursor-pointer overflow-hidden rounded-lg"
-                                                        onclick="viewSingleImage('{{ $otherImages->first()->image_url }}', '{{ $roomType->name }} - Ảnh 2')">
-                                                        <img src="{{ $otherImages->first()->image_url }}"
+                                                        onclick="viewSingleImage('{{ $otherImages->first()->image_path }}', '{{ $roomType->name }} - Ảnh 2')">
+                                                        <img src="{{ $otherImages->first()->image_path }}"
                                                             alt="Ảnh 2"
                                                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                                                         <div
@@ -163,8 +163,8 @@
                                             <div class="w-1/2 relative">
                                                 @if ($otherImages->count() > 1)
                                                     <div class="relative h-full group cursor-pointer overflow-hidden rounded-lg"
-                                                        onclick="viewSingleImage('{{ $otherImages->skip(1)->first()->image_url }}', '{{ $roomType->name }} - Ảnh 3')">
-                                                        <img src="{{ $otherImages->skip(1)->first()->image_url }}"
+                                                        onclick="viewSingleImage('{{ $otherImages->skip(1)->first()->image_path }}', '{{ $roomType->name }} - Ảnh 3')">
+                                                        <img src="{{ $otherImages->skip(1)->first()->image_path }}"
                                                             alt="Ảnh 3"
                                                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                                                         <div
@@ -193,8 +193,8 @@
                                             <div class="w-1/2 relative">
                                                 @if ($otherImages->count() > 2)
                                                     <div class="relative h-full group cursor-pointer overflow-hidden rounded-lg"
-                                                        onclick="viewSingleImage('{{ $otherImages->skip(2)->first()->image_url }}', '{{ $roomType->name }} - Ảnh 4')">
-                                                        <img src="{{ $otherImages->skip(2)->first()->image_url }}"
+                                                        onclick="viewSingleImage('{{ $otherImages->skip(2)->first()->image_path }}', '{{ $roomType->name }} - Ảnh 4')">
+                                                        <img src="{{ $otherImages->skip(2)->first()->image_path }}"
                                                             alt="Ảnh 4"
                                                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
                                                         <div
@@ -221,7 +221,7 @@
                                                 @if ($otherImages->count() > 3)
                                                     <div
                                                         class="relative h-full cursor-pointer overflow-hidden rounded-lg">
-                                                        <img src="{{ $otherImages->skip(3)->first()->image_url }}"
+                                                        <img src="{{ $otherImages->skip(3)->first()->image_path }}"
                                                             alt="Ảnh 5" class="w-full h-full object-cover">
 
                                                         @if ($remainingImages > 0)
@@ -237,7 +237,7 @@
                                                         @else
                                                             <!-- Normal click to view -->
                                                             <div class="absolute inset-0 group cursor-pointer"
-                                                                onclick="viewSingleImage('{{ $otherImages->skip(3)->first()->image_url }}', '{{ $roomType->name }} - Ảnh 5')">
+                                                                onclick="viewSingleImage('{{ $otherImages->skip(3)->first()->image_path }}', '{{ $roomType->name }} - Ảnh 5')">
                                                                 <div
                                                                     class="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300">
                                                                 </div>
@@ -357,8 +357,8 @@
                                     <div class="relative group cursor-pointer"
                                         style="width: calc(20% - 16px); min-width: 200px;">
                                         <div class="relative overflow-hidden rounded-lg"
-                                            onclick="viewSingleImageFromGallery('{{ $image->image_url }}', '{{ $roomType->name }} - Ảnh {{ $index + 1 }}')">
-                                            <img src="{{ $image->image_url }}"
+                                            onclick="viewSingleImageFromGallery('{{ $image->image_path }}', '{{ $roomType->name }} - Ảnh {{ $index + 1 }}')">
+                                            <img src="{{ $image->image_path }}"
                                                 alt="Ảnh {{ $index + 1 }} - {{ $roomType->name }}"
                                                 class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105">
 
@@ -420,7 +420,7 @@
                                     <div class="relative group cursor-pointer flex-shrink-0"
                                         style="width: calc(20% - 12px); min-width: 200px;"
                                         onclick="viewImageFromGallery({{ $index }})">
-                                        <img src="{{ $image->image_url }}"
+                                        <img src="{{ $image->image_path }}"
                                             alt="Ảnh {{ $index + 1 }} - {{ $roomType->name }}"
                                             class="w-full h-48 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-300">
 
@@ -802,7 +802,7 @@
                     @foreach ($roomType->images as $index => $image)
                         <div class="relative group cursor-pointer"
                             onclick="viewImageFromGallery({{ $index }})">
-                            <img src="{{ $image->image_url }}"
+                            <img src="{{ $image->image_path }}"
                                 alt="Ảnh {{ $index + 1 }} - {{ $roomType->name }}"
                                 class="w-full h-48 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-all duration-300">
 
@@ -902,7 +902,7 @@
 
                 // Then open image viewer
                 setTimeout(() => {
-                    viewImage(image.image_url, title, description);
+                    viewImage(image.image_path, title, description);
                 }, 100);
             }
         }
@@ -915,7 +915,7 @@
                 const title = `{{ $roomType->name }} - Ảnh ${currentImageIndex + 1}`;
                 const description = image.is_main ? 'Ảnh chính' : `Ảnh ${currentImageIndex + 1}`;
 
-                document.getElementById('viewerImage').src = image.image_url;
+                document.getElementById('viewerImage').src = image.image_path;
                 document.getElementById('viewerTitle').textContent = title;
                 document.getElementById('viewerDescription').textContent = description;
             }
@@ -928,7 +928,7 @@
                 const title = `{{ $roomType->name }} - Ảnh ${currentImageIndex + 1}`;
                 const description = image.is_main ? 'Ảnh chính' : `Ảnh ${currentImageIndex + 1}`;
 
-                document.getElementById('viewerImage').src = image.image_url;
+                document.getElementById('viewerImage').src = image.image_path;
                 document.getElementById('viewerTitle').textContent = title;
                 document.getElementById('viewerDescription').textContent = description;
             }
@@ -1037,7 +1037,7 @@
             if (allImages && allImages.length > 0) {
                 allImages.forEach(function(image) {
                     const img = new Image();
-                    img.src = image.image_url;
+                    img.src = image.image_path;
                 });
             }
         }

@@ -1272,7 +1272,7 @@ CREATE TABLE `room_type_image` (
   `image_id` int NOT NULL COMMENT 'Khóa chính, mã ảnh',
   `room_type_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã phòng',
   `alt_text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `image_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn ảnh',
+  `image_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn ảnh',
   `is_main` tinyint(1) DEFAULT '0' COMMENT 'Ảnh chính',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
@@ -1282,7 +1282,7 @@ CREATE TABLE `room_type_image` (
 -- Dumping data for table `room_type_image`
 --
 
-INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_url`, `is_main`, `created_at`, `updated_at`) VALUES
+INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_path`, `is_main`, `created_at`, `updated_at`) VALUES
 (1, 1, 'Hahad', 'https://kconceptvn.com/wp-content/uploads/2020/04/hotel-photography-chup-anh-khach-san-khach-san-bamboo-sapa-hotel-18-1024x683.jpg', 1, '2025-06-08 10:21:06', '2025-06-09 07:20:50'),
 (2, 1, NULL, 'https://studiochupanhdep.com/Upload/Newsimages/phong-khach-san-tt-studio.jpg', 0, '2025-06-08 10:21:06', '2025-06-09 07:20:50'),
 (4, 1, 'hhah', 'https://asiky.com/files/images/Article/tin-tuc/chup-anh-khach-san.jpg', 0, '2025-06-08 10:21:06', '2025-06-09 07:20:50'),

@@ -49,7 +49,7 @@ class DashboardController extends Controller
                         'description' => $roomType->description,
                         'total_room' => $roomType->total_room,
                         'rooms_count' => $roomType->rooms_count,
-                        'main_image' => $roomType->images->first()?->image_url,
+                        'main_image' => $roomType->images->first()?->image_path,
                         'available_rooms' => $roomType->rooms->where('status', 'available')->count(),
                         'occupied_rooms' => $roomType->rooms->where('status', 'occupied')->count()
                     ];
