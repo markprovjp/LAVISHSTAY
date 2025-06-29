@@ -1,22 +1,20 @@
 -- =====  AMENITIES DATA =====
 -- Dữ liệu tiện nghi cập nhật theo mô tả chi tiết từng hạng phòng
 
-
--- Thêm đầy đủ tiện nghi theo mô tả chi tiết-- Giả định: cột `icon_lib` để ghi thư viện sử dụng: 'lucide' hoặc 'antd'
-INSERT INTO amenities (name, description, icon, icon_lib, category, is_active) VALUES 
+INSERT INTO amenities (name, description, icon, icon_lib, category, is_active) VALUES
 
 -- === BASIC AMENITIES ===
 ('Điều hòa không khí', 'Hệ thống điều hòa nhiệt độ hiện đại', 'Snowflake', 'lucide', 'basic', TRUE),
-('TV truyền hình cáp', 'Smart TV màn hình phẳng với truyền hình cáp', 'Tv2', 'lucide', 'entertainment', TRUE),
+('TV truyền hình cáp', 'Smart TV màn hình phẳng với truyền hình cáp', 'Tv', 'lucide', 'entertainment', TRUE), -- Sửa 'Tv2' thành 'Tv'
 ('Minibar với nước miễn phí', 'Minibar với 2 chai nước suối, trà, cà phê miễn phí', 'CupSoda', 'lucide', 'basic', TRUE),
 ('WiFi miễn phí', 'Kết nối wifi tốc độ cao 24/7', 'Wifi', 'lucide', 'connectivity', TRUE),
 ('Két sắt', 'Két sắt điện tử bảo mật cá nhân', 'Lock', 'lucide', 'security', TRUE),
 
 -- === BATHROOM AMENITIES ===
-('Vòi sen riêng biệt', 'Vòi sen áp lực cao riêng biệt với vòi sen', 'ShowerHead', 'lucide', 'bathroom', TRUE),
+('Vòi sen riêng biệt', 'Vòi sen áp lực cao riêng biệt với vòi sen', 'ShowerHead', 'lucide', 'bathroom', TRUE), -- Xác nhận 'shower-head' (component ShowerHead)
 ('Bồn tắm riêng biệt', 'Bồn tắm ngâm người lớn riêng biệt với vòi sen', 'Bath', 'lucide', 'bathroom', TRUE),
 ('Phòng tắm rộng rãi', 'Phòng tắm hiện đại với diện tích rộng rãi', 'Bath', 'lucide', 'bathroom', TRUE),
-('Đồ vệ sinh cao cấp', 'Bộ amenities cao cấp đầy đủ', 'Soap', 'antd', 'bathroom', TRUE),
+('Đồ vệ sinh cao cấp', 'Bộ amenities cao cấp đầy đủ', 'Droplet', 'lucide', 'bathroom', TRUE), -- Thay 'Soap' (antd) bằng 'Droplet' (lucide)
 ('Máy sấy tóc', 'Máy sấy tóc công suất cao', 'Wind', 'lucide', 'bathroom', TRUE),
 
 -- === VIEW & DESIGN AMENITIES ===
@@ -27,14 +25,14 @@ INSERT INTO amenities (name, description, icon, icon_lib, category, is_active) V
 
 -- === DESIGN & COMFORT ===
 ('Thiết kế hiện đại nâu-trắng', 'Nội thất hiện đại với gam màu nâu ấm và trắng', 'Palette', 'lucide', 'comfort', TRUE),
-('Sàn gạch nâu với thảm xám vàng', 'Sàn nhà lát gạch nâu nhạt với thảm xám đậm có hoa văn vàng', 'Image', 'antd', 'comfort', TRUE),
+('Sàn gạch nâu với thảm xám vàng', 'Sàn nhà lát gạch nâu nhạt với thảm xám đậm có hoa văn vàng', 'PictureOutlined', 'antd', 'comfort', TRUE), -- Thay 'Image' bằng 'PictureOutlined' (antd)
 ('Nội thất sang trọng', 'Đồ nội thất cao cấp, thiết kế tinh tế', 'Sofa', 'lucide', 'comfort', TRUE),
-('Tường ốp gỗ', 'Tường ốp gỗ cao cấp tạo không gian ấm cúng', 'Log', 'lucide', 'comfort', TRUE),
-('Trang trí vải nỉ xám đậm', 'Tấm vải nỉ mềm mại màu xám đậm trang trí tường', 'Fabric', 'antd', 'comfort', TRUE),
+('Tường ốp gỗ', 'Tường ốp gỗ cao cấp tạo không gian ấm cúng', 'Layers', 'lucide', 'comfort', TRUE), -- Thay 'Log' bằng 'Layers' (lucide)
+('Trang trí vải nỉ xám đậm', 'Tấm vải nỉ mềm mại màu xám đậm trang trí tường', 'Grid', 'lucide', 'comfort', TRUE), -- Thay 'Fabric' (antd) bằng 'Grid' (lucide)
 ('Tông màu trắng nâu trầm', 'Phối màu chủ đạo trắng và nâu trầm tạo không gian nhẹ nhàng', 'Palette', 'lucide', 'comfort', TRUE),
 
 -- === SUITE SPECIFIC AMENITIES ===
-('Phòng khách riêng biệt', 'Khu vực phòng khách tách biệt với giường ngủ', 'Home', 'antd', 'comfort', TRUE),
+('Phòng khách riêng biệt', 'Khu vực phòng khách tách biệt với giường ngủ', 'HomeOutlined', 'antd', 'comfort', TRUE),
 ('Ghế sofa cao cấp', 'Bộ sofa thoải mái trong phòng khách', 'Sofa', 'lucide', 'comfort', TRUE),
 ('Khu vực làm việc', 'Bàn làm việc gỗ cao cấp với ghế nệm da', 'Briefcase', 'lucide', 'comfort', TRUE),
 ('Bàn gỗ với ghế nệm da', 'Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp', 'Chair', 'lucide', 'comfort', TRUE),
@@ -55,15 +53,15 @@ INSERT INTO amenities (name, description, icon, icon_lib, category, is_active) V
 ('Ga trải giường cao cấp', 'Ga cotton Ai Cập thread count cao', 'BedDouble', 'lucide', 'comfort', TRUE),
 ('Gối memory foam', 'Gối êm ái hỗ trợ giấc ngủ tốt', 'Pillow', 'lucide', 'comfort', TRUE),
 ('Rèm cửa blackout', 'Rèm che ánh sáng hoàn toàn', 'Moon', 'antd', 'comfort', TRUE),
-('Áo choàng tắm cotton', 'Áo choàng tắm cotton 100% cao cấp', 'Bathrobe', 'antd', 'comfort', TRUE),
-('Dép đi trong phòng', 'Dép đi trong phòng bằng vải cao cấp', 'Slippers', 'lucide', 'comfort', TRUE),
+('Áo choàng tắm cotton', 'Áo choàng tắm cotton 100% cao cấp', 'Shirt', 'lucide', 'comfort', TRUE), -- Thay 'Bathrobe' (antd) bằng 'Shirt' (lucide)
+('Dép đi trong phòng', 'Dép đi trong phòng bằng vải cao cấp', 'Footprints', 'lucide', 'comfort', TRUE), -- Thay 'Slippers' bằng 'Footprints' (lucide)
 ('Cổng sạc USB đa năng', 'Ổ cắm USB đa năng cho các thiết bị điện tử', 'Usb', 'lucide', 'connectivity', TRUE),
 ('Điện thoại bàn quốc tế', 'Điện thoại bàn quốc tế', 'Phone', 'lucide', 'connectivity', TRUE),
 ('Hệ thống âm thanh Bluetooth', 'Hệ thống âm thanh Bluetooth', 'Speaker', 'lucide', 'entertainment', TRUE),
-('Dịch vụ phòng 24/7', 'Dịch vụ phòng 24/7', 'RoomService', 'antd', 'service', TRUE),
+('Dịch vụ phòng 24/7', 'Dịch vụ phòng 24/7', 'Bell', 'antd', 'service', TRUE), -- Thay 'RoomService' bằng 'Bell' (antd)
 ('Dọn phòng 2 lần/ngày', 'Dọn phòng 2 lần/ngày', 'Broom', 'lucide', 'service', TRUE),
 ('Butler cá nhân', 'Butler cá nhân', 'User', 'antd', 'service', TRUE),
-('Champagne chào mừng', 'Champagne chào mừng', 'Wine', 'lucide', 'service', TRUE);
+('Champagne chào mừng', 'Champagne chào mừng', 'Champagne', 'lucide', 'service', TRUE); -- Thay 'Wine' bằng 'Champagne' (lucide)
 
 -- ===== ROOM TYPE AMENITIES MAPPING =====
 

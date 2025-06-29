@@ -14,12 +14,20 @@ import HotelActivities from "../components/ui/HotelActivities";
 
 // Import API hooks for backend integration
 import { useGetRoomTypes } from "../hooks/useRoomTypes";
+import { useRoomTypes } from "../contexts/RoomTypesContext";
 
 const Home: React.FC = () => {
   const { t } = useTranslation();
+  const { setRoomTypes } = useRoomTypes();
 
   // Fetch room types for display using backend API
   const { data: roomTypesData, isLoading: isRoomTypesLoading } = useGetRoomTypes();
+
+  React.useEffect(() => {
+    if (roomTypesData?.data) {
+      setRoomTypes(roomTypesData.data);
+    }
+  }, [roomTypesData, setRoomTypes]);
 
   // Process rooms with discounts for the sale section (commented out for now)
   // const saleRooms = useMemo(() => {
@@ -111,35 +119,27 @@ const Home: React.FC = () => {
             <div className="text-center py-10">
               <Spin size="large" tip="Đang tải loại phòng..." />
             </div>
-          ) : roomTypesData?.data?.length ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          ) : roomTypesData?.data?.length ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
             {roomTypesData.data.map((roomType: any) => (
               <RoomTypeCard
                 key={roomType.id}
                 id={roomType.id}
                 name={roomType.name}
+                //base_price vnd
                 base_price={roomType.base_price}
-                avg_price={roomType.avg_price}
-                lavish_plus_discount={roomType.lavish_plus_discount}
                 room_code={roomType.room_code}
                 size={roomType.size}
-                avg_size={roomType.avg_size}
                 view={roomType.view}
-                common_views={roomType.common_views}
-                maxGuests={roomType.max_guests}
+                max_guests={roomType.max_guests}
                 amenities={roomType.amenities || []}
                 highlighted_amenities={roomType.highlighted_amenities || []}
-                mainAmenities={roomType.main_amenities || []}
-                                                  main_image={roomType.main_image}
+                main_image={roomType.main_image}
                 rating={roomType.rating}
-                avg_rating={roomType.avg_rating}
-                rooms_count={roomType.rooms_count}
-                available_rooms_count={roomType.available_rooms_count}
-              />
+            />
             ))}
-          </div>
-          ) : (
+          </div>) : (
             <div className="text-center py-10">
-              <p>Không có loại phòng nào để hiển thị</p>
+              <p>Không có loại phòng nào vào thời điểm hiện tại</p>
             </div>
           )}
         </div>

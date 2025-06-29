@@ -16,35 +16,21 @@ class RoomTypeController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = RoomType::query();
+            $query = RoomType::with('images');
             
-            // Search functionality
-            if ($request->has('search') && $request->search) {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('room_code', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
-                });
-            }
-
-            
-            // Pagination
-            $perPage = $request->get('per_page', 10);
-            $roomTypes = $query->paginate($perPage);
+      
+            $roomTypes = $query->paginate();
 
             $data = $roomTypes->getCollection()->map(function ($roomType) {
-                $imagesList = RoomTypeImage::where('room_type_id', $roomType->room_type_id)
-                    ->get(['image_id', 'room_type_id', 'image_url', 'image_path', 'alt_text', 'is_main'])
-                    ->map(function ($img) {
-                        return [
-                            'id' => $img->image_id,
-                            'room_type_id' => $img->room_type_id,
-                            'image_path' => asset($img->image_path), // Remove the extra 'storage' prefix
-                            'alt_text' => $img->alt_text,
-                            'is_main' => $img->is_main,
-                        ];
-                    })->toArray();
+                $imagesList = $roomType->images->map(function ($img) {
+                    return [
+                        'id' => $img->image_id,
+                        'room_type_id' => $img->room_type_id,
+                        'image_url' => asset($img->image_path),
+                        'alt_text' => $img->alt_text,
+                        'is_main' => $img->is_main,
+                    ];
+                })->toArray();
 
 // Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
 $mainImage = null;
@@ -57,79 +43,11 @@ foreach ($imagesList as $img) {
 if (!$mainImage && !empty($imagesList)) {
     $mainImage = $imagesList[0];
 }
-                // Get room statistics for this room type
-                $availableRoomsCount = 0;
-                $totalRoomsCount = 0;
-                $minPrice = 1200000;
-                $maxPrice = 1200000;
-                $avgPrice = 1200000;
-                $avgSize = 0;
-                $avgRating = 0;
-                $maxGuests = 2;
-                $commonViews = [];
-                $floors = [];
 
-                try {
-                    $rooms = \DB::table('room')
-                        ->where('room_type_id', $roomType->room_type_id)
-                        ->get();
+           
+         
 
-                    $totalRoomsCount = count($rooms);
-                    $roomPrices = [];
-                    $roomSizes = [];
-                    $roomRatings = [];
-                    
-                    foreach ($rooms as $room) {
-                        if ($room->status === 'available') {
-                            $availableRoomsCount++;
-                        }
-                        
-                        if (!empty($room->base_price_vnd)) {
-                            $roomPrices[] = floatval($room->base_price_vnd);
-                        }
-                        
-                        if (!empty($room->size)) {
-                            $roomSizes[] = floatval($room->size);
-                        }
-                        
-                        if (!empty($room->rating)) {
-                            $roomRatings[] = floatval($room->rating);
-                        }
-                        
-                        if (!empty($room->max_guests) && $room->max_guests > $maxGuests) {
-                            $maxGuests = $room->max_guests;
-                        }
-                        
-                        if (!empty($room->view)) {
-                            $commonViews[] = $room->view;
-                        }
-                        
-                        if (!empty($room->floor)) {
-                            $floors[] = $room->floor;
-                        }
-                    }
-                    
-                    if (!empty($roomPrices)) {
-                        $minPrice = min($roomPrices);
-                        $maxPrice = max($roomPrices);
-                        $avgPrice = round(array_sum($roomPrices) / count($roomPrices));
-                    }
-                    
-                    if (!empty($roomSizes)) {
-                        $avgSize = round(array_sum($roomSizes) / count($roomSizes));
-                    }
-                    
-                    if (!empty($roomRatings)) {
-                        $avgRating = round(array_sum($roomRatings) / count($roomRatings), 1);
-                    }
-                    
-                    $commonViews = array_unique($commonViews);
-                    $floors = array_unique($floors);
-                    sort($floors);
-                    
-                } catch (\Exception $e) {
-                    // Continue without room data if error
-                }
+         
 
                 // Get amenities for this room type
                 $allAmenities = [];
@@ -141,24 +59,19 @@ if (!$mainImage && !empty($imagesList)) {
                     'room_code' => $roomType->room_code,
                     'name' => $roomType->name,
                     'description' => $roomType->description,
-                    'total_room' => $roomType->total_room,
+
                      'images' => $imagesList,
                     'main_image' => $mainImage,
-                    'base_price' => $minPrice,
-                    'min_price' => $minPrice,
-                    'max_price' => $maxPrice,
-                    'avg_price' => $avgPrice,
-                    'size' => $avgSize,
-                    'avg_size' => $avgSize,
-                    'rating' => $avgRating,
-                    'avg_rating' => $avgRating,
-                    'max_guests' => $maxGuests,
-                    'common_views' => array_values($commonViews),
-                    'available_floors' => array_values($floors),
+                    'base_price' => $roomType->base_price,
+                    'size' => $roomType->room_area,
+
+                    'rating' => $roomType->rating,
+
+                    'max_guests' => $roomType->max_guests,
+
                     'amenities' => $allAmenities,
                     'highlighted_amenities' => $highlightedAmenities,
-                    'rooms_count' => $totalRoomsCount,
-                    'available_rooms_count' => $availableRoomsCount,
+   
                     'created_at' => $roomType->created_at,
                     'updated_at' => $roomType->updated_at
                 ];
@@ -180,7 +93,7 @@ if (!$mainImage && !empty($imagesList)) {
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi lấy danh sách loại phòng ',
+                'message' => 'Co loi khi lay danh sach loai phong',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -192,20 +105,17 @@ if (!$mainImage && !empty($imagesList)) {
     public function show(string $id): JsonResponse
     {
         try {
-            $roomType = RoomType::where('room_type_id', $id)
+            $roomType = RoomType::with('images')->where('room_type_id', $id)
                 ->firstOrFail();
 
-           $imagesList = RoomTypeImage::where('room_type_id', $roomType->room_type_id)
-    ->get(['image_id', 'image_url', 'image_path', 'alt_text', 'is_main'])
-    ->map(function ($img) {
-        return [
-            'id' => $img->image_id,
-            'image_url' => asset($img->image_path), // Remove the extra 'storage' prefix
-            'image_path' => $img->image_path,
-            'alt_text' => $img->alt_text,
-            'is_main' => $img->is_main,
-        ];
-    })->toArray();
+           $imagesList = $roomType->images->map(function ($img) {
+                return [
+                    'id' => $img->image_id,
+                    'image_url' => asset($img->image_path),
+                    'alt_text' => $img->alt_text,
+                    'is_main' => $img->is_main,
+                ];
+            })->toArray();
 
             // Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
             $mainImage = null;
@@ -219,17 +129,7 @@ if (!$mainImage && !empty($imagesList)) {
                 $mainImage = $imagesList[0];
             }
 
-            // Get comprehensive information from both room_types and room tables
-            $availableRoomsCount = 0;
-            $totalRoomsCount = 0;
-            $minPrice = 1200000;
-            $maxPrice = 1200000;
-            $avgPrice = 1200000;
-            $avgSize = 0;
-            $avgRating = 0;
-            $maxGuests = 2;
-            $commonViews = [];
-            $floors = [];
+
 
             try {
                 $roomsQuery = \DB::table('room')
@@ -317,17 +217,11 @@ if (!$mainImage && !empty($imagesList)) {
                 'total_room' => $roomType->total_room,
                 'images' => $imagesList,
                     'main_image' => $mainImage,
-                'base_price' => $minPrice,
-                'min_price' => $minPrice,
-                'max_price' => $maxPrice,
-                'avg_price' => $avgPrice,
-                'size' => $avgSize,
-                'avg_size' => $avgSize,
-                'rating' => $avgRating,
-                'avg_rating' => $avgRating,
-                'max_guests' => $maxGuests,
-                'common_views' => array_values($commonViews),
-                'available_floors' => array_values($floors),
+                'base_price' => $roomType->base_price,
+                    'size' => $roomType->room_area,
+                    'rating' => $roomType->rating,
+                    'max_guests' => $roomType->max_guests,
+                    'view' => $roomType->view,
                 'amenities' => $allAmenities,
                 'highlighted_amenities' => $highlightedAmenities,
                 // Summary statistics only - no individual room details

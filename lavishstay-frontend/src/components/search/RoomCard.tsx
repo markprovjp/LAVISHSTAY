@@ -14,7 +14,7 @@ import {
     ThunderboltOutlined
 } from '@ant-design/icons';
 import { Eye } from 'lucide-react';
-import { formatAmenitiesForDisplay } from '../../constants/amenities';
+import {  } from '../../constants/Icons';
 import RoomOptionsSection from './RoomOptionsSection';
 import { Room } from '../../types/room';
 
@@ -67,7 +67,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
     }; return (
         <Card
             className="room-card transition-shadow duration-200 w-full"
-            bodyStyle={{ padding: '20px' }}
+            styles={{ body: { padding: '20px' } }}
         >
             <Row gutter={24} className="w-full">
                 {/* Left Side - Images */}

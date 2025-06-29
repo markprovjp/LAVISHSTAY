@@ -16,84 +16,38 @@ import {
   ThunderboltOutlined,
   CheckCircleOutlined,
   TeamOutlined,
+  DesktopOutlined, // For TV
+  UserOutlined, // For Bathrobe
 } from "@ant-design/icons";
+import { Palette, Footprints } from 'lucide-react'; // For Palette and Slippers
 import { theme } from "antd";
+import { getIcon } from "../../constants/Icons";
 
 const { Title } = Typography;
 
-export interface RoomTypeProps {
-  id: number;
-  name: string;
-  images?: Array<{
-    id: number;
-    room_type_id: number;
-    image_url: string;
-    alt_text?: string;
-    is_main: boolean;
-  }>; // Updated image type to match backend response
-  main_image?: {
-    id: number;
-    room_type_id: number;
-    image_url: string;
-    alt_text?: string;
-    is_main: boolean;
-  }; // Add main_image from backend
-  size?: number;
-  avg_size?: number; // Kích thước trung bình từ bảng room
-  view?: string;
-  common_views?: string[]; // Tầm nhìn phổ biến từ bảng room
-  amenities?: Array<{
-    id: number;
-    name: string;
-    description?: string;
-    icon?: string;
-    category: string;
-  }>; // Amenities từ API backend
-  highlighted_amenities?: Array<{
-    id: number;
-    name: string;
-    description?: string;
-    icon?: string;
-    category: string;
-  }>; // Highlighted amenities từ API backend
-  mainAmenities?: string[]; // Legacy - để tương thích
-  roomType?: "deluxe" | "premium" | "suite" | "presidential" | "theLevel";
-  rating?: number;
-  avg_rating?: number; // Đánh giá trung bình từ bảng room
-  maxGuests?: number;
-  className?: string;
-  style?: React.CSSProperties;
-  base_price_vnd?: number;
-  base_price?: number; // Giá từ API backend
-  avg_price?: number;
-  lavish_plus_discount?: number;
-  room_code?: string;
-  rooms_count?: number; // Tổng số phòng
-  available_rooms_count?: number; // Số phòng còn trống
-}
+
 
 const RoomTypeCard: React.FC<RoomTypeProps> = ({
   id,
   name,
   images,
   main_image,
-  size,
-  avg_size,
+  room_area,
   view,
-  common_views,
+
+
   amenities,
   highlighted_amenities,
   mainAmenities,
   roomType = "deluxe",
   rating,
-  avg_rating,
-  maxGuests,
-  className = "",
   style = {},
-  base_price_vnd,
+  max_guests,
+  className = "",
+ 
+
   base_price,
-  avg_price,
-  lavish_plus_discount,
+
   room_code,
 }) => {
   const { token } = theme.useToken();
@@ -135,19 +89,17 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
     navigate(`/room-types/${id}`);
   }, [navigate, id]);
 
-  const maxGuestsDisplay = useMemo(() => maxGuests || 2, [maxGuests]);
+
 
   const actualRoomType = useMemo(() => {
-    if (room_code) {
-      const code = room_code.toLowerCase();
-      if (code.includes('deluxe')) return 'deluxe';
-      if (code.includes('premium')) return 'premium';
-      if (code.includes('suite')) return 'suite';
-      if (code.includes('presidential')) return 'presidential';
-      if (code.includes('level')) return 'theLevel';
-    }
-    return roomType;
-  }, [room_code, roomType]);
+    const code = room_code ? room_code.toLowerCase() : 'deluxe'; // Fallback to 'deluxe' if room_code is undefined
+    if (code.includes('deluxe')) return 'deluxe';
+    if (code.includes('premium')) return 'premium';
+    if (code.includes('suite')) return 'suite';
+    if (code.includes('presidential')) return 'presidential';
+    if (code.includes('level')) return 'theLevel';
+    return 'deluxe'; // Default if no match found
+  }, [room_code]);
 
   const themeColors = useMemo(() => {
     // Màu sắc đơn giản, sang trọng và tinh tế
@@ -259,33 +211,8 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
     }
   }, [actualRoomType, style]);
 
-  const formattedPrice = useMemo(() => {
-    // Logic lấy giá: ưu tiên base_price từ API backend,
-    // fallback về avg_price (giá trung bình từ bảng room),
-    // sau đó base_price_vnd (nếu có), cuối cùng là giá mặc định
-    const price = base_price || avg_price || base_price_vnd || 1200000;
 
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(price);
-  }, [base_price, avg_price, base_price_vnd]);
 
-  // Sử dụng thông tin từ bảng room nếu có
-  const displaySize = useMemo(() => {
-    return avg_size || size;
-  }, [avg_size, size]);
-
-  const displayRating = useMemo(() => {
-    return avg_rating || rating;
-  }, [avg_rating, rating]);
-
-  const displayView = useMemo(() => {
-    if (common_views && common_views.length > 0) {
-      return common_views[0]; // Lấy view phổ biến nhất
-    }
-    return view;
-  }, [common_views, view]);
 
   const roomTypeDisplayName = useMemo(() => {
     switch (actualRoomType) {
@@ -303,6 +230,8 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
         return "Standard";
     }
   }, [actualRoomType]);
+
+  
 
   return (
     <Card
@@ -355,7 +284,7 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
       <div className="p-4 flex-1 flex flex-col">
         <div className="mb-3">
           <Title
-            level={5}
+            level={4}
             className="mb-2 font-bold text-gray-800 leading-tight"
             style={{ color: themeColors.text, margin: 0 }}
           >
@@ -365,33 +294,32 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
 
         <div className="space-y-1 mb-3">
           {/* Compact info row */}
-          <div className="flex items-center justify-between text-xs text-gray-600">
+          <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center gap-3">
-              {displaySize && (
+              {room_area && (
                 <div className="flex items-center gap-1">
-                  <HomeOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
-                  <span>{displaySize}m²</span>
+                  <HomeOutlined style={{ color: themeColors.primary, fontSize: '14px' }} />
+                  <span>{room_area}m²</span>
                 </div>
               )}
               <div className="flex items-center gap-1">
-                <TeamOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
-                <span>{maxGuestsDisplay} khách</span>
+                <TeamOutlined style={{ color: themeColors.primary, fontSize: '14px' }} />
+                <span>{max_guests} khách</span>
               </div>
+              {view && (
+                <div className="flex items-center gap-1">
+                  <EyeOutlined style={{ color: themeColors.primary, fontSize: '14px' }} />
+                  <span className="truncate">{view}</span>
+                </div>
+              )}
             </div>
-            {displayRating && displayRating > 0 && (
+            {rating && rating > 0 && (
               <div className="flex items-center gap-1">
-                <StarFilled style={{ color: '#FFD700', fontSize: '12px' }} />
-                <span className="text-yellow-600 font-medium">{displayRating}</span>
+                <StarFilled style={{ color: '#FFD700', fontSize: '14px' }} />
+                <span className="text-yellow-600 font-medium">{rating}</span>
               </div>
             )}
           </div>
-
-          {displayView && (
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <EyeOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
-              <span className="truncate">{displayView}</span>
-            </div>
-          )}
         </div>
 
         {/* Tiện nghi nổi bật - Compact version */}
@@ -409,18 +337,18 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
               ).map((amenity, index) => (
                 <Tag
                   key={typeof amenity === 'string' ? index : amenity.id}
-                  className="text-xs px-2 py-0 rounded-full border-0 mb-1"
+                  className="text-sx px-0 py-0 rounded-full border-0 mb-1 flex items-center"
                   style={{
                     backgroundColor: themeColors.secondary,
                     color: themeColors.text,
-                    fontSize: '12px'
+                    fontSize: '8px'
                   }}
                 >
                   {typeof amenity === 'string' ? amenity : (
-                    <>
-                      {amenity.icon && <span className="mr-1" style={{ fontSize: '12px' }} dangerouslySetInnerHTML={{ __html: amenity.icon }} />}
-                      <span className="truncate max-w-20">{amenity.name}</span>
-                    </>
+                    <span className="flex items-center">
+                      {getIcon(amenity.icon, amenity.icon_lib) && <span className="mr-1" style={{ fontSize: '10px' }}>{getIcon(amenity.icon, amenity.icon_lib)}</span>}
+                      <span className="truncate ">{amenity.name}</span>
+                    </span>
                   )}
                 </Tag>
               ))}
@@ -436,25 +364,10 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
               backgroundColor: themeColors.secondary,
               border: `1px solid ${themeColors.border}`
             }}>
-            <div className="text-lg font-bold" style={{ color: themeColors.primary }}>
-              {formattedPrice}
+            <div className="text-xl font-bold" style={{ color: themeColors.primary }}>
+              {base_price}
             </div>
-            <div className="text-xs text-gray-500">mỗi đêm</div>
-            {lavish_plus_discount && lavish_plus_discount > 0 && (
-              <div className="mt-1">
-                <Tag
-                  className="rounded-full border-0 text-xs font-medium"
-                  style={{
-                    backgroundColor: '#FF4D4F',
-                    color: 'white',
-                    fontSize: '12px'
-                  }}
-                >
-                  <FireOutlined className="mr-1" />
-                  -{lavish_plus_discount}%
-                </Tag>
-              </div>
-            )}
+            <div className="text-sm text-gray-500">mỗi đêm</div>
           </div>
 
           {/* Compact button */}
@@ -462,13 +375,13 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
             type="primary"
             icon={<ArrowRightOutlined />}
             onClick={handleViewDetails}
-            size="small"
+            size="middle"
             className="w-full transition-all duration-300 font-medium"
             style={{
               borderRadius: "6px",
               backgroundColor: themeColors.primary,
               border: 'none',
-              height: "32px",
+              height: "40px",
             }}
           >
             Xem chi tiết
