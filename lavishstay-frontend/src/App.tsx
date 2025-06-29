@@ -6,6 +6,7 @@ import { RootState } from "./store";
 import ThemeProvider from "./providers/ThemeProvider";
 import QueryProvider from "./providers/QueryProvider";
 import { SearchProvider } from "./contexts/SearchContext";
+import { RoomTypesProvider } from "./contexts/RoomTypesContext";
 import { createAntdTheme } from "./styles/theme";
 
 // Import i18n configuration
@@ -86,9 +87,13 @@ const App: React.FC = React.memo(() => {
           <ThemeProvider>
             <QueryProvider>
               <SearchProvider>
-                <AntApp className={isDarkMode ? "dark" : "light"}>
-                  {children}
-                </AntApp>
+                <SearchProvider>
+                <RoomTypesProvider>
+                  <AntApp className={isDarkMode ? "dark" : "light"}>
+                    {children}
+                  </AntApp>
+                </RoomTypesProvider>
+              </SearchProvider>
               </SearchProvider>
             </QueryProvider>
           </ThemeProvider>
