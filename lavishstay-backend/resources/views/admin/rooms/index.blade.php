@@ -17,7 +17,6 @@
                     Hiện đang có : {{ $totalRooms }} phòng
                 </div>
             </div>
-
         </div>
 
         <!-- Rooms Grid -->
@@ -28,12 +27,12 @@
                         <!-- Room Image -->
                         <div class="relative h-48 bg-gray-200 dark:bg-gray-700">
                             @if($room->images && $room->images->count() > 0)
-                                <img src="{{ asset( $room->images->first()->image_url) }}" 
+                                <img src="{{ asset($room->images->first()->image_url) }}" 
                                      alt="{{ $room->name }}" 
                                      class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">>
+                                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
                                         <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
                                     </svg>
                                 </div>
@@ -51,11 +50,24 @@
                             <!-- Status Badge -->
                             <div class="absolute top-3 right-3">
                                 @php
-                                    $totalRooms = $room->total_room ?? $room->rooms_count;
-                                    $bookedRooms = $room->active_bookings_count ?? 0;
-                                    $availableRooms = $totalRooms - $bookedRooms;
+                                    $statusCounts = $room->rooms->groupBy('status')->map->count();
+                                    $dominantStatus = $statusCounts->keys()->first() ?? 'available';
+                                    $statusText = [
+                                        'available' => 'Trống',
+                                        'occupied' => 'Đang sử dụng',
+                                        'maintenance' => 'Đang bảo trì',
+                                        'cleaning' => 'Đang dọn dẹp'
+                                    ];
+                                    $statusColor = [
+                                        'available' => 'bg-green-100 text-green-800',
+                                        'occupied' => 'bg-violet-100 text-violet-800',
+                                        'maintenance' => 'bg-yellow-100 text-yellow-800',
+                                        'cleaning' => 'bg-blue-100 text-blue-800'
+                                    ];
                                 @endphp
-                                
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusColor[$dominantStatus] }} shadow-sm">
+                                    {{ $statusText[$dominantStatus] }}
+                                </span>
                             </div>
                         </div>
 
@@ -74,25 +86,42 @@
                             @endif
 
                             <div class="space-y-2 mb-4">
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex items-center text-sm text-gray-600 rounded-sm dark:text-gray-400">
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
                                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
                                     </svg>
-                                    Tổng: {{ $totalRooms }} phòng
+                                    Tổng: {{ $room->rooms_count }} phòng
                                 </div>
                                 
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Trống: <span class="text-green-600 font-medium ml-1">{{ $availableRooms }}</span>
-                                </div>
-
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex items-center text-sm text-gray-600 rounded-sm dark:text-gray-400">
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
                                         <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
                                     </svg>
-                                    Đã đặt: <span class="text-orange-600 font-medium ml-1">{{ $bookedRooms }}</span>
+                                    Đã đặt: <span class="text-orange-600 font-medium ml-1">{{ $room->active_bookings_count }}</span>
+                                </div>
+
+                                <div class="flex items-center text-sm text-gray-600 rounded-sm dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
+                                     onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=available&search=&max_guests=&view=&check_in=&check_out='">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Trống: <span class="text-green-600 font-medium ml-1">{{ $room->rooms->where('status', 'available')->count() }}</span>
+                                </div>
+
+                                <div class="flex items-center text-sm text-gray-600 rounded-sm dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
+                                     onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=maintenance&search=&max_guests=&view=&check_in=&check_out='">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Bảo trì: <span class="text-yellow-600 font-medium ml-1">{{ $room->rooms->where('status', 'maintenance')->count() }}</span>
+                                </div>
+
+                                <div class="flex items-center text-sm rounded-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
+                                     onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=cleaning&search=&max_guests=&view=&check_in=&check_out='">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm2 2h12v10H4V5zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Dọn dẹp: <span class="text-blue-600 font-medium ml-1">{{ $room->rooms->where('status', 'cleaning')->count() }}</span>
                                 </div>
                             </div>
 
@@ -245,7 +274,7 @@
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                                                entry.target.style.opacity = '1';
+                        entry.target.style.opacity = '1';
                         entry.target.style.transform = 'translateY(0)';
                     }
                 });
@@ -387,8 +416,6 @@
                 });
             });
 
-            
-
             // Add tooltip functionality
             const addTooltips = () => {
                 const badges = document.querySelectorAll('.absolute span');
@@ -498,26 +525,33 @@
                 let totalRooms = 0;
                 let availableRooms = 0;
                 let bookedRooms = 0;
+                let maintenanceRooms = 0;
+                let cleaningRooms = 0;
                 
                 cards.forEach(card => {
                     const statsText = card.querySelector('.space-y-2').textContent;
                     const totalMatch = statsText.match(/Tổng: (\d+)/);
                     const availableMatch = statsText.match(/Trống: (\d+)/);
                     const bookedMatch = statsText.match(/Đã đặt: (\d+)/);
+                    const maintenanceMatch = statsText.match(/Bảo trì: (\d+)/);
+                    const cleaningMatch = statsText.match(/Dọn dẹp: (\d+)/);
                     
                     if (totalMatch) totalRooms += parseInt(totalMatch[1]);
                     if (availableMatch) availableRooms += parseInt(availableMatch[1]);
                     if (bookedMatch) bookedRooms += parseInt(bookedMatch[1]);
+                    if (maintenanceMatch) maintenanceRooms += parseInt(maintenanceMatch[1]);
+                    if (cleaningMatch) cleaningRooms += parseInt(cleaningMatch[1]);
                 });
                 
                 return {
                     total: totalRooms,
                     available: availableRooms,
                     booked: bookedRooms,
+                    maintenance: maintenanceRooms,
+                    cleaning: cleaningRooms,
                     occupancyRate: totalRooms > 0 ? ((bookedRooms / totalRooms) * 100).toFixed(1) : 0
                 };
             }
         };
     </script>
 </x-app-layout>
-
