@@ -54,7 +54,8 @@
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa phòng {{ $room->name }}</h1>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa phòng
+                    {{ $room->name }}</h1>
                 <p class="text-gray-600 dark:text-gray-400">
                     Cập nhật thông tin phòng {{ $room->roomType->name }}
                 </p>
@@ -65,7 +66,7 @@
                 <a href="{{ route('admin.rooms.show', $room->room_id) }}"
                     class="btn border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
                     <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16" height="16">
-                        <path d="M6.6 13.4L5.2 12 8.4 8.8H1v-1.6h7.4L5.2 4 6.6 2.6 12.2 8.2 6.6 13.4z"/>
+                        <path d="M6.6 13.4L5.2 12 8.4 8.8H1v-1.6h7.4L5.2 4 6.6 2.6 12.2 8.2 6.6 13.4z" />
                     </svg>
                     Hủy bỏ
                 </a>
@@ -73,7 +74,8 @@
         </div>
 
         <!-- Form -->
-        <form action="{{ route('admin.rooms.update', $room->room_id) }}" method="POST" enctype="multipart/form-data" onsubmit="return confirmSubmit()">
+        <form action="{{ route('admin.rooms.update', $room->room_id) }}" method="POST" enctype="multipart/form-data"
+            onsubmit="return confirmSubmit()">
             @csrf
             @method('PUT')
 
@@ -108,11 +110,13 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Tầng <span class="text-red-500">*</span>
                                     </label>
-                                    <select name="floor_id" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+                                    <select name="floor_id"
+                                        class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
  dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
  w-full @error('floor_id') border-red-500 @enderror">
-                                        @foreach($floors as $floor)
-                                            <option value="{{ $floor->floor_id }}" {{ old('floor_id', $room->floor_id) == $floor->floor_id ? 'selected' : '' }}>
+                                        @foreach ($floors as $floor)
+                                            <option value="{{ $floor->floor_id }}"
+                                                {{ old('floor_id', $room->floor_id) == $floor->floor_id ? 'selected' : '' }}>
                                                 {{ $floor->floor_name }} (Tầng {{ $floor->floor_number }})
                                             </option>
                                         @endforeach
@@ -127,11 +131,13 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Loại giường <span class="text-red-500">*</span>
                                     </label>
-                                    <select name="bed_type_fixed" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+                                    <select name="bed_type_fixed"
+                                        class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
  dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
  w-full @error('bed_type_fixed') border-red-500 @enderror">
-                                        @foreach($bedTypes as $bedType)
-                                            <option value="{{ $bedType->id }}" {{ old('bed_type_fixed', $room->bed_type_fixed) == $bedType->id ? 'selected' : '' }}>
+                                        @foreach ($bedTypes as $bedType)
+                                            <option value="{{ $bedType->id }}"
+                                                {{ old('bed_type_fixed', $room->bed_type_fixed) == $bedType->id ? 'selected' : '' }}>
                                                 {{ $bedType->type_name }} <!-- Sử dụng type_name thay vì name -->
                                             </option>
                                         @endforeach
@@ -146,11 +152,13 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Trạng thái <span class="text-red-500">*</span>
                                     </label>
-                                    <select name="status" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+                                    <select name="status"
+                                        class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
  dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
  w-full @error('status') border-red-500 @enderror">
-                                        @foreach(['available' => 'Trống', 'occupied' => 'Đang sử dụng', 'maintenance' => 'Đang bảo trì', 'cleaning' => 'Đang dọn dẹp'] as $value => $label)
-                                            <option value="{{ $value }}" {{ old('status', $room->status) == $value ? 'selected' : '' }}>
+                                        @foreach (['available' => 'Trống', 'occupied' => 'Đang sử dụng', 'maintenance' => 'Đang bảo trì', 'cleaning' => 'Đang dọn dẹp'] as $value => $label)
+                                            <option value="{{ $value }}"
+                                                {{ old('status', $room->status) == $value ? 'selected' : '' }}>
                                                 {{ $label }}
                                             </option>
                                         @endforeach
@@ -185,7 +193,7 @@
                         </div>
                         <div class="p-6">
                             <!-- Current Image -->
-                            @if($room->image)
+                            @if ($room->image)
                                 <div class="mb-6">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Hình ảnh hiện tại
@@ -202,20 +210,27 @@
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     {{ $room->image ? 'Thay đổi hình ảnh' : 'Thêm hình ảnh phòng' }}
                                 </label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md hover:border-violet-400 transition-colors">
+                                <div
+                                    class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md hover:border-violet-400 transition-colors">
                                     <div class="space-y-1 text-center">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor"
+                                            fill="none" viewBox="0 0 48 48">
+                                            <path
+                                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                         <div class="flex items-center py-3 text-sm text-gray-600 dark:text-gray-400">
-                                            <label for="image" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-violet-600 hover:text-violet-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-violet-500">
-                                                <span class="btn bg-sky-700 me-3 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">{{ $room->image ? 'Chọn ảnh mới' : 'Tải lên hình ảnh' }}</span>
-                                                <input id="image" name="image" type="file" class="sr-only" accept="image/*" onchange="previewImage(this)">
+                                            <label for="image"
+                                                class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-violet-600 hover:text-violet-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-violet-500">
+                                                <span
+                                                    class="btn bg-sky-700 me-3 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">{{ $room->image ? 'Chọn ảnh mới' : 'Tải lên hình ảnh' }}</span>
+                                                <input id="image" name="image" type="file" class="sr-only"
+                                                    accept="image/*" onchange="previewImage(this)">
                                             </label>
                                             <p class="pl-1">hoặc kéo thả</p>
                                         </div>
                                         <p class="text-xs text-gray-500">PNG, JPG, GIF tối đa 2MB</p>
-                                        @if($room->image)
+                                        @if ($room->image)
                                             <p class="text-xs text-gray-400">Để trống nếu không muốn thay đổi</p>
                                         @endif
                                     </div>
@@ -224,11 +239,14 @@
                                 <!-- New Image Preview -->
                                 <div id="image-preview" class="mt-4 hidden">
                                     <div class="relative inline-block">
-                                        <img id="image-display" src="" alt="Preview" class="h-32 w-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600">
-                                        <button type="button" onclick="removeImage()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors">
+                                        <img id="image-display" src="" alt="Preview"
+                                            class="h-32 w-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600">
+                                        <button type="button" onclick="removeImage()"
+                                            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors">
                                             ×
                                         </button>
-                                        <div class="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                                        <div
+                                            class="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
                                             Ảnh mới
                                         </div>
                                     </div>
@@ -243,15 +261,17 @@
 
                 </div>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center justify-end space-x-4 mt-6">
-                <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
-                    <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16" height="16">
-                        <path d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z"/>
-                    </svg>
-                    Cập nhật phòng
-                </button>
-            </div>
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end space-x-4 mt-6">
+                    <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                        <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16"
+                            height="16">
+                            <path
+                                d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z" />
+                        </svg>
+                        Cập nhật phòng
+                    </button>
+                </div>
         </form>
 
     </div>
