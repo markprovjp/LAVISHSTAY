@@ -1,5 +1,4 @@
 <x-app-layout>
-        
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
@@ -43,7 +42,7 @@
                 </nav>
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">{{ $room->name }}</h1>
                 <p class="text-gray-600 dark:text-gray-400">
-                    Phòng {{ $room->room_number }} • Tầng {{ $room->floor }} • {{ $room->roomType->name }} 
+                    Phòng {{ $room->name }} • Tầng {{ $room->floor->floor_name }} (Số: {{ $room->floor->floor_number }}) • {{ $room->roomType->name }} 
                 </p>
             </div>
 
@@ -57,7 +56,6 @@
                     </svg>
                     <span class="ml-2">Chỉnh sửa</span>
                 </a>
-                    
 
                 <!-- Delete Button (optional) -->
                 <button onclick="confirmDelete()" class="btn bg-red-500 hover:bg-red-600 text-white">
@@ -84,7 +82,7 @@
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
                                     <svg class="w-24 h-24 text-gray-400 dark:text-gray-500" fill="currentColor"
-                                        viewBox="0 0 20 20" width="24px" height="24px">>
+                                        viewBox="0 0 20 20" width="24px" height="24px">
                                         <path fill-rule="evenodd"
                                             d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
                                             clip-rule="evenodd"></path>
@@ -135,72 +133,51 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="space-y-4 p-6">
                                     <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên
-                                            phòng</label>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tên phòng</label>
                                         <p class="text-gray-900 dark:text-gray-100 font-medium">{{ $room->name }}</p>
                                     </div>
-
                                     <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số
-                                            phòng</label>
-                                        <p
-                                            class="text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded inline-block">
-                                            {{ $room->room_number }}</p>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tầng</label>
+                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->floor->floor_name }} (Số: {{ $room->floor->floor_number }})</p>
                                     </div>
-
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tầng</label>
-                                        <p class="text-gray-900 dark:text-gray-100">Tầng {{ $room->floor }}</p>
-                                    </div>
-
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại
-                                            phòng</label>
-                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->roomType->name }}</p>
-                                    </div>
+                                    @if ($room->bedType)
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại giường</label>
+                                            <p class="text-gray-900 dark:text-gray-100">{{ $room->bedType->type_name ?? 'Chưa xác định' }}</p>
+                                        </div>
+                                    @endif
                                 </div>
-
                                 <div class="space-y-4">
                                     <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diện
-                                            tích</label>
-                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->size }} m²</p>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
+                                        <p class="text-gray-900 dark:text-gray-100">{{ $statusOptions[$room->status] ?? $room->status }}</p>
                                     </div>
-
                                     <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số
-                                            khách tối đa</label>
-                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->max_guests }} khách</p>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Loại phòng</label>
+                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->roomType->name }}</p>
                                     </div>
-
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diện tích</label>
+                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->roomType->room_area ?? $room->size ?? 'N/A' }} m²</p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số khách tối đa</label>
+                                        <p class="text-gray-900 dark:text-gray-100">{{ $room->roomType->max_guests ?? $room->max_guests ?? 'N/A' }} khách</p>
+                                    </div>
                                     @if ($room->view)
                                         <div>
-                                            <label
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hướng
-                                                nhìn</label>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hướng nhìn</label>
                                             <p class="text-gray-900 dark:text-gray-100">{{ $room->view }}</p>
                                         </div>
                                     @endif
-
                                     @if ($room->rating)
                                         <div>
-                                            <label
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Đánh
-                                                giá</label>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Đánh giá</label>
                                             <div class="flex items-center">
-                                                <svg class="w-5 h-5 text-yellow-400 fill-current mr-1"
-                                                    viewBox="0 0 20 20" width="24px" height="24px">>
-                                                    <path
-                                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                <svg class="w-5 h-5 text-yellow-400 fill-current mr-1" viewBox="0 0 20 20" width="24px" height="24px">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                                 </svg>
-                                                <span
-                                                    class="text-gray-900 dark:text-gray-100 font-medium">{{ $room->rating }}/5</span>
+                                                <span class="text-gray-900 dark:text-gray-100 font-medium">{{ $room->rating }}/5</span>
                                             </div>
                                         </div>
                                     @endif
@@ -209,10 +186,8 @@
 
                             @if ($room->description)
                                 <div class="mt-6 p-6 pt-6 border-t border-gray-100 dark:border-gray-700">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô
-                                        tả</label>
-                                    <p class="text-gray-900 dark:text-gray-100 leading-relaxed">
-                                        {{ $room->description }}</p>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</label>
+                                    <p class="text-gray-900 dark:text-gray-100 leading-relaxed">{{ $room->description }}</p>
                                 </div>
                             @endif
                         </div>
@@ -227,25 +202,16 @@
                     <div class="p-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giá cơ
-                                    bản</label>
-                                <p class="text-2xl font-bold text-violet-600 dark:text-violet-400">
-                                    {{ number_format($room->base_price_vnd, 0, ',', '.') }} VND
-                                </p>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giá cơ bản</label>
+                                <p class="text-2xl font-bold text-violet-600 dark:text-violet-400">{{ number_format($room->roomType->base_price, 0, ',', '.') }} VND</p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">mỗi đêm</p>
                             </div>
-
                             @if ($room->lavish_plus_discount > 0)
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giảm
-                                        giá Lavish+</label>
-                                    <p class="text-xl font-semibold text-green-600 dark:text-green-400">
-                                        {{ $room->lavish_plus_discount }}%
-                                    </p>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giảm giá Lavish+</label>
+                                    <p class="text-xl font-semibold text-green-600 dark:text-green-400">{{ $room->lavish_plus_discount }}%</p>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        Giá sau giảm:
-                                        {{ number_format(($room->base_price_vnd * (100 - $room->lavish_plus_discount)) / 100, 0, ',', '.') }}
-                                        VND
+                                        Giá sau giảm: {{ number_format(($room->base_price_vnd * (100 - $room->lavish_plus_discount)) / 100, 0, ',', '.') }} VND
                                     </p>
                                 </div>
                             @endif
@@ -273,7 +239,7 @@
                                                 </div>
                                             @else
                                                 <div class="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" width="24px" height="24px">>
+                                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd"></path>
                                                     </svg>
                                                 </div>
@@ -301,9 +267,9 @@
                             </div>
                         @endif
                     </div>
-                </div> --}}
+                </div>
 
-            </div>
+            </div> --}}
 
             <!-- Sidebar -->
             <div class="space-y-6">
@@ -352,7 +318,7 @@
                                     <span class="text-sm text-gray-600 dark:text-gray-400">Đánh giá</span>
                                     <div class="flex items-center">
                                         <svg class="w-4 h-4 text-yellow-400 fill-current mr-1" viewBox="0 0 20 20"
-                                            width="24px" height="24px">>
+                                            width="24px" height="24px">
                                             <path
                                                 d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                         </svg>
@@ -364,12 +330,12 @@
 
                             <div class="flex items-center justify-between">
                                 <span class="text-sm text-gray-600 dark:text-gray-400">Tổng đặt phòng</span>
-                                <span class="text-lg font-semibold text-violet-600 dark:text-violet-400">0</span>
+                                <span class="text-lg font-semibold text-violet-600 dark:text-violet-400">{{ $room->bookingCount ?? 0 }}</span>
                             </div>
 
                             <div class="flex items-center justify-between">
                                 <span class="text-sm text-gray-600 dark:text-gray-400">Doanh thu tháng</span>
-                                <span class="text-lg font-semibold text-green-600 dark:text-green-400">0 VND</span>
+                                <span class="text-lg font-semibold text-green-600 dark:text-green-400">{{ number_format($room->monthlyRevenue ?? 0, 0, ',', '.') }} VND</span>
                             </div>
                         </div>
                     </div>
@@ -407,7 +373,6 @@
                                 Cập nhật giá phòng
                             </button>
 
-                            <!-- Trong phần Quick Actions, thay thế button cũ -->
                             <button onclick="showRoomCalendar({{ $room->room_id }})"
                                 class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                 <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20" width="24px" height="24px">
@@ -417,56 +382,46 @@
                                 </svg>
                                 Xem lịch đặt phòng
                             </button>
-
-
-                            
                         </div>
                     </div>
+                </div>
 
-                    <!-- Room Type Info -->
-                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
-                        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
-                            <h2 class="font-semibold text-gray-800 dark:text-gray-100">Thông tin loại phòng</h2>
-                        </div>
-                        <div class="px-6 py-2">
-                            <div class="space-y-3">
+                <!-- Room Type Info -->
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
+                    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
+                        <h2 class="font-semibold text-gray-800 dark:text-gray-100">Thông tin loại phòng</h2>
+                    </div>
+                    <div class="px-6 py-2">
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Loại phòng:</span>
+                                <p class="font-medium text-gray-900 dark:text-gray-100">
+                                    {{ $room->roomType->name }}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Mã loại:</span>
+                                <p
+                                    class="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded inline-block">
+                                    {{ $room->roomType->room_type_id }}</p>
+                            </div>
+                            @if ($room->roomType->description)
                                 <div>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Loại phòng:</span>
-                                    <p class="font-medium text-gray-900 dark:text-gray-100">
-                                        {{ $room->roomType->name }}</p>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Mô tả loại phòng:</span>
+                                    <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">
+                                        {{ Str::limit($room->roomType->description, 100) }}</p>
                                 </div>
-
-                                <div>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Mã loại:</span>
-                                    <p
-                                        class="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded inline-block">
-                                        {{ $room->roomType->room_type_id }}</p>
-                                </div>
-
-                                @if ($room->roomType->description)
-                                    <div>
-                                        <span class="text-sm text-gray-600 dark:text-gray-400">Mô tả loại phòng:</span>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100 mt-1">
-                                            {{ Str::limit($room->roomType->description, 100) }}</p>
-                                    </div>
-                                @endif
-
-                                <div class="pt-3 border-t border-gray-100 dark:border-gray-700">
-                                    <a href="{{ route('admin.room-types.show', $room->roomType->room_type_id) }}"
-                                        class="text-sm text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300">
-                                        Xem chi tiết loại phòng →
-                                    </a>
-                                </div>
+                            @endif
+                            <div class="pt-3 border-t border-gray-100 dark:border-gray-700">
+                                <a href="{{ route('admin.room-types.show', $room->roomType->room_type_id) }}"
+                                    class="text-sm text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300">
+                                    Xem chi tiết loại phòng →
+                                </a>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
-
         </div>
-
-
 
         <!-- Room Calendar Modal -->
         @include('components.room-calendar-modal')
@@ -480,9 +435,9 @@
                     alert(`Chức năng "${feature}" đang được phát triển và sẽ sớm ra mắt!`);
                 }
             }
+
             function confirmDelete() {
                 if (confirm('Bạn có chắc chắn muốn xóa phòng {{ $room->name }}? Hành động này không thể hoàn tác!')) {
-                    // Create form to delete
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = '{{ route("admin.rooms.destroy", $room->room_id) }}';
@@ -504,5 +459,5 @@
                 }
             }
         </script>
-
+    </div>
 </x-app-layout>

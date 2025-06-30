@@ -54,13 +54,17 @@
                         <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Tìm kiếm</label>
                         <input type="text" name="search" value="{{ request('search') }}" 
                                placeholder="Tên phòng, tầng, số phòng..." 
-                               class="form-input w-full">
+                               class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                     </div>
 
                     <!-- Status -->
                     <div>
                         <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
-                        <select name="status" class="form-select w-full">
+                        <select name="status" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+ dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                             <option value="">Tất cả trạng thái</option>
                             @foreach($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ request('status') == $value ? 'selected' : '' }}>
@@ -73,7 +77,9 @@
                     <!-- Max Guests -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số khách tối đa</label>
-                        <select name="max_guests" class="form-select w-full">
+                        <select name="max_guests" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+ dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                             <option value="">Tất cả</option>
                             @for($i = 1; $i <= 10; $i++)
                                 <option value="{{ $i }}" {{ request('max_guests') == $i ? 'selected' : '' }}>
@@ -86,7 +92,9 @@
                     <!-- View -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hướng nhìn</label>
-                        <select name="view" class="form-select w-full">
+                        <select name="view" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+ dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                             <option value="">Tất cả hướng</option>
                             {{-- @foreach($viewOptions as $view)
                                 <option value="{{ $view }}" {{ request('view') == $view ? 'selected' : '' }}>
@@ -102,14 +110,18 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày nhận phòng</label>
                         <input type="date" name="check_in" value="{{ request('check_in') }}" 
-                               class="form-input w-full">
+                               class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                     </div>
 
                     <!-- Check-out Date -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày trả phòng</label>
                         <input type="date" name="check_out" value="{{ request('check_out') }}" 
-                               class="form-input w-full">
+                               class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                     </div>
 
                     <!-- Price Range -->
@@ -118,10 +130,14 @@
                         <div class="flex space-x-2 gap-4">
                             {{-- <input type="number" name="min_price" value="{{ request('min_price') }}" 
                                    placeholder="Từ {{ number_format($priceRange['min'], 0, ',', '.') }}" 
-                                   class="form-input w-full">
+                                   class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                             <input type="number" name="max_price" value="{{ request('max_price') }}" 
                                    placeholder="Đến {{ number_format($priceRange['max'], 0, ',', '.') }}" 
-                                   class="form-input w-full"> --}}
+                                   class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full"> --}}
                         </div>
                     </div>
 
@@ -134,10 +150,14 @@
                         <div class="flex space-x-2 gap-4">
                             {{-- <input type="number" name="min_size" value="{{ request('min_size') }}" 
                                    placeholder="Từ {{ $sizeRange['min'] }}" 
-                                   class="form-input w-full">
+                                   class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full">
                             <input type="number" name="max_size" value="{{ request('max_size') }}" 
                                    placeholder="Đến {{ $sizeRange['max'] }}" 
-                                   class="form-input w-full"> --}}
+                                   class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+ placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ w-full"> --}}
                         </div>
                     </div>
                 </div>
@@ -169,7 +189,9 @@
                     @endforeach
                     
                     <label class="text-sm text-gray-600 dark:text-gray-400">Sắp xếp theo:</label>
-                    <select name="sort_by" onchange="this.form.submit()" class="form-select text-sm">
+                    <select name="sort_by" onchange="this.form.submit()" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+ dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ text-sm">
                         <option value="name" {{ request('sort_by') == 'name' ? 'selected' : '' }}>Tên phòng</option>
                         <option value="room_number" {{ request('sort_by') == 'room_number' ? 'selected' : '' }}>Số phòng</option>
                         <option value="floor" {{ request('sort_by') == 'floor' ? 'selected' : '' }}>Tầng</option>
@@ -179,7 +201,9 @@
                         <option value="rating" {{ request('sort_by') == 'rating' ? 'selected' : '' }}>Đánh giá</option>
                     </select>
                     
-                    <select name="sort_order" onchange="this.form.submit()" class="form-select text-sm">
+                    <select name="sort_order" onchange="this.form.submit()" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
+ dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+ text-sm">
                         <option value="asc" {{ request('sort_order') == 'asc' ? 'selected' : '' }}>Tăng dần</option>
                         <option value="desc" {{ request('sort_order') == 'desc' ? 'selected' : '' }}>Giảm dần</option>
                     </select>
@@ -209,24 +233,22 @@
                                 </div>
                             @endif
                             
-                            <!-- Status Badge -->
-                            <div class="absolute top-3 right-3">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @if($room->status == 'available') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-                                    @elseif($room->status == 'occupied') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
-                                    @elseif($room->status == 'maintenance') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
-                                    @elseif($room->status == 'cleaning') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
-                                    @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
-                                    {{ $statusOptions[$room->status] ?? $room->status }}
-                                </span>
-                            </div>
+                            
                         </div>
 
                         <!-- Room Info -->
                         <div class="p-4">
                             <div class="flex items-start justify-between mb-2">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-                                    {{ $room->name }}
+                                    {{ $room->name }} -
+                                    <span class="inline-flex items-center rounded-full text-lg font-medium
+                                        @if($room->status == 'available') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                        @elseif($room->status == 'occupied') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                        @elseif($room->status == 'maintenance') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                                        @elseif($room->status == 'cleaning') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
+                                        @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
+                                        {{ $statusOptions[$room->status] ?? $room->status }}
+                                    </span>
                                 </h3>
                                 @if($room->rating)
                                     <div class="flex items-center ml-2">
@@ -243,14 +265,14 @@
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
                                         <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                                     </svg>
-                                    Tầng {{ $room->floor }} - Phòng {{ $room->room_number }}
+                                    Tầng {{ $room->floor->floor_name }} - Phòng {{ $room->floor->floor_number }}
                                 </div>
                                 
                                 <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
                                         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
                                     </svg>
-                                    {{ $room->max_guests }} khách • {{ $room->size }}m²
+                                    1-{{ $room->roomType->max_guests ?? 0 }} khách • {{ $room->roomType->room_area ?? 'Chưa cập nhật' }}m²
                                 </div>
 
                                 {{-- @if($room->view)
@@ -267,7 +289,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <span class="text-2xl font-bold text-violet-600 dark:text-violet-400">
-                                        {{ number_format($room->base_price_vnd, 0, ',', '.') }}
+                                        {{ $room->roomType->base_price ?? 0 }}
                                     </span>
                                     <span class="text-sm text-gray-500 dark:text-gray-400">VND/đêm</span>
                                 </div>

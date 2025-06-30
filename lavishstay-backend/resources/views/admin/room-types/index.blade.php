@@ -225,6 +225,39 @@
                                                                         </p>
                                                                     </div>
                                                                 @endif
+                                                                @if ($roomType->room_area)
+                                                                    <div>
+                                                                        <span
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Diện
+                                                                            Tích (m²):</span>
+                                                                        <p
+                                                                            class="text-sm text-green-600 dark:text-green-400">
+                                                                            {{ $roomType->room_area }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($roomType->view)
+                                                                    <div>
+                                                                        <span
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Hướng
+                                                                            View:</span>
+                                                                        <p
+                                                                            class="text-sm text-green-600 dark:text-green-400">
+                                                                            {{ $roomType->view }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+                                                                @if ($roomType->rating)
+                                                                    <div>
+                                                                        <span
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Đánh
+                                                                            Giá:</span>
+                                                                        <p
+                                                                            class="text-sm text-green-600 dark:text-green-400">
+                                                                            {{ $roomType->rating }} / 5
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
                                                                 @if ($roomType->description)
                                                                     <div>
                                                                         <span

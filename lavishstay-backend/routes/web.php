@@ -38,6 +38,7 @@ use App\Http\Controllers\PricingManagementController;
 use App\Http\Controllers\RoomPriceHistoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\RoomTypeServiceController;
+use App\Http\Controllers\FloorController;
 
 Route::redirect('/', 'login');
 
@@ -148,6 +149,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/rooms/type/{room}/edit', [RoomController::class, 'edit'])->name('admin.rooms.edit');
     Route::put('/admin/rooms/type/{room}', [RoomController::class, 'update'])->name('admin.rooms.update');
     Route::delete('/admin/rooms/type/{room}/delete', [RoomController::class, 'destroy'])->name('admin.rooms.destroy');
+
+    // Floors 
+    Route::get('/admin/floors', [FloorController::class, 'index'])->name('admin.floors');
+    Route::get('/admin/floors/create', [FloorController::class, 'create'])->name('admin.floors.create');
+    Route::post('/admin/floors/store', [FloorController::class, 'store'])->name('admin.floors.store');
+    Route::get('/admin/floors/edit/{floorId}', [FloorController::class, 'edit'])->name('admin.floors.edit');
+    Route::put('/admin/floors/update/{floorId}', [FloorController::class, 'update'])->name('admin.floors.update');
+    Route::post('/admin/floors/destroy/{floorId}', [FloorController::class, 'destroy'])->name('admin.floors.destroy');
+    Route::get('/admin/floors/show/{floorId}', [FloorController::class, 'show'])->name('admin.floors.show');
 
 
     // Cách liiiiiiiiiiiiiiiiiiii

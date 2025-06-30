@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Hotel;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Models\Floor; 
+use App\Models\BedType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,23 +15,27 @@ use Illuminate\Support\Facades\Validator;
 
 class RoomController extends Controller
 {
-    public function index()
-    {
+    public function index(){
         // Lấy tổng số phòng (đếm bản ghi trong bảng rooms)
         $totalRooms = Room::count();
         
         // Lấy tổng số loại phòng
         $totalRoomTypes = RoomType::count();
         
-        // Lấy số phòng đã được đặt (có booking active) - sửa lỗi ambiguous column
-        $bookedRooms = Room::whereHas('bookings', function($query) {
+        // Lấy số phòng đã được đặt (có booking active)
+        $bookedRooms = Room::whereHas('bookings', function ($query) {
             $query->where('booking.status', 'confirmed')
                 ->where('booking.check_in_date', '<=', now())
                 ->where('booking.check_out_date', '>=', now());
         })->count();
         
         // Lấy số phòng trống
-        $availableRooms = $totalRooms - $bookedRooms;
+        $availableRooms = Room::where('status', 'available')
+            ->whereDoesntHave('bookings', function ($query) {
+                $query->where('booking.status', 'confirmed')
+                    ->where('booking.check_in_date', '<=', now())
+                    ->where('booking.check_out_date', '>=', now());
+            })->count();
 
         // Lấy tất cả các loại phòng với thông tin chi tiết 
         $allrooms = RoomType::with([
@@ -37,7 +43,7 @@ class RoomController extends Controller
                 $query->orderBy('room_type_id', 'asc');
             },
             'images' => function ($query) {
-                $query->where('room_type_image.is_main', true);
+                $query->where('is_main', true);
             }
         ])
         ->withCount([
@@ -59,55 +65,31 @@ class RoomController extends Controller
         ));
     }
 
-    
     public function roomsByType(Request $request, $roomTypeId)
     {
-        // Get the room type
         $roomType = RoomType::where('room_type_id', $roomTypeId)->firstOrFail();
         
-        // Query rooms of this type
-        $query = Room::with(['roomType'])
-            ->where('room_type_id', $roomTypeId);
+        $query = Room::with(['roomType', 'floor', 'bedType']) // Sửa thành bedTypes
+        ->where('room_type_id', $roomTypeId);
 
         // Search filters
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('floor', 'LIKE', "%{$search}%")
-                  ->orWhere('room_number', 'LIKE', "%{$search}%");
+                  ->orWhere('floor_id', 'LIKE', "%{$search}%") // Thay floor bằng floor_id
+                  ->orWhereHas('floor', function ($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('bedType', function ($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  });
             });
         }
 
         // Status filter
         if ($request->filled('status')) {
             $query->where('status', $request->status);
-        }
-
-        // Price range filter
-        if ($request->filled('min_price')) {
-            $query->where('base_price_vnd', '>=', $request->min_price);
-        }
-        if ($request->filled('max_price')) {
-            $query->where('base_price_vnd', '<=', $request->max_price);
-        }
-
-        // Size range filter
-        if ($request->filled('min_size')) {
-            $query->where('size', '>=', $request->min_size);
-        }
-        if ($request->filled('max_size')) {
-            $query->where('size', '<=', $request->max_size);
-        }
-
-        // Max guests filter
-        if ($request->filled('max_guests')) {
-            $query->where('max_guests', '>=', $request->max_guests);
-        }
-
-        // View filter
-        if ($request->filled('view')) {
-            $query->where('view', $request->view);
         }
 
         // Date availability filter
@@ -119,59 +101,36 @@ class RoomController extends Controller
                 return redirect()->back()->withErrors(['check_out' => 'Ngày trả phòng phải sau ngày nhận phòng']);
             }
             
-            // Here you would check against bookings table for availability
-            // For now, we'll just validate the dates
+            $query->whereDoesntHave('bookings', function ($q) use ($checkIn, $checkOut) {
+                $q->where('status', 'confirmed')
+                  ->where(function ($q) use ($checkIn, $checkOut) {
+                      $q->where('check_in_date', '<=', $checkOut)
+                        ->where('check_out_date', '>=', $checkIn);
+                  });
+            });
         }
 
         // Sort options
         $sortBy = $request->get('sort_by', 'name');
         $sortOrder = $request->get('sort_order', 'asc');
         
-        $allowedSorts = ['name', 'base_price_vnd', 'size', 'max_guests', 'rating', 'floor', 'room_number'];
+        $allowedSorts = ['name', 'floor_id', 'status', 'created_at', 'updated_at']; // Cập nhật allowedSorts
         if (in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $sortOrder);
         }
 
         $rooms = $query->paginate(12)->withQueryString();
 
-        // Get filter options for dropdowns
         $statusOptions = [
             'available' => 'Trống',
             'occupied' => 'Đang sử dụng', 
             'maintenance' => 'Đang bảo trì',
             'cleaning' => 'Đang dọn dẹp'
         ];
-        
-        // Get unique values for this room type
-        // $viewOptions = Room::where('room_type_id', $roomTypeId)
-        //     ->distinct()
-        //     // ->pluck('view')
-        //     ->filter()
-        //     ->sort();
-            
-        // $priceRange = [
-        //     'min' => Room::where('room_type_id', $roomTypeId)->min('base_price_vnd') ?? 0,
-        //     'max' => Room::where('room_type_id', $roomTypeId)->max('base_price_vnd') ?? 10000000
-        // ];
-        
-        // $sizeRange = [
-        //     'min' => Room::where('room_type_id', $roomTypeId)->min('size') ?? 0,
-        //     'max' => Room::where('room_type_id', $roomTypeId)->max('size') ?? 200
-        // ];
 
-        return view('admin.rooms.rooms', compact(
-            'rooms', 
-            'roomType', 
-            'statusOptions', 
-            // 'viewOptions', 
-            // 'priceRange', 
-            // 'sizeRange'
-        ));
+        return view('admin.rooms.rooms', compact('rooms', 'roomType', 'statusOptions'));
     }
 
-    /**
-     * Display the specified room
-     */
     public function show($roomId)
     {
         $room = Room::with(['roomType.amenities'])
@@ -181,137 +140,8 @@ class RoomController extends Controller
         return view('admin.rooms.show', compact('room'));
     }
 
-
-    public function create(RoomType $roomType)
-    {
-        $viewOptions = [
-            'Hướng biển',
-            'Hướng núi', 
-            'Hướng thành phố',
-            'Hướng vườn',
-            'Hướng hồ bơi',
-            'Hướng sân golf'
-        ];
-
-        $statusOptions = [
-            'available' => 'Có sẵn',
-            'occupied' => 'Đã đặt',
-            'maintenance' => 'Bảo trì',
-            'cleaning' => 'Đang dọn dẹp'
-        ];
-
-        // $hotels = Hotel::all();
-
-        // Get existing rooms to suggest next available
-        $existingRooms = Room::where('room_type_id', $roomType->room_type_id)
-            ->orderBy('name')
-            ->get(['name', 'floor']);
-
-        return view('admin.rooms.create', compact('roomType', 'viewOptions', 'statusOptions', 'existingRooms'));
-    }
-
-    /**
-     * Store new room
-     */
-    public function store(Request $request, RoomType $roomType)
-    {
+    public function create(RoomType $roomType){
         try {
-            \Log::info('Store method called', ['request' => $request->all()]);
-
-            $rules = [
-                'name' => 'required|string|max:255',
-                'floor' => 'required|integer|min:1|max:50',
-                'base_price_vnd' => 'required|numeric|min:0',
-                'size' => 'required|integer|min:1',
-                'max_guests' => 'required|integer|min:1|max:20',
-                'view' => 'nullable|string|max:100',
-                'rating' => 'nullable|numeric|min:0|max:5',
-                'lavish_plus_discount' => 'nullable|numeric|min:0|max:100',
-                'description' => 'nullable|string',
-                'status' => 'required|in:available,occupied,maintenance,cleaning',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ];
-
-            // // Chỉ validate hotel_id nếu có bảng hotel
-            // if (\Schema::hasTable('hotel')) {
-            //     $rules['hotel_id'] = 'required|exists:hotel,hotel_id';
-            // }
-
-            $validator = Validator::make($request->all(), $rules);
-
-            if ($validator->fails()) {
-                \Log::error('Validation failed', ['errors' => $validator->errors()]);
-                return redirect()->back()
-                    ->withErrors($validator)
-                    ->withInput();
-            }
-
-            // Handle image upload
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                \Log::info('Image uploaded');
-                $imagePath = $request->file('image')->store('rooms', 'public');
-                $imagePath = Storage::url($imagePath);
-            }
-
-            // Prepare data
-            $data = [
-                'room_type_id' => $roomType->room_type_id,
-                'name' => $request->name,
-                'floor' => $request->floor,
-                'image' => $imagePath,
-                'base_price_vnd' => $request->base_price_vnd,
-                'size' => $request->size,
-                'view' => $request->view,
-                'rating' => $request->rating ?? 0,
-                'lavish_plus_discount' => $request->lavish_plus_discount ?? 0,
-                'max_guests' => $request->max_guests,
-                'description' => $request->description,
-                'status' => $request->status
-            ];
-
-            // // Chỉ thêm hotel_id nếu có
-            // if ($request->has('hotel_id') && $request->hotel_id) {
-            //     $data['hotel_id'] = $request->hotel_id;
-            // }
-
-            \Log::info('Creating room with data', $data);
-
-            // Create room
-            $room = Room::create($data);
-
-            \Log::info('Room created successfully', ['room_id' => $room->room_id]);
-
-            return redirect()
-                ->route('admin.rooms.by-type', $roomType->room_type_id)
-                ->with('success', "Đã thêm phòng {$room->name} thành công!");
-
-        } catch (\Exception $e) {
-            \Log::error('Error creating room: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
-            ]);
-            
-            return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra khi thêm phòng: ' . $e->getMessage())
-                ->withInput();
-        }
-    }
-
-
-
-    public function edit(Room $room)
-    {
-        try {
-            $viewOptions = [
-                'Hướng biển',
-                'Hướng núi', 
-                'Hướng thành phố',
-                'Hướng vườn',
-                'Hướng hồ bơi',
-                'Hướng sân golf'
-            ];
-
             $statusOptions = [
                 'available' => 'Có sẵn',
                 'occupied' => 'Đã đặt',
@@ -319,48 +149,30 @@ class RoomController extends Controller
                 'cleaning' => 'Đang dọn dẹp'
             ];
 
-            // Get hotels
-            $hotels = collect([]);
-            if (\Schema::hasTable('hotels')) {
-                $hotels = Hotel::all();
-            }
+            $floors = Floor::all();
+            $bedTypes = BedType::active()->get();
 
-            // Get room type
-            $roomType = $room->roomType;
-
-            return view('admin.rooms.edit', compact('room', 'roomType', 'viewOptions', 'statusOptions', 'hotels'));
+            return view('admin.rooms.create', compact('roomType', 'statusOptions', 'floors', 'bedTypes'));
         } catch (\Exception $e) {
-            Log::error('Error in edit method: ' . $e->getMessage());
+            \Log::error('Error in create method: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Update room
-     */
-    public function update(Request $request, Room $room)
-    {
+    public function store(Request $request, RoomType $roomType){
         try {
-            \Log::info('Update method called', ['room_id' => $room->room_id, 'request' => $request->all()]);
+            \Log::info('Store method called', ['room_type_id' => $roomType->room_type_id, 'request' => $request->all()]);
 
             $rules = [
-                'name' => 'required|string|max:255',
-                'floor' => 'required|integer|min:1|max:50',
-                'base_price_vnd' => 'required|numeric|min:0',
-                'size' => 'required|integer|min:1',
-                'max_guests' => 'required|integer|min:1|max:20',
-                'view' => 'nullable|string|max:100',
-                'rating' => 'nullable|numeric|min:0|max:5',
-                'lavish_plus_discount' => 'nullable|numeric|min:0|max:100',
-                'description' => 'nullable|string',
+                'name' => 'required|string|max:100',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+                'floor_id' => 'required|exists:floors,floor_id',
+                'bed_type_fixed' => 'required|exists:bed_types,id',
                 'status' => 'required|in:available,occupied,maintenance,cleaning',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'description' => 'nullable|string',
+                'last_cleaned' => 'nullable|date',
+                'base_price_vnd' => 'required|numeric|min:0',
             ];
-
-            // // Chỉ validate hotel_id nếu có bảng hotels
-            // if (\Schema::hasTable('hotels')) {
-            //     $rules['hotel_id'] = 'required|exists:hotels,hotel_id';
-            // }
 
             $validator = Validator::make($request->all(), $rules);
 
@@ -371,12 +183,90 @@ class RoomController extends Controller
                     ->withInput();
             }
 
-            // Handle image upload
-            $imagePath = $room->image; // Keep existing image by default
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                \Log::info('New image uploaded');
+                $imagePath = $request->file('image')->store('rooms', 'public');
+                $imagePath = Storage::url($imagePath);
+            }
+
+            $data = [
+                'name' => $request->name,
+                'image' => $imagePath,
+                'floor_id' => $request->floor_id,
+                'room_type_id' => $roomType->room_type_id,
+                'bed_type_fixed' => $request->bed_type_fixed,
+                'status' => $request->status,
+                'description' => $request->description,
+                'last_cleaned' => $request->last_cleaned,
+                'base_price_vnd' => $request->base_price_vnd,
+            ];
+
+            $room = Room::create($data);
+
+            \Log::info('Room created successfully', ['room_id' => $room->room_id]);
+
+            return redirect()
+                ->route('admin.rooms.show', $room->room_id)
+                ->with('success', "Đã tạo phòng {$room->name} thành công!");
+        } catch (\Exception $e) {
+            \Log::error('Error creating room: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra khi tạo phòng: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function edit(Room $room){
+        try {
+            $statusOptions = [
+                'available' => 'Có sẵn',
+                'occupied' => 'Đã đặt',
+                'maintenance' => 'Bảo trì',
+                'cleaning' => 'Đang dọn dẹp'
+            ];
+
+            $roomType = $room->roomType;
+            $floors = Floor::all(); // Lấy danh sách tất cả tầng
+            $bedTypes = BedType::active()->get(); // Chỉ lấy các BedType đang hoạt động
+
+            return view('admin.rooms.edit', compact('room', 'roomType', 'statusOptions', 'floors', 'bedTypes'));
+        } catch (\Exception $e) {
+            \Log::error('Error in edit method: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
+    }
+
+    public function update(Request $request, Room $room){
+        try {
+            \Log::info('Update method called', ['room_id' => $room->room_id, 'request' => $request->all()]);
+
+            $rules = [
+                'name' => 'required|string|max:100',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'floor_id' => 'required|exists:floors,floor_id',
+                'bed_type_fixed' => 'required|exists:bed_types,id',
+                'status' => 'required|in:available,occupied,maintenance,cleaning',
+                'description' => 'nullable|string',
+                'last_cleaned' => 'nullable|date',
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                \Log::error('Validation failed', ['errors' => $validator->errors()]);
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            $imagePath = $room->image;
             if ($request->hasFile('image')) {
                 \Log::info('New image uploaded');
                 
-                // Delete old image if exists
                 if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
                     Storage::disk('public')->delete(str_replace('/storage/', '', $room->image));
                 }
@@ -385,29 +275,18 @@ class RoomController extends Controller
                 $imagePath = Storage::url($imagePath);
             }
 
-            // Prepare data
             $data = [
                 'name' => $request->name,
-                'floor' => $request->floor,
                 'image' => $imagePath,
-                'base_price_vnd' => $request->base_price_vnd,
-                'size' => $request->size,
-                'view' => $request->view,
-                'rating' => $request->rating ?? 0,
-                'lavish_plus_discount' => $request->lavish_plus_discount ?? 0,
-                'max_guests' => $request->max_guests,
+                'floor_id' => $request->floor_id,
+                'bed_type_fixed' => $request->bed_type_fixed,
+                'status' => $request->status,
                 'description' => $request->description,
-                'status' => $request->status
+                'last_cleaned' => $request->last_cleaned,
             ];
-
-            // // Chỉ thêm hotel_id nếu có
-            // if ($request->has('hotel_id') && $request->hotel_id) {
-            //     $data['hotel_id'] = $request->hotel_id;
-            // }
 
             \Log::info('Updating room with data', $data);
 
-            // Update room
             $room->update($data);
 
             \Log::info('Room updated successfully', ['room_id' => $room->room_id]);
@@ -415,7 +294,6 @@ class RoomController extends Controller
             return redirect()
                 ->route('admin.rooms.show', $room->room_id)
                 ->with('success', "Đã cập nhật phòng {$room->name} thành công!");
-
         } catch (\Exception $e) {
             \Log::error('Error updating room: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -428,9 +306,6 @@ class RoomController extends Controller
         }
     }
 
-    /**
- * Delete room
- */
     public function destroy(Room $room)
     {
         try {
@@ -439,12 +314,10 @@ class RoomController extends Controller
             $roomName = $room->name;
             $roomTypeId = $room->room_type_id;
 
-            // Delete image if exists
             if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $room->image));
             }
 
-            // Delete room
             $room->delete();
 
             \Log::info('Room deleted successfully', ['room_name' => $roomName]);
@@ -464,17 +337,9 @@ class RoomController extends Controller
         }
     }
 
-
-
-
-
-    /**
-     * Get room availability calendar data
-     */
     public function getCalendarData($roomId)
     {
         try {
-            // Tìm phòng
             $room = Room::with('roomType')->where('room_id', $roomId)->first();
             
             if (!$room) {
@@ -484,7 +349,6 @@ class RoomController extends Controller
                 ], 404);
             }
 
-            // Tạo range 3 tháng: tháng trước, tháng hiện tại, tháng sau
             $startDate = now()->startOfMonth()->subMonth();
             $endDate = now()->addMonths(2)->endOfMonth();
             
@@ -493,28 +357,21 @@ class RoomController extends Controller
                 'end' => $endDate->format('Y-m-d')
             ]);
 
-            // Tạo dữ liệu cho mỗi ngày trong khoảng thời gian
             $calendarData = [];
             $current = $startDate->copy();
             
             while ($current <= $endDate) {
                 $dateStr = $current->format('Y-m-d');
-                
-                // Lấy dữ liệu thực từ database (nếu có)
                 $realData = $this->getRealBookingData($roomId, $dateStr);
                 
-                
-                // Nếu không có dữ liệu thực, tạo dữ liệu mẫu
                 if (!$realData) {
                     $realData = $this->generateSampleData($dateStr);
                 }
                 
-
                 $calendarData[] = $realData;
                 $current->addDay();
             }
 
-            // Tính summary
             $summary = $this->calculateSummary($calendarData);
 
             $response = [
@@ -522,7 +379,6 @@ class RoomController extends Controller
                 'room' => [
                     'id' => $room->room_id,
                     'name' => $room->name,
-                    'room_number' => $room->room_number ?? 'N/A',
                     'type' => $room->roomType->name ?? 'Standard Room'
                 ],
                 'date_range' => [
@@ -553,7 +409,6 @@ class RoomController extends Controller
 
     private function getRealBookingData($roomId, $date)
     {
-        // Thử lấy dữ liệu thực từ database
         $bookings = DB::table('booking as b')
             ->join('room_option as ro', 'b.option_id', '=', 'ro.option_id')
             ->where('ro.room_id', $roomId)
@@ -562,9 +417,10 @@ class RoomController extends Controller
             ->whereIn('b.status', ['confirmed', 'pending'])
             ->count();
         
-        // Nếu có dữ liệu booking thì return, không thì return null
         if ($bookings > 0) {
-            $totalRooms = 10; // Giả sử mỗi room type có 10 phòng
+            $totalRooms = Room::where('room_type_id', function ($query) use ($roomId) {
+                $query->select('room_type_id')->from('rooms')->where('room_id', $roomId);
+            })->count(); // Lấy tổng số phòng theo room_type
             $occupiedRooms = min($bookings, $totalRooms);
             $availableRooms = $totalRooms - $occupiedRooms;
             $occupancyRate = ($occupiedRooms / $totalRooms) * 100;
@@ -592,12 +448,10 @@ class RoomController extends Controller
 
     private function generateSampleData($date)
     {
-        // Tạo dữ liệu mẫu ngẫu nhiên nhưng có logic
-        $totalRooms = 10;
-        $dayOfWeek = date('N', strtotime($date)); // 1=Monday, 7=Sunday
-        $isWeekend = in_array($dayOfWeek, [6, 7]); // Saturday, Sunday
+        $totalRooms = 10; // Giả định số phòng cố định
+        $dayOfWeek = date('N', strtotime($date));
+        $isWeekend = in_array($dayOfWeek, [6, 7]);
         
-        // Cuối tuần thường đông hơn
         if ($isWeekend) {
             $occupiedRooms = rand(6, 10);
         } else {
@@ -657,7 +511,6 @@ class RoomController extends Controller
         ];
     }
 
-    
     private function getActiveBookings($roomId, $date)
     {
         return DB::table('booking as b')
@@ -668,7 +521,4 @@ class RoomController extends Controller
             ->whereIn('b.status', ['confirmed', 'pending'])
             ->count();
     }
-
-
-    
 }
