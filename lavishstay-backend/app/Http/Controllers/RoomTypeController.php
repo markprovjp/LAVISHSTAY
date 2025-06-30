@@ -18,7 +18,6 @@ class RoomTypeController extends Controller
     {
         $query = RoomType::with(['rooms', 'mainImage', 'amenities']);
 
-        // Search by name or code
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -26,7 +25,6 @@ class RoomTypeController extends Controller
             });
         }
 
-        // Filter by price range
         if ($request->filled('min_price')) {
             $query->where('base_price', '>=', $request->min_price);
         }
@@ -34,7 +32,6 @@ class RoomTypeController extends Controller
             $query->where('base_price', '<=', $request->max_price);
         }
 
-        // Filter by guest capacity
         if ($request->filled('max_guests')) {
             $query->where('max_guests', '>=', $request->max_guests);
         }
@@ -56,6 +53,11 @@ class RoomTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'total_room' => 'nullable|integer|min:0',
+            'room_area' => 'nullable|integer|min:0',
+            'view' => 'nullable|string|max:255',
+            'rating' => 'nullable|integer|min:0|max:5',
+            'max_guests' => 'nullable|integer|min:1',
+            'base_price' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -64,7 +66,7 @@ class RoomTypeController extends Controller
                 ->withInput();
         }
 
-        $data = $request->only(['room_code', 'name', 'description', 'total_room']);
+        $data = $request->only(['room_code', 'name', 'description', 'total_room', 'room_area', 'view', 'rating', 'max_guests', 'base_price']);
         RoomType::create($data);
 
         return redirect()->route('admin.room-types')
@@ -81,7 +83,7 @@ class RoomTypeController extends Controller
                 $query->orderBy('is_highlighted', 'desc')->orderBy('name', 'asc');
             },
             'services' => function($query) {
-            $query->orderBy('is_active', 'desc')->orderBy('name', 'asc');
+                $query->orderBy('is_active', 'desc')->orderBy('name', 'asc');
             },
             'rooms'
         ])->findOrFail($id);
@@ -102,6 +104,11 @@ class RoomTypeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'total_room' => 'nullable|integer|min:0',
+            'room_area' => 'nullable|integer|min:0',
+            'view' => 'nullable|string|max:255',
+            'rating' => 'nullable|integer|min:0|max:5',
+            'max_guests' => 'nullable|integer|min:1',
+            'base_price' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -111,7 +118,7 @@ class RoomTypeController extends Controller
         }
 
         $roomType = RoomType::findOrFail($roomTypeId);
-        $roomType->update($request->only(['room_code', 'name', 'description', 'total_room']));
+        $roomType->update($request->only(['room_code', 'name', 'description', 'total_room', 'room_area', 'view', 'rating', 'max_guests', 'base_price']));
 
         return redirect()->route('admin.room-types')
             ->with('success', 'Loại phòng đã được cập nhật thành công!');
@@ -136,18 +143,11 @@ class RoomTypeController extends Controller
         ]);
     }
 
-
-
-
-
-
-
     // //////////////////////////// Quản lý ảnh ////////////////////////////
     public function images(RoomType $roomType)
     {
         $images = $roomType->images()->orderBy('is_main', 'desc')->orderBy('created_at', 'desc')->get();
-        // dd($images);
-        
+
         return view('admin.room-types.images', compact('roomType', 'images'));
     }
 
@@ -158,7 +158,7 @@ class RoomTypeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'images' => 'required|array|max:10',
-            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120' // 5MB
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120'
         ]);
 
         if ($validator->fails()) {
@@ -174,24 +174,20 @@ class RoomTypeController extends Controller
             $hasMainImage = $roomType->images()->where('is_main', true)->exists();
 
             foreach ($request->file('images') as $index => $image) {
-                // Generate unique filename
                 $filename = time() . '_' . $index . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                
-                // Store image
+
                 $path = $image->storeAs('room-types/' . $roomType->room_type_id, $filename, 'public');
                 $imageUrl = Storage::url($path);
 
-                // Create database record
                 $roomTypeImage = RoomTypeImage::create([
                     'room_type_id' => $roomType->room_type_id,
                     'image_url' => $imageUrl,
                     'alt_text' => $roomType->name . ' - Ảnh ' . ($index + 1),
-                    'is_main' => !$hasMainImage && $index === 0 // First image becomes main if no main image exists
+                    'is_main' => !$hasMainImage && $index === 0
                 ]);
 
                 $uploadedImages[] = $roomTypeImage;
-                
-                // Only first image can be main
+
                 if (!$hasMainImage && $index === 0) {
                     $hasMainImage = true;
                 }
@@ -256,11 +252,9 @@ class RoomTypeController extends Controller
     public function setMainImage(Request $request, RoomType $roomType, $imageId)
     {
         try {
-            // Remove main status from all images of this room type
             RoomTypeImage::where('room_type_id', $roomType->room_type_id)
                          ->update(['is_main' => false]);
 
-            // Set the selected image as main
             $image = RoomTypeImage::where('image_id', $imageId)
                                   ->where('room_type_id', $roomType->room_type_id)
                                   ->firstOrFail();
@@ -291,7 +285,6 @@ class RoomTypeController extends Controller
                                   ->where('room_type_id', $roomType->room_type_id)
                                   ->firstOrFail();
 
-            // Don't allow deleting the main image if it's the only image
             if ($image->is_main && $roomType->images()->count() === 1) {
                 return response()->json([
                     'success' => false,
@@ -299,16 +292,13 @@ class RoomTypeController extends Controller
                 ], 400);
             }
 
-            // Delete file from storage
             if ($image->image_url) {
                 $path = str_replace('/storage/', '', $image->image_url);
                 Storage::disk('public')->delete($path);
             }
 
-            // Delete database record
             $image->delete();
 
-            // If deleted image was main, set another image as main
             if ($image->is_main) {
                 $nextImage = $roomType->images()->first();
                 if ($nextImage) {
@@ -328,6 +318,4 @@ class RoomTypeController extends Controller
             ], 404);
         }
     }
-
-    
 }

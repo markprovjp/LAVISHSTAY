@@ -27,4 +27,10 @@ class BedType extends Model
     {
         return $query->where('is_active', true);
     }
+
+    // Quan hệ ngược lại với Room (nếu cần)
+    public function rooms()
+    {
+        return $this->hasMany(Room::class, 'bed_type_fixed', 'id');
+    }
 }
