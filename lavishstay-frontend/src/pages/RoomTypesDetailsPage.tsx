@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Typography, Spin, Alert, Button, Card, Tag, Divider, Space } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useGetRoomTypeById } from '../hooks/useApi';
+import { useRoomTypes } from '../contexts/RoomTypesContext';
 
 // Import components từ roomTypes folder
 import RoomImageGallery from '../components/roomTypes/RoomImageGallery';
@@ -19,9 +20,27 @@ const { Title, Paragraph, Text } = Typography;
 const RoomTypesDetailsPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { roomTypes } = useRoomTypes();
 
-    const { data, isLoading, error } = useGetRoomTypeById(id!);
-    const roomType = data?.data;
+    const [roomType, setRoomType] = React.useState<any>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState<any>(null);
+
+    const { data, isLoading: isApiLoading, error: apiError } = useGetRoomTypeById(id!);
+
+    React.useEffect(() => {
+        const foundRoomType = roomTypes.find(rt => rt.id.toString() === id);
+        if (foundRoomType) {
+            setRoomType(foundRoomType);
+            setIsLoading(false);
+        } else if (data?.data) {
+            setRoomType(data.data);
+            setIsLoading(false);
+        } else if (apiError) {
+            setError(apiError);
+            setIsLoading(false);
+        }
+    }, [id, roomTypes, data, apiError]);
 
     // Lấy danh sách ảnh từ roomType.images (JSON array từ database)
     const images = roomType?.images ? (Array.isArray(roomType.images) ? roomType.images : JSON.parse(roomType.images)) : [];
@@ -42,7 +61,7 @@ const RoomTypesDetailsPage: React.FC = () => {
                 <Alert
                     message="Lỗi"
                     description="Không thể tải thông tin loại phòng. Vui lòng thử lại sau."
-                    type="error"
+                    type="error" 
                     showIcon
                     action={
                         <Button size="small" danger onClick={() => navigate(-1)}>
