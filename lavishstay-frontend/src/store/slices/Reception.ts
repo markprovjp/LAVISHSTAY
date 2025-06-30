@@ -6,6 +6,7 @@ export interface FiltersState {
   roomTypes: string[];
   occupancy: number;
   cleanedOnly: boolean;
+  selectedRooms: any[]; // Thêm selectedRooms vào state
 }
 
 const initialState: FiltersState = {
@@ -13,6 +14,7 @@ const initialState: FiltersState = {
   roomTypes: [],
   occupancy: 1,
   cleanedOnly: false,
+  selectedRooms: [], // Khởi tạo selectedRooms rỗng
 };
 
 const filtersSlice = createSlice({
@@ -31,14 +33,18 @@ const filtersSlice = createSlice({
     setCleanedOnly: (state, action: PayloadAction<boolean>) => {
       state.cleanedOnly = action.payload;
     },
+    setSelectedRooms: (state, action: PayloadAction<any[]>) => {
+      state.selectedRooms = action.payload;
+    },
     resetFilters: (state) => {
       state.dateRange = [dayjs(), dayjs().add(1, 'day')];
       state.roomTypes = [];
       state.occupancy = 1;
       state.cleanedOnly = false;
+      state.selectedRooms = [];
     },
   },
 });
 
-export const { setDateRange, setRoomTypes, setOccupancy, setCleanedOnly, resetFilters } = filtersSlice.actions;
+export const { setDateRange, setRoomTypes, setOccupancy, setCleanedOnly, resetFilters, setSelectedRooms } = filtersSlice.actions;
 export default filtersSlice.reducer;

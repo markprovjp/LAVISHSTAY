@@ -9,7 +9,7 @@ import {
     HomeOutlined
 } from '@ant-design/icons';
 import { Room } from '../../types/room';
-import { formatAmenitiesForDisplay } from '../../constants/amenities';
+import {  } from '../../constants/Icons';
 
 const { Title, Text } = Typography;
 

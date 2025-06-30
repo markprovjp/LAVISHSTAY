@@ -15,7 +15,6 @@ class RoomTypeImage extends Model
     protected $fillable = [
         'room_type_id',
         'image_path',
-        'image_url',
         'alt_text',
         'is_main'
     ];
