@@ -35,7 +35,6 @@ class RoomType extends Model
         'is_active'
     ];
 
-
     protected $casts = [
         'total_room' => 'integer',
         'base_price' => 'decimal:2',
@@ -53,11 +52,11 @@ class RoomType extends Model
     {
         return $this->belongsToMany(
             Amenity::class,
-            'room_type_amenity',     // Pivot table
-            'room_type_id',          // Foreign key của RoomType trong pivot
-            'amenity_id'             // Foreign key của Amenity trong pivot
-        )->withPivot('is_highlighted')  // Lấy thêm field từ pivot
-            ->withTimestamps();            // Nếu pivot có created_at, updated_at
+            'room_type_amenity',
+            'room_type_id',
+            'amenity_id'
+        )->withPivot('is_highlighted')
+            ->withTimestamps();
     }
 
     public function highlightedAmenities()
@@ -111,7 +110,6 @@ class RoomType extends Model
         );
     }
 
-
     /**
      * Flexible pricing rules
      */
@@ -120,7 +118,6 @@ class RoomType extends Model
         return $this->hasMany(FlexiblePricingRule::class, 'room_type_id', 'room_type_id');
     }
 
-
     /**
      * Packages relationship
      */
@@ -128,7 +125,6 @@ class RoomType extends Model
     {
         return $this->hasMany(RoomTypePackage::class, 'room_type_id', 'room_type_id');
     }
-    
 
     /**
      * Get total available rooms count
@@ -145,7 +141,7 @@ class RoomType extends Model
     {
         $totalRooms = $this->total_room;
         $occupiedRooms = $this->rooms()->where('status', Room::STATUS_OCCUPIED)->count();
-        
+
         return $totalRooms > 0 ? ($occupiedRooms / $totalRooms) * 100 : 0;
     }
 
@@ -235,7 +231,7 @@ class RoomType extends Model
     {
         return $this->packages()->create([
             'name' => 'Gói VIP',
-            'price_modifier_vnd' => $this->base_price * 0.3, // 30% increase
+            'price_modifier_vnd' => $this->base_price * 0.3,
             'include_all_services' => true,
             'description' => 'Gói VIP bao gồm tất cả dịch vụ của loại phòng này'
         ]);
@@ -279,5 +275,4 @@ class RoomType extends Model
         $standardPackage = $this->default_standard_package;
         return $this->base_price + $standardPackage->price_modifier_vnd;
     }
-
 }

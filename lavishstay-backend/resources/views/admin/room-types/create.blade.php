@@ -67,18 +67,73 @@
                                         placeholder="Ví dụ: 50" min="0">
                                 </div>
 
-                                <!-- Name -->
-                                <div class="md:col-span-2">
-                                    <label for="name"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Tên Loại Phòng <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="name" id="name" value="{{ old('name') }}"
-                                        class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
-                                        placeholder="Ví dụ: Phòng Deluxe Hướng Biển" required>
+                                <!-- Name and Base Price in the same row -->
+                                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="name"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Tên Loại Phòng <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" name="name" id="name" value="{{ old('name') }}"
+                                            class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
+                                            placeholder="Ví dụ: Phòng Deluxe Hướng Biển" required>
+                                    </div>
+                                    <div>
+                                        <label for="base_price"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Giá Cơ Bản (VND)
+                                        </label>
+                                        <input type="number" name="base_price" id="base_price" value="{{ old('base_price') }}"
+                                            class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
+                                            placeholder="Ví dụ: 1000000" min="0" step="0.01">
+                                    </div>
                                 </div>
 
-                                <!-- Description -->
+                                <!-- Room Area -->
+                                <div>
+                                    <label for="room_area"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Diện Tích (m²)
+                                    </label>
+                                    <input type="number" name="room_area" id="room_area" value="{{ old('room_area') }}"
+                                        class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Ví dụ: 30" min="0">
+                                </div>
+
+                                <!-- View -->
+                                <div>
+                                    <label for="view"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Hướng View
+                                    </label>
+                                    <input type="text" name="view" id="view" value="{{ old('view') }}"
+                                        class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Ví dụ: Hướng biển">
+                                </div>
+
+                                <!-- Rating -->
+                                <div>
+                                    <label for="rating"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Đánh Giá (0-5)
+                                    </label>
+                                    <input type="number" name="rating" id="rating" value="{{ old('rating') }}"
+                                        class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Ví dụ: 4" min="0" max="5">
+                                </div>
+
+                                <!-- Max Guests -->
+                                <div>
+                                    <label for="max_guests"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Số Khách Tối Đa
+                                    </label>
+                                    <input type="number" name="max_guests" id="max_guests" value="{{ old('max_guests') }}"
+                                        class="form-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Ví dụ: 4" min="1">
+                                </div>
+
+                                <!-- Description (moved to the end) -->
                                 <div class="md:col-span-2">
                                     <label for="description"
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -156,10 +211,10 @@
 
                 const notification = document.createElement('div');
                 notification.className = `notification fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-                
+
                 const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
                 notification.className += ` ${bgColor} text-white`;
-                
+
                 notification.innerHTML = `
                     <div class="flex items-center">
                         <span class="mr-2">
@@ -173,13 +228,13 @@
                         </button>
                     </div>
                 `;
-                
+
                 document.body.appendChild(notification);
-                
+
                 setTimeout(() => {
                     notification.classList.remove('translate-x-full');
                 }, 100);
-                
+
                 setTimeout(() => {
                     notification.classList.add('translate-x-full');
                     setTimeout(() => {
@@ -193,19 +248,19 @@
             .form-input, .form-select, .form-checkbox {
                 @apply transition-colors duration-200;
             }
-            
+
             .form-input:focus, .form-select:focus {
                 @apply ring-2 ring-violet-500 border-violet-500;
             }
-            
+
             .btn {
                 @apply transition-all duration-200 transform;
             }
-            
+
             .btn:hover {
                 @apply scale-105;
             }
-            
+
             .btn:active {
                 @apply scale-95;
             }

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
-
     protected $table = 'room';
     protected $primaryKey = 'room_id';
     public $timestamps = false;
@@ -15,29 +14,34 @@ class Room extends Model
         'room_type_id',
         'name',
         'image',
-        'floor',
+        'floor_id',
+        'bed_type_fixed',
         'status',
-        'description'
+        'description',
+        'last_cleaned',
+        'room_area', 
+        'max_guests'
     ];
 
     protected $casts = [
-        'floor' => 'integer',
-        'room_type_id' => 'integer'
+        'status' => 'string',
+        'last_cleaned' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-      // Status constants
+    // Status constants
     const STATUS_AVAILABLE = 'available';
     const STATUS_OCCUPIED = 'occupied';
     const STATUS_MAINTENANCE = 'maintenance';
     const STATUS_CLEANING = 'cleaning';
 
-
-    
     public function translations()
     {
         return $this->hasMany(Translation::class, 'record_id')
             ->where('table_name', $this->getTable());
     }
+
     public function getTranslatedAttribute($column, $lang)
     {
         $translation = $this->translations()
@@ -47,32 +51,28 @@ class Room extends Model
 
         return $translation ? $translation->value : $this->$column;
     }
-    /**
-     * Relationship with room type
-     */
+
     public function roomType()
     {
         return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
     }
 
-    /**
-     * Get status label
-     */
+    public function floor()
+    {
+        return $this->belongsTo(Floor::class, 'floor_id');
+    }
+
     public function getStatusLabelAttribute()
     {
-        $labels = [
+        $statusLabels = [
             'available' => 'Trống',
             'occupied' => 'Đang sử dụng',
             'maintenance' => 'Đang bảo trì',
-            'cleaning' => 'Đang dọn dẹp'
+            'cleaning' => 'Đang dọn dẹp',
         ];
-
-        return $labels[$this->status] ?? 'Không xác định';
+        return $statusLabels[$this->status] ?? $this->status;
     }
 
-    /**
-     * Get status color
-     */
     public function getStatusColorAttribute()
     {
         $colors = [
@@ -89,23 +89,21 @@ class Room extends Model
     {
         return $this->hasMany(RoomOption::class, 'room_id', 'room_id');
     }
-    
-    /**
-     * Get availability data through room options
-     */
+
     public function availability()
     {
         return $this->hasManyThrough(
             RoomAvailability::class,
             RoomOption::class,
-            'room_id', // Foreign key on room_option table
-            'option_id', // Foreign key on room_availability table
-            'room_id', // Local key on rooms table
-            'option_id' // Local key on room_option table
+            'room_id',
+            'option_id',
+            'room_id',
+            'option_id'
         );
     }
 
-    public function bookings(){
+    public function bookings()
+    {
         return $this->hasMany(Booking::class, 'room_id', 'room_id');
     }
 
@@ -118,20 +116,22 @@ class Room extends Model
     {
         return $this->hasMany(RoomTransfer::class, 'new_room_id', 'room_id');
     }
-    public function bedTypes()
-    {
-        return $this->belongsToMany(
-            BedType::class,
-            'room_bed_types',
-            'room_id',
-            'bed_type_id'
-        )->withPivot('quantity', 'is_default')
-          ->withTimestamps();
+
+    // public function bedTypes()
+    // {
+    //     return $this->belongsToMany(
+    //         BedType::class,
+    //         'room_bed_types',
+    //         'room_id',
+    //         'id'
+    //     )->withPivot('quantity', 'is_default')
+    //       ->withTimestamps();
+    // }
+
+    public function bedType(){
+        return $this->belongsTo(BedType::class, 'bed_type_fixed', 'id');
     }
 
-    /**
-     * Meal types relationship
-     */
     public function mealTypes()
     {
         return $this->belongsToMany(
@@ -143,28 +143,18 @@ class Room extends Model
           ->withTimestamps();
     }
 
-    /**
-     * Scope for available rooms
-     */
     public function scopeAvailable($query)
     {
         return $query->where('status', self::STATUS_AVAILABLE);
     }
 
-    /**
-     * Scope for rooms by floor
-     */
     public function scopeByFloor($query, $floor)
     {
-        return $query->where('floor', $floor);
+        return $query->where('floor_id', $floor);
     }
 
-    /**
-     * Scope for rooms by type
-     */
     public function scopeByType($query, $roomTypeId)
     {
         return $query->where('room_type_id', $roomTypeId);
     }
-
 }
