@@ -105,17 +105,20 @@ Route::prefix('payment')->group(function () {
     });
 });
 
-// Pricing API Routes
+// Pricing API Routes - Enhanced
 Route::prefix('pricing')->group(function () {
     // Public pricing endpoints (for booking system)
     Route::post('/calculate', [PricingController::class, 'calculatePrice']);
     Route::post('/calculate-night', [PricingController::class, 'calculateNightPrice']);
     Route::get('/occupancy-rate', [PricingController::class, 'getOccupancyRate']);
     Route::get('/applicable-rules', [PricingController::class, 'getApplicableRules']);
+    Route::get('/calendar', [PricingController::class, 'getPricingCalendar']);
+    Route::get('/summary', [PricingController::class, 'getPricingSummary']);
     
     // Admin only endpoints
     Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('/validate-conflicts', [PricingController::class, 'validateRuleConflicts']);
         Route::post('/clear-cache', [PricingController::class, 'clearCache']);
+        Route::get('/stats', [PricingController::class, 'getPricingStats']);
     });
 });

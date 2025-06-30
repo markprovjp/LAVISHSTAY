@@ -5,8 +5,10 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý Quy tắc Giá Linh hoạt</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý quy tắc giá theo cuối tuần, sự kiện, lễ hội và mùa</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý Quy tắc Giá Linh hoạt
+                </h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý quy tắc giá theo cuối tuần, sự kiện, lễ hội
+                    và mùa</p>
             </div>
 
             <!-- Right: Actions -->
@@ -42,7 +44,8 @@
                 <!-- Add Event/Holiday button -->
                 <button id="addEventHolidayBtn" class="btn cursor-pointer bg-green-500 hover:bg-green-600 text-white">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
-                        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span class="max-xs:sr-only">Thêm sự kiện/lễ hội</span>
                 </button>
@@ -139,7 +142,8 @@
                         <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Chưa có dữ liệu</h3>
                         <p class="mt-1 text-sm text-gray-500">Bắt đầu bằng cách thêm quy tắc giá mới.</p>
                         <div class="mt-6">
-                            <button id="addPricingRuleBtnEmpty" class="btn bg-indigo-500 hover:bg-indigo-600 text-white">
+                            <button id="addPricingRuleBtnEmpty"
+                                class="btn bg-indigo-500 hover:bg-indigo-600 text-white">
                                 Thêm quy tắc giá
                             </button>
                         </div>
@@ -170,7 +174,7 @@
                                         <th class="p-2 whitespace-nowrap">
                                             <div class="font-semibold text-left">Điều chỉnh giá</div>
                                         </th>
-                                                                                <th class="p-2 whitespace-nowrap">
+                                        <th class="p-2 whitespace-nowrap">
                                             <div class="font-semibold text-left">Trạng thái</div>
                                         </th>
                                         <th class="p-2 whitespace-nowrap">
@@ -201,7 +205,8 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100" id="pricingRuleModalTitle">Thêm quy tắc giá</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100" id="pricingRuleModalTitle">
+                            Thêm quy tắc giá</h3>
                         <button onclick="closePricingRuleModal()"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +222,8 @@
                         <!-- Rule Type and Room Type -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Loại quy tắc
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Loại quy
+                                    tắc
                                     <span class="text-red-500">*</span></label>
                                 <select id="ruleType" name="rule_type" required
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -229,7 +235,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Loại phòng</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Loại
+                                    phòng</label>
                                 <select id="roomTypeId" name="room_type_id"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                     <option value="">Áp dụng cho tất cả loại phòng</option>
@@ -239,9 +246,11 @@
 
                         <!-- Price Adjustment -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Điều chỉnh giá (%)
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Điều chỉnh
+                                giá (%)
                                 <span class="text-red-500">*</span></label>
-                            <input id="priceAdjustment" name="price_adjustment" type="number" required step="0.01" min="-100" max="1000"
+                            <input id="priceAdjustment" name="price_adjustment" type="number" required
+                                step="0.01" min="-100" max="1000"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="Nhập tỷ lệ điều chỉnh giá (VD: 20 = tăng 20%, -10 = giảm 10%)">
                             <p class="text-xs text-gray-500 mt-1">Số dương để tăng giá, số âm để giảm giá</p>
@@ -249,43 +258,65 @@
 
                         <!-- Weekend Days Selection -->
                         <div id="weekendDaysContainer" class="hidden">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày cuối tuần áp dụng
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày cuối
+                                tuần áp dụng
                                 <span class="text-red-500">*</span></label>
                             <div id="weekendDaysSelection" class="flex justify-between gap-2">
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="monday" name="days_of_week[]" value="Monday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="monday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ Hai</label>
+                                    <label for="monday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ
+                                        Hai</label>
                                 </div>
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="tuesday" name="days_of_week[]" value="Tuesday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="tuesday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ Ba</label>
+                                    <label for="tuesday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ
+                                        Ba</label>
                                 </div>
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="wednesday" name="days_of_week[]" value="Wednesday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="wednesday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ Tư</label>
+                                    <label for="wednesday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ
+                                        Tư</label>
                                 </div>
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="thursday" name="days_of_week[]" value="Thursday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="thursday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ Năm</label>
+                                    <label for="thursday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ
+                                        Năm</label>
                                 </div>
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="friday" name="days_of_week[]" value="Friday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="friday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ Sáu</label>
+                                    <label for="friday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ
+                                        Sáu</label>
                                 </div>
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="saturday" name="days_of_week[]" value="Saturday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="saturday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ Bảy</label>
+                                    <label for="saturday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Thứ
+                                        Bảy</label>
                                 </div>
-                                <div class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
+                                <div
+                                    class="flex items-center p-2 border border-gray-200 cursor-pointer dark:border-gray-600 rounded-lg">
                                     <input type="checkbox" id="sunday" name="days_of_week[]" value="Sunday"
                                         class="form-checkbox  h-5 w-5 text-violet-600 ">
-                                    <label for="sunday" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Chủ Nhật</label>
+                                    <label for="sunday"
+                                        class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Chủ
+                                        Nhật</label>
                                 </div>
                             </div>
                         </div>
@@ -325,13 +356,15 @@
                         <div id="dateRangeContainer" class="hidden">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày bắt đầu</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày
+                                        bắt đầu</label>
                                     <input id="startDate" name="start_date" type="date"
                                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                     <p class="text-xs text-gray-500 mt-1">Để trống nếu áp dụng vô thời hạn</p>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày kết thúc</label>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày
+                                        kết thúc</label>
                                     <input id="endDate" name="end_date" type="date"
                                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                     <p class="text-xs text-gray-500 mt-1">Để trống nếu áp dụng vô thời hạn</p>
@@ -344,7 +377,8 @@
                             <div class="flex items-center">
                                 <input type="checkbox" id="isActive" name="is_active" checked
                                     class="form-checkbox  h-5 w-5 text-violet-600">
-                                <label for="isActive" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label for="isActive"
+                                    class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Kích hoạt quy tắc
                                 </label>
                             </div>
@@ -359,8 +393,9 @@
                             <button type="submit" id="pricingRuleSubmitBtn"
                                 class="px-4 py-2 text-sm font-medium btn cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span id="pricingRuleSubmitText">Thêm mới</span>
-                                <svg id="pricingRuleSubmitLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
-                                    fill="none" viewBox="0 0 24 24">
+                                <svg id="pricingRuleSubmitLoading"
+                                    class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" fill="none"
+                                    viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10"
                                         stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor"
@@ -381,7 +416,8 @@
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-7xl max-h-[90vh] overflow-y-auto">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100" id="eventHolidayModalTitle">Thêm sự kiện/lễ hội</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100"
+                            id="eventHolidayModalTitle">Thêm sự kiện/lễ hội</h3>
                         <button onclick="closeEventHolidayModal()"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,7 +444,8 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trạng thái</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trạng
+                                    thái</label>
                                 <select id="eventHolidayIsActive" name="is_active"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                                     <option value="1">Hoạt động</option>
@@ -428,7 +465,8 @@
 
                         <!-- Description -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô tả</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mô
+                                tả</label>
                             <textarea id="eventHolidayDescription" name="description" rows="3"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 placeholder="Nhập mô tả (tùy chọn)"></textarea>
@@ -437,12 +475,14 @@
                         <!-- Dates -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày bắt đầu <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày bắt
+                                    đầu <span class="text-red-500">*</span></label>
                                 <input id="eventHolidayStartDate" name="start_date" type="date" required
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày kết thúc</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ngày kết
+                                    thúc</label>
                                 <input id="eventHolidayEndDate" name="end_date" type="date"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             </div>
@@ -457,8 +497,9 @@
                             <button type="submit" id="eventHolidaySubmitBtn"
                                 class="px-4 py-2 text-sm font-medium btn cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span id="eventHolidaySubmitText">Thêm mới</span>
-                                <svg id="eventHolidaySubmitLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden"
-                                    fill="none" viewBox="0 0 24 24">
+                                <svg id="eventHolidaySubmitLoading"
+                                    class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" fill="none"
+                                    viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10"
                                         stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor"
@@ -567,7 +608,7 @@
             elements.addPricingRuleBtn.addEventListener('click', () => showPricingRuleModal());
             elements.addEventHolidayBtn.addEventListener('click', () => showEventHolidayModal());
             if (elements.addPricingRuleBtnEmpty) {
-                                elements.addPricingRuleBtnEmpty.addEventListener('click', () => showPricingRuleModal());
+                elements.addPricingRuleBtnEmpty.addEventListener('click', () => showPricingRuleModal());
             }
 
             // Modal forms
@@ -629,12 +670,12 @@
         // Load room types
         async function loadRoomTypes() {
             try {
-                const response = await fetch('{{ route("admin.weekend-price.room-types") }}');
+                const response = await fetch('{{ route('admin.dynamic-pricing.room-types') }}');
                 const roomTypes = await response.json();
-                
+
                 const select = document.getElementById('roomTypeId');
                 select.innerHTML = '<option value="">Áp dụng cho tất cả loại phòng</option>';
-                
+
                 roomTypes.forEach(roomType => {
                     const option = document.createElement('option');
                     option.value = roomType.room_type_id;
@@ -646,56 +687,135 @@
             }
         }
 
-        // Load events
         async function loadEvents() {
             try {
-                const response = await fetch('{{ route('admin.event-festival-management.data') }}?rule_type=event');
+                const response = await fetch('{{ route('admin.events.data') }}');
                 const data = await response.json();
-                // console.log('Loaded events:', data);
-                
+                console.log('Loaded events:', data);
+
                 const select = document.getElementById('eventId');
                 select.innerHTML = '<option value="">Chọn sự kiện</option>';
-                // console.log('Loaded events:', data.data);
-                
-                
-                if (data.data) {
+
+                if (data.data && data.data.length > 0) {
                     data.data.forEach(event => {
                         const option = document.createElement('option');
                         option.value = event.event_id;
-                        // console.log('Event:', event);
-                        
-                        option.textContent = event.event_name;
+                        option.textContent = event.name;
                         select.appendChild(option);
                     });
+                } else {
+                    // Nếu không có events available
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Không có sự kiện khả dụng';
+                    option.disabled = true;
+                    select.appendChild(option);
                 }
             } catch (error) {
                 console.error('Error loading events:', error);
+                showError('Không thể tải danh sách sự kiện');
             }
         }
 
         // Load holidays
         async function loadHolidays() {
             try {
-                const response = await fetch('{{ route('admin.event-festival-management.data') }}?rule_type=holiday');
+                const response = await fetch('{{ route('admin.holidays.data') }}');
                 const data = await response.json();
                 console.log('Loaded holidays:', data);
-                
+
                 const select = document.getElementById('holidayId');
                 select.innerHTML = '<option value="">Chọn lễ hội</option>';
-                
-                if (data.data) {
+
+                if (data.data && data.data.length > 0) {
                     data.data.forEach(holiday => {
                         const option = document.createElement('option');
                         option.value = holiday.holiday_id;
-                        option.textContent = holiday.holiday_name;
+                        option.textContent = holiday.name;
+                        select.appendChild(option);
+                    });
+                } else {
+                    // Nếu không có holidays available
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Không có lễ hội khả dụng';
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
+            } catch (error) {
+                console.error('Error loading holidays:', error);
+                showError('Không thể tải danh sách lễ hội');
+            }
+        }
+
+        // Load events for edit mode
+        async function loadEventsForEdit(currentEventId = null) {
+            try {
+                const url = currentEventId ?
+                    `{{ url('admin/events/data-for-edit') }}/${currentEventId}` :
+                    '{{ route('admin.events.data') }}';
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const select = document.getElementById('eventId');
+                select.innerHTML = '<option value="">Chọn sự kiện</option>';
+
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(event => {
+                        const option = document.createElement('option');
+                        option.value = event.event_id;
+                        option.textContent = event.name;
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Không có sự kiện khả dụng';
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
+
+                // Set selected value if provided
+                if (currentEventId) {
+                    select.value = currentEventId;
+                }
+
+                return Promise.resolve();
+            } catch (error) {
+                console.error('Error loading events for edit:', error);
+                return Promise.reject(error);
+            }
+        }
+
+        // Load holidays for edit mode
+        async function loadHolidaysForEdit(currentHolidayId = null) {
+            try {
+                const url = currentHolidayId ?
+                    `{{ url('admin/holidays/data-for-edit') }}/${currentHolidayId}` :
+                    '{{ route('admin.holidays.data') }}';
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const select = document.getElementById('holidayId');
+                select.innerHTML = '<option value="">Chọn lễ hội</option>';
+
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(holiday => {
+                        const option = document.createElement('option');
+                        option.value = holiday.holiday_id;
+                        option.textContent = holiday.name;
+                        if (currentHolidayId && holiday.holiday_id == currentHolidayId) {
+                            option.selected = true;
+                        }
                         select.appendChild(option);
                     });
                 }
             } catch (error) {
-                console.error('Error loading holidays:', error);
+                console.error('Error loading holidays for edit:', error);
             }
         }
-
         // Update statistics display
         function updateStatistics(stats) {
             const statisticsHtml = `
@@ -770,7 +890,8 @@
         // Update upcoming events display
         function updateUpcomingEvents(events) {
             const eventsHtml = events.map(event => {
-                const typeClass = event.type === 'event' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
+                const typeClass = event.type === 'event' ? 'bg-blue-100 text-blue-800' :
+                    'bg-purple-100 text-purple-800';
                 const typeName = event.type === 'event' ? 'Sự kiện' : 'Lễ hội';
                 const startDate = new Date(event.start_date).toLocaleDateString('vi-VN');
                 const endDate = event.end_date && event.end_date !== event.start_date ?
@@ -778,7 +899,7 @@
                 const timeDisplay = endDate ? `${startDate} - ${endDate}` : startDate;
 
                 return `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex items-center justify-between p-3 mb-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <div class="flex items-center space-x-3">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeClass}">
                                 ${typeName}
@@ -868,8 +989,13 @@
                         if (rule.days_of_week) {
                             const days = JSON.parse(rule.days_of_week);
                             const dayNames = {
-                                'Monday': 'T2', 'Tuesday': 'T3', 'Wednesday': 'T4',
-                                                                'Thursday': 'T5', 'Friday': 'T6', 'Saturday': 'T7', 'Sunday': 'CN'
+                                'Monday': 'T2',
+                                'Tuesday': 'T3',
+                                'Wednesday': 'T4',
+                                'Thursday': 'T5',
+                                'Friday': 'T6',
+                                'Saturday': 'T7',
+                                'Sunday': 'CN'
                             };
                             ruleDetails = days.map(day => dayNames[day] || day).join(', ');
                         }
@@ -890,7 +1016,7 @@
                 if (rule.start_date || rule.end_date) {
                     const startDate = rule.start_date ? new Date(rule.start_date).toLocaleDateString('vi-VN') : '';
                     const endDate = rule.end_date ? new Date(rule.end_date).toLocaleDateString('vi-VN') : '';
-                    
+
                     if (startDate && endDate) {
                         timePeriod = `${startDate} - ${endDate}`;
                     } else if (startDate) {
@@ -1138,7 +1264,7 @@
             elements.pricingRuleForm.reset();
         }
 
-                // Show event/holiday modal
+        // Show event/holiday modal
         function showEventHolidayModal(type = null, id = null) {
             // Reset form
             elements.eventHolidayForm.reset();
@@ -1150,7 +1276,8 @@
                 isEventHolidayEditMode = true;
                 editingEventHolidayId = id;
                 editingEventHolidayType = type;
-                document.getElementById('eventHolidayModalTitle').textContent = 'Chỉnh sửa ' + (type === 'event' ? 'sự kiện' : 'lễ hội');
+                document.getElementById('eventHolidayModalTitle').textContent = 'Chỉnh sửa ' + (type === 'event' ?
+                    'sự kiện' : 'lễ hội');
                 document.getElementById('eventHolidaySubmitText').textContent = 'Cập nhật';
                 document.getElementById('eventHolidayId').value = id;
                 document.getElementById('eventHolidayType').value = type;
@@ -1176,13 +1303,20 @@
         // Handle rule type change
         function handleRuleTypeChange() {
             const ruleType = elements.ruleType.value;
-            
+
             // Hide all containers first
             elements.weekendDaysContainer.classList.add('hidden');
             elements.eventContainer.classList.add('hidden');
             elements.holidayContainer.classList.add('hidden');
             elements.seasonContainer.classList.add('hidden');
             elements.dateRangeContainer.classList.add('hidden');
+
+            // Clear required attributes
+            document.getElementById('eventId').required = false;
+            document.getElementById('holidayId').required = false;
+            document.getElementById('seasonName').required = false;
+            document.getElementById('startDate').required = false;
+            document.getElementById('endDate').required = false;
 
             // Show relevant containers based on rule type
             switch (ruleType) {
@@ -1211,7 +1345,7 @@
         // Load pricing rule data for editing
         async function loadPricingRuleData(id) {
             try {
-                const response = await fetch(`{{ route("admin.flexible-pricing.show", ":id") }}`.replace(':id', id));
+                const response = await fetch(`{{ route('admin.flexible-pricing.show', ':id') }}`.replace(':id', id));
                 const result = await response.json();
 
                 if (response.ok && result.success) {
@@ -1226,29 +1360,41 @@
                     document.getElementById('endDate').value = rule.end_date || '';
                     document.getElementById('isActive').checked = rule.is_active;
 
-                    // Handle specific rule type data
-                    switch (rule.rule_type) {
-                        case 'weekend':
-                            if (rule.days_of_week) {
-                                const selectedDays = JSON.parse(rule.days_of_week);
-                                selectedDays.forEach(day => {
-                                    const checkbox = document.querySelector(`input[name="days_of_week[]"][value="${day}"]`);
-                                    if (checkbox) checkbox.checked = true;
-                                });
-                            }
-                            break;
-                        case 'event':
-                            document.getElementById('eventId').value = rule.event_id || '';
-                            break;
-                        case 'holiday':
-                            document.getElementById('holidayId').value = rule.holiday_id || '';
-                            break;
-                        case 'season':
-                            document.getElementById('seasonName').value = rule.season_name || '';
-                            break;
-                    }
-
+                    // Trigger rule type change first để show/hide các containers
                     handleRuleTypeChange();
+
+                    // Wait một chút để DOM update xong
+                    setTimeout(() => {
+                        // Handle specific rule type data
+                        switch (rule.rule_type) {
+                            case 'weekend':
+                                if (rule.days_of_week) {
+                                    const selectedDays = JSON.parse(rule.days_of_week);
+                                    selectedDays.forEach(day => {
+                                        const checkbox = document.querySelector(
+                                            `input[name="days_of_week[]"][value="${day}"]`);
+                                        if (checkbox) checkbox.checked = true;
+                                    });
+                                }
+                                break;
+                            case 'event':
+                                // Load events for edit mode với current event
+                                loadEventsForEdit(rule.event_id).then(() => {
+                                    document.getElementById('eventId').value = rule.event_id || '';
+                                });
+                                break;
+                            case 'holiday':
+                                // Load holidays for edit mode với current holiday
+                                loadHolidaysForEdit(rule.holiday_id).then(() => {
+                                    document.getElementById('holidayId').value = rule.holiday_id || '';
+                                });
+                                break;
+                            case 'season':
+                                document.getElementById('seasonName').value = rule.season_name || '';
+                                break;
+                        }
+                    }, 100);
+
                 } else {
                     showError('Không thể tải dữ liệu: ' + (result.message || 'Lỗi không xác định'));
                 }
@@ -1316,7 +1462,7 @@
                         const selectedDays = [];
                         const dayCheckboxes = document.querySelectorAll('input[name="days_of_week[]"]:checked');
                         dayCheckboxes.forEach(checkbox => selectedDays.push(checkbox.value));
-                        
+
                         if (selectedDays.length === 0) {
                             throw new Error('Vui lòng chọn ít nhất một ngày cuối tuần');
                         }
@@ -1345,17 +1491,18 @@
                         break;
                 }
 
-                const url = isPricingRuleEditMode 
-                    ? `{{ route("admin.flexible-pricing.update", ":id") }}`.replace(':id', editingPricingRuleId)
-                    : '{{ route("admin.flexible-pricing.store") }}';
-                
+                const url = isPricingRuleEditMode ?
+                    `{{ route('admin.flexible-pricing.update', ':id') }}`.replace(':id', editingPricingRuleId) :
+                    '{{ route('admin.flexible-pricing.store') }}';
+
                 const method = isPricingRuleEditMode ? 'PUT' : 'POST';
 
                 const response = await fetch(url, {
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content'),
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify(requestData)
@@ -1408,7 +1555,8 @@
                 let url, method;
                 if (isEventHolidayEditMode && editingEventHolidayId && editingEventHolidayType) {
                     // Update
-                    url = `{{ url('admin/event-festival-management') }}/${editingEventHolidayType}/${editingEventHolidayId}`;
+                    url =
+                        `{{ url('admin/event-festival-management') }}/${editingEventHolidayType}/${editingEventHolidayId}`;
                     method = 'PUT';
                 } else {
                     // Create
@@ -1419,7 +1567,8 @@
                 const response = await fetch(url, {
                     method: method,
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content'),
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(Object.fromEntries(formData))
@@ -1510,17 +1659,21 @@
             showPricingRuleModal(id);
         }
 
-                // Toggle pricing rule status
+        // Toggle pricing rule status
         async function togglePricingRuleStatus(id, newStatus) {
             try {
-                const response = await fetch(`{{ route("admin.flexible-pricing.toggle-status", ":id") }}`.replace(':id', id), {
+                const response = await fetch(`{{ route('admin.flexible-pricing.toggle-status', ':id') }}`.replace(
+                    ':id', id), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content'),
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ is_active: newStatus })
+                    body: JSON.stringify({
+                        is_active: newStatus
+                    })
                 });
 
                 const result = await response.json();
@@ -1545,10 +1698,12 @@
             }
 
             try {
-                const response = await fetch(`{{ route("admin.flexible-pricing.destroy", ":id") }}`.replace(':id', id), {
+                const response = await fetch(`{{ route('admin.flexible-pricing.destroy', ':id') }}`.replace(':id',
+                id), {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content'),
                         'Accept': 'application/json'
                     }
                 });
@@ -1583,7 +1738,8 @@
                 const response = await fetch(`{{ url('admin/event-festival-management') }}/${type}/${id}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content'),
                         'Content-Type': 'application/json',
                     }
                 });
@@ -1624,7 +1780,8 @@
 
             // Create notification element
             const notification = document.createElement('div');
-            notification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md z-50';
+            notification.className =
+                'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md z-50';
             notification.innerHTML = `
                 <div class="flex items-center justify-center w-8 h-8 text-green-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1660,7 +1817,8 @@
 
             // Create notification element
             const notification = document.createElement('div');
-            notification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 shadow-md z-50';
+            notification.className =
+                'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 shadow-md z-50';
             notification.innerHTML = `
                 <div class="flex items-center justify-center w-8 h-8 text-red-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1785,6 +1943,7 @@
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -1796,7 +1955,7 @@
             .table-auto {
                 font-size: 0.875rem;
             }
-            
+
             .table-auto th,
             .table-auto td {
                 padding: 0.5rem;
@@ -1805,7 +1964,3 @@
     </style>
 
 </x-app-layout>
-
-
-
-

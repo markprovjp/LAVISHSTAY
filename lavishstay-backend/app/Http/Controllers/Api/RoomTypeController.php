@@ -5,11 +5,20 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\RoomType;
 use App\Models\RoomTypeImage;
+use App\Services\PricingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class RoomTypeController extends Controller
 {
+    protected $pricingService;
+
+    public function __construct(PricingService $pricingService)
+    {
+        $this->pricingService = $pricingService;
+    }
     /**
      * Display a listing of all room types
      */
@@ -28,12 +37,11 @@ class RoomTypeController extends Controller
                 });
             }
 
-            
             // Pagination
             $perPage = $request->get('per_page', 10);
             $roomTypes = $query->paginate($perPage);
 
-            $data = $roomTypes->getCollection()->map(function ($roomType) {
+            $data = $roomTypes->getCollection()->map(function ($roomType) use ($request) {
                 $imagesList = RoomTypeImage::where('room_type_id', $roomType->room_type_id)
                     ->get(['image_id', 'room_type_id', 'image_url', 'image_path', 'alt_text', 'is_main'])
                     ->map(function ($img) {
@@ -46,17 +54,17 @@ class RoomTypeController extends Controller
                         ];
                     })->toArray();
 
-// Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
-$mainImage = null;
-foreach ($imagesList as $img) {
-    if ($img['is_main']) {
-        $mainImage = $img;
-        break;
-    }
-}
-if (!$mainImage && !empty($imagesList)) {
-    $mainImage = $imagesList[0];
-}
+                    // Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
+                    $mainImage = null;
+                    foreach ($imagesList as $img) {
+                        if ($img['is_main']) {
+                            $mainImage = $img;
+                            break;
+                        }
+                    }
+                    if (!$mainImage && !empty($imagesList)) {
+                        $mainImage = $imagesList[0];
+                    }
                 // Get room statistics for this room type
                 $availableRoomsCount = 0;
                 $totalRoomsCount = 0;
@@ -131,6 +139,9 @@ if (!$mainImage && !empty($imagesList)) {
                     // Continue without room data if error
                 }
 
+                // Calculate adjusted price using PricingService
+                $adjustedPrice = $this->calculateAdjustedPrice($roomType->room_type_id, $request);
+
                 // Get amenities for this room type
                 $allAmenities = [];
                 $highlightedAmenities = [];
@@ -148,6 +159,7 @@ if (!$mainImage && !empty($imagesList)) {
                     'min_price' => $minPrice,
                     'max_price' => $maxPrice,
                     'avg_price' => $avgPrice,
+                    'adjusted_price' => $adjustedPrice, // New field with dynamic pricing
                     'size' => $avgSize,
                     'avg_size' => $avgSize,
                     'rating' => $avgRating,
@@ -185,7 +197,147 @@ if (!$mainImage && !empty($imagesList)) {
             ], 500);
         }
     }
+    private function calculateAdjustedPrice($roomTypeId, $request)
+    {
+        try {
+            $roomType = RoomType::find($roomTypeId);
+            if (!$roomType) {
+                return 1200000; // Fallback price
+            }
 
+            $basePrice = $roomType->base_price;
+            
+            // Use provided date or default to tomorrow
+            $targetDate = $request->date ?? $request->check_in_date ?? Carbon::now()->addDay()->format('Y-m-d');
+            $date = Carbon::parse($targetDate);
+
+            // Calculate night price using PricingService
+            $nightPrice = $this->pricingService->calculateNightPrice(
+                $roomTypeId,
+                $date,
+                $basePrice
+            );
+
+            return $nightPrice['adjusted_price'] ?? $basePrice;
+
+        } catch (\Exception $e) {
+            Log::error('Error calculating adjusted price: ' . $e->getMessage(), [
+                'room_type_id' => $roomTypeId,
+                'date' => $targetDate ?? 'not provided'
+            ]);
+
+            // Fallback to base price or hardcoded value
+            $roomType = RoomType::find($roomTypeId);
+            return $roomType ? $roomType->base_price : 1200000;
+        }
+    }
+/**
+     * Calculate pricing for room type over a date range
+     */
+    private function calculateRoomTypePricing($roomTypeId, $checkInDate, $checkOutDate, $days = 30)
+    {
+        try {
+            $roomType = RoomType::find($roomTypeId);
+            $basePrice = $roomType->base_price;
+
+            // Calculate pricing for the specific date range if provided
+            if ($checkInDate && $checkOutDate) {
+                $pricingResult = $this->pricingService->calculatePrice(
+                    $roomTypeId,
+                    $checkInDate,
+                    $checkOutDate,
+                    $basePrice
+                );
+
+                $avgPrice = $pricingResult['average_price_per_night'];
+                $minPrice = $basePrice; // Base price as minimum
+                $maxPrice = $avgPrice; // Use average as max for now
+
+                // Get min/max from breakdown if available
+                if (isset($pricingResult['price_breakdown']) && !empty($pricingResult['price_breakdown'])) {
+                    $prices = array_column($pricingResult['price_breakdown'], 'adjusted_price');
+                    $minPrice = min($prices);
+                    $maxPrice = max($prices);
+                }
+
+                return [
+                    'base_price' => $basePrice,
+                    'min_price' => $minPrice,
+                    'max_price' => $maxPrice,
+                    'avg_price' => round($avgPrice, 0),
+                    'pricing_info' => [
+                        'total_price' => $pricingResult['total_price'],
+                        'nights' => $pricingResult['nights'],
+                        'has_adjustments' => !empty($pricingResult['price_breakdown']),
+                        'date_range' => [
+                            'check_in' => $checkInDate,
+                            'check_out' => $checkOutDate
+                        ]
+                    ]
+                ];
+            }
+
+            // Calculate pricing for next 30 days to get min/max/avg
+            $startDate = Carbon::now()->addDay();
+            $endDate = $startDate->copy()->addDays($days - 1);
+            
+            $prices = [];
+            $currentDate = $startDate->copy();
+            
+            while ($currentDate->lte($endDate)) {
+                $nightPrice = $this->pricingService->calculateNightPrice(
+                    $roomTypeId,
+                    $currentDate,
+                    $basePrice
+                );
+                
+                $adjustedPrice = $nightPrice['adjusted_price'] ?? $basePrice;
+                $prices[] = $adjustedPrice;
+                
+                $currentDate->addDay();
+            }
+
+            $minPrice = !empty($prices) ? min($prices) : $basePrice;
+            $maxPrice = !empty($prices) ? max($prices) : $basePrice;
+            $avgPrice = !empty($prices) ? array_sum($prices) / count($prices) : $basePrice;
+
+            return [
+                'base_price' => $basePrice,
+                'min_price' => $minPrice,
+                'max_price' => $maxPrice,
+                'avg_price' => round($avgPrice, 0),
+                'pricing_info' => [
+                    'calculation_period' => $days . ' days',
+                    'start_date' => $startDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    'price_range' => $maxPrice - $minPrice,
+                    'has_dynamic_pricing' => $maxPrice != $minPrice
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error calculating room type pricing: ' . $e->getMessage(), [
+                'room_type_id' => $roomTypeId,
+                'check_in_date' => $checkInDate,
+                'check_out_date' => $checkOutDate
+            ]);
+
+            // Fallback to base price if pricing calculation fails
+            $roomType = RoomType::find($roomTypeId);
+            $basePrice = $roomType ? $roomType->base_price : 1200000;
+
+            return [
+                'base_price' => $basePrice,
+                'min_price' => $basePrice,
+                'max_price' => $basePrice,
+                'avg_price' => $basePrice,
+                'pricing_info' => [
+                    'error' => 'Pricing calculation failed, using base price',
+                    'fallback' => true
+                ]
+            ];
+        }
+    }
     /**
      * Display the specified room type
      */
