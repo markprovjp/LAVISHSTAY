@@ -127,6 +127,7 @@ const Home: React.FC = () => {
                 name={roomType.name}
                 //base_price vnd
                 base_price={roomType.base_price}
+                adjusted_price={roomType.adjusted_price}
                 room_code={roomType.room_code}
                 size={roomType.size}
                 view={roomType.view}
