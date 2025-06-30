@@ -90,7 +90,6 @@ const StatusTag = styled(Tag) <{ $status: string }>`
 
 const SkeletonWrapper = styled.div`
   .ant-skeleton-image {
-    animation: ant-skeleton-loading 1.4s ease-in-out infinite !important;
   }
 `;
 
@@ -136,7 +135,7 @@ const ReceptionBooking: React.FC = () => {
     const getTotalPrice = React.useCallback(() =>
         selectedRooms.reduce((sum, room) => {
             const roomType = getRoomTypeDetail(room);
-            return sum + Number(roomType.base_price || 0);
+            return sum + Number(roomType.adjusted_price || 0);
         }, 0),
         [selectedRooms, getRoomTypeDetail]
     );
@@ -178,15 +177,15 @@ const ReceptionBooking: React.FC = () => {
         }
         const selectedRoomsWithDetails = selectedRooms.map(room => {
             const roomType = getRoomTypeDetail(room);
-            const base_price = Number(roomType.base_price || 0);
+            const adjusted_price = Number(roomType.adjusted_price || 0);
             return {
                 ...room,
                 room_type: roomType, // Đảm bảo room_type là object chi tiết
                 checkIn: filters.dateRange && filters.dateRange[0] ? filters.dateRange[0].toISOString() : null,
                 checkOut: filters.dateRange && filters.dateRange[1] ? filters.dateRange[1].toISOString() : null,
                 nights,
-                base_price,
-                totalPrice: base_price * nights
+                adjusted_price,
+                totalPrice: adjusted_price * nights
             };
         });
         dispatch(ReceptionActions.setSelectedRooms(selectedRoomsWithDetails));
@@ -215,7 +214,7 @@ const ReceptionBooking: React.FC = () => {
                             </Form.Item>
                         </Col>
 
-                        <Col xs={24} sm={12} lg={7}>
+                        <Col xs={24} sm={12} lg={8}>
                             <Form.Item label="Loại phòng">
                                 <Select
                                     mode="multiple"
@@ -331,8 +330,8 @@ const ReceptionBooking: React.FC = () => {
                                 mainImage = mainImgObj ? mainImgObj.image_url : roomType.images[0].image_url;
                             }
                             // Giá phòng
-                            const price = roomType.base_price !== undefined && roomType.base_price !== null
-                                ? Number(roomType.base_price)
+                            const price = roomType.adjusted_price !== undefined && roomType.adjusted_price !== null
+                                ? Number(roomType.adjusted_price)
                                 : null;
                             // Số người tối đa
                             const maxOccupancy = roomType.max_guests !== undefined && roomType.max_guests !== null
@@ -488,7 +487,7 @@ const ReceptionBooking: React.FC = () => {
                                         onClose={() => removeRoom(room.id)}
                                         className="mb-1 px-3 py-1 rounded-full bg-blue-50 border-blue-200 text-blue-700 font-medium"
                                     >
-                                        Phòng {room.name} - {new Intl.NumberFormat('vi-VN').format(Number(roomType.base_price || 0))} VNĐ
+                                        Phòng {room.name} - {new Intl.NumberFormat('vi-VN').format(Number(roomType.adjusted_price || 0))} VNĐ
                                     </Tag>
                                 );
                             })}

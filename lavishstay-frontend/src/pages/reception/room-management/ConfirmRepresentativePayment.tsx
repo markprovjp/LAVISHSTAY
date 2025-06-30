@@ -34,7 +34,7 @@ const { Title, Text } = Typography;
 interface RoomType {
     id: string;
     name: string;
-    base_price: number;
+    adjusted_price: number;
     max_guests: number;
     size: number;
     description: string;
@@ -96,7 +96,7 @@ const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> 
     const checkOutDate = dateRange[1] ? dayjs(dateRange[1]) : null;
 
     // Calculate totals for selected rooms only
-    const subtotal = selectedRoomsList.reduce((sum, room) => sum + (room.totalPrice || (room.room_type.base_price * (room.nights || 1)) || 0), 0);
+    const subtotal = selectedRoomsList.reduce((sum, room) => sum + (room.totalPrice || (room.room_type.adjusted_price * (room.nights || 1)) || 0), 0);
     const selectedCount = selectedRoomsList.length;
 
     // Check if proceed button should be enabled
@@ -169,11 +169,12 @@ const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> 
     };
 
     const handleProceedToPayment = () => {
-        navigate('/payment', {
+        navigate('/reception/payment-booking', {
             state: {
                 selectedRooms: selectedRoomsList,
                 representatives,
-                subtotal
+                subtotal,
+                dateRange,
             }
         });
     };
@@ -228,15 +229,15 @@ const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> 
         },
         {
             title: 'Giá/đêm',
-            dataIndex: ['room_type', 'base_price'],
+            dataIndex: ['room_type', 'adjusted_price'],
             key: 'basePrice',
-            render: (_: any, room: Room) => formatCurrency(room.room_type?.base_price || 0)
+            render: (_: any, room: Room) => formatCurrency(room.room_type?.adjusted_price || 0)
         },
         {
             title: 'Tổng tiền',
             dataIndex: 'totalPrice',
             key: 'totalPrice',
-            render: (value: number, room: Room) => formatCurrency(value || (room.room_type?.base_price * (room.nights || 1)))
+            render: (value: number, room: Room) => formatCurrency(value || (room.room_type?.adjusted_price * (room.nights || 1)))
         },
 
         {
@@ -261,9 +262,9 @@ const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> 
     return (
         <div className=" p-6  ">
 
-  <Title level={2} className="mb-6">
-         Xác nhận thông tin người đại diện và thanh toán
-      </Title>
+            <Title level={2} className="mb-6">
+                Xác nhận thông tin người đại diện và thanh toán
+            </Title>
             {/* Select All Checkbox */}
             <Card className="mb-6 shadow-sm">
                 <Checkbox

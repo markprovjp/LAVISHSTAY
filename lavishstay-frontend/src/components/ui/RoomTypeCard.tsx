@@ -34,7 +34,7 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
   main_image,
   room_area,
   view,
-
+adjusted_price,
 
   amenities,
   highlighted_amenities,
@@ -365,7 +365,7 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
               border: `1px solid ${themeColors.border}`
             }}>
             <div className="text-xl font-bold" style={{ color: themeColors.primary }}>
-              {base_price}
+              {adjusted_price}
             </div>
             <div className="text-sm text-gray-500">mỗi đêm</div>
           </div>

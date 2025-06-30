@@ -83,18 +83,7 @@ const Payment: React.FC = () => {
         resetBooking
     } = useBookingManager();// Check if we have booking data from navigation or Redux
     useEffect(() => {
-        if (!hasSelectedRooms || selectedRoomsSummary.length === 0) {
-            message.error('Không có thông tin đặt phòng. Vui lòng chọn phòng trước.');
-            navigate('/search');
-            return;
-        }
-
-        // Check if search data is valid
-        if (!searchData?.checkIn || !searchData?.checkOut) {
-            message.error('Thông tin tìm kiếm không hợp lệ. Vui lòng tìm kiếm lại.');
-            navigate('/search');
-            return;
-        }
+  
 
         // Start countdown timer
         const timer = setInterval(() => {
@@ -102,7 +91,7 @@ const Payment: React.FC = () => {
                 if (prev <= 1) {
                     clearInterval(timer);
                     message.warning('Phiên đặt phòng đã hết hạn. Vui lòng đặt lại.');
-                    navigate('/search');
+                    navigate('/');
                     return 0;
                 }
                 return prev - 1;
