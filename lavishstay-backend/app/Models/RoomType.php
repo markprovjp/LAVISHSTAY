@@ -31,7 +31,8 @@ class RoomType extends Model
         'room_area',
         'view',
         'rating',
-        'max_guests'
+        'max_guests',
+        'is_active'
     ];
 
 

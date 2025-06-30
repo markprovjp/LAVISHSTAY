@@ -35,6 +35,7 @@ use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\WeekendPriceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PricingManagementController;
+use App\Http\Controllers\RoomPriceHistoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\RoomTypeServiceController;
 
@@ -371,13 +372,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/holiday/{id}', [EventFestivalManagementController::class, 'destroyHoliday'])->name('destroy-holiday');
         Route::get('/export', [EventFestivalManagementController::class, 'export'])->name('export');
     });
-    Route::prefix('admin/flexible-pricing')->name('admin.flexible-pricing.')->group(function () {
-        // Route::get('/', [FlexiblePricingController::class, 'index'])->name('index');
-        // Route::get('/statistics', [FlexiblePricingController::class, 'getStatistics'])->name('statistics');
+    
+    Route::prefix('/admin/flexible-pricing')->name('admin.flexible-pricing.')->group(function () {
+        Route::get('/', [FlexiblePricingController::class, 'index'])->name('index');
         Route::get('/data', [FlexiblePricingController::class, 'getData'])->name('data');
-        // Route::get('/room-types', [FlexiblePricingController::class, 'getRoomTypes'])->name('room-types');
-        // Route::get('/events', [FlexiblePricingController::class, 'getEvents'])->name('events');
-        // Route::get('/holidays', [FlexiblePricingController::class, 'getHolidays'])->name('holidays');
+        Route::get('/room-types', [FlexiblePricingController::class, 'getRoomTypes'])->name('room-types');
         Route::post('/store', [FlexiblePricingController::class, 'store'])->name('store');
         Route::get('/show/{id}', [FlexiblePricingController::class, 'show'])->name('show');
         Route::put('/update/{id}', [FlexiblePricingController::class, 'update'])->name('update');
@@ -385,23 +384,29 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/destroy/{id}', [FlexiblePricingController::class, 'destroy'])->name('destroy');
         Route::get('/export', [FlexiblePricingController::class, 'export'])->name('export');
     });
-
-
+    // Thêm routes riêng cho events và holidays
+    Route::get('/admin/events/data', [FlexiblePricingController::class, 'getEvents'])->name('admin.events.data');
+    Route::get('/admin/holidays/data', [FlexiblePricingController::class, 'getHolidays'])->name('admin.holidays.data');
+    Route::get('/admin/events/data-for-edit/{eventId?}', [FlexiblePricingController::class, 'getEventsForEdit'])->name('admin.events.data-for-edit');
+    
+    
+    
     //Giá động
     Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
-    // Thêm vào phần routes admin
-    Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+        Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
         Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
         Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
         Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
         Route::get('/occupancy-stats', [DynamicPricingController::class, 'getOccupancyStats'])->name('occupancy-stats');
         Route::post('/calculate', [DynamicPricingController::class, 'calculateDynamicPrice'])->name('calculate');
+        Route::post('/sync-occupancy', [DynamicPricingController::class, 'syncOccupancy'])->name('sync-occupancy'); // Thêm route này
         Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
         Route::post('/', [DynamicPricingController::class, 'store'])->name('store');
         Route::put('/{id}', [DynamicPricingController::class, 'update'])->name('update');
         Route::patch('/{id}/toggle-status', [DynamicPricingController::class, 'toggleStatus'])->name('toggle-status');
         Route::delete('/{id}', [DynamicPricingController::class, 'destroy'])->name('destroy');
     });
+
 
 
 
@@ -448,6 +453,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
 
+    Route::prefix('admin/pricing/history')->name('admin.pricing.history.')->group(function () {
+        // Route::get('/', [RoomPriceHistoryController::class, 'index'])->name('index');
+        Route::get('/data', [RoomPriceHistoryController::class, 'getData'])->name('data');
+        Route::get('/statistics', [RoomPriceHistoryController::class, 'getStatistics'])->name('statistics');
+        Route::get('/chart', [RoomPriceHistoryController::class, 'getChartData'])->name('chart');
+        Route::get('/show/{id}', [RoomPriceHistoryController::class, 'show'])->name('show');
+        Route::get('/export', [RoomPriceHistoryController::class, 'export'])->name('export');
+        Route::get('/export-single/{id}', [RoomPriceHistoryController::class, 'exportSingle'])->name('export-single');
+    });
 
 
 

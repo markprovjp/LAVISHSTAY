@@ -11,6 +11,7 @@ use App\Models\RoomPriceHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PricingService
 {
@@ -289,21 +290,28 @@ class PricingService
             ->with(['event', 'holiday'])
             ->get();
 
+        // Track applied rule types to avoid duplicates
+        $appliedRuleTypes = [];
+
         foreach ($flexibleRules as $rule) {
             if ($this->isFlexibleRuleApplicable($rule, $date, $dayOfWeek)) {
-                $rules[] = [
-                    'id' => $rule->rule_id,
-                    'type' => 'flexible',
-                    'rule_type' => $rule->rule_type,
-                    'price_adjustment' => $rule->price_adjustment,
-                    'priority' => $rule->priority,
-                    'is_exclusive' => $rule->is_exclusive,
-                    'details' => $this->getFlexibleRuleDetails($rule)
-                ];
+                // Avoid duplicate rule types - only take the first one found (highest priority)
+                if (!in_array($rule->rule_type, $appliedRuleTypes)) {
+                    $rules[] = [
+                        'id' => $rule->rule_id,
+                        'type' => 'flexible',
+                        'rule_type' => $rule->rule_type,
+                        'price_adjustment' => $rule->price_adjustment,
+                        'priority' => $rule->priority,
+                        'is_exclusive' => $rule->is_exclusive,
+                        'details' => $this->getFlexibleRuleDetails($rule)
+                    ];
+                    $appliedRuleTypes[] = $rule->rule_type;
+                }
             }
         }
 
-        // 2. Get dynamic pricing rules
+        // 2. Get dynamic pricing rules (occupancy-based)
         $occupancyRate = $this->getOccupancyRate($roomTypeId, $date);
         
         $dynamicRules = DynamicPricingRule::where('is_active', 1)
@@ -313,18 +321,17 @@ class PricingService
             })
             ->where('occupancy_threshold', '<=', $occupancyRate)
             ->orderBy('occupancy_threshold', 'desc')
-            ->get();
-
-        foreach ($dynamicRules as $rule) {
+            ->first(); // Only take the highest applicable threshold
+        if ($dynamicRules) {
             $rules[] = [
-                'id' => $rule->rule_id,
+                'id' => $dynamicRules->rule_id,
                 'type' => 'dynamic',
                 'rule_type' => 'occupancy',
-                'price_adjustment' => $rule->price_adjustment,
-                'priority' => $rule->priority,
-                'is_exclusive' => $rule->is_exclusive,
+                'price_adjustment' => $dynamicRules->price_adjustment,
+                'priority' => $dynamicRules->priority,
+                'is_exclusive' => $dynamicRules->is_exclusive,
                 'details' => [
-                    'occupancy_threshold' => $rule->occupancy_threshold,
+                    'occupancy_threshold' => $dynamicRules->occupancy_threshold,
                     'current_occupancy' => $occupancyRate
                 ]
             ];
@@ -338,54 +345,55 @@ class PricingService
         return $rules;
     }
 
-    /**
-     * Check if flexible rule is applicable for the given date
-     */
-    private function isFlexibleRuleApplicable($rule, $date, $dayOfWeek)
-    {
-        switch ($rule->rule_type) {
-            case 'weekend':
-                if ($rule->days_of_week) {
-                    $applicableDays = json_decode($rule->days_of_week, true);
-                    return in_array($dayOfWeek, $applicableDays);
+            /**
+             * Check if flexible rule is applicable for the given date
+             */
+            private function isFlexibleRuleApplicable($rule, $date, $dayOfWeek)
+            {
+                switch ($rule->rule_type) {
+                    case 'weekend':
+                        if ($rule->days_of_week) {
+                            $applicableDays = json_decode($rule->days_of_week, true);
+                            return in_array($dayOfWeek, $applicableDays);
+                        }
+                        return false;
+
+                    case 'event':
+                        if ($rule->event && $rule->event->is_active) {
+                            $eventStart = Carbon::parse($rule->event->start_date);
+                            $eventEnd = $rule->event->end_date ? 
+                                Carbon::parse($rule->event->end_date) : $eventStart;
+                            return $date->between($eventStart, $eventEnd);
+                        }
+                        return false;
+
+                    case 'holiday':
+                        if ($rule->holiday && $rule->holiday->is_active) {
+                            $holidayStart = Carbon::parse($rule->holiday->start_date);
+                            $holidayEnd = $rule->holiday->end_date ? 
+                                Carbon::parse($rule->holiday->end_date) : $holidayStart;
+                            return $date->between($holidayStart, $holidayEnd);
+                        }
+                        return false;
+
+                    case 'season':
+                        // Season rules already filtered by date range in main query
+                        return true;
+
+                    default:
+                        return false;
                 }
-                return false;
+            }
 
-            case 'event':
-                if ($rule->event && $rule->event->is_active) {
-                    $eventStart = Carbon::parse($rule->event->start_date);
-                    $eventEnd = $rule->event->end_date ? 
-                        Carbon::parse($rule->event->end_date) : $eventStart;
-                    return $date->between($eventStart, $eventEnd);
-                }
-                return false;
-
-            case 'holiday':
-                if ($rule->holiday && $rule->holiday->is_active) {
-                    $holidayStart = Carbon::parse($rule->holiday->start_date);
-                    $holidayEnd = $rule->holiday->end_date ? 
-                        Carbon::parse($rule->holiday->end_date) : $holidayStart;
-                    return $date->between($holidayStart, $holidayEnd);
-                }
-                return false;
-
-            case 'season':
-                // Season rules already filtered by date range in main query
-                return true;
-
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * Apply stacking with cap mechanism
-     */
+            /**
+             * Apply stacking with cap mechanism
+             */
     public function applyStackingWithCap($basePrice, $rules)
     {
         $totalAdjustment = 0;
         $appliedRules = [];
 
+        // Apply all rules and sum adjustments
         foreach ($rules as $rule) {
             $totalAdjustment += $rule['price_adjustment'];
             $appliedRules[] = [
@@ -397,30 +405,35 @@ class PricingService
             ];
         }
 
-        // Apply cap on percentage increase
+        // Apply percentage cap BEFORE calculating final price
+        $cappedByPercentage = false;
         if ($totalAdjustment > $this->pricingConfig->max_price_increase_percentage) {
             $totalAdjustment = $this->pricingConfig->max_price_increase_percentage;
+            $cappedByPercentage = true;
         }
 
+        // Calculate adjusted price
         $adjustedPrice = $basePrice + ($basePrice * $totalAdjustment / 100);
 
         // Apply absolute price cap
+        $cappedByAbsolute = false;
         if ($adjustedPrice > $this->pricingConfig->max_absolute_price_vnd) {
             $adjustedPrice = $this->pricingConfig->max_absolute_price_vnd;
+            $cappedByAbsolute = true;
         }
 
         return [
-            'adjusted_price' => round($adjustedPrice, 0), // Round to nearest VND
+            'adjusted_price' => round($adjustedPrice, 0),
             'price_adjustment_total' => $totalAdjustment,
             'applied_rules' => $appliedRules,
-            'capped_by_percentage' => $totalAdjustment >= $this->pricingConfig->max_price_increase_percentage,
-            'capped_by_absolute' => $adjustedPrice >= $this->pricingConfig->max_absolute_price_vnd
+            'capped_by_percentage' => $cappedByPercentage,
+            'capped_by_absolute' => $cappedByAbsolute
         ];
     }
 
-    /**
-     * Apply rule priority mechanism
-     */
+            /**
+             * Apply rule priority mechanism
+             */
     public function applyRulePriority($basePrice, $rules)
     {
         if (empty($rules)) {
@@ -457,10 +470,10 @@ class PricingService
         $adjustedPrice = $basePrice + ($basePrice * $adjustment / 100);
 
         // Apply absolute price cap
-        $capped = false;
+        $cappedByAbsolute = false;
         if ($adjustedPrice > $this->pricingConfig->max_absolute_price_vnd) {
             $adjustedPrice = $this->pricingConfig->max_absolute_price_vnd;
-            $capped = true;
+            $cappedByAbsolute = true;
         }
 
         return [
@@ -473,15 +486,15 @@ class PricingService
                 'price_adjustment' => $selectedRule['price_adjustment'],
                 'details' => $selectedRule['details']
             ]],
-            'capped_by_percentage' => false,
-            'capped_by_absolute' => $capped
+            'capped_by_percentage' => false, // Priority mode doesn't use percentage cap
+            'capped_by_absolute' => $cappedByAbsolute
         ];
     }
 
-    /**
-     * Get real-time occupancy rate
-     */
-    public function getOccupancyRate($roomTypeId, $date)
+            /**
+             * Get real-time occupancy rate
+             */
+            public function getOccupancyRate($roomTypeId, $date)
     {
         $dateString = $date->toDateString();
         $cacheKey = "occupancy_{$roomTypeId}_{$dateString}";
@@ -494,55 +507,85 @@ class PricingService
                 ->where('date', $dateString)
                 ->first();
             
-            return $occupancy ? $occupancy->occupancy_rate : 0;
+            if ($occupancy && $occupancy->total_rooms > 0) {
+                return round(($occupancy->booked_rooms / $occupancy->total_rooms) * 100, 2);
+            }
+            
+            // Return mock occupancy rate for testing if no data
+            return $this->getMockOccupancyRate($roomTypeId, $dateString);
         });
     }
-
-    /**
-     * Update occupancy data for a specific room type and date
-     */
-    public function updateOccupancyData($roomTypeId, $date)
-{
-    // Get total rooms for this room type
-    $totalRooms = DB::table('room')
-        ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
-        ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
-        ->where('room.room_type_id', $roomTypeId)
-        ->where('room_availability.date', $date)
-        ->sum('room_availability.total_rooms');
-
-    // Nếu không có phòng thì không lưu
-    if ($totalRooms == 0) {
-        \Log::info("Không cập nhật occupancy vì không có phòng (room_type_id={$roomTypeId}, date={$date})");
-        return;
+    private function getMockOccupancyRate($roomTypeId, $dateString)
+    {
+        $date = Carbon::parse($dateString);
+        $dayOfWeek = $date->dayOfWeek;
+        
+        // Higher occupancy on weekends
+        if (in_array($dayOfWeek, [5, 6, 0])) { // Friday, Saturday, Sunday
+            return rand(70, 95);
+        }
+        
+        // Medium occupancy on weekdays
+        return rand(40, 70);
     }
 
-    $availableRooms = DB::table('room')
-        ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
-        ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
-        ->where('room.room_type_id', $roomTypeId)
-        ->where('room_availability.date', $date)
-        ->sum('room_availability.available_rooms');
+            /**
+             * Update occupancy data for a specific room type and date
+             */
+            public function updateOccupancyData($roomTypeId, $date)
+    {
+        try {
+            // Get total rooms for this room type
+            $totalRooms = DB::table('room')
+                ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
+                ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
+                ->where('room.room_type_id', $roomTypeId)
+                ->where('room_availability.date', $date)
+                ->sum('room_availability.total_rooms');
 
-    $bookedRooms = $totalRooms - $availableRooms;
+            // If no rooms available, don't update occupancy
+            if ($totalRooms == 0) {
+                Log::info("No rooms found for occupancy calculation", [
+                    'room_type_id' => $roomTypeId, 
+                    'date' => $date
+                ]);
+                return;
+            }
 
-    RoomOccupancy::updateOrCreate(
-        [
-            'room_type_id' => $roomTypeId,
-            'date' => $date
-        ],
-        [
-            'total_rooms' => $totalRooms,
-            'booked_rooms' => $bookedRooms
-        ]
-    );
-}
+            $availableRooms = DB::table('room')
+                ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
+                ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
+                ->where('room.room_type_id', $roomTypeId)
+                ->where('room_availability.date', $date)
+                ->sum('room_availability.available_rooms');
+
+            $bookedRooms = $totalRooms - $availableRooms;
+
+            RoomOccupancy::updateOrCreate(
+                [
+                    'room_type_id' => $roomTypeId,
+                    'date' => $date
+                ],
+                [
+                    'total_rooms' => $totalRooms,
+                    'booked_rooms' => max(0, $bookedRooms), // Ensure non-negative
+                    'occupancy_rate' => $totalRooms > 0 ? round(($bookedRooms / $totalRooms) * 100, 2) : 0
+                ]
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Error updating occupancy data: ' . $e->getMessage(), [
+                'room_type_id' => $roomTypeId,
+                'date' => $date
+            ]);
+        }
+    }
 
 
     /**
      * Get base price for room type
      */
-    private function getBasePrice($roomTypeId)
+    public function getBasePrice($roomTypeId)
     {
         $roomType = RoomType::find($roomTypeId);
         return $roomType ? $roomType->base_price : 0;
