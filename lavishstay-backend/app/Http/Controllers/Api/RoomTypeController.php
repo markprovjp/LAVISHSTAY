@@ -24,109 +24,37 @@ class RoomTypeController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        
         try {
             $query = RoomType::with('images');
-            
-      
+
             $roomTypes = $query->paginate();
 
-            $data = $roomTypes->getCollection()->map(function ($roomType) {
-                $imagesList = RoomTypeImage::where('room_type_id', $roomType->room_type_id)
-                    ->get(['image_id', 'room_type_id', 'image_url', 'image_path', 'alt_text', 'is_main'])
-                    ->map(function ($img) {
-                        return [
-                            'id' => $img->image_id,
-                            'room_type_id' => $img->room_type_id,
-                            'image_path' => asset($img->image_path), // Remove the extra 'storage' prefix
-                            'alt_text' => $img->alt_text,
-                            'is_main' => $img->is_main,
-                        ];
-                    })->toArray();
+            $data = $roomTypes->getCollection()->map(function ($roomType) use ($request) {
+                $imagesList = $roomType->images->map(function ($img) {
+                    return [
+                        'id' => $img->image_id,
+                        'room_type_id' => $img->room_type_id,
+                        'image_url' => asset($img->image_path),
+                        'alt_text' => $img->alt_text,
+                        'is_main' => $img->is_main,
+                    ];
+                })->toArray();
 
-// Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
-$mainImage = null;
-foreach ($imagesList as $img) {
-    if ($img['is_main']) {
-        $mainImage = $img;
-        break;
-    }
-}
-if (!$mainImage && !empty($imagesList)) {
-    $mainImage = $imagesList[0];
-}
-                // Get room statistics for this room type
-                $availableRoomsCount = 0;
-                $totalRoomsCount = 0;
-                $minPrice = 1200000;
-                $maxPrice = 1200000;
-                $avgPrice = 1200000;
-                $avgSize = 0;
-                $avgRating = 0;
-                $maxGuests = 2;
-                $commonViews = [];
-                $floors = [];
-
-                try {
-                    $rooms = \DB::table('room')
-                        ->where('room_type_id', $roomType->room_type_id)
-                        ->get();
-
-                    $totalRoomsCount = count($rooms);
-                    $roomPrices = [];
-                    $roomSizes = [];
-                    $roomRatings = [];
-                    
-                    foreach ($rooms as $room) {
-                        if ($room->status === 'available') {
-                            $availableRoomsCount++;
-                        }
-                        
-                        if (!empty($room->base_price_vnd)) {
-                            $roomPrices[] = floatval($room->base_price_vnd);
-                        }
-                        
-                        if (!empty($room->size)) {
-                            $roomSizes[] = floatval($room->size);
-                        }
-                        
-                        if (!empty($room->rating)) {
-                            $roomRatings[] = floatval($room->rating);
-                        }
-                        
-                        if (!empty($room->max_guests) && $room->max_guests > $maxGuests) {
-                            $maxGuests = $room->max_guests;
-                        }
-                        
-                        if (!empty($room->view)) {
-                            $commonViews[] = $room->view;
-                        }
-                        
-                        if (!empty($room->floor)) {
-                            $floors[] = $room->floor;
-                        }
+                // Lấy ảnh chính (is_main = true), nếu không có thì lấy ảnh đầu tiên
+                $mainImage = null;
+                foreach ($imagesList as $img) {
+                    if ($img['is_main']) {
+                        $mainImage = $img;
+                        break;
                     }
-                    
-                    if (!empty($roomPrices)) {
-                        $minPrice = min($roomPrices);
-                        $maxPrice = max($roomPrices);
-                        $avgPrice = round(array_sum($roomPrices) / count($roomPrices));
-                    }
-                    
-                    if (!empty($roomSizes)) {
-                        $avgSize = round(array_sum($roomSizes) / count($roomSizes));
-                    }
-                    
-                    if (!empty($roomRatings)) {
-                        $avgRating = round(array_sum($roomRatings) / count($roomRatings), 1);
-                    }
-                    
-                    $commonViews = array_unique($commonViews);
-                    $floors = array_unique($floors);
-                    sort($floors);
-                    
-                } catch (\Exception $e) {
-                    // Continue without room data if error
                 }
+                if (!$mainImage && !empty($imagesList)) {
+                    $mainImage = $imagesList[0];
+                }
+
+                // Calculate adjusted price using PricingService
+                $adjustedPrice = $this->calculateAdjustedPrice($roomType->room_type_id, $request);
 
                 // Get amenities for this room type
                 $allAmenities = [];
@@ -139,22 +67,19 @@ if (!$mainImage && !empty($imagesList)) {
                     'name' => $roomType->name,
                     'description' => $roomType->description,
 
-                     'images' => $imagesList,
+                    'images' => $imagesList,
                     'main_image' => $mainImage,
-                    'base_price' => $minPrice,
-                    'min_price' => $minPrice,
-                    'max_price' => $maxPrice,
-                    'avg_price' => $avgPrice,
-                    'size' => $avgSize,
-                    'avg_size' => $avgSize,
-                    'rating' => $avgRating,
-                    'avg_rating' => $avgRating,
-                    'max_guests' => $maxGuests,
-                    'common_views' => array_values($commonViews),
-                    'available_floors' => array_values($floors),
+                    'base_price' => $roomType->base_price,
+                    'adjusted_price' => $adjustedPrice, // New field with dynamic pricing
+                    'size' => $roomType->room_area,
+
+                    'rating' => $roomType->rating,
+
+                    'max_guests' => $roomType->max_guests,
+
                     'amenities' => $allAmenities,
                     'highlighted_amenities' => $highlightedAmenities,
-   
+
                     'created_at' => $roomType->created_at,
                     'updated_at' => $roomType->updated_at
                 ];
@@ -172,7 +97,6 @@ if (!$mainImage && !empty($imagesList)) {
                     'to' => $roomTypes->lastItem()
                 ]
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -181,12 +105,16 @@ if (!$mainImage && !empty($imagesList)) {
             ], 500);
         }
     }
+
+    /**
+     * Calculate adjusted price for room type based on current date or provided date
+     */
     private function calculateAdjustedPrice($roomTypeId, $request)
     {
         try {
             $roomType = RoomType::find($roomTypeId);
             if (!$roomType) {
-                return 1200000; // Fallback price
+                return $roomType->base_price ?? 1200000; // Fallback price
             }
 
             $basePrice = $roomType->base_price;
@@ -210,118 +138,12 @@ if (!$mainImage && !empty($imagesList)) {
                 'date' => $targetDate ?? 'not provided'
             ]);
 
-            // Fallback to base price or hardcoded value
+            // Fallback to base price
             $roomType = RoomType::find($roomTypeId);
             return $roomType ? $roomType->base_price : 1200000;
         }
     }
-/**
-     * Calculate pricing for room type over a date range
-     */
-    private function calculateRoomTypePricing($roomTypeId, $checkInDate, $checkOutDate, $days = 30)
-    {
-        try {
-            $roomType = RoomType::find($roomTypeId);
-            $basePrice = $roomType->base_price;
 
-            // Calculate pricing for the specific date range if provided
-            if ($checkInDate && $checkOutDate) {
-                $pricingResult = $this->pricingService->calculatePrice(
-                    $roomTypeId,
-                    $checkInDate,
-                    $checkOutDate,
-                    $basePrice
-                );
-
-                $avgPrice = $pricingResult['average_price_per_night'];
-                $minPrice = $basePrice; // Base price as minimum
-                $maxPrice = $avgPrice; // Use average as max for now
-
-                // Get min/max from breakdown if available
-                if (isset($pricingResult['price_breakdown']) && !empty($pricingResult['price_breakdown'])) {
-                    $prices = array_column($pricingResult['price_breakdown'], 'adjusted_price');
-                    $minPrice = min($prices);
-                    $maxPrice = max($prices);
-                }
-
-                return [
-                    'base_price' => $basePrice,
-                    'min_price' => $minPrice,
-                    'max_price' => $maxPrice,
-                    'avg_price' => round($avgPrice, 0),
-                    'pricing_info' => [
-                        'total_price' => $pricingResult['total_price'],
-                        'nights' => $pricingResult['nights'],
-                        'has_adjustments' => !empty($pricingResult['price_breakdown']),
-                        'date_range' => [
-                            'check_in' => $checkInDate,
-                            'check_out' => $checkOutDate
-                        ]
-                    ]
-                ];
-            }
-
-            // Calculate pricing for next 30 days to get min/max/avg
-            $startDate = Carbon::now()->addDay();
-            $endDate = $startDate->copy()->addDays($days - 1);
-            
-            $prices = [];
-            $currentDate = $startDate->copy();
-            
-            while ($currentDate->lte($endDate)) {
-                $nightPrice = $this->pricingService->calculateNightPrice(
-                    $roomTypeId,
-                    $currentDate,
-                    $basePrice
-                );
-                
-                $adjustedPrice = $nightPrice['adjusted_price'] ?? $basePrice;
-                $prices[] = $adjustedPrice;
-                
-                $currentDate->addDay();
-            }
-
-            $minPrice = !empty($prices) ? min($prices) : $basePrice;
-            $maxPrice = !empty($prices) ? max($prices) : $basePrice;
-            $avgPrice = !empty($prices) ? array_sum($prices) / count($prices) : $basePrice;
-
-            return [
-                'base_price' => $basePrice,
-                'min_price' => $minPrice,
-                'max_price' => $maxPrice,
-                'avg_price' => round($avgPrice, 0),
-                'pricing_info' => [
-                    'calculation_period' => $days . ' days',
-                    'start_date' => $startDate->format('Y-m-d'),
-                    'end_date' => $endDate->format('Y-m-d'),
-                    'price_range' => $maxPrice - $minPrice,
-                    'has_dynamic_pricing' => $maxPrice != $minPrice
-                ]
-            ];
-
-        } catch (\Exception $e) {
-            Log::error('Error calculating room type pricing: ' . $e->getMessage(), [
-                'room_type_id' => $roomTypeId,
-                'check_in_date' => $checkInDate,
-                'check_out_date' => $checkOutDate
-            ]);
-
-            // Fallback to base price if pricing calculation fails
-            $roomType = RoomType::find($roomTypeId);
-            $basePrice = $roomType ? $roomType->base_price : 1200000;
-
-            return [
-                'base_price' => $basePrice,
-                'min_price' => $basePrice,
-                'max_price' => $basePrice,
-                'avg_price' => $basePrice,
-                'pricing_info' => [
-                    'error' => 'Pricing calculation failed, using base price',
-                    'fallback' => true
-                ]
-            ];
-        }
-    }
     /**
      * Display the specified room type
      */
@@ -331,7 +153,7 @@ if (!$mainImage && !empty($imagesList)) {
             $roomType = RoomType::with('images')->where('room_type_id', $id)
                 ->firstOrFail();
 
-           $imagesList = $roomType->images->map(function ($img) {
+            $imagesList = $roomType->images->map(function ($img) {
                 return [
                     'id' => $img->image_id,
                     'image_url' => asset($img->image_path),
@@ -363,65 +185,64 @@ if (!$mainImage && !empty($imagesList)) {
                 $roomPrices = [];
                 $roomSizes = [];
                 $roomRatings = [];
-                
+
                 foreach ($roomsQuery as $room) {
                     if ($room->status === 'available') {
                         $availableRoomsCount++;
                     }
-                    
+
                     // Collect pricing data
                     if (!empty($room->base_price_vnd)) {
                         $roomPrices[] = floatval($room->base_price_vnd);
                     }
-                    
+
                     // Collect size data
                     if (!empty($room->size)) {
                         $roomSizes[] = floatval($room->size);
                     }
-                    
+
                     // Collect rating data
                     if (!empty($room->rating)) {
                         $roomRatings[] = floatval($room->rating);
                     }
-                    
+
                     // Collect max guests data
                     if (!empty($room->max_guests) && $room->max_guests > $maxGuests) {
                         $maxGuests = $room->max_guests;
                     }
-                    
+
                     // Collect view data
                     if (!empty($room->view)) {
                         $commonViews[] = $room->view;
                     }
-                    
+
                     // Collect floor data
                     if (!empty($room->floor)) {
                         $floors[] = $room->floor;
                     }
                 }
-                
+
                 // Calculate pricing statistics
                 if (!empty($roomPrices)) {
                     $minPrice = min($roomPrices);
                     $maxPrice = max($roomPrices);
                     $avgPrice = round(array_sum($roomPrices) / count($roomPrices));
                 }
-                
+
                 // Calculate size statistics
                 if (!empty($roomSizes)) {
                     $avgSize = round(array_sum($roomSizes) / count($roomSizes));
                 }
-                
+
                 // Calculate rating statistics
                 if (!empty($roomRatings)) {
                     $avgRating = round(array_sum($roomRatings) / count($roomRatings), 1);
                 }
-                
+
                 // Process views and floors
                 $commonViews = array_unique($commonViews);
                 $floors = array_unique($floors);
                 sort($floors);
-                
             } catch (\Exception $e) {
                 error_log("Error fetching rooms: " . $e->getMessage());
             }
@@ -429,7 +250,7 @@ if (!$mainImage && !empty($imagesList)) {
             // Get amenities based on room type ID
             $allAmenities = [];
             $highlightedAmenities = [];
-            
+
             $this->getAmenitiesForRoomType($roomType->room_type_id, $allAmenities, $highlightedAmenities);
 
             $data = [
@@ -439,12 +260,12 @@ if (!$mainImage && !empty($imagesList)) {
                 'description' => $roomType->description,
                 'total_room' => $roomType->total_room,
                 'images' => $imagesList,
-                    'main_image' => $mainImage,
+                'main_image' => $mainImage,
                 'base_price' => $roomType->base_price,
-                    'size' => $roomType->room_area,
-                    'rating' => $roomType->rating,
-                    'max_guests' => $roomType->max_guests,
-                    'view' => $roomType->view,
+                'size' => $roomType->room_area,
+                'rating' => $roomType->rating,
+                'max_guests' => $roomType->max_guests,
+                'view' => $roomType->view,
                 'amenities' => $allAmenities,
                 'highlighted_amenities' => $highlightedAmenities,
                 // Summary statistics only - no individual room details
@@ -458,7 +279,6 @@ if (!$mainImage && !empty($imagesList)) {
                 'success' => true,
                 'data' => $data
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -510,7 +330,6 @@ if (!$mainImage && !empty($imagesList)) {
                 ];
                 $highlightedAmenities = $allAmenities;
             }
-
         } catch (\Exception $e) {
             // Fallback in case of database error
             $allAmenities = [
