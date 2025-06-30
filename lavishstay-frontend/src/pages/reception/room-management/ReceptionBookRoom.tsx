@@ -4,9 +4,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { CalendarIcon, Users, Bed, Star, ShoppingCart } from 'lucide-react';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 import { RootState } from '../../../store';
 import { setDateRange, setRoomTypes, setOccupancy, setCleanedOnly, resetFilters } from '../../../store/slices/Reception';
+import * as ReceptionActions from '../../../store/slices/Reception';
 import { useGetRoomTypes } from "../../../hooks/useRoomTypes";
 import { useGetRooms } from '../../../hooks/useRooms';
 import { getIcon } from '../../../constants/Icons';
@@ -73,14 +75,10 @@ const BookingCart = styled.div<{ $visible: boolean }>`
   padding: 16px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
   z-index: 1000;
-  max-width: 100%;
 `;
 
 const QuickActionButton = styled(Button)`
-  border-radius: 20px;
-  font-size: 12px;
-  height: 28px;
-  padding: 0 12px;
+
 `;
 
 const StatusTag = styled(Tag) <{ $status: string }>`
@@ -98,6 +96,7 @@ const SkeletonWrapper = styled.div`
 
 const ReceptionBooking: React.FC = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const filters = useSelector((state: RootState) => state.Reception);
 
     const { data: roomTypesData, isLoading: isRoomTypesLoading } = useGetRoomTypes();
@@ -163,6 +162,35 @@ const ReceptionBooking: React.FC = () => {
         if (!isRoomSelected(room.id)) {
             setSelectedRooms(prev => [...prev, room]);
         }
+    };
+
+    const handleProceedToConfirm = () => {
+        // Convert dateRange (dayjs) to string for Redux
+        if (filters.dateRange && filters.dateRange.length === 2) {
+            const dateRangeStr = filters.dateRange.map((d: dayjs.Dayjs) => d ? d.toISOString() : null);
+            dispatch(ReceptionActions.setDateRange(dateRangeStr));
+        }
+        // Gắn thông tin ngày, số đêm, giá, room_type chi tiết vào từng phòng trước khi dispatch
+        let nights = 1;
+        if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
+            nights = dayjs(filters.dateRange[1]).diff(dayjs(filters.dateRange[0]), 'day');
+            if (nights < 1) nights = 1;
+        }
+        const selectedRoomsWithDetails = selectedRooms.map(room => {
+            const roomType = getRoomTypeDetail(room);
+            const base_price = Number(roomType.base_price || 0);
+            return {
+                ...room,
+                room_type: roomType, // Đảm bảo room_type là object chi tiết
+                checkIn: filters.dateRange && filters.dateRange[0] ? filters.dateRange[0].toISOString() : null,
+                checkOut: filters.dateRange && filters.dateRange[1] ? filters.dateRange[1].toISOString() : null,
+                nights,
+                base_price,
+                totalPrice: base_price * nights
+            };
+        });
+        dispatch(ReceptionActions.setSelectedRooms(selectedRoomsWithDetails));
+        navigate('/reception/confirm-representative-payment');
     };
 
     return (
@@ -350,7 +378,6 @@ const ReceptionBooking: React.FC = () => {
                                                         {price !== null && price > 0
                                                             ? new Intl.NumberFormat('vi-VN').format(price)
                                                             : 'Liên hệ'}
-                                                        <span className="text-xs opacity-80">/đêm</span>
                                                     </PriceTag>
                                                 </div>
                                             </div>
@@ -370,7 +397,7 @@ const ReceptionBooking: React.FC = () => {
                                             <div className="flex flex-wrap gap-0">
                                                 <StatusTag $status={roomStatus === 'available' ? 'clean' : 'dirty'} {...getStatusTagProps(room)} />
                                                 {size && (
-                                                    <Tag color="geekblue" icon={<span style={{ fontWeight: 600 }}>㎡</span>} className="flex items-center gap-1 px-2 py-1 text-xs rounded-full">
+                                                    <Tag color="geekblue"  className="flex items-center gap-1 px-2 py-1 text-xs rounded-full">
                                                         Diện tích: {size}m²
                                                     </Tag>
                                                 )}
@@ -425,7 +452,7 @@ const ReceptionBooking: React.FC = () => {
             </div>
 
             {/* Floating Booking Cart */}
-            <BookingCart $visible={selectedRooms.length > 0} className="shadow-2xl border-blue-200">
+            <BookingCart $visible={selectedRooms.length > 0} className="shadow-2xl border-blue-200 ">
                 <div className="flex items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="bg-blue-100 p-4 rounded-full border border-blue-200">
@@ -444,7 +471,7 @@ const ReceptionBooking: React.FC = () => {
                         <Button onClick={clearCart} className="rounded-full border-gray-300">
                             Xóa chọn
                         </Button>
-                        <Button type="primary" size="large" className="rounded-full bg-blue-600 hover:bg-blue-700">
+                        <Button type="primary" size="large" className="rounded-full bg-blue-600 hover:bg-blue-700" onClick={handleProceedToConfirm} disabled={selectedRooms.length < 2}>
                             Đặt phòng ngay
                         </Button>
                     </Space>

@@ -34,6 +34,10 @@ const ReceptionLayout: React.FC = () => {
                     label: <Link to="/reception/room-management-list">Danh sách phòng</Link>,
                 },
                 {
+                    key: '/reception/confirm-representative-payment',
+                    label: <Link to="/reception/confirm-representative-payment">Xác nhận thanh toán</Link>,
+                },
+                {
                     key: '/reception/room-management/today',
                     label: <Link to="/reception/room-management/today">Phòng hôm nay</Link>,
                 },
