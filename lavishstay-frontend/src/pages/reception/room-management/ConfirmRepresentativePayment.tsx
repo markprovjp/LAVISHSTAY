@@ -10,7 +10,7 @@ import {
     Typography,
     Space,
     Divider,
-    message,
+    App,
     Badge,
     Table,
     Tooltip,
@@ -80,6 +80,7 @@ const formatCurrency = (amount: number) => {
 const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> = () => {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const { message } = App.useApp();
 
     // State management
     const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set());
@@ -175,28 +176,39 @@ const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> 
             return;
         }
         try {
-            // Gọi API tạo booking
-            const response = await fetch('http://localhost:8888/api/payment/create-booking', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    rooms: selectedRoomsList,
-                    representatives,
-                    subtotal,
-                    dateRange
-                })
+            // Import paymentAPI dynamically
+            const { paymentAPI } = await import('../../../utils/api');
+
+            console.log('Sending data to API:', {
+                rooms: selectedRoomsList,
+                representatives,
+                subtotal,
+                dateRange
             });
-            const data = await response.json();
+
+            // Gọi API tạo booking với format đúng
+            const data = await paymentAPI.createBooking({
+                rooms: selectedRoomsList,
+                representatives,
+                subtotal,
+                dateRange
+            });
+
             if (data.success && data.booking_code) {
                 // Chuyển sang trang payment, truyền bookingCode thực tế
                 navigate('/reception/payment-booking', {
-                    state: { bookingCode: data.booking_code }
+                    state: {
+                        bookingCode: data.booking_code,
+                        paymentContent: data.payment_content || `LAVISHSTAY_${data.booking_code}`
+                    }
                 });
             } else {
                 message.error(data.message || 'Không tạo được mã đặt phòng!');
             }
-        } catch (err) {
-            message.error('Lỗi khi tạo đặt phòng!');
+        } catch (err: any) {
+            console.error('Error creating booking:', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Lỗi khi tạo đặt phòng!';
+            message.error(errorMessage);
         }
     };
 
