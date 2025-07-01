@@ -47,4 +47,15 @@ class Booking extends Model
     {
         return $this->hasMany(CheckoutRequest::class, 'booking_id', 'booking_id');
     }
+
+    
+    public function rooms()
+    {
+        return $this->hasMany(BookingRoom::class, 'booking_id', 'booking_id');
+    }
+    
+    public function representatives()
+    {
+        return $this->hasMany(Representative::class, 'booking_id', 'booking_id');
+    }
 }

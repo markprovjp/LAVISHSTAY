@@ -122,3 +122,11 @@ Route::prefix('pricing')->group(function () {
         Route::get('/stats', [PricingController::class, 'getPricingStats']);
     });
 });
+
+// Reception Booking API (Lễ tân đặt phòng)
+Route::prefix('reception')->group(function () {
+    Route::post('/book', [\App\Http\Controllers\Api\ReceptionBookController::class, 'create']);
+    Route::get('/booking/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'detail']);
+    Route::get('/payment-status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
+    Route::get('/bookings', [\App\Http\Controllers\Api\ReceptionBookController::class, 'list']);
+});

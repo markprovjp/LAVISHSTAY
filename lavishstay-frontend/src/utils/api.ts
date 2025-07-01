@@ -223,5 +223,11 @@ export const dashboardAPI = {
     return response.data;
   }
 };
-
+// Reception Booking API
+export const receptionAPI = {
+  createBooking: async (data: any) => api.post('/reception/book', data),
+  getBookingDetail: async (bookingId: string) => api.get(`/reception/booking/${bookingId}`),
+  getPaymentStatus: async (bookingId: string) => api.get(`/reception/payment-status/${bookingId}`),
+  listBookings: async (params?: any) => api.get('/reception/bookings', { params }),
+};
 export default api;
