@@ -12,13 +12,19 @@
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                 <!-- Sync Occupancy button -->
                 <button id="syncOccupancyBtn"
-                    class="btn cursor-pointer bg-blue-500 hover:bg-blue-600 text-white">
-                    <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 24 24">
+                    class="btn bg-green-500 hover:bg-green-600 text-white">
+                    <svg class="fill-current shrink-0 xs:hidden" viewBox="0 0 24 24" height="24px" width="24px">
                         <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
                     </svg>
                     <span class="max-xs:sr-only">Đồng bộ dữ liệu</span>
                 </button>
 
+                <a href="{{ route('admin.pricing.index') }}" class="btn bg-gray-500 hover:bg-gray-600 text-white">
+                    <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
+                        <path d="M7.3 8.7c-.4-.4-.4-1 0-1.4l7-7c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4L9.4 8l6.3 6.3c.4.4.4 1 0 1.4-.4.4-1 .4-1.4 0l-7-7z"/>
+                    </svg>
+                    <span class="max-xs:sr-only">Quay lại</span>
+                </a>
                 <!-- Add Dynamic Rule button -->
                 <button id="addDynamicRuleBtn" class="btn cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
