@@ -367,7 +367,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     /////////////////////// GIÁ PHÒNG /////////////////////////////////////////////////////
 
      //Theo lễ hội, sự kiện
-    Route::get('/admin/event_festival', [RoomPriceController::class, 'event_festival'])->name('admin.room-prices.event_festival');
     Route::prefix('admin/event-festival-management')->name('admin.event-festival-management.')->group(function () {
         Route::get('/', [EventFestivalManagementController::class, 'index'])->name('index');
         Route::get('/statistics', [EventFestivalManagementController::class, 'getStatistics'])->name('statistics');
@@ -398,12 +397,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/events/data', [FlexiblePricingController::class, 'getEvents'])->name('admin.events.data');
     Route::get('/admin/holidays/data', [FlexiblePricingController::class, 'getHolidays'])->name('admin.holidays.data');
     Route::get('/admin/events/data-for-edit/{eventId?}', [FlexiblePricingController::class, 'getEventsForEdit'])->name('admin.events.data-for-edit');
-    
+    Route::get('/admin/holidays/data-for-edit/{currentHolidayId?}', [FlexiblePricingController::class, 'getHolidaysForEdit'])->name('admin.holidays.data-for-edit');
     
     
     //Giá động
-    Route::get('/admin/dynamic_price', [RoomPriceController::class, 'dynamic_price'])->name('admin.room-prices.dynamic_price');
-        Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+    Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
         Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
         Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
         Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
@@ -422,7 +420,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     //Giá cuối tuần
-    Route::get('/admin/weekend_price', [RoomPriceController::class, 'weekend_price'])->name('admin.room-prices.weekend_price');
     Route::prefix('admin/weekend-price')->name('admin.weekend-price.')->group(function () {
         Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
         

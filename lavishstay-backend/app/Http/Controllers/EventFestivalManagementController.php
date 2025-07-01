@@ -15,7 +15,10 @@ class EventFestivalManagementController extends Controller
     /**
      * Display the main page
      */
-    
+    public function index()
+    {
+       return view('admin.pricing.event_festival');
+    }
     /**
      * Get statistics data
      */

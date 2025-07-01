@@ -23,7 +23,7 @@ class DynamicPricingController extends Controller
 
     public function index()
     {
-        return view('admin.room_prices.dynamic_price');
+        return view('admin.pricing.dynamic_price');
     }
 
     public function getData(Request $request)

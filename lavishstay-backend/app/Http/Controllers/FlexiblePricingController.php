@@ -444,242 +444,258 @@ class FlexiblePricingController extends Controller
     }
 
 
-    /**
-     * Show specific rule
-     */
-    public function show($id)
-    {
-        try {
-            $rule = FlexiblePricingRule::with(['roomType', 'event', 'holiday'])->findOrFail($id);
+    // Thêm hoặc sửa method show
+public function show($id)
+{
+    try {
+        $rule = FlexiblePricingRule::with(['roomType', 'event', 'holiday'])
+            ->find($id);
 
-            return response()->json([
-                'success' => true,
-                'data' => $rule
-            ]);
-        } catch (\Exception $e) {
+        if (!$rule) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không tìm thấy quy tắc giá'
             ], 404);
         }
+
+        // Format dates properly
+        $startDate = $rule->start_date ? Carbon::parse($rule->start_date)->format('Y-m-d') : null;
+        $endDate = $rule->end_date ? Carbon::parse($rule->end_date)->format('Y-m-d') : null;
+
+        $ruleData = [
+            'rule_id' => $rule->rule_id,
+            'room_type_id' => $rule->room_type_id,
+            'rule_type' => $rule->rule_type,
+            'price_adjustment' => $rule->price_adjustment,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'is_active' => (bool) $rule->is_active,
+            'days_of_week' => $rule->days_of_week,
+            'event_id' => $rule->event_id,
+            'holiday_id' => $rule->holiday_id,
+            'season_name' => $rule->season_name,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $ruleData
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error fetching pricing rule: ' . $e->getMessage(), [
+            'rule_id' => $id,
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Có lỗi xảy ra khi lấy thông tin quy tắc giá'
+        ], 500);
     }
+}
+
 
     /**
      * Update flexible pricing rule
      */
     public function update(Request $request, $id)
-    {
-        // Log request data để debug
-        \Log::info('FlexiblePricing Update Request:', [
-            'id' => $id,
-            'request_data' => $request->all()
+{
+    // Log toàn bộ request để debug
+    \Log::info('FlexiblePricing Update Request:', [
+        'id' => $id,
+        'method' => $request->method(),
+        'content_type' => $request->header('Content-Type'),
+        'request_data' => $request->all(),
+        'json_data' => $request->json()->all()
+    ]);
+
+    try {
+        // Kiểm tra rule có tồn tại không
+        $rule = FlexiblePricingRule::find($id);
+        if (!$rule) {
+            \Log::error('Rule not found:', ['id' => $id]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy quy tắc giá'
+            ], 404);
+        }
+
+        // Validate input data
+        $validator = Validator::make($request->all(), [
+            'rule_type' => 'required|in:weekend,event,holiday,season',
+            'price_adjustment' => 'required|numeric|min:-100|max:1000',
+            'room_type_id' => 'nullable|exists:room_types,room_type_id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'days_of_week' => 'nullable|array',
+            'days_of_week.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'event_id' => 'nullable|exists:events,event_id',
+            'holiday_id' => 'nullable|exists:holidays,holiday_id',
+            'season_name' => 'nullable|string|max:255',
+            'is_active' => 'boolean'
         ]);
 
+        if ($validator->fails()) {
+            \Log::error('Update validation failed:', $validator->errors()->toArray());
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Validate rule-specific requirements
+        switch ($request->rule_type) {
+            case 'weekend':
+                if (!$request->has('days_of_week') || empty($request->days_of_week)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vui lòng chọn ít nhất một ngày trong tuần'
+                    ], 422);
+                }
+                break;
+            case 'event':
+                if (!$request->event_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vui lòng chọn sự kiện'
+                    ], 422);
+                }
+                break;
+            case 'holiday':
+                if (!$request->holiday_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vui lòng chọn lễ hội'
+                    ], 422);
+                }
+                break;
+            case 'season':
+                if (!$request->season_name || !$request->start_date || !$request->end_date) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Vui lòng nhập đầy đủ thông tin mùa'
+                    ], 422);
+                }
+                break;
+        }
+
         try {
-            // Kiểm tra rule có tồn tại không
-            $rule = FlexiblePricingRule::find($id);
-            if (!$rule) {
-                \Log::error('Rule not found:', ['id' => $id]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy quy tắc giá'
-                ], 404);
-            }
+            DB::beginTransaction();
 
-            \Log::info('Found existing rule:', $rule->toArray());
+            // Prepare update data
+            $updateData = [
+                'room_type_id' => $request->room_type_id ?: null,
+                'rule_type' => $request->rule_type,
+                'price_adjustment' => $request->price_adjustment,
+                'start_date' => $request->start_date ?: null,
+                'end_date' => $request->end_date ?: null,
+                'is_active' => $request->has('is_active') ? (bool)$request->is_active : true,
+                'priority' => $rule->priority, // Keep existing priority
+                'is_exclusive' => $rule->is_exclusive // Keep existing exclusive setting
+            ];
 
-            $validator = $this->validateData($request);
+            // Clear all rule-specific fields first
+            $updateData['days_of_week'] = null;
+            $updateData['event_id'] = null;
+            $updateData['holiday_id'] = null;
+            $updateData['season_name'] = null;
 
-            if ($validator->fails()) {
-                \Log::error('Update validation failed:', $validator->errors()->toArray());
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Dữ liệu không hợp lệ',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            // Validate rule conflicts for events and holidays
-            if (in_array($request->rule_type, ['event', 'holiday'])) {
-                try {
-                    $conflictValidation = $this->pricingService->validateRuleConflicts(
-                        $request->rule_type,
-                        $request->start_date,
-                        $request->end_date,
-                        $id // Exclude current rule from conflict check
-                    );
-
-                    if (!$conflictValidation['valid']) {
-                        \Log::warning('Update rule conflict detected:', $conflictValidation);
-                        return response()->json([
-                            'success' => false,
-                            'message' => $conflictValidation['message'],
-                            'conflicts' => $conflictValidation['conflicts'] ?? []
-                        ], 422);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Error in update conflict validation:', [
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+            // Set rule-specific data
+            switch ($request->rule_type) {
+                case 'weekend':
+                    $updateData['days_of_week'] = json_encode($request->days_of_week);
+                    \Log::info('Weekend rule update data:', [
+                        'days_of_week' => $request->days_of_week,
+                        'encoded' => $updateData['days_of_week']
                     ]);
-                    // Continue without conflict validation if service fails
-                }
-            }
+                    break;
 
-            try {
-                DB::beginTransaction();
-
-                // Prepare update data
-                $data = [
-                    'room_type_id' => $request->room_type_id ?: null,
-                    'rule_type' => $request->rule_type,
-                    'price_adjustment' => $request->price_adjustment,
-                    'start_date' => $request->start_date ?: null,
-                    'end_date' => $request->end_date ?: null,
-                    'is_active' => $request->is_active ?? true,
-                    'priority' => $request->priority ?? $rule->priority,
-                    'is_exclusive' => $request->is_exclusive ?? $rule->is_exclusive
-                ];
-
-                \Log::info('Base update data prepared:', $data);
-
-                // Clear previous rule-specific data
-                $data['days_of_week'] = null;
-                $data['event_id'] = null;
-                $data['holiday_id'] = null;
-                $data['season_name'] = null;
-
-                // Add new rule-specific data
-                switch ($request->rule_type) {
-                    case 'weekend':
-                        if ($request->has('days_of_week') && is_array($request->days_of_week)) {
-                            $data['days_of_week'] = json_encode($request->days_of_week);
-                            \Log::info('Weekend days updated:', $request->days_of_week);
-                        } else {
-                            throw new \Exception('Days of week is required for weekend rules');
-                        }
-                        break;
-
-                    case 'event':
-                        if (!$request->event_id) {
-                            throw new \Exception('Event ID is required for event rules');
-                        }
-
-                        // Verify event exists
+                case 'event':
+                    $updateData['event_id'] = $request->event_id;
+                    // Get event dates if not provided
+                    if (!$updateData['start_date'] || !$updateData['end_date']) {
                         $event = \App\Models\Event::find($request->event_id);
-                        if (!$event) {
-                            throw new \Exception('Selected event does not exist');
+                        if ($event) {
+                            $updateData['start_date'] = $updateData['start_date'] ?: $event->start_date;
+                            $updateData['end_date'] = $updateData['end_date'] ?: $event->end_date;
                         }
+                    }
+                    break;
 
-                        $data['event_id'] = $request->event_id;
-                        // Get dates from event if not provided
-                        if (!$data['start_date']) {
-                            $data['start_date'] = $event->start_date;
-                        }
-                        if (!$data['end_date']) {
-                            $data['end_date'] = $event->end_date;
-                        }
-                        \Log::info('Event data updated:', ['event_id' => $request->event_id, 'event' => $event->toArray()]);
-                        break;
-
-                    case 'holiday':
-                        if (!$request->holiday_id) {
-                            throw new \Exception('Holiday ID is required for holiday rules');
-                        }
-
-                        // Verify holiday exists
+                case 'holiday':
+                    $updateData['holiday_id'] = $request->holiday_id;
+                    // Get holiday dates if not provided
+                    if (!$updateData['start_date'] || !$updateData['end_date']) {
                         $holiday = \App\Models\Holiday::find($request->holiday_id);
-                        if (!$holiday) {
-                            throw new \Exception('Selected holiday does not exist');
+                        if ($holiday) {
+                            $updateData['start_date'] = $updateData['start_date'] ?: $holiday->start_date;
+                            $updateData['end_date'] = $updateData['end_date'] ?: $holiday->end_date;
                         }
+                    }
+                    break;
 
-                        $data['holiday_id'] = $request->holiday_id;
-                        // Get dates from holiday if not provided
-                        if (!$data['start_date']) {
-                            $data['start_date'] = $holiday->start_date;
-                        }
-                        if (!$data['end_date']) {
-                            $data['end_date'] = $holiday->end_date;
-                        }
-                        \Log::info('Holiday data updated:', ['holiday_id' => $request->holiday_id, 'holiday' => $holiday->toArray()]);
-                        break;
-
-                    case 'season':
-                        if (!$request->season_name) {
-                            throw new \Exception('Season name is required for season rules');
-                        }
-                        if (!$data['start_date'] || !$data['end_date']) {
-                            throw new \Exception('Start date and end date are required for season rules');
-                        }
-                        $data['season_name'] = $request->season_name;
-                        \Log::info('Season data updated:', ['season_name' => $request->season_name]);
-                        break;
-
-                    default:
-                        throw new \Exception('Invalid rule type: ' . $request->rule_type);
-                }
-
-                \Log::info('Final update data:', $data);
-
-                // Update the rule
-                $rule->update($data);
-                \Log::info('Rule updated successfully:', ['rule_id' => $rule->rule_id]);
-
-                // Clear pricing cache for affected room types
-                try {
-                    $this->clearAffectedCache($rule);
-                    \Log::info('Cache cleared successfully after update');
-                } catch (\Exception $e) {
-                    \Log::warning('Failed to clear cache after update:', ['error' => $e->getMessage()]);
-                    // Don't fail the entire operation if cache clearing fails
-                }
-
-                DB::commit();
-                \Log::info('Update transaction committed successfully');
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Cập nhật quy tắc giá thành công',
-                    'data' => $rule->fresh() // Get updated data
-                ]);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                \Log::error('Database transaction failed during update:', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'request_data' => $request->all(),
-                    'rule_id' => $id
-                ]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Có lỗi xảy ra khi cập nhật quy tắc giá: ' . $e->getMessage(),
-                    'debug' => config('app.debug') ? [
-                        'error' => $e->getMessage(),
-                        'file' => $e->getFile(),
-                        'line' => $e->getLine()
-                    ] : null
-                ], 500);
+                case 'season':
+                    $updateData['season_name'] = $request->season_name;
+                    break;
             }
+
+            \Log::info('Final update data:', $updateData);
+
+            // Update the rule
+            $rule->update($updateData);
+
+            // Clear pricing cache - WRAP IN TRY-CATCH
+        try {
+            if (isset($this->pricingService)) {
+                $this->clearAffectedCache($rule);
+            }
+        } catch (\Exception $cacheError) {
+            \Log::warning('Failed to clear cache after update, but rule was updated successfully:', [
+                'cache_error' => $cacheError->getMessage(),
+                'rule_id' => $rule->rule_id
+            ]);
+            // Don't fail the entire operation
+        }
+
+            DB::commit();
+
+            \Log::info('Rule updated successfully:', ['rule_id' => $rule->rule_id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật quy tắc giá thành công',
+                'data' => $rule->fresh()
+            ]);
+
         } catch (\Exception $e) {
-            \Log::error('General error in update method:', [
+            DB::rollBack();
+            \Log::error('Database error during update:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
                 'rule_id' => $id
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi hệ thống xảy ra khi cập nhật: ' . $e->getMessage(),
-                'debug' => config('app.debug') ? [
-                    'error' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine()
-                ] : null
+                'message' => 'Có lỗi xảy ra khi cập nhật: ' . $e->getMessage()
             ], 500);
         }
+
+    } catch (\Exception $e) {
+        \Log::error('General error in update:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'rule_id' => $id
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Có lỗi hệ thống: ' . $e->getMessage()
+        ], 500);
     }
+}
+
 
 
     /**

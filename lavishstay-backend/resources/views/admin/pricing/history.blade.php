@@ -30,6 +30,12 @@
                     <span class="max-xs:sr-only">Xuất Excel</span>
                 </button>
 
+                <a href="{{ route('admin.pricing.index') }}" class="btn bg-gray-500 hover:bg-gray-600 text-white">
+                    <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
+                        <path d="M7.3 8.7c-.4-.4-.4-1 0-1.4l7-7c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4L9.4 8l6.3 6.3c.4.4.4 1 0 1.4-.4.4-1 .4-1.4 0l-7-7z"/>
+                    </svg>
+                    <span class="max-xs:sr-only">Quay lại</span>
+                </a>
                 <!-- Refresh button -->
                 <button id="refreshBtn" class="btn cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">

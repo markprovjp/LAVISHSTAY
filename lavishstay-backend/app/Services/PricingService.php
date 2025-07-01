@@ -674,13 +674,27 @@ class PricingService
      * Clear pricing cache for specific room type and date range
      */
     public function clearPricingCache($roomTypeId, $startDate = null, $endDate = null)
-    {
+{
+    try {
         if (!$startDate) {
-            // Clear all cache for room type
-            $pattern = "pricing_{$roomTypeId}_*";
-            $keys = Cache::getRedis()->keys($pattern);
-            if (!empty($keys)) {
-                Cache::getRedis()->del($keys);
+            // Clear cache for room type trong 30 ngày tới (vì không thể pattern match với file cache)
+            $start = Carbon::now();
+            $end = Carbon::now()->addDays(30);
+            
+            $current = $start->copy();
+            while ($current->lte($end)) {
+                $dateString = $current->toDateString();
+                
+                // Clear pricing cache với các base price phổ biến
+                $commonPrices = [500000, 800000, 1000000, 1200000, 1500000, 2000000, 2500000, 3000000];
+                foreach ($commonPrices as $price) {
+                    Cache::forget("pricing_{$roomTypeId}_{$dateString}_{$price}");
+                }
+                
+                // Clear occupancy cache
+                Cache::forget("occupancy_{$roomTypeId}_{$dateString}");
+                
+                $current->addDay();
             }
             return;
         }
@@ -691,11 +705,34 @@ class PricingService
 
         while ($current->lte($end)) {
             $dateString = $current->toDateString();
-            Cache::forget("pricing_{$roomTypeId}_{$dateString}_*");
+            
+            // Clear pricing cache với các base price phổ biến
+            $commonPrices = [500000, 800000, 1000000, 1200000, 1500000, 2000000, 2500000, 3000000];
+            foreach ($commonPrices as $price) {
+                Cache::forget("pricing_{$roomTypeId}_{$dateString}_{$price}");
+            }
+            
+            // Clear occupancy cache
             Cache::forget("occupancy_{$roomTypeId}_{$dateString}");
+            
             $current->addDay();
         }
+        
+        \Log::info('Pricing cache cleared successfully', [
+            'room_type_id' => $roomTypeId,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Error clearing pricing cache: ' . $e->getMessage(), [
+            'room_type_id' => $roomTypeId,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ]);
+        // Don't throw exception, just log it
     }
+}
 
     /**
      * Get pricing preview for admin interface

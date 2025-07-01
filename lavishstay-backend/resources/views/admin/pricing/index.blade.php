@@ -57,7 +57,7 @@
                     </span>
                 </div>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Quản lý giá theo sự kiện, lễ hội, cuối tuần</p>
-                <a href="{{ route('admin.room-prices.event_festival') }}"
+                <a href="{{ route('admin.event-festival-management.index') }}"
                     class="btn bg-green-500 hover:bg-green-600 text-white w-full">
                     Quản lý quy tắc
                 </a>
@@ -100,7 +100,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Xem trước giá 7 ngày tới</h3>
                 <div class="flex space-x-2">
                     <select id="roomTypeSelect" class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
- dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+             dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                         <option value="">Chọn loại phòng</option>
                     </select>
                     <button id="refreshPreview" class="btn bg-gray-500 hover:bg-gray-600 text-white ml-3 text-sm">
