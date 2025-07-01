@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Card, Button, Radio, Space, Row, Col, Divider, Alert, Descriptions, Typography, Image, message } from 'antd';
-import { QrcodeOutlined, CreditCardOutlined, BankOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Radio, Space, Row, Col, Divider, Alert, Descriptions, Typography, Image, message, Table } from 'antd';
+import { QrcodeOutlined, BankOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
@@ -16,41 +16,80 @@ const formatVND = (amount: number) => {
 };
 
 const generateVietQRUrl = (amount: number, content: string) => {
-    // Replace with your real QR code generator
-    return `https://img.vietqr.io/image/MB-0335920306-compact2.png?amount=${amount}&addInfo=${content}`;
+    return `https://img.vietqr.io/image/MB-0335920306-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 };
 
-const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-};
+const API_BASE_URL = 'http://localhost:8888/api';
 
 const PaymentBookingReception: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { selectedRooms = [], subtotal = 0, representatives = {}, dateRange = [] } = location.state || {};
+    // Lấy bookingCode từ state hoặc query
+    const bookingCode = location.state?.bookingCode || new URLSearchParams(window.location.search).get('bookingCode');
+    const [bookingInfo, setBookingInfo] = useState<any>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr');
     const [isProcessing, setIsProcessing] = useState(false);
-    const [bookingCode] = useState(() => {
-        // Generate a fake booking code for demo
-        return 'RCPT' + Math.floor(Math.random() * 1000000);
-    });
     const [countdown, setCountdown] = useState(900); // 15 minutes
+    const [loading, setLoading] = useState(true);
 
-    React.useEffect(() => {
+    // Lấy thông tin booking thực tế từ backend
+    useEffect(() => {
+        if (!bookingCode) {
+            message.error('Không tìm thấy mã đặt phòng.');
+            navigate('/reception');
+            return;
+        }
+        setLoading(true);
+        fetch(`${API_BASE_URL}/payment/booking-info/${bookingCode}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.booking) {
+                    setBookingInfo(data.booking);
+                    setCountdown(data.booking.countdown || 900);
+                } else {
+                    message.error('Không tìm thấy thông tin đặt phòng.');
+                    navigate('/reception');
+                }
+            })
+            .catch(() => {
+                message.error('Lỗi khi lấy thông tin đặt phòng.');
+                navigate('/reception');
+            })
+            .finally(() => setLoading(false));
+    }, [bookingCode, navigate]);
+
+    // Countdown
+    useEffect(() => {
         if (countdown > 0) {
             const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
             return () => clearTimeout(timer);
         }
     }, [countdown]);
 
+    // Poll trạng thái thanh toán nếu chọn VietQR
+    useEffect(() => {
+        if (bookingInfo && selectedPaymentMethod === 'vietqr' && bookingInfo.status !== 'paid') {
+            const interval = setInterval(() => {
+                fetch(`${API_BASE_URL}/payment/status/${bookingCode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.payment_status === 'confirmed') {
+                            setBookingInfo((prev: any) => ({ ...prev, status: 'paid' }));
+                            message.success('Thanh toán đã được xác nhận!');
+                            clearInterval(interval);
+                        }
+                    });
+            }, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [bookingInfo, selectedPaymentMethod, bookingCode]);
+
     const handleConfirmPayment = () => {
         setIsProcessing(true);
         setTimeout(() => {
             setIsProcessing(false);
             message.success('Thanh toán thành công!');
-            navigate('/reception/success', { state: { bookingCode } });
+            navigate('/reception/payment-success', { state: { bookingCode } });
         }, 1500);
     };
 
@@ -58,65 +97,118 @@ const PaymentBookingReception: React.FC = () => {
         navigate(-1);
     };
 
-    const generatePaymentContent = () => {
-        return `LAVISHSTAY_${bookingCode}`;
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    if (loading || !bookingInfo) {
+        return <div className="p-6 text-center">Đang tải thông tin đặt phòng...</div>;
+    }
+
+    const { rooms = [], representatives = {}, total_amount = 0, check_in, check_out, status } = bookingInfo;
+    const paymentContent = `LAVISHSTAY_${bookingCode}`;
+
     return (
-        <div className="p-6 max-w-3xl mx-auto">
+        <div className="p-6 ">
             <Title level={2} className="mb-6">Thanh toán đặt phòng lễ tân</Title>
 
+            {/* Thông tin đặt phòng dưới dạng bảng */}
             <Card title="Thông tin đặt phòng" className="mb-4">
-                <Descriptions column={1} size="small">
+                <Descriptions column={2} size="small" className="mb-4">
+                    <Descriptions.Item label="Mã đặt phòng">
+                        <Text strong style={{ color: '#52c41a' }}>{bookingCode}</Text>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái">
+                        <Text strong type={status === 'paid' ? 'success' : 'warning'}>
+                            {status === 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                        </Text>
+                    </Descriptions.Item>
                     <Descriptions.Item label="Ngày nhận phòng">
-                        {dateRange[0] ? dayjs(dateRange[0]).format('DD/MM/YYYY') : '-'}
+                        {check_in ? dayjs(check_in).format('DD/MM/YYYY') : '-'}
                     </Descriptions.Item>
                     <Descriptions.Item label="Ngày trả phòng">
-                        {dateRange[1] ? dayjs(dateRange[1]).format('DD/MM/YYYY') : '-'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Số phòng">
-                        {selectedRooms.length}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Khách đại diện">
-                        {Object.values(representatives).map((rep: any, idx) => (
-                            <div key={idx}>{rep.fullName} - {rep.phoneNumber}</div>
-                        ))}
+                        {check_out ? dayjs(check_out).format('DD/MM/YYYY') : '-'}
                     </Descriptions.Item>
                 </Descriptions>
+                <Table
+                    columns={[
+                        {
+                            title: 'Số phòng',
+                            dataIndex: 'name',
+                            key: 'name',
+                            render: (text: string) => <Text strong>{text}</Text>
+                        },
+                        {
+                            title: 'Loại phòng',
+                            dataIndex: ['room_type', 'name'],
+                            key: 'roomType',
+                            render: (_: any, room: any) => <Text>{room.room_type?.name}</Text>
+                        },
+                        {
+                            title: 'Check-in',
+                            dataIndex: 'checkIn',
+                            key: 'checkIn',
+                            render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY') : '-'
+                        },
+                        {
+                            title: 'Check-out',
+                            dataIndex: 'checkOut',
+                            key: 'checkOut',
+                            render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY') : '-'
+                        },
+                        {
+                            title: 'Số đêm',
+                            dataIndex: 'nights',
+                            key: 'nights',
+                            align: 'center' as const,
+                        },
+                        {
+                            title: 'Giá/đêm',
+                            dataIndex: ['room_type', 'adjusted_price'],
+                            key: 'basePrice',
+                            render: (_: any, room: any) => formatVND(room.room_type?.adjusted_price || 0)
+                        },
+                        {
+                            title: 'Tổng tiền',
+                            dataIndex: 'totalPrice',
+                            key: 'totalPrice',
+                            render: (value: number, room: any) => formatVND(value || (room.room_type?.adjusted_price * (room.nights || 1)))
+                        },
+                        {
+                            title: 'Người đại diện',
+                            key: 'representative',
+                            render: (_: any, room: any) => (
+                                representatives[room.id]
+                                    ? <span>{representatives[room.id].fullName} - {representatives[room.id].phoneNumber}</span>
+                                    : <span className="text-gray-400 italic">Chưa có</span>
+                            )
+                        }
+                    ]}
+                    dataSource={rooms}
+                    rowKey="id"
+                    pagination={false}
+                    bordered
+                    scroll={{ x: 900 }}
+                />
             </Card>
 
             <Card title="Phương thức thanh toán" className="mb-4">
                 <Radio.Group
                     value={selectedPaymentMethod}
                     onChange={e => setSelectedPaymentMethod(e.target.value)}
+                    optionType="button"
+                    buttonStyle="solid"
                     className="w-full"
                 >
-                    <Space direction="vertical" className="w-full" size="middle">
-                        <Radio value="vietqr" className="w-full">
-                            <Card size="small" className={`ml-6 ${selectedPaymentMethod === 'vietqr' ? 'border-blue-500 bg-blue-50' : ''}`} style={{ borderWidth: selectedPaymentMethod === 'vietqr' ? 2 : 1 }}>
-                                <Row align="middle" justify="space-between">
-                                    <Col>
-                                        <Space>
-                                            <QrcodeOutlined style={{ fontSize: 20, color: '#1890ff' }} /> VietQR
-                                        </Space>
-                                    </Col>
-                                    <Col>
-                                        <Text type="success">Khuyến nghị</Text>
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </Radio>
-                        <Radio value="pay_at_hotel" className="w-full">
-                            <Card size="small" className={`ml-6 ${selectedPaymentMethod === 'pay_at_hotel' ? 'border-blue-500 bg-blue-50' : ''}`} style={{ borderWidth: selectedPaymentMethod === 'pay_at_hotel' ? 2 : 1 }}>
-                                <Row align="middle" justify="space-between">
-                                    <Col>
-                                        <Space>
-                                            <BankOutlined style={{ fontSize: 20, color: '#52c41a' }} /> Thanh toán tại khách sạn
-                                        </Space>
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </Radio>
+                    <Space direction="horizontal" className="w-full" size="middle">
+                        <Radio.Button value="vietqr" style={{ minWidth: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <QrcodeOutlined style={{ fontSize: 18, color: '#1890ff' }} /> VietQR
+                        </Radio.Button>
+                        <Radio.Button value="pay_at_hotel" style={{ minWidth: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <BankOutlined style={{ fontSize: 18, color: '#52c41a' }} /> Thanh toán tại khách sạn
+                        </Radio.Button>
                     </Space>
                 </Radio.Group>
             </Card>
@@ -128,10 +220,10 @@ const PaymentBookingReception: React.FC = () => {
                             <div className="text-center">
                                 <div className="rounded-lg inline-block">
                                     <Image
-                                        src={generateVietQRUrl(subtotal, generatePaymentContent())}
+                                        src={generateVietQRUrl(total_amount, paymentContent)}
                                         alt="VietQR Payment Code"
-                                        width={300}
-                                        height={300}
+                                        width="100%"
+                                        height="100%"
                                         preview={false}
                                         style={{ borderRadius: 8 }}
                                     />
@@ -162,11 +254,11 @@ const PaymentBookingReception: React.FC = () => {
                                     </div>
                                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                         <Text className="text-gray-600">Số tiền:</Text>
-                                        <Text strong className="text-red-600 text-lg">{formatVND(subtotal)}</Text>
+                                        <Text strong className="text-red-600 text-lg">{formatVND(total_amount)}</Text>
                                     </div>
                                     <div className="flex justify-between items-start py-2 border-b border-gray-100">
                                         <Text className="text-gray-600">Nội dung:</Text>
-                                        <Text strong className="bg-green-50 px-2 py-1 rounded text-green-700 text-right font-mono">{generatePaymentContent()}</Text>
+                                        <Text strong className="bg-green-50 px-2 py-1 rounded text-green-700 text-right font-mono">{paymentContent}</Text>
                                     </div>
                                     <div className="flex justify-between items-center py-2">
                                         <Text className="text-gray-600">Mã đặt phòng:</Text>
@@ -186,7 +278,9 @@ const PaymentBookingReception: React.FC = () => {
                     <Divider />
                     <Space>
                         <Button onClick={handleBack}>Quay lại</Button>
-                        <Button type="primary" loading={isProcessing} onClick={handleConfirmPayment}>Đã thanh toán</Button>
+                        <Button type="primary" loading={isProcessing} onClick={handleConfirmPayment} disabled={status === 'paid'}>
+                            {status === 'paid' ? 'Đã thanh toán' : 'Đã chuyển khoản'}
+                        </Button>
                     </Space>
                 </Card>
             )}
@@ -205,7 +299,7 @@ const PaymentBookingReception: React.FC = () => {
                             <Text strong style={{ color: '#52c41a' }}>{bookingCode}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Tổng tiền cần thanh toán">
-                            <Text strong style={{ color: '#f5222d', fontSize: '1.1em' }}>{formatVND(subtotal)}</Text>
+                            <Text strong style={{ color: '#f5222d', fontSize: '1.1em' }}>{formatVND(total_amount)}</Text>
                         </Descriptions.Item>
                         <Descriptions.Item label="Hình thức thanh toán">
                             <Text>Tiền mặt hoặc thẻ tín dụng/ghi nợ</Text>
@@ -214,7 +308,9 @@ const PaymentBookingReception: React.FC = () => {
                     <Divider />
                     <Space>
                         <Button onClick={handleBack}>Quay lại</Button>
-                        <Button type="primary" loading={isProcessing} onClick={handleConfirmPayment}>Xác nhận đặt phòng</Button>
+                        <Button type="primary" loading={isProcessing} onClick={handleConfirmPayment} disabled={status === 'paid'}>
+                            {status === 'paid' ? 'Đã thanh toán' : 'Xác nhận đặt phòng'}
+                        </Button>
                     </Space>
                 </Card>
             )}

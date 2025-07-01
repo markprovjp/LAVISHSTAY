@@ -1,7 +1,7 @@
 // src/hooks/useApi.ts
 import { useQuery, useMutation, QueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { propertiesAPI, authAPI, bookingsAPI, roomsAPI, roomTypesAPI } from '../utils/api';
+import { propertiesAPI, authAPI, bookingsAPI, roomsAPI, roomTypesAPI , receptionAPI } from '../utils/api';
 import axios from 'axios';
 
 // Create a client to use for invalidation
@@ -153,3 +153,34 @@ export const useGetUserProfile = () => {
   });
 };
 
+
+
+// Tạo booking lễ tân
+export const useReceptionCreateBooking = () =>
+  useMutation({
+    mutationFn: receptionAPI.createBooking,
+  });
+
+// Lấy chi tiết booking lễ tân
+export const useReceptionBookingDetail = (bookingId: string) =>
+  useQuery({
+    queryKey: ['receptionBooking', bookingId],
+    queryFn: () => receptionAPI.getBookingDetail(bookingId),
+    enabled: !!bookingId,
+  });
+
+// Lấy trạng thái thanh toán
+export const useReceptionPaymentStatus = (bookingId: string) =>
+  useQuery({
+    queryKey: ['receptionPaymentStatus', bookingId],
+    queryFn: () => receptionAPI.getPaymentStatus(bookingId),
+    enabled: !!bookingId,
+    refetchInterval: 10000, // auto polling mỗi 10s nếu cần
+  });
+
+// Lấy danh sách booking lễ tân
+export const useReceptionBookings = (params?: any) =>
+  useQuery({
+    queryKey: ['receptionBookings', params],
+    queryFn: () => receptionAPI.listBookings(params),
+  });

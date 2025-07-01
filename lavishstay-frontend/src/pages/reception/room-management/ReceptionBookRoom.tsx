@@ -204,11 +204,16 @@ const ReceptionBooking: React.FC = () => {
                         <Col xs={24} sm={12} lg={6}>
                             <Form.Item label="Ngày nhận - trả phòng">
                                 <RangePicker
-                                    value={filters.dateRange}
+                                    value={
+                                        Array.isArray(filters.dateRange)
+                                            ? filters.dateRange.map(d => d ? (dayjs.isDayjs(d) ? d : dayjs(d)) : null)
+                                            : [null, null]
+                                    }
                                     onChange={(dates) => dispatch(setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs]))}
                                     className="w-full"
                                     size="large"
-                                    format="MMM DD, YYYY"
+                                    format="DD/MM/YYYY"
+                                    placeholder={["Ngày nhận phòng", "Ngày trả phòng"]}
                                     suffixIcon={<CalendarIcon size={16} />}
                                 />
                             </Form.Item>
@@ -396,7 +401,7 @@ const ReceptionBooking: React.FC = () => {
                                             <div className="flex flex-wrap gap-0">
                                                 <StatusTag $status={roomStatus === 'available' ? 'clean' : 'dirty'} {...getStatusTagProps(room)} />
                                                 {size && (
-                                                    <Tag color="geekblue"  className="flex items-center gap-1 px-2 py-1 text-xs rounded-full">
+                                                    <Tag color="geekblue" className="flex items-center gap-1 px-2 py-1 text-xs rounded-full">
                                                         Diện tích: {size}m²
                                                     </Tag>
                                                 )}

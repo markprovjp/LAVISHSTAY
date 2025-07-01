@@ -168,15 +168,36 @@ const ConfirmRepresentativePayment: React.FC<ConfirmRepresentativePaymentProps> 
         form.resetFields();
     };
 
-    const handleProceedToPayment = () => {
-        navigate('/reception/payment-booking', {
-            state: {
-                selectedRooms: selectedRoomsList,
-                representatives,
-                subtotal,
-                dateRange,
+    const handleProceedToPayment = async () => {
+        // Validate: phải có đủ thông tin đại diện cho tất cả phòng
+        if (!canProceed) {
+            message.warning('Vui lòng nhập đủ thông tin đại diện cho tất cả các phòng!');
+            return;
+        }
+        try {
+            // Gọi API tạo booking
+            const response = await fetch('http://localhost:8888/api/payment/create-booking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rooms: selectedRoomsList,
+                    representatives,
+                    subtotal,
+                    dateRange
+                })
+            });
+            const data = await response.json();
+            if (data.success && data.booking_code) {
+                // Chuyển sang trang payment, truyền bookingCode thực tế
+                navigate('/reception/payment-booking', {
+                    state: { bookingCode: data.booking_code }
+                });
+            } else {
+                message.error(data.message || 'Không tạo được mã đặt phòng!');
             }
-        });
+        } catch (err) {
+            message.error('Lỗi khi tạo đặt phòng!');
+        }
     };
 
     const getRoomImage = (room: Room) => {
