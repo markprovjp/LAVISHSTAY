@@ -230,4 +230,21 @@ export const receptionAPI = {
   getPaymentStatus: async (bookingId: string) => api.get(`/reception/payment-status/${bookingId}`),
   listBookings: async (params?: any) => api.get('/reception/bookings', { params }),
 };
+
+// Payment API for Reception
+export const paymentAPI = {
+  createBooking: async (data: any) => {
+    const response = await api.post('/payment/create-booking', data);
+    return response.data;
+  },
+  getBookingInfo: async (bookingId: string) => {
+    const response = await api.get(`/payment/booking-info/${bookingId}`);
+    return response.data;
+  },
+  getPaymentStatus: async (bookingId: string) => {
+    const response = await api.get(`/payment/status/${bookingId}`);
+    return response.data;
+  }
+};
+
 export default api;

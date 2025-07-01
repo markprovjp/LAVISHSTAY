@@ -130,3 +130,10 @@ Route::prefix('reception')->group(function () {
     Route::get('/payment-status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
     Route::get('/bookings', [\App\Http\Controllers\Api\ReceptionBookController::class, 'list']);
 });
+
+// Payment API (Thanh toán cho lễ tân)
+Route::prefix('payment')->group(function () {
+    Route::post('/create-booking', [\App\Http\Controllers\Api\ReceptionBookController::class, 'create']);
+    Route::get('/booking-info/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'bookingInfo']);
+    Route::get('/status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
+});

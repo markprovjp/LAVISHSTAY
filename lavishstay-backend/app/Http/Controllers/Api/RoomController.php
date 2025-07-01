@@ -34,37 +34,7 @@ class RoomController extends Controller
                 });
             }
 
-            // Status filter
-            if ($request->has('status') && $request->status) {
-                $query->where('status', $request->status);
-            }
-
-            // Price range filter
-            if ($request->has('min_price')) {
-                $query->where('base_price_vnd', '>=', $request->min_price);
-            }
-            if ($request->has('max_price')) {
-                $query->where('base_price_vnd', '<=', $request->max_price);
-            }
-
-            // Size range filter
-            if ($request->has('min_size')) {
-                $query->where('size', '>=', $request->min_size);
-            }
-            if ($request->has('max_size')) {
-                $query->where('size', '<=', $request->max_size);
-            }
-
-            // Max guests filter
-            if ($request->has('max_guests')) {
-                $query->where('max_guests', '>=', $request->max_guests);
-            }
-
-            // View filter
-            if ($request->has('view')) {
-                $query->where('view', $request->view);
-            }
-
+       
             // Sort options
             $sortBy = $request->get('sort_by', 'name');
             $sortOrder = $request->get('sort_order', 'asc');
@@ -82,17 +52,9 @@ class RoomController extends Controller
                 return [
                     'id' => $room->room_id,
                     'name' => $room->name,
-                    'floor' => $room->floor,
+                    'floor' => $room->floor_id,
                     'image' => $room->image,
-                    'base_price_vnd' => $room->base_price_vnd,
-                    'size' => $room->size,
-                    'view' => $room->view,
-                    'rating' => $room->rating,
-                    'lavish_plus_discount' => $room->lavish_plus_discount,
-                    'max_guests' => $room->max_guests,
-                    'description' => $room->description,
                     'status' => $room->status,
-                    'status_color' => $room->status_color,
                     'room_type' => $room->roomType ? [
                         'id' => $room->roomType->room_type_id,
                         'name' => $room->roomType->name,

@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import dayjs, { Dayjs } from 'dayjs';
 
 export interface FiltersState {
-  dateRange: [Dayjs, Dayjs] | null;
+  dateRange: [string, string] | null; // Lưu string thay vì Dayjs
   roomTypes: string[];
   occupancy: number;
   cleanedOnly: boolean;
@@ -10,7 +10,7 @@ export interface FiltersState {
 }
 
 const initialState: FiltersState = {
-  dateRange: [dayjs(), dayjs().add(1, 'day')],
+  dateRange: [dayjs().toISOString(), dayjs().add(1, 'day').toISOString()], // Lưu string
   roomTypes: [],
   occupancy: 1,
   cleanedOnly: false,
@@ -21,8 +21,20 @@ const filtersSlice = createSlice({
   name: 'filters',
   initialState,
   reducers: {
-    setDateRange: (state, action: PayloadAction<[Dayjs, Dayjs] | null>) => {
-      state.dateRange = action.payload;
+    setDateRange: (state, action: PayloadAction<[Dayjs, Dayjs] | [string, string] | null>) => {
+      if (action.payload) {
+        // Convert Dayjs to string if needed
+        if (typeof action.payload[0] === 'string') {
+          state.dateRange = action.payload as [string, string];
+        } else {
+          state.dateRange = [
+            (action.payload[0] as Dayjs).toISOString(),
+            (action.payload[1] as Dayjs).toISOString()
+          ];
+        }
+      } else {
+        state.dateRange = null;
+      }
     },
     setRoomTypes: (state, action: PayloadAction<string[]>) => {
       state.roomTypes = action.payload;
@@ -37,7 +49,7 @@ const filtersSlice = createSlice({
       state.selectedRooms = action.payload;
     },
     resetFilters: (state) => {
-      state.dateRange = [dayjs(), dayjs().add(1, 'day')];
+      state.dateRange = [dayjs().toISOString(), dayjs().add(1, 'day').toISOString()];
       state.roomTypes = [];
       state.occupancy = 1;
       state.cleanedOnly = false;

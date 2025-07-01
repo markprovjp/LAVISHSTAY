@@ -12,6 +12,7 @@ class Representative extends Model
 
     protected $fillable = [
         'booking_id',
+        'booking_code',
         'room_id',
         'full_name',
         'phone_number',
@@ -22,7 +23,7 @@ class Representative extends Model
     // Quan hệ với Booking
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
+        return $this->belongsTo(Booking::class, 'booking_code', 'booking_code');
     }
 
     // Quan hệ với Room

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Radio, Space, Row, Col, Divider, Alert, Descriptions, Typography, Image, message, Table } from 'antd';
+import { Card, Button, Radio, Space, Row, Col, Divider, Alert, Descriptions, Typography, Image, App, Table } from 'antd';
 import { QrcodeOutlined, BankOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -19,11 +19,11 @@ const generateVietQRUrl = (amount: number, content: string) => {
     return `https://img.vietqr.io/image/MB-0335920306-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 };
 
-const API_BASE_URL = 'http://localhost:8888/api';
-
 const PaymentBookingReception: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { message } = App.useApp();
+
     // Lấy bookingCode từ state hoặc query
     const bookingCode = location.state?.bookingCode || new URLSearchParams(window.location.search).get('bookingCode');
     const [bookingInfo, setBookingInfo] = useState<any>(null);
@@ -39,10 +39,14 @@ const PaymentBookingReception: React.FC = () => {
             navigate('/reception');
             return;
         }
-        setLoading(true);
-        fetch(`${API_BASE_URL}/payment/booking-info/${bookingCode}`)
-            .then(res => res.json())
-            .then(data => {
+
+        const fetchBookingInfo = async () => {
+            setLoading(true);
+            try {
+                // Import paymentAPI dynamically
+                const { paymentAPI } = await import('../../../utils/api');
+                const data = await paymentAPI.getBookingInfo(bookingCode);
+
                 if (data.success && data.booking) {
                     setBookingInfo(data.booking);
                     setCountdown(data.booking.countdown || 900);
@@ -50,12 +54,15 @@ const PaymentBookingReception: React.FC = () => {
                     message.error('Không tìm thấy thông tin đặt phòng.');
                     navigate('/reception');
                 }
-            })
-            .catch(() => {
+            } catch (error) {
                 message.error('Lỗi khi lấy thông tin đặt phòng.');
                 navigate('/reception');
-            })
-            .finally(() => setLoading(false));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBookingInfo();
     }, [bookingCode, navigate]);
 
     // Countdown
@@ -69,16 +76,20 @@ const PaymentBookingReception: React.FC = () => {
     // Poll trạng thái thanh toán nếu chọn VietQR
     useEffect(() => {
         if (bookingInfo && selectedPaymentMethod === 'vietqr' && bookingInfo.status !== 'paid') {
-            const interval = setInterval(() => {
-                fetch(`${API_BASE_URL}/payment/status/${bookingCode}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success && data.payment_status === 'confirmed') {
-                            setBookingInfo((prev: any) => ({ ...prev, status: 'paid' }));
-                            message.success('Thanh toán đã được xác nhận!');
-                            clearInterval(interval);
-                        }
-                    });
+            const interval = setInterval(async () => {
+                try {
+                    // Import paymentAPI dynamically
+                    const { paymentAPI } = await import('../../../utils/api');
+                    const data = await paymentAPI.getPaymentStatus(bookingCode);
+
+                    if (data.success && data.payment_status === 'confirmed') {
+                        setBookingInfo((prev: any) => ({ ...prev, status: 'paid' }));
+                        message.success('Thanh toán đã được xác nhận!');
+                        clearInterval(interval);
+                    }
+                } catch (error) {
+                    console.error('Error checking payment status:', error);
+                }
             }, 10000);
             return () => clearInterval(interval);
         }
@@ -107,8 +118,9 @@ const PaymentBookingReception: React.FC = () => {
         return <div className="p-6 text-center">Đang tải thông tin đặt phòng...</div>;
     }
 
-    const { rooms = [], representatives = {}, total_amount = 0, check_in, check_out, status } = bookingInfo;
-    const paymentContent = `LAVISHSTAY_${bookingCode}`;
+    const { rooms = [], representatives = {}, total_amount = 0, check_in, check_out, status, payment_content } = bookingInfo;
+    // Sử dụng payment_content từ backend, fallback là format chuẩn
+    const paymentContent = payment_content || `LAVISHSTAY_${bookingCode}`;
 
     return (
         <div className="p-6 ">

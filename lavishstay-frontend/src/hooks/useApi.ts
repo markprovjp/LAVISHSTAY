@@ -1,7 +1,7 @@
 // src/hooks/useApi.ts
 import { useQuery, useMutation, QueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { propertiesAPI, authAPI, bookingsAPI, roomsAPI, roomTypesAPI , receptionAPI } from '../utils/api';
+import { propertiesAPI, authAPI, bookingsAPI, roomsAPI, roomTypesAPI, receptionAPI } from '../utils/api';
 import axios from 'axios';
 
 // Create a client to use for invalidation
@@ -183,4 +183,44 @@ export const useReceptionBookings = (params?: any) =>
   useQuery({
     queryKey: ['receptionBookings', params],
     queryFn: () => receptionAPI.listBookings(params),
+  });
+
+// Payment API hooks
+export const useCreatePaymentBooking = () =>
+  useMutation({
+    mutationFn: async (data: any) => {
+      const { paymentAPI } = await import('../utils/api');
+      return paymentAPI.createBooking(data);
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        message.success('Tạo đặt phòng thành công!');
+      } else {
+        message.error(data.message || 'Có lỗi xảy ra');
+      }
+    },
+    onError: (error: any) => {
+      message.error(error.message || 'Không thể tạo đặt phòng');
+    }
+  });
+
+export const usePaymentBookingInfo = (bookingId: string) =>
+  useQuery({
+    queryKey: ['paymentBookingInfo', bookingId],
+    queryFn: async () => {
+      const { paymentAPI } = await import('../utils/api');
+      return paymentAPI.getBookingInfo(bookingId);
+    },
+    enabled: !!bookingId,
+  });
+
+export const usePaymentStatus = (bookingId: string) =>
+  useQuery({
+    queryKey: ['paymentStatus', bookingId],
+    queryFn: async () => {
+      const { paymentAPI } = await import('../utils/api');
+      return paymentAPI.getPaymentStatus(bookingId);
+    },
+    enabled: !!bookingId,
+    refetchInterval: 10000, // auto polling mỗi 10s
   });
