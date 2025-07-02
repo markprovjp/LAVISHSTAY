@@ -40,6 +40,12 @@ Route::prefix('search')->group(function () {
     Route::get('/pricing-rules', [SearchController::class, 'getPricingRules']);
 });
 
+
+
+Route::get('/rooms/available', [RoomAvailabilityController::class, 'getAvailableRooms']);
+Route::get('/rooms/available/debug', [RoomAvailabilityController::class, 'debugDatabase']);
+Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 'debugImagesAndAmenities']);
+
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
 
@@ -50,16 +56,12 @@ Route::get('/rooms/{roomId}/calendar', [\App\Http\Controllers\Api\RoomController
 
 
 
-//FAQs API
-Route::apiResource('faqs', FAQController::class);
 
 
 
 Route::apiResource('room-options', RoomOptionController::class);
 Route::post('bookings', [BookingController::class, 'store']);
 Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);
-
-Route::get('/rooms/available', [RoomAvailabilityController::class, 'getAvailableRooms']);
 
 // Payment Management Routes
 Route::prefix('payment')->group(function () {
@@ -137,3 +139,7 @@ Route::prefix('payment')->group(function () {
     Route::get('/booking-info/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'bookingInfo']);
     Route::get('/status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
 });
+
+
+//FAQs API
+Route::apiResource('faqs', FAQController::class);
