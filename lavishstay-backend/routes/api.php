@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\ReceptionController;
 use App\Http\Controllers\PaymentController;
 
 use Illuminate\Http\Request;
@@ -125,21 +126,30 @@ Route::prefix('pricing')->group(function () {
     });
 });
 
-// Reception Booking API (Lễ tân đặt phòng)
+// Reception Management API (Quản lý lễ tân)
 Route::prefix('reception')->group(function () {
+    // Room Management
+    Route::get('/rooms', [ReceptionController::class, 'getRooms']);
+    Route::get('/rooms/statistics', [ReceptionController::class, 'getRoomStatistics']);
+    Route::get('/rooms/{roomId}/details', [ReceptionController::class, 'getRoomDetails']);
+    Route::put('/rooms/{roomId}/status', [ReceptionController::class, 'updateRoomStatus']);
+    
+    // Booking Management
+    Route::get('/bookings', [ReceptionController::class, 'getRoomBookings']);
+    Route::post('/bookings/transfer', [ReceptionController::class, 'transferBooking']);
+    Route::post('/bookings/check-in', [ReceptionController::class, 'checkIn']);
+    Route::post('/bookings/check-out', [ReceptionController::class, 'checkOut']);
+    
+    // Filters
+    Route::get('/floors', [ReceptionController::class, 'getFloors']);
+    Route::get('/room-types', [ReceptionController::class, 'getRoomTypes']);
+    
+    // Legacy booking routes (keep for compatibility)
     Route::post('/book', [\App\Http\Controllers\Api\ReceptionBookController::class, 'create']);
     Route::get('/booking/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'detail']);
     Route::get('/payment-status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
-    Route::get('/bookings', [\App\Http\Controllers\Api\ReceptionBookController::class, 'list']);
+    Route::get('/bookings-legacy', [\App\Http\Controllers\Api\ReceptionBookController::class, 'list']);
 });
-
-// Payment API (Thanh toán cho lễ tân)
-Route::prefix('payment')->group(function () {
-    Route::post('/create-booking', [\App\Http\Controllers\Api\ReceptionBookController::class, 'create']);
-    Route::get('/booking-info/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'bookingInfo']);
-    Route::get('/status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
-});
-
 
 //FAQs API
 Route::apiResource('faqs', FAQController::class);
