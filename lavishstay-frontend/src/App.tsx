@@ -36,10 +36,8 @@ import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
 import RoomManagementList from "./pages/reception/room-management/ReceptionBookRoom";
 import ConfirmRepresentativePayment from "./pages/reception/room-management/ConfirmRepresentativePayment";
 import PaymentBookingReception from "./pages/reception/room-management/PaymentBookingReception";
-import RoomManagementToday from "./pages/reception/room-management/RoomManagementToday";
-import CheckInManagement from "./pages/reception/room-management/CheckInManagement";
-import CheckOutManagement from "./pages/reception/room-management/CheckOutManagement";
-import MaintenanceManagement from "./pages/reception/room-management/MaintenanceManagement";
+import RoomManagementDashboard from "./pages/reception/room-management/RoomManagementDashboard";
+
 
 // Import profile components
 import {
@@ -90,12 +88,12 @@ const App: React.FC = React.memo(() => {
             <QueryProvider>
               <SearchProvider>
                 <SearchProvider>
-                <RoomTypesProvider>
-                  <AntApp className={isDarkMode ? "dark" : "light"}>
-                    {children}
-                  </AntApp>
-                </RoomTypesProvider>
-              </SearchProvider>
+                  <RoomTypesProvider>
+                    <AntApp className={isDarkMode ? "dark" : "light"}>
+                      {children}
+                    </AntApp>
+                  </RoomTypesProvider>
+                </SearchProvider>
               </SearchProvider>
             </QueryProvider>
           </ThemeProvider>
@@ -139,13 +137,11 @@ const App: React.FC = React.memo(() => {
             <Route path="/reception" element={<ReceptionLayout />}>
               <Route index element={<ReceptionDashboard />} />
               <Route path="dashboard" element={<ReceptionDashboard />} />
-              <Route path="room-management-list" element={<RoomManagementList />} />
+              <Route path="room-management-list" element={<RoomManagementDashboard />} />
               <Route path="confirm-representative-payment" element={<ConfirmRepresentativePayment />} />
               <Route path="payment-booking" element={<PaymentBookingReception />} />
-              <Route path="room-management/today" element={<RoomManagementToday />} />
-              <Route path="room-management/check-in" element={<CheckInManagement />} />
-              <Route path="room-management/check-out" element={<CheckOutManagement />} />
-              <Route path="room-management/maintenance" element={<MaintenanceManagement />} />
+              <Route path="room-management/today" element={<RoomManagementDashboard />} />
+
             </Route>            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />

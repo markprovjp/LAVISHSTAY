@@ -30,6 +30,14 @@ const ReceptionLayout: React.FC = () => {
             label: 'Quản lý phòng',
             children: [
                 {
+                    key: '/reception/room-management/today',
+                    label: <Link to="/reception/room-management/today">Phòng hôm nay</Link>,
+                },
+                {
+                    key: '/reception/room-management/payment-booking',
+                    label: <Link to="/reception/room-management/payment-booking">Thanh toán đặt phòng</Link>,
+                },
+                {
                     key: '/reception/room-management-list',
                     label: <Link to="/reception/room-management-list">Danh sách phòng</Link>,
                 },
@@ -37,22 +45,7 @@ const ReceptionLayout: React.FC = () => {
                     key: '/reception/confirm-representative-payment',
                     label: <Link to="/reception/confirm-representative-payment">Xác nhận thanh toán</Link>,
                 },
-                {
-                    key: '/reception/room-management/today',
-                    label: <Link to="/reception/room-management/today">Phòng hôm nay</Link>,
-                },
-                {
-                    key: '/reception/room-management/check-in',
-                    label: <Link to="/reception/room-management/check-in">Check-in</Link>,
-                },
-                {
-                    key: '/reception/room-management/check-out',
-                    label: <Link to="/reception/room-management/check-out">Check-out</Link>,
-                },
-                {
-                    key: '/reception/room-management/maintenance',
-                    label: <Link to="/reception/room-management/maintenance">Bảo trì</Link>,
-                }
+
             ]
         },
         {

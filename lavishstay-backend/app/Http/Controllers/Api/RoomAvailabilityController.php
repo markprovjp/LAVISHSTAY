@@ -27,266 +27,255 @@ class RoomAvailabilityController extends Controller
     }
 
     public function getAvailableRooms(Request $request): JsonResponse
-    {
-        try {
-            Log::info('=== RoomAvailabilityController@getAvailableRooms START ===');
-            Log::info('Request URL: ' . $request->fullUrl());
-            Log::info('Request data: ', $request->all());
+{
+    try {
+        Log::info('=== RoomAvailabilityController@getAvailableRooms START ===');
+        Log::info('Request URL: ' . $request->fullUrl());
+        Log::info('Request data: ', $request->all());
 
-            $validated = $request->validate([
-                'check_in_date' => 'required|date',
-                'check_out_date' => 'required|date|after:check_in_date',
-                'guest_count' => 'required|integer|min:1',
-                'room_type_id' => 'nullable|integer|exists:room_types,room_type_id'
-            ]);
+        $validated = $request->validate([
+            'check_in_date' => 'required|date',
+            'check_out_date' => 'required|date|after:check_in_date',
+        ]);
 
-            Log::info('Validated data: ', $validated);
+        Log::info('Validated data: ', $validated);
 
-            $checkInDate = $validated['check_in_date'];
-            $checkOutDate = $validated['check_out_date'];
-            $guestCount = $validated['guest_count'];
-            $roomTypeId = $validated['room_type_id'] ?? null;
+        $checkInDate = $validated['check_in_date'];
+        $checkOutDate = $validated['check_out_date'];
 
-            // Kiểm tra bảng room tồn tại
-            $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
+        // Kiểm tra bảng room tồn tại
+        $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
+        if (empty($roomTableExists)) {
+            $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
             if (empty($roomTableExists)) {
-                $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
-                if (empty($roomTableExists)) {
-                    Log::error('No room table found');
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Bảng room không tồn tại trong database'
-                    ], 500);
-                }
-                $roomTable = 'rooms';
-                $roomIdColumn = 'id';
-            } else {
-                $roomTable = 'room';
-                $roomIdColumn = 'room_id';
-            }
-
-            Log::info('Using table: ' . $roomTable . ', ID column: ' . $roomIdColumn);
-
-            // Kiểm tra dữ liệu cơ bản
-            $totalRooms = DB::table($roomTable)->count();
-            $totalRoomTypes = DB::table('room_types')->count();
-            
-            Log::info("Total rooms: $totalRooms, Total room types: $totalRoomTypes");
-
-            if ($totalRooms == 0) {
-                Log::warning('No rooms found in database');
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'message' => 'Không có phòng nào trong hệ thống',
-                    'debug' => [
-                        'total_rooms' => $totalRooms,
-                        'total_room_types' => $totalRoomTypes,
-                        'table_used' => $roomTable
-                    ]
-                ]);
-            }
-
-            if ($totalRoomTypes == 0) {
-                Log::warning('No room types found in database');
+                Log::error('No room table found');
                 return response()->json([
                     'success' => false,
-                    'message' => 'Không có loại phòng nào trong hệ thống'
+                    'message' => 'Bảng room không tồn tại trong database'
                 ], 500);
             }
+            $roomTable = 'rooms';
+            $roomIdColumn = 'id';
+        } else {
+            $roomTable = 'room';
+            $roomIdColumn = 'room_id';
+        }
 
-            // Build query với logic kiểm tra booking
-            $query = DB::table($roomTable . ' as r')
-                ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->select([
-                    'r.' . $roomIdColumn . ' as room_id',
-                    'r.room_type_id',
-                    'r.status',
-                    'rt.name as room_type_name',
-                    'rt.description',
-                    'rt.base_price',
-                    'rt.room_area as size',
-                    'rt.max_guests',
-                    'rt.rating',
-                    'rt.room_code'
-                ]);
+        Log::info('Using table: ' . $roomTable . ', ID column: ' . $roomIdColumn);
 
-            Log::info('Base query built');
+        // Kiểm tra dữ liệu cơ bản
+        $totalRooms = DB::table($roomTable)->count();
+        $totalRoomTypes = DB::table('room_types')->count();
+        
+        Log::info("Total rooms: $totalRooms, Total room types: $totalRoomTypes");
 
-            // Add filters step by step
-            try {
-                $roomColumns = DB::select("SHOW COLUMNS FROM $roomTable LIKE 'status'");
-                if (!empty($roomColumns)) {
-                    $query->where('r.status', 'available');
-                    Log::info('Added room status filter: available');
-                }
-            } catch (\Exception $e) {
-                Log::warning('Could not check room status column: ' . $e->getMessage());
-            }
-
-            try {
-                $roomTypeColumns = DB::select("SHOW COLUMNS FROM room_types LIKE 'is_active'");
-                if (!empty($roomTypeColumns)) {
-                    $query->where('rt.is_active', 1);
-                    Log::info('Added room type is_active filter');
-                }
-            } catch (\Exception $e) {
-                Log::warning('Could not check is_active column: ' . $e->getMessage());
-            }
-
-            $query->where('rt.max_guests', '>=', $guestCount);
-            Log::info("Added guest count filter: >= $guestCount");
-
-            if ($roomTypeId) {
-                $query->where('rt.room_type_id', $roomTypeId);
-                Log::info("Added room_type_id filter: $roomTypeId");
-            }
-
-            // Thêm logic loại trừ phòng đã được đặt
-            $query->whereNotIn('r.' . $roomIdColumn, function($subQuery) use ($checkInDate, $checkOutDate) {
-                $subQuery->select('br.room_id')
-                    ->from('booking_rooms as br')
-                    ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
-                    ->whereIn('b.status', ['pending', 'confirmed'])
-                    ->where('br.check_in_date', '<', $checkOutDate)
-                    ->where('br.check_out_date', '>', $checkInDate)
-                    ->whereNotNull('br.room_id');
-            });
-
-            Log::info('Added booking conflict filter');
-
-            // Log the SQL query
-            $sql = $query->toSql();
-            $bindings = $query->getBindings();
-            Log::info('SQL Query: ' . $sql);
-            Log::info('Bindings: ', $bindings);
-
-            // Execute query
-            $availableRooms = $query->get();
-            Log::info('Query executed. Found rooms: ' . $availableRooms->count());
-
-            if ($availableRooms->isEmpty()) {
-                // Debug: Check what rooms exist without filters
-                $allRooms = DB::table($roomTable . ' as r')
-                    ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                    ->select('r.*', 'rt.name', 'rt.max_guests')
-                    ->get();
-                
-                Log::info('All rooms in database: ', $allRooms->toArray());
-                
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'message' => 'Không tìm thấy phòng trống phù hợp với yêu cầu',
-                    'debug' => [
-                        'search_criteria' => $validated,
-                        'total_rooms_in_db' => $allRooms->count(),
-                        'sample_rooms' => $allRooms->take(3)->toArray(),
-                        'sql_query' => $sql,
-                        'bindings' => $bindings
-                    ]
-                ]);
-            }
-
-            // Process results
-            $result = [];
-            $groupedRooms = $availableRooms->groupBy('room_type_id');
-
-            foreach ($groupedRooms as $roomTypeId => $rooms) {
-                $firstRoom = $rooms->first();
-
-
-               
-                // Calculate adjusted price using PricingService
-                $adjustedPrice = $this->calculateAdjustedPrice($roomTypeId, $request);
-                // Calculate pricing
-                // Get amenities based on room type ID
-                $allAmenities = [];
-                $highlightedAmenities = [];
-
-                $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
-                $checkIn = \Carbon\Carbon::parse($checkInDate);
-                $checkOut = \Carbon\Carbon::parse($checkOutDate);
-                $nights = $checkIn->diffInDays($checkOut);
-                $totalPrice = $firstRoom->base_price * $nights;
-                
-                $roomTypeData = [
-                    'room_type_id' => $roomTypeId,
-                    'room_code' => $firstRoom->room_code,
-                    'name' => $firstRoom->room_type_name,
-                    'description' => $firstRoom->description,
-                    'base_price' => $firstRoom->base_price,
-                    'adjusted_price' => $adjustedPrice,
-                    'size' => $firstRoom->size,
-                    'max_guests' => $firstRoom->max_guests,
-                    'rating' => $firstRoom->rating,
-                    'images' => $this->getRoomTypeImages($roomTypeId),
-                    'main_image' => null,
-                    'amenities' => $allAmenities,
-                    'highlighted_amenities' => $highlightedAmenities,
-                    'available_room_count' => $rooms->count(),
-                    'available_rooms' => [],
-                    'pricing_summary' => [
-                        'nights' => $nights,
-                        'price_per_night' => $firstRoom->base_price,
-                        'total_price' => $totalPrice,
-                        'currency' => 'VND'
-                    ]
-                ];
-
-                // Set main image
-                if (!empty($roomTypeData['images'])) {
-                    $mainImage = collect($roomTypeData['images'])->firstWhere('is_main', true);
-                    $roomTypeData['main_image'] = $mainImage ?: $roomTypeData['images'][0];
-                }
-
-                // Add room details
-                foreach ($rooms as $room) {
-                    $roomTypeData['available_rooms'][] = [
-                        'room_id' => $room->room_id,
-                        'room_status' => $room->status
-                    ];
-                }
-
-                $result[] = $roomTypeData;
-            }
-
-            Log::info('=== RoomAvailabilityController@getAvailableRooms SUCCESS ===');
-
+        if ($totalRooms == 0) {
+            Log::warning('No rooms found in database');
             return response()->json([
                 'success' => true,
-                'data' => $result,
-                'summary' => [
-                    'total_room_types' => count($result),
-                    'total_available_rooms' => $availableRooms->count(),
-                    'search_criteria' => $validated
-                ],
-                'message' => 'Danh sách phòng trống đã được tải thành công'
+                'data' => [],
+                'message' => 'Không có phòng nào trong hệ thống',
+                'debug' => [
+                    'total_rooms' => $totalRooms,
+                    'total_room_types' => $totalRoomTypes,
+                    'table_used' => $roomTable
+                ]
             ]);
+        }
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error: ', $e->errors());
+        if ($totalRoomTypes == 0) {
+            Log::warning('No room types found in database');
             return response()->json([
                 'success' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('=== ERROR in getAvailableRooms ===');
-            Log::error('Error message: ' . $e->getMessage());
-            Log::error('File: ' . $e->getFile());
-            Log::error('Line: ' . $e->getLine());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi tìm kiếm phòng trống',
-                'error' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => basename($e->getFile())
+                'message' => 'Không có loại phòng nào trong hệ thống'
             ], 500);
         }
+
+    // Build query với logic kiểm tra booking
+$query = DB::table($roomTable . ' as r')
+    ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+    ->join('bed_types as bt', 'r.bed_type_fixed', '=', 'bt.id') // Thêm JOIN với bed_types
+    ->select([
+        'r.' . $roomIdColumn . ' as room_id',
+        'r.room_type_id',
+        'r.status',
+        'r.name as room_name', // Cột mới
+        'r.bed_type_fixed', // Cột mới
+        'bt.type_name as bed_type_name', // Lấy tên loại giường từ bed_types
+        'rt.name as room_type_name',
+        'rt.description',
+        'rt.base_price',
+        'rt.room_area as size',
+        'rt.max_guests',
+        'rt.rating',
+        'rt.room_code'
+    ]);
+
+        Log::info('Base query built');
+
+        // Thêm bộ lọc
+        try {
+            $roomColumns = DB::select("SHOW COLUMNS FROM $roomTable LIKE 'status'");
+            if (!empty($roomColumns)) {
+                $query->where('r.status', 'available');
+                Log::info('Added room status filter: available');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not check room status column: ' . $e->getMessage());
+        }
+
+        try {
+            $roomTypeColumns = DB::select("SHOW COLUMNS FROM room_types LIKE 'is_active'");
+            if (!empty($roomTypeColumns)) {
+                $query->where('rt.is_active', 1);
+                Log::info('Added room type is_active filter');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not check is_active column: ' . $e->getMessage());
+        }
+
+        // Loại trừ phòng đã được đặt
+        $query->whereNotIn('r.' . $roomIdColumn, function($subQuery) use ($checkInDate, $checkOutDate) {
+            $subQuery->select('br.room_id')
+                ->from('booking_rooms as br')
+                ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                ->whereIn('b.status', ['pending', 'confirmed'])
+                ->where('br.check_in_date', '<', $checkOutDate)
+                ->where('br.check_out_date', '>', $checkInDate)
+                ->whereNotNull('br.room_id');
+        });
+
+        Log::info('Added booking conflict filter');
+
+        // Log truy vấn SQL
+        $sql = $query->toSql();
+        $bindings = $query->getBindings();
+        Log::info('SQL Query: ' . $sql);
+        Log::info('Bindings: ', $bindings);
+
+        // Thực thi truy vấn
+        $availableRooms = $query->get();
+        Log::info('Query executed. Found rooms: ' . $availableRooms->count());
+
+        if ($availableRooms->isEmpty()) {
+            $allRooms = DB::table($roomTable . ' as r')
+                ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                ->select('r.*', 'rt.name', 'rt.max_guests')
+                ->get();
+            
+            Log::info('All rooms in database: ', $allRooms->toArray());
+            
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'message' => 'Không tìm thấy phòng trống phù hợp với yêu cầu',
+                'debug' => [
+                    'search_criteria' => $validated,
+                    'total_rooms_in_db' => $allRooms->count(),
+                    'sample_rooms' => $allRooms->take(3)->toArray(),
+                    'sql_query' => $sql,
+                    'bindings' => $bindings
+                ]
+            ]);
+        }
+
+        // Xử lý kết quả
+        $result = [];
+        $groupedRooms = $availableRooms->groupBy('room_type_id');
+
+        foreach ($groupedRooms as $roomTypeId => $rooms) {
+            $firstRoom = $rooms->first();
+
+            // Tính giá điều chỉnh
+            $adjustedPrice = $this->calculateAdjustedPrice($roomTypeId, $request);
+            $allAmenities = [];
+            $highlightedAmenities = [];
+            $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
+            $checkIn = \Carbon\Carbon::parse($checkInDate);
+            $checkOut = \Carbon\Carbon::parse($checkOutDate);
+            $nights = $checkIn->diffInDays($checkOut);
+            $totalPrice = $firstRoom->base_price * $nights;
+            
+            $roomTypeData = [
+                'room_type_id' => $roomTypeId,
+                'room_code' => $firstRoom->room_code,
+                'name' => $firstRoom->room_type_name,
+                'room_name' => $firstRoom->room_name, // Thêm tên phòng
+    'bed_type_name' => $firstRoom->bed_type_name, // Thêm loại giường
+                'description' => $firstRoom->description,
+                'base_price' => $firstRoom->base_price,
+                'adjusted_price' => $adjustedPrice,
+                'size' => $firstRoom->size,
+                'max_guests' => $firstRoom->max_guests,
+                'rating' => $firstRoom->rating,
+                'images' => $this->getRoomTypeImages($roomTypeId),
+                'main_image' => null,
+                'amenities' => $allAmenities,
+                'highlighted_amenities' => $highlightedAmenities,
+                'available_room_count' => $rooms->count(),
+                'available_rooms' => [],
+                'pricing_summary' => [
+                    'nights' => $nights,
+                    'price_per_night' => $firstRoom->base_price,
+                    'total_price' => $totalPrice,
+                    'currency' => 'VND'
+                ]
+            ];
+
+            // Thiết lập ảnh chính
+            if (!empty($roomTypeData['images'])) {
+                $mainImage = collect($roomTypeData['images'])->firstWhere('is_main', true);
+                $roomTypeData['main_image'] = $mainImage ?: $roomTypeData['images'][0];
+            }
+
+          foreach ($rooms as $room) {
+    $roomTypeData['available_rooms'][] = [
+        'room_id' => $room->room_id,
+        'room_name' => $room->room_name, // Thêm tên phòng
+        'bed_type_name' => $room->bed_type_name, // Thêm loại giường
+        'room_status' => $room->status
+    ];
+}
+
+            $result[] = $roomTypeData;
+        }
+
+        Log::info('=== RoomAvailabilityController@getAvailableRooms SUCCESS ===');
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+            'summary' => [
+                'total_room_types' => count($result),
+                'total_available_rooms' => $availableRooms->count(),
+                'search_criteria' => $validated
+            ],
+            'message' => 'Danh sách phòng trống đã được tải thành công'
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation error: ', $e->errors());
+        return response()->json([
+            'success' => false,
+            'message' => 'Dữ liệu không hợp lệ',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('=== ERROR in getAvailableRooms ===');
+        Log::error('Error message: ' . $e->getMessage());
+        Log::error('File: ' . $e->getFile());
+        Log::error('Line: ' . $e->getLine());
+        Log::error('Stack trace: ' . $e->getTraceAsString());
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Có lỗi xảy ra khi tìm kiếm phòng trống',
+            'error' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => basename($e->getFile())
+        ], 500);
     }
+}
 
      private function getRoomTypeImages($roomTypeId): array
     {

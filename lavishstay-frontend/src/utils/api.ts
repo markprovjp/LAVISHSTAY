@@ -223,12 +223,77 @@ export const dashboardAPI = {
     return response.data;
   }
 };
-// Reception Booking API
+// Reception Management API
 export const receptionAPI = {
+  // Legacy booking methods (keep for compatibility)
   createBooking: async (data: any) => api.post('/reception/book', data),
   getBookingDetail: async (bookingId: string) => api.get(`/reception/booking/${bookingId}`),
   getPaymentStatus: async (bookingId: string) => api.get(`/reception/payment-status/${bookingId}`),
-  listBookings: async (params?: any) => api.get('/reception/bookings', { params }),
+  listBookings: async (params?: any) => api.get('/reception/bookings-legacy', { params }),
+
+  // New Room Management methods
+  getRooms: async (params?: any) => {
+    const response = await api.get('/reception/rooms', { params });
+    return response.data;
+  },
+
+  getRoomStatistics: async (params?: any) => {
+    const response = await api.get('/reception/rooms/statistics', { params });
+    return response.data;
+  },
+
+  getRoomDetails: async (roomId: number) => {
+    const response = await api.get(`/reception/rooms/${roomId}/details`);
+    return response.data;
+  },
+
+  updateRoomStatus: async (roomId: number, status: string) => {
+    const response = await api.put(`/reception/rooms/${roomId}/status`, { status });
+    return response.data;
+  },
+
+  getRoomBookings: async (params?: any) => {
+    const response = await api.get('/reception/bookings', { params });
+    return response.data;
+  },
+
+  transferBooking: async (params: {
+    booking_id: number;
+    old_room_id: number;
+    new_room_id: number;
+    reason?: string;
+  }) => {
+    const response = await api.post('/reception/bookings/transfer', params);
+    return response.data;
+  },
+
+  checkIn: async (params: {
+    booking_id: number;
+    room_id: number;
+    actual_check_in_time?: string;
+  }) => {
+    const response = await api.post('/reception/bookings/check-in', params);
+    return response.data;
+  },
+
+  checkOut: async (params: {
+    booking_id: number;
+    room_id: number;
+    actual_check_out_time?: string;
+  }) => {
+    const response = await api.post('/reception/bookings/check-out', params);
+    return response.data;
+  },
+
+  getFloors: async () => {
+    const response = await api.get('/reception/floors');
+    return response.data;
+  },
+
+  getRoomTypes: async () => {
+    const response = await api.get('/reception/room-types');
+    return response.data;
+  },
 };
 
 // Payment API for Reception

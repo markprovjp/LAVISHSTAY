@@ -1,0 +1,173 @@
+# Thiết Kế Giao Diện Tìm Kiếm Phòng Khách Sạn cho Meliá Vinpearl Thanh Hóa
+#công nghệ FE mà dự án đang có 
+Framework & Routing: React 18, React Router v7
+State Management:
+Redux Toolkit (auth, theme, search)
+Zustand (cart, simple state)
+UI Framework: Ant Design 5.25.4
+Styling: Tailwind CSS, Styled Components
+Build Tool: Vite
+Data Fetching: Axios, React Query (TanStack Query)
+Form Management: Ant Design Forms
+Date Handling: Day.js
+Internationalization: i18next
+
+Dựa trên nghiên cứu chi tiết về **Meliá Vinpearl Thanh Hóa** - khách sạn 5 sao với 7 loại phòng khác nhau và phân tích các xu hướng thiết kế UI/UX hiện đại, dưới đây là các khuyến nghị toàn diện để tối ưu hóa trải nghiệm người dùng.
+
+## **Tổng Quan 7 Loại Phòng**
+
+Meliá Vinpearl Thanh Hóa cung cấp **7 loại phòng** từ tiêu chuẩn đến siêu cao cấp[1][2]:
+
+- **Deluxe Room** (32m²) - Phòng tiêu chuẩn với đầy đủ tiện nghi
+- **Premium Corner Room** (42m²) - Phòng góc với tầm nhìn rộng hơn  
+- **Suite Room** (92-93m²) - Phòng suite với phòng khách riêng
+- **Presidential Suite** (270m²) - Phòng tổng thống siêu sang trọng
+- **The Level Premium Room** (34m²) - Phòng cao cấp với dịch vụ độc quyền
+- **The Level Premium Corner Room** (64m²) - Phòng góc cao cấp 
+- **The Level Suite** (85m²) - Suite cao cấp với dịch vụ The Level
+
+## **1. Logic và Hiển Thị Nội Dung**
+
+### **Thông Tin Cần Thiết Cho Mỗi Loại Phòng**
+
+**Thông tin chính:**
+- **Hình ảnh chất lượng cao** (tối thiểu 4-6 ảnh mỗi loại phòng)[3][4]
+- **Diện tích phòng** (hiển thị rõ ràng bằng m²)
+- **Cấu hình giường** (King/Twin/Hollywood Twin)
+- **Sức chứa tối đa** (người lớn + trẻ em)
+- **Loại view** (View thành phố, view cao cấp)
+- **Danh sách tiện nghi chính**
+- **Trạng thái có phòng** (realtime)
+- **Giá hiện tại** với các ưu đãi (nếu có)
+- **Chính sách hủy phòng** (tóm tắt ngắn gọn)
+
+### **Cấu Trúc Tùy Chọn Phòng**
+
+**Tùy chọn cơ bản:**
+- **Loại giường:** King Bed, Twin Beds, Hollywood Twin
+- **Tùy chọn view:** View thành phố, View thành phố cao cấp
+- **Gói dịch vụ:** Chỉ phòng, Kèm ăn sáng, Dịch vụ The Level
+- **Dịch vụ bổ sung:** Giường phụ, Trả phòng muộn, Nhận phòng sớm[2]
+- **Ưu đãi đặc biệt:** Khuyến mãi theo mùa, Giảm giá theo thời gian lưu trú
+
+### **Thứ Tự Ưu Tiên Thông Tin**
+
+**Cấp độ 1 (Quan trọng nhất):** Tên phòng, giá, tình trạng có phòng
+**Cấp độ 2 (Quan trọng):** Diện tích, loại giường, sức chứa
+**Cấp độ 3 (Chi tiết):** Tiện nghi đầy đủ, chính sách
+
+## **2. Hệ Thống Lọc**
+
+### **Bộ Lọc Chính (Ưu tiên cao)**
+
+**Khoảng giá:** Thanh trượt từ 1.000.000 - 15.000.000+ VND[1]
+**Kích thước phòng:** Nhỏ (30-40m²), Trung bình (40-70m²), Lớn (70m²+)
+**Loại giường:** King Bed, Twin Beds, Nhiều giường
+**Sức chứa:** 1-2 khách, 3-4 khách, 5+ khách
+
+### **Bộ Lọc Phụ (Ưu tiên trung bình)**
+
+**Loại view:** View thành phố, View thành phố cao cấp
+**Cấp độ phòng:** Tiêu chuẩn, The Level (Cao cấp)[2]
+**Ưu đãi đặc biệt:** Giá ưu đãi, Gói combo
+**Tiện nghi:** Bồn tắm, Ban công, Phòng khách, Máy pha cà phê Nespresso
+
+### **Thứ Tự Ưu Tiên Bộ Lọc**
+
+Theo nghiên cứu về hành vi người dùng khách sạn[5][6]:
+1. **Quan trọng nhất:** Khoảng giá, Sức chứa khách
+2. **Quan trọng:** Kích thước phòng, Loại giường
+3. **Hữu ích:** Loại view, Ưu đãi đặc biệt
+4. **Tùy chọn:** Tiện nghi cụ thể, Tầng lầu
+
+## **3. Bố Cục Giao Diện**
+
+### **Panel Bên Trái - Hiển Thị Phòng**
+
+**Thiết kế thẻ phòng:**
+- **Hình ảnh chính** với carousel hình ảnh[3][4]
+- **Tên phòng** với font chữ phân cấp rõ ràng
+- **Giá hiển thị nổi bật** (theo đêm)
+- **Chi tiết chính:** Diện tích, loại giường, sức chứa
+- **Chỉ báo tình trạng** có phòng
+- **Icon tiện nghi** nhanh
+- **Phần 'Xem chi tiết'** có thể mở rộng
+- **Nút 'Đặt phòng'** CTA nổi bật
+
+**Tùy chọn mở rộng:**
+- Bộ sưu tập hình ảnh (6-8 ảnh)
+- Danh sách tiện nghi chi tiết
+- Sơ đồ/layout phòng
+- Đánh giá của khách theo loại phòng cụ thể
+- Chính sách hủy và thay đổi
+
+### **Panel Bên Phải - Bộ Lọc**
+
+**Cấu trúc layout:**
+- **Panel lọc dính** theo cuộn trang[5]
+- **Các phần lọc có thể thu gọn**
+- **Nút 'Áp dụng bộ lọc'** rõ ràng
+- **Chỉ báo bộ lọc** đang hoạt động
+- **Tùy chọn 'Xóa tất cả'**
+- **Bộ đếm kết quả** hiển thị số phòng đã lọc
+
+### **Yếu Tố Thẩm Mỹ Cao Cấp**
+
+**Phối màu sang trọng:** Trắng, vàng đồng, xanh navy đậm[7][8]
+**Typography chuyên nghiệp:** Playfair Display (tiêu đề), Montserrat (nội dung)
+**Hiệu ứng tinh tế:** Đổ bóng nhẹ và gradient
+**Hình ảnh chất lượng cao** và nhất quán
+**Animation mượt mà** và transition
+**Iconography cao cấp**
+**Khoảng trắng phù hợp**
+
+## **4. Cân Nhắc Trải Nghiệm Người Dùng**
+
+### **Luồng Logic**
+
+**Quy trình:** Tìm kiếm → Lọc → So sánh → Chọn → Đặt phòng[9][10]
+- Điều hướng dễ dàng giữa các loại phòng
+- Minh bạch giá cả rõ ràng
+- Chức năng so sánh liền mạch
+- Quy trình đặt phòng trực quan
+
+### **Thiết Kế Responsive Mobile**
+
+**Tối ưu di động:**[11][12]
+- **Điều khiển lọc** thân thiện với cảm ứng
+- **Gallery hình ảnh** có thể vuốt
+- **Navigation có thể thu gọn**
+- **Kích thước nút tối ưu** (tối thiểu 44px)
+- **Text dễ đọc** không cần zoom (tối thiểu 16px)
+- **Thời gian tải nhanh** (<3 giây)
+
+### **Khả Năng Truy Cập**
+
+**Tiêu chuẩn accessibility:**
+- Alt text cho tất cả hình ảnh
+- Hỗ trợ điều hướng bằng bàn phím  
+- Tỷ lệ tương phản màu sắc (tối thiểu 4.5:1)
+- Tương thích với screen reader
+- Chỉ báo focus cho các yếu tố tương tác
+
+### **Tối Ưu Hiệu Suất**
+
+**Kỹ thuật tối ưu:**
+- Lazy loading cho hình ảnh
+- Định dạng hình ảnh nén (WebP)
+- CSS/JavaScript đã minify
+- Content delivery network (CDN)
+- Cache kết quả lọc
+
+## **Khuyến Nghị Triển Khai**
+
+**Ưu tiên phát triển:**
+1. **Sử dụng layout MyTour:** Bộ lọc bên phải, danh sách phòng bên trái[13][14]
+2. **Triển khai 7 thẻ phòng** với thứ bậc hình ảnh rõ ràng
+3. **Bộ lọc ưu tiên:** Khoảng giá, sức chứa, kích thước phòng, loại giường
+4. **Chi tiết phòng mở rộng** với gallery và tiện nghi
+5. **Thẩm mỹ 5 sao cao cấp** với typography và màu sắc thanh lịch
+6. **Thiết kế mobile-first** với điều khiển thân thiện cảm ứng
+7. **Hiệu suất tải nhanh** với hình ảnh tối ưu và caching
+
+Thiết kế này sẽ tạo ra trải nghiệm đặt phòng liền mạch, phản ánh đúng đẳng cấp 5 sao của Meliá Vinpearl Thanh Hóa và tối ưu hóa tỷ lệ chuyển đổi từ người dùng duyệt web thành khách hàng đặt phòng.

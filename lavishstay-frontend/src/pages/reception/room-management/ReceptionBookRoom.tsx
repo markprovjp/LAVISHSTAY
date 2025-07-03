@@ -1,42 +1,20 @@
 import React, { useState } from 'react';
-import { Card, Form, DatePicker, Select, InputNumber, Switch, Button, Row, Col, Tag, Checkbox, Space, Typography, Table, Tooltip } from 'antd';
+import { Card, Form, DatePicker, Select, InputNumber, Button, Row, Col, Tag, Space, Typography, Table, Tooltip, Alert, Drawer, Badge } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
-import { CalendarIcon, Users, Bed, ShoppingCart, Home } from 'lucide-react';
-import styled from 'styled-components';
+import { CalendarIcon, Users, Bed, ShoppingCart, Home, Search, RotateCcw } from 'lucide-react';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
 import { RootState } from '../../../store';
-import { setDateRange, setRoomTypes, setOccupancy, setCleanedOnly, resetFilters } from '../../../store/slices/Reception';
+import { setDateRange, setRoomTypes, setOccupancy, resetFilters } from '../../../store/slices/Reception';
 import * as ReceptionActions from '../../../store/slices/Reception';
 import { useGetRoomTypes } from "../../../hooks/useRoomTypes";
 import { useGetRooms } from '../../../hooks/useRooms';
+import { useGetAvailableRooms } from '../../../hooks/useRoomAvailability';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Title, Text } = Typography;
-
-// Styled Components
-const FilterSection = styled.div`
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
-`;
-
-const BookingCart = styled.div<{ $visible: boolean }>`
-  position: fixed;
-  bottom: ${props => props.$visible ? '16px' : '-100px'};
-  left: 8px;
-  right: 8px;
-  transform: none;
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
-  z-index: 1000;
-`;
 
 const ReceptionBooking: React.FC = () => {
     const dispatch = useDispatch();
@@ -46,18 +24,88 @@ const ReceptionBooking: React.FC = () => {
     const { data: roomTypesData, isLoading: isRoomTypesLoading } = useGetRoomTypes();
     const roomTypes = roomTypesData?.data || [];
 
-    const { data: roomsData = { data: [] }, isLoading } = useGetRooms({ 
-        ...filters, 
-        include: 'room_type' // Bỏ amenities và images để tăng tốc
+    // Prepare date parameters for availability API
+    const availabilityParams = React.useMemo(() => {
+        if (filters.dateRange && filters.dateRange.length === 2 && filters.dateRange[0] && filters.dateRange[1]) {
+            const checkInDate = typeof filters.dateRange[0] === 'string'
+                ? filters.dateRange[0]
+                : dayjs(filters.dateRange[0]).format('YYYY-MM-DD');
+            const checkOutDate = typeof filters.dateRange[1] === 'string'
+                ? filters.dateRange[1]
+                : dayjs(filters.dateRange[1]).format('YYYY-MM-DD');
+
+            return {
+                check_in_date: checkInDate,
+                check_out_date: checkOutDate,
+                enabled: true
+            };
+        }
+        return { enabled: false };
+    }, [filters.dateRange]);
+
+    // Use room availability API when dates are selected, fallback to regular rooms API
+    const { data: availableRoomsData, isLoading: isAvailableRoomsLoading } = useGetAvailableRooms(availabilityParams);
+
+    const { data: roomsData = { data: [] }, isLoading: isRoomsLoading } = useGetRooms({
+        ...filters,
+        include: 'room_type' // Fallback khi chưa chọn ngày
     });
-    const roomsRaw = roomsData.data;
-    const rooms = filters.roomTypes && filters.roomTypes.length > 0
-        ? roomsRaw.filter((room: any) => filters.roomTypes.includes(room.room_type?.id))
-        : roomsRaw;
+
+    // Determine which data to use based on availability
+    const useAvailabilityData = availabilityParams.enabled && !isAvailableRoomsLoading && availableRoomsData?.success;
+
+    const roomsToDisplay = React.useMemo(() => {
+        if (useAvailabilityData && availableRoomsData?.data) {
+            // Convert room types from availability API to room-like structure
+            const convertedRooms: any[] = [];
+
+            availableRoomsData.data.forEach((roomType: any) => {
+                // Create a room entry for each available room of this type
+                roomType.available_rooms.forEach((availableRoom: any, index: number) => {
+                    convertedRooms.push({
+                        id: `${roomType.room_type_id}-${availableRoom.room_id}`, // Unique ID
+                        room_id: availableRoom.room_id,
+                        name: availableRoom.room_name || `${roomType.room_code || roomType.name}-${String(index + 1).padStart(2, '0')}`, // Use actual room name or generate
+                        bed_type_name: availableRoom.bed_type_name || 'Không xác định', // Bed type name
+                        status: availableRoom.room_status || 'available',
+                        isClean: true, // Assume available rooms are clean
+                        room_type_id: roomType.room_type_id,
+                        room_type: {
+                            id: roomType.room_type_id,
+                            name: roomType.name,
+                            description: roomType.description,
+                            base_price: roomType.base_price,
+                            adjusted_price: roomType.adjusted_price,
+                            size: roomType.size,
+                            max_guests: roomType.max_guests,
+                            rating: roomType.rating,
+                            images: roomType.images,
+                            main_image: roomType.main_image,
+                            amenities: roomType.amenities,
+                            highlighted_amenities: roomType.highlighted_amenities,
+                            pricing_summary: roomType.pricing_summary
+                        }
+                    });
+                });
+            });
+
+            return convertedRooms;
+        } else {
+            // Use regular rooms data
+            const roomsRaw = roomsData.data || [];
+            return filters.roomTypes && filters.roomTypes.length > 0
+                ? roomsRaw.filter((room: any) => filters.roomTypes.includes(room.room_type?.id))
+                : roomsRaw;
+        }
+    }, [useAvailabilityData, availableRoomsData, roomsData, filters.roomTypes]);
+
+    // Loading state
+    const isLoading = useAvailabilityData ? isAvailableRoomsLoading : isRoomsLoading;
 
     const [selectedRooms, setSelectedRooms] = useState<any[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
+    const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
 
     const isRoomSelected = (roomId: number) => selectedRooms.some(room => room.id === roomId);
 
@@ -89,36 +137,28 @@ const ReceptionBooking: React.FC = () => {
         [selectedRooms, getRoomTypeDetail]
     );
 
-    const handleQuickBook = (room: any) => {
-        if (!isRoomSelected(room.id)) {
-            setSelectedRooms(prev => [...prev, room]);
-        }
-    };
-
-    // Table columns configuration
+    // Table columns configuration - loại bỏ cột checkbox thừa
     const columns = [
-        {
-            title: 'Chọn',
-            dataIndex: 'id',
-            key: 'select',
-            width: 60,
-            render: (_: any, room: any) => (
-                <Checkbox
-                    checked={isRoomSelected(room.id)}
-                    onChange={(e) => handleRoomSelection(room, e.target.checked)}
-                />
-            ),
-        },
         {
             title: 'Số phòng',
             dataIndex: 'name',
             key: 'name',
-            width: 100,
-            render: (text: string) => (
-                <div className="flex items-center gap-2">
-                    <Home size={16} className="text-blue-500" />
-                    <span className="font-medium">{text}</span>
-                </div>
+            width: 120,
+            render: (text: string, room: any) => (
+                <Tooltip title={`Phòng ${text}${room.bed_type_name ? ` - ${room.bed_type_name}` : ''}`}>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <Home size={16} className="text-blue-500" />
+                            <span className="font-medium">{text}</span>
+                        </div>
+                        {room.bed_type_name && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Bed size={12} className="text-gray-400" />
+                                <span>{room.bed_type_name}</span>
+                            </div>
+                        )}
+                    </div>
+                </Tooltip>
             ),
         },
         {
@@ -147,11 +187,18 @@ const ReceptionBooking: React.FC = () => {
             render: (_: any, room: any) => {
                 const roomType = getRoomTypeDetail(room);
                 const price = roomType.adjusted_price;
+                const pricingSummary = roomType.pricing_summary;
+
                 return (
                     <div className="text-right">
                         <div className="font-semibold text-blue-600">
                             {price ? new Intl.NumberFormat('vi-VN').format(Number(price)) + ' VNĐ' : 'Liên hệ'}
                         </div>
+                        {useAvailabilityData && pricingSummary && (
+                            <div className="text-xs text-gray-500">
+                                {pricingSummary.nights} đêm • Tổng: {new Intl.NumberFormat('vi-VN').format(pricingSummary.total_price)} VNĐ
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -176,7 +223,7 @@ const ReceptionBooking: React.FC = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            width: 120,
+            width: 140,
             render: (status: string, room: any) => {
                 const isClean = room.isClean;
                 return (
@@ -187,6 +234,11 @@ const ReceptionBooking: React.FC = () => {
                         <Tag color={isClean ? 'blue' : 'gold'}>
                             {isClean ? 'Sạch' : 'Cần dọn'}
                         </Tag>
+                        {room.room_id && (
+                            <div className="text-xs text-gray-400">
+                                ID: {room.room_id}
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -194,27 +246,18 @@ const ReceptionBooking: React.FC = () => {
         {
             title: 'Thao tác',
             key: 'actions',
-            width: 150,
+            width: 100,
             render: (_: any, room: any) => (
-                <Space size="small">
+                <Tooltip title={isRoomSelected(room.id) ? "Bỏ chọn phòng" : "Thêm vào giỏ"}>
                     <Button
-                        type="primary"
+                        type={isRoomSelected(room.id) ? "default" : "primary"}
                         size="small"
+                        icon={<ShoppingCart size={14} />}
                         onClick={() => handleRoomSelection(room, !isRoomSelected(room.id))}
-                        className="rounded"
                     >
-                        {isRoomSelected(room.id) ? 'Bỏ chọn' : 'Chọn phòng'}
+                        {isRoomSelected(room.id) ? 'Bỏ chọn' : 'Chọn'}
                     </Button>
-                    {!isRoomSelected(room.id) && (
-                        <Tooltip title="Thêm nhanh vào giỏ">
-                            <Button
-                                size="small"
-                                icon={<ShoppingCart size={14} />}
-                                onClick={() => handleQuickBook(room)}
-                            />
-                        </Tooltip>
-                    )}
-                </Space>
+                </Tooltip>
             ),
         },
     ];
@@ -228,7 +271,7 @@ const ReceptionBooking: React.FC = () => {
             ];
             dispatch(ReceptionActions.setDateRange(dateRangeStr));
         }
-        
+
         // Gắn thông tin ngày, số đêm, giá, room_type chi tiết vào từng phòng trước khi dispatch
         let nights = 1;
         if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
@@ -255,23 +298,32 @@ const ReceptionBooking: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen  p-6">
+        <div className="min-h-screen p-6">
             {/* Filter Section */}
-            <FilterSection>
-                <Title level={3} className="mb-6 text-gray-800">
-                    Đặt phòng khách sạn
-                </Title>
+            <Card className="mb-6">
+                <div className="flex items-center gap-2 mb-6">
+                    <Search size={20} className="text-blue-500" />
+                    <Title level={3} className="mb-0">
+                        Tìm kiếm & Đặt phòng
+                    </Title>
+                </div>
+
                 <Form layout="vertical">
-                    <Row gutter={[24, 16]} align="bottom">
+                    <Row gutter={[16, 16]} align="bottom">
                         <Col xs={24} sm={12} lg={6}>
-                            <Form.Item label="Ngày nhận - trả phòng">
+                            <Form.Item label={
+                                <Space>
+                                    <CalendarIcon size={16} />
+                                    <span>Ngày nhận - trả phòng</span>
+                                </Space>
+                            }>
                                 <RangePicker
                                     value={
                                         Array.isArray(filters.dateRange) && filters.dateRange.length === 2
                                             ? [
                                                 filters.dateRange[0] ? dayjs(filters.dateRange[0]) : null,
                                                 filters.dateRange[1] ? dayjs(filters.dateRange[1]) : null
-                                              ]
+                                            ]
                                             : [null, null]
                                     }
                                     onChange={(dates) => dispatch(setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs]))}
@@ -279,13 +331,17 @@ const ReceptionBooking: React.FC = () => {
                                     size="large"
                                     format="DD/MM/YYYY"
                                     placeholder={["Ngày nhận phòng", "Ngày trả phòng"]}
-                                    suffixIcon={<CalendarIcon size={16} />}
                                 />
                             </Form.Item>
                         </Col>
 
                         <Col xs={24} sm={12} lg={8}>
-                            <Form.Item label="Loại phòng">
+                            <Form.Item label={
+                                <Space>
+                                    <Bed size={16} />
+                                    <span>Loại phòng</span>
+                                </Space>
+                            }>
                                 <Select
                                     mode="multiple"
                                     placeholder="Chọn loại phòng"
@@ -293,8 +349,12 @@ const ReceptionBooking: React.FC = () => {
                                     onChange={(values) => dispatch(setRoomTypes(values))}
                                     className="w-full"
                                     size="large"
-                                    suffixIcon={<Bed size={16} />}
                                     loading={isRoomTypesLoading}
+                                    maxTagCount="responsive"
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                                    }
                                 >
                                     {roomTypes.map((type: any) => (
                                         <Option key={type.id} value={type.id}>
@@ -306,7 +366,12 @@ const ReceptionBooking: React.FC = () => {
                         </Col>
 
                         <Col xs={12} sm={8} lg={4}>
-                            <Form.Item label="Số khách">
+                            <Form.Item label={
+                                <Space>
+                                    <Users size={16} />
+                                    <span>Số khách</span>
+                                </Space>
+                            }>
                                 <InputNumber
                                     min={1}
                                     max={10}
@@ -314,76 +379,126 @@ const ReceptionBooking: React.FC = () => {
                                     onChange={(value) => dispatch(setOccupancy(value || 1))}
                                     className="w-full"
                                     size="large"
-                                    prefix={<Users size={16} />}
                                     placeholder="Số khách"
                                 />
                             </Form.Item>
                         </Col>
 
-                        <Col xs={12} sm={8} lg={4}>
-                            <Form.Item>
-                                <Switch
-                                    checked={filters.cleanedOnly}
-                                    onChange={(checked) => dispatch(setCleanedOnly(checked))}
-                                    checkedChildren="Sạch"
-                                    unCheckedChildren="Tất cả"
-                                    className="mr-3"
-                                />
-                                <div className="text-sm text-gray-600 mt-1">Chỉ hiển thị phòng sạch</div>
+                        <Col xs={12} sm={8} lg={6}>
+                            <Form.Item label=" ">
+                                <Space>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        icon={<Search size={16} />}
+                                        loading={isAvailableRoomsLoading}
+                                        disabled={!availabilityParams.enabled}
+                                    >
+                                        {useAvailabilityData ? 'Tìm phòng trống' : 'Tìm kiếm'}
+                                    </Button>
+                                    <Button
+                                        size="large"
+                                        icon={<RotateCcw size={16} />}
+                                        onClick={() => dispatch(resetFilters())}
+                                    >
+                                        Đặt lại
+                                    </Button>
+                                </Space>
                             </Form.Item>
-                        </Col>
-
-                        <Col xs={24} sm={8} lg={4}>
-                            <Space>
-                                <Button
-                                    type="primary"
-                                    size="large"
-                                    icon={<CalendarIcon size={16} />}
-                                >
-                                    Tìm kiếm
-                                </Button>
-                                <Button
-                                    size="large"
-                                    onClick={() => dispatch(resetFilters())}
-                                >
-                                    Đặt lại
-                                </Button>
-                            </Space>
                         </Col>
                     </Row>
                 </Form>
-            </FilterSection>
+            </Card>
 
             {/* Room Table */}
             <Card className="mb-8">
+                {/* Show availability mode indicator */}
+                {useAvailabilityData && (
+                    <Alert
+                        message={
+                            <Space>
+                                <CalendarIcon size={16} />
+                                <span>
+                                    Hiển thị phòng trống từ {dayjs(availabilityParams.check_in_date).format('DD/MM/YYYY')}
+                                    đến {dayjs(availabilityParams.check_out_date).format('DD/MM/YYYY')}
+                                </span>
+                            </Space>
+                        }
+                        description={
+                            availableRoomsData?.summary && (
+                                <Text>
+                                    Tổng cộng {availableRoomsData.summary.total_available_rooms} phòng trống
+                                    thuộc {availableRoomsData.summary.total_room_types} loại phòng
+                                </Text>
+                            )
+                        }
+                        type="info"
+                        showIcon
+                        className="mb-4"
+                    />
+                )}
+
+                {/* Show error if availability API fails */}
+                {availabilityParams.enabled && !isAvailableRoomsLoading && availableRoomsData && !availableRoomsData.success && (
+                    <Alert
+                        message="Lỗi tìm kiếm phòng trống"
+                        description="Không thể tìm kiếm phòng trống. Hiển thị tất cả phòng thay thế."
+                        type="error"
+                        showIcon
+                        className="mb-4"
+                    />
+                )}
+
+                {/* Show message when no dates selected */}
+                {!availabilityParams.enabled && (
+                    <Alert
+                        message="Chưa chọn ngày"
+                        description="Vui lòng chọn ngày nhận và trả phòng để xem phòng trống khả dụng"
+                        type="warning"
+                        showIcon
+                        className="mb-4"
+                    />
+                )}
+
                 <div className="flex justify-between items-center mb-4">
                     <div>
                         <Title level={4} className="mb-1">Danh sách phòng</Title>
                         <Text className="text-gray-600">
-                            Tìm thấy {rooms.length} phòng
+                            Tìm thấy {roomsToDisplay.length} phòng
+                            {useAvailabilityData && availableRoomsData?.summary && (
+                                <span className="ml-2 text-blue-600">
+                                    ({availableRoomsData.summary.total_room_types} loại phòng khả dụng)
+                                </span>
+                            )}
                         </Text>
                     </div>
                     {selectedRooms.length > 0 && (
-                        <div className="flex items-center gap-4">
-                            <Text strong className="text-blue-600">
-                                Đã chọn: {selectedRooms.length} phòng
-                            </Text>
+                        <Space>
+                            <Badge count={selectedRooms.length} showZero={false}>
+                                <Button
+                                    type="primary"
+                                    icon={<ShoppingCart size={16} />}
+                                    onClick={() => setCartDrawerOpen(true)}
+                                >
+                                    Giỏ phòng
+                                </Button>
+                            </Badge>
                             <Button size="small" onClick={clearCart}>
-                                Bỏ chọn tất cả
+                                Xóa tất cả
                             </Button>
-                        </div>
+                        </Space>
                     )}
                 </div>
-                
+
                 <Table
                     columns={columns}
-                    dataSource={rooms}
+                    dataSource={roomsToDisplay}
                     rowKey="id"
                     loading={isLoading || isRoomTypesLoading}
                     pagination={{
                         current: currentPage,
                         pageSize: pageSize,
-                        total: rooms.length,
+                        total: roomsToDisplay.length,
                         showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} phòng`,
                         showSizeChanger: true,
                         showQuickJumper: true,
@@ -395,89 +510,87 @@ const ReceptionBooking: React.FC = () => {
                     }}
                     scroll={{ x: 900 }}
                     size="middle"
-                    rowSelection={{
-                        type: 'checkbox',
-                        selectedRowKeys: selectedRooms.map(room => room.id),
-                        onSelect: (record, selected) => {
-                            handleRoomSelection(record, selected);
-                        },
-                        onSelectAll: (selected, _selectedRows, changeRows) => {
-                            if (selected) {
-                                changeRows.forEach(roomKey => {
-                                    const room = rooms.find((r: any) => r.id === roomKey);
-                                    if (room && !isRoomSelected(room.id)) {
-                                        handleRoomSelection(room, true);
-                                    }
-                                });
-                            } else {
-                                changeRows.forEach(roomKey => {
-                                    const room = rooms.find((r: any) => r.id === roomKey);
-                                    if (room && isRoomSelected(room.id)) {
-                                        handleRoomSelection(room, false);
-                                    }
-                                });
-                            }
-                        },
-                    }}
                 />
             </Card>
 
-            {/* Floating Booking Cart */}
-            <BookingCart $visible={selectedRooms.length > 0} className="shadow-2xl border-blue-200">
-                <div className="flex items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-blue-100 p-3 rounded-full border border-blue-200">
-                            <ShoppingCart size={20} className="text-blue-600" />
-                        </div>
+            {/* Booking Cart Drawer */}
+            <Drawer
+                title={
+                    <Space>
+                        <ShoppingCart size={20} />
+                        <span>Giỏ phòng ({selectedRooms.length} phòng)</span>
+                    </Space>
+                }
+                placement="right"
+                width={400}
+                open={cartDrawerOpen}
+                onClose={() => setCartDrawerOpen(false)}
+                footer={
+                    <Space className="w-full justify-between">
                         <div>
-                            <Title level={5} className="mb-0 !text-lg !font-semibold text-blue-700">
-                                {selectedRooms.length} phòng đã chọn
-                            </Title>
-                            <Text className="text-gray-600 !text-base">
-                                Tổng tiền: <strong className="text-blue-600">{new Intl.NumberFormat('vi-VN').format(getTotalPrice())} VNĐ</strong>
+                            <Text strong>Tổng tiền: </Text>
+                            <Text className="text-lg font-bold text-blue-600">
+                                {new Intl.NumberFormat('vi-VN').format(getTotalPrice())} VNĐ
                             </Text>
                         </div>
-                    </div>
-                    <Space>
-                        <Button onClick={clearCart} className="rounded-full border-gray-300">
-                            Xóa tất cả
-                        </Button>
-                        <Button 
-                            type="primary" 
-                            size="large" 
-                            className="rounded-full bg-blue-600 hover:bg-blue-700" 
-                            onClick={handleProceedToConfirm} 
-                            disabled={selectedRooms.length < 1}
-                        >
-                            Đặt phòng ngay
-                        </Button>
+                        <Space>
+                            <Button onClick={clearCart}>
+                                Xóa tất cả
+                            </Button>
+                            <Button
+                                type="primary"
+                                size="large"
+                                onClick={handleProceedToConfirm}
+                                disabled={selectedRooms.length < 1}
+                            >
+                                Đặt phòng ngay
+                            </Button>
+                        </Space>
                     </Space>
-                </div>
-                {selectedRooms.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                        <div className="flex flex-wrap gap-2">
-                            {selectedRooms.slice(0, 5).map((room) => {
-                                const roomType = getRoomTypeDetail(room);
-                                return (
-                                    <Tag
-                                        key={room.id}
-                                        closable
-                                        onClose={() => removeRoom(room.id)}
-                                        className="mb-1 px-3 py-1 rounded-full bg-blue-50 border-blue-200 text-blue-700 font-medium"
-                                    >
-                                        {room.name} - {new Intl.NumberFormat('vi-VN').format(Number(roomType.adjusted_price || 0))} VNĐ
-                                    </Tag>
-                                );
-                            })}
-                            {selectedRooms.length > 5 && (
-                                <Tag className="mb-1 px-3 py-1 rounded-full bg-gray-100 text-gray-600">
-                                    +{selectedRooms.length - 5} phòng khác
-                                </Tag>
-                            )}
-                        </div>
+                }
+            >
+                {selectedRooms.length === 0 ? (
+                    <div className="text-center py-8">
+                        <ShoppingCart size={48} className="mx-auto text-gray-300 mb-4" />
+                        <Text className="text-gray-500">Chưa có phòng nào được chọn</Text>
                     </div>
+                ) : (
+                    <Space direction="vertical" className="w-full" size="middle">
+                        {selectedRooms.map((room) => {
+                            const roomType = getRoomTypeDetail(room);
+                            return (
+                                <Card key={room.id} size="small" className="shadow-sm">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <Text strong className="text-base">{room.name}</Text>
+                                            {room.bed_type_name && (
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                                    <Bed size={12} />
+                                                    <span>{room.bed_type_name}</span>
+                                                </div>
+                                            )}
+                                            <div className="mt-2">
+                                                <Text className="text-sm text-gray-600">{roomType.name}</Text>
+                                                <div className="text-blue-600 font-semibold">
+                                                    {new Intl.NumberFormat('vi-VN').format(Number(roomType.adjusted_price || 0))} VNĐ/đêm
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            type="text"
+                                            size="small"
+                                            onClick={() => removeRoom(room.id)}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            Xóa
+                                        </Button>
+                                    </div>
+                                </Card>
+                            );
+                        })}
+                    </Space>
                 )}
-            </BookingCart>
+            </Drawer>
         </div>
     );
 };
