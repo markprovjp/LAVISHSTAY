@@ -135,7 +135,11 @@ Route::prefix('reception')->group(function () {
     Route::put('/rooms/{roomId}/status', [ReceptionController::class, 'updateRoomStatus']);
     
     // Booking Management
-    Route::get('/bookings', [ReceptionController::class, 'getRoomBookings']);
+    Route::get('/bookings', [ReceptionController::class, 'getBookings']);
+    Route::get('/bookings/statistics', [ReceptionController::class, 'getBookingStatistics']);
+    Route::post('/bookings', [ReceptionController::class, 'createReceptionBooking']);
+    Route::put('/bookings/{bookingId}/status', [ReceptionController::class, 'updateBookingStatus']);
+    Route::put('/bookings/{bookingId}/cancel', [ReceptionController::class, 'cancelBooking']);
     Route::post('/bookings/transfer', [ReceptionController::class, 'transferBooking']);
     Route::post('/bookings/check-in', [ReceptionController::class, 'checkIn']);
     Route::post('/bookings/check-out', [ReceptionController::class, 'checkOut']);

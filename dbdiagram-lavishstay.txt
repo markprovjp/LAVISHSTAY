@@ -85,6 +85,10 @@ Enum "room_status_enum" {
   "occupied"
   "maintenance"
   "cleaning"
+  "deposited"
+  "no_show"
+  "check_in"
+  "check_out"
 }
 
 Enum "room_option_cancellation_policy_type_enum" {

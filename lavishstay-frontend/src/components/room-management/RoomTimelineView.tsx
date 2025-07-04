@@ -1,13 +1,13 @@
-import React from 'react';
-import { Card, Typography, Empty, Spin, Statistic, Row, Col, Table } from 'antd';
+import React, { useState, useMemo } from 'react';
+import { Card, Typography, Empty, Spin, Statistic, Row, Col, Table, Modal, Form, Select, DatePicker, Input, Button, message } from 'antd';
 import FullCalendar from '@fullcalendar/react';
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { FullCalendarEvent, FullCalendarResource } from '../../types/room';
 import { fullCalendarStatusColors } from '../../constants/roomStatus';
+import { useGetRoomBookings } from '../../hooks/useReception';
 import dayjs from 'dayjs';
-import './RoomTimelineView.css';
 
 const { Title } = Typography;
 
@@ -24,7 +24,66 @@ const RoomTimelineView: React.FC<RoomTimelineViewProps> = ({
     onEventClick,
     onDateSelect
 }) => {
-    if (loading) {
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState<any>(null);
+    const [selectedEvent, setSelectedEvent] = useState<any>(null);
+    const [form] = Form.useForm();
+    const [statusFilter, setStatusFilter] = useState<string[]>([]);
+    const [currentDate, setCurrentDate] = useState(dayjs());
+
+    // Fetch real bookings data from API
+    const { data: bookingsData, isLoading: bookingsLoading } = useGetRoomBookings({
+        start_date: currentDate.startOf('week').format('YYYY-MM-DD'),
+        end_date: currentDate.endOf('week').format('YYYY-MM-DD'),
+    });
+
+    const bookings = bookingsData?.data || [];
+
+    // Generate dates for the current week for statistics
+    const weekDates = useMemo(() => {
+        const start = currentDate.startOf('week');
+        return Array.from({ length: 7 }, (_, i) => start.add(i, 'day'));
+    }, [currentDate]);
+
+    // Create events for FullCalendar from API bookings data
+    const events: FullCalendarEvent[] = useMemo(() => {
+        return bookings.map((booking: any) => ({
+            id: booking.id,
+            resourceId: booking.resourceId,
+            title: booking.title,
+            start: booking.start,
+            end: booking.end,
+            backgroundColor: fullCalendarStatusColors[booking.extendedProps?.booking_status as keyof typeof fullCalendarStatusColors] || '#1890ff',
+            borderColor: fullCalendarStatusColors[booking.extendedProps?.booking_status as keyof typeof fullCalendarStatusColors] || '#1890ff',
+            extendedProps: booking.extendedProps
+        }));
+    }, [bookings]);
+
+    // Calculate room statistics for each day and room
+    const roomStatistics = useMemo(() => {
+        return rooms.map(room => {
+            const roomData = {
+                roomId: room.id,
+                roomName: room.name,
+                floor: room.floor || Math.floor(parseInt(room.name) / 100) || 1,
+            };
+
+            // For each day, check if room has booking
+            weekDates.forEach((date, index) => {
+                const roomBookings = events.filter((event: any) =>
+                    event.resourceId === room.id &&
+                    (date.isSame(dayjs(event.start), 'day') ||
+                        (date.isAfter(dayjs(event.start), 'day') && date.isBefore(dayjs(event.end), 'day')))
+                );
+
+                (roomData as any)[`day_${index}`] = roomBookings.length > 0 ? 'occupied' : 'available';
+            });
+
+            return roomData;
+        });
+    }, [rooms, events, weekDates]);
+
+    if (loading || bookingsLoading) {
         return (
             <div className="flex justify-center items-center h-64">
                 <Spin size="large" />
@@ -40,8 +99,6 @@ const RoomTimelineView: React.FC<RoomTimelineViewProps> = ({
             />
         );
     }
-
-    const currentDate = dayjs();
 
     // Group rooms by floor - extract floor from room name
     const roomsByFloor = rooms.reduce((acc: any, room: any) => {
@@ -70,19 +127,10 @@ const RoomTimelineView: React.FC<RoomTimelineViewProps> = ({
             });
         });
 
-    // Create events for FullCalendar
-    const events: FullCalendarEvent[] = rooms
-        .filter((room: any) => room.status !== 'available' && room.checkInDate && room.checkOutDate)
-        .map((room: any) => ({
-            id: room.id,
-            resourceId: room.id,
-            title: room.guestName || (room.status === 'maintenance' ? 'Bảo trì' : 'Khách'),
-            start: room.checkInDate!,
-            end: room.checkOutDate!,
-            backgroundColor: fullCalendarStatusColors[room.status as keyof typeof fullCalendarStatusColors] || '#1890ff',
-            guestCount: room.guestCount,
-            status: room.status,
-        }));
+    // Filter events by status
+    const filteredEvents = statusFilter.length === 0
+        ? events
+        : events.filter((event: any) => statusFilter.includes(event.extendedProps?.booking_status));
 
     // Calculate statistics
     const totalRooms = rooms.length;
@@ -91,53 +139,142 @@ const RoomTimelineView: React.FC<RoomTimelineViewProps> = ({
     const maintenanceRooms = rooms.filter((room: any) => room.status === 'maintenance').length;
     const cleaningRooms = rooms.filter((room: any) => room.status === 'cleaning').length;
 
+    // Status filter options
+    const statusFilterOptions = [
+        { key: 'confirmed', label: 'Đã xác nhận', color: '#1890ff' },
+        { key: 'checked_in', label: 'Đã nhận phòng', color: '#52c41a' },
+        { key: 'checked_out', label: 'Đã trả phòng', color: '#8c8c8c' },
+        { key: 'cancelled', label: 'Đã hủy', color: '#ff4d4f' },
+    ];
+
+    // Toggle status filter
+    const handleStatusFilterToggle = (status: string) => {
+        setStatusFilter(prev =>
+            prev.includes(status)
+                ? prev.filter(s => s !== status)
+                : [...prev, status]
+        );
+    };
+
+    // Event handlers for drag & drop và click
     const handleEventClick = (clickInfo: any) => {
         const event = clickInfo.event;
-        const eventData: FullCalendarEvent = {
+        setSelectedEvent({
+            id: event.id,
+            title: event.title,
+            start: event.start,
+            end: event.end,
+            resourceId: event.getResources()[0]?.id,
+            ...event.extendedProps
+        });
+        onEventClick?.({
             id: event.id,
             resourceId: event.getResources()[0]?.id || '',
             title: event.title,
             start: event.start?.toISOString().split('T')[0] || '',
             end: event.end?.toISOString().split('T')[0] || '',
             backgroundColor: event.backgroundColor,
-            guestCount: event.extendedProps.guestCount,
-            status: event.extendedProps.status,
-        };
-        onEventClick?.(eventData);
+            guestCount: event.extendedProps?.guest_count,
+            status: event.extendedProps?.booking_status,
+        });
     };
 
     const handleDateSelect = (selectInfo: any) => {
         const start = selectInfo.start.toISOString().split('T')[0];
         const end = selectInfo.end.toISOString().split('T')[0];
+        const resourceId = selectInfo.resource?.id;
+
+        if (resourceId) {
+            setSelectedSlot({
+                start,
+                end,
+                resourceId,
+                roomName: selectInfo.resource.title
+            });
+            setModalVisible(true);
+        }
+
         onDateSelect?.(start, end);
     };
 
     const handleEventDrop = (dropInfo: any) => {
-        console.log('Event dropped:', dropInfo);
-        // Handle drag and drop logic here
+        const event = dropInfo.event;
+        const newStart = event.start?.toISOString().split('T')[0];
+        const newEnd = event.end?.toISOString().split('T')[0];
+        const newResourceId = event.getResources()[0]?.id;
+
+        console.log('Event dropped:', {
+            eventId: event.id,
+            newStart,
+            newEnd,
+            newResourceId,
+            oldResourceId: dropInfo.oldResource?.id
+        });
+
+        message.success(`Đã chuyển booking "${event.title}" sang phòng ${event.getResources()[0]?.title}`);
+
+        // TODO: Call API để cập nhật booking
+        // transferBooking({ booking_id: event.id, old_room_id: dropInfo.oldResource?.id, new_room_id: newResourceId });
     };
 
     const handleEventResize = (resizeInfo: any) => {
-        console.log('Event resized:', resizeInfo);
-        // Handle resize logic here
+        const event = resizeInfo.event;
+        const newStart = event.start?.toISOString().split('T')[0];
+        const newEnd = event.end?.toISOString().split('T')[0];
+
+        console.log('Event resized:', {
+            eventId: event.id,
+            newStart,
+            newEnd
+        });
+
+        message.success(`Đã thay đổi thời gian booking "${event.title}"`);
+
+        // TODO: Call API để cập nhật thời gian booking
+        // updateBooking(event.id, { check_in: newStart, check_out: newEnd });
     };
 
-    // Generate dates for the next 7 days for statistics
-    const dates = Array.from({ length: 7 }, (_, i) => currentDate.add(i, 'day'));
+    const handleCreateBooking = (values: any) => {
+        console.log('Creating booking:', {
+            room_id: selectedSlot.resourceId,
+            guest_name: values.guestName,
+            guest_count: values.guestCount,
+            check_in: values.dateRange[0].format('YYYY-MM-DD'),
+            check_out: values.dateRange[1].format('YYYY-MM-DD'),
+            status: values.status,
+            booking_type: 'confirmed'
+        });
 
-    const calculateRoomStats = (date: dayjs.Dayjs) => {
-        // Mock calculation for demo - you can implement real logic here
-        const dateStr = date.format('YYYY-MM-DD');
-        const eventsOnDate = events.filter(event =>
-            dayjs(event.start).isSameOrBefore(date) &&
-            dayjs(event.end).isAfter(date)
-        );
+        setModalVisible(false);
+        form.resetFields();
+        message.success('Đã tạo booking mới!');
 
-        return {
-            occupied: eventsOnDate.length,
-            available: totalRooms - eventsOnDate.length,
-        };
+        // TODO: Call API để tạo booking mới
+        // createBooking(newBooking);
     };
+
+    // Statistics table columns
+    const statisticsColumns = [
+        {
+            title: 'Phòng',
+            dataIndex: 'roomName',
+            key: 'roomName',
+            width: 80,
+            fixed: 'left' as const,
+        },
+        ...weekDates.map((date, index) => ({
+            title: date.format('DD/MM'),
+            dataIndex: `day_${index}`,
+            key: `day_${index}`,
+            width: 80,
+            render: (status: string) => {
+                if (status === 'occupied') {
+                    return <div className="w-4 h-4 bg-red-500 rounded mx-auto"></div>;
+                }
+                return <div className="w-4 h-4 bg-green-500 rounded mx-auto"></div>;
+            },
+        }))
+    ];
 
     return (
         <div className="space-y-6">
@@ -186,149 +323,226 @@ const RoomTimelineView: React.FC<RoomTimelineViewProps> = ({
                 </Row>
             </Card>
 
-            {/* Status Filter Pills */}
+            {/* Status Filter Buttons */}
             <Card>
                 <div className="flex items-center justify-between mb-4">
-                    <Title level={5} className="mb-0">Bộ lọc trạng thái phòng</Title>
+                    <Title level={5} className="mb-0">Bộ lọc trạng thái booking</Title>
                     <div className="text-xs text-gray-500">
                         {currentDate.format('DD/MM/YYYY')}
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <div className="px-3 py-1 bg-green-500 text-white rounded-full text-xs">
-                        Phòng đón khách
-                    </div>
-                    <div className="px-3 py-1 bg-orange-400 text-white rounded-full text-xs">
-                        Khách nghỉ ngơi
-                    </div>
-                    <div className="px-3 py-1 bg-red-500 text-white rounded-full text-xs">
-                        Phòng đang có khách ở
-                    </div>
-                    <div className="px-3 py-1 bg-pink-400 text-white rounded-full text-xs">
-                        Không đến
-                    </div>
-                    <div className="px-3 py-1 bg-gray-400 text-white rounded-full text-xs">
-                        Phòng đang sửa
-                    </div>
-                    <div className="px-3 py-1 bg-blue-500 text-white rounded-full text-xs">
-                        Khách đã cọc tiền
-                    </div>
+                    {statusFilterOptions.map((option) => (
+                        <Button
+                            key={option.key}
+                            type={statusFilter.includes(option.key) ? "primary" : "default"}
+                            size="small"
+                            onClick={() => handleStatusFilterToggle(option.key)}
+                            style={{
+                                backgroundColor: statusFilter.includes(option.key) ? option.color : undefined,
+                                borderColor: option.color
+                            }}
+                        >
+                            {option.label}
+                        </Button>
+                    ))}
+                    {statusFilter.length > 0 && (
+                        <Button
+                            type="text"
+                            size="small"
+                            onClick={() => setStatusFilter([])}
+                            className="text-gray-500"
+                        >
+                            Xóa bộ lọc
+                        </Button>
+                    )}
                 </div>
             </Card>
 
             {/* Timeline Calendar */}
             <Card>
-                <div className="fullcalendar-container">
-                    <FullCalendar
-                        plugins={[resourceTimelinePlugin, dayGridPlugin, interactionPlugin]}
-                        initialView="resourceTimelineWeek"
-                        initialDate={currentDate.format('YYYY-MM-DD')}
-                        headerToolbar={{
-                            left: 'prev,next',
-                            center: 'title',
-                            right: 'today'
-                        }}
-                        resources={resources}
-                        events={events}
-                        resourceGroupField="group"
-                        resourceAreaHeaderContent="Phòng"
-                        selectable={true}
-                        selectMirror={true}
-                        editable={true}
-                        droppable={true}
-                        eventDrop={handleEventDrop}
-                        eventResize={handleEventResize}
-                        eventClick={handleEventClick}
-                        select={handleDateSelect}
-                        height="500px"
-                        locale="vi"
-                        slotMinTime="00:00:00"
-                        slotMaxTime="24:00:00"
-                        resourceAreaWidth="120px"
-                        resourceAreaColumns={[
-                            {
-                                field: 'title',
-                                headerContent: 'Số phòng',
-                                width: 120
-                            }
-                        ]}
-                        eventContent={(eventInfo) => {
-                            const room = rooms.find((r: any) => r.id === eventInfo.event.getResources()[0]?.id);
-                            return (
-                                <div className="p-1 text-xs text-white overflow-hidden">
-                                    <div className="font-medium truncate">{eventInfo.event.title}</div>
-                                    {room?.guestCount && (
-                                        <div className="opacity-75">{room.guestCount} người</div>
-                                    )}
+                <FullCalendar
+                    plugins={[resourceTimelinePlugin, dayGridPlugin, interactionPlugin]}
+                    initialView="resourceTimelineWeek"
+                    initialDate={currentDate.format('YYYY-MM-DD')}
+                    headerToolbar={{
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'resourceTimelineWeek,resourceTimelineDay'
+                    }}
+                    resources={resources}
+                    events={filteredEvents}
+                    resourceGroupField="group"
+                    resourceAreaHeaderContent="Phòng"
+                    selectable={true}
+                    selectMirror={true}
+                    editable={true}
+                    droppable={true}
+                    eventDrop={handleEventDrop}
+                    eventResize={handleEventResize}
+                    eventClick={handleEventClick}
+                    select={handleDateSelect}
+                    height="600px"
+                    locale="vi"
+                    slotMinTime="00:00:00"
+                    slotMaxTime="24:00:00"
+                    resourceAreaWidth="150px"
+                    resourceAreaColumns={[
+                        {
+                            field: 'title',
+                            headerContent: 'Số phòng',
+                            width: 150
+                        }
+                    ]}
+                    eventContent={(eventInfo) => {
+                        const booking = eventInfo.event.extendedProps;
+                        return (
+                            <div className="p-1 text-xs text-white overflow-hidden">
+                                <div className="font-medium truncate">{eventInfo.event.title}</div>
+                                {booking?.guest_count && (
+                                    <div className="opacity-75">{booking.guest_count} người</div>
+                                )}
+                                <div className="opacity-75 text-xs">
+                                    {dayjs(eventInfo.event.start).format('DD/MM')} - {dayjs(eventInfo.event.end).format('DD/MM')}
                                 </div>
-                            );
-                        }}
-                        eventClassNames="cursor-pointer hover:opacity-80"
-                        businessHours={{
-                            daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-                            startTime: '00:00',
-                            endTime: '24:00',
-                        }}
-                        slotLabelFormat={{
-                            day: '2-digit',
-                            month: '2-digit',
-                            weekday: 'short'
-                        }}
-                        dayHeaderFormat={{
-                            weekday: 'short',
-                            month: '2-digit',
-                            day: '2-digit'
-                        }}
-                        resourceOrder="title"
-                        eventOverlap={false}
-                        eventMinHeight={30}
-                    />
-                </div>
+                            </div>
+                        );
+                    }}
+                    eventClassNames="cursor-pointer hover:opacity-80 transition-opacity"
+                    businessHours={{
+                        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+                        startTime: '00:00',
+                        endTime: '24:00',
+                    }}
+                    slotLabelFormat={{
+                        day: '2-digit',
+                        month: '2-digit',
+                        weekday: 'short'
+                    }}
+                    dayHeaderFormat={{
+                        weekday: 'short',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }}
+                    resourceOrder="title"
+                    eventOverlap={false}
+                    eventMinHeight={40}
+                    eventResizableFromStart={true}
+                    schedulerLicenseKey="CC-Attribution-NonCommercial-NoDerivatives"
+                    selectConstraint={{
+                        start: currentDate.format('YYYY-MM-DD'),
+                        end: currentDate.add(30, 'day').format('YYYY-MM-DD')
+                    }}
+                    datesSet={(dateInfo) => {
+                        setCurrentDate(dayjs(dateInfo.start));
+                    }}
+                />
             </Card>
 
-            {/* Room Statistics Footer */}
+            {/* Room Statistics Table - Match with Timeline */}
             <Card>
-                <Title level={5} className="mb-4">Thống kê phòng theo ngày</Title>
+                <Title level={5} className="mb-4">Thống kê phòng theo ngày (khớp timeline)</Title>
                 <div className="overflow-x-auto">
                     <Table
                         size="small"
                         pagination={false}
-                        columns={[
-                            {
-                                title: 'Ngày',
-                                dataIndex: 'date',
-                                key: 'date',
-                                width: 100,
-                                render: (date: dayjs.Dayjs) => date.format('DD/MM'),
-                            },
-                            {
-                                title: 'Phòng đang sử dụng',
-                                dataIndex: 'occupied',
-                                key: 'occupied',
-                                width: 120,
-                                render: (occupied: number) => (
-                                    <span className="text-red-600 font-medium">{occupied}</span>
-                                ),
-                            },
-                            {
-                                title: 'Phòng còn trống',
-                                dataIndex: 'available',
-                                key: 'available',
-                                width: 120,
-                                render: (available: number) => (
-                                    <span className="text-green-600 font-medium">{available}</span>
-                                ),
-                            },
-                        ]}
-                        dataSource={dates.map((date, index) => ({
-                            key: index,
-                            date: date,
-                            ...calculateRoomStats(date),
-                        }))}
-                        scroll={{ x: true }}
+                        columns={statisticsColumns}
+                        dataSource={roomStatistics}
+                        rowKey="roomId"
+                        scroll={{ x: 'max-content' }}
+                        rowClassName={(record) => `floor-${record.floor}`}
                     />
                 </div>
             </Card>
+
+            {/* Modal tạo/sửa booking */}
+            <Modal
+                title={selectedEvent ? "Sửa booking" : "Tạo booking mới"}
+                open={modalVisible}
+                onCancel={() => {
+                    setModalVisible(false);
+                    setSelectedEvent(null);
+                    form.resetFields();
+                }}
+                footer={null}
+                width={600}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleCreateBooking}
+                    initialValues={selectedEvent ? {
+                        guestName: selectedEvent.guest_name,
+                        guestCount: selectedEvent.guest_count,
+                        status: selectedEvent.booking_status,
+                        dateRange: [dayjs(selectedEvent.start), dayjs(selectedEvent.end)]
+                    } : {
+                        dateRange: selectedSlot ? [dayjs(selectedSlot.start), dayjs(selectedSlot.end)] : []
+                    }}
+                >
+                    <Form.Item
+                        label="Tên khách hàng"
+                        name="guestName"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên khách hàng!' }]}
+                    >
+                        <Input placeholder="Nhập tên khách hàng" />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Số khách"
+                        name="guestCount"
+                        rules={[{ required: true, message: 'Vui lòng nhập số khách!' }]}
+                    >
+                        <Select placeholder="Chọn số khách">
+                            <Select.Option value={1}>1 khách</Select.Option>
+                            <Select.Option value={2}>2 khách</Select.Option>
+                            <Select.Option value={3}>3 khách</Select.Option>
+                            <Select.Option value={4}>4 khách</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Thời gian lưu trú"
+                        name="dateRange"
+                        rules={[{ required: true, message: 'Vui lòng chọn thời gian!' }]}
+                    >
+                        <DatePicker.RangePicker
+                            className="w-full"
+                            format="DD/MM/YYYY"
+                            placeholder={['Ngày nhận phòng', 'Ngày trả phòng']}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Trạng thái"
+                        name="status"
+                        rules={[{ required: true, message: 'Vui lòng chọn trạng thái!' }]}
+                    >
+                        <Select placeholder="Chọn trạng thái">
+                            <Select.Option value="confirmed">Đã xác nhận</Select.Option>
+                            <Select.Option value="checked_in">Đã nhận phòng</Select.Option>
+                            <Select.Option value="checked_out">Đã trả phòng</Select.Option>
+                            <Select.Option value="cancelled">Đã hủy</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    {selectedSlot && (
+                        <div className="mb-4 p-3 bg-blue-50 rounded">
+                            <p><strong>Phòng:</strong> {selectedSlot.roomName}</p>
+                            <p><strong>Thời gian:</strong> {selectedSlot.start} đến {selectedSlot.end}</p>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end space-x-2">
+                        <Button onClick={() => setModalVisible(false)}>
+                            Hủy
+                        </Button>
+                        <Button type="primary" htmlType="submit">
+                            {selectedEvent ? "Cập nhật" : "Tạo booking"}
+                        </Button>
+                    </div>
+                </Form>
+            </Modal>
         </div>
     );
 };

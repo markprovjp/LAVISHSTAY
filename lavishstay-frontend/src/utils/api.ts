@@ -226,10 +226,43 @@ export const dashboardAPI = {
 // Reception Management API
 export const receptionAPI = {
   // Legacy booking methods (keep for compatibility)
-  createBooking: async (data: any) => api.post('/reception/book', data),
+  createLegacyBooking: async (data: any) => api.post('/reception/book', data),
   getBookingDetail: async (bookingId: string) => api.get(`/reception/booking/${bookingId}`),
   getPaymentStatus: async (bookingId: string) => api.get(`/reception/payment-status/${bookingId}`),
   listBookings: async (params?: any) => api.get('/reception/bookings-legacy', { params }),
+
+  // Booking Management methods
+  getBookings: async (params?: any) => {
+    const response = await api.get('/reception/bookings', { params });
+    return response.data;
+  },
+
+  getBookingStatistics: async () => {
+    const response = await api.get('/reception/bookings/statistics');
+    return response.data;
+  },
+
+  createBooking: async (data: any) => {
+    const response = await api.post('/reception/bookings', data);
+    return response.data;
+  },
+
+  updateBookingStatus: async (bookingId: number, status: string) => {
+    const response = await api.put(`/reception/bookings/${bookingId}/status`, { status });
+    return response.data;
+  },
+
+  cancelBooking: async (bookingId: number) => {
+    const response = await api.put(`/reception/bookings/${bookingId}/cancel`);
+    return response.data;
+  },
+
+  getAvailableRooms: async (checkIn: string, checkOut: string) => {
+    const response = await api.get('/rooms/available', {
+      params: { check_in: checkIn, check_out: checkOut }
+    });
+    return response.data;
+  },
 
   // New Room Management methods
   getRooms: async (params?: any) => {
