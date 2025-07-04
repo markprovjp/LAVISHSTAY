@@ -13,7 +13,6 @@ const breadcrumbNameMap: Record<string, string> = {
   '/about': 'Về chúng tôi',
   '/contact': 'Liên hệ',
   '/destinations': 'Điểm đến',
-  '/login': 'Đăng nhập',
   '/register': 'Đăng ký',
   '/notifications': 'Thông báo',
 

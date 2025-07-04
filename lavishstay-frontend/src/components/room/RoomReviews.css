@@ -1,0 +1,74 @@
+/* Custom styles for Room Reviews component */
+
+.custom-pagination .ant-pagination-item {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.custom-pagination .ant-pagination-item:hover {
+  border-color: #1890ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.custom-pagination .ant-pagination-item-active {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.custom-pagination .ant-pagination-item-active a {
+  /* color: white; */
+  font-weight: 600;
+}
+
+.custom-pagination .ant-pagination-jump-prev:hover::after,
+.custom-pagination .ant-pagination-jump-next:hover::after {
+  color: #1890ff;
+}
+
+.review-list .ant-list-item {
+  border: none !important;
+  padding: 0 !important;
+  margin-bottom: 1.5rem;
+}
+
+.review-list .ant-list-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Custom scrollbar for image gallery */
+.review-list ::-webkit-scrollbar {
+  height: 4px;
+}
+
+.review-list ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.review-list ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.review-list ::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Animation for helpful button */
+.helpful-button-clicked {
+  animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+  0%, 20%, 60%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  80% {
+    transform: translateY(-2px);
+  }
+}

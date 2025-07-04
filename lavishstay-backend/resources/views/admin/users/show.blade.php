@@ -4,7 +4,7 @@
         integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-6xl mx-auto">
+    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
         <!-- Page Header -->
         <div class="flex justify-between items-center">
             <div class="mb-8">
@@ -39,7 +39,6 @@
             </nav>
         </div>
 
-        
         <!-- Tab Content -->
         <div class="mt-6">
             <!-- Personal Info Tab -->
@@ -377,6 +376,7 @@
                                         </div>
                                     </div>
 
+                                    
                                     <!-- New Password -->
                                     <div class="mb-4">
                                         <label for="password"

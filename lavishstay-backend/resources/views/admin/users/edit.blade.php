@@ -5,7 +5,8 @@
         <div class="flex justify-between items-center">
             <div class="mb-8">
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa người dùng</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cập nhật thông tin người dùng {{ $user->name }}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Cập nhật thông tin người dùng
+                    {{ $user->name }}</p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
                 <a href="{{ route('admin.users') }}">
@@ -44,7 +45,8 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl dark:border-gray-700">
-            <form action="{{ route('admin.users.update', $user->id) }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form action="{{ route('admin.users.update', $user->id) }}" method="POST" enctype="multipart/form-data"
+                class="p-6">
                 @csrf
                 @method('PUT')
 
@@ -60,8 +62,7 @@
                             <div class="shrink-0">
                                 <img id="avatar-preview"
                                     class="h-20 w-20 object-cover rounded-full border-4 border-gray-200 dark:border-gray-600 {{ $user->profile_photo_url ? '' : 'hidden' }}"
-                                    src="{{ $user->profile_photo_url ?? '' }}"
-                                    alt="Avatar preview">
+                                    src="{{ $user->profile_photo_url ?? '' }}" alt="Avatar preview">
                                 <div id="avatar-placeholder"
                                     class="h-20 w-20 rounded-full border-4 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700 {{ $user->profile_photo_url ? 'hidden' : '' }}">
                                     <i class="fas fa-user text-gray-400 text-2xl"></i>
@@ -95,11 +96,13 @@
                     <div class="space-y-6">
                         <!-- Họ và tên -->
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label for="name"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fas fa-user mr-2 text-violet-600"></i>
                                 Họ và tên <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" required
+                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}"
+                                required
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="Nhập họ và tên">
                             @error('name')
@@ -112,11 +115,13 @@
 
                         <!-- Email -->
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label for="email"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fas fa-envelope mr-2 text-violet-600"></i>
                                 Email <span class="text-red-500">*</span>
                             </label>
-                            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" required
+                            <input type="email" id="email" name="email"
+                                value="{{ old('email', $user->email) }}" required
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="example@email.com">
                             @error('email')
@@ -129,11 +134,13 @@
 
                         <!-- Số điện thoại -->
                         <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label for="phone"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fas fa-phone mr-2 text-violet-600"></i>
                                 Số điện thoại
                             </label>
-                            <input type="tel" id="phone" name="phone" value="{{ old('phone', $user->phone) }}"
+                            <input type="tel" id="phone" name="phone"
+                                value="{{ old('phone', $user->phone) }}"
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="0123456789">
                             @error('phone')
@@ -146,26 +153,22 @@
 
                         <!-- Vai trò -->
                         <div>
-                            <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label for="role"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
                                 Vai trò <span class="text-red-500">*</span>
                             </label>
                             <select id="role" name="role" required
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                                <option value="">Chọn vai trò</option>
-                                <option value="guest" {{ old('role', $user->role) == 'guest' ? 'selected' : '' }}>
-                                    Khách
-                                </option>
-                                <option value="receptionist" {{ old('role', $user->role) == 'receptionist' ? 'selected' : '' }}>
-                                    Lễ tân
-                                </option>
-                                <option value="manager" {{ old('role', $user->role) == 'manager' ? 'selected' : '' }}>
-                                    Quản lý
-                                </option>
-                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>
-                                    Quản trị viên
-                                </option>
+                                <option value="">-- Chọn vai trò --</option>
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role->name }}"
+                                        {{ old('role', $currentRole) === $role->name ? 'selected' : '' }}>
+                                        {{ \App\Models\Role::getRoleLabel($role->name) }}
+                                    </option>
+                                @endforeach
                             </select>
+
                             @error('role')
                                 <p class="mt-2 text-sm text-red-600 dark:text-red-400">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -173,6 +176,7 @@
                                 </p>
                             @enderror
                         </div>
+
                     </div>
 
                     <!-- Cột phải: Địa chỉ -->

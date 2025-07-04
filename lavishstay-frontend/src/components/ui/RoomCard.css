@@ -1,0 +1,268 @@
+/* RoomCard Enhanced Styles */
+.room-card {
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  min-height: 520px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.room-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15), 0 8px 8px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Room Type Specific Styles */
+.deluxe-room {
+  --room-shadow: rgba(99, 102, 241, 0.15);
+}
+
+.deluxe-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(99, 102, 241, 0.08) !important;
+}
+
+.premium-room {
+  --room-shadow: rgba(5, 150, 105, 0.15);
+}
+
+.premium-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(5, 150, 105, 0.08) !important;
+}
+
+.suite-room {
+  --room-shadow: rgba(220, 38, 38, 0.15);
+}
+
+.suite-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(220, 38, 38, 0.08) !important;
+}
+
+.presidential-room {
+  --room-shadow: rgba(217, 119, 6, 0.15);
+}
+
+.presidential-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(217, 119, 6, 0.08) !important;
+}
+
+.the-level-room {
+  --room-shadow: rgba(14, 165, 233, 0.15);
+}
+
+.the-level-room:hover {
+  box-shadow: 0 20px 25px -5px var(--room-shadow), 0 10px 10px -5px rgba(14, 165, 233, 0.08) !important;
+}
+
+/* Cover Image Enhancements */
+.room-card .ant-card-cover {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-card .ant-card-cover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.room-card:hover .ant-card-cover::after {
+  opacity: 1;
+}
+
+/* Button Enhancements */
+.room-card .ant-btn-primary {
+  transition: all 0.3s ease;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.room-card .ant-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Price Animation */
+.room-card .price-section {
+  transition: all 0.3s ease;
+}
+
+.room-card:hover .price-section {
+  transform: scale(1.02);
+}
+
+/* Amenities Grid */
+.amenities-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.amenity-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  transition: all 0.2s ease;
+}
+
+.amenity-item:hover {
+  transform: translateX(2px);
+}
+
+.amenity-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.amenity-item:hover .amenity-icon {
+  opacity: 1;
+}
+
+/* Badge Animations */
+.room-type-badge {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeInDown 0.6s ease-out;
+}
+
+.discount-badge {
+  animation: pulse 2s infinite;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Star Rating Animation */
+.star-rating {
+  transition: all 0.3s ease;
+}
+
+.room-card:hover .star-rating {
+  transform: scale(1.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .room-card {
+    margin-bottom: 16px;
+  }
+  
+  .room-card .ant-card-cover img {
+    height: 180px !important;
+  }
+  
+  .room-card .ant-card-body {
+    padding: 12px !important;
+  }
+  
+  .room-card .space-y-3 > :not(:first-child) {
+    margin-top: 8px !important;
+  }
+  
+  .room-card .text-xl {
+    font-size: 18px !important;
+  }
+}
+
+/* Dark Mode Support - Removed dark background */
+@media (prefers-color-scheme: dark) {
+  .room-card {
+    border-color: #374151 !important;
+  }
+  
+  /* Removed dark background-color to keep card light */
+}
+
+/* Accessibility */
+.room-card:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading State */
+.room-card.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.room-card.loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 1.5s infinite;
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Đảm bảo consistent card height cho tất cả room types */
+.room-card {
+  /* ...existing styles... */
+  min-height: 520px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.room-card .ant-card-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Đảm bảo title có chiều cao tối thiểu nhất quán */
+.room-card .ant-typography {
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Amenities section flexible */
+.room-card .amenities-section {
+  flex: 1 !important;
+  min-height: 120px !important;
+}
+
+/* Button luôn ở bottom */
+.room-card .action-button-container {
+  margin-top: auto !important;
+}
