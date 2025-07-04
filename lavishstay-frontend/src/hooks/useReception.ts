@@ -2,11 +2,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { receptionAPI } from '../utils/api';
 import { message } from 'antd';
+import { BookingFilters, CreateBookingRequest } from '../types/booking';
 
 // Get all rooms for reception dashboard
 export const useGetReceptionRooms = (params?: any) => {
     return useQuery({
-        queryKey: ['reception', 'rooms','room_types', params],
+        queryKey: ['reception', 'rooms', params],
         queryFn: () => receptionAPI.getRooms(params),
         staleTime: 2 * 60 * 1000, // 2 minutes (shorter for real-time data)
         gcTime: 5 * 60 * 1000, // 5 minutes
@@ -151,5 +152,87 @@ export const useCheckOut = () => {
         onError: (error: any) => {
             message.error(`Lỗi trả phòng: ${error.message}`);
         },
+    });
+};
+
+// Booking Management hooks
+export const useGetBookings = (params?: BookingFilters) => {
+    return useQuery({
+        queryKey: ['bookings', params],
+        queryFn: () => receptionAPI.getBookings(params),
+        staleTime: 1 * 60 * 1000, // 1 minute
+        gcTime: 5 * 60 * 1000,
+    });
+};
+
+export const useGetBookingStatistics = () => {
+    return useQuery({
+        queryKey: ['booking-statistics'],
+        queryFn: () => receptionAPI.getBookingStatistics(),
+        staleTime: 2 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        refetchInterval: 60 * 1000, // Refresh every minute
+    });
+};
+
+export const useCreateBooking = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data: CreateBookingRequest) => receptionAPI.createBooking(data),
+        onSuccess: () => {
+            message.success('Đặt phòng thành công');
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+        },
+        onError: (error: any) => {
+            message.error(`Lỗi tạo đặt phòng: ${error.response?.data?.message || error.message}`);
+        },
+    });
+};
+
+export const useUpdateBookingStatus = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ bookingId, status }: { bookingId: number; status: string }) =>
+            receptionAPI.updateBookingStatus(bookingId, status),
+        onSuccess: () => {
+            message.success('Cập nhật trạng thái đặt phòng thành công');
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+        },
+        onError: (error: any) => {
+            message.error(`Lỗi cập nhật trạng thái: ${error.response?.data?.message || error.message}`);
+        },
+    });
+};
+
+export const useCancelBooking = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (bookingId: number) => receptionAPI.cancelBooking(bookingId),
+        onSuccess: () => {
+            message.success('Hủy đặt phòng thành công');
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+        },
+        onError: (error: any) => {
+            message.error(`Lỗi hủy đặt phòng: ${error.response?.data?.message || error.message}`);
+        },
+    });
+};
+
+export const useGetAvailableRooms = (checkIn: string, checkOut: string) => {
+    return useQuery({
+        queryKey: ['available-rooms', checkIn, checkOut],
+        queryFn: () => receptionAPI.getAvailableRooms(checkIn, checkOut),
+        enabled: !!checkIn && !!checkOut,
+        staleTime: 1 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
     });
 };

@@ -1,43 +1,11 @@
 import React from 'react';
-import { Row, Col, Typography, Empty, Spin, Tooltip } from 'antd';
-import { UserOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Typography, Empty, Spin, Tooltip, Tag , Divider } from 'antd';
+import { UserOutlined, CalendarOutlined, HomeOutlined  } from '@ant-design/icons';
+import { statusColorMap, statusOptions } from '../../constants/roomStatus';
+import { Plane, Cake, Bed } from 'lucide-react';
 import dayjs from 'dayjs';
-import {
-    Bed,
-    DoorOpen,
-    UserRound,
-    Hammer,
-    Clock,
-    Ban,
-    BadgeCheck
-} from "lucide-react";
 
-const { Title } = Typography;
-
-// Định nghĩa màu sắc theo yêu cầu
-const statusColorMap = {
-    occupied: 'bg-red-500',      // 🔴 Phòng đang có khách
-    available: 'bg-green-500',   // 🟢 Phòng trống
-    cleaning: 'bg-orange-500',   // 🟠 Nghỉ giờ
-    deposited: 'bg-blue-500',    // 🔵 Khách đi cọc tiền
-    no_show: 'bg-purple-500',    // 🟣 No show
-    maintenance: 'bg-gray-400',  // ⚪ Phòng đang sửa
-    check_in: 'bg-blue-500',     // 🔵 Phòng đón khách
-    check_out: 'bg-orange-500',  // 🟠 Phòng trả
-};
-
-const statusIconMap = {
-    occupied: Bed,
-    available: DoorOpen,
-    cleaning: Clock,
-    deposited: BadgeCheck,
-    no_show: Ban,
-    maintenance: Hammer,
-    check_in: Bed,
-    check_out: DoorOpen,
-};
-useGetReceptionRooms({ include: 'room_type' })
-
+const { Text, Title } = Typography;
 
 interface RoomGridViewProps {
     rooms: any[];
@@ -84,13 +52,10 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     const formatDateRange = (checkIn: string, checkOut: string) => {
         return `${formatDate(checkIn)} - ${formatDate(checkOut)}`;
     };
-    const RoomCard: React.FC<{ room: any }> = ({ room }) => {
-        const statusColor = statusColorMap[room.status as keyof typeof statusColorMap] || 'bg-gray-400';
-        const statusIcon = statusIconMap[room.status as keyof typeof statusIconMap] || '⚪';
 
-        // Tạo mã phòng ngắn từ loại phòng
-        const roomCode = room.room_type?.name ? room.room_type.name.substring(0, 2).toUpperCase() : 'RM';
-        const IconComponent = statusIconMap[room.status as keyof typeof statusIconMap];
+    const RoomCard: React.FC<{ room: any }> = ({ room }) => {
+        const isOccupied = room.status === 'occupied';
+        const statusColor = statusColorMap[room.status as keyof typeof statusColorMap] || 'bg-gray-400';
 
         return (
             <Tooltip
@@ -98,7 +63,7 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
                     <div className="space-y-2">
                         <div><strong>Phòng:</strong> {room.name}</div>
                         <div><strong>Loại:</strong> {room.room_type?.name || 'N/A'}</div>
-                        <div><strong>Trạng thái:</strong> {room.status || 'N/A'}</div>
+                        <div><strong>Trạng thái:</strong> {statusOptions.find(s => s.value === room.status)?.label || room.status}</div>
                         <div><strong>Diện tích:</strong> {room.room_type?.room_area || 'N/A'} m²</div>
                         <div><strong>Sức chứa:</strong> {room.room_type?.max_guests || 'N/A'} khách</div>
                         {room.guestName && (
@@ -114,93 +79,83 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
                 }
                 placement="top"
             >
-                <div
-                    className={`
-                        ${statusColor} 
-                        rounded-xl 
-                        shadow-md 
-                        hover:shadow-lg 
-                        hover:scale-105 
-                        transition-all 
-                        duration-200 
-                        cursor-pointer 
-                        p-4 
-                        text-white 
-                        min-h-[120px]
-                        flex 
-                        flex-col 
-                        justify-between
-                    `}
+                <Card
+                    size="small"
+                    className={`cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 ${statusColor} text-white `}
                     onClick={() => onRoomClick?.(room)}
+                    bodyStyle={{ padding: '12px'  }}
                 >
-                    {/* Header: Icon và Số phòng */}
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="text-lg text-white/90">
-                            {IconComponent && <IconComponent size={20} />}
-                        </div>
-                        <div className="text-right">
-                            <div className="text-white font-semibold text-lg">
-                                {room.name}
+                    <div className="space-y-2">
+                        {/* Room number and code */}
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center space-x-2">
+                                <HomeOutlined className="text-white" />
+                                <Text className="text-white font-semibold text-sm">
+                                    {room.name}
+                                </Text>
+                                {room.room_type?.name && (
+                                    <Tag color="rgba(255,255,255,0.2)" className="text-white border-white text-xs">
+                                        {room.room_type.name.substring(0, 2).toUpperCase()}
+                                    </Tag>
+                                )}
                             </div>
-                            <div className="text-white/80 text-xs">
-                                {roomCode}
+                            <div className="opacity-75 text-white text-xs">
+                                 {statusOptions.find(s => s.value === room.status)?.label || room.status}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Giữa: Ngày check-in đến check-out */}
-                    <div className="text-center mb-2">
-                        {room.checkInDate && room.checkOutDate ? (
-                            <div className="text-white/90 text-sm">
-                                <CalendarOutlined className="mr-1" />
-                                {formatDateRange(room.checkInDate, room.checkOutDate)}
-                            </div>
-                        ) : (
-                            <div className="text-white/70 text-sm">
-                                {room.status === 'available' ? 'Sẵn sàng' :
-                                    room.status === 'maintenance' ? 'Bảo trì' :
-                                        room.status === 'cleaning' ? 'Dọn dẹp' : 'Trống'}
+                        {/* Guest information */}
+                        {isOccupied && room.guestName && (
+                            <div className="space-y-1">
+                                <div className="flex items-center space-x-1">
+                                    <UserOutlined className="text-white text-xs" />
+                                    <Text className="text-white text-xs truncate max-w-[120px]">
+                                        {room.guestName}
+                                    </Text>
+                                </div>
+
+                                {room.guestCount && (
+                                    <div className="text-white text-xs">
+                                        {room.guestCount} người
+                                    </div>
+                                )}
+
+                                {room.checkInDate && room.checkOutDate && (
+                                    <div className="flex items-center space-x-1">
+                                        <CalendarOutlined className="text-white text-xs" />
+                                        <Text className="text-white text-xs">
+                                            {formatDateRange(room.checkInDate, room.checkOutDate)}
+                                        </Text>
+                                    </div>
+                                )}
                             </div>
                         )}
-                    </div>
 
-                    {/* Footer: Thông tin khách */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                            <UserOutlined className="text-white/80 text-xs" />
-                            <span className="text-white/90 text-xs">
-                                {room.guestCount || 0}
-                            </span>
+                        {/* Room type */}
+                        <div className="text-white text-xs opacity-75 truncate">
+                            {room.room_type?.name || 'N/A'}
                         </div>
-                        {room.guestName && (
-                            <div className="text-white/90 text-xs truncate max-w-[80px]">
-                                {room.guestName}
-                            </div>
-                        )}
                     </div>
-                </div>
+                </Card>
             </Tooltip>
         );
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             {Object.entries(roomsByFloor)
                 .sort(([a], [b]) => Number(a) - Number(b))
                 .map(([floor, floorRooms]) => (
-                    <div key={floor} className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <Title level={3} className="mb-0 text-gray-700">
-                                🏢 Tầng {floor}
-                            </Title>
-                            <div className="text-sm text-gray-500">
-                                {(floorRooms as any[]).length} phòng
-                            </div>
-                        </div>
-                        <Row gutter={[16, 16]}>
+                    <div key={floor} className="space-y-5">
+                        <Divider orientation="left" plain>
+                        <Title level={4} className="mb-3 text-gray-700">
+                            Tầng {floor}
+                        </Title>
+                        </Divider>
+                        <Row gutter={[12, 12]}>
                             {(floorRooms as any[]).map((room: any) => (
-                                <Col key={room.id} xs={12} sm={8} md={6} lg={4} xl={3}>
-                                    <RoomCard room={room} />
+                                <Col key={room.id} xs={12} sm={8} md={6} lg={6} xl={4}>
+                                        <RoomCard room={room} />
                                 </Col>
                             ))}
                         </Row>

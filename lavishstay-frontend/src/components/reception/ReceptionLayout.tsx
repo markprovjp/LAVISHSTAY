@@ -34,13 +34,14 @@ const ReceptionLayout: React.FC = () => {
                     label: <Link to="/reception/room-management/today">Phòng hôm nay</Link>,
                 },
                 {
+                    key: '/reception/booking-management',
+                    label: <Link to="/reception/booking-management">Quản lý đặt phòng</Link>,
+                },
+                {
                     key: '/reception/room-management/payment-booking',
                     label: <Link to="/reception/room-management/payment-booking">Thanh toán đặt phòng</Link>,
                 },
-                {
-                    key: '/reception/room-management-list',
-                    label: <Link to="/reception/room-management-list">Danh sách phòng</Link>,
-                },
+
                 {
                     key: '/reception/confirm-representative-payment',
                     label: <Link to="/reception/confirm-representative-payment">Xác nhận thanh toán</Link>,

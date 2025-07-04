@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Layout, message, Modal, Descriptions, Tag } from 'antd';
+import { Layout, message, Modal, Descriptions, Tag, Button, Space } from 'antd';
+import { UnorderedListOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useRoomManagementStore } from '../../../stores/roomManagementStore';
 import { RoomFilters, FullCalendarEvent } from '../../../types/room';
 import FilterBar from '../../../components/room-management/FilterBar';
 import RoomGridView from '../../../components/room-management/RoomGridView';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
 import { useGetReceptionRooms, useGetReceptionRoomTypes } from '../../../hooks/useReception';
+import { statusOptions } from '../../../constants/roomStatus';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 
@@ -14,6 +17,7 @@ dayjs.locale('vi');
 const { Content } = Layout;
 
 const RoomManagementDashboard: React.FC = () => {
+    const navigate = useNavigate();
     const { viewMode } = useRoomManagementStore();
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [roomDetailVisible, setRoomDetailVisible] = useState(false);
@@ -84,11 +88,7 @@ const RoomManagementDashboard: React.FC = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                     <Tag color={statusColor}>
-                        {selectedRoom.status === 'available' ? 'Có thể thuê' :
-                            selectedRoom.status === 'occupied' ? 'Đang có khách' :
-                                selectedRoom.status === 'cleaning' ? 'Đang dọn dẹp' :
-                                    selectedRoom.status === 'maintenance' ? 'Bảo trì' :
-                                        selectedRoom.status || 'N/A'}
+                        {statusOptions.find(s => s.value === selectedRoom.status)?.label || selectedRoom.status}
                     </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="ID phòng">
@@ -125,16 +125,27 @@ const RoomManagementDashboard: React.FC = () => {
     };
 
     return (
-        <Layout className=" ">
-            <Content className="p-8">
+        <Layout className="50">
+            <Content className="p-6">
                 <div className="">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                             Quản lý phòng khách sạn
-                        </h1>
-                        <p className="text-gray-600 text-lg">
-                            Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng
-                        </p>
+                    <div className="mb-6 flex justify-between items-start">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                                Quản lý phòng khách sạn
+                            </h1>
+                            <p className="text-gray-600">
+                                Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng
+                            </p>
+                        </div>
+                        <Space>
+                            <Button
+                                type="primary"
+                                icon={<UnorderedListOutlined />}
+                                onClick={() => navigate('/reception/booking-management')}
+                            >
+                                Quản lý đặt phòng
+                            </Button>
+                        </Space>
                     </div>
 
                     <FilterBar
@@ -143,7 +154,7 @@ const RoomManagementDashboard: React.FC = () => {
                         loading={isLoading}
                     />
 
-                    <div className="bg-white rounded-2xl shadow-sm p-8 mt-6">
+                    <div className="bg-white rounded-lg shadow-sm p-6">
                         {viewMode === 'grid' ? (
                             <RoomGridView
                                 rooms={rooms}
@@ -160,20 +171,12 @@ const RoomManagementDashboard: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Room Detail Modal */}
                     <Modal
-                        title={
-                            <div className="flex items-center space-x-2">
-                                <span>Chi tiết phòng</span>
-                                {selectedRoom && (
-                                    <Tag color="blue">{selectedRoom.name || selectedRoom.number || selectedRoom.id}</Tag>
-                                )}
-                            </div>
-                        }
+                        title="Chi tiết phòng"
                         open={roomDetailVisible}
                         onCancel={handleCloseModal}
                         footer={null}
-                        width={700}
+                        width={800}
                     >
                         {renderRoomDetail()}
                     </Modal>
