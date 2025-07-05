@@ -37,10 +37,10 @@ const ReceptionLayout: React.FC = () => {
                     key: '/reception/booking-management',
                     label: <Link to="/reception/booking-management">Quản lý đặt phòng</Link>,
                 },
-                {
-                    key: '/reception/room-management/payment-booking',
-                    label: <Link to="/reception/room-management/payment-booking">Thanh toán đặt phòng</Link>,
-                },
+                // {
+                //     key: '/reception/room-management/payment-booking',
+                //     label: <Link to="/reception/room-management/payment-booking">Thanh toán đặt phòng</Link>,
+                // },
 
                 {
                     key: '/reception/confirm-representative-payment',
@@ -127,7 +127,7 @@ const ReceptionLayout: React.FC = () => {
                 />
             </Sider>
             <Layout style={{ marginLeft: collapsed ? 80 : 250, transition: 'margin-left 0.2s' }}>
-                <Content style={{  overflow: 'auto' }}>
+                <Content style={{ overflow: 'auto' }}>
                     <Outlet />
                 </Content>
             </Layout>

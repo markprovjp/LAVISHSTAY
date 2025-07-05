@@ -51,6 +51,7 @@ import {
     BookingPaymentStatus,
     BookingStatus
 } from '../../../types/booking';
+import BookingDetailModal from './BookingDetailModal';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 
@@ -177,7 +178,7 @@ const BookingManagement: React.FC = () => {
             title: 'Mã đặt phòng',
             dataIndex: 'booking_code',
             key: 'booking_code',
-            width: 120,
+            width: 160,
             render: (code: string) => (
                 <Text strong style={{ color: '#1890ff' }}>
                     {code}
@@ -223,7 +224,7 @@ const BookingManagement: React.FC = () => {
         {
             title: 'Thời gian',
             key: 'dates',
-            width: 180,
+            width: 120,
             render: (_, record) => (
                 <div>
                     <div style={{ marginBottom: 4 }}>
@@ -654,67 +655,17 @@ const BookingManagement: React.FC = () => {
                 </Modal>
 
                 {/* Booking Detail Modal */}
-                <Modal
-                    title="Chi tiết đặt phòng"
-                    open={isDetailModalVisible}
-                    onCancel={() => {
+                <BookingDetailModal
+                    visible={isDetailModalVisible}
+                    onClose={() => {
                         setIsDetailModalVisible(false);
                         setSelectedBooking(null);
                     }}
-                    footer={null}
-                    width={800}
-                >
-                    {selectedBooking && (
-                        <div>
-                            <Row gutter={[16, 16]}>
-                                <Col xs={24} sm={12}>
-                                    <Card title="Thông tin khách hàng" size="small">
-                                        <p><UserOutlined /> <strong>Tên:</strong> {selectedBooking.guest_name}</p>
-                                        <p><MailOutlined /> <strong>Email:</strong> {selectedBooking.guest_email}</p>
-                                        <p><PhoneOutlined /> <strong>Điện thoại:</strong> {selectedBooking.guest_phone}</p>
-                                        <p><strong>Số khách:</strong> {selectedBooking.guest_count}</p>
-                                    </Card>
-                                </Col>
-                                <Col xs={24} sm={12}>
-                                    <Card title="Thông tin phòng" size="small">
-                                        <p><HomeOutlined /> <strong>Phòng:</strong> {selectedBooking.room?.name}</p>
-                                        <p><strong>Loại phòng:</strong> {selectedBooking.room?.room_type?.name}</p>
-                                        <p><strong>Tầng:</strong> {selectedBooking.room?.floor}</p>
-                                    </Card>
-                                </Col>
-                                <Col xs={24} sm={12}>
-                                    <Card title="Thời gian" size="small">
-                                        <p><CalendarOutlined /> <strong>Nhận phòng:</strong> {dayjs(selectedBooking.check_in_date).format('DD/MM/YYYY')}</p>
-                                        <p><CalendarOutlined /> <strong>Trả phòng:</strong> {dayjs(selectedBooking.check_out_date).format('DD/MM/YYYY')}</p>
-                                        <p><strong>Số đêm:</strong> {dayjs(selectedBooking.check_out_date).diff(dayjs(selectedBooking.check_in_date), 'day')}</p>
-                                    </Card>
-                                </Col>
-                                <Col xs={24} sm={12}>
-                                    <Card title="Thanh toán" size="small">
-                                        <p><DollarOutlined /> <strong>Tổng tiền:</strong> {new Intl.NumberFormat('vi-VN').format(selectedBooking.total_amount)} ₫</p>
-                                        <p><strong>Trạng thái thanh toán:</strong>
-                                            <Tag color={paymentStatusConfig[selectedBooking.payment_status]?.color} style={{ marginLeft: 8 }}>
-                                                {paymentStatusConfig[selectedBooking.payment_status]?.text}
-                                            </Tag>
-                                        </p>
-                                        <p><strong>Trạng thái đặt phòng:</strong>
-                                            <Tag color={bookingStatusConfig[selectedBooking.booking_status]?.color} style={{ marginLeft: 8 }}>
-                                                {bookingStatusConfig[selectedBooking.booking_status]?.text}
-                                            </Tag>
-                                        </p>
-                                    </Card>
-                                </Col>
-                                {selectedBooking.special_requests && (
-                                    <Col xs={24}>
-                                        <Card title="Yêu cầu đặc biệt" size="small">
-                                            <p>{selectedBooking.special_requests}</p>
-                                        </Card>
-                                    </Col>
-                                )}
-                            </Row>
-                        </div>
-                    )}
-                </Modal>
+                    bookingId={selectedBooking?.id || null}
+                    onUpdate={() => {
+                        refetch();
+                    }}
+                />
             </Content>
         </Layout>
     );
