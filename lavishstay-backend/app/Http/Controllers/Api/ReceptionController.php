@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\PricingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +13,14 @@ use Carbon\Carbon;
 
 class ReceptionController extends Controller
 {
-    /**
+    protected $pricingService;
+
+    public function __construct(PricingService $pricingService)
+    {
+        $this->pricingService = $pricingService;
+    }
+    
+   /**
      * Get all rooms with filters for room management dashboard
      */
     public function getRooms(Request $request): JsonResponse
@@ -68,7 +76,10 @@ class ReceptionController extends Controller
             $rooms = $query->get();
 
             // Format response
-            $formattedRooms = $rooms->map(function ($room) {
+            $formattedRooms = $rooms->map(function ($room) use ($request) {
+                // Calculate adjusted price using the same logic as RoomTypeController
+                $adjustedPrice = $this->calculateAdjustedPrice($room->room_type_id, $request);
+                
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
@@ -81,6 +92,7 @@ class ReceptionController extends Controller
                         'name' => $room->room_type_name,
                         'description' => $room->room_type_description,
                         'base_price' => $room->base_price,
+                        'adjusted_price' => $adjustedPrice, // Add adjusted price
                         'room_area' => $room->room_area,
                         'max_guests' => $room->max_guests,
                     ],
@@ -677,66 +689,64 @@ class ReceptionController extends Controller
             ], 500);
         }
     }
-
     /**
      * Get all bookings with filters for booking management
      */
     public function getBookings(Request $request): JsonResponse
     {
         try {
-            $query = DB::table('booking_info')
-                ->leftJoin('room', 'booking_info.room_id', '=', 'room.room_id')
+            $query = DB::table('booking')
+                ->leftJoin('booking_rooms', 'booking.booking_id', '=', 'booking_rooms.booking_id')
+                ->leftJoin('room', 'booking_rooms.room_id', '=', 'room.room_id')
                 ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
-                ->leftJoin('customers', 'booking_info.customer_id', '=', 'customers.customer_id')
+                ->leftJoin('representatives', 'booking_rooms.representative_id', '=', 'representatives.id')
                 ->select([
-                    'booking_info.booking_id as id',
-                    'booking_info.booking_code',
-                    'booking_info.guest_name',
-                    'booking_info.guest_email',
-                    'booking_info.guest_phone',
-                    'booking_info.guest_count',
-                    'booking_info.room_id',
-                    'booking_info.check_in_date',
-                    'booking_info.check_out_date',
-                    'booking_info.total_amount',
-                    'booking_info.deposit_amount',
-                    'booking_info.payment_status',
-                    'booking_info.booking_status',
-                    'booking_info.payment_method',
-                    'booking_info.notes',
-                    'booking_info.special_requests',
-                    'booking_info.actual_check_in_time',
-                    'booking_info.actual_check_out_time',
-                    'booking_info.created_at',
-                    'booking_info.updated_at',
+                    'booking.booking_id as id',
+                    'booking.booking_code',
+                    'booking.guest_name',
+                    'booking.guest_email',
+                    'booking.guest_phone',
+                    'booking.guest_count',
+                    'booking.adults',
+                    'booking.children',
+                    'booking.children_age',
+                    'booking_rooms.room_id',
+                    'booking.check_in_date',
+                    'booking.check_out_date',
+                    'booking.total_price_vnd as total_amount',
+                    'booking.status as booking_status',
+                    'booking.created_at',
+                    'booking.updated_at',
                     'room.name as room_name',
                     'room.floor_id as room_floor',
                     'room_types.name as room_type_name',
                     'room_types.base_price as room_type_price',
                     'room_types.max_guests as room_type_max_guests',
-                    'customers.name as customer_name',
-                    'customers.email as customer_email'
+                    'representatives.full_name as representative_name'
                 ]);
 
             // Apply filters
             if ($request->has('guest_name') && !empty($request->guest_name)) {
-                $query->where('booking_info.guest_name', 'LIKE', '%' . $request->guest_name . '%');
+                $query->where('booking.guest_name', 'LIKE', '%' . $request->guest_name . '%');
             }
 
             if ($request->has('booking_code') && !empty($request->booking_code)) {
-                $query->where('booking_info.booking_code', 'LIKE', '%' . $request->booking_code . '%');
+                $query->where('booking.booking_code', 'LIKE', '%' . $request->booking_code . '%');
             }
 
+            // Lưu ý: Bảng booking không có trường payment_status theo schema
+            // Cần thêm bảng payment để lấy thông tin thanh toán
             if ($request->has('payment_status') && !empty($request->payment_status)) {
-                $query->where('booking_info.payment_status', $request->payment_status);
+                $query->leftJoin('payment', 'booking.booking_id', '=', 'payment.booking_id')
+                    ->where('payment.status', $request->payment_status);
             }
 
             if ($request->has('booking_status') && !empty($request->booking_status)) {
-                $query->where('booking_info.booking_status', $request->booking_status);
+                $query->where('booking.status', $request->booking_status);
             }
 
             if ($request->has('date_range') && is_array($request->date_range) && count($request->date_range) == 2) {
-                $query->whereBetween('booking_info.check_in_date', $request->date_range);
+                $query->whereBetween('booking.check_in_date', $request->date_range);
             }
 
             if ($request->has('room_number') && !empty($request->room_number)) {
@@ -744,30 +754,48 @@ class ReceptionController extends Controller
             }
 
             // Order by creation date (newest first)
-            $query->orderBy('booking_info.created_at', 'desc');
+            $query->orderBy('booking.created_at', 'desc');
 
             $bookings = $query->paginate($request->get('per_page', 20));
 
             // Transform data to match frontend expectations
-            $transformedBookings = $bookings->items();
-            foreach ($transformedBookings as &$booking) {
-                $booking->room = (object) [
-                    'id' => $booking->room_id,
-                    'name' => $booking->room_name,
-                    'floor' => $booking->room_floor,
-                    'room_type' => (object) [
-                        'name' => $booking->room_type_name,
-                        'base_price' => $booking->room_type_price,
-                        'max_guests' => $booking->room_type_max_guests
+            $transformedBookings = [];
+            foreach ($bookings->items() as $booking) {
+                // Lấy thông tin payment status từ bảng payment
+                $paymentInfo = DB::table('payment')
+                    ->where('booking_id', $booking->id)
+                    ->latest()
+                    ->first();
+
+                $transformedBookings[] = [
+                    'id' => $booking->id,
+                    'booking_code' => $booking->booking_code,
+                    'guest_name' => $booking->guest_name,
+                    'guest_email' => $booking->guest_email,
+                    'guest_phone' => $booking->guest_phone,
+                    'guest_count' => $booking->guest_count,
+                    'adults' => $booking->adults ?? 1,
+                    'children' => $booking->children ?? 0,
+                    'children_age' => $booking->children_age ? json_decode($booking->children_age, true) : [],
+                    'room_id' => $booking->room_id,
+                    'check_in_date' => $booking->check_in_date,
+                    'check_out_date' => $booking->check_out_date,
+                    'total_amount' => $booking->total_amount,
+                    'booking_status' => $booking->booking_status,
+                    'payment_status' => $paymentInfo ? $paymentInfo->status : 'pending',
+                    'created_at' => $booking->created_at,
+                    'updated_at' => $booking->updated_at,
+                    'room' => [
+                        'id' => $booking->room_id,
+                        'name' => $booking->room_name,
+                        'floor' => $booking->room_floor,
+                        'room_type' => [
+                            'name' => $booking->room_type_name,
+                            'base_price' => $booking->room_type_price,
+                            'max_guests' => $booking->room_type_max_guests
+                        ]
                     ]
                 ];
-                
-                // Clean up redundant fields
-                unset($booking->room_name);
-                unset($booking->room_floor);
-                unset($booking->room_type_name);
-                unset($booking->room_type_price);
-                unset($booking->room_type_max_guests);
             }
 
             return response()->json([
@@ -788,31 +816,30 @@ class ReceptionController extends Controller
             ], 500);
         }
     }
+    
 
     /**
-     * Get booking statistics for dashboard
-     */
+    * Get booking statistics for dashboard
+    */
     public function getBookingStatistics(): JsonResponse
     {
         try {
             $statistics = [
-                'total_bookings' => DB::table('booking_info')->count(),
-                'pending_bookings' => DB::table('booking_info')->where('booking_status', 'pending')->count(),
-                'confirmed_bookings' => DB::table('booking_info')->where('booking_status', 'confirmed')->count(),
-                'checked_in_bookings' => DB::table('booking_info')->where('booking_status', 'checked_in')->count(),
-                'checked_out_bookings' => DB::table('booking_info')->where('booking_status', 'checked_out')->count(),
-                'cancelled_bookings' => DB::table('booking_info')->where('booking_status', 'cancelled')->count(),
-                'total_revenue' => DB::table('booking_info')
-                    ->whereIn('booking_status', ['confirmed', 'checked_in', 'checked_out'])
-                    ->where('payment_status', 'paid')
-                    ->sum('total_amount'),
-                'pending_revenue' => DB::table('booking_info')
-                    ->where('booking_status', 'pending')
-                    ->sum('total_amount'),
-                'confirmed_revenue' => DB::table('booking_info')
-                    ->where('booking_status', 'confirmed')
-                    ->where('payment_status', 'paid')
-                    ->sum('total_amount')
+                'total_bookings' => DB::table('booking')->count(),
+                'pending_bookings' => DB::table('booking')->where('status', 'pending')->count(),
+                'confirmed_bookings' => DB::table('booking')->where('status', 'confirmed')->count(),
+                'completed_bookings' => DB::table('booking')->where('status', 'completed')->count(), // Sửa từ checked_in/checked_out
+                'cancelled_bookings' => DB::table('booking')->where('status', 'cancelled')->count(),
+                'total_revenue' => DB::table('booking')
+                    ->join('payment', 'booking.booking_id', '=', 'payment.booking_id')
+                    ->where('payment.status', 'completed')
+                    ->sum('payment.amount_vnd'),
+                'pending_revenue' => DB::table('booking')
+                    ->where('status', 'pending')
+                    ->sum('total_price_vnd'), // Sửa từ total_amount thành total_price_vnd
+                'confirmed_revenue' => DB::table('booking')
+                    ->where('status', 'confirmed')
+                    ->sum('total_price_vnd') // Sửa từ total_amount thành total_price_vnd
             ];
 
             return response()->json([
@@ -831,13 +858,13 @@ class ReceptionController extends Controller
     }
 
     /**
-     * Update booking status
-     */
+    * Update booking status
+    */
     public function updateBookingStatus(Request $request, $bookingId): JsonResponse
     {
         try {
             $validator = Validator::make($request->all(), [
-                'status' => 'required|string|in:pending,confirmed,checked_in,checked_out,cancelled,no_show'
+                'status' => 'required|string|in:pending,confirmed,completed,cancelled'
             ]);
 
             if ($validator->fails()) {
@@ -851,7 +878,7 @@ class ReceptionController extends Controller
             DB::beginTransaction();
 
             try {
-                $booking = DB::table('booking_info')->where('booking_id', $bookingId)->first();
+                $booking = DB::table('booking')->where('booking_id', $bookingId)->first();
                 
                 if (!$booking) {
                     return response()->json([
@@ -861,26 +888,33 @@ class ReceptionController extends Controller
                 }
 
                 // Update booking status
-                DB::table('booking_info')
+                DB::table('booking')
                     ->where('booking_id', $bookingId)
                     ->update([
-                        'booking_status' => $request->status,
+                        'status' => $request->status,
                         'updated_at' => Carbon::now()
                     ]);
 
-                // Update room status based on booking status
-                if ($request->status === 'checked_in') {
-                    DB::table('room')
-                        ->where('room_id', $booking->room_id)
-                        ->update(['status' => 'occupied']);
-                } elseif ($request->status === 'checked_out') {
-                    DB::table('room')
-                        ->where('room_id', $booking->room_id)
-                        ->update(['status' => 'cleaning']);
-                } elseif ($request->status === 'cancelled') {
-                    DB::table('room')
-                        ->where('room_id', $booking->room_id)
-                        ->update(['status' => 'available']);
+                // Get room_id from booking_rooms table
+                $bookingRoom = DB::table('booking_rooms')
+                    ->where('booking_id', $bookingId)
+                    ->first();
+
+                if ($bookingRoom) {
+                    // Update room status based on booking status
+                    if ($request->status === 'confirmed') {
+                        DB::table('room')
+                            ->where('room_id', $bookingRoom->room_id)
+                            ->update(['status' => 'occupied']);
+                    } elseif ($request->status === 'completed') {
+                        DB::table('room')
+                            ->where('room_id', $bookingRoom->room_id)
+                            ->update(['status' => 'cleaning']);
+                    } elseif ($request->status === 'cancelled') {
+                        DB::table('room')
+                            ->where('room_id', $bookingRoom->room_id)
+                            ->update(['status' => 'available']);
+                    }
                 }
 
                 DB::commit();
@@ -910,15 +944,15 @@ class ReceptionController extends Controller
     }
 
     /**
-     * Cancel booking
-     */
+    * Cancel booking
+    */
     public function cancelBooking($bookingId): JsonResponse
     {
         try {
             DB::beginTransaction();
 
             try {
-                $booking = DB::table('booking_info')->where('booking_id', $bookingId)->first();
+                $booking = DB::table('booking')->where('booking_id', $bookingId)->first();
                 
                 if (!$booking) {
                     return response()->json([
@@ -927,25 +961,31 @@ class ReceptionController extends Controller
                     ], 404);
                 }
 
-                if ($booking->booking_status === 'checked_in') {
+                if ($booking->status === 'completed') {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Cannot cancel booking that is already checked in'
+                        'message' => 'Cannot cancel completed booking'
                     ], 400);
                 }
 
                 // Update booking status to cancelled
-                DB::table('booking_info')
+                DB::table('booking')
                     ->where('booking_id', $bookingId)
                     ->update([
-                        'booking_status' => 'cancelled',
+                        'status' => 'cancelled',
                         'updated_at' => Carbon::now()
                     ]);
 
-                // Make room available again
-                DB::table('room')
-                    ->where('room_id', $booking->room_id)
-                    ->update(['status' => 'available']);
+                // Get room_id from booking_rooms table and make room available again
+                $bookingRoom = DB::table('booking_rooms')
+                    ->where('booking_id', $bookingId)
+                    ->first();
+
+                if ($bookingRoom) {
+                    DB::table('room')
+                        ->where('room_id', $bookingRoom->room_id)
+                        ->update(['status' => 'available']);
+                }
 
                 DB::commit();
 
@@ -974,117 +1014,241 @@ class ReceptionController extends Controller
     }
 
     /**
-     * Create new booking from reception
+    * Get detailed booking information with all rooms
+    */
+    public function getBookingDetails($bookingId): JsonResponse
+    {
+        try {
+            // Get booking information
+            $booking = DB::table('booking')
+                ->where('booking_id', $bookingId)
+                ->first();
+
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking not found'
+                ], 404);
+            }
+
+            // Get payment information
+            $paymentInfo = DB::table('payment')
+                ->where('booking_id', $bookingId)
+                ->latest()
+                ->first();
+
+            // Get all rooms for this booking
+            $bookingRooms = DB::table('booking_rooms')
+                ->leftJoin('room', 'booking_rooms.room_id', '=', 'room.room_id')
+                ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
+                ->leftJoin('representatives', 'booking_rooms.representative_id', '=', 'representatives.id')
+                ->where('booking_rooms.booking_id', $bookingId)
+                ->select([
+                    'booking_rooms.id as booking_room_id',
+                    'booking_rooms.room_id',
+                    'booking_rooms.price_per_night',
+                    'booking_rooms.nights',
+                    'booking_rooms.total_price',
+                    'booking_rooms.check_in_date',
+                    'booking_rooms.check_out_date',
+                    'room.name as room_name',
+                    'room.floor_id as room_floor',
+                    'room.status as room_status',
+                    'room_types.name as room_type_name',
+                    'room_types.base_price as room_type_price',
+                    'room_types.max_guests as room_type_max_guests',
+                    'representatives.full_name as representative_name'
+                ])
+                ->get();
+
+            $transformedBookingRooms = [];
+            foreach ($bookingRooms as $room) {
+                $transformedBookingRooms[] = [
+                    'booking_room_id' => $room->booking_room_id,
+                    'room_id' => $room->room_id,
+                    'room_name' => $room->room_name,
+                    'room_floor' => $room->room_floor,
+                    'room_status' => $room->room_status,
+                    'room_type_name' => $room->room_type_name,
+                    'room_type_price' => $room->room_type_price,
+                    'max_guests' => $room->room_type_max_guests,
+                    'price_per_night' => $room->price_per_night,
+                    'nights' => $room->nights,
+                    'total_price' => $room->total_price,
+                    'check_in_date' => $room->check_in_date,
+                    'check_out_date' => $room->check_out_date,
+                    'representative_name' => $room->representative_name
+                ];
+            }
+
+            $bookingDetails = [
+                'id' => $booking->booking_id,
+                'booking_code' => $booking->booking_code,
+                'guest_name' => $booking->guest_name,
+                'guest_email' => $booking->guest_email,
+                'guest_phone' => $booking->guest_phone,
+                'guest_count' => $booking->guest_count,
+                'adults' => $booking->adults ?? 1,
+                'children' => $booking->children ?? 0,
+                'children_age' => $booking->children_age ? json_decode($booking->children_age, true) : [],
+                'check_in_date' => $booking->check_in_date,
+                'check_out_date' => $booking->check_out_date,
+                'total_price_vnd' => $booking->total_price_vnd,
+                'status' => $booking->status,
+                'quantity' => $booking->quantity,
+                'created_at' => $booking->created_at,
+                'updated_at' => $booking->updated_at,
+                'payment_status' => $paymentInfo ? $paymentInfo->status : 'pending',
+                'payment_type' => $paymentInfo ? $paymentInfo->payment_type : null,
+                'booking_rooms' => $transformedBookingRooms
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $bookingDetails
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching booking details: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching booking details',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    /**
+     * Create a new booking with multiple rooms and representatives
      */
-    public function createReceptionBooking(Request $request): JsonResponse
+    public function createBooking(Request $request): JsonResponse
     {
         try {
             $validator = Validator::make($request->all(), [
-                'guest_name' => 'required|string|max:255',
-                'guest_email' => 'required|email|max:255',
-                'guest_phone' => 'required|string|max:20',
-                'guest_count' => 'required|integer|min:1',
-                'room_id' => 'required|integer|exists:room,room_id',
-                'check_in_date' => 'required|date|after_or_equal:today',
-                'check_out_date' => 'required|date|after:check_in_date',
-                'payment_method' => 'required|string|in:cash,bank_transfer,credit_card,vnpay',
-                'special_requests' => 'nullable|string|max:1000',
-                'deposit_amount' => 'nullable|numeric|min:0'
+                'rooms' => 'required|array|min:1',
+                'rooms.*.id' => 'required|string',
+                'rooms.*.name' => 'required|string',
+                'rooms.*.room_type' => 'required|array',
+                'rooms.*.room_type.adjusted_price' => 'required|numeric',
+                'representatives' => 'required|array',
+                'checkInDate' => 'required|date',
+                'checkOutDate' => 'required|date|after:checkInDate',
+                'guestCount' => 'required|integer|min:1',
+                'subtotal' => 'required|numeric',
+                'representativeMode' => 'required|in:individual,all',
+                'bookingData' => 'sometimes|array',
+                'bookingData.adults' => 'sometimes|integer|min:1',
+                'bookingData.children' => 'sometimes|array',
+                'bookingData.children.*.age' => 'sometimes|integer|min:0|max:12',
+                'bookingData.notes' => 'sometimes|string|nullable'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation error',
+                    'message' => 'Validation failed',
                     'errors' => $validator->errors()
-                ], 422);
+                ], 400);
             }
 
             DB::beginTransaction();
 
             try {
-                // Check room availability
-                $checkInDate = Carbon::parse($request->check_in_date);
-                $checkOutDate = Carbon::parse($request->check_out_date);
-                
-                $conflictingBookings = DB::table('booking_info')
-                    ->where('room_id', $request->room_id)
-                    ->where('booking_status', '!=', 'cancelled')
-                    ->where(function ($query) use ($checkInDate, $checkOutDate) {
-                        $query->whereBetween('check_in_date', [$checkInDate->format('Y-m-d'), $checkOutDate->format('Y-m-d')])
-                              ->orWhereBetween('check_out_date', [$checkInDate->format('Y-m-d'), $checkOutDate->format('Y-m-d')])
-                              ->orWhere(function ($q) use ($checkInDate, $checkOutDate) {
-                                  $q->where('check_in_date', '<=', $checkInDate->format('Y-m-d'))
-                                    ->where('check_out_date', '>=', $checkOutDate->format('Y-m-d'));
-                              });
-                    })
-                    ->exists();
-
-                if ($conflictingBookings) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Room is not available for the selected dates'
-                    ], 400);
-                }
-
-                // Get room and room type details for pricing
-                $room = DB::table('room')
-                    ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
-                    ->where('room.room_id', $request->room_id)
-                    ->select('room.*', 'room_types.base_price')
-                    ->first();
-
-                if (!$room) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Room not found'
-                    ], 404);
-                }
-
-                // Calculate total amount (simple calculation - can be enhanced with pricing rules)
-                $nights = $checkInDate->diffInDays($checkOutDate);
-                $totalAmount = $room->base_price * $nights;
-
                 // Generate booking code
-                $bookingCode = 'BK' . date('Ymd') . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                $bookingCode = 'LVS' . date('YmdHis') . rand(100, 999);
+                
+                // Get main representative (for 'all' mode use 'all' key, for individual use first room)
+                $mainRepresentative = $request->representativeMode === 'all' 
+                    ? $request->representatives['all'] 
+                    : reset($request->representatives);
 
-                // Create booking
-                $bookingId = DB::table('booking_info')->insertGetId([
+                // Get booking data if available
+                $bookingData = $request->bookingData ?? null;
+                $adults = $bookingData['adults'] ?? 1;
+                $children = $bookingData['children'] ?? [];
+                $notes = $bookingData['notes'] ?? null;
+
+                // Prepare children ages array
+                $childrenAges = [];
+                if ($bookingData && isset($bookingData['children']) && is_array($bookingData['children'])) {
+                    foreach ($bookingData['children'] as $child) {
+                        if (isset($child['age'])) {
+                            $childrenAges[] = $child['age'];
+                        }
+                    }
+                }
+
+                // Create main booking record with children info
+                $bookingId = DB::table('booking')->insertGetId([
                     'booking_code' => $bookingCode,
-                    'guest_name' => $request->guest_name,
-                    'guest_email' => $request->guest_email,
-                    'guest_phone' => $request->guest_phone,
-                    'guest_count' => $request->guest_count,
-                    'room_id' => $request->room_id,
-                    'check_in_date' => $checkInDate->format('Y-m-d'),
-                    'check_out_date' => $checkOutDate->format('Y-m-d'),
-                    'total_amount' => $totalAmount,
-                    'deposit_amount' => $request->deposit_amount ?? 0,
-                    'payment_status' => $request->payment_method === 'cash' ? 'pending' : 'pending',
-                    'booking_status' => 'pending',
-                    'payment_method' => $request->payment_method,
-                    'special_requests' => $request->special_requests,
-                    'booking_source' => 'reception',
+                    'guest_name' => $mainRepresentative['fullName'],
+                    'guest_email' => $mainRepresentative['email'],
+                    'guest_phone' => $mainRepresentative['phoneNumber'],
+                    'guest_count' => $request->guestCount,
+                    'check_in_date' => $request->checkInDate,
+                    'check_out_date' => $request->checkOutDate,
+                    'total_price_vnd' => $request->subtotal,
+                    'status' => 'pending',
+                    'quantity' => count($request->rooms),
+                    'adults' => $adults,
+                    'children' => count($childrenAges),
+                    'children_age' => !empty($childrenAges) ? json_encode($childrenAges) : null,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);
 
-                // Update room status
+                // Create booking room records
+                foreach ($request->rooms as $room) {
+                    $representative = $request->representativeMode === 'all' 
+                        ? $request->representatives['all'] 
+                        : $request->representatives[$room['id']];
+
+                    $nights = Carbon::parse($request->checkOutDate)->diffInDays(Carbon::parse($request->checkInDate));
+                    $totalPrice = $room['room_type']['adjusted_price'] * $nights;
+
+                    // Insert into booking_rooms table (without children info)
+                    DB::table('booking_rooms')->insert([
+                        'booking_id' => $bookingId,
+                        'booking_code' => $bookingCode,
+                        'room_id' => $room['id'],
+                        'price_per_night' => $room['room_type']['adjusted_price'],
+                        'nights' => $nights,
+                        'total_price' => $totalPrice,
+                        'check_in_date' => $request->checkInDate,
+                        'check_out_date' => $request->checkOutDate,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()
+                    ]);
+
+                    // Insert representative information
+                    DB::table('representatives')->insert([
+                        'booking_id' => $bookingId,
+                        'room_id' => $room['id'],
+                        'full_name' => $representative['fullName'],
+                        'phone_number' => $representative['phoneNumber'],
+                        'email' => $representative['email'],
+                        'id_card' => $representative['idCard'],
+                        'notes' => $notes,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()
+                    ]);
+                }
+
+                // Update room status to 'deposited'
+                $roomIds = array_column($request->rooms, 'id');
                 DB::table('room')
-                    ->where('room_id', $request->room_id)
-                    ->update(['status' => 'reserved']);
+                    ->whereIn('room_id', $roomIds)
+                    ->update(['status' => 'deposited', 'updated_at' => Carbon::now()]);
 
                 DB::commit();
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Booking created successfully',
-                    'data' => [
-                        'booking_id' => $bookingId,
-                        'booking_code' => $bookingCode,
-                        'total_amount' => $totalAmount,
-                        'nights' => $nights
-                    ]
+                    'booking_code' => $bookingCode,
+                    'booking_id' => $bookingId,
+                    'payment_content' => "LAVISHSTAY_$bookingCode"
                 ]);
 
             } catch (\Exception $e) {
@@ -1093,7 +1257,7 @@ class ReceptionController extends Controller
             }
 
         } catch (\Exception $e) {
-            Log::error('Error creating reception booking: ' . $e->getMessage());
+            Log::error('Error creating booking: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error creating booking',
@@ -1101,4 +1265,44 @@ class ReceptionController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Calculate adjusted price for room type based on current date or provided date
+     * Same logic as RoomTypeController
+     */
+    private function calculateAdjustedPrice($roomTypeId, $request)
+    {
+        try {
+            $roomType = DB::table('room_types')->where('room_type_id', $roomTypeId)->first();
+            if (!$roomType) {
+                return 1200000; // Fallback price
+            }
+
+            $basePrice = $roomType->base_price;
+            
+            // Use provided date or default to tomorrow
+            $targetDate = $request->date ?? $request->check_in_date ?? Carbon::now()->addDay()->format('Y-m-d');
+            $date = Carbon::parse($targetDate);
+
+            // Calculate night price using PricingService
+            $nightPrice = $this->pricingService->calculateNightPrice(
+                $roomTypeId,
+                $date,
+                $basePrice
+            );
+
+            return $nightPrice['adjusted_price'] ?? $basePrice;
+
+        } catch (\Exception $e) {
+            Log::error('Error calculating adjusted price: ' . $e->getMessage(), [
+                'room_type_id' => $roomTypeId,
+                'date' => $targetDate ?? 'not provided'
+            ]);
+
+            // Fallback to base price
+            $roomType = DB::table('room_types')->where('room_type_id', $roomTypeId)->first();
+            return $roomType ? $roomType->base_price : 1200000;
+        }
+    }
+
 }
