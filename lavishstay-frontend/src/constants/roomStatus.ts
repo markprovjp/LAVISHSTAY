@@ -25,13 +25,14 @@ export const statusTextMap: Record<RoomStatus, string> = {
 };
 
 export const statusOptions = [
-    { value: 'available', label: 'Phòng trống', color: '#52c41a' },
-    { value: 'check_in', label: 'Phòng đón khách', color: '#1890ff' },
-    { value: 'occupied', label: 'Khách nghỉ ngơi', color: '#52c41a' },
-    { value: 'check_out', label: 'Phòng đang có khách ở', color: '#722ed1' },
+    { value: 'available', label: 'Có sẵn', color: '#52c41a' },
+    { value: 'occupied', label: 'Đã có khách', color: '#f5222d' },
+    { value: 'maintenance', label: 'Bảo trì', color: '#8c8c8c' },
+    { value: 'cleaning', label: 'Đang dọn dẹp', color: '#fa8c16' },
+    { value: 'deposited', label: 'Đã cọc tiền', color: '#faad14' },
     { value: 'no_show', label: 'Không đến', color: '#ff4d4f' },
-    { value: 'maintenance', label: 'Phòng đang sửa', color: '#8c8c8c' },
-    { value: 'deposited', label: 'Khách đã cọc tiền', color: '#faad14' },
+    { value: 'check_in', label: 'Đón khách', color: '#1890ff' },
+    { value: 'check_out', label: 'Trả phòng', color: '#722ed1' },
 ];
 
 export const fullCalendarStatusColors = {

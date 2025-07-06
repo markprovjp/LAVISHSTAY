@@ -11,7 +11,6 @@ import {
     App,
     Table,
     Tag,
-    Radio,
     Divider
 } from 'antd';
 import {
@@ -75,9 +74,10 @@ const ConfirmRepresentativePayment: React.FC = () => {
         guestCount?: number;
         checkInDate?: string;
         checkOutDate?: string;
+        quickBookNights?: number;
         bookingData?: {
-            checkInDate: string;
-            checkOutDate: string;
+            checkInDate?: string;
+            checkOutDate?: string;
             adults: number;
             children: Array<{ age: number }>;
             notes?: string;
@@ -94,25 +94,46 @@ const ConfirmRepresentativePayment: React.FC = () => {
         bookingData.adults + bookingData.children.length :
         (navigationState.guestCount || 2);
 
+    // Ưu tiên: bookingData -> Redux dateRange -> navigationState -> quickBook fallback
     const checkInDate = bookingData?.checkInDate ? dayjs(bookingData.checkInDate) :
-        (navigationState.checkInDate ? dayjs(navigationState.checkInDate) :
-            (reduxDateRange[0] ? dayjs(reduxDateRange[0]) : null));
-    const checkOutDate = bookingData?.checkOutDate ? dayjs(bookingData.checkOutDate) :
-        (navigationState.checkOutDate ? dayjs(navigationState.checkOutDate) :
-            (reduxDateRange[1] ? dayjs(reduxDateRange[1]) : null));
+        (reduxDateRange[0] ? dayjs(reduxDateRange[0]) :
+            (navigationState.checkInDate ? dayjs(navigationState.checkInDate) :
+                // Nếu là quick book, dùng ngày hiện tại
+                (navigationState.quickBookNights ? dayjs() : null)));
 
-    // State management
-    const [representatives, setRepresentatives] = useState<Record<string, RepresentativeInfo>>({});
+    const checkOutDate = bookingData?.checkOutDate ? dayjs(bookingData.checkOutDate) :
+        (reduxDateRange[1] ? dayjs(reduxDateRange[1]) :
+            (navigationState.checkOutDate ? dayjs(navigationState.checkOutDate) :
+                // Nếu là quick book, tính từ check-in + số đêm
+                (navigationState.quickBookNights && checkInDate ?
+                    checkInDate.add(navigationState.quickBookNights, 'day') : null)));
+
+    // State management - đơn giản hóa chỉ cần một người đại diện cho tất cả
+    const [representative, setRepresentative] = useState<RepresentativeInfo | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [currentRoomId, setCurrentRoomId] = useState<string>('');
-    const [representativeMode, setRepresentativeMode] = useState<'individual' | 'all'>('individual');
+
+    // Debug logging
+    console.log('Debug ConfirmRepresentativePayment:', {
+        navigationState,
+        reduxDateRange,
+        bookingData,
+        checkInDate: checkInDate?.format('YYYY-MM-DD'),
+        checkOutDate: checkOutDate?.format('YYYY-MM-DD')
+    });
 
     // Calculate booking details
-    const nights = checkInDate && checkOutDate ? checkOutDate.diff(checkInDate, 'day') : 1;
+    // Ưu tiên sử dụng quickBookNights nếu có, nếu không thì tính từ ngày check-in/out
+    const nights = navigationState.quickBookNights ||
+        (checkInDate && checkOutDate ? checkOutDate.diff(checkInDate, 'day') : 1);
+
+    // Tính ngày check-out cuối cùng
+    const finalCheckOutDate = checkOutDate ||
+        (checkInDate ? checkInDate.add(nights, 'day') : dayjs().add(nights, 'day'));
+
     const roomsWithBookingInfo = roomsList.map(room => ({
         ...room,
         checkIn: checkInDate?.format('YYYY-MM-DD') || '',
-        checkOut: checkOutDate?.format('YYYY-MM-DD') || '',
+        checkOut: finalCheckOutDate?.format('YYYY-MM-DD') || '',
         nights,
         totalPrice: (room.room_type?.adjusted_price || 0) * nights
     }));
@@ -120,21 +141,16 @@ const ConfirmRepresentativePayment: React.FC = () => {
     const subtotal = roomsWithBookingInfo.reduce((sum, room) => sum + room.totalPrice, 0);
     const selectedCount = roomsList.length;
 
-    // Check if proceed button should be enabled
-    const canProceed = selectedCount > 0 && (
-        representativeMode === 'all'
-            ? representatives['all'] !== undefined
-            : roomsList.every(room => representatives[room.id])
-    );
+    // Check if proceed button should be enabled - chỉ cần có representative
+    const canProceed = selectedCount > 0 && representative !== null;
 
-    // Handle representative modal
-    const handleAddRepresentative = (roomId: string = 'all') => {
-        setCurrentRoomId(roomId);
+    // Handle representative modal - đơn giản hóa
+    const handleAddRepresentative = () => {
         setIsModalVisible(true);
 
         // If editing existing representative, populate form
-        if (representatives[roomId]) {
-            form.setFieldsValue(representatives[roomId]);
+        if (representative) {
+            form.setFieldsValue(representative);
         } else {
             form.resetFields();
         }
@@ -143,23 +159,7 @@ const ConfirmRepresentativePayment: React.FC = () => {
     const handleSaveRepresentative = async () => {
         try {
             const values = await form.validateFields();
-
-            if (representativeMode === 'all') {
-                // Set same representative for all rooms
-                const newRepresentatives: Record<string, RepresentativeInfo> = {};
-                roomsList.forEach(room => {
-                    newRepresentatives[room.id] = values;
-                });
-                newRepresentatives['all'] = values; // Keep a reference
-                setRepresentatives(newRepresentatives);
-            } else {
-                // Set representative for specific room
-                setRepresentatives({
-                    ...representatives,
-                    [currentRoomId]: values
-                });
-            }
-
+            setRepresentative(values);
             setIsModalVisible(false);
             form.resetFields();
             message.success('Thông tin người đại diện được lưu thành công');
@@ -181,26 +181,45 @@ const ConfirmRepresentativePayment: React.FC = () => {
         }
 
         try {
-            // Prepare booking data
+            // Prepare booking data - match backend validation exactly
             const apiData = {
-                rooms: roomsWithBookingInfo,
-                representatives,
-                subtotal,
-                guestCount: totalGuestCount,
+                rooms: roomsWithBookingInfo.map(room => ({
+                    id: String(room.id), // Backend expects string
+                    name: room.name,
+                    room_type: {
+                        adjusted_price: room.room_type?.adjusted_price || 0
+                    }
+                })),
+                representatives: {
+                    all: representative // Backend expects representatives object with 'all' key
+                },
                 checkInDate: checkInDate?.format('YYYY-MM-DD'),
-                checkOutDate: checkOutDate?.format('YYYY-MM-DD'),
-                representativeMode,
+                checkOutDate: finalCheckOutDate?.format('YYYY-MM-DD'),
+                guestCount: totalGuestCount,
+                subtotal: subtotal,
+                representativeMode: 'all', // Always use 'all' mode
                 bookingData: bookingData ? {
                     adults: bookingData.adults,
                     children: bookingData.children,
                     notes: bookingData.notes
-                } : null
+                } : {
+                    adults: 1,
+                    children: [],
+                    notes: null
+                }
             };
 
             console.log('Saving booking data:', apiData);
+            console.log('Debug calculated values:', {
+                nights,
+                finalCheckOutDate: finalCheckOutDate?.format('YYYY-MM-DD'),
+                checkInDate: checkInDate?.format('YYYY-MM-DD'),
+                subtotal,
+                representative
+            });
 
             // Call API to create booking
-            const response = await fetch('http://localhost:8000/api/reception/bookings/create', {
+            const response = await fetch('http://localhost:8888/api/reception/bookings/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -210,7 +229,9 @@ const ConfirmRepresentativePayment: React.FC = () => {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                console.error('API Error Response:', errorData);
+                throw new Error(`HTTP error! status: ${response.status}. ${errorData.message || 'Unknown error'}`);
             }
 
             const result = await response.json();
@@ -299,21 +320,21 @@ const ConfirmRepresentativePayment: React.FC = () => {
         {
             title: 'Người đại diện',
             key: 'representative',
-            render: (_: any, room: any) => {
-                const hasRepresentative = representativeMode === 'all' ? representatives['all'] : representatives[room.id];
-                return hasRepresentative ? (
+            render: () => {
+                // Tất cả phòng đều dùng cùng một người đại diện
+                return representative ? (
                     <Button
                         icon={<Edit3 size={16} />}
-                        onClick={() => handleAddRepresentative(representativeMode === 'all' ? 'all' : room.id)}
+                        onClick={() => handleAddRepresentative()}
                         size="small"
                     >
-                        {hasRepresentative.fullName}
+                        {representative.fullName}
                     </Button>
                 ) : (
                     <Button
                         icon={<Clipboard size={16} />}
                         type="primary"
-                        onClick={() => handleAddRepresentative(representativeMode === 'all' ? 'all' : room.id)}
+                        onClick={() => handleAddRepresentative()}
                         size="small"
                     >
                         Thêm
@@ -329,61 +350,29 @@ const ConfirmRepresentativePayment: React.FC = () => {
                 Xác nhận thông tin người đại diện và đặt phòng
             </Title>
 
-            {/* Representative Mode Selection */}
-            <Card className="mb-6 shadow-sm" title="Chế độ người đại diện">
-                <Radio.Group
-                    value={representativeMode}
-                    onChange={(e) => {
-                        setRepresentativeMode(e.target.value);
-                        setRepresentatives({}); // Clear existing representatives when switching mode
-                    }}
-                    className="w-full"
-                >
-                    <Space direction="vertical" className="w-full">
-                        <Radio value="individual">
-                            <div>
-                                <Text strong>Một người đại diện cho mỗi phòng</Text>
-                                <br />
-                                <Text type="secondary" className="text-sm">
-                                    Phù hợp khi khách đặt từng phòng riêng biệt
-                                </Text>
-                            </div>
-                        </Radio>
-                        <Radio value="all">
-                            <div>
-                                <Text strong>Một người đại diện cho tất cả phòng</Text>
-                                <br />
-                                <Text type="secondary" className="text-sm">
-                                    Phù hợp cho nhóm khách, đoàn du lịch
-                                </Text>
-                            </div>
-                        </Radio>
-                    </Space>
-                </Radio.Group>
-
-                {representativeMode === 'all' && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <div className="flex justify-between items-center">
-                            <Text>Người đại diện chung cho {selectedCount} phòng</Text>
-                            {representatives['all'] ? (
-                                <Button
-                                    icon={<Edit3 size={16} />}
-                                    onClick={() => handleAddRepresentative('all')}
-                                >
-                                    {representatives['all'].fullName}
-                                </Button>
-                            ) : (
-                                <Button
-                                    icon={<Clipboard size={16} />}
-                                    type="primary"
-                                    onClick={() => handleAddRepresentative('all')}
-                                >
-                                    Thêm người đại diện
-                                </Button>
-                            )}
-                        </div>
+            {/* Người đại diện chung */}
+            <Card className="mb-6 shadow-sm" title="Người đại diện">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                        <Text>Người đại diện cho {selectedCount} phòng</Text>
+                        {representative ? (
+                            <Button
+                                icon={<Edit3 size={16} />}
+                                onClick={() => handleAddRepresentative()}
+                            >
+                                {representative.fullName}
+                            </Button>
+                        ) : (
+                            <Button
+                                icon={<Clipboard size={16} />}
+                                type="primary"
+                                onClick={() => handleAddRepresentative()}
+                            >
+                                Thêm người đại diện
+                            </Button>
+                        )}
                     </div>
-                )}
+                </div>
             </Card>
 
             {/* Room Table */}
@@ -435,11 +424,7 @@ const ConfirmRepresentativePayment: React.FC = () => {
                 title={
                     <div className="flex items-center gap-2">
                         <Clipboard size={20} />
-                        <span>
-                            {representativeMode === 'all'
-                                ? 'Thông tin người đại diện chung'
-                                : 'Thông tin người đại diện phòng'}
-                        </span>
+                        <span>Thông tin người đại diện</span>
                     </div>
                 }
                 open={isModalVisible}

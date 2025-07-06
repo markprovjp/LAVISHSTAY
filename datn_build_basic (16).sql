@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Jun 28, 2025 at 10:03 AM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Máy chủ: localhost
+-- Thời gian đã tạo: Th7 06, 2025 lúc 09:58 AM
+-- Phiên bản máy phục vụ: 8.0.30
+-- Phiên bản PHP: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,20 +18,20 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `datn_build_basic`
+-- Cơ sở dữ liệu: `datn_build_basic`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `amenities`
+-- Cấu trúc bảng cho bảng `amenities`
 --
 
 CREATE TABLE `amenities` (
   `amenity_id` int NOT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `icon_lib` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `icon_lib` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `category` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `is_active` tinyint(1) DEFAULT '1',
@@ -40,7 +40,7 @@ CREATE TABLE `amenities` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `amenities`
+-- Đang đổ dữ liệu cho bảng `amenities`
 --
 
 INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -94,7 +94,7 @@ INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `
 -- --------------------------------------------------------
 
 --
--- Table structure for table `audit_logs`
+-- Cấu trúc bảng cho bảng `audit_logs`
 --
 
 CREATE TABLE `audit_logs` (
@@ -110,7 +110,7 @@ CREATE TABLE `audit_logs` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `bed_types`
+-- Cấu trúc bảng cho bảng `bed_types`
 --
 
 CREATE TABLE `bed_types` (
@@ -123,7 +123,7 @@ CREATE TABLE `bed_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách các loại giường';
 
 --
--- Dumping data for table `bed_types`
+-- Đang đổ dữ liệu cho bảng `bed_types`
 --
 
 INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -133,17 +133,19 @@ INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking`
+-- Cấu trúc bảng cho bảng `booking`
 --
 
 CREATE TABLE `booking` (
   `booking_id` int NOT NULL COMMENT 'Khóa chính, mã đặt phòng',
+  `booking_code` varchar(55) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Khóa ngoại, mã người dùng (nếu có)',
   `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
   `check_in_date` date NOT NULL COMMENT 'Ngày nhận phòng',
   `check_out_date` date NOT NULL COMMENT 'Ngày trả phòng',
   `total_price_vnd` decimal(15,2) NOT NULL COMMENT 'Tổng giá (VND)',
   `guest_count` int NOT NULL COMMENT 'Số khách',
+  `adults` int NOT NULL,
   `status` enum('pending','confirmed','cancelled','completed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái đặt phòng',
   `quantity` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
@@ -151,13 +153,90 @@ CREATE TABLE `booking` (
   `guest_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên khách',
   `guest_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Email khách',
   `guest_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số điện thoại khách',
-  `room_id` int DEFAULT NULL
+  `room_id` int DEFAULT NULL,
+  `children` int DEFAULT NULL,
+  `children_age` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin đặt phòng';
+
+--
+-- Đang đổ dữ liệu cho bảng `booking`
+--
+
+INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `adults`, `status`, `quantity`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`, `children`, `children_age`) VALUES
+(23, 'LAVISHSTAY_509999', NULL, NULL, '2025-07-01', '2025-07-02', 2400000.00, 2, 0, 'cancelled', 2, '2025-07-01 04:08:52', '2025-07-04 02:26:20', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', 255, NULL, NULL),
+(24, 'LAVISHYSTAY_931923', 2, 'OPT10', '2025-07-04', '2025-07-09', 999999.00, 2, 0, 'confirmed', 3, '2025-07-04 03:41:38', '2025-07-04 03:41:38', 'húhu', 'quyen@gmai.comđ', '231443342423', 1, NULL, NULL);
+
+--
+-- Bẫy `booking`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_update_booked_rooms` AFTER UPDATE ON `booking` FOR EACH ROW BEGIN
+  -- Biến điều khiển
+  DECLARE done INT DEFAULT 0;
+  DECLARE start_date DATE;
+  DECLARE end_date DATE;
+  DECLARE v_room_type_id INT;
+  DECLARE cur_date DATE;
+
+  -- CURSOR để duyệt từng dòng booking_rooms → room → room_type
+  DECLARE cur CURSOR FOR
+    SELECT br.check_in_date, br.check_out_date, r.room_type_id
+    FROM booking_rooms br
+    JOIN room r ON r.room_id = br.room_id
+    WHERE br.booking_id = NEW.booking_id;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+  -- Nếu chuyển từ trạng thái khác → confirmed
+  IF OLD.status <> 'confirmed' AND NEW.status = 'confirmed' THEN
+    OPEN cur;
+    read_loop: LOOP
+      FETCH cur INTO start_date, end_date, v_room_type_id;
+      IF done THEN
+        LEAVE read_loop;
+      END IF;
+
+      SET cur_date = start_date;
+      WHILE cur_date < end_date DO
+        UPDATE room_occupancy
+        SET booked_rooms = booked_rooms + 1
+        WHERE room_type_id = v_room_type_id AND date = cur_date;
+        SET cur_date = DATE_ADD(cur_date, INTERVAL 1 DAY);
+      END WHILE;
+
+    END LOOP;
+    CLOSE cur;
+  END IF;
+
+  -- Nếu chuyển từ trạng thái khác → completed
+  SET done = 0; -- reset biến done
+  IF OLD.status <> 'completed' AND NEW.status = 'completed' THEN
+    OPEN cur;
+    read_loop2: LOOP
+      FETCH cur INTO start_date, end_date, v_room_type_id;
+      IF done THEN
+        LEAVE read_loop2;
+      END IF;
+
+      SET cur_date = start_date;
+      WHILE cur_date < end_date DO
+        UPDATE room_occupancy
+        SET booked_rooms = GREATEST(booked_rooms - 1, 0)
+        WHERE room_type_id = v_room_type_id AND date = cur_date;
+        SET cur_date = DATE_ADD(cur_date, INTERVAL 1 DAY);
+      END WHILE;
+
+    END LOOP;
+    CLOSE cur;
+  END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_extensions`
+-- Cấu trúc bảng cho bảng `booking_extensions`
 --
 
 CREATE TABLE `booking_extensions` (
@@ -174,7 +253,7 @@ CREATE TABLE `booking_extensions` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_reschedules`
+-- Cấu trúc bảng cho bảng `booking_reschedules`
 --
 
 CREATE TABLE `booking_reschedules` (
@@ -192,7 +271,36 @@ CREATE TABLE `booking_reschedules` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `cancellation_policies`
+-- Cấu trúc bảng cho bảng `booking_rooms`
+--
+
+CREATE TABLE `booking_rooms` (
+  `id` int NOT NULL,
+  `booking_id` int NOT NULL,
+  `booking_code` varchar(55) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `room_id` int NOT NULL,
+  `representative_id` int DEFAULT NULL,
+  `price_per_night` bigint NOT NULL,
+  `nights` int NOT NULL,
+  `total_price` bigint NOT NULL,
+  `check_in_date` date DEFAULT NULL,
+  `check_out_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `booking_rooms`
+--
+
+INSERT INTO `booking_rooms` (`id`, `booking_id`, `booking_code`, `room_id`, `representative_id`, `price_per_night`, `nights`, `total_price`, `check_in_date`, `check_out_date`, `created_at`, `updated_at`) VALUES
+(17, 23, 'LAVISHSTAY_509999', 255, 21, 1200000, 1, 1200000, '2025-07-01', '2025-07-02', '2025-07-01 04:08:52', '2025-07-01 04:08:52'),
+(18, 23, 'LAVISHSTAY_509999', 256, 22, 1200000, 1, 1200000, '2025-07-01', '2025-07-02', '2025-07-01 04:08:52', '2025-07-01 04:08:52');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `cancellation_policies`
 --
 
 CREATE TABLE `cancellation_policies` (
@@ -208,7 +316,7 @@ CREATE TABLE `cancellation_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `cancellation_policies`
+-- Đang đổ dữ liệu cho bảng `cancellation_policies`
 --
 
 INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -218,7 +326,7 @@ INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_day
 -- --------------------------------------------------------
 
 --
--- Table structure for table `check_out_policies`
+-- Cấu trúc bảng cho bảng `check_out_policies`
 --
 
 CREATE TABLE `check_out_policies` (
@@ -235,7 +343,7 @@ CREATE TABLE `check_out_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `check_out_policies`
+-- Đang đổ dữ liệu cho bảng `check_out_policies`
 --
 
 INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `early_check_out_max_hours`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -245,7 +353,7 @@ INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `check_out_requests`
+-- Cấu trúc bảng cho bảng `check_out_requests`
 --
 
 CREATE TABLE `check_out_requests` (
@@ -262,7 +370,7 @@ CREATE TABLE `check_out_requests` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `currency`
+-- Cấu trúc bảng cho bảng `currency`
 --
 
 CREATE TABLE `currency` (
@@ -274,7 +382,7 @@ CREATE TABLE `currency` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin tiền tệ và tỷ giá';
 
 --
--- Dumping data for table `currency`
+-- Đang đổ dữ liệu cho bảng `currency`
 --
 
 INSERT INTO `currency` (`currency_code`, `name`, `exchange_rate`, `symbol`, `format`) VALUES
@@ -284,7 +392,7 @@ INSERT INTO `currency` (`currency_code`, `name`, `exchange_rate`, `symbol`, `for
 -- --------------------------------------------------------
 
 --
--- Table structure for table `datafeeds`
+-- Cấu trúc bảng cho bảng `datafeeds`
 --
 
 CREATE TABLE `datafeeds` (
@@ -300,7 +408,7 @@ CREATE TABLE `datafeeds` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `deposit_policies`
+-- Cấu trúc bảng cho bảng `deposit_policies`
 --
 
 CREATE TABLE `deposit_policies` (
@@ -315,7 +423,7 @@ CREATE TABLE `deposit_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `deposit_policies`
+-- Đang đổ dữ liệu cho bảng `deposit_policies`
 --
 
 INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -324,7 +432,7 @@ INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `depo
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dynamic_pricing_rules`
+-- Cấu trúc bảng cho bảng `dynamic_pricing_rules`
 --
 
 CREATE TABLE `dynamic_pricing_rules` (
@@ -340,19 +448,20 @@ CREATE TABLE `dynamic_pricing_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `dynamic_pricing_rules`
+-- Đang đổ dữ liệu cho bảng `dynamic_pricing_rules`
 --
 
 INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_threshold`, `price_adjustment`, `is_active`, `created_at`, `updated_at`, `priority`, `is_exclusive`) VALUES
-(1, 1, 80.00, 10.00, 1, '2025-06-11 02:44:33', '2025-06-27 02:39:39', 5, 0),
+(1, 1, 80.00, 10.00, 1, '2025-06-11 02:44:33', '2025-06-29 19:50:57', 5, 0),
 (2, 1, 90.00, 20.00, 1, '2025-06-11 02:44:33', '2025-06-11 02:44:33', 5, 0),
 (3, 2, 80.00, 20.00, 1, '2025-06-14 03:41:08', '2025-06-14 03:42:03', 5, 0),
-(4, 2, 90.00, 30.00, 1, '2025-06-14 04:17:32', '2025-06-14 04:17:32', 5, 0);
+(4, 2, 90.00, 30.00, 1, '2025-06-14 04:17:32', '2025-06-14 04:17:32', 5, 0),
+(5, 4, 70.00, 7.00, 1, '2025-06-29 21:11:10', '2025-06-29 21:11:21', 5, 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `events`
+-- Cấu trúc bảng cho bảng `events`
 --
 
 CREATE TABLE `events` (
@@ -367,16 +476,18 @@ CREATE TABLE `events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `events`
+-- Đang đổ dữ liệu cho bảng `events`
 --
 
 INSERT INTO `events` (`event_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Lễ hội pháo hoa Đà Nẵng', '2025-07-01', '2025-07-07', 'Sự kiện pháo hoa quốc tế', 1, '2025-06-11 02:20:27', '2025-06-11 02:20:27');
+(1, 'Lễ hội pháo hoa Đà Nẵng', '2025-06-28', '2025-07-07', 'Sự kiện pháo hoa quốc tế', 1, '2025-06-11 02:20:27', '2025-06-29 07:11:13'),
+(3, 'Sự kiện có 1 0 2', '2025-06-30', '2025-07-01', '102', 1, '2025-06-29 11:36:55', '2025-06-29 11:36:55'),
+(4, 'Nguyễn Anh Đức', '2025-07-02', '2025-07-03', 't', 1, '2025-06-29 09:45:40', '2025-06-29 09:45:40');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `failed_jobs`
+-- Cấu trúc bảng cho bảng `failed_jobs`
 --
 
 CREATE TABLE `failed_jobs` (
@@ -392,7 +503,7 @@ CREATE TABLE `failed_jobs` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `faqs`
+-- Cấu trúc bảng cho bảng `faqs`
 --
 
 CREATE TABLE `faqs` (
@@ -408,7 +519,7 @@ CREATE TABLE `faqs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ câu hỏi thường gặp và câu trả lời';
 
 --
--- Dumping data for table `faqs`
+-- Đang đổ dữ liệu cho bảng `faqs`
 --
 
 INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer_vi`, `sort_order`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -421,7 +532,7 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 -- --------------------------------------------------------
 
 --
--- Table structure for table `flexible_pricing_rules`
+-- Cấu trúc bảng cho bảng `flexible_pricing_rules`
 --
 
 CREATE TABLE `flexible_pricing_rules` (
@@ -443,20 +554,19 @@ CREATE TABLE `flexible_pricing_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Quy tắc giá linh động cho cuối tuần, sự kiện, ngày lễ, mùa';
 
 --
--- Dumping data for table `flexible_pricing_rules`
+-- Đang đổ dữ liệu cho bảng `flexible_pricing_rules`
 --
 
 INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `days_of_week`, `event_id`, `holiday_id`, `season_name`, `start_date`, `end_date`, `price_adjustment`, `is_active`, `created_at`, `updated_at`, `priority`, `is_exclusive`) VALUES
-(3, NULL, 'event', NULL, 1, NULL, NULL, '2025-06-01', '2025-08-01', 25.00, 1, '2025-06-23 03:03:08', '2025-06-26 14:47:48', 2, 1),
-(4, NULL, 'holiday', NULL, NULL, 1, NULL, NULL, NULL, 30.00, 1, '2025-06-23 03:03:08', '2025-06-26 14:47:48', 1, 1),
+(4, NULL, 'holiday', NULL, NULL, 1, NULL, NULL, NULL, 30.00, 0, '2025-06-23 03:03:08', '2025-06-29 02:34:28', 1, 1),
 (5, NULL, 'season', NULL, NULL, NULL, 'Mùa cao điểm', '2025-06-01', '2025-08-31', 20.00, 1, '2025-06-23 03:03:08', '2025-06-26 14:47:48', 3, 0),
-(6, 1, 'season', NULL, NULL, NULL, 'Mùa thấp điểm', '2025-11-01', '2026-02-28', -10.00, 1, '2025-06-23 03:03:08', '2025-06-26 14:47:48', 3, 0),
-(12, NULL, 'weekend', '\"[\\\"Saturday\\\",\\\"Sunday\\\"]\"', NULL, NULL, NULL, NULL, NULL, 15.00, 1, '2025-06-23 00:45:55', '2025-06-26 14:47:47', 4, 0);
+(12, NULL, 'weekend', '\"[\\\"Saturday\\\",\\\"Sunday\\\"]\"', NULL, NULL, NULL, NULL, NULL, 10.00, 1, '2025-06-23 00:45:55', '2025-06-29 07:29:36', 4, 0),
+(18, NULL, 'event', NULL, 3, NULL, NULL, '2025-06-30', '2025-07-01', -6.00, 1, '2025-06-29 05:02:45', '2025-06-29 09:09:13', 5, 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `floors`
+-- Cấu trúc bảng cho bảng `floors`
 --
 
 CREATE TABLE `floors` (
@@ -472,7 +582,7 @@ CREATE TABLE `floors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý các tầng của khách sạn';
 
 --
--- Dumping data for table `floors`
+-- Đang đổ dữ liệu cho bảng `floors`
 --
 
 INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `description`, `facilities`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -514,7 +624,7 @@ INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `d
 -- --------------------------------------------------------
 
 --
--- Table structure for table `guests`
+-- Cấu trúc bảng cho bảng `guests`
 --
 
 CREATE TABLE `guests` (
@@ -531,7 +641,7 @@ CREATE TABLE `guests` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `holidays`
+-- Cấu trúc bảng cho bảng `holidays`
 --
 
 CREATE TABLE `holidays` (
@@ -546,7 +656,7 @@ CREATE TABLE `holidays` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `holidays`
+-- Đang đổ dữ liệu cho bảng `holidays`
 --
 
 INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -556,7 +666,7 @@ INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `descrip
 -- --------------------------------------------------------
 
 --
--- Table structure for table `hotel`
+-- Cấu trúc bảng cho bảng `hotel`
 --
 
 CREATE TABLE `hotel` (
@@ -567,7 +677,7 @@ CREATE TABLE `hotel` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin khách sạn';
 
 --
--- Dumping data for table `hotel`
+-- Đang đổ dữ liệu cho bảng `hotel`
 --
 
 INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
@@ -576,7 +686,7 @@ INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `hotel_rating`
+-- Cấu trúc bảng cho bảng `hotel_rating`
 --
 
 CREATE TABLE `hotel_rating` (
@@ -595,7 +705,7 @@ CREATE TABLE `hotel_rating` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `language`
+-- Cấu trúc bảng cho bảng `language`
 --
 
 CREATE TABLE `language` (
@@ -604,7 +714,7 @@ CREATE TABLE `language` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ngôn ngữ hỗ trợ';
 
 --
--- Dumping data for table `language`
+-- Đang đổ dữ liệu cho bảng `language`
 --
 
 INSERT INTO `language` (`language_code`, `name`) VALUES
@@ -614,7 +724,7 @@ INSERT INTO `language` (`language_code`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `meal_types`
+-- Cấu trúc bảng cho bảng `meal_types`
 --
 
 CREATE TABLE `meal_types` (
@@ -628,7 +738,7 @@ CREATE TABLE `meal_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách các loại bữa ăn';
 
 --
--- Dumping data for table `meal_types`
+-- Đang đổ dữ liệu cho bảng `meal_types`
 --
 
 INSERT INTO `meal_types` (`id`, `type_name`, `description`, `base_price_vnd`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -637,7 +747,7 @@ INSERT INTO `meal_types` (`id`, `type_name`, `description`, `base_price_vnd`, `i
 -- --------------------------------------------------------
 
 --
--- Table structure for table `migrations`
+-- Cấu trúc bảng cho bảng `migrations`
 --
 
 CREATE TABLE `migrations` (
@@ -647,7 +757,7 @@ CREATE TABLE `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `migrations`
+-- Đang đổ dữ liệu cho bảng `migrations`
 --
 
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
@@ -659,12 +769,14 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (6, '2022_05_11_154250_create_datafeeds_table', 1),
 (7, '2025_06_12_074026_create_table_translation_table', 2),
 (8, '2025_06_16_014026_change_type_column_in_checkout_requests', 3),
-(9, '2025_06_16_094513_add_early_checkout_fields_to_check_out_policies_table', 3);
+(9, '2025_06_16_094513_add_early_checkout_fields_to_check_out_policies_table', 3),
+(10, '2025_06_21_100528_fix_bookings_room_foreign_keys', 4),
+(11, '2025_07_01_075329_add_booking_code_to_booking_rooms_and_representatives', 5);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `notifications`
+-- Cấu trúc bảng cho bảng `notifications`
 --
 
 CREATE TABLE `notifications` (
@@ -681,7 +793,7 @@ CREATE TABLE `notifications` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `payment`
+-- Cấu trúc bảng cho bảng `payment`
 --
 
 CREATE TABLE `payment` (
@@ -698,20 +810,20 @@ CREATE TABLE `payment` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `permissions`
+-- Cấu trúc bảng cho bảng `permissions`
 --
 
 CREATE TABLE `permissions` (
   `id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `parent_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `permissions`
+-- Đang đổ dữ liệu cho bảng `permissions`
 --
 
 INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_at`, `parent_id`) VALUES
@@ -723,7 +835,7 @@ INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_a
 -- --------------------------------------------------------
 
 --
--- Table structure for table `permission_role`
+-- Cấu trúc bảng cho bảng `permission_role`
 --
 
 CREATE TABLE `permission_role` (
@@ -732,7 +844,7 @@ CREATE TABLE `permission_role` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `permission_role`
+-- Đang đổ dữ liệu cho bảng `permission_role`
 --
 
 INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
@@ -745,7 +857,7 @@ INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `personal_access_tokens`
+-- Cấu trúc bảng cho bảng `personal_access_tokens`
 --
 
 CREATE TABLE `personal_access_tokens` (
@@ -764,7 +876,7 @@ CREATE TABLE `personal_access_tokens` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `pricing_config`
+-- Cấu trúc bảng cho bảng `pricing_config`
 --
 
 CREATE TABLE `pricing_config` (
@@ -772,13 +884,13 @@ CREATE TABLE `pricing_config` (
   `max_price_increase_percentage` decimal(5,2) DEFAULT '40.00' COMMENT 'Giới hạn tăng giá tối đa (%)',
   `max_absolute_price_vnd` decimal(15,2) DEFAULT '3000000.00' COMMENT 'Giới hạn giá trần tuyệt đối (VND)',
   `use_exclusive_rule` tinyint(1) DEFAULT '0' COMMENT 'Bật chế độ chỉ lấy quy tắc ưu tiên cao nhất',
-  `exclusive_rule_type` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Loại quy tắc độc quyền (event, holiday, season, weekend, occupancy)',
+  `exclusive_rule_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Loại quy tắc độc quyền (event, holiday, season, weekend, occupancy)',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `pricing_config`
+-- Đang đổ dữ liệu cho bảng `pricing_config`
 --
 
 INSERT INTO `pricing_config` (`config_id`, `max_price_increase_percentage`, `max_absolute_price_vnd`, `use_exclusive_rule`, `exclusive_rule_type`, `created_at`, `updated_at`) VALUES
@@ -787,19 +899,67 @@ INSERT INTO `pricing_config` (`config_id`, `max_price_increase_percentage`, `max
 -- --------------------------------------------------------
 
 --
--- Table structure for table `roles`
+-- Cấu trúc bảng cho bảng `pricing_history`
+--
+
+CREATE TABLE `pricing_history` (
+  `history_id` bigint UNSIGNED NOT NULL,
+  `room_type_id` int UNSIGNED DEFAULT NULL COMMENT 'Khóa ngoại, mã loại phòng',
+  `option_id` int UNSIGNED DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
+  `applied_date` date NOT NULL COMMENT 'Ngày áp dụng giá',
+  `base_price` decimal(12,2) NOT NULL COMMENT 'Giá gốc',
+  `adjusted_price` decimal(12,2) NOT NULL COMMENT 'Giá sau điều chỉnh',
+  `applied_rules` json DEFAULT NULL COMMENT 'Danh sách quy tắc đã áp dụng (JSON)',
+  `occupancy_rate` decimal(5,2) DEFAULT NULL COMMENT 'Tỷ lệ lấp đầy tại thời điểm áp dụng (%)',
+  `pricing_mechanism` enum('cumulative','highest_priority','exclusive') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'cumulative' COMMENT 'Cơ chế tính giá',
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Ghi chú bổ sung',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `representatives`
+--
+
+CREATE TABLE `representatives` (
+  `id` int NOT NULL,
+  `booking_id` int NOT NULL,
+  `booking_code` varchar(55) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `room_id` int NOT NULL,
+  `full_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `phone_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `id_card` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `representatives`
+--
+
+INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `full_name`, `phone_number`, `email`, `id_card`, `created_at`, `updated_at`) VALUES
+(21, 23, 'LAVISHSTAY_509999', 255, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-01 04:08:52', '2025-07-01 04:08:52'),
+(22, 23, 'LAVISHSTAY_509999', 256, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-01 04:08:52', '2025-07-01 04:08:52');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `roles`
 --
 
 CREATE TABLE `roles` (
   `id` int NOT NULL,
-  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `roles`
+-- Đang đổ dữ liệu cho bảng `roles`
 --
 
 INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
@@ -812,7 +972,7 @@ INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 -- --------------------------------------------------------
 
 --
--- Table structure for table `role_user`
+-- Cấu trúc bảng cho bảng `role_user`
 --
 
 CREATE TABLE `role_user` (
@@ -821,7 +981,7 @@ CREATE TABLE `role_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `role_user`
+-- Đang đổ dữ liệu cho bảng `role_user`
 --
 
 INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
@@ -830,7 +990,7 @@ INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room`
+-- Cấu trúc bảng cho bảng `room`
 --
 
 CREATE TABLE `room` (
@@ -840,7 +1000,7 @@ CREATE TABLE `room` (
   `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Đường dẫn ảnh chính',
   `floor_id` int DEFAULT NULL COMMENT 'Tầng của phòng',
   `bed_type_fixed` int DEFAULT NULL COMMENT 'Loại giường mặc định',
-  `status` enum('available','occupied','maintenance','cleaning') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` enum('available','occupied','maintenance','cleaning','deposited','no_show','check_in','check_out') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết phòng',
   `last_cleaned` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -848,18 +1008,18 @@ CREATE TABLE `room` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin phòng';
 
 --
--- Dumping data for table `room`
+-- Đang đổ dữ liệu cho bảng `room`
 --
 
 INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed_type_fixed`, `status`, `description`, `last_cleaned`, `created_at`, `updated_at`) VALUES
 (1, 1, '0201', NULL, 2, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(2, 1, '0202', NULL, 2, 2, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(3, 1, '0203', NULL, 2, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(4, 1, '0204', NULL, 2, 2, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(5, 1, '0205', NULL, 2, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(6, 1, '0206', NULL, 2, 2, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(7, 1, '0207', NULL, 2, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(8, 1, '0208', NULL, 2, 2, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(2, 1, '0202', NULL, 2, 2, 'occupied', NULL, NULL, '2025-06-24 12:00:15', '2025-07-06 09:08:07'),
+(3, 1, '0203', NULL, 2, 1, 'maintenance', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(4, 1, '0204', NULL, 2, 2, 'cleaning', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(5, 1, '0205', NULL, 2, 1, 'deposited', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(6, 1, '0206', NULL, 2, 2, 'no_show', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(7, 1, '0207', NULL, 2, 1, 'check_in', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(8, 1, '0208', NULL, 2, 2, 'check_out', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (9, 1, '0209', NULL, 2, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (10, 1, '0210', NULL, 2, 2, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (11, 1, '0211', NULL, 2, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
@@ -1107,7 +1267,7 @@ INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed
 (253, 4, '2407', NULL, 24, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (254, 4, '2408', NULL, 24, 2, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (255, 5, '2501', NULL, 25, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
-(256, 5, '2502', NULL, 25, 1, 'occupied', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
+(256, 5, '2502', NULL, 25, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (257, 5, '2503', NULL, 25, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (258, 5, '2504', NULL, 25, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
 (259, 5, '2505', NULL, 25, 1, 'available', NULL, NULL, '2025-06-24 12:00:15', '2025-06-24 12:00:15'),
@@ -1151,7 +1311,7 @@ INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_availability`
+-- Cấu trúc bảng cho bảng `room_availability`
 --
 
 CREATE TABLE `room_availability` (
@@ -1159,13 +1319,15 @@ CREATE TABLE `room_availability` (
   `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
   `date` date NOT NULL COMMENT 'Ngày áp dụng',
   `total_rooms` int NOT NULL COMMENT 'Tổng số phòng',
-  `available_rooms` int NOT NULL COMMENT 'Số phòng còn trống'
+  `available_rooms` int NOT NULL COMMENT 'Số phòng còn trống',
+  `created_at` date NOT NULL,
+  `updated_at` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu lịch đặt phòng theo ngày';
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_bed_types`
+-- Cấu trúc bảng cho bảng `room_bed_types`
 --
 
 CREATE TABLE `room_bed_types` (
@@ -1180,7 +1342,7 @@ CREATE TABLE `room_bed_types` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_meal_types`
+-- Cấu trúc bảng cho bảng `room_meal_types`
 --
 
 CREATE TABLE `room_meal_types` (
@@ -1194,7 +1356,7 @@ CREATE TABLE `room_meal_types` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_occupancy`
+-- Cấu trúc bảng cho bảng `room_occupancy`
 --
 
 CREATE TABLE `room_occupancy` (
@@ -1209,17 +1371,22 @@ CREATE TABLE `room_occupancy` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_occupancy`
+-- Đang đổ dữ liệu cho bảng `room_occupancy`
 --
 
 INSERT INTO `room_occupancy` (`occupancy_id`, `room_type_id`, `date`, `total_rooms`, `booked_rooms`, `created_at`, `updated_at`) VALUES
-(1, 2, '2025-06-27', 90, 10, '2025-06-27 03:45:27', '2025-06-27 03:45:27'),
-(2, 2, '2025-06-28', 90, 30, '2025-06-27 03:46:36', '2025-06-27 03:46:36');
+(11, 1, '2025-07-01', 90, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43'),
+(12, 2, '2025-07-01', 96, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43'),
+(13, 3, '2025-07-01', 20, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43'),
+(14, 4, '2025-07-01', 36, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43'),
+(15, 5, '2025-07-01', 20, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43'),
+(16, 6, '2025-07-01', 32, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43'),
+(17, 7, '2025-07-01', 1, 0, '2025-07-01 11:07:43', '2025-07-01 11:07:43');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_option`
+-- Cấu trúc bảng cho bảng `room_option`
 --
 
 CREATE TABLE `room_option` (
@@ -1249,10 +1416,24 @@ CREATE TABLE `room_option` (
   `adjusted_price` decimal(15,2) DEFAULT NULL COMMENT 'Giá sau khi áp dụng các quy tắc'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu tùy chọn giá và dịch vụ của phòng';
 
+--
+-- Đang đổ dữ liệu cho bảng `room_option`
+--
+
+INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `cancellation_policy_type`, `cancellation_penalty`, `cancellation_description`, `free_until`, `payment_policy_type`, `payment_description`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `deposit_policy_id`, `cancellation_policy_id`, `package_id`, `adjusted_price`) VALUES
+('OPT10', 257, 'Premium Corner King', 2000000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Phòng cao cấp, đặt ngay!', 1, 1, 1, 1, 95.00, 50.00, 1000000.00, 1, 1, 2, 2000000.00),
+('OPT11', 258, 'The Level Premium King', 2500000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Chỉ còn 1 phòng!', 0, 1, 1, 1, 88.00, 50.00, 1250000.00, 1, 1, 3, 2500000.00),
+('OPT12', 259, 'The Level Premium Corner Twin', 2800000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Phòng cao cấp, đặt ngay!', 1, 1, 1, 2, 92.00, 50.00, 1400000.00, 1, 1, 4, 2800000.00),
+('OPT13', 261, 'Suite King', 4000000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Phòng cao cấp nhất!', 1, 1, 1, 1, 99.00, 50.00, 2000000.00, 1, 1, 6, 4000000.00),
+('OPT6', 260, 'The Level Suite King', 3500000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Phòng sang trọng, đặt ngay!', 1, 1, 1, 1, 97.00, 50.00, 1750000.00, 1, 1, 5, 3500000.00),
+('OPT8', 255, 'Deluxe King Room', 1200000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Chỉ còn 3 phòng!', 1, 1, 1, 1, 90.00, 50.00, 600000.00, 1, 1, 1, 1200000.00),
+('OPT9', 256, 'Deluxe Twin Room', 1300000.00, 2, 1, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Chỉ còn 2 phòng!', 0, 1, 1, 2, 85.00, 50.00, 650000.00, 1, 1, 1, 1300000.00),
+('OPT_PRES_1', 295, 'Presidential Suite King', 10000000.00, 4, 2, 'free', 0.00, 'Hủy miễn phí trong 7 ngày', '2025-06-25 23:59:59', 'pay_now', 'Thanh toán trước 50%', 'Phòng Tổng thống, đặt ngay!', 1, 1, 1, 1, 100.00, 50.00, 5000000.00, 1, 1, 7, 10000000.00);
+
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_option_promotion`
+-- Cấu trúc bảng cho bảng `room_option_promotion`
 --
 
 CREATE TABLE `room_option_promotion` (
@@ -1266,7 +1447,7 @@ CREATE TABLE `room_option_promotion` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_price_history`
+-- Cấu trúc bảng cho bảng `room_price_history`
 --
 
 CREATE TABLE `room_price_history` (
@@ -1281,40 +1462,89 @@ CREATE TABLE `room_price_history` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_price_history`
+-- Đang đổ dữ liệu cho bảng `room_price_history`
 --
 
 INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
 (1, 2, '2025-06-27', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:53:28', '2025-06-26 21:53:28'),
-(2, 2, '2025-07-01', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-26 21:55:01'),
-(3, 2, '2025-07-02', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-26 21:55:01'),
-(4, 2, '2025-07-03', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-26 21:55:01'),
-(5, 2, '2025-07-04', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-26 21:55:01'),
-(6, 2, '2025-07-31', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:59:08', '2025-06-26 21:59:08'),
-(7, 2, '2025-08-01', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:59:08', '2025-06-26 21:59:08'),
+(2, 2, '2025-07-01', 1500000.00, 1710000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-07-03 01:59:50'),
+(3, 2, '2025-07-02', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-29 02:35:55'),
+(4, 2, '2025-07-03', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-29 02:35:55'),
+(5, 2, '2025-07-04', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":80}}]\"', '2025-06-26 21:55:01', '2025-07-03 03:12:38'),
+(6, 2, '2025-07-31', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:59:08', '2025-06-29 21:43:29'),
+(7, 2, '2025-08-01', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":87}}]\"', '2025-06-26 21:59:08', '2025-06-29 21:43:29'),
 (8, 1, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
-(9, 1, '2025-06-29', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
-(10, 1, '2025-06-30', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
-(11, 1, '2025-07-01', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
-(12, 1, '2025-07-02', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
-(13, 1, '2025-07-03', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
+(9, 1, '2025-06-29', 1200000.00, 1680000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
+(10, 1, '2025-06-30', 1200000.00, 1368000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
+(11, 1, '2025-07-01', 1200000.00, 1368000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-07-03 01:59:50'),
+(12, 1, '2025-07-02', 1200000.00, 1440000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
+(13, 1, '2025-07-03', 1200000.00, 1440000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
 (14, 3, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
-(15, 3, '2025-06-29', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
-(16, 3, '2025-06-30', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
-(17, 3, '2025-07-01', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
-(18, 3, '2025-07-02', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
-(19, 3, '2025-07-03', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
+(15, 3, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:03', '2025-06-29 04:30:12'),
+(16, 3, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-29 21:13:26'),
+(17, 3, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-07-03 01:59:50'),
+(18, 3, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-29 04:30:12'),
+(19, 3, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-29 04:30:12'),
 (20, 7, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08'),
-(21, 7, '2025-06-29', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08'),
-(22, 7, '2025-06-30', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08'),
-(23, 7, '2025-07-01', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08'),
-(24, 7, '2025-07-02', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08'),
-(25, 7, '2025-07-03', 0.00, 0.00, '\"[{\\\"rule_id\\\":3,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"25.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"L\\\\u1ec5 h\\\\u1ed9i ph\\\\u00e1o hoa \\\\u0110\\\\u00e0 N\\\\u1eb5ng\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-07T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08');
+(21, 7, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:08', '2025-06-29 02:30:36'),
+(22, 7, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-29 23:54:20'),
+(23, 7, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-07-03 01:59:50'),
+(24, 7, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-29 02:30:36'),
+(25, 7, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-29 02:30:36'),
+(26, 6, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:23', '2025-06-28 03:40:23'),
+(27, 6, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:23', '2025-06-29 02:33:36'),
+(28, 6, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-07-02 03:28:15'),
+(29, 6, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-07-03 01:59:50'),
+(30, 6, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-06-29 02:33:36'),
+(31, 6, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-06-29 02:33:36'),
+(32, 2, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:24', '2025-06-28 03:40:24'),
+(33, 2, '2025-06-29', 1500000.00, 1950000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:24', '2025-06-29 05:15:28'),
+(34, 2, '2025-06-30', 1500000.00, 1710000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:24', '2025-06-29 20:51:47'),
+(35, 4, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:42:30', '2025-06-28 03:42:30'),
+(36, 4, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:42:30', '2025-06-29 02:34:36'),
+(37, 4, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-06-29 20:52:43'),
+(38, 4, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-03 01:59:50'),
+(39, 4, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-01 01:46:03'),
+(40, 4, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-02 04:22:05'),
+(41, 4, '2025-07-04', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":74}}]\"', '2025-06-28 23:26:04', '2025-07-03 03:12:38'),
+(42, 6, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:29:06', '2025-06-29 02:33:36'),
+(43, 3, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:29:18', '2025-06-29 04:30:12'),
+(44, 5, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
+(45, 5, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-07-02 03:28:15'),
+(46, 5, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-07-03 01:59:50'),
+(47, 5, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
+(48, 5, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
+(49, 5, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
+(50, 3, '2025-07-05', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 00:47:05', '2025-06-29 04:30:12'),
+(51, 1, '2025-07-04', 1200000.00, 1560000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":87}}]\"', '2025-06-29 02:29:55', '2025-07-03 03:12:38'),
+(52, 1, '2025-07-05', 1200000.00, 1680000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":91}}]\"', '2025-06-29 02:29:55', '2025-07-04 04:52:35'),
+(53, 2, '2025-07-05', 1500000.00, 1950000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 02:30:20', '2025-07-04 04:52:36'),
+(54, 7, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-29 02:30:36', '2025-06-29 02:30:36'),
+(55, 7, '2025-07-05', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 02:30:36', '2025-06-29 02:30:36'),
+(56, 6, '2025-07-05', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 02:33:36', '2025-06-29 02:33:36'),
+(57, 5, '2025-07-05', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 02:33:38', '2025-06-29 02:33:38'),
+(58, 4, '2025-07-05', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":74}}]\"', '2025-06-29 02:34:36', '2025-07-04 04:52:36'),
+(59, 2, '2025-07-06', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":84}}]\"', '2025-06-29 20:51:47', '2025-07-06 02:32:33'),
+(60, 1, '2025-07-06', 1200000.00, 1680000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":86}}]\"', '2025-06-29 20:52:16', '2025-07-06 02:32:33'),
+(61, 4, '2025-07-06', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":89}}]\"', '2025-06-29 20:52:43', '2025-07-06 02:32:33'),
+(62, 3, '2025-07-06', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 21:13:26', '2025-06-29 21:13:26'),
+(63, 2, '2025-07-30', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-29 21:43:29', '2025-06-29 21:43:29'),
+(64, 7, '2025-07-06', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 23:54:20', '2025-06-29 23:54:20'),
+(65, 2, '2025-07-07', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-02 04:26:19', '2025-07-02 04:26:19'),
+(66, 2, '2025-07-08', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-02 04:26:19', '2025-07-02 04:26:19'),
+(67, 5, '2025-07-06', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-04 19:42:25', '2025-07-04 19:42:25'),
+(68, 6, '2025-07-06', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-04 19:42:25', '2025-07-04 19:42:25'),
+(69, 1, '2025-07-07', 1200000.00, 1440000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-05 21:37:15', '2025-07-05 21:37:15'),
+(70, 3, '2025-07-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-05 21:37:15', '2025-07-05 21:37:15'),
+(71, 4, '2025-07-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-05 21:37:15', '2025-07-05 21:37:15'),
+(72, 5, '2025-07-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-05 21:37:15', '2025-07-05 21:37:15'),
+(73, 6, '2025-07-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-05 21:37:15', '2025-07-05 21:37:15'),
+(74, 7, '2025-07-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-05 21:37:15', '2025-07-05 21:37:15');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_transfers`
+-- Cấu trúc bảng cho bảng `room_transfers`
 --
 
 CREATE TABLE `room_transfers` (
@@ -1331,40 +1561,40 @@ CREATE TABLE `room_transfers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_types`
+-- Cấu trúc bảng cho bảng `room_types`
 --
 
 CREATE TABLE `room_types` (
-  `room_type_id` int NOT NULL COMMENT 'Khóa chính, mã loại phòng',
-  `room_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Code loại phòng',
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên loại phòng',
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả loại phòng',
-  `total_room` int DEFAULT NULL,
-  `base_price` decimal(15,2) NOT NULL COMMENT 'Giá cơ bản',
-  `room_area` int NOT NULL COMMENT 'Diện tích phòng',
-  `view` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Cảnh, góc nhìn',
-  `rating` int NOT NULL COMMENT 'Đánh giá, max là 5',
-  `max_guests` int NOT NULL COMMENT 'Số khách tối đa',
-  `is_active` tinyint(1) DEFAULT '1'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách loại phòng';
+  `room_type_id` int NOT NULL,
+  `room_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `total_room` int NOT NULL,
+  `base_price` decimal(10,2) NOT NULL,
+  `room_area` int NOT NULL,
+  `view` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `rating` int DEFAULT '0',
+  `max_guests` int DEFAULT '0',
+  `is_active` tinyint DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_types`
+-- Đang đổ dữ liệu cho bảng `room_types`
 --
 
 INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `total_room`, `base_price`, `room_area`, `view`, `rating`, `max_guests`, `is_active`) VALUES
-(1, 'deluxe', 'Phòng Loại Sang (Deluxe Room)', 'Chưa có mô tả', 90, 0.00, 32, 'ABC', 0, 0, 1),
-(2, 'premium_corner', 'Phòng cao cấp trong góc (Premium Corner Room)', 'Chưa có mô tả', 96, 0.00, 64, 'BCD', 0, 0, 1),
-(3, 'suite', 'Phòng Suite (Suite Room)', 'Chưa có mô tả', 20, 0.00, 45, 'TDG', 0, 0, 1),
-(4, 'the_level_premium', 'Phòng The Level Cao cấp (The Level Premium Room)', 'Chưa luônnn', 30, 0.00, 92, 'BBJ', 0, 0, 1),
-(5, 'the_level_suite', 'The Level Suite (Phòng gì đó)', 'Không', 20, 0.00, 48, 'FFS', 0, 0, 1),
-(6, 'the_level_premium_corner', 'The Level Premium Corner (Phòng cao cấp trong góc)', 'Không', 32, 0.00, 20, 'WD', 0, 0, 1),
-(7, 'presidential_suite', 'Presidential Suite (Phòng Tổng thống)', 'Không', 1, 0.00, 10, 'OKO', 0, 0, 1);
+(1, 'deluxe', 'Deluxe Room', 'Chưa có mô tả', 90, 1200000.00, 32, 'ABC', 0, 2, 1),
+(2, 'premium_corner', 'Premium Corner', 'Chưa có mô tả', 96, 1500000.00, 64, 'BCD', 0, 2, 1),
+(3, 'the_level_premium', 'The Level Premium', 'Chưa có mô tả', 36, 1000000.00, 92, 'BBJ', 0, 2, 1),
+(4, 'the_level_premium_corner', 'The Level Premium Corner', 'Không', 32, 1000000.00, 20, 'WD', 0, 2, 1),
+(5, 'the_level_suite', 'The Level Suite', 'Không', 20, 1000000.00, 48, 'FFS', 0, 2, 1),
+(6, 'suite', 'Suite', 'Chưa có mô tả', 20, 1000000.00, 45, 'TDG', 0, 2, 1),
+(7, 'presidential_suite', 'Presidential Suite', 'Không', 1, 1000000.00, 10, 'OKO', 0, 4, 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_amenity`
+-- Cấu trúc bảng cho bảng `room_type_amenity`
 --
 
 CREATE TABLE `room_type_amenity` (
@@ -1376,27 +1606,232 @@ CREATE TABLE `room_type_amenity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_type_amenity`
+-- Đang đổ dữ liệu cho bảng `room_type_amenity`
 --
 
 INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`, `created_at`, `updated_at`) VALUES
-(1, 3, 0, '2025-06-25 23:51:40', '2025-06-25 23:51:40'),
-(1, 17, 1, '2025-06-25 23:51:40', '2025-06-25 23:51:40'),
-(1, 22, 1, '2025-06-25 23:51:40', '2025-06-25 23:51:40'),
-(1, 36, 0, '2025-06-25 23:51:40', '2025-06-25 23:51:40'),
-(1, 39, 1, '2025-06-25 23:51:40', '2025-06-25 23:51:40'),
-(2, 2, 1, '2025-06-25 23:52:59', '2025-06-25 23:52:59'),
-(2, 3, 0, '2025-06-25 23:52:59', '2025-06-25 23:52:59'),
-(2, 7, 0, '2025-06-25 23:52:59', '2025-06-25 23:52:59'),
-(2, 10, 0, '2025-06-25 23:52:59', '2025-06-25 23:52:59'),
-(2, 15, 1, '2025-06-25 23:52:59', '2025-06-25 23:52:59'),
-(2, 38, 1, '2025-06-25 23:52:59', '2025-06-25 23:52:59'),
-(2, 39, 1, '2025-06-25 23:52:59', '2025-06-25 23:52:59');
+(1, 1, 1, NULL, NULL),
+(1, 2, 1, NULL, NULL),
+(1, 3, 1, NULL, NULL),
+(1, 4, 1, NULL, NULL),
+(1, 5, 0, NULL, NULL),
+(1, 6, 0, NULL, NULL),
+(1, 7, 0, NULL, NULL),
+(1, 8, 1, NULL, NULL),
+(1, 9, 0, NULL, NULL),
+(1, 10, 0, NULL, NULL),
+(1, 11, 1, NULL, NULL),
+(1, 12, 1, NULL, NULL),
+(1, 15, 1, NULL, NULL),
+(1, 35, 0, NULL, NULL),
+(1, 36, 0, NULL, NULL),
+(1, 37, 0, NULL, NULL),
+(1, 38, 0, NULL, NULL),
+(1, 39, 0, NULL, NULL),
+(1, 40, 0, NULL, NULL),
+(1, 41, 0, NULL, NULL),
+(1, 43, 0, NULL, NULL),
+(1, 44, 0, NULL, NULL),
+(2, 1, 1, NULL, NULL),
+(2, 2, 1, NULL, NULL),
+(2, 3, 1, NULL, NULL),
+(2, 4, 1, NULL, NULL),
+(2, 5, 0, NULL, NULL),
+(2, 6, 0, NULL, NULL),
+(2, 7, 0, NULL, NULL),
+(2, 8, 1, NULL, NULL),
+(2, 9, 0, NULL, NULL),
+(2, 10, 0, NULL, NULL),
+(2, 11, 0, NULL, NULL),
+(2, 12, 0, NULL, NULL),
+(2, 13, 1, NULL, NULL),
+(2, 14, 1, NULL, NULL),
+(2, 16, 1, NULL, NULL),
+(2, 17, 1, NULL, NULL),
+(2, 35, 0, NULL, NULL),
+(2, 36, 0, NULL, NULL),
+(2, 37, 0, NULL, NULL),
+(2, 38, 0, NULL, NULL),
+(2, 39, 0, NULL, NULL),
+(2, 40, 0, NULL, NULL),
+(2, 41, 0, NULL, NULL),
+(2, 42, 0, NULL, NULL),
+(2, 43, 0, NULL, NULL),
+(2, 44, 0, NULL, NULL),
+(3, 1, 1, NULL, NULL),
+(3, 2, 1, NULL, NULL),
+(3, 3, 0, NULL, NULL),
+(3, 4, 1, NULL, NULL),
+(3, 5, 0, NULL, NULL),
+(3, 6, 0, NULL, NULL),
+(3, 7, 0, NULL, NULL),
+(3, 8, 0, NULL, NULL),
+(3, 9, 0, NULL, NULL),
+(3, 10, 0, NULL, NULL),
+(3, 11, 0, NULL, NULL),
+(3, 12, 0, NULL, NULL),
+(3, 26, 1, NULL, NULL),
+(3, 27, 1, NULL, NULL),
+(3, 28, 1, NULL, NULL),
+(3, 29, 1, NULL, NULL),
+(3, 30, 0, NULL, NULL),
+(3, 31, 0, NULL, NULL),
+(3, 32, 0, NULL, NULL),
+(3, 33, 0, NULL, NULL),
+(3, 34, 1, NULL, NULL),
+(3, 35, 0, NULL, NULL),
+(3, 36, 0, NULL, NULL),
+(3, 37, 0, NULL, NULL),
+(3, 38, 0, NULL, NULL),
+(3, 39, 0, NULL, NULL),
+(3, 40, 0, NULL, NULL),
+(3, 41, 0, NULL, NULL),
+(3, 42, 0, NULL, NULL),
+(3, 44, 0, NULL, NULL),
+(4, 1, 1, NULL, NULL),
+(4, 2, 1, NULL, NULL),
+(4, 3, 0, NULL, NULL),
+(4, 4, 1, NULL, NULL),
+(4, 5, 0, NULL, NULL),
+(4, 6, 0, NULL, NULL),
+(4, 7, 0, NULL, NULL),
+(4, 8, 0, NULL, NULL),
+(4, 9, 0, NULL, NULL),
+(4, 10, 0, NULL, NULL),
+(4, 11, 0, NULL, NULL),
+(4, 12, 0, NULL, NULL),
+(4, 13, 1, NULL, NULL),
+(4, 14, 1, NULL, NULL),
+(4, 16, 0, NULL, NULL),
+(4, 17, 0, NULL, NULL),
+(4, 26, 1, NULL, NULL),
+(4, 27, 1, NULL, NULL),
+(4, 28, 1, NULL, NULL),
+(4, 29, 1, NULL, NULL),
+(4, 30, 0, NULL, NULL),
+(4, 31, 0, NULL, NULL),
+(4, 32, 0, NULL, NULL),
+(4, 33, 0, NULL, NULL),
+(4, 34, 0, NULL, NULL),
+(4, 35, 0, NULL, NULL),
+(4, 36, 0, NULL, NULL),
+(4, 37, 0, NULL, NULL),
+(4, 38, 0, NULL, NULL),
+(4, 39, 0, NULL, NULL),
+(4, 40, 0, NULL, NULL),
+(4, 41, 0, NULL, NULL),
+(4, 42, 0, NULL, NULL),
+(4, 43, 0, NULL, NULL),
+(4, 46, 0, NULL, NULL),
+(5, 1, 1, NULL, NULL),
+(5, 2, 1, NULL, NULL),
+(5, 3, 0, NULL, NULL),
+(5, 4, 1, NULL, NULL),
+(5, 5, 0, NULL, NULL),
+(5, 6, 0, NULL, NULL),
+(5, 7, 0, NULL, NULL),
+(5, 8, 0, NULL, NULL),
+(5, 9, 0, NULL, NULL),
+(5, 10, 0, NULL, NULL),
+(5, 11, 0, NULL, NULL),
+(5, 12, 0, NULL, NULL),
+(5, 18, 0, NULL, NULL),
+(5, 19, 0, NULL, NULL),
+(5, 20, 0, NULL, NULL),
+(5, 21, 1, NULL, NULL),
+(5, 22, 1, NULL, NULL),
+(5, 23, 1, NULL, NULL),
+(5, 24, 1, NULL, NULL),
+(5, 25, 1, NULL, NULL),
+(5, 26, 1, NULL, NULL),
+(5, 27, 0, NULL, NULL),
+(5, 28, 0, NULL, NULL),
+(5, 29, 0, NULL, NULL),
+(5, 30, 0, NULL, NULL),
+(5, 31, 0, NULL, NULL),
+(5, 32, 0, NULL, NULL),
+(5, 33, 0, NULL, NULL),
+(5, 34, 0, NULL, NULL),
+(5, 35, 0, NULL, NULL),
+(5, 36, 0, NULL, NULL),
+(5, 37, 0, NULL, NULL),
+(5, 38, 0, NULL, NULL),
+(5, 39, 0, NULL, NULL),
+(5, 40, 0, NULL, NULL),
+(5, 41, 0, NULL, NULL),
+(5, 42, 0, NULL, NULL),
+(5, 43, 0, NULL, NULL),
+(5, 44, 0, NULL, NULL),
+(5, 45, 0, NULL, NULL),
+(5, 46, 0, NULL, NULL),
+(6, 1, 1, NULL, NULL),
+(6, 2, 1, NULL, NULL),
+(6, 3, 0, NULL, NULL),
+(6, 4, 1, NULL, NULL),
+(6, 5, 0, NULL, NULL),
+(6, 6, 0, NULL, NULL),
+(6, 7, 0, NULL, NULL),
+(6, 8, 0, NULL, NULL),
+(6, 9, 0, NULL, NULL),
+(6, 10, 0, NULL, NULL),
+(6, 11, 0, NULL, NULL),
+(6, 12, 0, NULL, NULL),
+(6, 18, 0, NULL, NULL),
+(6, 19, 0, NULL, NULL),
+(6, 20, 0, NULL, NULL),
+(6, 21, 1, NULL, NULL),
+(6, 22, 1, NULL, NULL),
+(6, 23, 1, NULL, NULL),
+(6, 24, 1, NULL, NULL),
+(6, 25, 1, NULL, NULL),
+(6, 35, 0, NULL, NULL),
+(6, 36, 0, NULL, NULL),
+(6, 37, 0, NULL, NULL),
+(6, 38, 0, NULL, NULL),
+(6, 39, 0, NULL, NULL),
+(6, 40, 0, NULL, NULL),
+(6, 41, 0, NULL, NULL),
+(6, 42, 0, NULL, NULL),
+(6, 43, 0, NULL, NULL),
+(6, 44, 0, NULL, NULL),
+(6, 45, 0, NULL, NULL),
+(7, 1, 1, NULL, NULL),
+(7, 2, 1, NULL, NULL),
+(7, 3, 0, NULL, NULL),
+(7, 4, 1, NULL, NULL),
+(7, 5, 0, NULL, NULL),
+(7, 6, 0, NULL, NULL),
+(7, 7, 0, NULL, NULL),
+(7, 8, 0, NULL, NULL),
+(7, 9, 0, NULL, NULL),
+(7, 10, 0, NULL, NULL),
+(7, 11, 0, NULL, NULL),
+(7, 13, 0, NULL, NULL),
+(7, 18, 0, NULL, NULL),
+(7, 19, 0, NULL, NULL),
+(7, 20, 0, NULL, NULL),
+(7, 21, 1, NULL, NULL),
+(7, 22, 1, NULL, NULL),
+(7, 23, 1, NULL, NULL),
+(7, 24, 1, NULL, NULL),
+(7, 25, 1, NULL, NULL),
+(7, 35, 0, NULL, NULL),
+(7, 36, 0, NULL, NULL),
+(7, 37, 0, NULL, NULL),
+(7, 38, 0, NULL, NULL),
+(7, 39, 0, NULL, NULL),
+(7, 40, 0, NULL, NULL),
+(7, 41, 0, NULL, NULL),
+(7, 42, 0, NULL, NULL),
+(7, 43, 0, NULL, NULL),
+(7, 44, 0, NULL, NULL),
+(7, 45, 1, NULL, NULL),
+(7, 46, 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_image`
+-- Cấu trúc bảng cho bảng `room_type_image`
 --
 
 CREATE TABLE `room_type_image` (
@@ -1411,39 +1846,51 @@ CREATE TABLE `room_type_image` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ảnh của phòng';
 
 --
--- Dumping data for table `room_type_image`
+-- Đang đổ dữ liệu cho bảng `room_type_image`
 --
 
 INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_path`, `image_url`, `is_main`, `created_at`, `updated_at`) VALUES
 (5, 1, NULL, 'https://kksapahotel.com/uploads/images/VQK_2153%20(1).jpg', 'https://kksapahotel.com/uploads/images/VQK_2153%20(1).jpg', 1, '2025-06-08 10:21:06', '2025-06-27 03:09:56'),
-(15, 2, 'Phòng cao cấp trong góc (Premium Corner Room) - Ảnh 1', '/storage/room-types/2/1749478606_0_6846ecce37c50.jpg', '/storage/room-types/2/1749478606_0_6846ecce37c50.jpg', 1, '2025-06-09 07:16:46', '2025-06-09 08:02:03'),
-(20, 2, 'Phòng cao cấp trong góc (Premium Corner Room) - Ảnh 1', '/storage/room-types/2/1749479414_0_6846eff63b9d2.jpg', '/storage/room-types/2/1749479414_0_6846eff63b9d2.jpg', 0, '2025-06-09 07:30:14', '2025-06-09 08:02:03'),
 (23, 3, 'Phòng Suite (Suite Room) - Ảnh 1', '/storage/room-types/3/1750921018_0_685cef3ad7560.jpg', '/storage/room-types/3/1750921018_0_685cef3ad7560.jpg', 1, '2025-06-25 23:56:58', '2025-06-25 23:56:58'),
 (24, 1, 'Phòng Loại Sang (Deluxe Room) - Ảnh 1', '/storage/room-types/1/1751019383_0_685e6f77855e9.jpg', NULL, 0, '2025-06-27 03:16:23', '2025-06-27 03:16:23'),
 (26, 1, 'Phòng Loại Sang (Deluxe Room) - Ảnh 1', '/storage/room-types/1/1751021451_0_685e778bb4f50.png', 'http://127.0.0.1:8888/storage/room-types/1/1751021451_0_685e778bb4f50.png', 0, '2025-06-27 03:50:51', '2025-06-27 03:50:51'),
-(27, 1, 'Phòng Loại Sang (Deluxe Room) - Ảnh 1', '/storage/room-types/1/1751021649_0_685e785114e87.jpg', 'http://127.0.0.1:8888/storage/room-types/1/1751021649_0_685e785114e87.jpg', 0, '2025-06-27 03:54:09', '2025-06-27 03:54:09');
+(27, 1, 'Phòng Loại Sang (Deluxe Room) - Ảnh 1', '/storage/room-types/1/1751021649_0_685e785114e87.jpg', 'http://127.0.0.1:8888/storage/room-types/1/1751021649_0_685e785114e87.jpg', 0, '2025-06-27 03:54:09', '2025-06-27 03:54:09'),
+(28, 2, 'Premium Corner - Ảnh 1', '/storage/room-types/2/1751595760_0_68673af077c40.png', NULL, 1, '2025-07-03 19:22:41', '2025-07-03 19:22:47');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_package`
+-- Cấu trúc bảng cho bảng `room_type_package`
 --
 
 CREATE TABLE `room_type_package` (
   `package_id` int NOT NULL,
   `room_type_id` int NOT NULL,
-  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `price_modifier_vnd` decimal(15,2) DEFAULT '0.00',
   `include_all_services` tinyint(1) DEFAULT '0',
-  `description` text COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `room_type_package`
+--
+
+INSERT INTO `room_type_package` (`package_id`, `room_type_id`, `name`, `price_modifier_vnd`, `include_all_services`, `description`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Standard Package', 0.00, 0, 'Gói tiêu chuẩn cho Deluxe Room', '2025-07-02 09:00:56', '2025-07-02 09:00:56'),
+(2, 2, 'Premium Package', 500000.00, 0, 'Gói cao cấp cho Premium Corner', '2025-07-02 09:00:56', '2025-07-02 09:00:56'),
+(3, 3, 'VIP Package', 1000000.00, 0, 'Gói VIP cho The Level Premium', '2025-07-02 09:00:56', '2025-07-02 09:00:56'),
+(4, 4, 'Corner Package', 1200000.00, 0, 'Gói góc cao cấp cho The Level Premium Corner', '2025-07-02 09:00:56', '2025-07-02 09:00:56'),
+(5, 5, 'Suite Package', 1500000.00, 0, 'Gói suite cho The Level Suite', '2025-07-02 09:00:56', '2025-07-02 09:00:56'),
+(6, 6, 'Luxury Package', 2000000.00, 0, 'Gói sang trọng cho Suite', '2025-07-02 09:00:56', '2025-07-02 09:00:56'),
+(7, 7, 'Presidential Package', 5000000.00, 0, 'Gói Tổng thống cao cấp', '2025-07-02 09:12:55', '2025-07-02 09:12:55');
+
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_service`
+-- Cấu trúc bảng cho bảng `room_type_service`
 --
 
 CREATE TABLE `room_type_service` (
@@ -1455,7 +1902,7 @@ CREATE TABLE `room_type_service` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_type_service`
+-- Đang đổ dữ liệu cho bảng `room_type_service`
 --
 
 INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at`, `updated_at`) VALUES
@@ -1464,13 +1911,13 @@ INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at
 -- --------------------------------------------------------
 
 --
--- Table structure for table `services`
+-- Cấu trúc bảng cho bảng `services`
 --
 
 CREATE TABLE `services` (
   `service_id` int NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `description` text COLLATE utf8mb4_general_ci,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `price_vnd` decimal(15,2) NOT NULL DEFAULT '0.00',
   `unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Ví dụ: lần, ngày, giờ, kg',
   `is_active` tinyint(1) DEFAULT '1',
@@ -1479,7 +1926,7 @@ CREATE TABLE `services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `services`
+-- Đang đổ dữ liệu cho bảng `services`
 --
 
 INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1488,43 +1935,42 @@ INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `sessions`
+-- Cấu trúc bảng cho bảng `sessions`
 --
 
 CREATE TABLE `sessions` (
-  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL,
-  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `payload` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `payload` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `last_activity` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `sessions`
+-- Đang đổ dữ liệu cho bảng `sessions`
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('XIS4G69HAcuKGrrtTCzBe93pXmbvUDIIhQHKvR0l', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiUkZhcEQxbTRjaTFaNUNtY1c1a0RIaXFjN240b2tnUHdWUXRrRldqeiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDM6Imh0dHA6Ly8xMjcuMC4wLjE6ODg4OC9hZG1pbi9wcmljaW5nL2hpc3RvcnkiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1751104033),
-('zpc67IHo8UU4UE5aYMPWp2i5Q0lYK3ZC6SsRhjOT', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiS2dreFZONG1kNFc4cVJ4MnVOWkpIazdqY2k2c3JYTll6VURBanhvOCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQyOiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vcHJpY2luZy9jb25maWciO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1751023099);
+('l9P8X17i9knsKm6Se44m0KLTEnn5ZOciaQiIDrJI', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiNDhTVTZlZEk2YXFNMW1QclUwd3plRnoxdE5WemY0MXYyWjdkRzhqSCI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjEwMDoiaHR0cDovLzEyNy4wLjAuMTo4ODg4L2FkbWluL3ByaWNpbmcvcHJldmlldz9lbmRfZGF0ZT0yMDI1LTA3LTA2JnJvb21fdHlwZV9pZD0xJnN0YXJ0X2RhdGU9MjAyNS0wNi0zMCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1751266505);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `table_translation`
+-- Cấu trúc bảng cho bảng `table_translation`
 --
 
 CREATE TABLE `table_translation` (
   `id` bigint UNSIGNED NOT NULL,
-  `table_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `display_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `table_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `display_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `table_translation`
+-- Đang đổ dữ liệu cho bảng `table_translation`
 --
 
 INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1534,7 +1980,7 @@ INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `translation`
+-- Cấu trúc bảng cho bảng `translation`
 --
 
 CREATE TABLE `translation` (
@@ -1549,31 +1995,31 @@ CREATE TABLE `translation` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users`
+-- Cấu trúc bảng cho bảng `users`
 --
 
 CREATE TABLE `users` (
   `id` bigint UNSIGNED NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
-  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `phone` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số điện thoại',
-  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Địa chỉ',
-  `identity_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số CCCD hoặc số hộ chiếu',
-  `role` enum('guest','receptionist','manager','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Vai trò',
-  `two_factor_secret` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-  `two_factor_recovery_codes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `phone` varchar(12) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số điện thoại',
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Địa chỉ',
+  `identity_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số CCCD hoặc số hộ chiếu',
+  `role` enum('guest','receptionist','manager','admin') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Vai trò',
+  `two_factor_secret` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `two_factor_recovery_codes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `two_factor_confirmed_at` timestamp NULL DEFAULT NULL,
-  `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `remember_token` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `current_team_id` bigint UNSIGNED DEFAULT NULL,
-  `profile_photo_path` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `profile_photo_path` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users`
+-- Đang đổ dữ liệu cho bảng `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `phone`, `address`, `identity_code`, `role`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `current_team_id`, `profile_photo_path`, `created_at`, `updated_at`) VALUES
@@ -1584,7 +2030,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `ph
 -- --------------------------------------------------------
 
 --
--- Table structure for table `weekend_days`
+-- Cấu trúc bảng cho bảng `weekend_days`
 --
 
 CREATE TABLE `weekend_days` (
@@ -1596,7 +2042,7 @@ CREATE TABLE `weekend_days` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `weekend_days`
+-- Đang đổ dữ liệu cho bảng `weekend_days`
 --
 
 INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1609,30 +2055,30 @@ INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `upd
 (9, 'Sunday', 1, '2025-06-14 02:38:18', '2025-06-23 00:42:49');
 
 --
--- Indexes for dumped tables
+-- Chỉ mục cho các bảng đã đổ
 --
 
 --
--- Indexes for table `amenities`
+-- Chỉ mục cho bảng `amenities`
 --
 ALTER TABLE `amenities`
   ADD PRIMARY KEY (`amenity_id`);
 
 --
--- Indexes for table `audit_logs`
+-- Chỉ mục cho bảng `audit_logs`
 --
 ALTER TABLE `audit_logs`
   ADD PRIMARY KEY (`log_id`),
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `bed_types`
+-- Chỉ mục cho bảng `bed_types`
 --
 ALTER TABLE `bed_types`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `booking`
+-- Chỉ mục cho bảng `booking`
 --
 ALTER TABLE `booking`
   ADD PRIMARY KEY (`booking_id`),
@@ -1641,58 +2087,67 @@ ALTER TABLE `booking`
   ADD KEY `fk_booking_room` (`room_id`);
 
 --
--- Indexes for table `booking_extensions`
+-- Chỉ mục cho bảng `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   ADD PRIMARY KEY (`extension_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `booking_reschedules`
+-- Chỉ mục cho bảng `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   ADD PRIMARY KEY (`reschedule_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `cancellation_policies`
+-- Chỉ mục cho bảng `booking_rooms`
+--
+ALTER TABLE `booking_rooms`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `room_id` (`room_id`),
+  ADD KEY `representative_id` (`representative_id`);
+
+--
+-- Chỉ mục cho bảng `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `check_out_policies`
+-- Chỉ mục cho bảng `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `check_out_requests`
+-- Chỉ mục cho bảng `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   ADD PRIMARY KEY (`request_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `currency`
+-- Chỉ mục cho bảng `currency`
 --
 ALTER TABLE `currency`
   ADD PRIMARY KEY (`currency_code`);
 
 --
--- Indexes for table `datafeeds`
+-- Chỉ mục cho bảng `datafeeds`
 --
 ALTER TABLE `datafeeds`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `deposit_policies`
+-- Chỉ mục cho bảng `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `dynamic_pricing_rules`
+-- Chỉ mục cho bảng `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD PRIMARY KEY (`rule_id`),
@@ -1700,26 +2155,26 @@ ALTER TABLE `dynamic_pricing_rules`
   ADD KEY `idx_dynamic_priority` (`priority`,`is_exclusive`);
 
 --
--- Indexes for table `events`
+-- Chỉ mục cho bảng `events`
 --
 ALTER TABLE `events`
   ADD PRIMARY KEY (`event_id`);
 
 --
--- Indexes for table `failed_jobs`
+-- Chỉ mục cho bảng `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
 
 --
--- Indexes for table `faqs`
+-- Chỉ mục cho bảng `faqs`
 --
 ALTER TABLE `faqs`
   ADD PRIMARY KEY (`faq_id`);
 
 --
--- Indexes for table `flexible_pricing_rules`
+-- Chỉ mục cho bảng `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   ADD PRIMARY KEY (`rule_id`),
@@ -1729,58 +2184,58 @@ ALTER TABLE `flexible_pricing_rules`
   ADD KEY `idx_priority` (`priority`,`is_exclusive`);
 
 --
--- Indexes for table `floors`
+-- Chỉ mục cho bảng `floors`
 --
 ALTER TABLE `floors`
   ADD PRIMARY KEY (`floor_id`),
   ADD UNIQUE KEY `floor_number` (`floor_number`);
 
 --
--- Indexes for table `guests`
+-- Chỉ mục cho bảng `guests`
 --
 ALTER TABLE `guests`
   ADD PRIMARY KEY (`guest_id`),
   ADD KEY `fk_guests_user` (`user_id`);
 
 --
--- Indexes for table `holidays`
+-- Chỉ mục cho bảng `holidays`
 --
 ALTER TABLE `holidays`
   ADD PRIMARY KEY (`holiday_id`);
 
 --
--- Indexes for table `hotel`
+-- Chỉ mục cho bảng `hotel`
 --
 ALTER TABLE `hotel`
   ADD PRIMARY KEY (`hotel_id`),
   ADD KEY `idx_hotel_id` (`hotel_id`);
 
 --
--- Indexes for table `hotel_rating`
+-- Chỉ mục cho bảng `hotel_rating`
 --
 ALTER TABLE `hotel_rating`
   ADD PRIMARY KEY (`hotel_id`);
 
 --
--- Indexes for table `language`
+-- Chỉ mục cho bảng `language`
 --
 ALTER TABLE `language`
   ADD PRIMARY KEY (`language_code`);
 
 --
--- Indexes for table `meal_types`
+-- Chỉ mục cho bảng `meal_types`
 --
 ALTER TABLE `meal_types`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `migrations`
+-- Chỉ mục cho bảng `migrations`
 --
 ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `notifications`
+-- Chỉ mục cho bảng `notifications`
 --
 ALTER TABLE `notifications`
   ADD PRIMARY KEY (`notification_id`),
@@ -1788,14 +2243,14 @@ ALTER TABLE `notifications`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `payment`
+-- Chỉ mục cho bảng `payment`
 --
 ALTER TABLE `payment`
   ADD PRIMARY KEY (`payment_id`),
   ADD KEY `idx_booking_status` (`booking_id`,`status`);
 
 --
--- Indexes for table `permissions`
+-- Chỉ mục cho bảng `permissions`
 --
 ALTER TABLE `permissions`
   ADD PRIMARY KEY (`id`),
@@ -1803,14 +2258,14 @@ ALTER TABLE `permissions`
   ADD KEY `idx_permissions_parent_id` (`parent_id`);
 
 --
--- Indexes for table `permission_role`
+-- Chỉ mục cho bảng `permission_role`
 --
 ALTER TABLE `permission_role`
   ADD PRIMARY KEY (`permission_id`,`role_id`),
   ADD KEY `role_id` (`role_id`);
 
 --
--- Indexes for table `personal_access_tokens`
+-- Chỉ mục cho bảng `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
   ADD PRIMARY KEY (`id`),
@@ -1818,20 +2273,39 @@ ALTER TABLE `personal_access_tokens`
   ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`);
 
 --
--- Indexes for table `pricing_config`
+-- Chỉ mục cho bảng `pricing_config`
 --
 ALTER TABLE `pricing_config`
   ADD PRIMARY KEY (`config_id`);
 
 --
--- Indexes for table `roles`
+-- Chỉ mục cho bảng `pricing_history`
+--
+ALTER TABLE `pricing_history`
+  ADD PRIMARY KEY (`history_id`),
+  ADD KEY `idx_pricing_history_date_room` (`applied_date`,`room_type_id`),
+  ADD KEY `idx_pricing_history_room_date` (`room_type_id`,`applied_date`),
+  ADD KEY `idx_pricing_history_date` (`applied_date`),
+  ADD KEY `idx_pricing_history_price` (`adjusted_price`),
+  ADD KEY `idx_pricing_history_created` (`created_at`);
+
+--
+-- Chỉ mục cho bảng `representatives`
+--
+ALTER TABLE `representatives`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `room_id` (`room_id`);
+
+--
+-- Chỉ mục cho bảng `roles`
 --
 ALTER TABLE `roles`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Indexes for table `role_user`
+-- Chỉ mục cho bảng `role_user`
 --
 ALTER TABLE `role_user`
   ADD PRIMARY KEY (`user_id`,`role_id`),
@@ -1839,7 +2313,7 @@ ALTER TABLE `role_user`
   ADD KEY `role_id` (`role_id`);
 
 --
--- Indexes for table `room`
+-- Chỉ mục cho bảng `room`
 --
 ALTER TABLE `room`
   ADD PRIMARY KEY (`room_id`),
@@ -1848,14 +2322,14 @@ ALTER TABLE `room`
   ADD KEY `floor_id` (`floor_id`);
 
 --
--- Indexes for table `room_availability`
+-- Chỉ mục cho bảng `room_availability`
 --
 ALTER TABLE `room_availability`
   ADD PRIMARY KEY (`availability_id`),
   ADD KEY `idx_option_date` (`option_id`,`date`);
 
 --
--- Indexes for table `room_bed_types`
+-- Chỉ mục cho bảng `room_bed_types`
 --
 ALTER TABLE `room_bed_types`
   ADD PRIMARY KEY (`room_id`),
@@ -1863,7 +2337,7 @@ ALTER TABLE `room_bed_types`
   ADD KEY `idx_bed_type_id` (`bed_type_id`);
 
 --
--- Indexes for table `room_meal_types`
+-- Chỉ mục cho bảng `room_meal_types`
 --
 ALTER TABLE `room_meal_types`
   ADD PRIMARY KEY (`room_id`),
@@ -1871,14 +2345,14 @@ ALTER TABLE `room_meal_types`
   ADD KEY `idx_meal_type_id` (`meal_type_id`);
 
 --
--- Indexes for table `room_occupancy`
+-- Chỉ mục cho bảng `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   ADD PRIMARY KEY (`occupancy_id`),
   ADD UNIQUE KEY `idx_room_type_date` (`room_type_id`,`date`);
 
 --
--- Indexes for table `room_option`
+-- Chỉ mục cho bảng `room_option`
 --
 ALTER TABLE `room_option`
   ADD PRIMARY KEY (`option_id`),
@@ -1890,21 +2364,21 @@ ALTER TABLE `room_option`
   ADD KEY `package_id` (`package_id`);
 
 --
--- Indexes for table `room_option_promotion`
+-- Chỉ mục cho bảng `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   ADD PRIMARY KEY (`promotion_id`),
   ADD KEY `option_id` (`option_id`);
 
 --
--- Indexes for table `room_price_history`
+-- Chỉ mục cho bảng `room_price_history`
 --
 ALTER TABLE `room_price_history`
   ADD PRIMARY KEY (`price_history_id`),
   ADD UNIQUE KEY `idx_room_type_date` (`room_type_id`,`date`);
 
 --
--- Indexes for table `room_transfers`
+-- Chỉ mục cho bảng `room_transfers`
 --
 ALTER TABLE `room_transfers`
   ADD PRIMARY KEY (`transfer_id`),
@@ -1913,34 +2387,34 @@ ALTER TABLE `room_transfers`
   ADD KEY `new_room_id` (`new_room_id`);
 
 --
--- Indexes for table `room_types`
+-- Chỉ mục cho bảng `room_types`
 --
 ALTER TABLE `room_types`
   ADD PRIMARY KEY (`room_type_id`);
 
 --
--- Indexes for table `room_type_amenity`
+-- Chỉ mục cho bảng `room_type_amenity`
 --
 ALTER TABLE `room_type_amenity`
   ADD PRIMARY KEY (`room_type_id`,`amenity_id`),
   ADD KEY `amenity_id` (`amenity_id`);
 
 --
--- Indexes for table `room_type_image`
+-- Chỉ mục cho bảng `room_type_image`
 --
 ALTER TABLE `room_type_image`
   ADD PRIMARY KEY (`image_id`),
   ADD KEY `room_image_ibfk_1` (`room_type_id`);
 
 --
--- Indexes for table `room_type_package`
+-- Chỉ mục cho bảng `room_type_package`
 --
 ALTER TABLE `room_type_package`
   ADD PRIMARY KEY (`package_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Indexes for table `room_type_service`
+-- Chỉ mục cho bảng `room_type_service`
 --
 ALTER TABLE `room_type_service`
   ADD PRIMARY KEY (`id`),
@@ -1948,13 +2422,13 @@ ALTER TABLE `room_type_service`
   ADD KEY `service_id` (`service_id`);
 
 --
--- Indexes for table `services`
+-- Chỉ mục cho bảng `services`
 --
 ALTER TABLE `services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Indexes for table `sessions`
+-- Chỉ mục cho bảng `sessions`
 --
 ALTER TABLE `sessions`
   ADD PRIMARY KEY (`id`),
@@ -1962,14 +2436,14 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
--- Indexes for table `table_translation`
+-- Chỉ mục cho bảng `table_translation`
 --
 ALTER TABLE `table_translation`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `table_translation_table_name_unique` (`table_name`);
 
 --
--- Indexes for table `translation`
+-- Chỉ mục cho bảng `translation`
 --
 ALTER TABLE `translation`
   ADD PRIMARY KEY (`translation_id`),
@@ -1977,311 +2451,337 @@ ALTER TABLE `translation`
   ADD KEY `language_code` (`language_code`);
 
 --
--- Indexes for table `users`
+-- Chỉ mục cho bảng `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `users_email_unique` (`email`);
 
 --
--- Indexes for table `weekend_days`
+-- Chỉ mục cho bảng `weekend_days`
 --
 ALTER TABLE `weekend_days`
   ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT cho các bảng đã đổ
 --
 
 --
--- AUTO_INCREMENT for table `amenities`
+-- AUTO_INCREMENT cho bảng `amenities`
 --
 ALTER TABLE `amenities`
   MODIFY `amenity_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
--- AUTO_INCREMENT for table `audit_logs`
+-- AUTO_INCREMENT cho bảng `audit_logs`
 --
 ALTER TABLE `audit_logs`
   MODIFY `log_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `bed_types`
+-- AUTO_INCREMENT cho bảng `bed_types`
 --
 ALTER TABLE `bed_types`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính', AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `booking`
+-- AUTO_INCREMENT cho bảng `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=2;
+  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=25;
 
 --
--- AUTO_INCREMENT for table `booking_extensions`
+-- AUTO_INCREMENT cho bảng `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   MODIFY `extension_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `booking_reschedules`
+-- AUTO_INCREMENT cho bảng `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   MODIFY `reschedule_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `cancellation_policies`
+-- AUTO_INCREMENT cho bảng `booking_rooms`
+--
+ALTER TABLE `booking_rooms`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+
+--
+-- AUTO_INCREMENT cho bảng `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT for table `check_out_policies`
+-- AUTO_INCREMENT cho bảng `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `check_out_requests`
+-- AUTO_INCREMENT cho bảng `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `datafeeds`
+-- AUTO_INCREMENT cho bảng `datafeeds`
 --
 ALTER TABLE `datafeeds`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `deposit_policies`
+-- AUTO_INCREMENT cho bảng `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT for table `dynamic_pricing_rules`
+-- AUTO_INCREMENT cho bảng `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
-  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT for table `events`
+-- AUTO_INCREMENT cho bảng `events`
 --
 ALTER TABLE `events`
-  MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT for table `failed_jobs`
+-- AUTO_INCREMENT cho bảng `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `faqs`
+-- AUTO_INCREMENT cho bảng `faqs`
 --
 ALTER TABLE `faqs`
   MODIFY `faq_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `flexible_pricing_rules`
+-- AUTO_INCREMENT cho bảng `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
-  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
--- AUTO_INCREMENT for table `floors`
+-- AUTO_INCREMENT cho bảng `floors`
 --
 ALTER TABLE `floors`
   MODIFY `floor_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã tầng', AUTO_INCREMENT=35;
 
 --
--- AUTO_INCREMENT for table `guests`
+-- AUTO_INCREMENT cho bảng `guests`
 --
 ALTER TABLE `guests`
   MODIFY `guest_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `holidays`
+-- AUTO_INCREMENT cho bảng `holidays`
 --
 ALTER TABLE `holidays`
   MODIFY `holiday_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `hotel`
+-- AUTO_INCREMENT cho bảng `hotel`
 --
 ALTER TABLE `hotel`
   MODIFY `hotel_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khách sạn', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `meal_types`
+-- AUTO_INCREMENT cho bảng `meal_types`
 --
 ALTER TABLE `meal_types`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `migrations`
+-- AUTO_INCREMENT cho bảng `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- AUTO_INCREMENT for table `notifications`
+-- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
   MODIFY `notification_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `payment`
+-- AUTO_INCREMENT cho bảng `payment`
 --
 ALTER TABLE `payment`
   MODIFY `payment_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã thanh toán';
 
 --
--- AUTO_INCREMENT for table `personal_access_tokens`
+-- AUTO_INCREMENT cho bảng `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `pricing_config`
+-- AUTO_INCREMENT cho bảng `pricing_config`
 --
 ALTER TABLE `pricing_config`
   MODIFY `config_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `room`
+-- AUTO_INCREMENT cho bảng `pricing_history`
+--
+ALTER TABLE `pricing_history`
+  MODIFY `history_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `representatives`
+--
+ALTER TABLE `representatives`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT cho bảng `room`
 --
 ALTER TABLE `room`
   MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=296;
 
 --
--- AUTO_INCREMENT for table `room_availability`
+-- AUTO_INCREMENT cho bảng `room_availability`
 --
 ALTER TABLE `room_availability`
-  MODIFY `availability_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã lịch', AUTO_INCREMENT=10;
+  MODIFY `availability_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã lịch', AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT for table `room_occupancy`
+-- AUTO_INCREMENT cho bảng `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
-  MODIFY `occupancy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `occupancy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
--- AUTO_INCREMENT for table `room_option_promotion`
+-- AUTO_INCREMENT cho bảng `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   MODIFY `promotion_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khuyến mãi';
 
 --
--- AUTO_INCREMENT for table `room_price_history`
+-- AUTO_INCREMENT cho bảng `room_price_history`
 --
 ALTER TABLE `room_price_history`
-  MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
--- AUTO_INCREMENT for table `room_transfers`
+-- AUTO_INCREMENT cho bảng `room_transfers`
 --
 ALTER TABLE `room_transfers`
   MODIFY `transfer_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `room_types`
+-- AUTO_INCREMENT cho bảng `room_types`
 --
 ALTER TABLE `room_types`
-  MODIFY `room_type_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã loại phòng', AUTO_INCREMENT=8;
+  MODIFY `room_type_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `room_type_image`
+-- AUTO_INCREMENT cho bảng `room_type_image`
 --
 ALTER TABLE `room_type_image`
-  MODIFY `image_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã ảnh', AUTO_INCREMENT=28;
+  MODIFY `image_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã ảnh', AUTO_INCREMENT=29;
 
 --
--- AUTO_INCREMENT for table `room_type_package`
+-- AUTO_INCREMENT cho bảng `room_type_package`
 --
 ALTER TABLE `room_type_package`
-  MODIFY `package_id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `package_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `room_type_service`
+-- AUTO_INCREMENT cho bảng `room_type_service`
 --
 ALTER TABLE `room_type_service`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `services`
+-- AUTO_INCREMENT cho bảng `services`
 --
 ALTER TABLE `services`
   MODIFY `service_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `table_translation`
+-- AUTO_INCREMENT cho bảng `table_translation`
 --
 ALTER TABLE `table_translation`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `translation`
+-- AUTO_INCREMENT cho bảng `translation`
 --
 ALTER TABLE `translation`
   MODIFY `translation_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bản dịch', AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `users`
+-- AUTO_INCREMENT cho bảng `users`
 --
 ALTER TABLE `users`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT for table `weekend_days`
+-- AUTO_INCREMENT cho bảng `weekend_days`
 --
 ALTER TABLE `weekend_days`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- Constraints for dumped tables
+-- Ràng buộc đối với các bảng kết xuất
 --
 
 --
--- Constraints for table `audit_logs`
+-- Ràng buộc cho bảng `audit_logs`
 --
 ALTER TABLE `audit_logs`
   ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `booking`
+-- Ràng buộc cho bảng `booking`
 --
 ALTER TABLE `booking`
   ADD CONSTRAINT `booking_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE RESTRICT,
   ADD CONSTRAINT `fk_booking_room` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `booking_extensions`
+-- Ràng buộc cho bảng `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   ADD CONSTRAINT `booking_extensions_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `booking_reschedules`
+-- Ràng buộc cho bảng `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   ADD CONSTRAINT `booking_reschedules_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `check_out_requests`
+-- Ràng buộc cho bảng `booking_rooms`
+--
+ALTER TABLE `booking_rooms`
+  ADD CONSTRAINT `booking_rooms_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
+  ADD CONSTRAINT `booking_rooms_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`),
+  ADD CONSTRAINT `booking_rooms_ibfk_3` FOREIGN KEY (`representative_id`) REFERENCES `representatives` (`id`);
+
+--
+-- Ràng buộc cho bảng `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   ADD CONSTRAINT `check_out_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `dynamic_pricing_rules`
+-- Ràng buộc cho bảng `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD CONSTRAINT `dynamic_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `flexible_pricing_rules`
+-- Ràng buộc cho bảng `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL,
@@ -2289,46 +2789,53 @@ ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_3` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `guests`
+-- Ràng buộc cho bảng `guests`
 --
 ALTER TABLE `guests`
   ADD CONSTRAINT `fk_guests_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `hotel_rating`
+-- Ràng buộc cho bảng `hotel_rating`
 --
 ALTER TABLE `hotel_rating`
   ADD CONSTRAINT `hotel_rating_ibfk_1` FOREIGN KEY (`hotel_id`) REFERENCES `hotel` (`hotel_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `notifications`
+-- Ràng buộc cho bảng `notifications`
 --
 ALTER TABLE `notifications`
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `notifications_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `payment`
+-- Ràng buộc cho bảng `payment`
 --
 ALTER TABLE `payment`
   ADD CONSTRAINT `payment_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `permission_role`
+-- Ràng buộc cho bảng `permission_role`
 --
 ALTER TABLE `permission_role`
   ADD CONSTRAINT `permission_role_ibfk_1` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `permission_role_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `role_user`
+-- Ràng buộc cho bảng `representatives`
+--
+ALTER TABLE `representatives`
+  ADD CONSTRAINT `representatives_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
+  ADD CONSTRAINT `representatives_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`);
+
+--
+-- Ràng buộc cho bảng `role_user`
 --
 ALTER TABLE `role_user`
   ADD CONSTRAINT `role_user_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `role_user_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room`
+-- Ràng buộc cho bảng `room`
 --
 ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_2` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
@@ -2336,33 +2843,33 @@ ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_4` FOREIGN KEY (`floor_id`) REFERENCES `floors` (`floor_number`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_availability`
+-- Ràng buộc cho bảng `room_availability`
 --
 ALTER TABLE `room_availability`
   ADD CONSTRAINT `room_availability_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_bed_types`
+-- Ràng buộc cho bảng `room_bed_types`
 --
 ALTER TABLE `room_bed_types`
   ADD CONSTRAINT `fk_room_bed_type` FOREIGN KEY (`bed_type_id`) REFERENCES `bed_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_bed_types_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_meal_types`
+-- Ràng buộc cho bảng `room_meal_types`
 --
 ALTER TABLE `room_meal_types`
   ADD CONSTRAINT `fk_room_meal_type` FOREIGN KEY (`meal_type_id`) REFERENCES `meal_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_meal_types_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_occupancy`
+-- Ràng buộc cho bảng `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   ADD CONSTRAINT `room_occupancy_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_option`
+-- Ràng buộc cho bảng `room_option`
 --
 ALTER TABLE `room_option`
   ADD CONSTRAINT `fk_room_option_cancellation_policy` FOREIGN KEY (`cancellation_policy_id`) REFERENCES `cancellation_policies` (`policy_id`) ON DELETE SET NULL,
@@ -2373,19 +2880,19 @@ ALTER TABLE `room_option`
   ADD CONSTRAINT `room_option_ibfk_4` FOREIGN KEY (`package_id`) REFERENCES `room_type_package` (`package_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `room_option_promotion`
+-- Ràng buộc cho bảng `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   ADD CONSTRAINT `room_option_promotion_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_price_history`
+-- Ràng buộc cho bảng `room_price_history`
 --
 ALTER TABLE `room_price_history`
   ADD CONSTRAINT `room_price_history_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_transfers`
+-- Ràng buộc cho bảng `room_transfers`
 --
 ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -2393,36 +2900,53 @@ ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_3` FOREIGN KEY (`new_room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT;
 
 --
--- Constraints for table `room_type_amenity`
---
-ALTER TABLE `room_type_amenity`
-  ADD CONSTRAINT `room_type_amenity_ibfk_1` FOREIGN KEY (`amenity_id`) REFERENCES `amenities` (`amenity_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `room_type_amenity_ibfk_2` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-
---
--- Constraints for table `room_type_image`
+-- Ràng buộc cho bảng `room_type_image`
 --
 ALTER TABLE `room_type_image`
   ADD CONSTRAINT `room_type_image_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_type_package`
+-- Ràng buộc cho bảng `room_type_package`
 --
 ALTER TABLE `room_type_package`
   ADD CONSTRAINT `room_type_package_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_type_service`
+-- Ràng buộc cho bảng `room_type_service`
 --
 ALTER TABLE `room_type_service`
   ADD CONSTRAINT `room_type_service_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_type_service_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `translation`
+-- Ràng buộc cho bảng `translation`
 --
 ALTER TABLE `translation`
   ADD CONSTRAINT `translation_ibfk_1` FOREIGN KEY (`language_code`) REFERENCES `language` (`language_code`) ON DELETE CASCADE;
+
+DELIMITER $$
+--
+-- Sự kiện
+--
+CREATE DEFINER=`root`@`localhost` EVENT `insert_daily_room_occupancy` ON SCHEDULE EVERY 1 DAY STARTS '2025-07-01 00:00:00' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
+  INSERT INTO room_occupancy (room_type_id, date, total_rooms, booked_rooms, occupancy_rate, created_at, updated_at)
+  SELECT
+    rt.room_type_id,
+    CURRENT_DATE,
+    rt.total_room,
+    0,
+    0,
+    NOW(),
+    NOW()
+  FROM room_types AS rt
+  WHERE rt.is_active = 1
+    AND NOT EXISTS (
+      SELECT 1 FROM room_occupancy ro
+      WHERE ro.room_type_id = rt.room_type_id AND ro.date = CURRENT_DATE
+    );
+END$$
+
+DELIMITER ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

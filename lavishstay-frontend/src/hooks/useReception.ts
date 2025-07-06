@@ -227,12 +227,20 @@ export const useCancelBooking = () => {
     });
 };
 
-export const useGetAvailableRooms = (checkIn: string, checkOut: string) => {
+// Get available rooms for specific dates
+export const useGetAvailableRooms = (params?: { check_in_date?: string; check_out_date?: string }) => {
     return useQuery({
-        queryKey: ['available-rooms', checkIn, checkOut],
-        queryFn: () => receptionAPI.getAvailableRooms(checkIn, checkOut),
-        enabled: !!checkIn && !!checkOut,
-        staleTime: 1 * 60 * 1000,
+        queryKey: ['room-availability', params],
+        queryFn: () => {
+            if (!params?.check_in_date || !params?.check_out_date) {
+                return Promise.resolve({ data: [] });
+            }
+            // Use the correct API endpoint
+            return fetch(`http://localhost:8888/api/rooms/available?check_in_date=${params.check_in_date}&check_out_date=${params.check_out_date}`)
+                .then(res => res.json());
+        },
+        enabled: !!params?.check_in_date && !!params?.check_out_date,
+        staleTime: 1 * 60 * 1000, // 1 minute
         gcTime: 5 * 60 * 1000,
     });
 };

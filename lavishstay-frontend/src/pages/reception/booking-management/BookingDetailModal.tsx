@@ -24,6 +24,8 @@ import {
     Tooltip,
     Dropdown,
     MenuProps,
+    Progress,
+    Statistic,
 } from 'antd';
 import {
     UserOutlined,
@@ -42,14 +44,69 @@ import {
     ExclamationCircleOutlined,
     DeleteOutlined,
     MoreOutlined,
+    ClockCircleOutlined,
+    CreditCardOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
-const { Title, Text } = Typography;
-const { TextArea } = Input;
+const { Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
+
+
+// Status badge component
+const StatusBadge: React.FC<{ status: string; type: 'booking' | 'payment' | 'room' }> = ({ status, type }) => {
+    const getConfig = () => {
+        if (type === 'booking') {
+            const configs = {
+                pending: { color: '#fa8c16', bg: '#fff7e6', text: 'Chờ xác nhận' },
+                confirmed: { color: '#1890ff', bg: '#e6f7ff', text: 'Đã xác nhận' },
+                completed: { color: '#52c41a', bg: '#f6ffed', text: 'Hoàn thành' },
+                cancelled: { color: '#ff4d4f', bg: '#fff2f0', text: 'Đã hủy' },
+            };
+            return configs[status as keyof typeof configs] || configs.pending;
+        }
+        if (type === 'payment') {
+            const configs = {
+                pending: { color: '#fa8c16', bg: '#fff7e6', text: 'Chờ thanh toán' },
+                completed: { color: '#52c41a', bg: '#f6ffed', text: 'Đã thanh toán' },
+                failed: { color: '#ff4d4f', bg: '#fff2f0', text: 'Thất bại' },
+                refunded: { color: '#722ed1', bg: '#f9f0ff', text: 'Đã hoàn tiền' },
+            };
+            return configs[status as keyof typeof configs] || configs.pending;
+        }
+        // room status
+        const configs = {
+            available: { color: '#52c41a', bg: '#f6ffed', text: 'Trống' },
+            occupied: { color: '#ff4d4f', bg: '#fff2f0', text: 'Có khách' },
+            cleaning: { color: '#1890ff', bg: '#e6f7ff', text: 'Dọn dẹp' },
+            maintenance: { color: '#fa8c16', bg: '#fff7e6', text: 'Bảo trì' },
+            deposited: { color: '#722ed1', bg: '#f9f0ff', text: 'Đã cọc' },
+            no_show: { color: '#ff7875', bg: '#fff2f0', text: 'Không đến' },
+            check_in: { color: '#13c2c2', bg: '#e6fffb', text: 'Đang nhận' },
+            check_out: { color: '#a0d911', bg: '#fcffe6', text: 'Đang trả' },
+        };
+        return configs[status as keyof typeof configs] || configs.available;
+    };
+
+    const config = getConfig();
+    return (
+        <span
+            style={{
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 500,
+                color: config.color,
+                backgroundColor: config.bg,
+                border: `1px solid ${config.color}20`,
+            }}
+        >
+            {config.text}
+        </span>
+    );
+};
 
 interface BookingRoom {
     booking_room_id: number;
@@ -237,12 +294,13 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
         }
     };
 
-    // Room columns
+    // Room columns with beautiful design
     const roomColumns: ColumnsType<BookingRoom> = [
         {
             title: '',
             dataIndex: 'booking_room_id',
             width: 50,
+            fixed: 'left',
             render: (id: number) => (
                 <Checkbox
                     checked={selectedRooms.includes(id)}
@@ -257,92 +315,210 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
             ),
         },
         {
-            title: 'Phòng',
+            title: 'Thông tin phòng',
             dataIndex: 'room_name',
             key: 'room_name',
+            width: 200,
+            fixed: 'left',
             render: (name: string, record: BookingRoom) => (
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                        <HomeOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-                        <Text strong>{name}</Text>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '8px',
+                        backgroundColor: '#f0f2ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 12,
+                    }}>
+                        <HomeOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
                     </div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                        Tầng {record.room_floor} • {record.room_type_name}
-                    </Text>
+                    <div>
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#262626', marginBottom: 2 }}>
+                            {name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            Tầng {record.room_floor} • {record.room_type_name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            Tối đa {record.max_guests} khách
+                        </div>
+                    </div>
                 </div>
             ),
         },
         {
-            title: 'Trạng thái phòng',
+            title: 'Trạng thái',
             dataIndex: 'room_status',
             key: 'room_status',
-            render: (status: string) => (
-                <Tag color={roomStatusConfig[status as keyof typeof roomStatusConfig]?.color}>
-                    {roomStatusConfig[status as keyof typeof roomStatusConfig]?.text}
-                </Tag>
-            ),
+            width: 120,
+            align: 'center',
+            render: (status: string) => <StatusBadge status={status} type="room" />,
         },
         {
-            title: 'Thời gian',
+            title: 'Thời gian lưu trú',
             key: 'duration',
+            width: 180,
             render: (_, record: BookingRoom) => (
-                <div>
-                    <div>
-                        <CalendarOutlined style={{ marginRight: 4, color: '#52c41a' }} />
-                        <Text style={{ fontSize: '12px' }}>
-                            {dayjs(record.check_in_date).format('DD/MM/YYYY')}
-                        </Text>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 4,
+                        padding: '4px 8px',
+                        backgroundColor: '#f6ffed',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#52c41a'
+                    }}>
+                        <CalendarOutlined style={{ marginRight: 4 }} />
+                        {dayjs(record.check_in_date).format('DD/MM')}
                     </div>
-                    <div>
-                        <CalendarOutlined style={{ marginRight: 4, color: '#ff4d4f' }} />
-                        <Text style={{ fontSize: '12px' }}>
-                            {dayjs(record.check_out_date).format('DD/MM/YYYY')}
-                        </Text>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 4,
+                        padding: '4px 8px',
+                        backgroundColor: '#fff2f0',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#ff4d4f'
+                    }}>
+                        <CalendarOutlined style={{ marginRight: 4 }} />
+                        {dayjs(record.check_out_date).format('DD/MM')}
                     </div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <div style={{
+                        fontSize: '12px',
+                        color: '#1890ff',
+                        fontWeight: 500,
+                        textAlign: 'center'
+                    }}>
                         {record.nights} đêm
-                    </Text>
+                    </div>
                 </div>
             ),
         },
         {
             title: 'Giá phòng',
             key: 'price',
+            width: 150,
             align: 'right',
             render: (_, record: BookingRoom) => (
-                <div>
-                    <div>
-                        <Text strong>
-                            {new Intl.NumberFormat('vi-VN').format(record.price_per_night)} ₫
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-                            /đêm
-                        </Text>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{
+                        fontSize: '13px',
+                        color: '#262626',
+                        fontWeight: 500,
+                        marginBottom: 2
+                    }}>
+                        {new Intl.NumberFormat('vi-VN').format(record.price_per_night)} ₫
+                        <span style={{ fontSize: '11px', color: '#8c8c8c', fontWeight: 400 }}>/đêm</span>
                     </div>
-                    <div style={{ marginTop: 4 }}>
-                        <Text strong style={{ color: '#f50' }}>
-                            {new Intl.NumberFormat('vi-VN').format(record.total_price)} ₫
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-                            tổng cộng
-                        </Text>
+                    <div style={{
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: '#f5222d',
+                        marginTop: 4
+                    }}>
+                        {new Intl.NumberFormat('vi-VN').format(record.total_price)} ₫
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
+                        tổng cộng
                     </div>
                 </div>
             ),
         },
         {
-            title: 'Đại diện',
+            title: 'Người đại diện',
             dataIndex: 'representative_name',
             key: 'representative_name',
+            width: 160,
             render: (name: string) => (
                 name ? (
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar size="small" icon={<UserOutlined />} style={{ marginRight: 8 }} />
-                        <Text>{name}</Text>
+                        <Avatar
+                            size={32}
+                            icon={<UserOutlined />}
+                            style={{
+                                marginRight: 8,
+                                backgroundColor: '#1890ff',
+                                fontSize: '14px'
+                            }}
+                        />
+                        <div>
+                            <div style={{
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                color: '#262626',
+                                marginBottom: 2
+                            }}>
+                                {name}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
+                                Đại diện
+                            </div>
+                        </div>
                     </div>
                 ) : (
-                    <Text type="secondary">Chưa chỉ định</Text>
+                    <div style={{
+                        textAlign: 'center',
+                        padding: '8px',
+                        backgroundColor: '#fafafa',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        color: '#8c8c8c'
+                    }}>
+                        Chưa chỉ định
+                    </div>
                 )
+            ),
+        },
+        {
+            title: 'Thao tác',
+            key: 'action',
+            width: 100,
+            fixed: 'right',
+            align: 'center',
+            render: (_, record: BookingRoom) => (
+                <Dropdown
+                    menu={{
+                        items: [
+                            {
+                                key: 'transfer',
+                                label: 'Đổi phòng',
+                                icon: <SwapOutlined />,
+                                onClick: () => handleRoomAction('transfer', [record.booking_room_id]),
+                            },
+                            {
+                                key: 'check_in',
+                                label: 'Check-in',
+                                icon: <CheckCircleOutlined />,
+                                onClick: () => handleRoomAction('check_in', [record.booking_room_id]),
+                            },
+                            {
+                                key: 'check_out',
+                                label: 'Check-out',
+                                icon: <CloseCircleOutlined />,
+                                onClick: () => handleRoomAction('check_out', [record.booking_room_id]),
+                            },
+                        ],
+                    }}
+                    trigger={['click']}
+                >
+                    <Button
+                        type="text"
+                        icon={<MoreOutlined />}
+                        size="small"
+                        style={{
+                            borderRadius: '6px',
+                        }}
+                    />
+                </Dropdown>
             ),
         },
     ];
@@ -441,6 +617,8 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
             <Spin spinning={loading}>
                 {bookingDetail && (
                     <>
+
+
                         {/* Phần thông tin khách hàng */}
                         <Card
                             title="Thông tin đặt phòng"
@@ -567,13 +745,34 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
 
                         {/* Phần Tabs */}
                         <Tabs defaultActiveKey="rooms">
-                            <TabPane tab="Chi tiết phòng" key="rooms">
-                                <Card>
-                                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Space>
+                            <TabPane tab={
+                                <span>
+                                    <HomeOutlined style={{ marginRight: 8 }} />
+                                    Chi tiết phòng ({bookingDetail.booking_rooms?.length || 0})
+                                </span>
+                            } key="rooms">
+                                <Card
+                                    style={{
+                                        borderRadius: '12px',
+                                        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)',
+                                        border: '1px solid #f0f0f0'
+                                    }}
+                                    bodyStyle={{ padding: '20px' }}
+                                >
+                                    <div style={{
+                                        marginBottom: 20,
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '16px 20px',
+                                        backgroundColor: '#fafafa',
+                                        borderRadius: '8px',
+                                        border: '1px solid #f0f0f0'
+                                    }}>
+                                        <Space size={16}>
                                             <Checkbox
                                                 indeterminate={selectedRooms.length > 0 && selectedRooms.length < bookingDetail.booking_rooms.length}
-                                                checked={selectedRooms.length === bookingDetail.booking_rooms.length}
+                                                checked={selectedRooms.length === bookingDetail.booking_rooms.length && bookingDetail.booking_rooms.length > 0}
                                                 onChange={(e) => {
                                                     if (e.target.checked) {
                                                         setSelectedRooms(bookingDetail.booking_rooms.map(room => room.booking_room_id));
@@ -582,8 +781,19 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                                     }
                                                 }}
                                             >
-                                                Chọn tất cả ({selectedRooms.length}/{bookingDetail.booking_rooms.length})
+                                                <span style={{ fontWeight: 500, color: '#262626' }}>
+                                                    Chọn tất cả
+                                                </span>
                                             </Checkbox>
+                                            <Badge
+                                                count={selectedRooms.length}
+                                                style={{ backgroundColor: '#1890ff' }}
+                                                showZero={false}
+                                            >
+                                                <span style={{ color: '#8c8c8c', fontSize: '13px' }}>
+                                                    ({selectedRooms.length}/{bookingDetail.booking_rooms.length} phòng)
+                                                </span>
+                                            </Badge>
                                         </Space>
                                         <Space>
                                             <Dropdown
@@ -596,8 +806,9 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                                     type="primary"
                                                     icon={<MoreOutlined />}
                                                     disabled={selectedRooms.length === 0}
+                                                    style={{ borderRadius: '8px' }}
                                                 >
-                                                    Thao tác ({selectedRooms.length})
+                                                    Thao tác hàng loạt ({selectedRooms.length})
                                                 </Button>
                                             </Dropdown>
                                         </Space>
@@ -608,6 +819,12 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         rowKey="booking_room_id"
                                         pagination={false}
                                         size="middle"
+                                        scroll={{ x: 'max-content' }}
+                                        rowClassName={(record) =>
+                                            selectedRooms.includes(record.booking_room_id)
+                                                ? 'selected-row'
+                                                : ''
+                                        }
                                     />
                                 </Card>
                             </TabPane>

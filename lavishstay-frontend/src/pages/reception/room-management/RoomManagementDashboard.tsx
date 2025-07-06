@@ -7,7 +7,7 @@ import { RoomFilters, FullCalendarEvent } from '../../../types/room';
 import FilterBar from '../../../components/room-management/FilterBar';
 import RoomGridView from '../../../components/room-management/RoomGridView';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
-import { useGetReceptionRooms, useGetReceptionRoomTypes } from '../../../hooks/useReception';
+import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms } from '../../../hooks/useReception';
 import { statusOptions } from '../../../constants/roomStatus';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
@@ -30,12 +30,43 @@ const RoomManagementDashboard: React.FC = () => {
     const { data: roomTypesData } = useGetReceptionRoomTypes();
     const roomTypes = roomTypesData?.data || [];
 
-    // Fetch rooms using real API with filters
-    const { data: roomsData, isLoading } = useGetReceptionRooms({
-        ...currentFilters,
-        include: 'room_type'
-    });
-    const rooms = roomsData?.data || [];
+    // Check if we have date range filter
+    const hasDateRange = currentFilters.dateRange && currentFilters.dateRange.length === 2;
+
+    // Fetch available rooms when date range is provided
+    const { data: availableRoomsData, isLoading: isLoadingAvailable } = useGetAvailableRooms(
+        hasDateRange ? {
+            check_in_date: currentFilters.dateRange![0],
+            check_out_date: currentFilters.dateRange![1]
+        } : undefined
+    );
+
+    // Fetch regular rooms when no date range
+    const { data: roomsData, isLoading: isLoadingRooms } = useGetReceptionRooms(
+        !hasDateRange ? {
+            ...currentFilters,
+            include: 'room_type'
+        } : undefined
+    );
+
+    // Use appropriate data source based on filter
+    const rooms = hasDateRange
+        ? (availableRoomsData?.data || []).flatMap((roomType: any) =>
+            roomType.available_rooms?.map((room: any) => ({
+                id: room.room_id,
+                name: room.room_name || `Room ${room.room_id}`,
+                room_type: {
+                    name: roomType.name,
+                    base_price: roomType.base_price,
+                    adjusted_price: roomType.adjusted_price,
+                    max_guests: roomType.max_guests
+                },
+                status: 'available' // Available rooms from API
+            })) || []
+        )
+        : (roomsData?.data || []);
+
+    const isLoading = hasDateRange ? isLoadingAvailable : isLoadingRooms;
 
     const handleSearch = (searchFilters: RoomFilters) => {
         setCurrentFilters(searchFilters);
@@ -203,6 +234,9 @@ const RoomManagementDashboard: React.FC = () => {
                                 guestCount={guestCount}
                                 onGuestCountChange={setGuestCount}
                                 navigate={navigate}
+                                hasDateFilter={hasDateRange}
+                                checkInDate={hasDateRange ? currentFilters.dateRange![0] : undefined}
+                                checkOutDate={hasDateRange ? currentFilters.dateRange![1] : undefined}
                             />
                         ) : (
                             <RoomTimelineView
