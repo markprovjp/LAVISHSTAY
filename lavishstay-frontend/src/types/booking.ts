@@ -1,27 +1,31 @@
 // Booking Management Types
 export interface Booking {
-    id: number;
+    booking_id: number; // Primary key theo schema
     booking_code: string;
-    guest_name: string;
-    guest_email: string;
-    guest_phone: string;
-    guest_count: number;
-    room_id: number;
-    room?: Room;
+    user_id?: number;
+    option_id?: string;
     check_in_date: string;
     check_out_date: string;
-    total_amount: number;
-    deposit_amount: number;
-    payment_status: BookingPaymentStatus;
-    booking_status: BookingStatus;
-    payment_method?: string;
-    notes?: string;
+    total_price_vnd: number; // Tên đúng theo schema
+    guest_count: number;
+    adults: number;
+    children?: number;
+    children_age?: any; // JSON field
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Enum theo schema
+    quantity?: number;
     created_at: string;
     updated_at: string;
-    actual_check_in_time?: string;
-    actual_check_out_time?: string;
-    special_requests?: string;
-    extra_services?: ExtraService[];
+    guest_name?: string;
+    guest_email?: string;
+    guest_phone?: string;
+    room_id?: number;
+    room?: Room;
+
+    // Compatibility fields (map to actual schema fields)
+    id?: number; // Map to booking_id
+    total_amount?: number; // Map to total_price_vnd
+    payment_status?: BookingPaymentStatus; // Not in schema, optional
+    booking_status?: BookingStatus; // Map to status
 }
 
 export interface Room {
@@ -48,17 +52,19 @@ export interface ExtraService {
 }
 
 export type BookingPaymentStatus = 'pending' | 'paid' | 'partial' | 'refunded' | 'failed';
-export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
 export interface BookingFilters {
     guest_name?: string;
+    guest_phone?: string;
     booking_code?: string;
     payment_status?: BookingPaymentStatus;
     booking_status?: BookingStatus;
     check_in_date?: string;
     check_out_date?: string;
     room_number?: string;
-    date_range?: [string, string];
+    date_range?: [Date, Date];
+    created_date_range?: [Date, Date];
 }
 
 export interface CreateBookingRequest {

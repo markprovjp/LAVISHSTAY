@@ -701,22 +701,24 @@ class ReceptionController extends Controller
                 ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
                 ->leftJoin('representatives', 'booking_rooms.representative_id', '=', 'representatives.id')
                 ->select([
-                    'booking.booking_id as id',
+                    'booking.booking_id',
                     'booking.booking_code',
-                    'booking.guest_name',
-                    'booking.guest_email',
-                    'booking.guest_phone',
+                    'booking.user_id',
+                    'booking.option_id',
+                    'booking.check_in_date',
+                    'booking.check_out_date',
+                    'booking.total_price_vnd',
                     'booking.guest_count',
                     'booking.adults',
                     'booking.children',
-                    'booking.children_age',
-                    'booking_rooms.room_id',
-                    'booking.check_in_date',
-                    'booking.check_out_date',
-                    'booking.total_price_vnd as total_amount',
-                    'booking.status as booking_status',
+                    'booking.status',
+                    'booking.quantity',
                     'booking.created_at',
                     'booking.updated_at',
+                    'booking.guest_name',
+                    'booking.guest_email',
+                    'booking.guest_phone',
+                    'booking_rooms.room_id',
                     'room.name as room_name',
                     'room.floor_id as room_floor',
                     'room_types.name as room_type_name',
@@ -758,43 +760,50 @@ class ReceptionController extends Controller
 
             $bookings = $query->paginate($request->get('per_page', 20));
 
-            // Transform data to match frontend expectations
+            // Transform data to return actual schema fields
             $transformedBookings = [];
             foreach ($bookings->items() as $booking) {
                 // Lấy thông tin payment status từ bảng payment
                 $paymentInfo = DB::table('payment')
-                    ->where('booking_id', $booking->id)
+                    ->where('booking_id', $booking->booking_id)
                     ->latest()
                     ->first();
 
                 $transformedBookings[] = [
-                    'id' => $booking->id,
+                    'booking_id' => $booking->booking_id,
                     'booking_code' => $booking->booking_code,
+                    'user_id' => $booking->user_id,
+                    'option_id' => $booking->option_id,
+                    'check_in_date' => $booking->check_in_date,
+                    'check_out_date' => $booking->check_out_date,
+                    'total_price_vnd' => $booking->total_price_vnd,
+                    'guest_count' => $booking->guest_count,
+                    'adults' => (int)($booking->adults ?? 1), // Ensure integer
+                    'children' => (int)($booking->children ?? 0), // Ensure integer
+                    'status' => $booking->status,
+                    'quantity' => $booking->quantity,
+                    'created_at' => $booking->created_at,
+                    'updated_at' => $booking->updated_at,
                     'guest_name' => $booking->guest_name,
                     'guest_email' => $booking->guest_email,
                     'guest_phone' => $booking->guest_phone,
-                    'guest_count' => $booking->guest_count,
-                    'adults' => $booking->adults ?? 1,
-                    'children' => $booking->children ?? 0,
-                    'children_age' => $booking->children_age ? json_decode($booking->children_age, true) : [],
                     'room_id' => $booking->room_id,
-                    'check_in_date' => $booking->check_in_date,
-                    'check_out_date' => $booking->check_out_date,
-                    'total_amount' => $booking->total_amount,
-                    'booking_status' => $booking->booking_status,
+                    
+                    // Compatibility fields for frontend
+                    'id' => $booking->booking_id,
+                    'total_amount' => $booking->total_price_vnd,
+                    'booking_status' => $booking->status,
                     'payment_status' => $paymentInfo ? $paymentInfo->status : 'pending',
-                    'created_at' => $booking->created_at,
-                    'updated_at' => $booking->updated_at,
-                    'room' => [
+                    
+                    'room' => $booking->room_id ? [
                         'id' => $booking->room_id,
                         'name' => $booking->room_name,
                         'floor' => $booking->room_floor,
-                        'room_type' => [
-                            'name' => $booking->room_type_name,
-                            'base_price' => $booking->room_type_price,
-                            'max_guests' => $booking->room_type_max_guests
-                        ]
-                    ]
+                        // Flatten room_type data to avoid nested objects that cause Ant Design issues
+                        'room_type_name' => $booking->room_type_name,
+                        'room_type_price' => $booking->room_type_price,
+                        'room_type_max_guests' => $booking->room_type_max_guests
+                    ] : null
                 ];
             }
 
@@ -863,11 +872,24 @@ class ReceptionController extends Controller
     public function updateBookingStatus(Request $request, $bookingId): JsonResponse
     {
         try {
+            // Debug log the incoming request
+            Log::info('Update booking status request', [
+                'booking_id' => $bookingId,
+                'request_data' => $request->all(),
+                'method' => $request->method(),
+                'content_type' => $request->header('Content-Type')
+            ]);
+
             $validator = Validator::make($request->all(), [
-                'status' => 'required|string|in:pending,confirmed,completed,cancelled'
+                'status' => 'required|string|in:pending,confirmed,completed,cancelled,checked_in,checked_out,no_show'
             ]);
 
             if ($validator->fails()) {
+                Log::error('Validation failed for booking status update', [
+                    'booking_id' => $bookingId,
+                    'request_data' => $request->all(),
+                    'errors' => $validator->errors()
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation error',
@@ -1090,7 +1112,6 @@ class ReceptionController extends Controller
                 'guest_count' => $booking->guest_count,
                 'adults' => $booking->adults ?? 1,
                 'children' => $booking->children ?? 0,
-                'children_age' => $booking->children_age ? json_decode($booking->children_age, true) : [],
                 'check_in_date' => $booking->check_in_date,
                 'check_out_date' => $booking->check_out_date,
                 'total_price_vnd' => $booking->total_price_vnd,
@@ -1125,6 +1146,9 @@ class ReceptionController extends Controller
     public function createBooking(Request $request): JsonResponse
     {
         try {
+            // Log the incoming request for debugging
+            Log::info('Incoming booking request:', $request->all());
+
             $validator = Validator::make($request->all(), [
                 'rooms' => 'required|array|min:1',
                 'rooms.*.id' => 'required|string',
@@ -1145,6 +1169,7 @@ class ReceptionController extends Controller
             ]);
 
             if ($validator->fails()) {
+                Log::error('Validation failed:', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
@@ -1178,8 +1203,16 @@ class ReceptionController extends Controller
                         }
                     }
                 }
+                
+                // Debug logging
+                Log::info('Quick booking creation - childrenAges data:', [
+                    'bookingData' => $bookingData,
+                    'childrenAges' => $childrenAges,
+                    'childrenAges_json' => json_encode($childrenAges),
+                    'childrenAges_isEmpty' => empty($childrenAges)
+                ]);
 
-                // Create main booking record with children info
+                // Create main booking record
                 $bookingId = DB::table('booking')->insertGetId([
                     'booking_code' => $bookingCode,
                     'guest_name' => $mainRepresentative['fullName'],
@@ -1189,11 +1222,11 @@ class ReceptionController extends Controller
                     'check_in_date' => $request->checkInDate,
                     'check_out_date' => $request->checkOutDate,
                     'total_price_vnd' => $request->subtotal,
-                    'status' => 'pending',
+                    'status' => 'confirmed', // Set to confirmed since reception is creating it
                     'quantity' => count($request->rooms),
                     'adults' => $adults,
                     'children' => count($childrenAges),
-                    'children_age' => !empty($childrenAges) ? json_encode($childrenAges) : null,
+                    'children_age' => !empty($childrenAges) ? implode(',', $childrenAges) : '', // Store as comma-separated string
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);
@@ -1207,29 +1240,30 @@ class ReceptionController extends Controller
                     $nights = Carbon::parse($request->checkOutDate)->diffInDays(Carbon::parse($request->checkInDate));
                     $totalPrice = $room['room_type']['adjusted_price'] * $nights;
 
-                    // Insert into booking_rooms table (without children info)
-                    DB::table('booking_rooms')->insert([
+                    // First insert representative to get the ID
+                    $representativeId = DB::table('representatives')->insertGetId([
                         'booking_id' => $bookingId,
                         'booking_code' => $bookingCode,
-                        'room_id' => $room['id'],
-                        'price_per_night' => $room['room_type']['adjusted_price'],
-                        'nights' => $nights,
-                        'total_price' => $totalPrice,
-                        'check_in_date' => $request->checkInDate,
-                        'check_out_date' => $request->checkOutDate,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now()
-                    ]);
-
-                    // Insert representative information
-                    DB::table('representatives')->insert([
-                        'booking_id' => $bookingId,
                         'room_id' => $room['id'],
                         'full_name' => $representative['fullName'],
                         'phone_number' => $representative['phoneNumber'],
                         'email' => $representative['email'],
                         'id_card' => $representative['idCard'],
-                        'notes' => $notes,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now()
+                    ]);
+
+                    // Then insert into booking_rooms table with representative_id
+                    DB::table('booking_rooms')->insert([
+                        'booking_id' => $bookingId,
+                        'booking_code' => $bookingCode,
+                        'room_id' => $room['id'],
+                        'representative_id' => $representativeId,
+                        'price_per_night' => $room['room_type']['adjusted_price'],
+                        'nights' => $nights,
+                        'total_price' => $totalPrice,
+                        'check_in_date' => $request->checkInDate,
+                        'check_out_date' => $request->checkOutDate,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now()
                     ]);

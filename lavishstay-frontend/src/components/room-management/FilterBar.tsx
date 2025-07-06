@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Select, DatePicker, Button, Space, Card, Row, Col, Switch, Badge } from 'antd';
-import { SearchOutlined, ReloadOutlined, FilterOutlined, CheckSquareOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, CheckSquareOutlined } from '@ant-design/icons';
 import { useRoomManagementStore } from '../../stores/roomManagementStore';
 import { statusOptions } from '../../constants/roomStatus';
 import { RoomFilters } from '../../types/room';
@@ -44,6 +44,14 @@ const FilterBar: React.FC<FilterBarProps> = ({
         onSearch(searchFilters);
     };
 
+    // Hàm search real-time khi thay đổi input
+    const handleFieldChange = () => {
+        // Delay search một chút để tránh quá nhiều API calls
+        setTimeout(() => {
+            handleSearch();
+        }, 300);
+    };
+
     const handleReset = () => {
         form.resetFields();
         resetFilters();
@@ -77,16 +85,18 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <Input
                                     placeholder="Nhập tên khách hàng"
                                     allowClear
+                                    onChange={handleFieldChange}
                                 />
                             </Form.Item>
                         </Col>
 
                         <Col xs={24} sm={12} md={6} lg={5}>
-                            <Form.Item label="Thời gian" name="dateRange">
+                            <Form.Item label="Ngày nhận - trả phòng" name="dateRange">
                                 <RangePicker
                                     className="w-full"
                                     format="DD/MM/YYYY"
-                                    placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                                    placeholder={['Ngày nhận phòng', 'Ngày trả phòng']}
+                                    onChange={handleFieldChange}
                                 />
                             </Form.Item>
                         </Col>
@@ -96,6 +106,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <Input
                                     placeholder="Nhập số phòng"
                                     allowClear
+                                    onChange={handleFieldChange}
                                 />
                             </Form.Item>
                         </Col>
@@ -105,6 +116,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <Select
                                     placeholder="Chọn loại phòng"
                                     allowClear
+                                    onChange={handleFieldChange}
                                 >
                                     {roomTypes.map(type => (
                                         <Option key={type.id} value={type.id}>
@@ -120,6 +132,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 <Select
                                     placeholder="Chọn trạng thái"
                                     allowClear
+                                    onChange={handleFieldChange}
                                 >
                                     {statusOptions.map(status => (
                                         <Option key={status.value} value={status.value}>
@@ -139,19 +152,13 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                         onClick={handleSearch}
                                         loading={loading}
                                     >
-                                        Tìm kiếm
+                                        Tìm kiếm hoặc tìm phòng trống
                                     </Button>
                                     <Button
                                         icon={<ReloadOutlined />}
                                         onClick={handleReset}
                                     >
                                         Đặt lại
-                                    </Button>
-                                    <Button
-                                        icon={<FilterOutlined />}
-                                        type="dashed"
-                                    >
-                                        Bộ lọc
                                     </Button>
                                 </Space>
                             </Form.Item>
