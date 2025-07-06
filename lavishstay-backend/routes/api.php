@@ -46,6 +46,9 @@ Route::prefix('search')->group(function () {
 Route::get('/rooms/available', [RoomAvailabilityController::class, 'getAvailableRooms']);
 Route::get('/rooms/available/debug', [RoomAvailabilityController::class, 'debugDatabase']);
 Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 'debugImagesAndAmenities']);
+// Thêm route mới cho customer search
+Route::get('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
+
 
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
