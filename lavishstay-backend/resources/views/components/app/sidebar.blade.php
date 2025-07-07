@@ -1,3 +1,44 @@
+<style>
+    /* Submenu slide animations */
+    .submenu-enter {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .submenu-enter-active {
+        max-height: 500px;
+        opacity: 1;
+    }
+
+    .submenu-exit {
+        max-height: 500px;
+        opacity: 1;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .submenu-exit-active {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    /* Enhanced hover effects */
+    .sidebar-item {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .sidebar-item:hover {
+        transform: translateX(2px);
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .dark .sidebar-item:hover {
+        background: rgba(139, 92, 246, 0.1);
+    }
+</style>
+
 <div class="min-w-fit">
     <!-- Sidebar backdrop (mobile only) -->
     <div class="fixed inset-0 bg-gray-900/30 z-40 lg:hidden lg:z-auto transition-opacity duration-200"
@@ -40,7 +81,7 @@
                 </h3>
                 <ul class="mt-3">
                     <!-- Dashboard -->
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['dashboard'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['dashboard'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(1), ['dashboard']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(1), ['dashboard'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -68,8 +109,16 @@
                             </div>
                         </a>
                         <div class="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                            <ul class="pl-8 mt-1 @if (!in_array(Request::segment(1), ['dashboard'])) {{ 'hidden' }} @endif"
-                                :class="open ? 'block!' : 'hidden'">
+    <ul class="pl-8 mt-1 overflow-hidden transition-all duration-300 ease-in-out"
+        :class="open ? 'submenu-enter-active max-h-96 opacity-100' : 'submenu-enter max-h-0 opacity-0'"
+        x-show="open" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 max-h-0"
+        x-transition:enter-end="opacity-100 max-h-96"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 max-h-96"
+        x-transition:leave-end="opacity-0 max-h-0">
+
                                 <li class="mb-1 last:mb-0">
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate @if (Route::is('dashboard')) {{ 'text-violet-500!' }} @endif"
                                         href="{{ route('dashboard') }}">
@@ -89,7 +138,7 @@
                     </li>
 
                     <!-- Settings -->
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['settings'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['settings'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(1), ['settings']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(1), ['settings'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -140,7 +189,7 @@
 
                     {{-- User --}}
                     @if (Auth::user()?->hasPermission('quan_ly_nhan_vien') || Auth::user()?->hasPermission('quan_ly_khach_hang'))
-                        <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                        <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                             x-data="{ open: {{ in_array(Request::segment(2), ['users', 'staffs', 'customers']) ? 1 : 0 }} }">
                             <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                                 href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -203,7 +252,7 @@
 
 
                     {{-- Bookings --}}
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.bookings*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.bookings*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ request()->routeIs('admin.bookings*') ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!request()->routeIs('admin.bookings*')) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -251,7 +300,7 @@
 
 
                     {{-- Room Modification --}}
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.booking_extensions*') ||
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.booking_extensions*') ||
                             request()->routeIs('admin.booking_reschedules*') ||
                             request()->routeIs('admin.room_transfers*') ||
                             request()->routeIs('admin.check_out_requests*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
@@ -336,7 +385,7 @@
 
 
                     {{-- Policy --}}
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.cancellation-policies*') ||
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.cancellation-policies*') ||
                             request()->routeIs('admin.deposit-policies*') ||
                             request()->routeIs('admin.checkout-policies*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ request()->routeIs('admin.cancellation-policies*') || request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.checkout-policies*') ? 1 : 0 }} }">
@@ -406,7 +455,7 @@
 
 
                     {{-- Room Management --}}
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['room-types', 'rooms']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -465,7 +514,7 @@
 
 
                     {{-- Services --}}
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (Request::segment(2) === 'services') {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (Request::segment(2) === 'services') {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ Request::segment(2) === 'services' ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (Request::segment(2) !== 'services') {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -529,7 +578,7 @@
 
 
                     <!-- Multinational -->
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['multinational'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['multinational'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['multinational']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(2), ['multinational'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
@@ -585,23 +634,26 @@
 
                     {{-- Room Pricing --}}
                     <li
-                        class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                        class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['pricing'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="{{ route('admin.pricing.index') }}">
                             <div class="flex items-center">
-                                <svg class="shrink-0 fill-current @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }}@endif" width="20px" height="20px"						
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-                            </svg>
+                                <svg class="shrink-0 fill-current @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                    width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                </svg>
                                 <span
-                                    class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Pricing</span>
+                                    class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room
+                                    Pricing</span>
                             </div>
                         </a>
                     </li>
 
                     {{-- FAQs --}}
                     <li
-                        class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                        class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['faqs'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="{{ route('admin.faqs') }}">
                             <div class="flex items-center">
@@ -611,13 +663,13 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                                 </svg>
-                                
+
                                 <span
                                     class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">FAQs</span>
                             </div>
                         </a>
                     </li>
-                    
+
                 </ul>
             </div>
             <!-- More group -->
