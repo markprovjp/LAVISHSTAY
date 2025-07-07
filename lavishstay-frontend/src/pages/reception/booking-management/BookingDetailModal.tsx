@@ -576,7 +576,7 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     return (
         <Modal
             title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' , padding: '0 14px' }}>
                     <span>Chi tiết đặt phòng - {bookingDetail?.booking_code}</span>
                     <Space>
                         {isEditing ? (
@@ -611,8 +611,8 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
             open={visible}
             onCancel={onClose}
             footer={null}
-            width={1200}
-            style={{ top: 20 }}
+            width={1300}
+            style={{ top: 20  }}
         >
             <Spin spinning={loading}>
                 {bookingDetail && (

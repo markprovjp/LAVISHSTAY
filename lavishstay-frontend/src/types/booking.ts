@@ -20,7 +20,7 @@ export interface Booking {
     guest_phone?: string;
     room_id?: number;
     room?: Room;
-
+    
     // Compatibility fields (map to actual schema fields)
     id?: number; // Map to booking_id
     total_amount?: number; // Map to total_price_vnd
