@@ -68,6 +68,7 @@ interface BookingTableData {
     guest_count: number;
     adults: number;
     num_children: number;
+    children_age?: any; // JSON field, optional
     total_price_vnd: number;
     status: string;
     check_in_date: string;
@@ -174,6 +175,7 @@ const BookingManagement: React.FC = () => {
 
                 // Use the ultra-safe processed values - rename "children" to avoid Ant Design Table conflict
                 adults: safeAdults,
+
                 num_children: safeChildren, // Renamed from "children" to avoid Ant Design reserved property
 
                 status: String(booking.status || 'pending'),
@@ -367,17 +369,38 @@ const BookingManagement: React.FC = () => {
                     children = 0;
                 }
 
+                const childrenAges = record.children_age;
+                let tooltipTitle = 'Không có thông tin độ tuổi';
+
+                if (typeof childrenAges === 'string' && childrenAges.length > 0) {
+                    tooltipTitle = `Độ tuổi: ${childrenAges.split(',').join(', ')}`;
+                }
+
+                const content = (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4
+                    }}>
+                        <SmileOutlined style={{ color: '#fa8c16', fontSize: '14px' }} />
+                        <Text strong style={{ fontSize: '13px' }}>{children}</Text>
+                    </div>
+                );
+
+                if (children > 0) {
+                    return (
+                        <Tooltip title={tooltipTitle}>
+                            <div style={{ textAlign: 'center' }}>
+                                {content}
+                            </div>
+                        </Tooltip>
+                    );
+                }
+
                 return (
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 4
-                        }}>
-                            <SmileOutlined style={{ color: '#fa8c16', fontSize: '14px' }} />
-                            <Text strong style={{ fontSize: '13px' }}>{children}</Text>
-                        </div>
+                        {content}
                     </div>
                 );
             },
@@ -714,6 +737,7 @@ const BookingManagement: React.FC = () => {
                                         guest_count: Number(booking.guest_count) || 0,
                                         adults: Number(booking.adults) || 0,
                                         num_children: Number(booking.num_children) || 0,
+                                        children_age: booking.children_age , // Convert JSON to string
                                         total_price_vnd: Number(booking.total_price_vnd) || 0,
                                         status: String(booking.status || 'pending'),
                                         check_in_date: String(booking.check_in_date || ''),
@@ -760,7 +784,8 @@ const BookingManagement: React.FC = () => {
                                         room_name: booking.room_name,
                                         room_id_display: booking.room_id_display,
                                         guest_email: booking.guest_email,
-                                        guest_phone: booking.guest_phone
+                                        guest_phone: booking.guest_phone,
+                                        children_age: booking.children_age // mảng
                                     }));
 
                                     // Beautiful columns similar to original design
@@ -892,21 +917,42 @@ const BookingManagement: React.FC = () => {
                                             key: 'num_children',
                                             width: 100,
                                             align: 'center' as const,
-                                            render: (children: number) => {
+                                            render: (children: number, record: any) => {
                                                 // Ultra safe processing
                                                 const safeChildren = Number(children) || 0;
 
+                                                const childrenAges = record.children_age;
+                                                let tooltipTitle = 'Không có thông tin độ tuổi';
+                                                
+                                                if (Array.isArray(childrenAges) && childrenAges.length > 0) {
+                                                    tooltipTitle = `Độ tuổi: ${childrenAges.join(', ')}`;
+                                                }
+
+                                                const content = (
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        gap: 4
+                                                    }}>
+                                                        <SmileOutlined style={{ color: '#fa8c16', fontSize: '14px' }} />
+                                                        <Text strong style={{ fontSize: '13px' }}>{safeChildren}</Text>
+                                                    </div>
+                                                );
+
+                                                if (safeChildren > 0) {
+                                                    return (
+                                                        <Tooltip title={tooltipTitle}>
+                                                            <div style={{ textAlign: 'center' }}>
+                                                                {content}
+                                                            </div>
+                                                        </Tooltip>
+                                                    );
+                                                }
+
                                                 return (
                                                     <div style={{ textAlign: 'center' }}>
-                                                        <div style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            gap: 4
-                                                        }}>
-                                                            <SmileOutlined style={{ color: '#fa8c16', fontSize: '14px' }} />
-                                                            <Text strong style={{ fontSize: '13px' }}>{safeChildren}</Text>
-                                                        </div>
+                                                        {content}
                                                     </div>
                                                 );
                                             },

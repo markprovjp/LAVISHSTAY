@@ -711,6 +711,7 @@ class ReceptionController extends Controller
                     'booking.guest_count',
                     'booking.adults',
                     'booking.children',
+                    'booking.children_age',
                     'booking.status',
                     'booking.quantity',
                     'booking.created_at',
@@ -780,6 +781,7 @@ class ReceptionController extends Controller
                     'guest_count' => $booking->guest_count,
                     'adults' => (int)($booking->adults ?? 1), // Ensure integer
                     'children' => (int)($booking->children ?? 0), // Ensure integer
+                    'children_age' => $booking->children_age ,
                     'status' => $booking->status,
                     'quantity' => $booking->quantity,
                     'created_at' => $booking->created_at,
