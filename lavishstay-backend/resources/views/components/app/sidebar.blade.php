@@ -461,7 +461,7 @@
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <svg class="shrink-0 fill-current @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                    <svg class="shrink-0 fill-current @if (in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
                                         xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"
                                         viewBox="0 0 18 18">
                                         <path
@@ -474,7 +474,7 @@
                                 <!-- Icon -->
                                 <div
                                     class="flex shrink-0 ml-2    lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'rotate-180' }} @endif"
+                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 @if (in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'rotate-180' }} @endif"
                                         :class="open ? 'rotate-180' : 'rotate-0'" viewBox="0 0 12 12">
                                         <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
                                     </svg>
@@ -482,7 +482,7 @@
                             </div>
                         </a>
                         <div class="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                            <ul class="pl-8 mt-1 @if (!in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'hidden' }} @endif"
+                            <ul class="pl-8 mt-1 @if (!in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'hidden' }} @endif"
                                 :class="open ? 'block!' : 'hidden'">
                                 <li class="mb-1 last:mb-0">
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate @if (Request::segment(2) === 'room-types') {{ 'text-violet-500!' }} @endif"
