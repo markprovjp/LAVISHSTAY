@@ -13,22 +13,27 @@
                         Tổng quan tất cả các loại phòng trong hệ thống
                     </p>
                 </div>
-                <div>
-                    Hiện đang có : {{ $totalRooms }} phòng
+                <div class="flex flex-col items-end space-y-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                        Tổng số phòng của khách sạn: <span class="ml-1 font-bold">{{ $totalRoomsFromTypes }}</span>
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200">
+                        Tổng số phòng đang hoạt động: <span class="ml-1 font-bold">{{ $totalActiveRooms }}</span>
+                    </span>
                 </div>
             </div>
         </div>
 
         <!-- Rooms Grid -->
         @if($allrooms->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8">
                 @foreach($allrooms as $room)
                     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-200 relative">
                         <!-- Room Image -->
-                        <div class="relative h-48 bg-gray-200 dark:bg-gray-700">
+                        <div class="relative h-48 w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                             @if ($room->images && $room->images->count() > 0)
                                 <img src="{{ asset($room->images->first()->image_path) }}" alt="{{ $room->name }}"
-                                    class="w-full h-full object-cover">
+                                    class="object-cover w-full h-full min-h-[12rem] min-w-full" style="aspect-ratio: 5/3;">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
                                     <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="currentColor"
@@ -37,16 +42,6 @@
                                             d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
                                             clip-rule="evenodd"></path>
                                     </svg>
-                                </div>
-                            @endif
-
-                            <!-- Room Code Badge -->
-                            @if ($room->room_code)
-                                <div class="absolute top-3 left-3">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white text-gray-800 shadow-sm">
-                                        {{ $room->room_code }}
-                                    </span>
                                 </div>
                             @endif
                         </div>
@@ -88,28 +83,76 @@
                                     Đã đặt: <span class="text-orange-600 font-medium ml-1">{{ $room->active_bookings_count }}</span>
                                 </div>
 
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
-                                     onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=available&search=&max_guests=&view=&check_in=&check_out='">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                <!-- Trống -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=available'">
+                                    <svg class="w-4 h-4 mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                     </svg>
                                     Trống: <span class="text-green-600 font-medium ml-1">{{ $room->rooms->where('status', 'available')->count() }}</span>
                                 </div>
 
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
-                                     onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=maintenance&search=&max_guests=&view=&check_in=&check_out='">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                                <!-- Đang sử dụng -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=occupied'">
+                                    <svg class="w-4 h-4 mr-2 text-red-600" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM8 8h4v4H8V8z"></path>
                                     </svg>
-                                    Bảo trì: <span class="text-yellow-600 font-medium ml-1">{{ $room->rooms->where('status', 'maintenance')->count() }}</span>
+                                    Đang sử dụng: <span class="text-red-600 font-medium ml-1">{{ $room->rooms->where('status', 'occupied')->count() }}</span>
                                 </div>
 
-                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200" 
-                                     onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=cleaning&search=&max_guests=&view=&check_in=&check_out='">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
-                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm2 2h12v10H4V5zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                                <!-- Bảo trì -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=maintenance'">
+                                    <svg class="w-4 h-4 mr-2 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M9 12h2v2H9v-2zm0-8h2v6H9V4z"></path>
                                     </svg>
-                                    Dọn dẹp: <span class="text-blue-600 font-medium ml-1">{{ $room->rooms->where('status', 'cleaning')->count() }}</span>
+                                    Bảo trì: <span class="text-yellow-500 font-medium ml-1">{{ $room->rooms->where('status', 'maintenance')->count() }}</span>
+                                </div>
+
+                                <!-- Dọn dẹp -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=cleaning'">
+                                    <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"></path>
+                                    </svg>
+                                    Dọn dẹp: <span class="text-blue-500 font-medium ml-1">{{ $room->rooms->where('status', 'cleaning')->count() }}</span>
+                                </div>
+
+                                <!-- Đặt cọc -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=deposited'">
+                                    <svg class="w-4 h-4 mr-2 text-purple-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M5 8h10v2H5V8zm0 4h10v2H5v-2z"></path>
+                                    </svg>
+                                    Đặt cọc: <span class="text-purple-500 font-medium ml-1">{{ $room->rooms->where('status', 'deposited')->count() }}</span>
+                                </div>
+
+                                <!-- Không đến -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=no_show'">
+                                    <svg class="w-4 h-4 mr-2 text-pink-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm3 9H7v-2h6v2z"></path>
+                                    </svg>
+                                    Không đến: <span class="text-pink-500 font-medium ml-1">{{ $room->rooms->where('status', 'no_show')->count() }}</span>
+                                </div>
+
+                                <!-- Đang check-in -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=check_in'">
+                                    <svg class="w-4 h-4 mr-2 text-teal-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M5 8h10v4H5V8z"></path>
+                                    </svg>
+                                    Đang check-in: <span class="text-teal-500 font-medium ml-1">{{ $room->rooms->where('status', 'check_in')->count() }}</span>
+                                </div>
+
+                                <!-- Đã check out -->
+                                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
+                                    onclick="window.location.href='{{ route('admin.rooms.by-type', $room->room_type_id) }}?status=check_out'">
+                                    <svg class="w-4 h-4 mr-2 text-indigo-500" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
+                                        <path d="M7 8h6v4H7V8z"></path>
+                                    </svg>
+                                    Đã check out: <span class="text-indigo-500 font-medium ml-1">{{ $room->rooms->where('status', 'check_out')->count() }}</span>
                                 </div>
                             </div>
 

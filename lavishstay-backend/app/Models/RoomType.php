@@ -37,7 +37,7 @@ class RoomType extends Model
 
     protected $casts = [
         'total_room' => 'integer',
-        'base_price' => 'decimal:2',
+        'base_price' => 'decimal:0',
         'room_area' => 'integer',
         'rating' => 'integer',
         'max_guests' => 'integer'

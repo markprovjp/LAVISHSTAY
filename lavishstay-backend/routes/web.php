@@ -134,8 +134,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/edit/{roomTypeId}', [RoomTypeController::class, 'edit'])->name('admin.room-types.edit');
     Route::put('/admin/room-types/update/{roomTypeId}', [RoomTypeController::class, 'update'])->name('admin.room-types.update');
     Route::post('/admin/room-types/destroy/{roomTypeId}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy');
-    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
-        
+    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');        
 
     
 
@@ -149,6 +148,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/rooms/type/{room}/edit', [RoomController::class, 'edit'])->name('admin.rooms.edit');
     Route::put('/admin/rooms/type/{room}', [RoomController::class, 'update'])->name('admin.rooms.update');
     Route::delete('/admin/rooms/type/{room}/delete', [RoomController::class, 'destroy'])->name('admin.rooms.destroy');
+    Route::post('/admin/rooms/import-excel/{room_type_id}', [RoomController::class, 'importExcel'])->name('admin.rooms.import-excel');
+    // Route preview
+    Route::get('/admin/rooms/import-preview', [RoomController::class, 'showPreview'])->name('import.preview');
+    // Route confirm
+    Route::post('/admin/rooms/import-confirm/{room_type_id}', [RoomController::class, 'confirmImport'])->name('rooms.import.confirm');
+    Route::delete('/admin/rooms/type/{room_type_id}/destroy-multiple', [RoomController::class, 'destroyMultiple'])->name('admin.rooms.destroy.multiple');
 
     // Floors 
     Route::get('/admin/floors', [FloorController::class, 'index'])->name('admin.floors');
