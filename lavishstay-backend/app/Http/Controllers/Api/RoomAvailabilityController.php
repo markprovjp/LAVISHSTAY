@@ -871,6 +871,7 @@ class RoomAvailabilityController extends Controller
                     'room_type_id' => $roomTypeId,
                     'room_type_name' => $roomType->room_type_name,
                     'room_code' => $roomType->room_code,
+                    'bed_type_name' => $roomType->bed_type_names,
                     'description' => $roomType->description,
                     'size' => $roomType->size,
                     'max_guests' => $roomType->max_guests,
@@ -985,9 +986,11 @@ class RoomAvailabilityController extends Controller
                     rt.rating,
                     COUNT(r.{$roomIdColumn}) AS total_rooms,
                     COALESCE(bs.booked_quantity, 0) AS booked_rooms,
-                    COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms
+                    COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms,
+                    GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
                 FROM room_types rt
                 JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
+                LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
                 LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
                 WHERE rt.is_active = 1
                 GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
