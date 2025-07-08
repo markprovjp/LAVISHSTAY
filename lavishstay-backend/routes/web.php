@@ -327,12 +327,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-    
-
-    
-
-
-
 
     //FAQs
     Route::get('/admin/faqs', [FAQController::class, 'index'])->name('admin.faqs');
