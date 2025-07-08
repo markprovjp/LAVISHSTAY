@@ -9,7 +9,7 @@ import {
     HomeOutlined
 } from '@ant-design/icons';
 import { Room } from '../../types/room';
-import {  } from '../../constants/Icons';
+import { } from '../../constants/Icons';
 
 const { Title, Text } = Typography;
 
@@ -32,7 +32,16 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({
 }) => {
     if (!room) return null;
 
-    const mainAmenities = formatAmenitiesForDisplay(room.mainAmenities || room.amenities);
+    // Format amenities for display - show max 5 items
+    const mainAmenities = (room.mainAmenities || room.amenities || []).slice(0, 5).map((amenity: any) => {
+        if (typeof amenity === 'string') {
+            return amenity;
+        }
+        if (typeof amenity === 'object' && amenity && 'name' in amenity) {
+            return amenity.name;
+        }
+        return String(amenity);
+    });
 
     return (
         <Modal

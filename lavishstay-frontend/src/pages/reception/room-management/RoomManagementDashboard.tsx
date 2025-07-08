@@ -117,7 +117,17 @@ const RoomManagementDashboard: React.FC = () => {
         navigate('/reception/confirm-representative-payment', {
             state: {
                 selectedRooms: selectedRoomsList,
-                guestCount
+                guestCount,
+                // Truyền thông tin ngày từ filter nếu có
+                checkInDate: hasDateRange ? currentFilters.dateRange![0] : undefined,
+                checkOutDate: hasDateRange ? currentFilters.dateRange![1] : undefined,
+                // Truyền booking data để giữ nguyên logic
+                bookingData: hasDateRange ? {
+                    checkInDate: currentFilters.dateRange![0],
+                    checkOutDate: currentFilters.dateRange![1],
+                    adults: 1,
+                    children: []
+                } : undefined
             }
         });
     };

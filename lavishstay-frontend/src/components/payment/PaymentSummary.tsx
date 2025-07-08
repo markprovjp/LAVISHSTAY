@@ -1,8 +1,7 @@
 import React from 'react';
-import { Card, Typography, Descriptions, Image, Row, Col, Divider, Space, Alert, Tag } from 'antd';
-import { CalendarOutlined, TeamOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Coffee, Bed } from 'lucide-react';
-import { validateRoomSelection, type GuestDetails } from '../../utils/roomAllocation';
+import { Card, Typography, Descriptions, Image, Row, Col, Divider, Space, Tag, List, Badge, Statistic } from 'antd';
+import { CalendarOutlined, TeamOutlined, HomeOutlined, CopyOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
 
@@ -25,15 +24,11 @@ interface RoomSummary {
 interface SearchData {
     checkIn?: string;
     checkOut?: string;
-    guestDetails?: {
+    rooms?: { adults: number; children: number }[];
+    guestDetails?: { // This might be legacy, we'll prefer `rooms`
         adults: number;
         children: number;
     };
-}
-
-interface BookingPreferences {
-    breakfastOption?: 'none' | 'standard' | 'premium';
-    bedPreference?: 'single' | 'double' | 'twin';
 }
 
 interface PaymentSummaryProps {
@@ -50,7 +45,6 @@ interface PaymentSummaryProps {
         finalTotal: number;
         nights: number;
     };
-    preferences?: BookingPreferences;
     formatVND: (amount: number) => string;
 }
 
@@ -60,53 +54,58 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     searchData,
     nights,
     totals,
-    preferences,
     formatVND
-}) => {    const totalGuests = (searchData?.guestDetails?.adults || 0) + (searchData?.guestDetails?.children || 0) || 2;
+}) => {
+    // Helper function to format dates safely
+    const formatDate = (date: any): string => {
+        if (!date) return 'Chưa xác định';
 
-    // Calculate total room capacity from selected rooms
-    const calculateTotalCapacity = (): number => {
-        return selectedRoomsSummary.reduce((total, roomSummary) => {
-            // Estimate capacity based on room type and quantity
-            // This is a simplified calculation - in real implementation you'd get this from room data
-            const estimatedCapacityPerRoom = roomSummary.option.name.includes('4 khách') ? 4 :
-                                           roomSummary.option.name.includes('3 khách') ? 3 : 2;
-            return total + (estimatedCapacityPerRoom * roomSummary.quantity);
-        }, 0);
-    };
+        // If it's already a string, try to parse and format it
+        if (typeof date === 'string') {
+            try {
+                const parsed = dayjs(date);
+                return parsed.isValid() ? parsed.format('DD/MM/YYYY') : date;
+            } catch {
+                return date;
+            }
+        }
 
-    const totalCapacity = calculateTotalCapacity();
-    const hasEnoughCapacity = totalCapacity >= totalGuests;
-    const missingCapacity = hasEnoughCapacity ? 0 : totalGuests - totalCapacity;
-
-    const getBreakfastText = () => {
-        switch (preferences?.breakfastOption) {
-            case 'standard':
-                return 'Bữa sáng tiêu chuẩn';
-            case 'premium':
-                return 'Bữa sáng cao cấp';
-            default:
-                return 'Không bao gồm bữa sáng';
+        // If it's a dayjs object or Date, format it
+        try {
+            if (dayjs.isDayjs(date)) {
+                return date.format('DD/MM/YYYY');
+            }
+            if (date instanceof Date) {
+                return dayjs(date).format('DD/MM/YYYY');
+            }
+            // Try to parse as dayjs
+            return dayjs(date).format('DD/MM/YYYY');
+        } catch (error) {
+            console.warn('Error formatting date:', date, error);
+            return 'Chưa xác định';
         }
     };
 
-    const getBedText = () => {
-        switch (preferences?.bedPreference) {
-            case 'single':
-                return 'Giường đơn';
-            case 'double':
-                return 'Giường đôi';
-            case 'twin':
-                return 'Hai giường đơn';
-            default:
-                return 'Theo phòng';
+    // Consolidate guest calculation logic
+    const totalGuests = React.useMemo(() => {
+        if (searchData?.rooms && searchData.rooms.length > 0) {
+            return searchData.rooms.reduce((acc, room) => acc + room.adults + room.children, 0);
         }
-    };
+        if (searchData?.guestDetails) {
+            return (searchData.guestDetails.adults || 0) + (searchData.guestDetails.children || 0);
+        }
+        // Fallback for safety, though it should not be reached in normal flow
+        return selectedRoomsSummary.reduce((acc, room) => acc + room.quantity * 2, 0) || 2;
+    }, [searchData, selectedRoomsSummary]);
 
     // Safe render guard
     if (!selectedRoomsSummary || selectedRoomsSummary.length === 0) {
         return (
-            <Card title="Chi tiết đặt phòng" className="sticky top-4">
+            <Card
+                title={<Title level={4}>Chi tiết đặt phòng</Title>}
+                className="sticky top-4 shadow-lg"
+                bordered={false}
+            >
                 <div className="text-center py-8">
                     <Text type="secondary">Không có thông tin đặt phòng</Text>
                 </div>
@@ -115,143 +114,196 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     }
 
     return (
-        <Card title="Chi tiết đặt phòng" className="sticky top-4">
-            <Space direction="vertical" className="w-full" size="middle">
+        <Card
+            title={<Title level={4} style={{ margin: 0 }}>Chi tiết đặt phòng</Title>}
+            className="sticky top-4 shadow-lg"
+            bordered={false}
+            style={{ borderRadius: '12px' }}
+        >
+            <Space direction="vertical" className="w-full" size="large">
                 {/* Hotel Info */}
-                <div>
-                    <Text strong>LavishStay Thanh Hóa</Text>
-                    <br />
-                    <Text type="secondary">Thanh Hóa, Việt Nam</Text>
-                </div>
+                <Card size="small" style={{ backgroundColor: '#f8f9fa', border: 'none' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <Title level={5} style={{ margin: 0, color: '#1890ff' }}>
+                            <HomeOutlined /> LavishStay Thanh Hóa
+                        </Title>
+                        <Text type="secondary">Thanh Hóa, Việt Nam</Text>
+                    </div>
+                </Card>
+
+                {/* Booking Code */}
+                {bookingCode && (
+                    <Card size="small" style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <Text type="secondary" style={{ fontSize: '12px' }}>Mã đặt phòng</Text>
+                            <br />
+                            <Text
+                                strong
+                                copyable={{
+                                    icon: <CopyOutlined />,
+                                    tooltips: ['Sao chép mã', 'Đã sao chép!']
+                                }}
+                                style={{
+                                    fontSize: '16px',
+                                    color: '#52c41a',
+                                    fontFamily: 'monospace'
+                                }}
+                            >
+                                {bookingCode}
+                            </Text>
+                        </div>
+                    </Card>
+                )}
 
                 {/* Booking Details */}
-                <Descriptions column={1} size="small">
-                    <Descriptions.Item label="Mã đặt phòng">
-                        <Text strong code style={{ color: '#52c41a' }}>
-                            {bookingCode}
-                        </Text>
-                    </Descriptions.Item>                    <Descriptions.Item label="Check-in">
-                        <CalendarOutlined /> {searchData?.checkIn || 'Chưa xác định'}
+                <Descriptions
+                    column={1}
+                    size="small"
+                    bordered
+                    style={{ backgroundColor: '#fff' }}
+                >
+                    <Descriptions.Item
+                        label={<><CalendarOutlined /> Thời gian</>}
+                        labelStyle={{ fontWeight: 500 }}
+                    >
+                        <div>
+                            <div><strong>Nhận:</strong> {formatDate(searchData?.checkIn)}</div>
+                            <div><strong>Trả:</strong> {formatDate(searchData?.checkOut)}</div>
+                            <Badge count={`${nights} đêm`} style={{ backgroundColor: '#108ee9' }} />
+                        </div>
                     </Descriptions.Item>
-                    <Descriptions.Item label="Check-out">
-                        <CalendarOutlined /> {searchData?.checkOut || 'Chưa xác định'}
+                    <Descriptions.Item
+                        label={<><TeamOutlined /> Khách</>}
+                        labelStyle={{ fontWeight: 500 }}
+                    >
+                        <Badge count={totalGuests} style={{ backgroundColor: '#52c41a' }} showZero />
+                        <span style={{ marginLeft: 8 }}>khách</span>
                     </Descriptions.Item>
-                    <Descriptions.Item label="Số đêm">
-                        {nights} đêm
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Khách">
-                        <TeamOutlined /> {totalGuests} khách
-                    </Descriptions.Item>
-                </Descriptions>                <Divider />
-
-                {/* Capacity Validation */}
-                <div>
-                    {hasEnoughCapacity ? (
-                        <Alert
-                            message="Đủ chỗ cho tất cả khách"
-                            description={`✅ ${totalCapacity} chỗ cho ${totalGuests} khách`}
-                            type="success"
-                            showIcon
-                            icon={<CheckCircleOutlined />}
-                        />
-                    ) : (
-                        <Alert
-                            message="Chưa đủ chỗ cho tất cả khách"
-                            description={`❌ Thiếu ${missingCapacity} chỗ (có ${totalCapacity}/${totalGuests} chỗ). Vui lòng chọn thêm phòng.`}
-                            type="error"
-                            showIcon
-                            icon={<ExclamationCircleOutlined />}
-                        />
-                    )}
-                </div>
+                </Descriptions>
 
                 {/* Selected Rooms */}
                 <div>
-                    <Title level={5}>Phòng đã chọn</Title>
-                    {selectedRoomsSummary.map((summary, index) => (
-                        <Card key={`${summary.roomId}-${index}`} size="small" className="mb-3">
-                            <Row gutter={12}>
-                                <Col span={8}>
-                                    <Image
-                                        src={summary.room?.image || ''}
-                                        alt={summary.room?.name || 'Phòng'}
-                                        width="100%"
-                                        height={60}
-                                        style={{ objectFit: 'cover', borderRadius: 4 }}
-                                        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAADDCAYAAADQvc6UAAABRWlDQ1BJQ0MgUHJvZmlsZQAAKJFjYGASSSwoyGFhYGDIzSspCnJ3UoiIjFJgf8LAwSDCIMogwMCcmFxc4BgQ4ANUwgCjUcG3awyMIPqyLsis7PPOq3QdDFcvjV3jOD1boQVTPQrgSkktTgbSf4A4LbmgqISBgTEFyFYuLykAsTuAbJEioKOA7DkgdjqEvQHEToKwj4DVhAQ5A9k3gGyB5IxEoBmML4BsnSQk8XQkNtReEOBxcfXxUQg1Mjc0dyHgXNJBSWpFCYh2zi+oLMpMzyhRcASGUqqCZ16yno6CkYGRAQMDKMwhqj/fAIcloxgHQqxAjIHBEugw5sUIsSQpBobtQPdLciLEVJYzMPBHMDBsayhILEqEO4DxG0txmrERhM29nYGBddr//5/DGRjYNRkY/l7////39v///y4Dmn+LgeHANwDrkl1AuO+pmgAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAwqADAAQAAAABAAAAwwAAAAD9b/HnAAAHlklEQVR4Ae3dP3Ik1RnG4W+FgYxN"
-                                    />
-                                </Col>
-                                <Col span={16}>
-                                    <Text strong className="text-sm">{summary.room?.name || 'Phòng không xác định'}</Text>
-                                    <br />
-                                    <Text type="secondary" className="text-xs">
-                                        {summary.option?.name || 'Tùy chọn không xác định'}
-                                    </Text>
-                                    <br />
-                                    <Text className="text-xs">
-                                        {summary.quantity || 0} phòng × {nights} đêm
-                                    </Text>
-                                    <br />
-                                    <Text strong className="text-sm" style={{ color: '#f5222d' }}>
-                                        {formatVND(summary.totalPrice || 0)}
-                                    </Text>
-                                </Col>
-                            </Row>
-                        </Card>
-                    ))}
+                    <Title level={5} style={{ marginBottom: 16 }}>
+                        Phòng đã chọn ({selectedRoomsSummary.length} phòng)
+                    </Title>
+                    <List
+                        dataSource={selectedRoomsSummary}
+                        renderItem={(summary, index) => (
+                            <List.Item style={{ padding: 0, marginBottom: 12 }}>
+                                <Card
+                                    size="small"
+                                    hoverable
+                                    style={{
+                                        width: '100%',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e8e8e8'
+                                    }}
+                                    bodyStyle={{ padding: '12px' }}
+                                >
+                                    <Row gutter={12} align="middle">
+                                        <Col span={8}>
+                                            <Image
+                                                src={summary.room?.image || ''}
+                                                alt={summary.room?.name || 'Phòng'}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '60px',
+                                                    objectFit: 'cover',
+                                                    borderRadius: '6px'
+                                                }}
+                                                fallback="https://dam.melia.com/melia/file/iXGwjwBVnTHehdUyTT57.jpg?im=RegionOfInterestCrop=(1920,1281),regionOfInterest=(1771.5,1181.5)"
+                                            />
+                                        </Col>
+                                        <Col span={16}>
+                                            <div style={{ marginBottom: '4px' }}>
+                                                <Text strong style={{ fontSize: '14px' }}>
+                                                    {summary.room?.name || 'Phòng không xác định'}
+                                                </Text>
+                                            </div>
+                                            <div style={{ marginBottom: '4px' }}>
+                                                <Tag color="blue" style={{ fontSize: '11px' }}>
+                                                    {summary.option?.name || 'Tùy chọn không xác định'}
+                                                </Tag>
+                                            </div>
+                                            <div style={{ marginBottom: '4px' }}>
+                                                <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    {summary.quantity || 0} phòng × {nights} đêm
+                                                </Text>
+                                            </div>
+                                            <div>
+                                                <Text strong style={{ color: '#f5222d', fontSize: '14px' }}>
+                                                    {formatVND(summary.totalPrice || 0)}
+                                                </Text>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            </List.Item>
+                        )}
+                    />
                 </div>
 
-                {/* Preferences */}
-                {preferences && (preferences.breakfastOption !== 'none' || preferences.bedPreference) && (
-                    <>
-                        <Divider />
-                        <div>
-                            <Title level={5}>Tùy chọn khách hàng</Title>
-                            <Space direction="vertical" size="small" className="w-full">
-                                {preferences.breakfastOption && preferences.breakfastOption !== 'none' && (
-                                    <div className="flex items-center gap-2">
-                                        <Coffee size={16} className="text-orange-500" />
-                                        <Text className="text-sm">{getBreakfastText()}</Text>
-                                    </div>
-                                )}
-                                {preferences.bedPreference && (
-                                    <div className="flex items-center gap-2">
-                                        <Bed size={16} className="text-blue-500" />
-                                        <Text className="text-sm">{getBedText()}</Text>
-                                    </div>
-                                )}
-                            </Space>
-                        </div>
-                    </>
-                )}
+                <Divider />
 
-                <Divider />                {/* Payment Summary */}
-                <div>
-                    <div className="flex justify-between mb-2">
-                        <Text>Tổng tiền phòng:</Text>
-                        <Text>{formatVND(totals?.roomsTotal || 0)}</Text>
-                    </div>
-                    {(totals?.breakfastTotal || 0) > 0 && (
-                        <div className="flex justify-between mb-2">
-                            <Text>Phụ thu bữa sáng:</Text>
-                            <Text className="text-amber-600">{formatVND(totals.breakfastTotal)}</Text>
+                {/* Payment Summary */}
+                <Card
+                    size="small"
+                    style={{
+                        backgroundColor: '#fff2e8',
+                        border: '1px solid #ffbb96',
+                        borderRadius: '8px'
+                    }}
+                >
+                    <Space direction="vertical" className="w-full" size="small">
+                        {totals.roomsTotal > 0 && (
+                            <div className="flex justify-between">
+                                <Text>Tiền phòng:</Text>
+                                <Text>{formatVND(totals.roomsTotal)}</Text>
+                            </div>
+                        )}
+                        {totals.breakfastTotal > 0 && (
+                            <div className="flex justify-between">
+                                <Text>Tiền ăn sáng:</Text>
+                                <Text>{formatVND(totals.breakfastTotal)}</Text>
+                            </div>
+                        )}
+                        {totals.serviceFee > 0 && (
+                            <div className="flex justify-between">
+                                <Text>Phí dịch vụ:</Text>
+                                <Text>{formatVND(totals.serviceFee)}</Text>
+                            </div>
+                        )}
+                        {totals.taxAmount > 0 && (
+                            <div className="flex justify-between">
+                                <Text>Thuế VAT:</Text>
+                                <Text>{formatVND(totals.taxAmount)}</Text>
+                            </div>
+                        )}
+                        {totals.discountAmount > 0 && (
+                            <div className="flex justify-between">
+                                <Text>Giảm giá:</Text>
+                                <Text style={{ color: '#52c41a' }}>-{formatVND(totals.discountAmount)}</Text>
+                            </div>
+                        )}
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div className="flex justify-between">
+                            <Text strong style={{ fontSize: '16px' }}>Tổng thanh toán:</Text>
+                            <Text strong style={{ color: '#f5222d', fontSize: '18px' }}>
+                                {formatVND(totals?.finalTotal || 0)}
+                            </Text>
                         </div>
-                    )}
-                    {(totals?.discountAmount || 0) > 0 && (
-                        <div className="flex justify-between mb-2">
-                            <Text>Giảm giá:</Text>
-                            <Text className="text-green-600">-{formatVND(totals.discountAmount)}</Text>
-                        </div>
-                    )}
+                    </Space>
+                </Card>
 
-                    <Divider />
-                    <div className="flex justify-between">
-                        <Text strong>Tổng thanh toán:</Text>
-                        <Text strong style={{ color: '#f5222d', fontSize: '1.1em' }}>
-                            {formatVND(totals?.finalTotal || 0)}
+                {/* Session Timer */}
+                <Card size="small" style={{ backgroundColor: '#fff1f0', border: '1px solid #ffccc7' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <ClockCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                            Vui lòng hoàn tất đặt phòng trong thời gian quy định
                         </Text>
                     </div>
-                </div>
+                </Card>
             </Space>
         </Card>
     );

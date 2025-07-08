@@ -1,0 +1,52 @@
+// Hàm xử lý giao dịch từ SePay Google Sheets
+function processSePayTransactions() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName('SePay Google Sheets Template');
+  const data = sheet.getRange('A2:J' + sheet.getLastRow()).getValues(); // Lấy dữ liệu từ A2 đến cột J
+
+  const results = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const bank = row[0]; // Ngân hàng
+    const transactionDate = row[1]; // Ngày giao dịch
+    const accountNumber = row[2]; // Số tài khoản
+    const content = row[5]; // Nội dung thanh toán
+    const type = row[6]; // Loại (Tiền vào/Tiền ra)
+    const amount = row[7]; // Số tiền
+    const referenceCode = row[8]; // Mã tham chiếu
+
+    // Trích xuất mã đơn hàng từ Nội dung thanh toán (ví dụ: Trace364825)
+    const orderCodeMatch = content.match(/Trace(\d+)/);
+    const orderCode = orderCodeMatch ? orderCodeMatch[1] : null;
+
+    results.push({
+      bank: bank,
+      transaction_date: transactionDate,
+      account_number: accountNumber,
+      content: content,
+      type: type,
+      amount: amount,
+      reference_code: referenceCode,
+      order_code: orderCode
+    });
+  }
+
+  return results;
+}
+
+// Hàm Web App để gọi từ Laravel
+function doPost(e) {
+  try {
+    const results = processSePayTransactions();
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      data: results
+    })).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'error',
+      message: error.message
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}

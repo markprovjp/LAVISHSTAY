@@ -556,13 +556,6 @@ const BookingManagement: React.FC = () => {
                             >
                                 Xuất báo cáo
                             </Button>
-                            <Button
-                                type="primary"
-                                icon={<CalendarOutlined />}
-                                style={{ borderRadius: '8px', height: '40px' }}
-                            >
-                                Tạo đặt phòng mới
-                            </Button>
                         </Space>
                     </div>
                 </div>

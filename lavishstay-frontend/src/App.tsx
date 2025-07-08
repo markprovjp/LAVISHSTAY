@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import AuthTest from "./pages/AuthTest";
 import SearchResults from "./pages/SearchResults";
 import RoomTypesDetailsPage from "./pages/RoomTypesDetailsPage";
+import BookingConfirmation from "./pages/BookingConfirmation"
 
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
@@ -120,6 +121,7 @@ const App: React.FC = React.memo(() => {
             <Route path="/about" element={<About />} />
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/booking/confirmation" element={<BookingConfirmation />} />
 
             {/* Profile Routes with nested routing */}
             <Route path="/profile" element={<ProfileLayout />}>

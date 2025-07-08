@@ -9,13 +9,12 @@ import {
   Space,
   Typography,
   Popover,
-  theme,
-  Divider,
   Affix,
   Input,
   message,
   Select,
-  InputNumber,
+  Tag,
+  Badge,
 } from "antd";
 import {
   SearchOutlined,
@@ -23,21 +22,32 @@ import {
   UserOutlined,
   PlusOutlined,
   MinusOutlined,
-  MessageOutlined,
-  UsergroupAddOutlined,
+  DeleteOutlined,
+  HomeOutlined
 } from "@ant-design/icons";
-import { Users, UsersRound, UserCheck } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import type { RangePickerProps } from "antd/es/date-picker";
-import { useSearch } from "../hooks/useSearch";
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../store';
+import {
+  setDateRange,
+  addRoom,
+  removeRoom,
+  updateRoomGuests,
+  updateRoomChildAge,
+  setSearchResults,
+  setSearchLoading,
+  setSearchError
+} from '../store/slices/searchSlice';
+import { searchService } from '../services/searchService';
 
 dayjs.extend(customParseFormat);
 
 const { RangePicker } = DatePicker;
-const { Title } = Typography;
-const { useToken } = theme;
+const { Text } = Typography;
 const { Option } = Select;
 
 // Disable dates in the past - memoized
@@ -57,28 +67,15 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   style = {},
 }) => {
   const [form] = Form.useForm();
-  const { token } = useToken();
   const navigate = useNavigate();
-
-  const {
-    searchData,
-    isValidSearchData,
-    setSearchDateRange,
-    setSearchGuestType,
-    updateGuests,
-    updateChildAgeHandler,
-    performSearch,
-    clearError,
-  } = useSearch();
+  const dispatch = useDispatch();
+  const searchData = useSelector((state: RootState) => state.search);
 
   const [guestPopoverVisible, setGuestPopoverVisible] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
 
-  // Local state for guest details editing (for family_young and group types)
-  const [localGuestDetails, setLocalGuestDetails] = useState({
-    adults: searchData.guestDetails.adults,
-    children: searchData.guestDetails.children,
-    childrenAges: searchData.guestDetails.childrenAges || []
-  });
+  // Safe access to rooms array
+  const safeRooms = searchData.rooms || [{ adults: 2, children: 0, childrenAges: [] }];
 
   // Auto-update dates to today and tomorrow if dateRange is in the past
   useEffect(() => {
@@ -92,81 +89,40 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       !searchData.dateRange[0] ||
       searchData.dateRange[0].isBefore(now, 'day')) {
 
-      setSearchDateRange([now, tomorrow]);
+      dispatch(setDateRange([now.format('YYYY-MM-DD'), tomorrow.format('YYYY-MM-DD')]));
     }
   }, []); // Run only on component mount
 
-  // Update local state when searchData changes (from external sources)
-  useEffect(() => {
-    setLocalGuestDetails({
-      adults: searchData.guestDetails.adults,
-      children: searchData.guestDetails.children,
-      childrenAges: searchData.guestDetails.childrenAges || []
-    });
-  }, [searchData.guestDetails.adults, searchData.guestDetails.children, searchData.guestDetails.childrenAges]);
+  // Format guest summary
+  const formatGuestSummary = useCallback(() => {
+    const totalAdults = safeRooms.reduce((sum, room) => sum + room.adults, 0);
+    const totalChildren = safeRooms.reduce((sum, room) => sum + room.children, 0);
+    const roomCount = safeRooms.length;
+    if (roomCount === 1) {
+      return `${totalAdults + totalChildren} khách`;
+    }
+    return `${roomCount} phòng, ${totalAdults + totalChildren} khách`;
+  }, [safeRooms]);
+
+  // Handle room guest count change
+  const handleRoomGuestChange = useCallback((roomIndex: number, type: 'adults' | 'children', operation: 'increase' | 'decrease') => {
+    dispatch(updateRoomGuests({ roomIndex, type, operation }));
+  }, [dispatch]);
 
   // Handle child age change
-  const handleChildAgeChange = useCallback((index: number, age: number) => {
-    setLocalGuestDetails(prev => {
-      const newAges = [...(prev.childrenAges || [])];
-      if (newAges[index]) {
-        newAges[index] = { ...newAges[index], age };
-      } else {
-        newAges[index] = { age, id: `child_${index + 1}` };
-      }
-      return {
-        ...prev,
-        childrenAges: newAges
-      };
-    });
-  }, []);
+  const handleChildAgeChange = useCallback((roomIndex: number, childIndex: number, age: number) => {
+    dispatch(updateRoomChildAge({ roomIndex, childIndex, age }));
+  }, [dispatch]);
 
-  // Handle local guest count change (doesn't update Redux store immediately) - memoized
-  const handleLocalGuestCountChange = useCallback((
-    type: "adults" | "children",
-    operation: "increase" | "decrease"
-  ) => {
-    setLocalGuestDetails(prev => {
-      const newDetails = { ...prev };
-      if (operation === "increase") {
-        newDetails[type] += 1;
-        // If adding children, add new child age entry
-        if (type === "children") {
-          const newAges = [...(prev.childrenAges || [])];
-          newAges.push({ age: 8, id: `child_${newAges.length + 1}` }); // Default age 8
-          newDetails.childrenAges = newAges;
-        }
-      } else if (
-        operation === "decrease" &&
-        newDetails[type] > (type === "adults" ? 1 : 0)
-      ) {
-        newDetails[type] -= 1;
-        // If removing children, remove last child age entry
-        if (type === "children") {
-          const newAges = [...(prev.childrenAges || [])];
-          newAges.pop();
-          newDetails.childrenAges = newAges;
-        }
-      }
-      return newDetails;
-    });
-  }, []);
+  // Handle add room
+  const handleAddRoom = useCallback(() => {
+    dispatch(addRoom());
+  }, [dispatch]);
 
-  // Format guest selection using local state for family_young and group types - memoized
-  const formatLocalGuestSelection = useCallback(() => {
-    switch (searchData.guestType) {
-      case "solo":
-        return "1 người";
-      case "couple":
-        return "2 người";
-      case "family_young":
-      case "group":
-        const totalPeople = localGuestDetails.adults + localGuestDetails.children;
-        return `${totalPeople} người`;
-      default:
-        return "Số lượng khách";
-    }
-  }, [searchData.guestType, localGuestDetails.adults, localGuestDetails.children]);
+  // Handle remove room
+  const handleRemoveRoom = useCallback((roomIndex: number) => {
+    dispatch(removeRoom(roomIndex));
+  }, [dispatch]);
 
   // Initialize form with search data
   useEffect(() => {
@@ -174,7 +130,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
 
     if (searchData.dateRange && Array.isArray(searchData.dateRange)) {
       // Ensure dateRange contains valid dayjs objects
-      const isValidDateRange = searchData.dateRange.every(date =>
+      const isValidDateRange = searchData.dateRange.every((date: any) =>
         date && typeof date.isValid === 'function' && date.isValid()
       );
 
@@ -183,39 +139,57 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       }
     }
 
-    // Use local formatting for guest display
-    formValues.guests = formatLocalGuestSelection();
+    formValues.guests = formatGuestSummary();
     form.setFieldsValue(formValues);
-  }, [searchData, form, formatLocalGuestSelection]);
+  }, [searchData, form, formatGuestSummary]);
 
-  // Handle search form submission - memoized
+  // Handle search form submission
   const handleSearch = useCallback(async (values: any) => {
     try {
-      // Clear any previous errors
-      clearError();
-
-      // Sync local guest details with Redux store for family_young and group types
-      if (searchData.guestType === "family_young" || searchData.guestType === "group") {
-        // Update Redux with local values including children ages
-        updateGuests(localGuestDetails);
-
-        // Wait a bit for Redux update to complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      setIsSearching(true);
+      dispatch(setSearchLoading(true));
 
       // Update date range if changed
       if (values.dateRange && values.dateRange !== searchData.dateRange) {
-        setSearchDateRange(values.dateRange);
+        dispatch(setDateRange(values.dateRange));
       }
 
-      // Validate before search
-      if (!isValidSearchData) {
-        message.error('Kiểm tra lại ngày tháng và số lượng khách trước khi tìm kiếm');
+      // Validate guest details
+      if (safeRooms.length === 0) {
+        message.error('Vui lòng chọn ít nhất 1 phòng');
         return;
       }
 
-      // Perform search
-      const results = await performSearch();
+      // Build search request with new room structure
+      const totalAdults = safeRooms.reduce((sum, room) => sum + room.adults, 0);
+      const totalChildren = safeRooms.reduce((sum, room) => sum + room.children, 0);
+
+      const searchRequest = {
+        dateRange: values.dateRange || searchData.dateRange,
+        guests: totalAdults + totalChildren,
+        guestDetails: {
+          adults: totalAdults,
+          children: totalChildren,
+          childrenAges: safeRooms.flatMap(room => room.childrenAges),
+          rooms: safeRooms,
+          totalRooms: safeRooms.length
+        },
+        rooms: safeRooms,
+        totalRooms: safeRooms.length,
+        guestType: 'couple' as const,
+        location: searchData.location,
+        checkIn: searchData.checkIn,
+        checkOut: searchData.checkOut
+      };
+
+      console.log('🔍 Searching with request:', searchRequest);
+
+      // Call search API
+      const results = await searchService.searchRooms(searchRequest);
+      console.log('📥 Search results:', results);
+
+      // Save results to Redux store
+      dispatch(setSearchResults(results));
 
       // Close popover
       setGuestPopoverVisible(false);
@@ -228,232 +202,188 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
         onSearch(results);
       }
 
-      message.success(`Tìm thấy ${results.total} phòng phù hợp cho bạn`);
+      message.success(`Tìm thấy ${results.total || 0} phòng phù hợp cho bạn`);
     } catch (error: any) {
+      dispatch(setSearchError(error.message || 'Có lỗi xảy ra khi tìm kiếm'));
       message.error(error.message || 'Có lỗi xảy ra khi tìm kiếm');
+      console.error('❌ Search error:', error);
+    } finally {
+      setIsSearching(false);
+      dispatch(setSearchLoading(false));
     }
-  }, [searchData, localGuestDetails, navigate, onSearch, clearError, setSearchDateRange, updateGuests, isValidSearchData, performSearch]);
+  }, [searchData, navigate, onSearch, dispatch, safeRooms]);
 
   // Guest selection dropdown content
   const guestPopoverContent = (
-    <div
-      className="p-6 "
-      style={{ width: "100%", maxWidth: "400px" }}
-    >
-      <Space direction="vertical" size="large" style={{ width: "100%" }}>
-        <div>
-          <Title level={5} className="mb-6 text-center font-medium text-gray-800">
-            Bạn đi du lịch với ai?
-          </Title>
-          <Row gutter={[12, 12]}>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "solo" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("solo");
-                  form.setFieldsValue({ guests: "1 người" });
-                  setGuestPopoverVisible(false);
-                  setTimeout(() => {
-                    const formValues = form.getFieldsValue();
-                    handleSearch(formValues);
-                  }, 100);
-                }}
-                className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "solo"
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : " border-gray-200 text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                <UserOutlined className="mr-2" /> Đi một mình
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "couple" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("couple");
-                  form.setFieldsValue({ guests: "2 người" });
-                  setGuestPopoverVisible(false);
-                  setTimeout(() => {
-                    const formValues = form.getFieldsValue();
-                    handleSearch(formValues);
-                  }, 100);
-                }}
-                className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "couple"
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : " border-gray-200 text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                <UsersRound className="mr-2" /> Cặp đôi
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "family_young" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("family_young");
-                  form.setFieldsValue({ guests: formatLocalGuestSelection() });
-                }}
-                className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "family_young"
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : " border-gray-200 text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                <Users className="mr-2" /> Gia đình trẻ
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                type={searchData.guestType === "group" ? "primary" : "default"}
-                block
-                onClick={() => {
-                  setSearchGuestType("group");
-                  form.setFieldsValue({ guests: formatLocalGuestSelection() });
-                }}
-                className={`rounded-lg h-auto py-4 transition-all ${searchData.guestType === "group"
-                    ? "bg-blue-600 border-blue-600 text-white"
-                    : " border-gray-200 text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                <UsergroupAddOutlined className="mr-2" /> Đi theo nhóm
-              </Button>
-            </Col>
-          </Row>
+    <div className="p-4" style={{ width: "400px", maxHeight: "500px", overflowY: "auto" }}>
+      <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        {/* Summary - compact */}
+        <div className="text-center">
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <div className="flex justify-center gap-6 text-sm">
+              <div className="text-center">
+                <div className="text-lg font-bold text-blue-600">{safeRooms.length}</div>
+                <div className="text-gray-600">Phòng</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-green-600">{safeRooms.reduce((sum, room) => sum + room.adults, 0)}</div>
+                <div className="text-gray-600">Người lớn</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-orange-600">{safeRooms.reduce((sum, room) => sum + room.children, 0)}</div>
+                <div className="text-gray-600">Trẻ em</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {(searchData.guestType === "family_young" || searchData.guestType === "group") && (
-          <div>
-            <Divider className="my-6" />
-            <div className="p-4 space-y-6 bg-gray-50 rounded-lg">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Người lớn</span>
-                  <span className="ml-2 text-xs text-gray-500">(tối thiểu 1)</span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Button
-                    icon={<MinusOutlined />}
-                    size="small"
-                    onClick={() => {
-                      handleLocalGuestCountChange("adults", "decrease");
-                      setTimeout(() => {
-                        form.setFieldsValue({ guests: formatLocalGuestSelection() });
-                      }, 50);
-                    }}
-                    disabled={localGuestDetails.adults <= 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border-gray-300"
-                  />
-                  <span className="min-w-[40px] text-center font-medium text-lg text-gray-800">
-                    {localGuestDetails.adults}
-                  </span>
-                  <Button
-                    icon={<PlusOutlined />}
-                    size="small"
-                    onClick={() => {
-                      handleLocalGuestCountChange("adults", "increase");
-                      setTimeout(() => {
-                        form.setFieldsValue({ guests: formatLocalGuestSelection() });
-                      }, 50);
-                    }}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border-gray-300"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Trẻ em</span>
-                  <span className="ml-2 text-xs text-gray-500">(0-17 tuổi)</span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Button
-                    icon={<MinusOutlined />}
-                    size="small"
-                    onClick={() => {
-                      handleLocalGuestCountChange("children", "decrease");
-                      setTimeout(() => {
-                        form.setFieldsValue({ guests: formatLocalGuestSelection() });
-                      }, 50);
-                    }}
-                    disabled={localGuestDetails.children <= 0}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border-gray-300"
-                  />
-                  <span className="min-w-[40px] text-center font-medium text-lg text-gray-800">
-                    {localGuestDetails.children}
-                  </span>
-                  <Button
-                    icon={<PlusOutlined />}
-                    size="small"
-                    onClick={() => {
-                      handleLocalGuestCountChange("children", "increase");
-                      setTimeout(() => {
-                        form.setFieldsValue({ guests: formatLocalGuestSelection() });
-                      }, 50);
-                    }}
-                    className="w-8 h-8 flex items-center justify-center rounded-full border-gray-300"
-                  />
-                </div>
-              </div>
-
-              {/* Children Age Inputs */}
-              {localGuestDetails.children > 0 && (
-                <div className="mt-4">
-                  <div className="text-sm font-medium text-gray-700 mb-3">
-                    Tuổi của từng trẻ em:
-                  </div>
-                  <div className="space-y-3">
-                    {Array.from({ length: localGuestDetails.children }, (_, index) => {
-                      const childAge = localGuestDetails.childrenAges?.[index]?.age || 8;
-                      return (
-                        <div key={index} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">
-                            Trẻ em {index + 1}:
-                          </span>
-                          <Select
-                            value={childAge}
-                            style={{ width: 80 }}
-                            size="small"
-                            onChange={(age) => handleChildAgeChange(index, age)}
-                          >
-                            {Array.from({ length: 18 }, (_, ageIndex) => (
-                              <Option key={ageIndex} value={ageIndex}>
-                                {ageIndex} tuổi
-                              </Option>
-                            ))}
-                          </Select>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {searchData.guestType === "group" && (
-              <div className="mt-6 p-4 rounded-lg border border-gray-200 bg-blue-50">
-                <p className="text-sm mb-3 flex items-start text-gray-700">
-                  <UsergroupAddOutlined className="mr-2 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <span className="font-medium">
-                    Cần đặt nhiều hơn 16 phòng ? Chat với LAVISHSTAY để nhận ưu đãi đặc biệt!
-                  </span>
-                </p>
-                <Button
-                  type="primary"
-                  icon={<MessageOutlined />}
-                  size="small"
-                  block
-                  className="rounded-lg   border-0"
-                  onClick={() => console.log("Chat with support")}
-                >
-                  Chat ngay
-                </Button>
-              </div>
-            )}
-
+        {/* Room configurations - compact */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <Text strong className="text-gray-800">Phòng và khách</Text>
+            <Button
+              type="dashed"
+              icon={<PlusOutlined />}
+              onClick={handleAddRoom}
+              disabled={safeRooms.length >= 6}
+              size="small"
+            >
+              Thêm
+            </Button>
           </div>
-        )}
+
+          {/* Max rooms warning */}
+          {safeRooms.length >= 6 && (
+            <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-center">
+              <Text className="text-xs text-yellow-700">
+                ⚠️ Tối đa 6 phòng. Cần thêm?
+                <Button type="link" size="small" className="p-0 ml-1 h-auto text-xs">
+                  Hotline: 1900-XXX-XXX
+                </Button>
+              </Text>
+            </div>
+          )}
+
+          {/* Room list - compact */}
+          <div className="space-y-3">
+            {safeRooms.map((room, roomIndex) => (
+              <div key={roomIndex} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <HomeOutlined className="text-blue-600" />
+                    <span className="text-sm font-medium">Phòng {roomIndex + 1}</span>
+                    <Tag color="blue">
+                      {room.adults + room.children} khách
+                    </Tag>
+                  </div>
+                  {safeRooms.length > 1 && (
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleRemoveRoom(roomIndex)}
+                      className="w-6 h-6"
+                    />
+                  )}
+                </div>
+
+                {/* Adults & Children in same row */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Người lớn</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        icon={<MinusOutlined />}
+                        size="small"
+                        onClick={() => handleRoomGuestChange(roomIndex, 'adults', 'decrease')}
+                        disabled={room.adults <= 1}
+                        className="w-6 h-6"
+                      />
+                      <span className="w-6 text-center text-sm font-medium">{room.adults}</span>
+                      <Button
+                        icon={<PlusOutlined />}
+                        size="small"
+                        onClick={() => handleRoomGuestChange(roomIndex, 'adults', 'increase')}
+                        disabled={room.adults + room.children >= 6}
+                        className="w-6 h-6"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-700">Trẻ em (0-12)</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        icon={<MinusOutlined />}
+                        size="small"
+                        onClick={() => handleRoomGuestChange(roomIndex, 'children', 'decrease')}
+                        disabled={room.children <= 0}
+                        className="w-6 h-6"
+                      />
+                      <span className="w-6 text-center text-sm font-medium">{room.children}</span>
+                      <Button
+                        icon={<PlusOutlined />}
+                        size="small"
+                        onClick={() => handleRoomGuestChange(roomIndex, 'children', 'increase')}
+                        disabled={room.adults + room.children >= 6}
+                        className="w-6 h-6"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Children Ages - compact */}
+                  {room.children > 0 && (
+                    <div className="mt-2">
+                      <div className="text-xs text-gray-600 mb-1">Tuổi trẻ em:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from({ length: room.children }, (_, childIndex) => {
+                          const childAge = room.childrenAges?.[childIndex]?.age || 8;
+                          return (
+                            <div key={childIndex} className="flex items-center gap-1">
+                              <span className="text-xs text-gray-500">{childIndex + 1}:</span>
+                              <Select
+                                value={childAge}
+                                style={{ width: 60 }}
+                                size="small"
+                                onChange={(age) => handleChildAgeChange(roomIndex, childIndex, age)}
+                              >
+                                {Array.from({ length: 13 }, (_, ageIndex) => (
+                                  <Option key={ageIndex} value={ageIndex}>
+                                    {ageIndex}
+                                  </Option>
+                                ))}
+                              </Select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Room limit warning - compact */}
+                  {room.adults + room.children >= 6 && (
+                    <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
+                      <Text className="text-xs text-orange-700">
+                        Đã đạt tối đa 6 khách/phòng
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+
+        {/* Help message - compact */}
+        <div className="text-center text-xs text-gray-500">
+          Cần hỗ trợ?
+          <Button type="link" size="small" className="p-0 ml-1 h-auto text-xs">
+            Email: support@lavishstay.com
+          </Button>
+        </div>
       </Space>
     </div>
   );
@@ -461,7 +391,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   return (
     <Affix offsetTop={88}>
       <div
-        className={`mx-auto max-w-3xl ${className}`}
+        className={`mx-auto max-w-4xl ${className}`}
         style={{ ...style, zIndex: 1000 }}
       >
         <Card className="shadow-sm border border-gray-200 rounded-2xl">
@@ -484,6 +414,14 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                     suffixIcon={<CalendarOutlined className="text-gray-500" />}
                     disabledDate={disabledDate}
                     getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                    onChange={(dates) => {
+                      if (dates && dates[0] && dates[1]) {
+                        // Auto-focus guest field after selecting dates
+                        setTimeout(() => {
+                          setGuestPopoverVisible(true);
+                        }, 300);
+                      }
+                    }}
                   />
                 </Form.Item>
               </Col>
@@ -504,8 +442,17 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                       size="large"
                       placeholder="Số khách"
                       readOnly
-                      value={formatLocalGuestSelection()}
+                      value={formatGuestSummary()}
                       prefix={<UserOutlined className="text-gray-500" />}
+                      suffix={
+                        safeRooms.length > 1 && (
+                          <Badge
+                            count={safeRooms.length}
+                            size="small"
+                            style={{ backgroundColor: '#1890ff' }}
+                          />
+                        )
+                      }
                       className="rounded-lg border border-gray-300 hover:border-gray-400 cursor-pointer h-[52px]"
                       onClick={() => setGuestPopoverVisible(true)}
                     />
@@ -520,6 +467,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                     type="primary"
                     htmlType="submit"
                     size="large"
+                    loading={isSearching}
                     className="w-full rounded-lg h-[52px] bg-blue-600 hover:bg-blue-700 border-0 font-medium text-base"
                     icon={<SearchOutlined />}
                   >

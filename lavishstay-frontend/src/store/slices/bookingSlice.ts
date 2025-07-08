@@ -78,6 +78,7 @@ export interface SelectedRoom {
     option: BookingRoomOption;
     pricePerNight: number;
     totalPrice: number;
+    key: string; // Make key mandatory
 }
 
 // Define SelectedRooms as a record/dictionary
@@ -114,6 +115,18 @@ export interface BookingState {
     isLoading?: boolean;
     error?: string | null;
 
+    // Simple booking data for confirmation page
+    simpleBookingData?: {
+        selectedRoom: {
+            id: string;
+            name: string;
+            roomType: string;
+            package: any;
+            searchCriteria: any;
+        };
+        searchData: any;
+    } | null;
+
     // New field for extending existing bookings
     extendingBooking?: {
         originalBookingCode: string;
@@ -149,6 +162,7 @@ const initialState: BookingState = {
     },
     currentStep: 'selection',
     lastUpdated: new Date().toISOString(),
+    simpleBookingData: null,
     extendingBooking: null,
 };
 
@@ -247,15 +261,27 @@ const loadStateFromStorage = (): Partial<BookingState> => {
 // Create booking slice
 const bookingSlice = createSlice({
     name: 'booking',
-    initialState: {
-        ...initialState,
-        ...loadStateFromStorage(),
-    },
+    initialState,
     reducers: {
+        initializeBookingSelection: (state, action: PayloadAction<{ room: BookingRoom, option: BookingRoomOption, quantity: number }>) => {
+            const { room, option, quantity } = action.payload;
+
+            // Clear previous selections
+            state.selectedRooms = {};
+            state.roomsData = [room]; // Set the room data
+
+            // Set the new selection
+            state.selectedRooms[room.id] = {
+                [option.id]: quantity
+            };
+
+            state.lastUpdated = new Date().toISOString();
+        },
+
         // Set rooms data
         setRoomsData: (state, action: PayloadAction<BookingRoom[]>) => {
             state.roomsData = action.payload;
-            saveStateToStorage(state);
+            state.lastUpdated = new Date().toISOString();
         },
 
         // Add or update room selection
@@ -449,11 +475,47 @@ const bookingSlice = createSlice({
             state.currentStep = 'selection';
             saveStateToStorage(state);
         },
+
+        // Set booking data for simple booking flow
+        setBookingData: (state, action: PayloadAction<{
+            selectedRoom: {
+                id: string;
+                name: string;
+                roomType: string;
+                package: any;
+                searchCriteria: any;
+            };
+            searchData: any;
+        }>) => {
+            const { selectedRoom, searchData } = action.payload;
+
+            // Store simple booking data for confirmation page
+            state.simpleBookingData = {
+                selectedRoom,
+                searchData
+            };
+
+            // Clear existing selections
+            state.selectedRooms = {};
+
+            // Set the new selection
+            state.selectedRooms[selectedRoom.id] = {
+                [selectedRoom.package.id]: 1
+            };
+
+            // Update current step
+            state.currentStep = 'payment';
+
+            // Save to storage
+            state.lastUpdated = new Date().toISOString();
+            saveStateToStorage(state);
+        },
     },
 });
 
 // Export actions
 export const {
+    initializeBookingSelection,
     setRoomsData,
     updateRoomSelection,
     removeRoomSelection,
@@ -466,6 +528,7 @@ export const {
     clearError,
     startAddingRoomsToBooking,
     finishExtendingBooking,
+    setBookingData,
 } = bookingSlice.actions;
 
 // Selectors
@@ -498,17 +561,21 @@ export const selectSelectedRoomsSummary = createSelector(
                     const option = room.options.find(opt => opt.id === optionId);
                     if (option) {
                         const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
-                        const totalPrice = pricePerNight * numericQuantity * totals.nights;
 
-                        summary.push({
-                            roomId,
-                            optionId,
-                            quantity: numericQuantity,
-                            room,
-                            option,
-                            pricePerNight,
-                            totalPrice,
-                        });
+                        // Unroll the quantity to create one entry per room instance
+                        for (let i = 0; i < numericQuantity; i++) {
+                            const totalPrice = pricePerNight * totals.nights; // Price for one room
+                            summary.push({
+                                roomId,
+                                optionId,
+                                quantity: 1, // Each entry represents one room
+                                room,
+                                option,
+                                pricePerNight,
+                                totalPrice,
+                                key: `${roomId}-${optionId}-${i}`, // Unique key for this room instance
+                            });
+                        }
                     }
                 }
             });
