@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, Radio, Space, Row, Col, Alert, Button, Divider, Descriptions, Typography, Image } from 'antd';
 import { QrcodeOutlined, BankOutlined, CreditCardOutlined } from '@ant-design/icons';
+import { PaymentCheck } from './PaymentCheck';
+import { PaymentTransaction } from '../../services/paymentService';
 
 const { Text } = Typography;
 
@@ -16,7 +18,7 @@ interface PaymentStepProps {
     selectedPaymentMethod: string;
     onPaymentMethodChange: (method: string) => void;
     onBack: () => void;
-    onConfirmPayment: () => void;
+    onConfirmPayment: (transaction?: PaymentTransaction) => void;
     isProcessing: boolean;
     bookingCode: string;
     totalAmount: number;
@@ -47,6 +49,25 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     formatTime,
     generateVietQRUrl
 }) => {
+    const [showPaymentCheck, setShowPaymentCheck] = useState(false);
+
+    const handleConfirmPayment = () => {
+        if (selectedPaymentMethod === 'vietqr') {
+            setShowPaymentCheck(true);
+        } else {
+            onConfirmPayment();
+        }
+    };
+
+    const handlePaymentConfirmed = (transaction: PaymentTransaction) => {
+        console.log('💰 PaymentStep: Payment confirmed, calling parent callback with:', transaction);
+        setShowPaymentCheck(false);
+        onConfirmPayment(transaction);
+    };
+
+    const handleCancelCheck = () => {
+        setShowPaymentCheck(false);
+    };
     const paymentMethods: PaymentMethod[] = [
         {
             id: 'vietqr',
@@ -54,13 +75,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             description: 'Quét mã QR để thanh toán nhanh chóng',
             icon: <QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />,
             badge: 'Khuyến nghị'
-        },
-        {
-            id: 'vnpay',
-            name: 'VNPay',
-            description: 'Thanh toán qua cổng VNPay (thẻ ATM, Internet Banking)',
-            icon: <CreditCardOutlined style={{ fontSize: '20px', color: '#52c41a' }} />,
-            badge: 'Phổ biến'
         },
         {
             id: 'pay_at_hotel',
@@ -210,11 +224,19 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                         <Button
                             type="primary"
                             loading={isProcessing}
-                            onClick={onConfirmPayment}
+                            onClick={handleConfirmPayment}
                         >
                             Đã thanh toán
                         </Button>
                     </Space>
+
+                    <PaymentCheck
+                        bookingCode={bookingCode}
+                        expectedAmount={totalAmount}
+                        onPaymentConfirmed={handlePaymentConfirmed}
+                        onCancel={handleCancelCheck}
+                        isVisible={showPaymentCheck}
+                    />
                 </Card>
             )}
 
@@ -262,7 +284,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                         <Button
                             type="primary"
                             loading={isProcessing}
-                            onClick={onConfirmPayment}
+                            onClick={handleConfirmPayment}
                         >
                             Thanh toán VNPay
                         </Button>
@@ -306,7 +328,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                         <Button
                             type="primary"
                             loading={isProcessing}
-                            onClick={onConfirmPayment}
+                            onClick={handleConfirmPayment}
                         >
                             Xác nhận đặt phòng
                         </Button>

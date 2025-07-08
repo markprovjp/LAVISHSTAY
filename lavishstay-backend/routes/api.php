@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
 /*
@@ -79,7 +80,11 @@ Route::prefix('payment')->group(function () {
     
     // Get booking details
     Route::get('/booking/{bookingCode}', [PaymentController::class, 'getBookingDetails']);
-      // VNPay create payment URL (new API)
+    
+    // Get booking details with rooms and options
+    Route::get('/booking-details/{bookingCode}', [PaymentController::class, 'getBookingWithRooms']);
+    
+    // VNPay create payment URL (new API)
     Route::post('/vnpay', [PaymentController::class, 'createVNPayPaymentAPI']);
     
     // VNPay callback/return
@@ -106,9 +111,19 @@ Route::prefix('payment')->group(function () {
         // Lấy danh sách booking đã được xác nhận (auto-approved)
         Route::get('/confirmed', [PaymentController::class, 'getConfirmedBookings']);
         
+        // Lấy tất cả booking với thông tin room và option chi tiết  
+        Route::get('/all-bookings', [PaymentController::class, 'getAllBookingsWithOptions']);
+        
         // Xác nhận thanh toán - sử dụng booking ID
         Route::post('/confirm/{bookingId}', [PaymentController::class, 'confirmPayment']);
     });
+
+    // VietQR payment routes
+    Route::post('/create-vietqr', [PaymentController::class, 'createVietQRPayment']);
+    Route::post('/verify-vietqr', [PaymentController::class, 'verifyVietQRPayment']);
+    
+    // CPay payment check route
+    Route::post('/check-cpay', [PaymentController::class, 'checkCPayPayment']);
 });
 
 // Pricing API Routes - Enhanced
@@ -158,6 +173,32 @@ Route::prefix('reception')->group(function () {
     Route::get('/booking/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'detail']);
     Route::get('/payment-status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
     Route::get('/bookings-legacy', [\App\Http\Controllers\Api\ReceptionBookController::class, 'list']);
+});
+
+// Test route to check database
+Route::get('/test-db', function () {
+    try {
+        $tables = DB::select('SHOW TABLES');
+        $result = [];
+        
+        foreach ($tables as $table) {
+            $tableName = array_values((array) $table)[0];
+            if (in_array($tableName, ['booking', 'booking_rooms', 'payment', 'room'])) {
+                $columns = DB::select("DESCRIBE {$tableName}");
+                $result[$tableName] = $columns;
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'tables' => $result
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
 });
 
 //FAQs API

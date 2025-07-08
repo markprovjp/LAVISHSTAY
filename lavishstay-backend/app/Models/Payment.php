@@ -7,65 +7,45 @@ use Carbon\Carbon;
 
 class Payment extends Model
 {
-    protected $table = 'bookings';
-    protected $primaryKey = 'id';
-      protected $fillable = [
-        'booking_code',
-        'customer_name', 
-        'customer_email', 
-        'customer_phone', 
-        'room_id',
-        'room_type_id',
-        'quantity',
-        'total_amount', 
-        'payment_method', 
-        'payment_status', 
-        'booking_status',
-        'payment_confirmed_at',
-        'check_in',
-        'check_out',
-        'special_requests'
-    ];    protected $casts = [
-        'check_in' => 'date',
-        'check_out' => 'date',
-        'payment_confirmed_at' => 'datetime',
-        'total_amount' => 'decimal:2',
-        'quantity' => 'integer'
+    protected $table = 'payment';
+    protected $primaryKey = 'payment_id';
+    public $timestamps = true;
+
+    protected $fillable = [
+        'booking_id',
+        'amount_vnd',
+        'payment_type',
+        'status',
+        'transaction_id'
     ];
 
-    // Scope cho pending payments
+    protected $casts = [
+        'amount_vnd' => 'decimal:2',
+    ];
+
+    // Scope for pending payments
     public function scopePending($query)
     {
-        return $query->where('payment_status', 'pending');
+        return $query->where('status', 'pending');
     }
 
-    // Scope cho VietQR payments
-    public function scopeVietQR($query)
+    // Scope for completed payments
+    public function scopeCompleted($query)
     {
-        return $query->where('payment_method', 'vietqr');
+        return $query->where('status', 'completed');
     }
 
-    // Accessor cho booking code format
-    public function getFormattedBookingCodeAttribute()
+    // Relationship with booking
+    public function booking()
     {
-        return 'LAVISH' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
-    }    // Confirm payment method
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
+    }
+
+    // Confirm payment method
     public function confirmPayment()
     {
         $this->update([
-            'payment_status' => 'confirmed',
-            'payment_confirmed_at' => now()
+            'status' => 'completed'
         ]);
-    }
-
-    // Relationships
-    public function room()
-    {
-        return $this->belongsTo(Room::class, 'room_id', 'room_id');
-    }
-
-    public function roomType()
-    {
-        return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
     }
 }

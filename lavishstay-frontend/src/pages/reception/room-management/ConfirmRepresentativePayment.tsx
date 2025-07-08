@@ -112,23 +112,32 @@ const ConfirmRepresentativePayment: React.FC = () => {
     const [representative, setRepresentative] = useState<RepresentativeInfo | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
 
-    // Debug logging
-    console.log('Debug ConfirmRepresentativePayment:', {
+    // Debug logging - thêm log chi tiết hơn
+    console.log('Debug ConfirmRepresentativePayment state:', {
         navigationState,
         reduxDateRange,
         bookingData,
+        roomsList,
         checkInDate: checkInDate?.format('YYYY-MM-DD'),
-        checkOutDate: checkOutDate?.format('YYYY-MM-DD')
+        checkOutDate: checkOutDate?.format('YYYY-MM-DD'),
+        quickBookNights: navigationState.quickBookNights,
     });
 
     // Calculate booking details
     // Ưu tiên sử dụng quickBookNights nếu có, nếu không thì tính từ ngày check-in/out
     const nights = navigationState.quickBookNights ||
-        (checkInDate && checkOutDate ? checkOutDate.diff(checkInDate, 'day') : 1);
+        (checkInDate && checkOutDate ? checkOutDate.diff(checkInDate, 'day') :
+            (navigationState.quickBookNights || 1));
 
-    // Tính ngày check-out cuối cùng
+    // Tính ngày check-out cuối cùng - ưu tiên checkOutDate từ bookingData hoặc dateRange
     const finalCheckOutDate = checkOutDate ||
         (checkInDate ? checkInDate.add(nights, 'day') : dayjs().add(nights, 'day'));
+
+    // Debug thêm thông tin sau khi tính toán
+    console.log('Debug calculated values:', {
+        nights,
+        finalCheckOutDate: finalCheckOutDate?.format('YYYY-MM-DD'),
+    });
 
     const roomsWithBookingInfo = roomsList.map(room => ({
         ...room,

@@ -91,7 +91,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                         </Col>
 
                         <Col xs={24} sm={12} md={6} lg={5}>
-                            <Form.Item label="Ngày nhận - trả phòng" name="dateRange">
+                            <Form.Item label="Ngày nhận - trả phòng khả dụng" name="dateRange">
                                 <RangePicker
                                     className="w-full"
                                     format="DD/MM/YYYY"
@@ -152,7 +152,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                         onClick={handleSearch}
                                         loading={loading}
                                     >
-                                        Tìm kiếm hoặc tìm phòng trống
+                                        Tìm kiếm 
                                     </Button>
                                     <Button
                                         icon={<ReloadOutlined />}
@@ -200,10 +200,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                     </Badge>
                                 )}
                             </div>
-                        </div>
-
-                        <div className="text-xs ">
-                            Hiển thị theo: {viewMode === 'grid' ? 'Ngày, Loại phòng hoặc Tầng' : 'Timeline theo loại phòng'}
                         </div>
                     </div>
                 </Form>

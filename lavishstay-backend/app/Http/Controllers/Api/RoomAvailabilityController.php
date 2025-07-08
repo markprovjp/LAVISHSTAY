@@ -870,6 +870,7 @@ class RoomAvailabilityController extends Controller
                 $result[] = [
                     'room_type_id' => $roomTypeId,
                     'room_type_name' => $roomType->room_type_name,
+                    'bed_type_name' => $roomType->bed_type_names,
                     'room_code' => $roomType->room_code,
                     'description' => $roomType->description,
                     'size' => $roomType->size,
@@ -943,70 +944,70 @@ class RoomAvailabilityController extends Controller
     /**
      * Get available room types with sufficient rooms for packages
      */
-    private function getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsNeeded)
-    {
-        try {
-            // Determine room table name
-            $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
+  private function getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsNeeded)
+{
+    try {
+        $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
+        if (empty($roomTableExists)) {
+            $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
             if (empty($roomTableExists)) {
-                $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
-                if (empty($roomTableExists)) {
-                    throw new \Exception('No room table found');
-                }
-                $roomTable = 'rooms';
-                $roomIdColumn = 'id';
-            } else {
-                $roomTable = 'room';
-                $roomIdColumn = 'room_id';
+                throw new \Exception('No room table found');
             }
+            $roomTable = 'rooms';
+            $roomIdColumn = 'id';
+        } else {
+            $roomTable = 'room';
+            $roomIdColumn = 'room_id';
+        }
 
-            // Build the query using raw SQL similar to your provided query
-            $sql = "
-            WITH booking_summary AS (
-                SELECT 
-                    room_type_id,
-                    SUM(quantity) AS booked_quantity
-                FROM booking
-                WHERE 
-                    status IN ('pending', 'confirmed')
-                    AND check_in_date < ?
-                    AND check_out_date > ?
-                GROUP BY room_type_id
-            ),
-            available_rooms AS (
-                SELECT 
-                    rt.room_type_id,
-                    rt.name AS room_type_name,
-                    rt.room_code,
-                    rt.description,
-                    rt.base_price,
-                    rt.room_area as size,
-                    rt.max_guests,
-                    rt.rating,
-                    COUNT(r.{$roomIdColumn}) AS total_rooms,
-                    COALESCE(bs.booked_quantity, 0) AS booked_rooms,
-                    COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms
-                FROM room_types rt
-                JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
-                LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
-                WHERE rt.is_active = 1
-                GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
-                HAVING COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) >= ?
-            )
-            SELECT * FROM available_rooms
-            ORDER BY room_type_id
+        $sql = "
+        WITH booking_summary AS (
+            SELECT 
+                room_type_id,
+                SUM(quantity) AS booked_quantity
+            FROM booking
+            WHERE 
+                status IN ('pending', 'confirmed')
+                AND check_in_date < ?
+                AND check_out_date > ?
+            GROUP BY room_type_id
+        ),
+        available_rooms AS (
+            SELECT 
+                rt.room_type_id,
+                rt.name AS room_type_name,
+                rt.room_code,
+                rt.description,
+                rt.base_price,
+                rt.room_area AS size,
+                rt.max_guests,
+                rt.rating,
+                COUNT(r.{$roomIdColumn}) AS total_rooms,
+                COALESCE(bs.booked_quantity, 0) AS booked_rooms,
+                COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms,
+                GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
+            FROM room_types rt
+            JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
+            LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
+            LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
+            WHERE rt.is_active = 1
+            GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
+            HAVING COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) >= ?
+        )
+        SELECT * FROM available_rooms
+        ORDER BY room_type_id
         ";
 
-            $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);
+        $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);
 
-            Log::info("Found " . count($availableRoomTypes) . " room types with at least {$roomsNeeded} available rooms");
+        Log::info("Found " . count($availableRoomTypes) . " room types with at least {$roomsNeeded} available rooms");
 
-            return collect($availableRoomTypes);
-        } catch (\Exception $e) {
-            Log::error('Error getting available room types for packages: ' . $e->getMessage());
-            throw $e;
-        }
+        return collect($availableRoomTypes);
+    } catch (\Exception $e) {
+        Log::error('Error getting available room types for packages: ' . $e->getMessage());
+        throw $e;
     }
+}
 
     /**
      * Get room type packages with services
@@ -1057,8 +1058,9 @@ class RoomAvailabilityController extends Controller
                     's.service_id',
                     's.name',
                     's.description',
-                    's.icon',
-                    's.category'
+                    's.price_vnd',
+                    's.unit',
+                    's.is_active',
                 ])
                 ->orderBy('s.name')
                 ->get();
@@ -1067,8 +1069,7 @@ class RoomAvailabilityController extends Controller
                 return [
                     'service_id' => $service->service_id,
                     'name' => $service->name,
-                    'description' => $service->description,
-                    'icon' => $service->icon ?: '🏨',
+                        'description' => $service->description,
                     'category' => $service->category ?: 'general'
                 ];
             })->toArray();

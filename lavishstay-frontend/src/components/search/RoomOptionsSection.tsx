@@ -150,10 +150,32 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                     scrollbarColor: '#cbd5e1 transparent'
                 }}
             >                {(hasScrollableOptions ? room.options : displayOptions).map((option: any) => {
-                const availability = getAvailabilityStatus(option.availability);
-                const cancellation = getCancellationPolicyDisplay(option.cancellationPolicy);
-                const payment = getPaymentPolicyDisplay(option.paymentPolicy?.type);
-                const isUnavailable = option.availability.remaining === 0;
+                // Handle availability from API format
+                const availableRooms = option.availability || option.roomsLeft || 0;
+                const availability = {
+                    remaining: availableRooms,
+                    total: availableRooms + 10, // Assume total is higher than remaining
+                    color: availableRooms > 5 ? '#52c41a' : availableRooms > 0 ? '#faad14' : '#ff4d4f',
+                    text: availableRooms > 5 ? `Còn ${availableRooms} phòng` :
+                        availableRooms > 0 ? `Chỉ còn ${availableRooms} phòng` : 'Hết phòng',
+                    percentage: Math.min((availableRooms / 10) * 100, 100),
+                    strokeColor: availableRooms > 5 ? '#52c41a' : availableRooms > 0 ? '#faad14' : '#ff4d4f'
+                };
+
+                // Handle cancellation policy
+                const cancellation = {
+                    text: option.isCancellable ? 'Hủy miễn phí' : 'Không hoàn tiền',
+                    icon: option.isCancellable ? <CheckCircleOutlined /> : <StopOutlined />,
+                    description: option.cancellationPolicy || (option.isCancellable ? 'Hủy miễn phí trước 24h' : 'Không hoàn tiền')
+                };
+
+                // Handle payment policy  
+                const payment = {
+                    icon: <HomeOutlined />,
+                    text: 'Tại khách sạn'
+                };
+
+                const isUnavailable = availableRooms === 0;
                 const currentQuantity = selectedRooms[room.id]?.[option.id] || 0;
                 const isSelected = currentQuantity > 0;
 
@@ -245,22 +267,23 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                             </div>
 
                             {/* Price và quantity */}
-                            <div className="flex items-center gap-3">                                <div className="text-right">
-                                <div className="text-lg font-semibold text-gray-800">
-                                    {formatVND(option.dynamicPricing?.finalPrice || option.pricePerNight.vnd)}
+                            <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                    <div className="text-lg font-semibold text-gray-800">
+                                        {formatVND(option.totalPrice || option.pricePerNight?.vnd || option.price_per_room_per_night || 0)}
+                                    </div>
+                                    <div className="text-xs text-gray-500">/ đêm</div>
+                                    {option.originalPrice && option.originalPrice > (option.totalPrice || option.pricePerNight?.vnd || 0) && (
+                                        <div className="text-xs text-green-600 font-medium">
+                                            Tiết kiệm {formatVND(option.originalPrice - (option.totalPrice || option.pricePerNight?.vnd || 0))}
+                                        </div>
+                                    )}
+                                    {option.originalPrice && option.originalPrice !== (option.totalPrice || option.pricePerNight?.vnd || 0) && (
+                                        <div className="text-xs text-gray-400 line-through">
+                                            {formatVND(option.originalPrice)}
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="text-xs text-gray-500">/ đêm</div>
-                                {option.dynamicPricing?.savings > 0 && (
-                                    <div className="text-xs text-green-600 font-medium">
-                                        Tiết kiệm {formatVND(option.dynamicPricing.savings)}
-                                    </div>
-                                )}
-                                {option.dynamicPricing?.basePrice && option.dynamicPricing.basePrice !== (option.dynamicPricing?.finalPrice || option.pricePerNight.vnd) && (
-                                    <div className="text-xs text-gray-400 line-through">
-                                        {formatVND(option.dynamicPricing.basePrice)}
-                                    </div>
-                                )}
-                            </div>
 
                                 {/* Quantity selector */}
                                 <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white">
@@ -280,7 +303,7 @@ const RoomOptionsSection: React.FC<RoomOptionsSectionProps> = ({
                                         type="text"
                                         icon={<PlusOutlined style={{ fontSize: '12px' }} />}
                                         size="small"
-                                        disabled={currentQuantity >= option.availability.remaining || isUnavailable}
+                                        disabled={currentQuantity >= availableRooms || isUnavailable}
                                         onClick={() => onQuantityChange(room.id.toString(), option.id, currentQuantity + 1)}
                                         className="w-8 h-8 border-none hover:bg-gray-50"
                                         style={{ borderRadius: '0' }}

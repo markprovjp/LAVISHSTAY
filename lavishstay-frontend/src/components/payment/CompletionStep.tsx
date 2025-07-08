@@ -1,21 +1,35 @@
 import React from 'react';
-import { Card, Typography, Alert, Button, Space, Result } from 'antd';
-import { CheckCircleOutlined } from '@ant-design/icons';
+import { Card, Typography, Button, Result, Descriptions, List, Row, Col, Divider } from 'antd';
+import { CheckCircleOutlined, HomeOutlined, RedoOutlined } from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
+
+// Helper to format currency
+const formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
 interface CompletionStepProps {
     bookingCode: string;
     selectedPaymentMethod: string;
     onViewBookings: () => void;
     onNewBooking: () => void;
+    onCompleteBooking?: () => void;
+    customerInfo?: any;
+    selectedRoomsSummary?: any[];
+    searchData?: any;
+    totals?: any;
+    nights?: number;
 }
 
 const CompletionStep: React.FC<CompletionStepProps> = ({
     bookingCode,
     selectedPaymentMethod,
     onViewBookings,
-    onNewBooking
+    onNewBooking,
+    customerInfo,
+    selectedRoomsSummary,
+    searchData,
+    totals,
+    nights = 1
 }) => {
     const getSuccessMessage = () => {
         if (selectedPaymentMethod === 'vietqr') {
@@ -26,70 +40,128 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
 
     const getDescription = () => {
         if (selectedPaymentMethod === 'vietqr') {
-            return 'Chúng tôi đã xác nhận thanh toán của bạn. Thông tin đặt phòng đã được gửi qua email.';
+            return `Cảm ơn bạn đã tin tưởng LavishStay. Mã đặt phòng của bạn là: ${bookingCode}`;
         }
-        return 'Đặt phòng của bạn đã được xác nhận. Vui lòng thanh toán tại khách sạn khi nhận phòng.';
+        return `Cảm ơn bạn đã tin tưởng LavishStay. Mã đặt phòng của bạn là: ${bookingCode}`;
     };
 
+    // If we don't have complete data, show simple success
+    if (!customerInfo || !selectedRoomsSummary || !totals) {
+        return (
+            <div className="text-center">
+                <Card className="max-w-2xl mx-auto">
+                    <Result
+                        status="success"
+                        title={getSuccessMessage()}
+                        subTitle={getDescription()}
+                        icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                        extra={[
+                            <Button key="home" type="primary" icon={<HomeOutlined />} onClick={onNewBooking}>
+                                Về trang chủ
+                            </Button>,
+                            <Button key="new" icon={<RedoOutlined />} onClick={onViewBookings}>
+                                Xem đặt phòng
+                            </Button>,
+                        ]}
+                    />
+                </Card>
+            </div>
+        );
+    }
+
     return (
-        <div className="text-center">
-            <Card className="max-w-2xl mx-auto">
+        <div className="bg-gray-100 min-h-screen p-4 sm:p-8">
+            <div className="max-w-4xl mx-auto">
                 <Result
+                    icon={<CheckCircleOutlined className="text-green-500" />}
                     status="success"
                     title={getSuccessMessage()}
                     subTitle={getDescription()}
-                    icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                    extra={[
+                        <Button type="primary" key="home" icon={<HomeOutlined />} onClick={onNewBooking}>
+                            Về trang chủ
+                        </Button>,
+                        <Button key="new" icon={<RedoOutlined />} onClick={onViewBookings}>
+                            Xem đặt phòng của tôi
+                        </Button>,
+                    ]}
                 />
 
-                <div className="mb-6">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-center justify-center mb-2">
-                            <CheckCircleOutlined className="text-green-600 mr-2" />
-                            <Text strong className="text-green-800">
-                                Mã đặt phòng của bạn: {bookingCode}
-                            </Text>
-                        </div>
-                        <Text className="text-green-700 text-sm">
-                            Vui lòng lưu lại mã này để tra cứu thông tin đặt phòng
-                        </Text>
-                    </div>
-                </div>
+                <Card bordered={false} className="shadow-lg rounded-lg mt-8">
+                    <Title level={3} className="text-center mb-6">Chi tiết đơn đặt phòng</Title>
 
-                <Alert
-                    message="Thông tin quan trọng"
-                    description={
-                        <div className="text-left">
-                            <p>• Vui lòng mang theo giấy tờ tùy thân và mã đặt phòng: <Text strong>{bookingCode}</Text></p>
-                            <p>• Thời gian check-in: 14:00 | Thời gian check-out: 12:00</p>
-                            <p>• Liên hệ: 0123456789 nếu có thắc mắc</p>
-                            {selectedPaymentMethod === 'pay_at_hotel' && (
-                                <p>• <Text strong>Lưu ý:</Text> Vui lòng thanh toán tại quầy lễ tân khi nhận phòng</p>
-                            )}
-                        </div>
-                    }
-                    type="info"
-                    showIcon
-                    className="mb-6 text-left"
-                />
+                    {/* Customer and Booking Info */}
+                    <Row gutter={[16, 16]} justify="space-between">
+                        <Col xs={24} md={12}>
+                            <Descriptions title="Thông tin khách hàng" bordered column={1} size="small">
+                                <Descriptions.Item label="Họ và tên">{customerInfo.fullName}</Descriptions.Item>
+                                <Descriptions.Item label="Email">{customerInfo.email}</Descriptions.Item>
+                                <Descriptions.Item label="Số điện thoại">{customerInfo.phone}</Descriptions.Item>
+                            </Descriptions>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Descriptions title="Thông tin chung" bordered column={1} size="small">
+                                <Descriptions.Item label="Mã đặt phòng"><Text strong copyable>{bookingCode}</Text></Descriptions.Item>
+                                <Descriptions.Item label="Ngày nhận phòng">{new Date(searchData.checkIn).toLocaleDateString('vi-VN')}</Descriptions.Item>
+                                <Descriptions.Item label="Ngày trả phòng">{new Date(searchData.checkOut).toLocaleDateString('vi-VN')}</Descriptions.Item>
+                                <Descriptions.Item label="Phương thức thanh toán">
+                                    {selectedPaymentMethod === 'pay_at_hotel' ? 'Thanh toán tại khách sạn' : 'Đã thanh toán'}
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </Col>
+                    </Row>
 
-                <Space size="large">
-                    <Button
-                        type="primary"
-                        size="large"
-                        onClick={onViewBookings}
-                        className="min-w-[140px]"
-                    >
-                        Xem đặt phòng
-                    </Button>
-                    <Button
-                        size="large"
-                        onClick={onNewBooking}
-                        className="min-w-[140px]"
-                    >
-                        Đặt phòng mới
-                    </Button>
-                </Space>
-            </Card>
+                    <Divider />
+
+                    {/* Room Details */}
+                    <Title level={4} className="mt-6 mb-4">Chi tiết các phòng đã đặt</Title>
+                    <List
+                        grid={{ gutter: 16, xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 }}
+                        dataSource={selectedRoomsSummary}
+                        renderItem={(roomSummary: any, index: number) => (
+                            <List.Item>
+                                <Card type="inner" title={`Phòng ${index + 1}: ${roomSummary.room.name}`}>
+                                    <Row gutter={16}>
+                                        <Col span={12}>
+                                            <img src={roomSummary.room.image_url} alt={roomSummary.room.name} className="w-full h-auto rounded-md" />
+                                        </Col>
+                                        <Col span={12}>
+                                            <Descriptions column={1} size="small">
+                                                <Descriptions.Item label="Khách đứng tên">{customerInfo.fullName}</Descriptions.Item>
+                                                <Descriptions.Item label="Gói dịch vụ">{roomSummary.option.name}</Descriptions.Item>
+                                                <Descriptions.Item label="Số đêm">{nights}</Descriptions.Item>
+                                                <Descriptions.Item label="Giá mỗi đêm">{formatVND(roomSummary.pricePerNight)}</Descriptions.Item>
+                                            </Descriptions>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            </List.Item>
+                        )}
+                    />
+
+                    <Divider />
+
+                    {/* Payment Summary */}
+                    <Title level={4} className="mt-6 mb-4">Tổng kết chi phí</Title>
+                    <Row justify="end">
+                        <Col xs={24} sm={16} md={12}>
+                            <Descriptions bordered column={1} size="small">
+                                <Descriptions.Item label={`Tiền phòng (${nights} đêm)`}>{formatVND(totals.roomsTotal)}</Descriptions.Item>
+                                <Descriptions.Item label="Phí dịch vụ">{formatVND(totals.serviceFee)}</Descriptions.Item>
+                                <Descriptions.Item label="Thuế VAT">{formatVND(totals.taxAmount)}</Descriptions.Item>
+                                <Descriptions.Item label="Tổng cộng">
+                                    <Title level={4} style={{ margin: 0 }}>{formatVND(totals.finalTotal)}</Title>
+                                </Descriptions.Item>
+                            </Descriptions>
+                        </Col>
+                    </Row>
+
+                    <Paragraph className="text-center mt-8 text-gray-500">
+                        Một email xác nhận đã được gửi đến {customerInfo.email}. Vui lòng kiểm tra hộp thư của bạn.
+                        Nếu có bất kỳ câu hỏi nào, xin vui lòng liên hệ với chúng tôi.
+                    </Paragraph>
+                </Card>
+            </div>
         </div>
     );
 };

@@ -14,7 +14,7 @@ import {
     ThunderboltOutlined
 } from '@ant-design/icons';
 import { Eye } from 'lucide-react';
-import {  } from '../../constants/Icons';
+import { } from '../../constants/Icons';
 import RoomOptionsSection from './RoomOptionsSection';
 import { Room } from '../../types/room';
 
@@ -62,8 +62,23 @@ const RoomCard: React.FC<RoomCardProps> = ({
             return `Phòng này phù hợp cho ${room.maxGuests} khách. Bạn có thể đặt phòng này và cần thêm chỗ ở cho ${additionalGuests} khách.`;
         }
         return null;
-    }; const getMainAmenities = (amenities: string[]) => {
-        return formatAmenitiesForDisplay(amenities);
+    }; const getMainAmenities = (amenities: any[]) => {
+        // Format amenities for display - show max 3 items
+        if (!amenities || amenities.length === 0) return [];
+        return amenities.slice(0, 3).map(amenity => {
+            // If amenity is already a string, return as is
+            if (typeof amenity === 'string') {
+                return { name: amenity, icon: null };
+            }
+            // If amenity is an object, extract the name and icon
+            if (typeof amenity === 'object' && amenity && 'name' in amenity) {
+                return {
+                    name: amenity.name,
+                    icon: amenity.icon || null
+                };
+            }
+            return { name: String(amenity), icon: null };
+        });
     }; return (
         <Card
             className="room-card transition-shadow duration-200 w-full"
@@ -110,13 +125,16 @@ const RoomCard: React.FC<RoomCardProps> = ({
 
                         {/* Badges */}
                         <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
-                            {room.isSale && (
+                            {(room.originalPrice > room.pricePerNight || room.isSale) && (
                                 <div className="relative">
                                     <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 border border-red-300">
                                         <FireOutlined className="text-sm animate-pulse" />
-                                        <span className="text-sm font-bold">-{room.discount}%</span>
+                                        <span className="text-sm font-bold">
+                                            -{Math.round(((room.originalPrice - room.pricePerNight) / room.originalPrice) * 100)}%
+                                        </span>
                                     </div>
-                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>                                </div>
+                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+                                </div>
                             )}
                             {shouldShowSuggestion() && (
                                 <div className="relative">
@@ -125,6 +143,14 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                         <span className="text-sm font-bold">Gợi ý</span>
                                     </div>
                                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-lg blur-sm opacity-50 -z-10"></div>
+                                </div>
+                            )}
+                            {room.availableRooms && room.availableRooms <= 3 && (
+                                <div className="relative">
+                                    <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1.5 border border-orange-300">
+                                        <FireOutlined className="text-sm" />
+                                        <span className="text-sm font-bold">Sắp hết phòng!</span>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -170,11 +196,11 @@ const RoomCard: React.FC<RoomCardProps> = ({
                         <Space size={16} wrap className="mb-4">
                             <div className="flex items-center gap-2">
                                 <HomeOutlined style={{ fontSize: '16px', color: '#6b7280' }} />
-                                <Text className="text-base">{room.size}m²</Text>
+                                <Text className="text-base">{room.size || room.roomSize}m²</Text>
                             </div>
                             <div className="flex items-center gap-2">
                                 <EyeOutlined style={{ fontSize: '16px', color: '#6b7280' }} />
-                                <Text className="text-base">{room.view}</Text>
+                                <Text className="text-base">{room.view || room.viewType || 'City view'}</Text>
                             </div>
                             <div className="flex items-center gap-2">
                                 <UserOutlined style={{ fontSize: '16px', color: '#6b7280' }} />
@@ -184,6 +210,13 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                 <div className="flex items-center gap-2">
                                     <StarFilled style={{ fontSize: '16px', color: '#f59e0b' }} />
                                     <Text className="text-base font-medium">{room.rating}/10</Text>
+                                </div>
+                            )}
+                            {room.availableRooms && (
+                                <div className="flex items-center gap-2">
+                                    <Text className="text-sm text-gray-600">
+                                        Còn {room.availableRooms} phòng
+                                    </Text>
                                 </div>
                             )}
                         </Space>
@@ -216,7 +249,7 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                 <Text className="text-base font-medium">Tiện ích nổi bật</Text>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {getMainAmenities(room.mainAmenities || room.amenities).slice(0, 12).map((amenity, index) => (
+                                {getMainAmenities(room.highlighted_amenities || room.mainAmenities || room.amenities || []).slice(0, 12).map((amenity, index) => (
                                     <span
                                         key={index}
                                         className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm border border-blue-100"
@@ -225,9 +258,9 @@ const RoomCard: React.FC<RoomCardProps> = ({
                                         <span>{amenity.name}</span>
                                     </span>
                                 ))}
-                                {getMainAmenities(room.mainAmenities || room.amenities).length > 12 && (
+                                {getMainAmenities(room.highlighted_amenities || room.mainAmenities || room.amenities || []).length > 12 && (
                                     <span className="inline-flex items-center px-3 py-2 bg-gray-50 text-gray-600 rounded-lg text-sm">
-                                        +{getMainAmenities(room.mainAmenities || room.amenities).length - 12} khác
+                                        +{getMainAmenities(room.highlighted_amenities || room.mainAmenities || room.amenities || []).length - 12} khác
                                     </span>
                                 )}
                             </div>

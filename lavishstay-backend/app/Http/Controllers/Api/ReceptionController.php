@@ -203,7 +203,7 @@ class ReceptionController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'status' => 'required|in:available,occupied,cleaning,maintenance'
+                'status' => 'required|in:available,occupied,cleaning,maintenance,deposited,no_show,check_in,check_out'
             ]);
 
             if ($validator->fails()) {
@@ -1246,7 +1246,7 @@ class ReceptionController extends Controller
                     $representativeId = DB::table('representatives')->insertGetId([
                         'booking_id' => $bookingId,
                         'booking_code' => $bookingCode,
-                        'room_id' => $room['id'],
+                        'room_id' => intval($room['id']), // Convert string to int
                         'full_name' => $representative['fullName'],
                         'phone_number' => $representative['phoneNumber'],
                         'email' => $representative['email'],
@@ -1259,7 +1259,7 @@ class ReceptionController extends Controller
                     DB::table('booking_rooms')->insert([
                         'booking_id' => $bookingId,
                         'booking_code' => $bookingCode,
-                        'room_id' => $room['id'],
+                        'room_id' => intval($room['id']), // Convert string to int
                         'representative_id' => $representativeId,
                         'price_per_night' => $room['room_type']['adjusted_price'],
                         'nights' => $nights,
@@ -1272,7 +1272,7 @@ class ReceptionController extends Controller
                 }
 
                 // Update room status to 'deposited'
-                $roomIds = array_column($request->rooms, 'id');
+                $roomIds = array_map('intval', array_column($request->rooms, 'id')); // Convert to int
                 DB::table('room')
                     ->whereIn('room_id', $roomIds)
                     ->update(['status' => 'deposited', 'updated_at' => Carbon::now()]);

@@ -1,27 +1,95 @@
 import { SearchData } from '../store/slices/searchSlice';
-import { ApiService, API_ENDPOINTS } from './apiService';
+import dayjs from 'dayjs';
 
-interface BackendSearchResponse {
+interface RoomPackageApiResponse {
     success: boolean;
-    message?: string;
-    data: {
-        results: any[];
-        search_params: {
-            check_in: string;
-            check_out: string;
-            nights: number;
-            guests: {
-                adults: number;
-                children: number;
-                guest_type: string;
-                total: number;
-            };
+    data: RoomPackageData[];
+    summary: {
+        total_room_types: number;
+        total_packages: number;
+        search_criteria: {
+            check_in_date: string;
+            check_out_date: string;
+            guest_count: string;
         };
+        rooms_needed: number;
+        nights: number;
+    };
+    message: string;
+}
+
+interface RoomPackageData {
+    room_type_id: number;
+    bed_type_name: string; // Added bed_type_name
+    room_type_name: string;
+    room_code: string;
+    description: string;
+    size: number;
+    max_guests: number;
+    rating: number;
+    base_price: string;
+    adjusted_price: number;
+    available_rooms: string;
+    rooms_needed: number;
+    images: Array<{
+        id: number;
+        room_type_id: number;
+        image_url: string;
+        alt_text: string;
+        is_main: number;
+    }>;
+    main_image: {
+        id: number;
+        room_type_id: number;
+        image_url: string;
+        alt_text: string;
+        is_main: number;
+    } | null;
+    amenities: Array<{
+        id: number;
+        name: string;
+        icon: string;
+        category: string;
+        description: string;
+    }>;
+    highlighted_amenities: Array<{
+        id: number;
+        name: string;
+        icon: string;
+        category: string;
+        description: string;
+    }>;
+    package_options: Array<{
+        package_id: number;
+        package_name: string;
+        package_description: string;
+        price_modifier_vnd: string;
+        price_per_room_per_night: number;
+        total_package_price: number;
+        services: any[];
+        pricing_breakdown: {
+            base_price_per_night: string;
+            adjusted_price_per_night: number;
+            package_modifier: string;
+            final_price_per_room_per_night: number;
+            rooms_needed: number;
+            nights: number;
+            total_price: number;
+            currency: string;
+        };
+    }>;
+    cheapest_package_price: number;
+    search_criteria: {
+        guest_count: string;
+        check_in_date: string;
+        check_out_date: string;
+        nights: number;
     };
 }
 
 interface FrontendSearchResult {
     rooms: any[];
+    total: number;
     searchSummary: {
         totalRooms: number;
         nights: number;
@@ -38,43 +106,58 @@ interface FrontendSearchResult {
 export const searchService = {
     async searchRooms(searchData: SearchData): Promise<FrontendSearchResult> {
         try {
-            console.log('🔍 Calling backend API with search data:', searchData);
+            console.log('🔍 Calling room packages API with search data:', searchData);
 
-            // Prepare search parameters for backend API
-            const searchParams = {
-                check_in: searchData.checkIn,
-                check_out: searchData.checkOut,
-                adults: searchData.guestDetails.adults,
-                children: searchData.guestDetails.children,
-                children_ages: searchData.guestDetails.childrenAges.map(child => child.age),
-                guest_type: searchData.guestType
-            };
+            // Calculate guest count and nights
+            const totalGuests = (searchData.guestDetails?.adults || 2) + (searchData.guestDetails?.children || 0);
+            const checkInDate = searchData.dateRange?.[0] ? (typeof searchData.dateRange[0] === 'string' ? searchData.dateRange[0] : dayjs(searchData.dateRange[0]).format('YYYY-MM-DD')) : dayjs().format('YYYY-MM-DD');
+            const checkOutDate = searchData.dateRange?.[1] ? (typeof searchData.dateRange[1] === 'string' ? searchData.dateRange[1] : dayjs(searchData.dateRange[1]).format('YYYY-MM-DD')) : dayjs().add(1, 'day').format('YYYY-MM-DD');
 
-            console.log('📤 Backend API params:', searchParams);
+            // Prepare search parameters for room packages API
+            const searchParams = new URLSearchParams({
+                check_in_date: checkInDate,
+                check_out_date: checkOutDate,
+                guest_count: totalGuests.toString()
+            });
 
-            // Call backend API using ApiService POST method
-            const response: BackendSearchResponse = await ApiService.post(API_ENDPOINTS.SEARCH.ROOMS, searchParams);
-            console.log('📥 Backend API response:', response);
+            console.log('📤 Room packages API params:', searchParams.toString());
 
-            if (!response.success) {
-                throw new Error(response.message || 'Search failed');
+            // Call room packages search API
+            const response = await fetch(`http://localhost:8888/api/room-packages/search?${searchParams}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const apiResponse: RoomPackageApiResponse = await response.json();
+            console.log('📥 Room packages API response:', apiResponse);
+
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.message || 'Search failed');
             }
 
             // Transform backend response to frontend format
-            const transformedRooms = this.transformBackendRooms(response.data.results);
+            const transformedRooms = this.transformRoomPackageData(apiResponse.data, apiResponse.summary);
 
             return {
                 rooms: transformedRooms,
+                total: transformedRooms.length,
                 searchSummary: {
-                    totalRooms: response.data.results.length,
-                    nights: response.data.search_params.nights,
-                    checkIn: response.data.search_params.check_in,
-                    checkOut: response.data.search_params.check_out,
-                    adults: response.data.search_params.guests.adults,
-                    children: response.data.search_params.guests.children,
-                    childrenAges: searchData.guestDetails.childrenAges.map(child => child.age),
-                    guestType: response.data.search_params.guests.guest_type,
-                    totalGuests: response.data.search_params.guests.total,
+                    totalRooms: apiResponse.summary.total_room_types,
+                    nights: apiResponse.summary.nights,
+                    checkIn: checkInDate,
+                    checkOut: checkOutDate,
+                    adults: searchData.guestDetails?.adults || 2,
+                    children: searchData.guestDetails?.children || 0,
+                    childrenAges: (searchData.guestDetails?.childrenAges || []).map((child: any) => typeof child === 'object' ? child.age : child),
+                    guestType: searchData.guestType,
+                    totalGuests: totalGuests,
                 }
             };
         } catch (error) {
@@ -83,98 +166,109 @@ export const searchService = {
         }
     },
 
-    // Transform backend room data to frontend format
-    transformBackendRooms(backendRooms: any[]): any[] {
-        return backendRooms.map(result => {
-            const roomType = result.room_type;
-            const pricing = result.pricing;
-            const bookingDetails = result.booking_details;
+    // Transform room package data to frontend format
+    transformRoomPackageData(roomPackages: RoomPackageData[], summary: any): any[] {
+        return roomPackages.map(packageData => {
+            // Get main image
+            const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url || '/images/rooms/default.jpg';
 
-            // Create room options for frontend (simplified to one main option per room type)
-            const mainOption = {
-                id: `${roomType.id}-main`,
-                name: 'Standard Booking',
+            // Get all images
+            const images = packageData.images?.map(img => img.image_url) || [mainImage];
+
+            // Create options from package options
+            const options = packageData.package_options.map(pkg => ({
+                id: `pkg-${pkg.package_id}`,
+                name: pkg.package_name,
+                description: pkg.package_description,
                 pricePerNight: {
-                    vnd: pricing.total_per_night,
-                    originalVnd: pricing.base_price_per_night
+                    vnd: pkg.price_per_room_per_night,
+                    originalVnd: packageData.adjusted_price
                 },
-                maxGuests: roomType.max_guests,
+                totalPrice: pkg.total_package_price,
+                maxGuests: packageData.max_guests,
                 minGuests: 1,
-                roomType: roomType.room_code || 'standard',
+                roomType: packageData.room_code,
                 cancellationPolicy: 'Free cancellation before 24h',
                 paymentPolicy: 'Pay at hotel or online',
-                availability: roomType.available_rooms || 0,
-                additionalServices: [],
-                promotion: pricing.discount_amount > 0 ? {
-                    type: 'discount',
-                    value: pricing.discount_amount,
-                    description: `Giảm ${pricing.discount_amount.toLocaleString('vi-VN')}đ`
+                availability: parseInt(packageData.available_rooms) || 0,
+                additionalServices: pkg.services || [],
+                promotion: pkg.price_modifier_vnd !== "0.00" ? {
+                    type: 'package',
+                    value: parseFloat(pkg.price_modifier_vnd),
+                    description: `Gói ${pkg.package_name}`
                 } : null,
-                recommended: false,
-                mostPopular: false,
-                pricing: {
-                    basePrice: pricing.base_price_per_night,
-                    totalPerNight: pricing.total_per_night,
-                    totalPrice: pricing.total_price,
-                    breakdown: pricing.breakdown,
-                    seasonalMultiplier: pricing.seasonal_multiplier,
-                    discountAmount: pricing.discount_amount,
-                    nights: bookingDetails.nights
-                }
-            };
+                recommended: pkg.package_name.toLowerCase().includes('standard'),
+                mostPopular: pkg.package_name.toLowerCase().includes('premium'),
+                pricing: pkg.pricing_breakdown
+            }));
 
-            // Get images from backend, fallback to default
-            const images = roomType.images && roomType.images.length > 0
-                ? roomType.images.map((img: string) => {
-                    // Handle relative paths from backend
-                    if (img.startsWith('/storage/')) {
-                        return `http://localhost:8888${img}`;
+            // Add base option if no package options exist
+            if (options.length === 0) {
+                options.push({
+                    id: `base-${packageData.room_type_id}`,
+                    name: 'Standard Room',
+                    description: 'Basic room booking',
+                    pricePerNight: {
+                        vnd: packageData.adjusted_price,
+                        originalVnd: parseFloat(packageData.base_price)
+                    },
+                    totalPrice: packageData.adjusted_price * summary.nights,
+                    maxGuests: packageData.max_guests,
+                    minGuests: 1,
+                    roomType: packageData.room_code,
+                    cancellationPolicy: 'Free cancellation before 24h',
+                    paymentPolicy: 'Pay at hotel or online',
+                    availability: parseInt(packageData.available_rooms) || 0,
+                    additionalServices: [],
+                    promotion: null,
+                    recommended: true,
+                    mostPopular: false,
+                    pricing: {
+                        base_price_per_night: packageData.base_price,
+                        adjusted_price_per_night: packageData.adjusted_price,
+                        package_modifier: "0.00",
+                        final_price_per_room_per_night: packageData.adjusted_price,
+                        rooms_needed: packageData.rooms_needed,
+                        nights: summary.nights,
+                        total_price: packageData.adjusted_price * summary.nights,
+                        currency: "VND"
                     }
-                    return img;
-                })
-                : ['/images/rooms/default.jpg'];
+                });
+            }
 
             return {
-                id: roomType.id.toString(),
-                name: roomType.name,
-                roomType: roomType.room_code || 'standard',
-                room_code: roomType.room_code,
-                description: roomType.description || '',
-                image: images[0],
+                id: packageData.room_type_id.toString(),
+                name: packageData.room_type_name,
+                roomType: packageData.room_code,
+                room_code: packageData.room_code,
+                description: packageData.description || 'Chưa có mô tả',
+                image: mainImage,
                 images: images,
-                size: roomType.room_size,
-                roomSize: roomType.room_size,
-                view: roomType.view_type,
-                viewType: roomType.view_type,
-                bedType: roomType.specifications?.bed_options?.[0] || 'King bed',
-                amenities: roomType.amenities?.map((a: any) => a.name || a.amenity_name) || [],
-                mainAmenities: roomType.highlighted_amenities ? Object.values(roomType.highlighted_amenities).map((a: any) => a.name) : [],
-                highlighted_amenities: roomType.highlighted_amenities ? Object.values(roomType.highlighted_amenities).map((a: any) => a.name) : [],
-                rating: 4.5, // Default rating
-                maxGuests: roomType.max_guests,
-                availableRooms: roomType.available_rooms || 0,
-                specifications: roomType.specifications || {},
+                size: packageData.size,
+                roomSize: packageData.size,
+                view: 'City view', // Default view
+                viewType: 'City view',
+                bedType: 'King bed', // Default bed type
+                amenities: packageData.amenities?.map(a => a.name) || [],
+                mainAmenities: packageData.highlighted_amenities?.slice(0, 5).map(a => a.name) || [],
+                highlighted_amenities: packageData.highlighted_amenities?.map(a => a.name) || [],
+                rating: packageData.rating || 4.5,
+                maxGuests: packageData.max_guests,
+                availableRooms: parseInt(packageData.available_rooms) || 0,
+                roomsNeeded: packageData.rooms_needed,
 
-                // Pricing from backend
-                priceVND: pricing.total_price,
-                pricePerNight: pricing.total_per_night,
-                originalPrice: pricing.base_price_per_night,
+                // Pricing info
+                priceVND: packageData.cheapest_package_price || (packageData.adjusted_price * summary.nights),
+                pricePerNight: packageData.adjusted_price,
+                originalPrice: parseFloat(packageData.base_price),
+                cheapestPrice: packageData.cheapest_package_price,
 
-                // Main option for booking
-                options: [mainOption],
+                // Options for booking
+                options: options,
 
-                // Additional data for frontend
-                pricing: {
-                    ...pricing,
-                    nights: bookingDetails.nights,
-                    breakdown: pricing.breakdown
-                },
-                bookingDetails: {
-                    checkIn: bookingDetails.check_in,
-                    checkOut: bookingDetails.check_out,
-                    nights: bookingDetails.nights,
-                    guests: bookingDetails.guests
-                }
+                // Additional data
+                packageData: packageData,
+                searchCriteria: packageData.search_criteria
             };
         });
     }

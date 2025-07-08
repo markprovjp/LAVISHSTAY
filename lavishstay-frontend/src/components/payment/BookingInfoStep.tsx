@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { Card, Form, Input, Row, Col, Button, Checkbox } from 'antd';
+import { Card, Form, Input, Row, Col, Button, Checkbox, Typography } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 
 const { TextArea } = Input;
+const { Title } = Typography;
 
 interface BookingInfoStepProps {
     form: any;
@@ -18,45 +19,32 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     onSubmit,
     isProcessing,
     disabled = false,
-    selectedPaymentMethod = 'vietqr'
 }) => {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
 
     // Auto-fill form with user data if logged in
     useEffect(() => {
         if (isAuthenticated && user) {
-            // Split name into firstName and lastName if fullName is provided
-            const nameParts = user.name?.split(' ') || [];
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
-
             form.setFieldsValue({
-                firstName: firstName,
-                lastName: lastName,
+                fullName: user.name,
                 email: user.email,
-                phone: user.phone || '', // Use phone if available, otherwise empty
+                phone: user.phone || '',
             });
         }
-    }, [isAuthenticated, user, form]); return (
+    }, [isAuthenticated, user, form]);
+
+    return (
         <Card title="Thông tin khách hàng" className="mb-4">
             <Form form={form} layout="vertical" onFinish={onSubmit}>
+                <Title level={5}>Thông tin người đại diện</Title>
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col span={24}>
                         <Form.Item
-                            name="firstName"
-                            label="Họ"
-                            rules={[{ required: true, message: 'Vui lòng nhập họ' }]}
+                            name="fullName"
+                            label="Họ và tên người đại diện"
+                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
                         >
-                            <Input placeholder="Nhập họ" size="large" />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            name="lastName"
-                            label="Tên"
-                            rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
-                        >
-                            <Input placeholder="Nhập tên" size="large" />
+                            <Input placeholder="Nhập họ và tên người đại diện cho tất cả phòng" size="large" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -85,35 +73,47 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                     </Col>
                 </Row>
 
-                <Form.Item name="specialRequests" label="Yêu cầu đặc biệt">
-                    <TextArea rows={3} placeholder="Nhập yêu cầu đặc biệt (tùy chọn)" />
+                <Form.Item name="specialRequests" label="Yêu cầu đặc biệt (tùy chọn)">
+                    <TextArea rows={3} placeholder="Ví dụ: phòng không hút thuốc, tầng cao..." />
+                </Form.Item>
+
+                <Form.Item
+                    name="termsAgreement"
+                    valuePropName="checked"
+                    rules={[
+                        {
+                            validator: (_, value) =>
+                                value ? Promise.resolve() : Promise.reject(new Error('Bạn phải đồng ý với điều khoản')),
+                        },
+                    ]}
+                >
+                    <Checkbox>
+                        Tôi đồng ý với <a href="/terms" target="_blank" rel="noopener noreferrer">điều khoản dịch vụ</a> và <a href="/privacy" target="_blank" rel="noopener noreferrer">chính sách bảo mật</a>.
+                    </Checkbox>
                 </Form.Item>
 
                 <Form.Item>
-                    <Checkbox>
-                        Tôi đồng ý với <a href="/terms">điều khoản dịch vụ</a> và <a href="/privacy">chính sách bảo mật</a>
-                    </Checkbox>
-                </Form.Item>                <Form.Item>                    <Button
-                    type="primary"
-                    htmlType="submit"
-                    size="large"
-                    loading={isProcessing}
-                    disabled={disabled}
-                    block
-                    style={{
-                        height: '50px',
-                        fontSize: '16px',
-                        fontWeight: 600,
-                        borderRadius: '8px'
-                    }}
-                >
-                    {isProcessing
-                        ? 'Đang xử lý...'
-                        : disabled
-                            ? 'Không thể tiến hành'
-                            : 'Tiếp tục'
-                    }
-                </Button>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        loading={isProcessing}
+                        disabled={disabled}
+                        block
+                        style={{
+                            height: '50px',
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            borderRadius: '8px'
+                        }}
+                    >
+                        {isProcessing
+                            ? 'Đang xử lý...'
+                            : disabled
+                                ? 'Không thể tiến hành'
+                                : 'Tiếp tục thanh toán'
+                        }
+                    </Button>
                 </Form.Item>
             </Form>
         </Card>
