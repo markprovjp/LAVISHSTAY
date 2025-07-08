@@ -30,7 +30,7 @@
                 @foreach($allrooms as $room)
                     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden hover:shadow-xl transition-shadow duration-200 relative">
                         <!-- Room Image -->
-                        <div class="relative h-48 w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                        <div class="relative w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
                             @if ($room->images && $room->images->count() > 0)
                                 <img src="{{ asset($room->images->first()->image_path) }}" alt="{{ $room->name }}"
                                     class="object-cover w-full h-full min-h-[12rem] min-w-full" style="aspect-ratio: 5/3;">
@@ -362,13 +362,13 @@
             const addSearchBox = () => {
                 const searchHTML = `
                     <div class="mb-6">
-                        <div class="max-w-md">
+                        <div class="max-w">
                             <div class="relative">
                                 <input type="text" 
                                        id="roomSearch" 
                                        placeholder="Tìm kiếm loại phòng..." 
                                        class="form-input w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                <div class="absolute top-0 mt-3 inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <div class="absolute top-0 inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20" width="20px" height="20px">
                                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
                                     </svg>

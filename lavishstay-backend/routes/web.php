@@ -39,6 +39,8 @@ use App\Http\Controllers\RoomPriceHistoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\RoomTypeServiceController;
 use App\Http\Controllers\FloorController;
+use App\Http\Controllers\NewsController\NewsCategoryController;
+use App\Http\Controllers\NewsController\NewsController;
 
 Route::redirect('/', 'login');
 
@@ -51,12 +53,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/dashboard/analytics/{id}', [DashboardController::class, 'analytics'])->name('analytics_id');
     Route::get('/settings/account', function () {
         return view('pages/settings/account');
-    })->name('account');  
+    })->name('account');
     Route::get('/settings/notifications', function () {
         return view('pages/settings/notifications');
-    })->name('notifications');  
-    
-    
+    })->name('notifications');
+
+
 
 
 
@@ -70,7 +72,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-   
+
     //Roles//////////////////////////////////
     Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
@@ -108,7 +110,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/admin/customers/destroy/{id}', [CustomerController::class, 'destroy'])->name('admin.customers.destroy');
         // Route::put('/admin/customers/change-password/{id}', [CustomerController::class, 'changePassword'])->name('admin.customers.change-password');
         Route::put('/admin/customers/reset-password/{id}', [CustomerController::class, 'resetPassword'])->name('admin.customers.reset-password');
-
     });
 
     //Staffs//////////////////////////////////Route::middleware(['auth', 'permission:quan_ly_user'])->group(function () {
@@ -122,7 +123,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/admin/staffs/destroy/{id}', [StaffController::class, 'destroy'])->name('admin.staffs.destroy'); // xóa nhân viên
         // Route::put('/admin/staffs/change-password/{id}', [StaffController::class, 'changePassword'])->name('admin.staffs.change-password'); // thay đổi mật khẩu nhân viên
         Route::put('/admin/staffs/reset-password/{id}', [StaffController::class, 'resetPassword'])->name('admin.staffs.reset-password');
-
     });
 
 
@@ -134,9 +134,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/edit/{roomTypeId}', [RoomTypeController::class, 'edit'])->name('admin.room-types.edit');
     Route::put('/admin/room-types/update/{roomTypeId}', [RoomTypeController::class, 'update'])->name('admin.room-types.update');
     Route::post('/admin/room-types/destroy/{roomTypeId}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy');
-    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');        
+    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
 
-    
+
 
     // Room //////////////////////////////////////////
     Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
@@ -167,13 +167,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Cách liiiiiiiiiiiiiiiiiiii
 
-   //Room Types Images Management
+    //Room Types Images Management
     Route::get('/admin/room-types/{roomType}/images', [RoomTypeController::class, 'images'])->name('admin.room-types.images');
     Route::post('/admin/room-types/{roomType}/images/upload', [RoomTypeController::class, 'uploadImages'])->name('admin.room-types.images.upload');
     Route::patch('/admin/room-types/{roomType}/images/{imageId}/update', [RoomTypeController::class, 'updateImage'])->name('admin.room-types.images.update');
     Route::patch('/admin/room-types/{roomType}/images/{imageId}/set-main', [RoomTypeController::class, 'setMainImage'])->name('admin.room-types.images.set-main');
     Route::delete('/admin/room-types/{roomType}/images/{imageId}', [RoomTypeController::class, 'deleteImage'])->name('admin.room-types.images.delete');
-    
+
     // Room Type Amenities Management
     Route::get('/admin/room-types/{roomType}/amenities', [RoomTypeAmenityController::class, 'index'])
         ->name('admin.room-types.amenities');
@@ -186,7 +186,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::patch('/admin/room-types/{roomType}/amenities/highlight-all', [RoomTypeAmenityController::class, 'highlightAll'])
         ->name('admin.room-types.amenities.highlight-all');
 
-        
+
     // Room Type Services Management
     Route::get('/admin/room-types/{roomType}/services', [RoomTypeServiceController::class, 'index'])->name('admin.room-types.services');
     Route::post('/admin/room-types/{roomType}/services', [RoomTypeServiceController::class, 'store'])->name('admin.room-types.services.store');
@@ -215,7 +215,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/services/services/edit/{id}', [ServiceController::class, 'edit'])->name('admin.services.services.edit');
     Route::put('/admin/services/services/update/{id}', [ServiceController::class, 'update'])->name('admin.services.services.update');
     Route::post('/admin/services/services/destroy/{id}', [ServiceController::class, 'destroy'])->name('admin.services.services.destroy');
-    Route::patch('/admin/services/services/toggle-status/{service}', [ServiceController::class, 'toggleStatus'])->name('admin.services.services.toggle-status'); 
+    Route::patch('/admin/services/services/toggle-status/{service}', [ServiceController::class, 'toggleStatus'])->name('admin.services.services.toggle-status');
 
     //  Meals Management //////////////////////////////////
     Route::get('/admin/services/meals', [ServiceMealController::class, 'index'])->name('admin.services.meals');
@@ -261,7 +261,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Translation Management
     Route::prefix('admin/translation')->group(function () {
-        
+
 
         Route::get('/get-tables', [TranslationController::class, 'getTables'])->name('admin.translation.get-tables');
         Route::get('/manage-tables', [TranslationController::class, 'manageTables'])->name('admin.translation.manage-tables');
@@ -320,7 +320,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-        ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
+    ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
 
     // Chính sách hủy phòng///////////////////////////////////////////////////
     Route::get('/admin/cancellation-policies', [CancellationPolicyController::class, 'index'])->name('admin.cancellation-policies');
@@ -360,7 +360,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::patch('/admin/checkout-policies/{checkoutPolicy}/toggle-status', [CheckoutPolicyController::class, 'toggleStatus'])->name('admin.checkout-policies.toggle-status');
 
 
-    
+
 
 
 
@@ -371,7 +371,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     /////////////////////// GIÁ PHÒNG /////////////////////////////////////////////////////
 
-     //Theo lễ hội, sự kiện
+    //Theo lễ hội, sự kiện
     Route::prefix('admin/event-festival-management')->name('admin.event-festival-management.')->group(function () {
         Route::get('/', [EventFestivalManagementController::class, 'index'])->name('index');
         Route::get('/statistics', [EventFestivalManagementController::class, 'getStatistics'])->name('statistics');
@@ -386,7 +386,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/holiday/{id}', [EventFestivalManagementController::class, 'destroyHoliday'])->name('destroy-holiday');
         Route::get('/export', [EventFestivalManagementController::class, 'export'])->name('export');
     });
-    
+
     Route::prefix('/admin/flexible-pricing')->name('admin.flexible-pricing.')->group(function () {
         Route::get('/', [FlexiblePricingController::class, 'index'])->name('index');
         Route::get('/data', [FlexiblePricingController::class, 'getData'])->name('data');
@@ -403,8 +403,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/holidays/data', [FlexiblePricingController::class, 'getHolidays'])->name('admin.holidays.data');
     Route::get('/admin/events/data-for-edit/{eventId?}', [FlexiblePricingController::class, 'getEventsForEdit'])->name('admin.events.data-for-edit');
     Route::get('/admin/holidays/data-for-edit/{currentHolidayId?}', [FlexiblePricingController::class, 'getHolidaysForEdit'])->name('admin.holidays.data-for-edit');
-    
-    
+
+
     //Giá động
     Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
         Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
@@ -427,23 +427,23 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     //Giá cuối tuần
     Route::prefix('admin/weekend-price')->name('admin.weekend-price.')->group(function () {
         Route::get('/', [WeekendPriceController::class, 'index'])->name('index');
-        
+
         // Weekend days configuration
         Route::get('/weekend-days', [WeekendPriceController::class, 'getWeekendDays'])->name('weekend-days');
         Route::post('/update-weekend-days', [WeekendPriceController::class, 'updateWeekendDays'])->name('update-weekend-days');
-        
+
         // Data and resources
         Route::get('/data', [WeekendPriceController::class, 'getData'])->name('data');
         Route::get('/room-types', [WeekendPriceController::class, 'getRoomTypes'])->name('room-types');
         Route::get('/statistics', [WeekendPriceController::class, 'getStatistics'])->name('statistics');
         Route::get('/export', [WeekendPriceController::class, 'export'])->name('export');
-        
+
         // CRUD operations
         Route::post('/store', [WeekendPriceController::class, 'store'])->name('store');
         Route::get('/show/{id}', [WeekendPriceController::class, 'show'])->name('show');
         Route::put('/update/{id}', [WeekendPriceController::class, 'update'])->name('update');
         Route::delete('/destroy/{id}', [WeekendPriceController::class, 'destroy'])->name('destroy');
-        
+
         // Additional operations
         Route::post('/toggle-status/{id}', [WeekendPriceController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/bulk-update-status', [WeekendPriceController::class, 'bulkUpdateStatus'])->name('bulk-update-status');
@@ -478,6 +478,41 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    // ---------------- DANH MỤC ----------------
+    Route::get('admin/news/categories', [NewsCategoryController::class, 'index'])->name('admin.news.categories.index');         // Danh sách
+    Route::get('admin/news/categories/create', [NewsCategoryController::class, 'create'])->name('admin.news.categories.create'); // Form tạo
+    Route::post('admin/news/categories', [NewsCategoryController::class, 'store'])->name('admin.news.categories.store');        // Lưu
+
+    Route::get('admin/news/categories/{category}/edit', [NewsCategoryController::class, 'edit'])->name('admin.news.categories.edit'); // Sửa
+    Route::put('admin/news/categories/{category}', [NewsCategoryController::class, 'update'])->name('admin.news.categories.update');  // Cập nhật
+    Route::delete('admin/news/categories/{category}', [NewsCategoryController::class, 'destroy'])->name('admin.news.categories.destroy'); // Xoá
+
+    // ---------------- BÀI VIẾT ----------------
+    Route::prefix('admin')->name('admin.')->group(function () {
+        // ---------- BÀI VIẾT ----------
+        Route::get('news',               [NewsController::class, 'index'])->name('news.index');
+        Route::get('news/create',        [NewsController::class, 'create'])->name('news.create');
+        Route::post('news',              [NewsController::class, 'store'])->name('news.store');
+
+        Route::get('news/edit/{news}',   [NewsController::class, 'edit'])->name('news.edit');
+        Route::put('news/{news}',        [NewsController::class, 'update'])->name('news.update');
+        Route::delete('news/{news}',     [NewsController::class, 'destroy'])->name('news.destroy');
+        Route::get('news/{news}',        [NewsController::class, 'show'])->name('news.show');
+
+        Route::post('news/bulk-action',  [NewsController::class, 'bulkAction'])->name('news.bulk');
+
+        // CKEditor upload
+        Route::post('ckeditor/upload', [NewsController::class, 'uploadImage'])->name('ckeditor.upload');
+
+        // Media
+        Route::get('news/media',          [MediaController::class, 'index'])->name('media.index');
+        Route::post('news/media',          [MediaController::class, 'store'])->name('media.store');
+        Route::post('news/media/upload',   [MediaController::class, 'upload'])->name('media.bulkUpload');
+
+        Route::post('media/meta/{media}', [MediaController::class, 'updateMeta'])->name('media.meta');
+        Route::delete('media/{media}',     [MediaController::class, 'destroy'])->name('media.destroy');
+        Route::post('media/bulk-destroy', [MediaController::class, 'bulkDestroy'])->name('media.bulkDestroy');
+    });
 
 
 
@@ -497,23 +532,23 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/faqs', [FAQController::class, 'index'])->name('admin.faqs');
     Route::get('/admin/faqs/create', [FAQController::class, 'create'])->name('admin.faqs.create');
     Route::post('/admin/faqs/store', [FAQController::class, 'store'])->name('admin.faqs.store');
-    Route::get('/admin/faqs/edit/{faqId}', [FAQController::class, 'edit'])->name('admin.faqs.edit');    
+    Route::get('/admin/faqs/edit/{faqId}', [FAQController::class, 'edit'])->name('admin.faqs.edit');
     Route::put('/admin/faqs/updat/{faqId}', [FAQController::class, 'update'])->name('admin.faqs.update');
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 
     // Payment Management Routes
     Route::get('/admin/bookings/trading', [PaymentController::class, 'adminIndex'])->name('admin.payment.index');
-    
+
     // VNPay Web Routes (cho callback từ VNPay)
     Route::prefix('vnpay')->name('vnpay.')->group(function () {
         // VNPay return URL (callback sau khi thanh toán)
         Route::get('/return', [PaymentController::class, 'handleVNPayReturn'])->name('return');
         Route::post('/return', [PaymentController::class, 'handleVNPayReturn'])->name('return.post');
-        
+
         // VNPay IPN (Instant Payment Notification)
         Route::post('/ipn', [PaymentController::class, 'handleVNPayIPN'])->name('ipn');
-        
+
         // Test payment page (optional - for testing)
         Route::get('/test', [PaymentController::class, 'showTestPaymentForm'])->name('test');
         Route::post('/test', [PaymentController::class, 'processTestPayment'])->name('test.process');

@@ -6,13 +6,7 @@
             <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa chính sách hủy</h1>
         </div>
 
-        <!-- Debug info - xóa sau khi test -->
-        @if(config('app.debug'))
-            <div class="mb-4 p-4 bg-yellow-100 rounded">
-                <p>Policy ID: {{ $cancellationPolicy->policy_id }}</p>
-                <p>Form Action: {{ route('admin.cancellation-policies.update', $cancellationPolicy->policy_id) }}</p>
-            </div>
-        @endif
+       
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">

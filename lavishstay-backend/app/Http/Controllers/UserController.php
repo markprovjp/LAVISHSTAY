@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Role;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * UserController - Quản lý người dùng trong hệ thống
@@ -204,7 +205,7 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         // Không cho phép xóa chính mình
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             return redirect()->route('admin.users')->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
         }
 
