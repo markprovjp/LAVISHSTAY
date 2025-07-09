@@ -13,7 +13,7 @@
                 </p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-                <a href="{{ route('admin.customers') }}">
+                <a href="{{ route('admin.staffs') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -58,7 +58,7 @@
                                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Thông tin cá
                                         nhân</h3>
                                 </div>
-                                <a href="{{ route('admin.customers.edit', $user->id) }}">
+                                <a href="{{ route('admin.staffs.edit', $user->id) }}">
                                     <button
                                         class="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                                         <i class="fas fa-edit fa-xs mr-1.5"></i> Chỉnh sửa
@@ -233,7 +233,7 @@
                                         <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
                                             <i class="fas fa-id-card fa-xs text-gray-400 mr-2"></i>
                                             <span class="text-sm text-gray-900 dark:text-gray-100">
-                                                {{ $user->identity_number ?? 'Chưa cập nhật' }}
+                                                {{ $user->identity_code ?? 'Chưa cập nhật' }}
                                             </span>
                                         </div>
                                     </div>
@@ -389,7 +389,7 @@
                                     </div>
                                 @endif
 
-                                <form action="{{ route('admin.customers.reset-password', $user->id) }}" method="POST"
+                                <form action="{{ route('admin.staffs.reset-password', $user->id) }}" method="POST"
                                     onsubmit="return confirm('Bạn có chắc chắn muốn đặt lại mật khẩu không?')">
                                     @csrf
                                     @method('PUT')

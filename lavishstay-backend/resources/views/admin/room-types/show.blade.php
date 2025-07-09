@@ -45,7 +45,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
             <!-- Main Content -->
             <div class="xl:col-span-2 space-y-6">
@@ -226,7 +226,7 @@
 
                                                         @if ($remainingImages > 0)
                                                             <!-- "+X more" overlay -->
-                                                            <div class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center cursor-pointer"
+                                                            <div class="absolute inset-0 opacity-50 bg-black flex items-center justify-center cursor-pointer"
                                                                 onclick="openAllImagesModal()">
                                                                 <div class="text-center text-white">
                                                                     <div class="text-3xl font-bold">
@@ -306,7 +306,7 @@
                 </div>
 
                 <!-- Single Image Viewer Modal -->
-                <div id="singleImageModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden">
+                <div id="singleImageModal" class="h-full fixed inset-0 bg-black bg-opacity-90 z-50 hidden">
                     <div class="h-full flex items-center justify-center p-4">
                         <!-- Close Button -->
                         <button onclick="closeSingleImageModal()"
