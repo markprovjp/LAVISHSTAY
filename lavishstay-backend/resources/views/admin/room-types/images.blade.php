@@ -155,7 +155,7 @@
 
             <div class="p-6">
                 @if($images->count() > 0)
-                    <div id="imagesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    <div id="imagesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
                                             @foreach ($images as $image)
                         <div class="image-item relative group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                              data-image-id="{{ $image->image_id }}"
@@ -187,7 +187,7 @@
                                      onerror="handleImageError(this)">
                                 
                                 <!-- Hover Overlay -->
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                                <div class="absolute inset-0  group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
                                     <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                         <div class="bg-white bg-opacity-90 text-gray-800 px-4 py-2 rounded-lg">
                                             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

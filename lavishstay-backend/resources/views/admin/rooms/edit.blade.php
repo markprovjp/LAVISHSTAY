@@ -1,5 +1,34 @@
 <x-app-layout>
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+        
+        @if (session('error'))
+            <div id="notification-error" class="transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 shadow-md relative">
+                <div class="flex items-center justify-center w-8 h-8 text-red-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 mr-8">
+                    <h3 class="font-semibold text-red-700">Lỗi!</h3>
+                    <div class="text-sm text-red-600">{{ session('error') }}</div>
+                </div>
+                <button onclick="closeNotificationError()" class="absolute right-2 top-2 text-red-600 hover:text-red-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <script>
+                function closeNotificationError() {
+                    const notification = document.getElementById('notification-error');
+                    notification.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }
+            </script>
+        @endif
+
 
         <!-- Page header -->
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
@@ -92,17 +121,19 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <!-- Room Name -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Tên phòng <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" name="name" value="{{ old('name', $room->name) }}"
-                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
- placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
- @error('name') border-red-500 @enderror"
-                                        placeholder="VD: {{ $room->roomType->name }} 101">
-                                    @error('name')
-                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                    @enderror
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Tên phòng <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="text" name="name" value="{{ old('name', $room->name ?? '') }}"
+                                            class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+                                            placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                                            @error('name') border-red-500 @enderror"
+                                            placeholder="VD: {{ $roomType->name ?? '' }} 101">
+                                        @error('name')
+                                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
 
                                 <!-- Floor -->
@@ -277,6 +308,25 @@
     </div>
 
     <!-- JavaScript -->
+
+    <script>
+        // Animation khi hiển thị
+        document.getElementById('notification').classList.add('translate-y-0', 'opacity-100');
+        document.getElementById('notification').classList.remove('-translate-y-full', 'opacity-0');
+
+        // Tự động ẩn sau 5 giây
+        setTimeout(() => {
+            closeNotification();
+        }, 5000);
+
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }
+    </script>
     <script>
         function previewImage(input) {
             if (input.files && input.files[0]) {
