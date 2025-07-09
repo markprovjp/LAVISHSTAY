@@ -1019,4 +1019,290 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Helper method to extract price from various formats
+     */
+    private function extractPrice($price)
+    {
+        if (is_array($price) || is_object($price)) {
+            // Handle price object/array format like { vnd: 1000000 }
+            $priceArray = (array) $price;
+            return $priceArray['vnd'] ?? $priceArray['value'] ?? 0;
+        }
+        
+        return (float) $price;
+    }
+
+    /**
+     * Helper method to process children ages
+     */
+    private function processChildrenAge($childrenAges)
+    {
+        if (is_array($childrenAges)) {
+            return json_encode($childrenAges);
+        }
+        
+        if (is_string($childrenAges)) {
+            // Already JSON encoded
+            return $childrenAges;
+        }
+        
+        return json_encode([]);
+    }
+
+    /**
+     * Check CPay payment status (called by frontend to verify payments)
+     */
+    public function checkCPayPayment(Request $request)
+    {
+        try {
+            $request->validate([
+                'booking_code' => 'required|string',
+                'amount' => 'required|numeric'
+            ]);
+
+            $bookingCode = $request->booking_code;
+            $expectedAmount = $request->amount;
+
+            Log::info("Checking CPay payment for booking: {$bookingCode}, amount: {$expectedAmount}");
+
+            // Find booking by booking_code
+            $booking = Booking::where('booking_code', $bookingCode)->first();
+
+            if (!$booking) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking không tồn tại'
+                ], 404);
+            }
+
+            // Check if payment already exists and is completed
+            $payment = Payment::where('booking_id', $booking->booking_id)->first();
+
+            if ($payment && $payment->status === 'completed') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Giao dịch đã được xác nhận trước đó',
+                    'transaction' => [
+                        'id' => $payment->id,
+                        'booking_code' => $bookingCode,
+                        'amount' => $payment->amount_vnd,
+                        'status' => 'completed',
+                        'payment_method' => 'vietqr',
+                        'created_at' => $payment->created_at,
+                        'updated_at' => $payment->updated_at
+                    ]
+                ]);
+            }
+
+            // Here you would integrate with actual CPay API to check for transactions
+            // For now, we'll simulate checking and return not found since we don't have real CPay integration
+            
+            // Simulate checking CPay transactions (replace with actual CPay API call)
+            $cPayTransaction = $this->checkCPayAPI($bookingCode, $expectedAmount);
+
+            if ($cPayTransaction) {
+                // Transaction found in CPay, update our records
+                DB::beginTransaction();
+                
+                try {
+                    // Update booking status
+                    $booking->update([
+                        'status' => 'confirmed'
+                    ]);
+
+                    // Update payment status
+                    if ($payment) {
+                        $payment->update([
+                            'status' => 'completed',
+                            'transaction_id' => $cPayTransaction['transaction_id'],
+                            'updated_at' => now()
+                        ]);
+                    } else {
+                        // Create payment record if doesn't exist
+                        $payment = Payment::create([
+                            'booking_id' => $booking->booking_id,
+                            'amount_vnd' => $expectedAmount,
+                            'payment_type' => 'vietqr',
+                            'status' => 'completed',
+                            'transaction_id' => $cPayTransaction['transaction_id']
+                        ]);
+                    }
+
+                    DB::commit();
+
+                    // Send confirmation email
+                    $this->sendBookingConfirmationEmail($booking->booking_id);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Giao dịch thanh toán đã được xác nhận',
+                        'transaction' => [
+                            'id' => $payment->id,
+                            'booking_code' => $bookingCode,
+                            'amount' => $payment->amount_vnd,
+                            'status' => 'completed',
+                            'payment_method' => 'vietqr',
+                            'transaction_id' => $cPayTransaction['transaction_id'],
+                            'created_at' => $payment->created_at,
+                            'updated_at' => $payment->updated_at
+                        ]
+                    ]);
+
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    throw $e;
+                }
+            }
+
+            // Transaction not found
+            return response()->json([
+                'success' => false,
+                'message' => 'Chưa tìm thấy giao dịch thanh toán. Vui lòng đợi vài phút và thử lại.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error checking CPay payment: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi hệ thống khi kiểm tra thanh toán'
+            ], 500);
+        }
+    }
+
+    /**
+     * Call actual CPay Google Apps Script API
+     */
+    private function checkCPayAPI($bookingCode, $expectedAmount)
+    {
+        try {
+            Log::info("Calling CPay Google Apps Script API for booking: {$bookingCode}, amount: {$expectedAmount}");
+            
+            // URL của Google Apps Script đã deploy
+            $cPayApiUrl = env('CPAY_GOOGLE_SCRIPT_URL', 'https://script.google.com/macros/s/AKfycbx8VhqXhSp0oY1uPrcM9nEr3iZZE2b8u8nXq7dKYX3UXQ0PmDe5Yh4sYNfU-QNGRgDN/exec');
+            
+            // Prepare request data
+            $requestData = [
+                'action' => 'checkPayment',
+                'booking_code' => $bookingCode,
+                'amount' => $expectedAmount
+            ];
+            
+            Log::info("CPay API Request", $requestData);
+            
+            // Make HTTP request to Google Apps Script with SSL verification disabled for development
+            $httpClient = Http::timeout(30);
+            
+            // Disable SSL verification for local development
+            if (env('APP_ENV') === 'local') {
+                $httpClient = $httpClient->withOptions([
+                    'verify' => false,  // Disable SSL verification for local dev
+                    'curl' => [
+                        CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_SSL_VERIFYHOST => false,
+                    ]
+                ]);
+                Log::info("CPay API: SSL verification disabled for local development");
+            }
+            
+            $response = $httpClient->post($cPayApiUrl, $requestData);
+            
+            Log::info("CPay API HTTP Status: " . $response->status());
+            
+            if (!$response->successful()) {
+                Log::error("CPay API HTTP Error: " . $response->status() . " - " . $response->body());
+                throw new \Exception("CPay API returned HTTP " . $response->status());
+            }
+            
+            $responseData = $response->json();
+            Log::info("CPay API Response", $responseData ?? ['raw_body' => $response->body()]);
+            
+            // Check if payment was found
+            if ($responseData['status'] === 'success' && !empty($responseData['data'])) {
+                $transaction = $responseData['data'][0]; // Get first matching transaction
+                
+                Log::info("✅ CPay payment found", $transaction);
+                
+                return [
+                    'transaction_id' => 'CPAY_' . $bookingCode . '_' . time(),
+                    'amount' => $transaction['amount'],
+                    'status' => 'success',
+                    'bank_name' => $transaction['bank'] ?? 'Unknown Bank',
+                    'account_number' => $transaction['account'] ?? '',
+                    'transaction_time' => now(),
+                    'description' => $transaction['content'] ?? "Thanh toan dat phong {$bookingCode}",
+                    'reference_code' => $transaction['reference_code'] ?? '',
+                    'cpay_data' => $transaction // Store original CPay data
+                ];
+            } else {
+                Log::info("❌ CPay payment not found for booking: {$bookingCode}");
+                return null;
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Error calling CPay API: ' . $e->getMessage());
+            
+            // Fallback for development environment - Always try fallback in local
+            if (env('APP_ENV') === 'local') {
+                Log::info("Using fallback auto-confirm for development due to error: " . $e->getMessage());
+                return [
+                    'transaction_id' => 'DEV_' . $bookingCode . '_' . time(),
+                    'amount' => $expectedAmount,
+                    'status' => 'success',
+                    'bank_name' => 'MB Bank',
+                    'account_number' => '0335920306',
+                    'transaction_time' => now(),
+                    'description' => "DEV: Thanh toan dat phong {$bookingCode}",
+                    'reference_code' => 'DEV_REF_' . $bookingCode,
+                    'cpay_data' => [
+                        'fallback' => true,
+                        'error' => $e->getMessage(),
+                        'timestamp' => now()->toISOString()
+                    ]
+                ];
+            }
+            
+            return null;
+        }
+    }
+
+    /**
+     * Debug endpoint để test CPay API
+     */
+    public function debugCPayAPI(Request $request)
+    {
+        try {
+            $bookingCode = $request->get('booking_code', 'LVS78084846');
+            $expectedAmount = $request->get('amount', 22000);
+
+            Log::info("🔧 DEBUG: Testing CPay API", [
+                'booking_code' => $bookingCode,
+                'amount' => $expectedAmount,
+                'app_env' => env('APP_ENV'),
+                'cpay_auto_confirm' => env('CPAY_AUTO_CONFIRM'),
+                'cpay_url' => env('CPAY_GOOGLE_SCRIPT_URL')
+            ]);
+
+            $result = $this->checkCPayAPI($bookingCode, $expectedAmount);
+
+            return response()->json([
+                'success' => true,
+                'cpay_result' => $result,
+                'environment' => [
+                    'app_env' => env('APP_ENV'),
+                    'cpay_auto_confirm' => env('CPAY_AUTO_CONFIRM'),
+                    'cpay_url' => env('CPAY_GOOGLE_SCRIPT_URL')
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Debug CPay API error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
 }

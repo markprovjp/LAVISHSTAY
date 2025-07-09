@@ -961,7 +961,7 @@ class RoomAvailabilityController extends Controller
             $roomIdColumn = 'room_id';
         }
 
-<<<<<<< HEAD
+        // Build the query using raw SQL similar to your provided query
         $sql = "
         WITH booking_summary AS (
             SELECT 
@@ -981,7 +981,7 @@ class RoomAvailabilityController extends Controller
                 rt.room_code,
                 rt.description,
                 rt.base_price,
-                rt.room_area AS size,
+                rt.room_area as size,
                 rt.max_guests,
                 rt.rating,
                 COUNT(r.{$roomIdColumn}) AS total_rooms,
@@ -998,45 +998,6 @@ class RoomAvailabilityController extends Controller
         )
         SELECT * FROM available_rooms
         ORDER BY room_type_id
-=======
-            // Build the query using raw SQL similar to your provided query
-            $sql = "
-            WITH booking_summary AS (
-                SELECT 
-                    room_type_id,
-                    SUM(quantity) AS booked_quantity
-                FROM booking
-                WHERE 
-                    status IN ('pending', 'confirmed')
-                    AND check_in_date < ?
-                    AND check_out_date > ?
-                GROUP BY room_type_id
-            ),
-            available_rooms AS (
-                SELECT 
-                    rt.room_type_id,
-                    rt.name AS room_type_name,
-                    rt.room_code,
-                    rt.description,
-                    rt.base_price,
-                    rt.room_area as size,
-                    rt.max_guests,
-                    rt.rating,
-                    COUNT(r.{$roomIdColumn}) AS total_rooms,
-                    COALESCE(bs.booked_quantity, 0) AS booked_rooms,
-                    COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms,
-                    GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
-                FROM room_types rt
-                JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
-                LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
-                LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
-                WHERE rt.is_active = 1
-                GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
-                HAVING COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) >= ?
-            )
-            SELECT * FROM available_rooms
-            ORDER BY room_type_id
->>>>>>> 118f1d6f89729a365790896f7903c62e46c5dff5
         ";
 
         $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);

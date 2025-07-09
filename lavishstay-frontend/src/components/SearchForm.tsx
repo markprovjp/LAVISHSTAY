@@ -77,6 +77,17 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   // Safe access to rooms array
   const safeRooms = searchData.rooms || [{ adults: 2, children: 0, childrenAges: [] }];
 
+  // Format guest summary
+  const formatGuestSummary = useCallback(() => {
+    const totalAdults = safeRooms.reduce((sum, room) => sum + room.adults, 0);
+    const totalChildren = safeRooms.reduce((sum, room) => sum + room.children, 0);
+    const roomCount = safeRooms.length;
+    if (roomCount === 1) {
+      return `${totalAdults + totalChildren} khách`;
+    }
+    return `${roomCount} phòng, ${totalAdults + totalChildren} khách`;
+  }, [safeRooms]);
+
   // Auto-update dates to today and tomorrow if dateRange is in the past
   useEffect(() => {
     const now = dayjs();
@@ -93,16 +104,27 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
     }
   }, []); // Run only on component mount
 
-  // Format guest summary
-  const formatGuestSummary = useCallback(() => {
-    const totalAdults = safeRooms.reduce((sum, room) => sum + room.adults, 0);
-    const totalChildren = safeRooms.reduce((sum, room) => sum + room.children, 0);
-    const roomCount = safeRooms.length;
-    if (roomCount === 1) {
-      return `${totalAdults + totalChildren} khách`;
+  // Initialize form with search data - enhanced to preserve dates
+  useEffect(() => {
+    const formValues: any = {};
+
+    if (searchData.dateRange && Array.isArray(searchData.dateRange)) {
+      // Convert string dates to dayjs objects for form
+      try {
+        const startDate = dayjs(searchData.dateRange[0]);
+        const endDate = dayjs(searchData.dateRange[1]);
+
+        if (startDate.isValid() && endDate.isValid()) {
+          formValues.dateRange = [startDate, endDate];
+        }
+      } catch (error) {
+        console.error('Error parsing date range:', error);
+      }
     }
-    return `${roomCount} phòng, ${totalAdults + totalChildren} khách`;
-  }, [safeRooms]);
+
+    formValues.guests = formatGuestSummary();
+    form.setFieldsValue(formValues);
+  }, [searchData.dateRange, searchData.rooms, form, formatGuestSummary]);
 
   // Handle room guest count change
   const handleRoomGuestChange = useCallback((roomIndex: number, type: 'adults' | 'children', operation: 'increase' | 'decrease') => {
@@ -123,25 +145,6 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
   const handleRemoveRoom = useCallback((roomIndex: number) => {
     dispatch(removeRoom(roomIndex));
   }, [dispatch]);
-
-  // Initialize form with search data
-  useEffect(() => {
-    const formValues: any = {};
-
-    if (searchData.dateRange && Array.isArray(searchData.dateRange)) {
-      // Ensure dateRange contains valid dayjs objects
-      const isValidDateRange = searchData.dateRange.every((date: any) =>
-        date && typeof date.isValid === 'function' && date.isValid()
-      );
-
-      if (isValidDateRange) {
-        formValues.dateRange = searchData.dateRange;
-      }
-    }
-
-    formValues.guests = formatGuestSummary();
-    form.setFieldsValue(formValues);
-  }, [searchData, form, formatGuestSummary]);
 
   // Handle search form submission
   const handleSearch = useCallback(async (values: any) => {
