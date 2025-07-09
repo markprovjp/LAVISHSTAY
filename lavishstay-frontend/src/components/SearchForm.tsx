@@ -87,7 +87,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       !Array.isArray(searchData.dateRange) ||
       searchData.dateRange.length < 2 ||
       !searchData.dateRange[0] ||
-      searchData.dateRange[0].isBefore(now, 'day')) {
+      dayjs(searchData.dateRange[0]).isBefore(now, 'day')) {
 
       dispatch(setDateRange([now.format('YYYY-MM-DD'), tomorrow.format('YYYY-MM-DD')]));
     }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\RoomTypeController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReceptionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Api\AuthController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,22 @@ use App\Http\Controllers\BookingController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Route test gửi email
+Route::get('/test-email/{bookingId}', [PaymentController::class, 'testEmail']);
+
+// Authentication routes
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/google', [AuthController::class, 'googleLogin']); // Đổi từ google-login thành google
+    
+    // Protected routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me', [AuthController::class, 'me']);
+    });
 });
 
 // Dashboard API

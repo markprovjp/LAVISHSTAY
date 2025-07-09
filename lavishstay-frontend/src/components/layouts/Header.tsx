@@ -64,6 +64,15 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const { token } = theme.useToken(); // Lấy token từ theme
   const { t } = useTranslation();
 
+  // Debug user data
+  console.log('🔍 Header Debug - Redux Auth State:', { isAuthenticated, user });
+  console.log('🖼️ User Avatar URL:', user?.avatar);
+  console.log('👤 User Data:', JSON.stringify(user, null, 2));
+
+  // Debug localStorage
+  console.log('💾 LocalStorage authUser:', localStorage.getItem('authUser'));
+  console.log('🔑 LocalStorage authToken:', localStorage.getItem('authToken'));
+
   // Xử lý đăng xuất
   const handleLogout = async () => {
     try {
@@ -123,7 +132,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     boxShadow: scrolled ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
     transition: "all 0.3s ease",
     backdropFilter: scrolled ? "blur(12px)" : "none",
-    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",  };  // Navigation items
+    borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
+  };  // Navigation items
   const menuItems: MenuItem[] = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
     { key: "/about", label: "Về chúng tôi", icon: null },
@@ -302,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
           {/* Notifications */}
           <Dropdown
             overlay={notificationMenu}
-            
+
             trigger={["hover"]}
             placement="bottomRight"
           >

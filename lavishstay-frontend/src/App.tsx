@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "./store";
 import ThemeProvider from "./providers/ThemeProvider";
 import QueryProvider from "./providers/QueryProvider";
+import GoogleAuthProviderWrapper from "./providers/GoogleAuthProvider";
 import { SearchProvider } from "./contexts/SearchContext";
 import { RoomTypesProvider } from "./contexts/RoomTypesContext";
 import { createAntdTheme } from "./styles/theme";
@@ -26,7 +27,6 @@ import About from "./pages/About";
 import Payment from "./pages/Payment";
 import AdminPayment from "./pages/AdminPayment";
 import NotFound from "./pages/NotFound";
-import AuthTest from "./pages/AuthTest";
 import SearchResults from "./pages/SearchResults";
 import RoomTypesDetailsPage from "./pages/RoomTypesDetailsPage";
 import BookingConfirmation from "./pages/BookingConfirmation"
@@ -51,6 +51,9 @@ import {
   Settings,
   ChangePassword
 } from "./components/profile";
+
+// Import Google OAuth callback
+import GoogleOAuthCallback from "./components/auth/GoogleOAuthCallback";
 
 // Placeholder for pages not yet created
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
@@ -84,21 +87,23 @@ const App: React.FC = React.memo(() => {
   const ProviderWrapper: React.FC<{ children: React.ReactNode }> = React.useMemo(
     () =>
       ({ children }) => (
-        <ConfigProvider theme={currentTheme}>
-          <ThemeProvider>
-            <QueryProvider>
-              <SearchProvider>
+        <GoogleAuthProviderWrapper>
+          <ConfigProvider theme={currentTheme}>
+            <ThemeProvider>
+              <QueryProvider>
                 <SearchProvider>
-                  <RoomTypesProvider>
-                    <AntApp className={isDarkMode ? "dark" : "light"}>
-                      {children}
-                    </AntApp>
-                  </RoomTypesProvider>
+                  <SearchProvider>
+                    <RoomTypesProvider>
+                      <AntApp className={isDarkMode ? "dark" : "light"}>
+                        {children}
+                      </AntApp>
+                    </RoomTypesProvider>
+                  </SearchProvider>
                 </SearchProvider>
-              </SearchProvider>
-            </QueryProvider>
-          </ThemeProvider>
-        </ConfigProvider>
+              </QueryProvider>
+            </ThemeProvider>
+          </ConfigProvider>
+        </GoogleAuthProviderWrapper>
       ),
     [currentTheme, isDarkMode]
   );
@@ -122,6 +127,9 @@ const App: React.FC = React.memo(() => {
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+
+            {/* Auth Routes */}
+            <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
 
             {/* Profile Routes with nested routing */}
             <Route path="/profile" element={<ProfileLayout />}>
@@ -149,7 +157,6 @@ const App: React.FC = React.memo(() => {
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/admin/payment" element={<AdminPayment />} />
-            <Route path="/auth-test" element={<AuthTest />} />
 
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />

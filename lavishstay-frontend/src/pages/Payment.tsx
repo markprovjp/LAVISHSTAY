@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
     Layout, Typography, Form, Steps, Alert, message, Row, Col
 } from 'antd';
-import { useSelector } from 'react-redux';
-import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms } from "../store/slices/bookingSlice";
+import { useSelector, useDispatch } from 'react-redux';
+import store from '../store';
+import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms, clearBookingData } from "../store/slices/bookingSlice";
 import { selectSearchData } from "../store/slices/searchSlice";
 import { BookingInfoStep, PaymentStep, PaymentSummary, CompletionStep } from '../components/payment';
 import { useBookingManager } from '../hooks/useBookingManager';
@@ -40,6 +41,7 @@ const steps = [
 
 const Payment: React.FC = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [form] = Form.useForm();
     const [currentStep, setCurrentStep] = useState(0);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr'); // Default to VietQR
@@ -63,10 +65,42 @@ const Payment: React.FC = () => {
 
     // Check if we have booking data from navigation or Redux
     useEffect(() => {
+        // Kiểm tra xem có dữ liệu trong Redux không
         if (!hasSelectedRooms || !selectedRoomsSummary || selectedRoomsSummary.length === 0) {
-            message.error('Không có thông tin đặt phòng. Vui lòng quay lại và chọn phòng.');
-            navigate('/search');
-            return;
+            // Thử kiểm tra localStorage để khôi phục dữ liệu
+            try {
+                const persistedData = localStorage.getItem('persist:root');
+                if (persistedData) {
+                    const parsedData = JSON.parse(persistedData);
+                    const bookingData = parsedData.booking ? JSON.parse(parsedData.booking) : null;
+
+                    // Nếu có dữ liệu trong localStorage nhưng Redux chưa được hydrate
+                    if (bookingData?.selectedRoomsSummary?.length > 0) {
+                        console.log('Found persisted booking data, waiting for Redux rehydration...');
+                        // Đợi một chút để Redux persist rehydrate
+                        setTimeout(() => {
+                            // Kiểm tra lại sau khi đợi
+                            const currentState = store.getState();
+                            const currentBookingState = currentState.booking as any;
+                            if (!currentBookingState.selectedRoomsSummary?.length) {
+                                message.error('Dữ liệu đặt phòng đã hết hạn. Vui lòng đặt lại.');
+                                navigate('/search');
+                            }
+                        }, 1000);
+                        return;
+                    }
+                }
+
+                // Nếu không có dữ liệu nào
+                message.error('Không có thông tin đặt phòng. Vui lòng quay lại và chọn phòng.');
+                navigate('/search');
+                return;
+            } catch (error) {
+                console.error('Error checking persisted data:', error);
+                message.error('Không có thông tin đặt phòng. Vui lòng quay lại và chọn phòng.');
+                navigate('/search');
+                return;
+            }
         }
 
         // Start countdown timer
@@ -395,8 +429,16 @@ const Payment: React.FC = () => {
     const API_BASE_URL = 'http://localhost:8888/api';
 
     // Handle navigation functions
-    const handleViewBookings = () => navigate('/bookings');
-    const handleNewBooking = () => navigate('/search');
+    const handleViewBookings = () => {
+        dispatch(clearBookingData()); // Clear booking data after completion
+        navigate('/bookings');
+    };
+
+    const handleNewBooking = () => {
+        dispatch(clearBookingData()); // Clear booking data for new booking
+        navigate('/search');
+    };
+
     const handleBack = () => setCurrentStep(0);
 
     // Render step content
@@ -481,6 +523,22 @@ const Payment: React.FC = () => {
                     {/* Header */}
                     <div className="text-center mb-8">
                         <Title level={2}>Thanh toán đặt phòng</Title>
+
+                        {/* Debug button - Remove in production */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <div className="mb-4">
+                                <button
+                                    onClick={() => {
+                                        dispatch(clearBookingData());
+                                        localStorage.clear();
+                                        message.info('Đã xóa tất cả dữ liệu booking');
+                                    }}
+                                    className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                                >
+                                    [DEV] Clear All Data
+                                </button>
+                            </div>
+                        )}
 
                         {/* Steps */}
                         <Steps

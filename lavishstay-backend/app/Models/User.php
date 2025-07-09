@@ -23,6 +23,8 @@ class User extends Authenticatable
         'current_team_id',
         'profile_photo_path',
         'identity_code',
+        'google_id',
+        'avatar',
     ];
 
     protected $hidden = [

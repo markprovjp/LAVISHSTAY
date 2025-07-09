@@ -358,7 +358,7 @@ const BookingManagement: React.FC = () => {
         if (dateRange && dateRange[0] && dateRange[1]) {
             filtered = filtered.filter(booking => {
                 const bookingDate = dayjs(booking.bookingDate);
-                return bookingDate.isAfter(dateRange[0]) && bookingDate.isBefore(dateRange[1]);
+                return bookingDate.isAfter(dayjs(dateRange[0])) && bookingDate.isBefore(dayjs(dateRange[1]));
             });
         }
 

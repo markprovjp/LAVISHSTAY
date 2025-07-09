@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use App\Mail\BookingConfirmation;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentController extends Controller
 {
@@ -220,6 +222,9 @@ class PaymentController extends Controller
 
         DB::commit();
 
+        // Gửi email xác nhận đặt phòng
+        $this->sendBookingConfirmationEmail($booking->booking_id);
+
         return response()->json([
             'success' => true,
             'message' => 'Đặt phòng thành công!',
@@ -337,6 +342,9 @@ class PaymentController extends Controller
             }
 
             DB::commit();
+
+            // Gửi email xác nhận đặt phòng
+            $this->sendBookingConfirmationEmail($booking->booking_id);
 
             return response()->json([
                 'success' => true,
@@ -837,6 +845,9 @@ class PaymentController extends Controller
 
             DB::commit();
 
+            // Gửi email xác nhận đặt phòng
+            $this->sendBookingConfirmationEmail($booking->booking_id);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Payment verified successfully',
@@ -915,382 +926,96 @@ class PaymentController extends Controller
             ], 500);
         }
     }
-   /**
-     * Admin: Get all bookings with rooms and options for management
+   
+    /**
+     * Gửi email xác nhận đặt phòng
      */
-    public function getAllBookingsWithOptions(Request $request)
+    private function sendBookingConfirmationEmail($bookingId)
     {
         try {
-            $query = DB::table('booking as b')
-                ->leftJoin('booking_rooms as br', 'b.booking_id', '=', 'br.booking_id')
+            Log::info('Starting to send booking confirmation email for booking ID: ' . $bookingId);
+            
+            // Lấy thông tin booking
+            $booking = Booking::find($bookingId);
+            if (!$booking) {
+                Log::error('Booking not found for ID: ' . $bookingId);
+                return false;
+            }
+
+            // Lấy thông tin booking rooms
+            $bookingRooms = DB::table('booking_rooms as br')
                 ->leftJoin('room as r', 'br.room_id', '=', 'r.room_id')
                 ->leftJoin('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->leftJoin('room_option as ro', 'br.option_id', '=', 'ro.option_id')
-                ->leftJoin('payment as p', 'b.booking_id', '=', 'p.booking_id')
-                ->leftJoin('representatives as rep', 'b.booking_id', '=', 'rep.booking_id')
+                ->where('br.booking_id', $bookingId)
                 ->select([
-                    'b.booking_id',
-                    'b.booking_code',
-                    'b.guest_name',
-                    'b.guest_email',
-                    'b.guest_phone',
-                    'b.check_in_date',
-                    'b.check_out_date',
-                    'b.guest_count',
-                    'b.total_price_vnd',
-                    'b.status as booking_status',
-                    'b.created_at',
-                    'br.room_id',
-                    'br.option_id',
-                    'br.option_name',
-                    'br.option_price',
-                    'br.adults',
-                    'br.children',
-                    'br.price_per_night',
-                    'br.nights',
-                    'br.total_price as room_total_price',
+                    'br.*',
                     'r.name as room_name',
-                    'rt.name as room_type_name',
-                    'ro.name as selected_option_name',
-                    'ro.price_per_night_vnd as selected_option_price_per_night',
-                    'ro.cancellation_policy_type',
-                    'ro.payment_policy_type',
-                    'p.amount_vnd as payment_amount',
-                    'p.status as payment_status',
-                    'p.payment_type',
-                    'rep.full_name as representative_name',
-                    'rep.phone_number as representative_phone'
-                ]);
+                    'rt.name as room_type_name'
+                ])
+                ->get();
 
-            // Filters
-            if ($request->has('status') && $request->status !== '') {
-                $query->where('b.status', $request->status);
+            // Lấy thông tin representative (người đại diện)
+            $representative = DB::table('representatives')
+                ->where('booking_id', $bookingId)
+                ->first();
+
+            if (!$representative) {
+                Log::warning('No representative found for booking ID: ' . $bookingId . ', using booking guest info');
             }
 
-            if ($request->has('payment_status') && $request->payment_status !== '') {
-                $query->where('p.status', $request->payment_status);
+            // Địa chỉ email nhận
+            $recipientEmail = $representative ? $representative->email : $booking->guest_email;
+            
+            if (!$recipientEmail) {
+                Log::error('No email address found for booking ID: ' . $bookingId);
+                return false;
             }
 
-            if ($request->has('date_from') && $request->date_from !== '') {
-                $query->whereDate('b.created_at', '>=', $request->date_from);
-            }
+            Log::info('Sending booking confirmation email to: ' . $recipientEmail);
 
-            if ($request->has('date_to') && $request->date_to !== '') {
-                $query->whereDate('b.created_at', '<=', $request->date_to);
-            }
+            // Gửi email
+            Mail::to($recipientEmail)->send(new BookingConfirmation($booking, $bookingRooms, $representative));
 
-            if ($request->has('search') && $request->search !== '') {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('b.booking_code', 'like', "%{$search}%")
-                      ->orWhere('b.guest_name', 'like', "%{$search}%")
-                      ->orWhere('b.guest_email', 'like', "%{$search}%")
-                      ->orWhere('b.guest_phone', 'like', "%{$search}%");
-                });
-            }
-
-            $bookings = $query->orderBy('b.created_at', 'desc')
-                            ->paginate($request->get('per_page', 20));
-
-            // Group by booking_id để tránh trùng lặp
-            $groupedBookings = $bookings->getCollection()->groupBy('booking_id')->map(function ($rooms, $bookingId) {
-                $firstRoom = $rooms->first();
-                return [
-                    'booking_id' => $bookingId,
-                    'booking_code' => $firstRoom->booking_code,
-                    'guest_name' => $firstRoom->guest_name,
-                    'guest_email' => $firstRoom->guest_email,
-                    'guest_phone' => $firstRoom->guest_phone,
-                    'check_in_date' => $firstRoom->check_in_date,
-                    'check_out_date' => $firstRoom->check_out_date,
-                    'guest_count' => $firstRoom->guest_count,
-                    'total_price_vnd' => $firstRoom->total_price_vnd,
-                    'booking_status' => $firstRoom->booking_status,
-                    'payment_amount' => $firstRoom->payment_amount,
-                    'payment_status' => $firstRoom->payment_status,
-                    'payment_type' => $firstRoom->payment_type,
-                    'representative_name' => $firstRoom->representative_name,
-                    'representative_phone' => $firstRoom->representative_phone,
-                    'created_at' => $firstRoom->created_at,
-                    'rooms' => $rooms->map(function ($room) {
-                        return [
-                            'room_id' => $room->room_id,
-                            'room_name' => $room->room_name,
-                            'room_type_name' => $room->room_type_name,
-                            'option_id' => $room->option_id,
-                            'option_name' => $room->option_name ?? $room->selected_option_name,
-                            'option_price' => $room->option_price ?? $room->selected_option_price_per_night,
-                            'adults' => $room->adults,
-                            'children' => $room->children,
-                            'price_per_night' => $room->price_per_night,
-                            'nights' => $room->nights,
-                            'total_price' => $room->room_total_price,
-                            'cancellation_policy_type' => $room->cancellation_policy_type,
-                            'payment_policy_type' => $room->payment_policy_type,
-                        ];
-                    })
-                ];
-            })->values();
-
-            $bookings->setCollection($groupedBookings);
-
-            return response()->json([
-                'success' => true,
-                'data' => $bookings
-            ]);
+            Log::info('Booking confirmation email sent successfully for booking ID: ' . $bookingId);
+            return true;
 
         } catch (\Exception $e) {
-            Log::error('Error getting all bookings with options: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error getting bookings'
-            ], 500);
+            Log::error('Error sending booking confirmation email for booking ID ' . $bookingId . ': ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return false;
         }
     }
 
     /**
-     * Extract price from various formats (number, object with vnd, etc.)
+     * Test email functionality - Route: /api/test-email/{bookingId}
      */
-    private function extractPrice($price)
-    {
-        if (is_numeric($price)) {
-            return $price;
-        }
-        
-        if (is_array($price) && isset($price['vnd'])) {
-            return $price['vnd'];
-        }
-        
-        if (is_object($price) && isset($price->vnd)) {
-            return $price->vnd;
-        }
-        
-        // Try to get numerical value from string
-        if (is_string($price)) {
-            $numericPrice = preg_replace('/[^0-9.]/', '', $price);
-            return is_numeric($numericPrice) ? (float)$numericPrice : 0;
-        }
-        
-        return 0;
-    }
-
-    /**
-     * Process children ages from various formats
-     */
-    private function processChildrenAge($childrenAge)
-    {
-        if (empty($childrenAge)) {
-            return null;
-        }
-        
-        if (is_string($childrenAge)) {
-            return $childrenAge; // Already JSON string
-        }
-        
-        if (is_array($childrenAge)) {
-            // Extract ages from array of objects or simple array
-            $ages = [];
-            foreach ($childrenAge as $child) {
-                if (is_array($child) && isset($child['age'])) {
-                    $ages[] = $child['age'];
-                } elseif (is_object($child) && isset($child->age)) {
-                    $ages[] = $child->age;
-                } elseif (is_numeric($child)) {
-                    $ages[] = $child;
-                }
-            }
-            return json_encode($ages);
-        }
-        
-        return json_encode([]);
-    }
-
-    /**
-     * Check CPay payment status via Google Sheets
-     */
-    public function checkCPayPayment(Request $request)
+    public function testEmail($bookingId)
     {
         try {
-            $request->validate([
-                'booking_code' => 'required|string',
-                'amount' => 'required|numeric'
-            ]);
-
-            $bookingCode = $request->booking_code;
-            $expectedAmount = $request->amount;
-
-            Log::info("🔍 Checking CPay payment for booking", [
-                'booking_code' => $bookingCode,
-                'expected_amount' => $expectedAmount
-            ]);
-
-            // Find booking
-            $booking = Booking::where('booking_code', $bookingCode)->first();
-
-            if (!$booking) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Booking not found'
-                ], 404);
-            }
-
-            // Multiple CPay URLs for redundancy
-            $cpayUrls = [
-                'https://script.google.com/macros/s/AKfycbx4F-yvXHfFifvP4JkunVHRiTwgL9cZNg7yE6CgcXZs3hmAjVtr6-1qKIa7ZEk52d00/exec',
-                // Backup URL can be added here if needed
-            ];
+            Log::info('Testing email for booking ID: ' . $bookingId);
             
-            $paymentFound = false;
-            $transactionData = null;
-            $lastError = null;
-
-            foreach ($cpayUrls as $index => $cpayUrl) {
-                try {
-                    Log::info("🌐 Trying CPay URL #" . ($index + 1), ['url' => $cpayUrl]);
-
-                    // Try GET with query parameters first (more common for Google Apps Script)
-                    $response = Http::timeout(15) // Increase timeout for Google Apps Script
-                        ->withoutVerifying() // Skip SSL verification for Google Apps Script
-                        ->retry(2, 100) // Retry 2 times with 100ms delay
-                        ->withHeaders([
-                            'User-Agent' => 'LavishStay-Payment-Checker/1.0',
-                            'Accept' => 'application/json, text/plain, */*',
-                            'Cache-Control' => 'no-cache'
-                        ])
-                        ->get($cpayUrl, [
-                            'action' => 'checkPayment',
-                            'booking_code' => $bookingCode,
-                            'amount' => $expectedAmount,
-                            'timestamp' => time()
-                        ]);
-
-                    Log::info("📨 CPay API Response", [
-                        'status' => $response->status(),
-                        'headers' => $response->headers(),
-                        'body_preview' => substr($response->body(), 0, 200)
-                    ]);
-
-                    if ($response->successful()) {
-                        $data = $response->json();
-                        
-                        if (isset($data['status']) && $data['status'] === 'success') {
-                            // Check if payment transaction exists in the data
-                            $transactions = $data['data'] ?? [];
-                            
-                            foreach ($transactions as $transaction) {
-                                // Look for matching booking code in transaction content
-                                $content = strtolower($transaction['content'] ?? '');
-                                
-                                // Multiple search patterns to be flexible
-                                $searchPatterns = [
-                                    strtolower("trace{$bookingCode}"),
-                                    strtolower($bookingCode),
-                                    strtolower("dat phong {$bookingCode}"),
-                                    strtolower("thanh toan dat phong {$bookingCode}")
-                                ];
-                                
-                                // Also check for amount match (allow small variance)
-                                $transactionAmount = floatval($transaction['amount'] ?? 0);
-                                $amountMatch = abs($transactionAmount - $expectedAmount) <= 1000; // 1000 VND tolerance
-                                
-                                $patternMatch = false;
-                                foreach ($searchPatterns as $pattern) {
-                                    if (strpos($content, $pattern) !== false) {
-                                        $patternMatch = true;
-                                        break;
-                                    }
-                                }
-                                
-                                if ($patternMatch && $amountMatch) {
-                                    $paymentFound = true;
-                                    $transactionData = $transaction;
-                                    break 2; // Break both loops
-                                }
-                            }
-                        }
-                        
-                        // If no payment found, continue to next URL
-                        break;
-                    } else {
-                        $lastError = "HTTP {$response->status()}: " . $response->body();
-                    }
-                    
-                } catch (\Exception $httpError) {
-                    $lastError = $httpError->getMessage();
-                    Log::warning("⚠️ CPay URL failed", [
-                        'url' => $cpayUrl,
-                        'error' => $lastError
-                    ]);
-                    continue; // Try next URL
-                }
-            }
-
-            if ($paymentFound && $transactionData) {
-                // Payment found, update booking status
-                DB::beginTransaction();
-                
-                try {
-                    $booking->update([
-                        'status' => 'confirmed',
-                        'updated_at' => now()
-                    ]);
-
-                    // Update payment status
-                    $payment = Payment::where('booking_id', $booking->booking_id)->first();
-                    if ($payment) {
-                        $payment->update([
-                            'status' => 'completed',
-                            'transaction_id' => $transactionData['reference_code'] ?? 'CPAY_' . time(),
-                            'updated_at' => now()
-                        ]);
-                    }
-
-                    DB::commit();
-
-                    Log::info("✅ CPay payment verified successfully", [
-                        'booking_code' => $bookingCode,
-                        'transaction' => $transactionData
-                    ]);
-
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Payment verified successfully',
-                        'transaction' => $transactionData,
-                        'booking_code' => $bookingCode
-                    ]);
-                } catch (\Exception $dbError) {
-                    DB::rollBack();
-                    throw $dbError;
-                }
-            } else {
-                Log::info("❌ CPay payment not found", [
-                    'booking_code' => $bookingCode,
-                    'expected_amount' => $expectedAmount,
-                    'last_error' => $lastError
+            $result = $this->sendBookingConfirmationEmail($bookingId);
+            
+            if ($result) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email test thành công! Email đã được gửi.',
+                    'booking_id' => $bookingId
                 ]);
-                
+            } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Payment not found or not completed yet',
-                    'payment_found' => false,
-                    'debug_info' => [
-                        'searched_pattern' => "trace{$bookingCode}",
-                        'expected_amount' => $expectedAmount,
-                        'last_error' => $lastError
-                    ]
-                ]);
+                    'message' => 'Email test thất bại. Vui lòng kiểm tra log để biết chi tiết.',
+                    'booking_id' => $bookingId
+                ], 500);
             }
 
         } catch (\Exception $e) {
-            Log::error('💥 Error checking CPay payment: ' . $e->getMessage(), [
-                'booking_code' => $request->booking_code ?? 'unknown',
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            Log::error('Error in email test: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error checking payment status',
-                'error' => $e->getMessage()
+                'message' => 'Lỗi trong quá trình test email: ' . $e->getMessage(),
+                'booking_id' => $bookingId
             ], 500);
         }
     }
