@@ -41,6 +41,7 @@ use App\Http\Controllers\RoomTypeServiceController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NewsController\NewsController;
+use App\Http\Controllers\NewsController\MediaController;
 
 Route::redirect('/', 'login');
 

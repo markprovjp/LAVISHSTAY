@@ -141,6 +141,9 @@ Route::prefix('payment')->group(function () {
     
     // CPay payment check route
     Route::post('/check-cpay', [PaymentController::class, 'checkCPayPayment']);
+    
+    // Debug route for CPay (development only)
+    Route::get('/debug-cpay', [PaymentController::class, 'debugCPayAPI']);
 });
 
 // Pricing API Routes - Enhanced

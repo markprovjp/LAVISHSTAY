@@ -1,4 +1,7 @@
 <?php
+
+namespace App\Http\Controllers\NewsController;
+
 use App\Models\News\MediaFile;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
 // Types for search data
@@ -82,7 +81,7 @@ const initialState: SearchState = {
 };
 
 // Helper function to safely parse dates from localStorage
-const parseStoredDateRange = (storedDateRange: any): [Dayjs, Dayjs] | null => {
+const parseStoredDateRange = (storedDateRange: any): [string, string] | null => {
     try {
         if (storedDateRange && Array.isArray(storedDateRange) && storedDateRange.length === 2) {
             const [startDate, endDate] = storedDateRange;
@@ -91,7 +90,7 @@ const parseStoredDateRange = (storedDateRange: any): [Dayjs, Dayjs] | null => {
 
             // Validate dates
             if (start.isValid() && end.isValid() && start.isBefore(end)) {
-                return [start, end];
+                return [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')];
             }
         }
     } catch (error) {

@@ -48,6 +48,7 @@ const Payment: React.FC = () => {
     const [countdown, setCountdown] = useState(900); // 15 minutes
     const [backendBookingCode, setBackendBookingCode] = useState<string | null>(null);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
+    const [customerInfo, setCustomerInfo] = useState<any>(null); // Store customer info separately
 
     // Redux state
     const bookingState = useSelector(selectBookingState);
@@ -193,6 +194,14 @@ const Payment: React.FC = () => {
             navigate('/search');
             return;
         }
+
+        // Store customer info in state for use in CompletionStep
+        setCustomerInfo({
+            fullName: values.fullName,
+            email: values.email,
+            phone: values.phone,
+            specialRequests: values.specialRequests
+        });
 
         setPaymentProcessing(true);
         try {
@@ -504,7 +513,7 @@ const Payment: React.FC = () => {
                         selectedPaymentMethod={selectedPaymentMethod}
                         onViewBookings={handleViewBookings}
                         onNewBooking={handleNewBooking}
-                        customerInfo={form.getFieldsValue()}
+                        customerInfo={customerInfo || form.getFieldsValue()}
                         selectedRoomsSummary={selectedRoomsSummary}
                         searchData={searchData}
                         totals={totals}
