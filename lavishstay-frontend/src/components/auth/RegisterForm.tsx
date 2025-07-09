@@ -1,30 +1,60 @@
 import React from "react";
-import { Form, Input, Button, Divider } from "antd";
+import { Form, Input, Button, Divider, message } from "antd";
 import { FcGoogle } from "react-icons/fc";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../store";
+import { registerStart, registerSuccess, registerFailure } from "../../store/slices/authSlice";
+import authService, { RegisterData } from "../../services/authService";
 
 interface RegisterFormProps {
   onSwitchToLogin?: () => void;
+  onRegisterSuccess?: () => void; // Callback khi đăng ký thành công
   formItemStyle?: React.CSSProperties;
   inputSize?: "large" | "middle" | "small";
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({
   onSwitchToLogin,
+  onRegisterSuccess,
   formItemStyle,
   inputSize = "middle",
 }) => {
+  const dispatch = useDispatch();
+  const { isLoading } = useSelector((state: RootState) => state.auth);
   const isDarkMode = useSelector((state: RootState) => state.theme?.isDarkMode);
 
-  const onFinish = (values: any) => {
-    // Xử lý đăng ký ở đây
-    console.log("Register values:", values);
+  const onFinish = async (values: RegisterData) => {
+    try {
+      dispatch(registerStart());
+
+      const response = await authService.register(values);
+
+      dispatch(registerSuccess({
+        user: response.user,
+        token: response.token
+      }));
+
+      message.success(`Chào mừng ${response.user.name}! Đăng ký thành công.`);
+
+      // Gọi callback nếu có
+      if (onRegisterSuccess) {
+        onRegisterSuccess();
+      }
+
+    } catch (error: any) {
+      console.error("Register error:", error);
+
+      const errorMessage = error?.message || "Đăng ký thất bại. Vui lòng thử lại!";
+
+      dispatch(registerFailure(errorMessage));
+      message.error(errorMessage);
+    }
   };
 
   const handleGoogleRegister = () => {
     // Xử lý đăng ký bằng Google ở đây
     console.log("Register with Google");
+    message.info("Tính năng đăng ký với Google đang được phát triển.");
   };
 
   return (
@@ -115,8 +145,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
       </Form.Item>
 
       <Form.Item style={formItemStyle} className="pt-4">
-        <Button type="primary" htmlType="submit" block size={inputSize}>
-          Đăng ký
+        <Button
+          type="primary"
+          htmlType="submit"
+          block
+          size={inputSize}
+          loading={isLoading}
+          disabled={isLoading}
+        >
+          {isLoading ? "Đang đăng ký..." : "Đăng ký"}
         </Button>
       </Form.Item>
 

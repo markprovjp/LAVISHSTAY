@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Modal } from "antd";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
-import LoginInfo from "./LoginInfo";
 
 interface AuthModalProps {
     open: boolean;
@@ -41,7 +40,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
                 {activeKey === "login" ? "Đăng nhập" : "Đăng ký"}
             </h2>
             <div style={{ maxWidth: 480, margin: "0 auto" }}>
-                {activeKey === "login" && <LoginInfo />}
                 {activeKey === "login" ? (
                     <LoginForm
                         onSwitchToRegister={() => setActiveKey("register")}
@@ -53,6 +51,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose }) => {
                 ) : (
                     <RegisterForm
                         onSwitchToLogin={() => setActiveKey("login")}
+                        onRegisterSuccess={onClose} // Đóng modal khi đăng ký thành công
                         formItemStyle={{ marginBottom: 10 }}
                         inputSize="middle"
                     />

@@ -1,10 +1,10 @@
 import React from "react";
 import { Form, Input, Button, Divider, message } from "antd";
-import { FcGoogle } from "react-icons/fc";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../store";
 import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice";
 import authService, { LoginCredentials } from "../../services/authService";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 interface LoginFormProps {
     onSwitchToRegister?: () => void;
@@ -53,11 +53,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
             dispatch(loginFailure(errorMessage));
             message.error(errorMessage);
         }
-    };
-
-    const handleGoogleLogin = () => {
-        // Xử lý đăng nhập bằng Google ở đây
-        console.log("Login with Google");
     };
 
     return (
@@ -128,24 +123,16 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </Divider>
 
             <Form.Item style={formItemStyle}>
-                <Button
-                    icon={<FcGoogle size={22} />}
-                    block
+                <GoogleLoginButton
+                    onSuccess={onLoginSuccess}
                     size={inputSize}
+                    block
                     style={{
                         background: isDarkMode ? "#23272f" : "#fff",
                         color: isDarkMode ? "#fff" : "#222",
                         border: isDarkMode ? "1px solid #444" : "1px solid #d9d9d9",
-                        fontWeight: 500,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
                     }}
-                    onClick={handleGoogleLogin}
-                >
-                    Đăng nhập với Google
-                </Button>
+                />
             </Form.Item>
 
             <div style={{ textAlign: "center", marginTop: 8 }}>

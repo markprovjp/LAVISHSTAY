@@ -24,7 +24,7 @@ export interface GuestDetails {
 
 export interface SearchData {
     location?: string;
-    dateRange: [Dayjs, Dayjs] | null;
+    dateRange: [string, string] | null; // Changed to string for serialization
     checkIn?: string;
     checkOut?: string;
     guests: number;
@@ -128,14 +128,7 @@ const saveStateToStorage = (state: SearchState) => {
     try {
         const dataToSave = {
             ...state,
-            // Convert dateRange to ISO strings for storage
-            dateRange: state.dateRange ? [
-                state.dateRange[0].format('YYYY-MM-DD'),
-                state.dateRange[1].format('YYYY-MM-DD'),
-            ] : null,
-            // Add checkIn and checkOut as string values
-            checkIn: state.checkIn,
-            checkOut: state.checkOut,
+            // dateRange is already string array, no conversion needed
             // Don't save loading and error states
             isLoading: undefined,
             error: undefined,
@@ -174,10 +167,10 @@ const searchSlice = createSlice({
             // Save to localStorage
             saveStateToStorage(state);
         }, setDateRange: (state, action: PayloadAction<[string, string] | null>) => {
-            // Convert strings to Dayjs objects for internal state
+            // Store as string array for serialization
             if (action.payload) {
                 const [startStr, endStr] = action.payload;
-                state.dateRange = [dayjs(startStr), dayjs(endStr)];
+                state.dateRange = [startStr, endStr];
                 state.checkIn = startStr;
                 state.checkOut = endStr;
             } else {
@@ -317,7 +310,7 @@ const searchSlice = createSlice({
             const tomorrow = dayjs().add(1, 'day');
             const dayAfter = tomorrow.add(1, 'day');
 
-            state.dateRange = [tomorrow, dayAfter];
+            state.dateRange = [tomorrow.format('YYYY-MM-DD'), dayAfter.format('YYYY-MM-DD')];
             state.checkIn = tomorrow.format('YYYY-MM-DD');
             state.checkOut = dayAfter.format('YYYY-MM-DD');
             state.guestDetails = {

@@ -4,7 +4,7 @@
 
 
 import React, { useCallback, useMemo } from "react";
-import { Card, Typography, Button, Tag } from "antd";
+import { Card, Typography, Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRightOutlined,
@@ -12,18 +12,32 @@ import {
   EyeOutlined,
   HomeOutlined,
   CrownOutlined,
-  FireOutlined,
   ThunderboltOutlined,
   CheckCircleOutlined,
   TeamOutlined,
-  DesktopOutlined, // For TV
-  UserOutlined, // For Bathrobe
 } from "@ant-design/icons";
-import { Palette, Footprints } from 'lucide-react'; // For Palette and Slippers
-import { theme } from "antd";
-import { getIcon } from "../../constants/Icons";
 
 const { Title } = Typography;
+
+interface RoomTypeProps {
+  id: number;
+  name: string;
+  images?: Array<{ image_url: string; is_main?: boolean }>;
+  main_image?: { image_url: string };
+  room_area?: number;
+  view?: string;
+  adjusted_price: string;
+  amenities?: any[];
+  highlighted_amenities?: any[];
+  mainAmenities?: any[];
+  roomType?: string;
+  rating?: number;
+  style?: React.CSSProperties;
+  max_guests: number;
+  className?: string;
+  base_price?: string;
+  room_code?: string;
+}
 
 
 
@@ -34,23 +48,15 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
   main_image,
   room_area,
   view,
-adjusted_price,
-
-  amenities,
+  adjusted_price,
   highlighted_amenities,
   mainAmenities,
-  roomType = "deluxe",
   rating,
   style = {},
   max_guests,
   className = "",
- 
-
-  base_price,
-
   room_code,
 }) => {
-  const { token } = theme.useToken();
   const navigate = useNavigate();
 
   const displayImage = useMemo(() => {
@@ -102,114 +108,27 @@ adjusted_price,
   }, [room_code]);
 
   const themeColors = useMemo(() => {
-    // Màu sắc đơn giản, sang trọng và tinh tế
-    const baseColors = {
-      primary: "#2D3748", // Dark gray
-      secondary: "#F7FAFC",
-      accent: "#CBD5E0",
-      text: "#2D3748",
-      border: "#E2E8F0",
-      light: "#EDF2F7"
+    // Thiết kế minimalist, chỉ dùng màu tinh tế
+    return {
+      primary: "#1f2937", // Charcoal gray
+      secondary: "#6b7280", // Medium gray
+      accent: "#d1d5db", // Light gray
+      text: "#111827", // Almost black
+      border: "#e5e7eb", // Very light gray
+      light: "#f9fafb" // Off white
     };
-
-    switch (actualRoomType) {
-      case "deluxe":
-        return {
-          primary: "#4A5568", // Sophisticated gray
-          secondary: "#F7FAFC",
-          accent: "#A0AEC0",
-          text: "#2D3748",
-          border: "#E2E8F0",
-          light: "#EDF2F7"
-        };
-      case "premium":
-        return {
-          primary: "#2F855A", // Elegant green
-          secondary: "#F0FFF4",
-          accent: "#9AE6B4",
-          text: "#2F855A",
-          border: "#C6F6D5",
-          light: "#F0FFF4"
-        };
-      case "suite":
-        return {
-          primary: "#C53030", // Refined red
-          secondary: "#FFF5F5",
-          accent: "#FEB2B2",
-          text: "#C53030",
-          border: "#FED7D7",
-          light: "#FFF5F5"
-        };
-      case "presidential":
-        return {
-          primary: "#B7791F", // Luxurious gold
-          secondary: "#FFFAF0",
-          accent: "#F6E05E",
-          text: "#B7791F",
-          border: "#FAD5A5",
-          light: "#FFFAF0"
-        };
-      case "theLevel":
-        return {
-          primary: "#2C5282", // Premium blue
-          secondary: "#EBF8FF",
-          accent: "#90CDF4",
-          text: "#2C5282",
-          border: "#BEE3F8",
-          light: "#EBF8FF"
-        };
-      default:
-        return baseColors;
-    }
-  }, [actualRoomType, token.colorTextBase]);
+  }, []);
 
   const cardStyle = useMemo(() => {
-    const baseStyle = { ...style };
-    switch (actualRoomType) {
-      case "deluxe":
-        return {
-          ...baseStyle,
-          border: "1px solid #E2E8F0",
-          background: "#FFFFFF",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
-        };
-      case "premium":
-        return {
-          ...baseStyle,
-          border: "1px solid #C6F6D5",
-          background: "#FFFFFF",
-          boxShadow: "0 1px 3px rgba(47, 133, 90, 0.1), 0 1px 2px rgba(47, 133, 90, 0.06)",
-        };
-      case "suite":
-        return {
-          ...baseStyle,
-          border: "1px solid #FED7D7",
-          background: "#FFFFFF",
-          boxShadow: "0 1px 3px rgba(197, 48, 48, 0.1), 0 1px 2px rgba(197, 48, 48, 0.06)",
-        };
-      case "presidential":
-        return {
-          ...baseStyle,
-          border: "1px solid #FAD5A5",
-          background: "#FFFFFF",
-          boxShadow: "0 1px 3px rgba(183, 121, 31, 0.1), 0 1px 2px rgba(183, 121, 31, 0.06)",
-        };
-      case "theLevel":
-        return {
-          ...baseStyle,
-          border: "1px solid #BEE3F8",
-          background: "#FFFFFF",
-          boxShadow: "0 1px 3px rgba(44, 82, 130, 0.1), 0 1px 2px rgba(44, 82, 130, 0.06)",
-        };
-      default:
-        return {
-          ...baseStyle,
-          border: "1px solid #E2E8F0",
-          background: "#FFFFFF",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
-        };
-    }
-  }, [actualRoomType, style]);
+    return {
+      ...style,
+      border: "1px solid #f3f4f6",
+      background: "#ffffff",
+      borderRadius: "12px",
+      boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+      transition: "all 0.3s ease",
+    };
+  }, [style]);
 
 
 
@@ -231,11 +150,11 @@ adjusted_price,
     }
   }, [actualRoomType]);
 
-  
+
 
   return (
     <Card
-      className={`room-type-card overflow-hidden transition-all duration-300 hover:shadow-xl  ${className}`}
+      className={`room-type-card overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${className}`}
       style={cardStyle}
       bordered={false}
       bodyStyle={{
@@ -245,143 +164,134 @@ adjusted_price,
         flexDirection: "column",
       }}
     >
-      <div className="relative overflow-hidden h-36 group">
+      {/* Image Section */}
+      <div className="relative overflow-hidden h-48 group">
         {displayImage && !imageError ? (
           <>
             <img
               src={displayImage}
               alt={name}
               onError={handleImageError}
-              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
             />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </>
         ) : (
-          <div
-            className="w-full h-full flex items-center justify-center text-white relative"
-            style={{ backgroundColor: themeColors.primary }}
-          >
-            <HomeOutlined className="text-3xl opacity-70" />
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <HomeOutlined className="text-4xl text-gray-400" />
           </div>
         )}
 
-        <div className="absolute top-2 left-2">
-          <Tag
-            className="px-2 py-1 rounded-full font-medium border-0 text-xs"
-            style={{
-              backgroundColor: themeColors.primary,
-              color: 'white',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
-            }}
-          >
-            <CrownOutlined className="mr-1" style={{ fontSize: '12px' }} />
-            {roomTypeDisplayName}
-          </Tag>
+        {/* Room Type Badge */}
+        <div className="absolute top-3 left-3">
+          <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+            <div className="flex items-center gap-1.5">
+              <CrownOutlined className="text-gray-700 text-xs" />
+              <span className="text-xs font-medium text-gray-700">{roomTypeDisplayName}</span>
+            </div>
+          </div>
         </div>
+
+        {/* Rating Badge */}
+        {rating && rating > 0 && (
+          <div className="absolute top-3 right-3">
+            <div className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-lg">
+              <div className="flex items-center gap-1">
+                <StarFilled className="text-yellow-500 text-xs" />
+                <span className="text-xs font-semibold text-gray-700">{rating}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="mb-3">
+      {/* Content Section */}
+      <div className="p-6 flex-1 flex flex-col">
+        {/* Title */}
+        <div className="mb-4">
           <Title
             level={4}
-            className="mb-2 font-bold text-gray-800 leading-tight"
-            style={{ color: themeColors.text, margin: 0 }}
+            className="mb-0 font-semibold leading-tight"
+            style={{
+              color: themeColors.text,
+              fontSize: '1.125rem',
+              lineHeight: '1.4',
+              margin: 0
+            }}
           >
             {name}
           </Title>
         </div>
 
-        <div className="space-y-1 mb-3">
-          {/* Compact info row */}
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center gap-3">
-              {room_area && (
-                <div className="flex items-center gap-1">
-                  <HomeOutlined style={{ color: themeColors.primary, fontSize: '14px' }} />
-                  <span>{room_area}m²</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1">
-                <TeamOutlined style={{ color: themeColors.primary, fontSize: '14px' }} />
-                <span>{max_guests} khách</span>
-              </div>
-              {view && (
-                <div className="flex items-center gap-1">
-                  <EyeOutlined style={{ color: themeColors.primary, fontSize: '14px' }} />
-                  <span className="truncate">{view}</span>
-                </div>
-              )}
+        {/* Room Details */}
+        <div className="flex items-center gap-6 mb-4 text-sm text-gray-600">
+          {room_area && (
+            <div className="flex items-center gap-1.5">
+              <HomeOutlined className="text-gray-400" />
+              <span className="font-medium">{room_area}m²</span>
             </div>
-            {rating && rating > 0 && (
-              <div className="flex items-center gap-1">
-                <StarFilled style={{ color: '#FFD700', fontSize: '14px' }} />
-                <span className="text-yellow-600 font-medium">{rating}</span>
-              </div>
-            )}
+          )}
+          <div className="flex items-center gap-1.5">
+            <TeamOutlined className="text-gray-400" />
+            <span className="font-medium">{max_guests} khách</span>
           </div>
+          {view && (
+            <div className="flex items-center gap-1.5">
+              <EyeOutlined className="text-gray-400" />
+              <span className="font-medium truncate">{view}</span>
+            </div>
+          )}
         </div>
 
-        {/* Tiện nghi nổi bật - Compact version */}
+        {/* Amenities */}
         {((highlighted_amenities && highlighted_amenities.length > 0) || (mainAmenities && mainAmenities.length > 0)) && (
-          <div className="mb-3">
-            <div className="flex items-center gap-2 mb-2">
-              <ThunderboltOutlined style={{ color: themeColors.primary, fontSize: '12px' }} />
-              <span className="text-xs font-medium text-gray-600">Tiện nghi nổi bật</span>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <ThunderboltOutlined className="text-gray-500 text-sm" />
+              <span className="text-sm font-medium text-gray-700">Tiện nghi nổi bật</span>
             </div>
-            <div className="flex flex-wrap gap-1">
-              {/* Ưu tiên highlighted_amenities từ API, fallback về mainAmenities */}
+            <div className="grid grid-cols-2 gap-2">
               {(highlighted_amenities && highlighted_amenities.length > 0
-                ? highlighted_amenities.slice(0, 8)
-                : (mainAmenities || []).slice(0, 8)
-              ).map((amenity, index) => (
-                <Tag
+                ? highlighted_amenities.slice(0, 6)
+                : (mainAmenities || []).slice(0, 6)
+              ).map((amenity: any, index: number) => (
+                <div
                   key={typeof amenity === 'string' ? index : amenity.id}
-                  className="text-sx px-0 py-0 rounded-full border-0 mb-1 flex items-center"
-                  style={{
-                    backgroundColor: themeColors.secondary,
-                    color: themeColors.text,
-                    fontSize: '8px'
-                  }}
+                  className="flex items-center gap-2 text-xs text-gray-600"
                 >
-                  {typeof amenity === 'string' ? amenity : (
-                    <span className="flex items-center">
-                      {getIcon(amenity.icon, amenity.icon_lib) && <span className="mr-1" style={{ fontSize: '10px' }}>{getIcon(amenity.icon, amenity.icon_lib)}</span>}
-                      <span className="truncate ">{amenity.name}</span>
-                    </span>
-                  )}
-                </Tag>
+                  <CheckCircleOutlined className="text-green-500 text-xs flex-shrink-0" />
+                  <span className="truncate">
+                    {typeof amenity === 'string' ? amenity : amenity.name}
+                  </span>
+                </div>
               ))}
-
             </div>
           </div>
         )}
 
+        {/* Pricing & CTA */}
         <div className="mt-auto">
-          {/* Compact pricing */}
-          <div className="text-center p-2 rounded-lg mb-3"
-            style={{
-              backgroundColor: themeColors.secondary,
-              border: `1px solid ${themeColors.border}`
-            }}>
-            <div className="text-xl font-bold" style={{ color: themeColors.primary }}>
-              {adjusted_price}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-2xl font-bold text-gray-900">
+                {adjusted_price}
+              </div>
+              <div className="text-sm text-gray-500">mỗi đêm</div>
             </div>
-            <div className="text-sm text-gray-500">mỗi đêm</div>
           </div>
 
-          {/* Compact button */}
           <Button
             type="primary"
             icon={<ArrowRightOutlined />}
             onClick={handleViewDetails}
-            size="middle"
-            className="w-full transition-all duration-300 font-medium"
+            size="large"
+            className="w-full font-medium"
             style={{
-              borderRadius: "6px",
               backgroundColor: themeColors.primary,
-              border: 'none',
-              height: "40px",
+              borderColor: themeColors.primary,
+              borderRadius: "8px",
+              height: "44px",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
             }}
           >
             Xem chi tiết
