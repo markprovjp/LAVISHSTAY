@@ -230,7 +230,7 @@
                                 <td class="px-6 py-4">
                                     <div class="font-medium text-gray-900 dark:text-gray-100 {{ $request->status === 'rejected' ? 'text-white' : '' }}">
                                         @if ($request->booking && $request->booking->check_out_date instanceof Carbon\Carbon)
-                                            {{ $request->booking->check_out_date->format('d/m/Y H:i') }}
+                                            {{ $request->booking->check_out_date->setTime(12, 0)->format('d/m/Y H:i') }}
                                         @else
                                             N/A
                                         @endif

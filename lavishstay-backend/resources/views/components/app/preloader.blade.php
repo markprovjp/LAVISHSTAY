@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 200 + Math.random() * 300); // Random interval between 200-500ms
     
     // Minimum loading time (adjust based on your needs)
-    const minLoadTime = 800;
+    const minLoadTime = 100;
     setTimeout(() => {
         if (progress < 100) {
             // Force completion if taking too long

@@ -134,9 +134,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/edit/{roomTypeId}', [RoomTypeController::class, 'edit'])->name('admin.room-types.edit');
     Route::put('/admin/room-types/update/{roomTypeId}', [RoomTypeController::class, 'update'])->name('admin.room-types.update');
     Route::post('/admin/room-types/destroy/{roomTypeId}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy');
-    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');        
-
-    
+    Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
+    Route::post('/admin/room-types/{roomType}/packages', [RoomTypeController::class, 'storePackage'])->name('admin.room-types.packages.store');
+    Route::get('/admin/room-types/packages/{package}/edit', [RoomTypeController::class, 'editPackage'])->name('admin.room-types.packages.edit');
+    Route::put('/admin/room-types/packages/{package}', [RoomTypeController::class, 'updatePackage'])->name('admin.room-types.packages.update');
+    Route::delete('/admin/room-types/{roomType}/packages/{package}', [RoomTypeController::class, 'destroyPackage'])->name('admin.room-types.packages.destroy');
+    Route::get('/admin/room-types/{roomType}/manage-packages-services', [RoomTypeController::class, 'managePackagesServices'])->name('admin.room-types.manage-packages-services'); 
+    Route::get('/admin/room-types/packages/{package}/services', [RoomTypeController::class, 'getPackageServices'])->name('admin.room-types.packages.services');
+    Route::post('/admin/room-types/packages/{package}/services', [RoomTypeController::class, 'storePackageServices'])->name('admin.room-types.packages.services.store');
+    Route::delete('/admin/room-types/packages/{package}/services/{service}', [RoomTypeController::class, 'destroyPackageService'])->name('admin.room-types.packages.services.destroy');   
+    Route::get('/admin/room-types/{roomType}/packages/{package}/manage-services', [RoomTypeController::class, 'managePackageServices'])->name('admin.room-types.packages.manage-services');
+    Route::post('/admin/room-types/packages/{package}/toggle-status', [RoomTypeController::class, 'togglePackageStatus'])->name('admin.room-types.packages.toggle-status');    
 
     // Room //////////////////////////////////////////
     Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');

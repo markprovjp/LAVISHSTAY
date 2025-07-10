@@ -474,9 +474,9 @@ class RoomController extends Controller
             \Log::info('Update method called', ['room_id' => $room->room_id, 'request' => $request->all()]);
 
             $rules = [
-                'name' => ['required', 'string', 'max:100', 'unique:room,name,' . $room->room_id], // Sửa từ 'rooms' thành 'room'
+                'name' => ['required', 'string', 'max:100', 'unique:room,name,' . $room->room_id. ',room_id'], // Sửa từ 'rooms' thành 'room'
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'floor_id' => 'required|exists:floors,floor_id',
+                'floor_id' => 'required|exists:floors,floor_id',        
                 'bed_type_fixed' => 'required|exists:bed_types,id',
                 'status' => 'required|in:available,occupied,maintenance,cleaning',
                 'description' => 'nullable|string',

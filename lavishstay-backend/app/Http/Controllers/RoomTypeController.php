@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Amenity;
+use App\Models\Amenity; 
 use App\Models\RoomType;
 use App\Models\RoomTypeAmenity;
 use App\Models\RoomTypeImage;
+use App\Models\RoomTypePackage;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+
 
 use function Psy\debug;
 
@@ -321,4 +325,136 @@ class RoomTypeController extends Controller
             ], 404);
         }
     }
+
+    public function storePackage(Request $request, $roomTypeId){
+        \Log::info('Dữ liệu nhận được trong storePackage:', $request->all());
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price_modifier_vnd' => 'required|numeric|min:0',
+            'include_all_services' => 'required|boolean',
+            'description' => 'nullable|string',
+            'is_active' => 'required|boolean',
+        ]);
+
+        $roomType = RoomType::findOrFail($roomTypeId);
+        $package = $roomType->packages()->create([
+            'name' => $request->name,
+            'price_modifier_vnd' => $request->price_modifier_vnd,
+            'include_all_services' => $request->include_all_services === '1',
+            'description' => $request->description,
+            'is_active' => $request->is_active === '1',
+            'created_by' => Auth::id(),
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Gói dịch vụ đã được tạo thành công.']);
+    }
+
+    public function editPackage($packageId){
+        $package = RoomTypePackage::findOrFail($packageId);
+        return response()->json([
+            'package_id' => $package->package_id,
+            'name' => $package->name,
+            'price_modifier_vnd' => $package->price_modifier_vnd,
+            'include_all_services' => $package->include_all_services,
+            'description' => $package->description,
+            'is_active' => $package->is_active,
+        ]);
+    }
+
+    public function updatePackage(Request $request, $packageId){
+        \Log::info('Dữ liệu nhận được trong updatePackage:', $request->all());
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price_modifier_vnd' => 'required|numeric|min:0',
+            'include_all_services' => 'required|boolean',
+            'description' => 'nullable|string',
+            'is_active' => 'required|boolean',
+        ]);
+
+        $package = RoomTypePackage::findOrFail($packageId);
+        $updated = $package->update([
+            'name' => $request->name,
+            'price_modifier_vnd' => $request->price_modifier_vnd,
+            'include_all_services' => $request->include_all_services === '1',
+            'description' => $request->description,
+            'is_active' => $request->is_active === '1',
+        ]);
+
+        return response()->json(['success' => $updated, 'message' => $updated ? 'Cập nhật thành công' : 'Cập nhật thất bại']);
+    }
+
+   public function managePackageServices($roomTypeId, $packageId)
+    {
+        $roomType = RoomType::with(['packages.services' => function ($query) use ($packageId) {
+            $query->where('room_type_package_services.package_id', $packageId);
+        }])->findOrFail($roomTypeId);
+
+        $package = $roomType->packages()->findOrFail($packageId);
+
+        // Lấy danh sách dịch vụ chưa được liên kết với gói này
+        $availableServices = Service::whereDoesntHave('packages', function ($query) use ($packageId) {
+            $query->where('room_type_package_services.package_id', $packageId);
+        })->get()->groupBy('unit');
+
+        // Lấy danh sách dịch vụ hiện tại của gói
+        $currentServices = $package->services;
+
+        return view('admin.room-types.manage-package-services', [
+            'roomType' => $roomType,
+            'package' => $package,
+            'availableServices' => $availableServices,
+            'currentServices' => $currentServices,
+        ]);
+    }
+
+    public function togglePackageServiceStatus(Request $request, $packageId, $serviceId)
+    {
+        return response()->json(['success' => false, 'message' => 'Tính năng này không được hỗ trợ.'], 400);
+    }
+
+    public function storePackageServices(Request $request, $packageId)
+    {
+        $request->validate(['service_ids' => 'required|array', 'service_ids.*' => 'exists:services,service_id']);
+        $package = RoomTypePackage::findOrFail($packageId);
+
+        // Sử dụng select để chỉ định rõ cột service_id từ bảng services
+        $existingServiceIds = $package->services()->select('services.service_id')->pluck('service_id')->toArray();
+        $newServiceIds = array_diff($request->service_ids, $existingServiceIds);
+
+        if (empty($newServiceIds)) {
+            return response()->json(['success' => false, 'message' => 'Tất cả dịch vụ đã được thêm trước đó.'], 400);
+        }
+
+        $package->services()->attach($newServiceIds);
+        return response()->json(['success' => true, 'message' => 'Dịch vụ đã được thêm.']);
+    }
+
+    public function destroyPackageService($packageId, $serviceId)
+    {
+        $package = RoomTypePackage::findOrFail($packageId);
+        $package->services()->detach($serviceId);
+        return response()->json(['success' => true, 'message' => 'Dịch vụ đã được xóa.']);
+    }
+
+    private function allServicesAdded(RoomTypePackage $package, $availableServices)
+    {
+        $packageServiceIds = $package->services()->pluck('service_id')->toArray();
+        $availableServiceIds = $availableServices->pluck('service_id')->toArray();
+        return empty(array_diff($availableServiceIds, $packageServiceIds));
+    }
+
+    public function togglePackageStatus($packageId)
+    {
+        $package = RoomTypePackage::findOrFail($packageId);
+        $package->is_active = !$package->is_active;
+        $package->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã cập nhật trạng thái gói dịch vụ!'
+        ]);
+    }
+    
 }
