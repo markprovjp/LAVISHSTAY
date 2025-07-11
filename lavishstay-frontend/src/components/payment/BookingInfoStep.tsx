@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react';
-import { Card, Form, Input, Row, Col, Button, Checkbox, Typography } from 'antd';
+import { Card, Form, Input, Row, Col, Button, Checkbox, Typography, Divider, Collapse } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { selectSelectedRoomsSummary } from '../../store/slices/bookingSlice';
+import { Phone } from 'lucide-react';
 
 const { TextArea } = Input;
 const { Title } = Typography;
+const { Panel } = Collapse;
 
 interface BookingInfoStepProps {
     form: any;
@@ -21,6 +24,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     disabled = false,
 }) => {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+    const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
 
     // Auto-fill form with user data if logged in
     useEffect(() => {
@@ -29,6 +33,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                 fullName: user.name,
                 email: user.email,
                 phone: user.phone || '',
+                
             });
         }
     }, [isAuthenticated, user, form]);
@@ -72,6 +77,50 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                         </Form.Item>
                     </Col>
                 </Row>
+
+                {/* Per-room guest information for multi-room bookings */}
+                {selectedRoomsSummary.length > 1 && (
+                    <>
+                        <Divider orientation="left">Thông tin cho từng phòng</Divider>
+                        <Collapse defaultActiveKey={['0']} className="mb-4">
+                            {selectedRoomsSummary.map((roomSummary, index) => (
+                                <Panel
+                                    header={`Phòng ${index + 1}: ${roomSummary.room.name} - ${roomSummary.option.name}`}
+                                    key={index.toString()}
+                                >
+                                    <Title level={5} className="mt-2">Thông tin khách cho phòng {index + 1}</Title>
+                                    <p className="text-sm mb-3">Để trống nếu giống với thông tin người đại diện</p>
+
+                                    <Form.Item
+                                        name={`room_${index}_guest_name`}
+                                        label="Họ và tên"
+                                    >
+                                        <Input placeholder="Nhập tên khách ở phòng này (nếu khác với người đại diện)" />
+                                    </Form.Item>
+
+                                    <Row gutter={16}>
+                                        <Col span={12}>
+                                            <Form.Item
+                                                name={`room_${index}_guest_email`}
+                                                label="Email"
+                                            >
+                                                <Input placeholder="Email của khách" />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={12}>
+                                            <Form.Item
+                                                name={`room_${index}_guest_phone`}
+                                                label="Số điện thoại"
+                                            >
+                                                <Input placeholder="Số điện thoại của khách" />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                </Panel>
+                            ))}
+                        </Collapse>
+                    </>
+                )}
 
                 <Form.Item name="specialRequests" label="Yêu cầu đặc biệt (tùy chọn)">
                     <TextArea rows={3} placeholder="Ví dụ: phòng không hút thuốc, tầng cao..." />

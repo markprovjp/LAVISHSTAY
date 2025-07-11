@@ -64,14 +64,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const { token } = theme.useToken(); // Lấy token từ theme
   const { t } = useTranslation();
 
-  // Debug user data
-  console.log('🔍 Header Debug - Redux Auth State:', { isAuthenticated, user });
-  console.log('🖼️ User Avatar URL:', user?.avatar);
-  console.log('👤 User Data:', JSON.stringify(user, null, 2));
 
-  // Debug localStorage
-  console.log('💾 LocalStorage authUser:', localStorage.getItem('authUser'));
-  console.log('🔑 LocalStorage authToken:', localStorage.getItem('authToken'));
 
   // Xử lý đăng xuất
   const handleLogout = async () => {

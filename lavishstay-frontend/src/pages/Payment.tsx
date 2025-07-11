@@ -5,7 +5,7 @@ import {
 } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import store from '../store';
-import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms, clearBookingData } from "../store/slices/bookingSlice";
+import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms, clearBookingData, setTotals } from "../store/slices/bookingSlice";
 import { selectSearchData } from "../store/slices/searchSlice";
 import { BookingInfoStep, PaymentStep, PaymentSummary, CompletionStep } from '../components/payment';
 import { useBookingManager } from '../hooks/useBookingManager';
@@ -205,24 +205,81 @@ const Payment: React.FC = () => {
 
         setPaymentProcessing(true);
         try {
-            // Prepare the data for the backend - sử dụng 1 người đại diện cho tất cả phòng
-            const roomsPayload = selectedRoomsSummary.map((roomSummary, index) => {
-                const guestInfoForThisRoom = searchData.rooms?.[index] || { adults: 1, children: 0, childrenAges: [] };
 
-                return {
-                    room_id: roomSummary.room.id,
-                    room_price: roomSummary.pricePerNight,
-                    guest_name: values.fullName, // Sử dụng tên người đại diện cho tất cả phòng
-                    adults: guestInfoForThisRoom.adults,
-                    children: guestInfoForThisRoom.children,
-                    children_age: guestInfoForThisRoom.childrenAges || [], // Lấy tuổi trẻ em từ searchData
-                    option_id: roomSummary.optionId,
-                    option_name: roomSummary.option.name,
-                    option_price: typeof roomSummary.option.pricePerNight === 'object'
-                        ? roomSummary.option.pricePerNight.vnd
-                        : roomSummary.option.pricePerNight, // Xử lý option_price dạng object
-                };
-            });
+
+            // PROBLEM: selectedRoomsSummary có thể chỉ có 1 phòng được chọn nhiều lần
+            // nhưng searchData.rooms có 4 phòng khác nhau với thông tin guest khác nhau
+
+            // Solution: Tạo roomsPayload từ searchData.rooms để đảm bảo có đủ 4 phòng
+            const roomsPayload = [];
+
+            if (searchData.rooms && searchData.rooms.length > 0 && selectedRoomsSummary.length > 0) {
+                // Sử dụng searchData.rooms làm nguồn chính cho số lượng phòng và guest info
+                for (let i = 0; i < searchData.rooms.length; i++) {
+                    const guestInfoForThisRoom = searchData.rooms[i];
+
+                    // Lấy thông tin phòng từ selectedRoomsSummary (có thể là cùng 1 loại phòng)
+                    const roomSummary = selectedRoomsSummary[0]; // Sử dụng phòng đầu tiên được chọn
+
+                    console.log(`🔍 Debug - Room ${i}:`, {
+                        roomSummary: roomSummary,
+                        guestInfoForThisRoom: guestInfoForThisRoom
+                    });
+
+                    // Check if we have individual guest names for this room (from form values)
+                    const roomGuestName = values[`room_${i}_guest_name`] || values.fullName;
+                    const roomGuestEmail = values[`room_${i}_guest_email`] || values.email;
+                    const roomGuestPhone = values[`room_${i}_guest_phone`] || values.phone;
+
+                    // Use the exact price values from the selected room summary
+                    const roomPrice = roomSummary.totalPrice; // Total price for the entire stay
+                    const optionPricePerNight = roomSummary.pricePerNight; // Price per night
+
+                    const roomPayload = {
+                        room_id: roomSummary.room.id,
+                        room_price: roomPrice, // Total price for the entire stay
+                        guest_name: roomGuestName,
+                        guest_email: roomGuestEmail,
+                        guest_phone: roomGuestPhone,
+                        adults: guestInfoForThisRoom.adults,
+                        children: guestInfoForThisRoom.children,
+                        children_age: guestInfoForThisRoom.childrenAges || [], // Get children ages from searchData
+                        option_id: roomSummary.optionId,
+                        option_name: roomSummary.option.name,
+                        option_price: optionPricePerNight, // Price per night for option
+                    };
+
+                    console.log(`🔍 Debug - Room ${i} payload:`, roomPayload);
+
+                    roomsPayload.push(roomPayload);
+                }
+            } else {
+                // Fallback: sử dụng selectedRoomsSummary như cũ nếu không có searchData.rooms
+                roomsPayload.push(...selectedRoomsSummary.map((roomSummary, index) => {
+                    const guestInfoForThisRoom = { adults: 1, children: 0, childrenAges: [] };
+
+                    const roomGuestName = values[`room_${index}_guest_name`] || values.fullName;
+                    const roomGuestEmail = values[`room_${index}_guest_email`] || values.email;
+                    const roomGuestPhone = values[`room_${index}_guest_phone`] || values.phone;
+
+                    const roomPrice = roomSummary.totalPrice;
+                    const optionPricePerNight = roomSummary.pricePerNight;
+
+                    return {
+                        room_id: roomSummary.room.id,
+                        room_price: roomPrice,
+                        guest_name: roomGuestName,
+                        guest_email: roomGuestEmail,
+                        guest_phone: roomGuestPhone,
+                        adults: guestInfoForThisRoom.adults,
+                        children: guestInfoForThisRoom.children,
+                        children_age: guestInfoForThisRoom.childrenAges || [],
+                        option_id: roomSummary.optionId,
+                        option_name: roomSummary.option.name,
+                        option_price: optionPricePerNight,
+                    };
+                }));
+            }
 
             const totalGuests = roomsPayload.reduce((acc, room) => acc + room.adults + room.children, 0);
 
@@ -409,30 +466,59 @@ const Payment: React.FC = () => {
         return bookingState.totals?.nights || 1;
     }, [searchData.checkIn, searchData.checkOut, bookingState.totals?.nights]);
 
-    // Use totals calculated from selected rooms
+    // Use totals from Redux store (already calculated with correct prices)
     const totals = React.useMemo(() => {
-        if (selectedRoomsSummary && selectedRoomsSummary.length > 0) {
-            const roomsTotal = selectedRoomsSummary.reduce((sum, room) => sum + room.totalPrice, 0);
-            return {
-                roomsTotal,
-                breakfastTotal: 0,
-                serviceFee: 0,
-                taxAmount: 0,
-                discountAmount: 0,
-                finalTotal: roomsTotal,
-                nights: nights
-            };
+        // Always use the totals from Redux store as it has the correct calculated prices
+        const storeTotals = bookingState.totals || {
+            roomsTotal: 0,
+            breakfastTotal: 0,
+            serviceFee: 0,
+            taxAmount: 0,
+            discountAmount: 0,
+            finalTotal: 0,
+            nights: 1
+        };
+
+        // If we have selected rooms, verify the totals are correct
+        if (selectedRoomsSummary.length > 0) {
+            // Calculate total directly from selected rooms to ensure consistency
+            const calculatedRoomsTotal = selectedRoomsSummary.reduce(
+                (sum, room) => sum + room.totalPrice,
+                0
+            );
+
+            // Calculate final total
+            const calculatedTotal = calculatedRoomsTotal +
+                (storeTotals.breakfastTotal || 0) +
+                (storeTotals.serviceFee || 0) +
+                (storeTotals.taxAmount || 0) -
+                (storeTotals.discountAmount || 0);
+
+            // If the calculated total is different from the stored total,
+            // update the store to ensure consistency
+            if (Math.abs(calculatedTotal - storeTotals.finalTotal) > 1) {
+                const updatedTotals = {
+                    ...storeTotals,
+                    roomsTotal: calculatedRoomsTotal,
+                    finalTotal: calculatedTotal,
+                    nights: nights
+                };
+
+                // Update Redux store with accurate totals
+                dispatch(setTotals(updatedTotals));
+
+                return updatedTotals;
+            }
         }
-        return {
-            roomsTotal: bookingState.totals?.roomsTotal || 0,
-            breakfastTotal: bookingState.totals?.breakfastTotal || 0,
-            serviceFee: bookingState.totals?.serviceFee || 0,
-            taxAmount: bookingState.totals?.taxAmount || 0,
-            discountAmount: bookingState.totals?.discountAmount || 0,
-            finalTotal: bookingState.totals?.finalTotal || 0,
+
+        // Update nights if different
+        const updatedTotals = {
+            ...storeTotals,
             nights: nights
         };
-    }, [selectedRoomsSummary, bookingState.totals, nights]);
+
+        return updatedTotals;
+    }, [bookingState.totals, nights, selectedRoomsSummary, dispatch]);
 
     // API Base URL
     const API_BASE_URL = 'http://localhost:8888/api';
