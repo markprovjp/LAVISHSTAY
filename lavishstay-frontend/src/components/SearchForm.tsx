@@ -308,7 +308,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                         icon={<PlusOutlined />}
                         size="small"
                         onClick={() => handleRoomGuestChange(roomIndex, 'adults', 'increase')}
-                        disabled={room.adults + room.children >= 6}
+                        disabled={room.adults >= 2}
                         className="w-6 h-6"
                       />
                     </div>
@@ -329,7 +329,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                         icon={<PlusOutlined />}
                         size="small"
                         onClick={() => handleRoomGuestChange(roomIndex, 'children', 'increase')}
-                        disabled={room.adults + room.children >= 6}
+                        disabled={room.children >= 4}
                         className="w-6 h-6"
                       />
                     </div>
@@ -364,14 +364,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                     </div>
                   )}
 
-                  {/* Room limit warning - compact */}
-                  {room.adults + room.children >= 6 && (
-                    <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
-                      <Text className="text-xs text-orange-700">
-                        Đã đạt tối đa 6 khách/phòng
-                      </Text>
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             ))}
