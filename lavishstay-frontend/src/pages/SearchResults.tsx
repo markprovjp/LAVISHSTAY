@@ -37,7 +37,7 @@ import {
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { initializeBookingSelection, setRoomsData, recalculateTotals } from '../store/slices/bookingSlice';
+import { initializeBookingSelection, setRoomsData, setTotals } from '../store/slices/bookingSlice';
 import { selectSearchResults, selectHasSearched, selectIsLoading } from '../store/slices/searchSlice';
 import { searchService } from '../services/searchService';
 import SearchForm from '../components/SearchForm';
@@ -136,14 +136,12 @@ const SearchResults: React.FC = () => {
             ...prev,
             [roomId]: packageId
         }));
-    };
-
-    // Handle booking with rooms_needed from API
+    };    // Handle booking with rooms_needed from API
     const handleBookRoom = (room: any, packageOption: any) => {
-        console.log('📋 Initializing booking with:', { room, packageOption });
 
-        // Get the number of rooms from the search data
-        const roomsNeeded = searchData.rooms?.length || 1;
+
+        // Khi người dùng chọn một gói phòng, họ chỉ đặt 1 phòng, không phải nhiều phòng
+        const roomsNeeded = 1;
 
         // Calculate nights
         const checkIn = searchData.checkIn || searchData.dateRange?.[0];
@@ -160,22 +158,31 @@ const SearchResults: React.FC = () => {
             }
         }
 
-        // Dispatch the new action to properly initialize the selection
+        // Lấy trực tiếp totalPrice từ packageOption - đây là giá hiển thị cho người dùng
+        // Đã được tính toán đúng và hiển thị trên UI
+        const totalPrice = packageOption.totalPrice || 0;
+        const pricePerNight = packageOption.pricePerNight?.vnd || packageOption.pricePerNight || 0;
+
+        // Dispatch đơn giản để chuẩn bị cho trang thanh toán
         dispatch(initializeBookingSelection({
             room: room,
             option: packageOption,
-            quantity: roomsNeeded, // Use the count from search data
+            quantity: roomsNeeded
         }));
 
-        // Also ensure the full rooms data is in the store for the summary selector
-        dispatch(setRoomsData(roomData));
+        // Set giá trị tổng cộng chính xác
+        const correctTotals = {
+            roomsTotal: totalPrice,
+            breakfastTotal: 0,
+            serviceFee: 0,
+            taxAmount: 0,
+            discountAmount: 0,
+            finalTotal: totalPrice,
+            nights: nights
+        };
 
-        // Recalculate totals with the new nights and guest count
-        const totalGuests = searchData.rooms?.reduce((sum, room) => sum + room.adults + room.children, 0) || 2;
-        dispatch(recalculateTotals({
-            nights: nights,
-            guestCount: totalGuests
-        }));
+        // Đặt tổng giá trị vào store
+        dispatch(setTotals(correctTotals));
 
         // Navigate to payment page
         navigate('/payment');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\BookingRoom;
+use App\Models\BookingRoomChildren;
 use App\Models\Payment;
 use App\Models\Room;
 use Carbon\Carbon;
@@ -33,6 +34,8 @@ class PaymentController extends Controller
    public function createBooking(Request $request)
 {
     Log::info('Create Booking Request Received:', $request->all());
+    Log::info('Rooms data received:', ['rooms' => $request->input('rooms', [])]);
+    Log::info('Total guests from request:', ['total_guests' => $request->input('total_guests')]);
 
     $validator = Validator::make($request->all(), [
         'customer_name' => 'required|string|max:255',
@@ -43,6 +46,10 @@ class PaymentController extends Controller
         'total_guests' => 'required|integer|min:1',
         'total_price' => 'required|numeric|min:0',
         'payment_method' => 'required|string|in:vietqr,pay_at_hotel',
+        'rooms' => 'required|array|min:1', // Add validation for rooms array
+        'rooms.*.room_id' => 'required|integer',
+        'rooms.*.adults' => 'required|integer|min:1',
+        'rooms.*.children' => 'integer|min:0',
     ]);
 
     if ($validator->fails()) {
@@ -113,9 +120,8 @@ class PaymentController extends Controller
             'notes' => $request->input('notes', ''),
             'user_id' => null,
             'room_id' => null,
-            'adults' => array_sum(array_column($request->input('rooms'), 'adults')),
-            'children' => array_sum(array_column($request->input('rooms'), 'children')),
-            'children_age' => json_encode(array_column($request->input('rooms'), 'children_age') ?? []),
+            'adults' => $request->input('total_adults', 1), // Default to 1 if not provided
+            'children' => $request->input('total_children', 0), // Default to 0 if not provided
         ]);
 
         // Generate booking code after creation
@@ -125,18 +131,39 @@ class PaymentController extends Controller
 
         // 4. Create booking_rooms records for each room
         $rooms = $request->input('rooms', []);
-        $representativeId = null; // Will store the representative ID after creating representative
+        
+        Log::info('Processing rooms for booking:', [
+            'booking_id' => $booking->booking_id,
+            'booking_code' => $bookingCode,
+            'total_rooms_to_process' => count($rooms),
+            'rooms_data' => $rooms
+        ]);
+        
+        // Create the main representative record for the booking
+        $mainRepresentativeId = DB::table('representatives')->insertGetId([
+            'booking_id' => $booking->booking_id,
+            'booking_code' => $bookingCode,
+            'room_id' => $request->input('rooms')[0]['room_id'],
+            'full_name' => $request->input('customer_name'),
+            'phone_number' => $request->input('customer_phone'),
+            'email' => $request->input('customer_email'),
+            'id_card' => $request->input('customer_id_card', ''),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         
         foreach ($rooms as $roomIndex => $roomData) {
+            Log::info("Processing room {$roomIndex}:", $roomData);
+            
             $room = Room::find($roomData['room_id']);
             if (!$room) {
                 throw new \Exception("Invalid room ID provided: " . $roomData['room_id']);
             }
 
-            // Tạo option_id duy nhất cho booking này
+            // Create a unique option_id for this booking
             $optionId = 'BOOK-' . $bookingCode . '-R' . $roomData['room_id'] . '-' . ($roomIndex + 1);
 
-            // Tạo room_option mới cho booking này
+            // Create a new room_option for this booking
             DB::table('room_option')->insert([
                 'option_id' => $optionId,
                 'room_id' => $roomData['room_id'],
@@ -164,18 +191,38 @@ class PaymentController extends Controller
                 'adjusted_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price']),
             ]);
 
-            // Create booking room record với option_id mới tạo
+            // Create guest record for this specific room if different from main guest
+            $representativeId = $mainRepresentativeId;
+            
+            // Check if there's specific guest information for this room
+            if (isset($roomData['guest_name']) && !empty($roomData['guest_name']) && 
+                $roomData['guest_name'] !== $request->input('customer_name')) {
+                // Create a separate representative for this room
+                $representativeId = DB::table('representatives')->insertGetId([
+                    'booking_id' => $booking->booking_id,
+                    'booking_code' => $bookingCode,
+                    'room_id' => $roomData['room_id'],
+                    'full_name' => $roomData['guest_name'],
+                    'phone_number' => $roomData['guest_phone'] ?? $request->input('customer_phone'),
+                    'email' => $roomData['guest_email'] ?? $request->input('customer_email'),
+                    'id_card' => $roomData['guest_id_card'] ?? '',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Create booking room record with the new option_id
             $bookingRoomId = DB::table('booking_rooms')->insertGetId([
                 'booking_id' => $booking->booking_id,
                 'booking_code' => $bookingCode,
                 'room_id' => $roomData['room_id'],
-                'option_id' => $optionId, // Sử dụng option_id vừa tạo
+                'option_id' => $optionId, // Use the created option_id
                 'option_name' => $roomData['option_name'] ?? 'Custom Package',
                 'option_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price']),
-                'representative_id' => null, // Sẽ update sau khi tạo representative
+                'representative_id' => $representativeId, // Link to the appropriate representative
                 'adults' => $roomData['adults'] ?? 1,
                 'children' => $roomData['children'] ?? 0,
-                'children_age' => $this->processChildrenAge($roomData['children_age'] ?? []),
+                'children_age' => null, // Không lưu JSON nữa, dùng bảng riêng
                 'price_per_night' => $roomData['room_price'],
                 'nights' => $nights,
                 'total_price' => $roomData['room_price'] * $nights,
@@ -184,31 +231,34 @@ class PaymentController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
-            Log::info('Created room_option and booking_room', [
-                'option_id' => $optionId,
+            
+            // Lưu thông tin children vào bảng booking_room_children
+            if (isset($roomData['children_age']) && is_array($roomData['children_age']) && !empty($roomData['children_age'])) {
+                foreach ($roomData['children_age'] as $childIndex => $childData) {
+                    // Từ frontend có thể là [{age: 3, id: "room_2_child_1"}, ...]
+                    $age = is_array($childData) ? ($childData['age'] ?? 0) : (int)$childData;
+                    
+                    BookingRoomChildren::create([
+                        'booking_room_id' => $bookingRoomId,
+                        'age' => $age,
+                        'child_index' => $childIndex,
+                    ]);
+                    
+                    Log::info("Created child record for booking_room {$bookingRoomId}:", [
+                        'child_index' => $childIndex,
+                        'age' => $age,
+                    ]);
+                }
+            }
+            
+            Log::info("Created booking_room {$roomIndex}:", [
                 'booking_room_id' => $bookingRoomId,
-                'booking_id' => $booking->booking_id,
                 'room_id' => $roomData['room_id'],
-                'option_name' => $roomData['option_name'] ?? 'Custom Package',
                 'adults' => $roomData['adults'] ?? 1,
                 'children' => $roomData['children'] ?? 0,
-                'price' => $roomData['room_price']
-            ]);
-        }
-
-        // 5. Create representative record
-        if ($request->has('customer_name')) {
-            DB::table('representatives')->insert([
-                'booking_id' => $booking->booking_id,
-                'booking_code' => $bookingCode,
-                'room_id' => $request->input('rooms')[0]['room_id'],
-                'full_name' => $request->input('customer_name'),
-                'phone_number' => $request->input('customer_phone'),
-                'email' => $request->input('customer_email'),
-                'id_card' => $request->input('customer_id_card', ''),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'children_age' => $roomData['children_age'] ?? [],
+                'representative_id' => $representativeId,
+                'total_price' => $roomData['room_price'] * $nights
             ]);
         }
 
@@ -222,7 +272,7 @@ class PaymentController extends Controller
 
         DB::commit();
 
-        // Gửi email xác nhận đặt phòng
+        // Send booking confirmation email
         $this->sendBookingConfirmationEmail($booking->booking_id);
 
         return response()->json([
@@ -1025,10 +1075,26 @@ class PaymentController extends Controller
      */
     private function extractPrice($price)
     {
+        if (empty($price)) {
+            return 0;
+        }
+        
         if (is_array($price) || is_object($price)) {
             // Handle price object/array format like { vnd: 1000000 }
             $priceArray = (array) $price;
-            return $priceArray['vnd'] ?? $priceArray['value'] ?? 0;
+            if (isset($priceArray['vnd'])) {
+                return (float) $priceArray['vnd'];
+            } elseif (isset($priceArray['value'])) {
+                return (float) $priceArray['value'];
+            } else {
+                // Try to get the first numeric value from the array/object
+                foreach ($priceArray as $value) {
+                    if (is_numeric($value)) {
+                        return (float) $value;
+                    }
+                }
+                return 0;
+            }
         }
         
         return (float) $price;
@@ -1039,15 +1105,36 @@ class PaymentController extends Controller
      */
     private function processChildrenAge($childrenAges)
     {
+        if (empty($childrenAges)) {
+            return json_encode([]);
+        }
+        
         if (is_array($childrenAges)) {
+            // If it's already an array, encode it
             return json_encode($childrenAges);
         }
         
         if (is_string($childrenAges)) {
-            // Already JSON encoded
-            return $childrenAges;
+            // Check if it's already a JSON string
+            $decoded = json_decode($childrenAges, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                // It's valid JSON, return as is
+                return $childrenAges;
+            }
+            
+            // Try to parse it as a comma-separated list
+            $ages = explode(',', $childrenAges);
+            if (count($ages) > 0) {
+                // Trim each age and convert to number if possible
+                $processedAges = array_map(function($age) {
+                    $trimmed = trim($age);
+                    return is_numeric($trimmed) ? (int)$trimmed : $trimmed;
+                }, $ages);
+                return json_encode($processedAges);
+            }
         }
         
+        // If we couldn't process it, return an empty array
         return json_encode([]);
     }
 

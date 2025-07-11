@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\PricingService;
+use App\Models\BookingRoomChildren;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -689,137 +690,165 @@ class ReceptionController extends Controller
             ], 500);
         }
     }
+
+
+
+
+
+
+
     /**
      * Get all bookings with filters for booking management
      */
     public function getBookings(Request $request): JsonResponse
     {
         try {
-            $query = DB::table('booking')
-                ->leftJoin('booking_rooms', 'booking.booking_id', '=', 'booking_rooms.booking_id')
-                ->leftJoin('room', 'booking_rooms.room_id', '=', 'room.room_id')
-                ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
-                ->leftJoin('representatives', 'booking_rooms.representative_id', '=', 'representatives.id')
+            // Comprehensive booking query with all related data
+            $query = DB::table('booking as b')
+                ->leftJoin('payment as p', 'b.booking_id', '=', 'p.booking_id')
+                ->leftJoin('booking_rooms as br', 'b.booking_id', '=', 'br.booking_id')
+                ->leftJoin('room as r', 'br.room_id', '=', 'r.room_id')
+                ->leftJoin('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                ->leftJoin('representatives as rep', 'b.booking_id', '=', 'rep.booking_id')
                 ->select([
-                    'booking.booking_id',
-                    'booking.booking_code',
-                    'booking.user_id',
-                    'booking.option_id',
-                    'booking.check_in_date',
-                    'booking.check_out_date',
-                    'booking.total_price_vnd',
-                    'booking.guest_count',
-                    'booking.adults',
-                    'booking.children',
-                    'booking.children_age',
-                    'booking.status',
-                    'booking.quantity',
-                    'booking.created_at',
-                    'booking.updated_at',
-                    'booking.guest_name',
-                    'booking.guest_email',
-                    'booking.guest_phone',
-                    'booking_rooms.room_id',
-                    'room.name as room_name',
-                    'room.floor_id as room_floor',
-                    'room_types.name as room_type_name',
-                    'room_types.base_price as room_type_price',
-                    'room_types.max_guests as room_type_max_guests',
-                    'representatives.full_name as representative_name'
+                    // Main booking info
+                    'b.booking_id',
+                    'b.booking_code',
+                    'b.guest_name',
+                    'b.guest_email', 
+                    'b.guest_phone',
+                    'b.check_in_date',
+                    'b.check_out_date',
+                    'b.total_price_vnd',
+                    'b.guest_count',
+                    'b.adults',
+                    'b.children',
+                    'b.children_age',
+                    'b.status as booking_status',
+                    'b.notes',
+                    'b.created_at',
+                    'b.updated_at',
+                    
+                    // Payment info
+                    'p.amount_vnd as payment_amount',
+                    'p.payment_type',
+                    'p.status as payment_status',
+                    'p.transaction_id',
+                    
+                    // Count total rooms for this booking
+                    DB::raw('COUNT(DISTINCT br.id) as total_rooms'),
+                    
+                    // Aggregate room info (for display)
+                    DB::raw('GROUP_CONCAT(DISTINCT r.name ORDER BY r.name SEPARATOR ", ") as room_names'),
+                    DB::raw('GROUP_CONCAT(DISTINCT rt.name ORDER BY rt.name SEPARATOR ", ") as room_type_names'),
+                    DB::raw('SUM(br.adults) as total_adults_from_rooms'),
+                    DB::raw('SUM(br.children) as total_children_from_rooms'),
+                    
+                    // Representative info
+                    'rep.full_name as representative_name',
+                    'rep.phone_number as representative_phone',
+                    'rep.email as representative_email'
+                ])
+                ->groupBy([
+                    'b.booking_id', 'b.booking_code', 'b.guest_name', 'b.guest_email', 'b.guest_phone',
+                    'b.check_in_date', 'b.check_out_date', 'b.total_price_vnd', 'b.guest_count',
+                    'b.adults', 'b.children', 'b.children_age', 'b.status', 'b.notes',
+                    'b.created_at', 'b.updated_at', 'p.amount_vnd', 'p.payment_type',
+                    'p.status', 'p.transaction_id', 'rep.full_name', 'rep.phone_number', 'rep.email'
                 ]);
 
             // Apply filters
             if ($request->has('guest_name') && !empty($request->guest_name)) {
-                $query->where('booking.guest_name', 'LIKE', '%' . $request->guest_name . '%');
+                $query->where('b.guest_name', 'LIKE', '%' . $request->guest_name . '%');
             }
 
             if ($request->has('booking_code') && !empty($request->booking_code)) {
-                $query->where('booking.booking_code', 'LIKE', '%' . $request->booking_code . '%');
+                $query->where('b.booking_code', 'LIKE', '%' . $request->booking_code . '%');
             }
 
-            // Lưu ý: Bảng booking không có trường payment_status theo schema
-            // Cần thêm bảng payment để lấy thông tin thanh toán
             if ($request->has('payment_status') && !empty($request->payment_status)) {
-                $query->leftJoin('payment', 'booking.booking_id', '=', 'payment.booking_id')
-                    ->where('payment.status', $request->payment_status);
+                $query->where('p.status', $request->payment_status);
             }
 
             if ($request->has('booking_status') && !empty($request->booking_status)) {
-                $query->where('booking.status', $request->booking_status);
+                $query->where('b.status', $request->booking_status);
             }
 
             if ($request->has('date_range') && is_array($request->date_range) && count($request->date_range) == 2) {
-                $query->whereBetween('booking.check_in_date', $request->date_range);
+                $query->whereBetween('b.check_in_date', $request->date_range);
             }
 
             if ($request->has('room_number') && !empty($request->room_number)) {
-                $query->where('room.name', 'LIKE', '%' . $request->room_number . '%');
+                $query->where('r.name', 'LIKE', '%' . $request->room_number . '%');
             }
 
             // Order by creation date (newest first)
-            $query->orderBy('booking.created_at', 'desc');
+            $query->orderBy('b.created_at', 'desc');
 
             $bookings = $query->paginate($request->get('per_page', 20));
 
-            // Transform data to return actual schema fields
+            // Transform data for frontend
             $transformedBookings = [];
             foreach ($bookings->items() as $booking) {
-                // Lấy thông tin payment status từ bảng payment
-                $paymentInfo = DB::table('payment')
-                    ->where('booking_id', $booking->booking_id)
-                    ->latest()
-                    ->first();
+                // Get children ages from booking_room_children table
+                $allChildrenAges = DB::table('booking_room_children')
+                    ->join('booking_rooms', 'booking_room_children.booking_room_id', '=', 'booking_rooms.id')
+                    ->where('booking_rooms.booking_id', $booking->booking_id)
+                    ->orderBy('booking_room_children.booking_room_id')
+                    ->orderBy('booking_room_children.child_index')
+                    ->pluck('age')
+                    ->toArray();
 
                 $transformedBookings[] = [
                     'booking_id' => $booking->booking_id,
                     'booking_code' => $booking->booking_code,
-                    'user_id' => $booking->user_id,
-                    'option_id' => $booking->option_id,
-                    'check_in_date' => $booking->check_in_date,
-                    'check_out_date' => $booking->check_out_date,
-                    'total_price_vnd' => $booking->total_price_vnd,
-                    'guest_count' => $booking->guest_count,
-                    'adults' => (int)($booking->adults ?? 1), // Ensure integer
-                    'children' => (int)($booking->children ?? 0), // Ensure integer
-                    'children_age' => $booking->children_age ,
-                    'status' => $booking->status,
-                    'quantity' => $booking->quantity,
-                    'created_at' => $booking->created_at,
-                    'updated_at' => $booking->updated_at,
                     'guest_name' => $booking->guest_name,
                     'guest_email' => $booking->guest_email,
                     'guest_phone' => $booking->guest_phone,
-                    'room_id' => $booking->room_id,
+                    'check_in_date' => $booking->check_in_date,
+                    'check_out_date' => $booking->check_out_date,
+                    'total_price_vnd' => (float) $booking->total_price_vnd,
+                    'guest_count' => (int) $booking->guest_count,
+                    'adults' => (int) ($booking->total_adults_from_rooms ?: $booking->adults),
+                    'children' => (int) ($booking->total_children_from_rooms ?: $booking->children),
+                    'children_age' => $allChildrenAges, // Get from booking_room_children table
+                    'status' => $booking->booking_status,
+                    'notes' => $booking->notes,
+                    'created_at' => $booking->created_at,
+                    'updated_at' => $booking->updated_at,
+                    'total_rooms' => (int) $booking->total_rooms,
+                    'room_names' => $booking->room_names,
+                    'room_type_names' => $booking->room_type_names,
+                    'payment_status' => $booking->payment_status ?: 'pending',
+                    'payment_type' => $booking->payment_type,
+                    'payment_amount' => (float) ($booking->payment_amount ?: 0),
+                    'transaction_id' => $booking->transaction_id,
+                    'representative_name' => $booking->representative_name,
+                    'representative_phone' => $booking->representative_phone,
+                    'representative_email' => $booking->representative_email,
                     
                     // Compatibility fields for frontend
                     'id' => $booking->booking_id,
-                    'total_amount' => $booking->total_price_vnd,
-                    'booking_status' => $booking->status,
-                    'payment_status' => $paymentInfo ? $paymentInfo->status : 'pending',
-                    
-                    'room' => $booking->room_id ? [
-                        'id' => $booking->room_id,
-                        'name' => $booking->room_name,
-                        'floor' => $booking->room_floor,
-                        // Flatten room_type data to avoid nested objects that cause Ant Design issues
-                        'room_type_name' => $booking->room_type_name,
-                        'room_type_price' => $booking->room_type_price,
-                        'room_type_max_guests' => $booking->room_type_max_guests
-                    ] : null
+                    'total_amount' => (float) $booking->total_price_vnd,
+                    'booking_status' => $booking->booking_status,
                 ];
             }
 
             return response()->json([
                 'success' => true,
-                'data' => $transformedBookings,
-                'total' => $bookings->total(),
-                'per_page' => $bookings->perPage(),
-                'current_page' => $bookings->currentPage(),
-                'last_page' => $bookings->lastPage()
+                'message' => 'Bookings retrieved successfully',
+                'data' => [
+                    'data' => $transformedBookings,
+                    'current_page' => $bookings->currentPage(),
+                    'per_page' => $bookings->perPage(),
+                    'total' => $bookings->total(),
+                    'last_page' => $bookings->lastPage()
+                ]
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error fetching bookings: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching bookings',
@@ -1061,7 +1090,7 @@ class ReceptionController extends Controller
                 ->latest()
                 ->first();
 
-            // Get all rooms for this booking
+            // Get all rooms for this booking with detailed information
             $bookingRooms = DB::table('booking_rooms')
                 ->leftJoin('room', 'booking_rooms.room_id', '=', 'room.room_id')
                 ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
@@ -1075,64 +1104,142 @@ class ReceptionController extends Controller
                     'booking_rooms.total_price',
                     'booking_rooms.check_in_date',
                     'booking_rooms.check_out_date',
+                    'booking_rooms.adults',
+                    'booking_rooms.children',
+                    'booking_rooms.children_age',
+                    'booking_rooms.representative_id',
                     'room.name as room_name',
                     'room.floor_id as room_floor',
                     'room.status as room_status',
                     'room_types.name as room_type_name',
+                    'room_types.description as room_type_description',
                     'room_types.base_price as room_type_price',
                     'room_types.max_guests as room_type_max_guests',
-                    'representatives.full_name as representative_name'
+                    'room_types.room_area',
+                    'representatives.full_name as representative_name',
+                    'representatives.phone_number as representative_phone',
+                    'representatives.email as representative_email',
+                    'representatives.id_card as representative_id_card'
+                ])
+                ->get();
+
+            // Get all representatives for this booking (for additional context)
+            $allRepresentatives = DB::table('representatives')
+                ->where('booking_id', $bookingId)
+                ->select([
+                    'id',
+                    'full_name',
+                    'phone_number',
+                    'email',
+                    'id_card',
+                    'room_id'
                 ])
                 ->get();
 
             $transformedBookingRooms = [];
             foreach ($bookingRooms as $room) {
+                // Lấy children ages từ bảng booking_room_children
+                $childrenAges = DB::table('booking_room_children')
+                    ->where('booking_room_id', $room->booking_room_id)
+                    ->orderBy('child_index')
+                    ->pluck('age')
+                    ->toArray();
+                
                 $transformedBookingRooms[] = [
                     'booking_room_id' => $room->booking_room_id,
                     'room_id' => $room->room_id,
                     'room_name' => $room->room_name,
                     'room_floor' => $room->room_floor,
                     'room_status' => $room->room_status,
-                    'room_type_name' => $room->room_type_name,
-                    'room_type_price' => $room->room_type_price,
-                    'max_guests' => $room->room_type_max_guests,
-                    'price_per_night' => $room->price_per_night,
-                    'nights' => $room->nights,
-                    'total_price' => $room->total_price,
+                    'room_type' => [
+                        'name' => $room->room_type_name,
+                        'description' => $room->room_type_description,
+                        'base_price' => (float) $room->room_type_price,
+                        'max_guests' => (int) $room->room_type_max_guests,
+                        'room_area' => $room->room_area
+                    ],
+                    'price_per_night' => (float) $room->price_per_night,
+                    'nights' => (int) $room->nights,
+                    'total_price' => (float) $room->total_price,
                     'check_in_date' => $room->check_in_date,
                     'check_out_date' => $room->check_out_date,
-                    'representative_name' => $room->representative_name
+                    'adults' => (int) $room->adults,
+                    'children' => (int) $room->children,
+                    'children_age' => $childrenAges, // Lấy từ bảng booking_room_children
+                    'representative' => [
+                        'id' => $room->representative_id,
+                        'name' => $room->representative_name,
+                        'phone' => $room->representative_phone,
+                        'email' => $room->representative_email,
+                        'identity_number' => $room->representative_id_card
+                    ]
+                ];
+            }
+
+            $transformedRepresentatives = [];
+            foreach ($allRepresentatives as $rep) {
+                $transformedRepresentatives[] = [
+                    'id' => $rep->id,
+                    'full_name' => $rep->full_name,
+                    'phone_number' => $rep->phone_number,
+                    'email' => $rep->email,
+                    'identity_number' => $rep->id_card,
+                    'room_id' => $rep->room_id
                 ];
             }
 
             $bookingDetails = [
-                'id' => $booking->booking_id,
+                'booking_id' => $booking->booking_id,
                 'booking_code' => $booking->booking_code,
                 'guest_name' => $booking->guest_name,
                 'guest_email' => $booking->guest_email,
                 'guest_phone' => $booking->guest_phone,
-                'guest_count' => $booking->guest_count,
-                'adults' => $booking->adults ?? 1,
-                'children' => $booking->children ?? 0,
+                'guest_count' => (int) $booking->guest_count,
+                'adults' => (int) ($booking->adults ?? 1),
+                'children' => (int) ($booking->children ?? 0),
+                'children_age' => $booking->children_age,
                 'check_in_date' => $booking->check_in_date,
                 'check_out_date' => $booking->check_out_date,
-                'total_price_vnd' => $booking->total_price_vnd,
+                'total_price_vnd' => (float) $booking->total_price_vnd,
                 'status' => $booking->status,
-                'quantity' => $booking->quantity,
+                'notes' => $booking->notes,
+                'quantity' => (int) ($booking->quantity ?? count($transformedBookingRooms)),
                 'created_at' => $booking->created_at,
                 'updated_at' => $booking->updated_at,
+                
+                // Payment information
+                'payment' => $paymentInfo ? [
+                    'amount_vnd' => (float) $paymentInfo->amount_vnd,
+                    'payment_type' => $paymentInfo->payment_type,
+                    'status' => $paymentInfo->status,
+                    'transaction_id' => $paymentInfo->transaction_id,
+                    'created_at' => $paymentInfo->created_at
+                ] : null,
+                
+                // Room details
+                'booking_rooms' => $transformedBookingRooms,
+                'total_rooms' => count($transformedBookingRooms),
+                
+                // All representatives
+                'representatives' => $transformedRepresentatives,
+                
+                // Compatibility fields for frontend
+                'id' => $booking->booking_id,
                 'payment_status' => $paymentInfo ? $paymentInfo->status : 'pending',
                 'payment_type' => $paymentInfo ? $paymentInfo->payment_type : null,
-                'booking_rooms' => $transformedBookingRooms
+                'total_amount' => (float) $booking->total_price_vnd,
+                'booking_status' => $booking->status
             ];
 
             return response()->json([
                 'success' => true,
-                'data' => $bookingDetails
+                'data' => $bookingDetails,
+                'message' => 'Booking details retrieved successfully'
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error fetching booking details: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching booking details',

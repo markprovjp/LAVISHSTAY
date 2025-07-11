@@ -186,8 +186,20 @@ const calculateTotals = (
             if (numericQuantity > 0) {
                 const option = room.options.find(opt => opt.id === optionId);
                 if (option) {
-                    const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
-                    roomsTotal += pricePerNight * numericQuantity * nights;
+                    // Priority order for price calculation:
+                    // 1. calculatedTotalPrice (pre-calculated total from SearchResults)
+                    // 2. dynamicPricing.finalPrice * nights
+                    // 3. pricePerNight.vnd * nights
+                    let totalPricePerRoom = 0;
+
+                    if ((option as any).calculatedTotalPrice) {
+                        totalPricePerRoom = (option as any).calculatedTotalPrice;
+                    } else {
+                        const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
+                        totalPricePerRoom = pricePerNight * nights;
+                    }
+
+                    roomsTotal += totalPricePerRoom * numericQuantity;
                 }
             }
         });
@@ -210,6 +222,8 @@ const calculateTotals = (
     const taxAmount = 0; // Removed VAT tax
     const discountAmount = 0; // Can be updated later
     const finalTotal = roomsTotal + breakfastTotal - discountAmount;
+
+    // Không cần log phức tạp
 
     return {
         roomsTotal,
@@ -268,13 +282,16 @@ const bookingSlice = createSlice({
 
             // Clear previous selections
             state.selectedRooms = {};
-            state.roomsData = [room]; // Set the room data
 
-            // Set the new selection
+            // Simply store the room data as is
+            state.roomsData = [room];
+
+            // Set the new selection - one room, one option
             state.selectedRooms[room.id] = {
                 [option.id]: quantity
             };
 
+            // Lưu thời gian cập nhật
             state.lastUpdated = new Date().toISOString();
         },
 
@@ -510,6 +527,13 @@ const bookingSlice = createSlice({
             state.lastUpdated = new Date().toISOString();
             saveStateToStorage(state);
         },
+
+        // Set totals directly (for when we want to override calculated totals)
+        setTotals: (state, action: PayloadAction<BookingTotals>) => {
+            state.totals = action.payload;
+            state.lastUpdated = new Date().toISOString();
+            saveStateToStorage(state);
+        },
     },
 });
 
@@ -529,6 +553,7 @@ export const {
     startAddingRoomsToBooking,
     finishExtendingBooking,
     setBookingData,
+    setTotals,
 } = bookingSlice.actions;
 
 // Selectors
@@ -560,11 +585,13 @@ export const selectSelectedRoomsSummary = createSelector(
                 if (numericQuantity > 0) {
                     const option = room.options.find(opt => opt.id === optionId);
                     if (option) {
-                        const pricePerNight = option.dynamicPricing?.finalPrice || option.pricePerNight.vnd;
+                        // Lấy giá từ option
+                        const pricePerNight = option.pricePerNight?.vnd || 0;
+                        // Tính tổng giá trị (giá × số đêm)
+                        const totalPrice = (option as any).totalPrice || pricePerNight * totals.nights;
 
                         // Unroll the quantity to create one entry per room instance
                         for (let i = 0; i < numericQuantity; i++) {
-                            const totalPrice = pricePerNight * totals.nights; // Price for one room
                             summary.push({
                                 roomId,
                                 optionId,
@@ -572,7 +599,7 @@ export const selectSelectedRoomsSummary = createSelector(
                                 room,
                                 option,
                                 pricePerNight,
-                                totalPrice,
+                                totalPrice: totalPrice, // Use the calculated or stored total price
                                 key: `${roomId}-${optionId}-${i}`, // Unique key for this room instance
                             });
                         }
@@ -581,6 +608,7 @@ export const selectSelectedRoomsSummary = createSelector(
             });
         });
 
+        console.log('📋 selectSelectedRoomsSummary result:', summary);
         return summary;
     }
 );

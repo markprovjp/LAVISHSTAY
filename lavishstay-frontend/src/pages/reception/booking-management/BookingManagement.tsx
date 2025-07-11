@@ -68,15 +68,27 @@ interface BookingTableData {
     guest_count: number;
     adults: number;
     num_children: number;
-    children_age?: any; // JSON field, optional
+    children_age?: number[] | string; // Support both array from new API and string for backward compatibility
     total_price_vnd: number;
     status: string;
     check_in_date: string;
     check_out_date: string;
     created_at: string;
     updated_at: string;
+    // Multi-room booking fields
+    room_names: string; // Aggregated room names
+    room_type_names: string; // Aggregated room type names
+    total_rooms: number; // Total number of rooms
+    // Payment and representative info
+    payment_status: string;
+    payment_type: string;
+    payment_amount: number;
+    transaction_id: string;
+    representative_name: string;
+    representative_phone: string;
+    representative_email: string;
+    // Compatibility fields
     room_id?: number | null;
-    // Flattened room data to avoid any nested objects
     room_name?: string;
     room_id_display?: number | null;
 }
@@ -130,25 +142,27 @@ const BookingManagement: React.FC = () => {
             const bookingId = booking.booking_id || booking.id;
             const totalAmount = booking.total_price_vnd || booking.total_amount || 0;
 
-            // Extract room data safely first
-            const roomData = booking.room || {};
-            const roomName = roomData && typeof roomData === 'object' ? (roomData.name || '') : '';
-            const roomId = roomData && typeof roomData === 'object' ? (roomData.id || null) : null;
+            // Extract aggregated room data from new backend API
+            const roomNames = booking.room_names || '';
+            const roomTypeNames = booking.room_type_names || '';
+            const totalRooms = booking.total_rooms || 1;
 
             // ULTRA SAFE processing of children and adults values
             let safeChildren = 0;
             let safeAdults = 1;
 
             try {
-                // Process children with extreme caution
-                if (booking.children !== null && booking.children !== undefined) {
-                    const childrenVal = Number(booking.children);
+                // Use aggregated values from backend if available
+                const backendAdults = booking.total_adults_from_rooms || booking.adults;
+                const backendChildren = booking.total_children_from_rooms || booking.children;
+
+                if (backendChildren !== null && backendChildren !== undefined) {
+                    const childrenVal = Number(backendChildren);
                     safeChildren = isNaN(childrenVal) ? 0 : Math.max(0, Math.floor(childrenVal));
                 }
 
-                // Process adults with extreme caution  
-                if (booking.adults !== null && booking.adults !== undefined) {
-                    const adultsVal = Number(booking.adults);
+                if (backendAdults !== null && backendAdults !== undefined) {
+                    const adultsVal = Number(backendAdults);
                     safeAdults = isNaN(adultsVal) ? 1 : Math.max(1, Math.floor(adultsVal));
                 }
             } catch (error) {
@@ -173,13 +187,12 @@ const BookingManagement: React.FC = () => {
                 total_amount: Number(totalAmount) || 0, // Compatibility
                 guest_count: Number(booking.guest_count) || 1,
 
-                // Use the ultra-safe processed values - rename "children" to avoid Ant Design Table conflict
+                // Use the ultra-safe processed values
                 adults: safeAdults,
-
-                num_children: safeChildren, // Renamed from "children" to avoid Ant Design reserved property
+                num_children: safeChildren,
 
                 status: String(booking.status || 'pending'),
-                quantity: Number(booking.quantity) || 1,
+                quantity: Number(booking.quantity) || totalRooms,
                 created_at: String(booking.created_at || ''),
                 updated_at: String(booking.updated_at || ''),
 
@@ -187,15 +200,26 @@ const BookingManagement: React.FC = () => {
                 guest_name: String(booking.guest_name || ''),
                 guest_email: String(booking.guest_email || ''),
                 guest_phone: String(booking.guest_phone || ''),
-                room_id: booking.room_id ? Number(booking.room_id) : null,
 
-                // FLATTEN room data immediately - NO nested objects, only primitives
-                room_name: String(roomName),
-                room_id_display: roomId ? Number(roomId) : null,
+                // Room information from aggregated data
+                room_names: String(roomNames),
+                room_type_names: String(roomTypeNames),
+                total_rooms: Number(totalRooms),
 
-                // Map status for compatibility - all strings
-                booking_status: String(booking.status || 'pending'),
+                // Payment and representative info
                 payment_status: String(booking.payment_status || 'pending'),
+                payment_type: String(booking.payment_type || ''),
+                payment_amount: Number(booking.payment_amount || 0),
+                transaction_id: String(booking.transaction_id || ''),
+                representative_name: String(booking.representative_name || ''),
+                representative_phone: String(booking.representative_phone || ''),
+                representative_email: String(booking.representative_email || ''),
+
+                // Compatibility fields
+                room_id: booking.room_id ? Number(booking.room_id) : null,
+                room_name: String(roomNames.split(',')[0] || ''), // First room for compatibility
+                room_id_display: booking.room_id ? Number(booking.room_id) : null,
+                booking_status: String(booking.status || 'pending'),
             };
 
             console.log('Final processed booking:', processedBooking);
@@ -372,8 +396,47 @@ const BookingManagement: React.FC = () => {
                 const childrenAges = record.children_age;
                 let tooltipTitle = 'Không có thông tin độ tuổi';
 
-                if (typeof childrenAges === 'string' && childrenAges.length > 0) {
-                    tooltipTitle = `Độ tuổi: ${childrenAges.split(',').join(', ')}`;
+                if (childrenAges) {
+                    try {
+                        // Handle both new API format (array of numbers) and old format (JSON string)
+                        let ages: number[] = [];
+
+                        if (Array.isArray(childrenAges)) {
+                            // New API format: direct array of ages
+                            ages = childrenAges.filter(age => typeof age === 'number');
+                        } else if (typeof childrenAges === 'string' && childrenAges.trim()) {
+                            // Old format: JSON string
+                            try {
+                                const parsed = JSON.parse(childrenAges);
+                                if (Array.isArray(parsed)) {
+                                    // Handle multi-room format: [[], [{"id": "room_2_child_1", "age": 3}, ...], ...]
+                                    parsed.forEach((roomAges: any) => {
+                                        if (Array.isArray(roomAges)) {
+                                            roomAges.forEach((child: any) => {
+                                                if (typeof child === 'object' && child.age) {
+                                                    ages.push(child.age);
+                                                } else if (typeof child === 'number') {
+                                                    ages.push(child);
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            } catch (parseError) {
+                                // Fallback: treat as comma-separated string
+                                ages = childrenAges.split(',').map(age => parseInt(age.trim())).filter(age => !isNaN(age));
+                            }
+                        }
+
+                        if (ages.length > 0) {
+                            tooltipTitle = `Độ tuổi: ${ages.join(', ')} tuổi`;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing children_age:', e);
+                        if (typeof childrenAges === 'string' && childrenAges.length > 0) {
+                            tooltipTitle = `Độ tuổi: ${childrenAges.split(',').join(', ')}`;
+                        }
+                    }
                 }
 
                 const content = (
@@ -408,9 +471,47 @@ const BookingManagement: React.FC = () => {
         {
             title: 'Phòng',
             key: 'room',
-            width: 140,
+            width: 200,
             render: (_, record) => {
-                if (record.room_name) {
+                if (record.total_rooms > 1) {
+                    // Multiple rooms
+                    const roomNames = record.room_names ? record.room_names.split(',').map(name => name.trim()) : [];
+                    const roomTypes = record.room_type_names ? record.room_type_names.split(',').map(type => type.trim()) : [];
+
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '6px',
+                                backgroundColor: '#f6ffed',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginRight: 8,
+                            }}>
+                                <HomeOutlined style={{ color: '#52c41a', fontSize: '14px' }} />
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 600, fontSize: '13px', color: '#262626', marginBottom: 2 }}>
+                                    {record.total_rooms} phòng
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#8c8c8c', maxWidth: '150px' }}>
+                                    {roomNames.length > 0 ? roomNames.slice(0, 2).join(', ') : 'Chưa chọn phòng'}
+                                    {roomNames.length > 2 && `... +${roomNames.length - 2}`}
+                                </div>
+                                <div style={{ fontSize: '10px', color: '#8c8c8c', maxWidth: '150px' }}>
+                                    {roomTypes.length > 0 ? roomTypes.slice(0, 2).join(', ') : ''}
+                                    {roomTypes.length > 2 && `... +${roomTypes.length - 2}`}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                } else if (record.room_name || record.room_names) {
+                    // Single room
+                    const roomName = record.room_name || (record.room_names ? record.room_names.split(',')[0].trim() : '');
+                    const roomType = record.room_type_names ? record.room_type_names.split(',')[0].trim() : '';
+
                     return (
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                             <div style={{
@@ -427,10 +528,10 @@ const BookingManagement: React.FC = () => {
                             </div>
                             <div>
                                 <div style={{ fontWeight: 600, fontSize: '13px', color: '#262626' }}>
-                                    {record.room_name}
+                                    {roomName}
                                 </div>
                                 <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
-                                    ID: {record.room_id_display}
+                                    {roomType || `ID: ${record.room_id_display || 'N/A'}`}
                                 </div>
                             </div>
                         </div>
@@ -730,7 +831,7 @@ const BookingManagement: React.FC = () => {
                                         guest_count: Number(booking.guest_count) || 0,
                                         adults: Number(booking.adults) || 0,
                                         num_children: Number(booking.num_children) || 0,
-                                        children_age: booking.children_age , // Convert JSON to string
+                                        children_age: booking.children_age, // Convert JSON to string
                                         total_price_vnd: Number(booking.total_price_vnd) || 0,
                                         status: String(booking.status || 'pending'),
                                         check_in_date: String(booking.check_in_date || ''),
@@ -778,7 +879,20 @@ const BookingManagement: React.FC = () => {
                                         room_id_display: booking.room_id_display,
                                         guest_email: booking.guest_email,
                                         guest_phone: booking.guest_phone,
-                                        children_age: booking.children_age // mảng
+                                        children_age: (() => {
+                                            try {
+                                                if (Array.isArray(booking.children_age)) {
+                                                    return booking.children_age;
+                                                }
+                                                if (typeof booking.children_age === 'string' && booking.children_age.trim()) {
+                                                    return JSON.parse(booking.children_age);
+                                                }
+                                                return [];
+                                            } catch (e) {
+                                                console.error('Error parsing children_age for booking:', booking.booking_id, e);
+                                                return [];
+                                            }
+                                        })()
                                     }));
 
                                     // Beautiful columns similar to original design
@@ -916,9 +1030,25 @@ const BookingManagement: React.FC = () => {
 
                                                 const childrenAges = record.children_age;
                                                 let tooltipTitle = 'Không có thông tin độ tuổi';
-                                                
+
                                                 if (Array.isArray(childrenAges) && childrenAges.length > 0) {
-                                                    tooltipTitle = `Độ tuổi: ${childrenAges.join(', ')}`;
+                                                    // Handle the multi-room format: [[], [{"id": "room_2_child_1", "age": 3}, ...], ...]
+                                                    const allAges: number[] = [];
+                                                    childrenAges.forEach((roomAges: any) => {
+                                                        if (Array.isArray(roomAges)) {
+                                                            roomAges.forEach((child: any) => {
+                                                                if (typeof child === 'object' && child.age) {
+                                                                    allAges.push(child.age);
+                                                                } else if (typeof child === 'number') {
+                                                                    allAges.push(child);
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+
+                                                    if (allAges.length > 0) {
+                                                        tooltipTitle = `Độ tuổi: ${allAges.join(', ')} tuổi`;
+                                                    }
                                                 }
 
                                                 const content = (
