@@ -170,7 +170,7 @@ export const searchService = {
     transformRoomPackageData(roomPackages: RoomPackageData[], summary: any): any[] {
         return roomPackages.map(packageData => {
             // Get main image
-            const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url || '/images/rooms/default.jpg';
+            const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url ;
 
             // Get all images
             const images = packageData.images?.map(img => img.image_url) || [mainImage];
@@ -241,18 +241,17 @@ export const searchService = {
                 name: packageData.room_type_name,
                 roomType: packageData.room_code,
                 room_code: packageData.room_code,
-                description: packageData.description || 'Chưa có mô tả',
+                description: packageData.description ,
                 image: mainImage,
                 images: images,
                 size: packageData.size,
                 roomSize: packageData.size,
-                view: 'City view', // Default view
-                viewType: 'City view',
-                bedType: 'King bed', // Default bed type
+                view: 'Tầm nhìn thành phố', // Default view
+                bedType: packageData.bed_type_name, // Default bed type
                 amenities: packageData.amenities?.map(a => a.name) || [],
                 mainAmenities: packageData.highlighted_amenities?.slice(0, 5).map(a => a.name) || [],
                 highlighted_amenities: packageData.highlighted_amenities?.map(a => a.name) || [],
-                rating: packageData.rating || 4.5,
+                rating: packageData.rating,
                 maxGuests: packageData.max_guests,
                 availableRooms: parseInt(packageData.available_rooms) || 0,
                 roomsNeeded: packageData.rooms_needed,

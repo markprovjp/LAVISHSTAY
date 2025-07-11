@@ -280,7 +280,7 @@ class RoomAvailabilityController extends Controller
     {
         try {
             // Kiểm tra các tên bảng có thể có
-            $possibleTables = ['room_type_images', 'room_type_image', 'roomtype_images'];
+            $possibleTables = ['room_type_images', 'room_type_image', 'room_images'];
             $tableName = null;
 
             foreach ($possibleTables as $table) {
@@ -312,14 +312,16 @@ class RoomAvailabilityController extends Controller
                 $imageIdColumn = 'id';
             }
 
-            // Xác định tên cột path
+            // Xác định tên cột path - ưu tiên image_path vì có dữ liệu
             $pathColumn = 'image_path';
-            if (in_array('path', $columnNames)) {
+            if (in_array('image_path', $columnNames)) {
+                $pathColumn = 'image_path';
+            } elseif (in_array('path', $columnNames)) {
                 $pathColumn = 'path';
-            } elseif (in_array('url', $columnNames)) {
-                $pathColumn = 'url';
             } elseif (in_array('image_url', $columnNames)) {
                 $pathColumn = 'image_url';
+            } elseif (in_array('url', $columnNames)) {
+                $pathColumn = 'url';
             }
 
             $images = DB::table($tableName)
@@ -340,10 +342,33 @@ class RoomAvailabilityController extends Controller
             }
 
             return $images->map(function ($img) use ($imageIdColumn, $pathColumn) {
+                // Tạo URL đầy đủ cho ảnh
+                $imagePath = $img->$pathColumn;
+                $imageUrl = '';
+                
+                if (!empty($imagePath)) {
+                    // Nếu path bắt đầu bằng '/storage', sử dụng asset()
+                    if (str_starts_with($imagePath, '/storage')) {
+                        $imageUrl = url($imagePath);
+                    } 
+                    // Nếu path bắt đầu bằng 'storage', thêm '/' và sử dụng asset()
+                    elseif (str_starts_with($imagePath, 'storage')) {
+                        $imageUrl = url('/' . $imagePath);
+                    }
+                    // Nếu là URL đầy đủ, giữ nguyên
+                    elseif (str_starts_with($imagePath, 'http')) {
+                        $imageUrl = $imagePath;
+                    }
+                    // Các trường hợp khác, thêm base URL
+                    else {
+                        $imageUrl = url('/storage/' . ltrim($imagePath, '/'));
+                    }
+                }
+
                 return [
                     'id' => $img->$imageIdColumn,
                     'room_type_id' => $img->room_type_id,
-                    'image_url' => asset($img->$pathColumn),
+                    'image_url' => $imageUrl,
                     'alt_text' => $img->alt_text ?? '',
                     'is_main' => $img->is_main ?? false,
                 ];
@@ -824,6 +849,7 @@ class RoomAvailabilityController extends Controller
 
                 // Get additional room type information
                 $images = $this->getRoomTypeImages($roomTypeId);
+                Log::info("Tìm thấy " . count($images) . " ảnh cho room_type_id: $roomTypeId");
                 $allAmenities = [];
                 $highlightedAmenities = [];
                 $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
