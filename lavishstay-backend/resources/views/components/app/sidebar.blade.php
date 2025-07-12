@@ -343,18 +343,19 @@
 
                     {{-- Policy --}}
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.cancellation-policies*') ||
-                            request()->routeIs('admin.deposit-policies*') ||
+                            request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.children-surcharge*') ||
                             request()->routeIs('admin.checkout-policies*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
-                        x-data="{ open: {{ request()->routeIs('admin.cancellation-policies*') || request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.checkout-policies*') ? 1 : 0 }} }">
+                        x-data="{ open: {{ request()->routeIs('admin.cancellation-policies*') || request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.children-surcharge*') || request()->routeIs('admin.checkout-policies*') ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (
                             !request()->routeIs('admin.cancellation-policies*') &&
                                 !request()->routeIs('admin.deposit-policies*') &&
+                                !request()->routeIs('admin.children-surcharge*') &&
                                 !request()->routeIs('admin.checkout-policies*')) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
                                     <svg class="shrink-0 fill-current transition-colors duration-200 @if (request()->routeIs('admin.cancellation-policies*') ||
-                                            request()->routeIs('admin.deposit-policies*') ||
+                                            request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.children-surcharge*') ||
                                             request()->routeIs('admin.checkout-policies*')) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
                                         width="20px" height="20px" xmlns="http://www.w3.org/2000/svg"
                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
@@ -367,7 +368,7 @@
                                 <!-- Icon -->
                                 <div class="flex shrink-0 ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                                     <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 transition-transform duration-200 @if (request()->routeIs('admin.cancellation-policies*') ||
-                                            request()->routeIs('admin.deposit-policies*') ||
+                                            request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.children-surcharge*') ||
                                             request()->routeIs('admin.checkout-policies*')) {{ 'rotate-180' }} @endif"
                                         :class="open ? 'rotate-180' : 'rotate-0'" viewBox="0 0 12 12">
                                         <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
@@ -400,6 +401,12 @@
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.checkout-policies*')) {{ 'text-violet-500!' }} @endif"
                                         href="{{ route('admin.checkout-policies') }}">
                                         <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Checkout</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.children-surcharge*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.children-surcharge') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Phụ thu trẻ em</span>
                                     </a>
                                 </li>
                             </ul>

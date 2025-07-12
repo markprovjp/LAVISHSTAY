@@ -108,27 +108,50 @@ export const searchService = {
         try {
             console.log('🔍 Calling room packages API with search data:', searchData);
 
-            // Calculate guest count and nights
-            const totalGuests = (searchData.guestDetails?.adults || 2) + (searchData.guestDetails?.children || 0);
-            const checkInDate = searchData.dateRange?.[0] ? (typeof searchData.dateRange[0] === 'string' ? searchData.dateRange[0] : dayjs(searchData.dateRange[0]).format('YYYY-MM-DD')) : dayjs().format('YYYY-MM-DD');
-            const checkOutDate = searchData.dateRange?.[1] ? (typeof searchData.dateRange[1] === 'string' ? searchData.dateRange[1] : dayjs(searchData.dateRange[1]).format('YYYY-MM-DD')) : dayjs().add(1, 'day').format('YYYY-MM-DD');
+            // Xử lý ngày nhận và trả
+            const checkInDate = searchData.dateRange?.[0]
+                ? (typeof searchData.dateRange[0] === 'string'
+                    ? searchData.dateRange[0]
+                    : dayjs(searchData.dateRange[0]).format('YYYY-MM-DD'))
+                : dayjs().format('YYYY-MM-DD');
 
-            // Prepare search parameters for room packages API
-            const searchParams = new URLSearchParams({
+            const checkOutDate = searchData.dateRange?.[1]
+                ? (typeof searchData.dateRange[1] === 'string'
+                    ? searchData.dateRange[1]
+                    : dayjs(searchData.dateRange[1]).format('YYYY-MM-DD'))
+                : dayjs().add(1, 'day').format('YYYY-MM-DD');
+
+            // Tạo danh sách rooms từ dữ liệu đầu vào
+            const rooms = searchData.rooms && searchData.rooms.length > 0
+                ? searchData.rooms.map(r => ({
+                    adults: r.adults || 2,
+                    children: r.children || 0,
+                    childrenAges: r.childrenAges || [] // 👈 bổ sung dòng này
+                }))
+                : [{
+                    adults: searchData.guestDetails?.adults || 2,
+                    children: searchData.guestDetails?.children || 0,
+                    childrenAges: searchData.guestDetails?.childrenAges || [] // 👈 bổ sung dòng này
+                }];
+
+
+            const totalGuests = rooms.reduce((sum, r) => sum + r.adults + r.children, 0);
+
+            const requestBody = {
                 check_in_date: checkInDate,
                 check_out_date: checkOutDate,
-                guest_count: totalGuests.toString()
-            });
+                rooms: rooms
+            };
 
-            console.log('📤 Room packages API params:', searchParams.toString());
+            console.log('📤 Room packages API body:', requestBody);
 
-            // Call room packages search API
-            const response = await fetch(`http://localhost:8888/api/room-packages/search?${searchParams}`, {
-                method: 'GET',
+            const response = await fetch(`http://localhost:8888/api/room-packages/search`, {
+                method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -142,7 +165,6 @@ export const searchService = {
                 throw new Error(apiResponse.message || 'Search failed');
             }
 
-            // Transform backend response to frontend format
             const transformedRooms = this.transformRoomPackageData(apiResponse.data, apiResponse.summary);
 
             return {
@@ -155,7 +177,9 @@ export const searchService = {
                     checkOut: checkOutDate,
                     adults: searchData.guestDetails?.adults || 2,
                     children: searchData.guestDetails?.children || 0,
-                    childrenAges: (searchData.guestDetails?.childrenAges || []).map((child: any) => typeof child === 'object' ? child.age : child),
+                    childrenAges: (searchData.guestDetails?.childrenAges || []).map((child: any) =>
+                        typeof child === 'object' ? child.age : child
+                    ),
                     guestType: searchData.guestType,
                     totalGuests: totalGuests,
                 }

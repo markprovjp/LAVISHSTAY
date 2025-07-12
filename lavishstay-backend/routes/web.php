@@ -12,6 +12,7 @@ use App\Http\Controllers\CancellationPolicyController;
 use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\CheckoutRequestController;
+use App\Http\Controllers\ChildPolicyController;
 use App\Http\Controllers\RoomTypeAmenityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataFeedController;
@@ -363,8 +364,18 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    // Chính sách thanh toán ///////////////////////////////////////////////////
+    // Route::get('/admin/payment-policies', [PaymentPolicyController::class, 'index'])->name('admin.payment-policies');
+    
 
-
+    // Chính sách phụ thu trẻ em ///////////////////////////////////////////////////
+    Route::get('/admin/children-surcharge', [ChildPolicyController::class, 'index'])->name('admin.children-surcharge');
+    Route::get('/admin/children-surcharge/create', [ChildPolicyController::class, 'create'])->name('admin.children-surcharge.create');
+    Route::post('/admin/children-surcharge', [ChildPolicyController::class, 'store'])->name('admin.children-surcharge.store');
+    Route::get('/admin/children-surcharge/{childrenSurcharge}/edit', [ChildPolicyController::class, 'edit'])->name('admin.children-surcharge.edit');
+    Route::put('/admin/children-surcharge/{childrenSurcharge}', [ChildPolicyController::class, 'update'])->name('admin.children-surcharge.update');
+    Route::delete('/admin/children-surcharge/{childrenSurcharge}', [ChildPolicyController::class, 'destroy'])->name('admin.children-surcharge.destroy');
+    
 
 
 
