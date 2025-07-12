@@ -23,7 +23,6 @@ import {
     Rate
 } from 'antd';
 import {
-    CheckCircleOutlined,
     TeamOutlined,
     HomeOutlined,
     FireOutlined,
@@ -36,14 +35,14 @@ import {
     CrownOutlined,
     ThunderboltOutlined,
     CheckOutlined,
-    DollarOutlined,
-    ArrowLeftOutlined,
     ZoomOutOutlined,
     ZoomInOutlined,
     RotateLeftOutlined,
     RotateRightOutlined,
     SwapOutlined,
-    UndoOutlined
+    UndoOutlined ,
+    LeftOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
@@ -448,150 +447,157 @@ const SearchResults: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Image Gallery */}
+                                                                                       {/* Image Gallery */}
                                                 <div className="mb-6">
                                                     <Row gutter={[12, 12]}>
-                                                        <Image.PreviewGroup
-                                                            preview={{
-                                                                onChange: (index) => setCurrentImageIndex(index),
-                                                                toolbarRender: (_, { current, total }) => (
-                                                                    <div className="flex items-center justify-between w-full px-4 py-3 bg-black/80  rounded-lg">
-                                                                        <div className="flex items-center gap-3">
-                                                                            <span className="text-white font-medium">
-                                                                                <PictureOutlined className="mr-2" />
-                                                                                {current}/{total}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-3">
-                                                                            <RotateLeftOutlined className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl" />
-                                                                            <RotateRightOutlined className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl" />
-                                                                            <ZoomOutOutlined className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl" />
-                                                                            <ZoomInOutlined className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl" />
-                                                                            <SwapOutlined className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl" />
-                                                                        </div>
-                                                                    </div>
-                                                                ),
-                                                                imageRender: (originalNode) => (
-                                                                    <div className="relative w-full h-full">
-                                                                        {originalNode}
-                                                                        <div className="absolute inset-0  pointer-events-none"></div>
-                                                                    </div>
-                                                                ),
-                                                            }}
-                                                        >
-                                                            {/* Main Large Image */}
-                                                            <Col xs={24} md={15}>
-                                                                <div className="relative overflow-hidden rounded-xl group">
-                                                                    <Image
-                                                                        alt={room.name}
-                                                                        src={room.image || room.images?.[0] || room.packageData?.images?.[0]?.image_url}
-                                                                        className="w-full h-[300px] object-cover transition-transform duration-700 group-hover:scale-105 rounded-lg"
-                                                                        preview={{
-                                                                            mask: (
-                                                                                <div className="flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                                                    <ExpandOutlined className="text-white text-2xl" />
-                                                                                    <span className="text-white font-medium">Xem ảnh</span>
-                                                                                </div>
-                                                                            )
-                                                                        }}
-                                                                        fallback="https://dam.melia.com/melia/file/iXGwjwBVnTHehdUyTT57.jpg?im=RegionOfInterestCrop=(1920,1281),regionOfInterest=(1771.5,1181.5)"
-                                                                        loading="lazy"
-                                                                    />
+                                                        {/* Get all images for this room */}
+                                                        {(() => {
+                                                            const allImages = room.packageData?.images || room.images || [];
+                                                            const allImageUrls = [
+                                                                room.image || room.images?.[0] || room.packageData?.images?.[0]?.image_url,
+                                                                ...allImages.slice(1).map((img: any) => typeof img === 'string' ? img : img.image_url)
+                                                            ].filter(Boolean);
 
-                                                                    {/* Image Count Badge */}
-                                                                    {(room.images?.length > 1 || room.packageData?.images?.length > 1) && (
-                                                                        <div className="absolute bottom-3 right-3 transition-transform duration-300 group-hover:translate-y-1">
-                                                                            <Tag className="border-0 shadow-lg text-white bg-black/60 backdrop-blur-sm rounded-full px-3">
-                                                                                <PictureOutlined className="mr-2" />
-                                                                                {room.packageData?.images?.length || room.images?.length} ảnh
-                                                                            </Tag>
-                                                                        </div>
-                                                                    )}
-
-                                                                    {/* Gradient overlay */}
-                                                                </div>
-                                                            </Col>
-
-                                                            {/* Thumbnail Grid */}
-                                                            <Col xs={24} md={9}>
-                                                                <div className="grid grid-cols-2 gap-3 ">
-                                                                    {(room.packageData?.images || room.images || []).slice(1, 7).map((img: any, index: number) => {
-                                                                        const allImages = room.packageData?.images || room.images || [];
-                                                                        const totalImages = allImages.length;
-                                                                        const isLastImage = index === 5 && totalImages > 7;
-                                                                        const remainingImages = totalImages - 7;
-
-                                                                        return (
-                                                                            <div key={index} className="relative   overflow-hidden rounded-xl group">
-                                                                                <Image
-                                                                                    alt={`${room.name} - Ảnh ${index + 2}`}
-                                                                                    src={typeof img === 'string' ? img : img.image_url}
-                                                                                    className="w-full h-full rounded-lg object-cover transition-transform duration-500 group-hover:scale-110  "
-                                                                                    fallback="https://dam.melia.com/melia/file/iXGwjwBVnTHehdUyTT57.jpg?im=RegionOfInterestCrop=(1920,1281),regionOfInterest=(1771.5,1181.5)"
-                                                                                    preview={{
-                                                                                        mask: isLastImage ? null : (
-                                                                                            <div className="flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                                                                <ExpandOutlined className="text-white text-lg" />
-                                                                                            </div>
-                                                                                        ),
-                                                                                        onVisibleChange: (visible) => {
-                                                                                            if (visible) {
-                                                                                                setCurrentImageIndex(index + 1);
-                                                                                            }
-                                                                                        }
-                                                                                    }}
-                                                                                    loading="lazy"
+                                                            return (
+                                                                <Image.PreviewGroup
+                                                                    preview={{
+                                                                        items: allImageUrls,
+                                                                        toolbarRender: (
+                                                                            _,
+                                                                            {
+                                                                                transform: { scale },
+                                                                                actions: {
+                                                                                    onActive,
+                                                                                    onFlipY,
+                                                                                    onFlipX,
+                                                                                    onRotateLeft,
+                                                                                    onRotateRight,
+                                                                                    onZoomOut,
+                                                                                    onZoomIn,
+                                                                                    onReset,
+                                                                                },
+                                                                            },
+                                                                        ) => (
+                                                                            <Space size={12} className="flex items-center justify-center w-full px-4 py-3 bg-black/80 rounded-lg">
+                                                                                <LeftOutlined 
+                                                                                    onClick={() => onActive?.(-1)} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-
-                                                                                {/* Hover gradient for normal images */}
-                                                                                {!isLastImage && (
-                                                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent pointer-events-none opacity-50 group-hover:opacity-0 transition-opacity duration-300"></div>
-                                                                                )}
-
-                                                                                {/* Overlay for last image showing remaining count */}
-                                                                                {isLastImage && remainingImages > 0 && (
-                                                                                    <div
-                                                                                        className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-black/70"
-                                                                                        onClick={() => {
-                                                                                            const hiddenImageElement = document.querySelector(`[data-room-id="${room.id}"] .hidden-image-5`);
-                                                                                            if (hiddenImageElement) {
-                                                                                                (hiddenImageElement as HTMLElement).click();
-                                                                                            }
-                                                                                        }}
-                                                                                    >
-                                                                                        <div className="text-center text-white">
-                                                                                            <PictureOutlined className="text-3xl mb-2" />
-                                                                                            <div className="text-lg ">
-                                                                                                +{remainingImages} ảnh khác
-                                                                                            </div>
-
+                                                                                <RightOutlined 
+                                                                                    onClick={() => onActive?.(1)} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
+                                                                                />
+                                                                                <SwapOutlined 
+                                                                                    rotate={90} 
+                                                                                    onClick={onFlipY} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
+                                                                                />
+                                                                                <SwapOutlined 
+                                                                                    onClick={onFlipX} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
+                                                                                />
+                                                                                <RotateLeftOutlined 
+                                                                                    onClick={onRotateLeft} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
+                                                                                />
+                                                                                <RotateRightOutlined 
+                                                                                    onClick={onRotateRight} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
+                                                                                />
+                                                                                <ZoomOutOutlined 
+                                                                                    disabled={scale === 1} 
+                                                                                    onClick={onZoomOut} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl disabled:text-gray-500"
+                                                                                />
+                                                                                <ZoomInOutlined 
+                                                                                    disabled={scale === 50} 
+                                                                                    onClick={onZoomIn} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl disabled:text-gray-500"
+                                                                                />
+                                                                                <UndoOutlined 
+                                                                                    onClick={onReset} 
+                                                                                    className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
+                                                                                />
+                                                                            </Space>
+                                                                        ),
+                                                                        onChange: (index) => setCurrentImageIndex(index),
+                                                                    }}
+                                                                >
+                                                                    {/* Main Large Image */}
+                                                                    <Col xs={24} md={15}>
+                                                                        <div className="relative overflow-hidden rounded-xl group">
+                                                                            <Image
+                                                                                alt={room.name}
+                                                                                src={allImageUrls[0]}
+                                                                                className="w-full h-[300px] object-cover transition-transform duration-700  rounded-lg"
+                                                                                preview={{
+                                                                                    mask: (
+                                                                                        <div className="flex flex-col items-center justify-center space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                                                            <ExpandOutlined className="text-white text-2xl" />
+                                                                                            <span className="text-white font-medium">Xem ảnh</span>
                                                                                         </div>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            </Col>
+                                                                                    )
+                                                                                }}
+                                                                                fallback="https://dam.melia.com/melia/file/iXGwjwBVnTHehdUyTT57.jpg?im=RegionOfInterestCrop=(1920,1281),regionOfInterest=(1771.5,1181.5)"
+                                                                                loading="lazy"
+                                                                            />
 
-                                                            {/* Hidden images for preview group */}
-                                                            <div data-room-id={room.id} style={{ display: 'none' }}>
-                                                                {(room.packageData?.images || room.images || []).slice(5).map((img: any, index: number) => (
-                                                                    <Image
-                                                                        key={`hidden-${index}`}
-                                                                        className={index === 0 ? 'hidden-image-5' : ''}
-                                                                        src={typeof img === 'string' ? img : img.image_url}
-                                                                        preview={{
-                                                                            onVisibleChange: (visible) => {
-                                                                                if (visible) {
-                                                                                    setCurrentImageIndex(5 + index);
-                                                                                }
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                ))}
-                                                            </div>
-                                                        </Image.PreviewGroup>
+                                                                            {/* Image Count Badge */}
+                                                                            {allImageUrls.length > 1 && (
+                                                                                <div className="absolute bottom-3 right-3 transition-transform duration-300 group-hover:translate-y-1">
+                                                                                    <Tag className="border-0 shadow-lg text-white bg-black/60 backdrop-blur-sm rounded-full px-3">
+                                                                                        <PictureOutlined className="mr-2" />
+                                                                                        {allImageUrls.length} ảnh
+                                                                                    </Tag>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </Col>
+
+                                                                    {/* Thumbnail Grid */}
+                                                                    <Col xs={24} md={9}>
+                                                                        <div className="grid grid-cols-2 gap-3">
+                                                                            {allImageUrls.slice(1, 7).map((imageUrl: string, index: number) => {
+                                                                                const isLastThumbnail = index === 5 && allImageUrls.length > 5;
+                                                                                const remainingImages = allImageUrls.length - 5;
+                                                                                
+                                                                                return (
+                                                                                    <div key={index} className="relative overflow-hidden rounded-xl group">
+                                                                                        <Image
+                                                                                            alt={`${room.name} - Ảnh ${index + 2}`}
+                                                                                            src={imageUrl}
+                                                                                            className="w-full rounded-lg object-cover transition-transform duration-500 "
+                                                                                            style={{ height: '155px' }}
+                                                                                            fallback="https://dam.melia.com/melia/file/iXGwjwBVnTHehdUyTT57.jpg?im=RegionOfInterestCrop=(1920,1281),regionOfInterest=(1771.5,1181.5)"
+                                                                                            loading="lazy"
+                                                                                        />
+
+                                                                                        {/* Hover gradient for normal images */}
+                                                                                        {!isLastThumbnail && (
+                                                                                            <div className="absolute inset-0  to-transparent pointer-events-none opacity-50 group-hover:opacity-0 transition-opacity duration-300"></div>
+                                                                                        )}
+
+                                                                                        {/* Lớp phủ cho hình ảnh cuối cùng hiển thị số lượng còn lại */}
+                                                                                        {isLastThumbnail && remainingImages > 0 && (
+                                                                                            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-black/70">
+                                                                                                <div className="text-center text-white">
+                                                                                                    <PictureOutlined className="text-xl " />
+                                                                                                    <div className="text-sm">
+                                                                                                        +{remainingImages}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </Col>
+
+
+                                                                </Image.PreviewGroup>
+                                                            );
+                                                        })()}
                                                     </Row>
                                                 </div>
 
