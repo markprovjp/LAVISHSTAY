@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 // use Illuminate\Database\Eloquent\SoftDeletes; // Xóa hoặc comment dòng này
 
-class CheckoutPolicy extends Model
+class CheckOutPolicy extends Model
 {
     protected $table = 'check_out_policies';
     protected $primaryKey = 'policy_id';

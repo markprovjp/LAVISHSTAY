@@ -66,6 +66,7 @@ Route::get('/rooms/available/debug', [RoomAvailabilityController::class, 'debugD
 Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 'debugImagesAndAmenities']);
 // Thêm route mới cho customer search
 Route::get('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
+Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 
 
 // Rooms API  

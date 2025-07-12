@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SearchRoomPackageRequest;
+use App\Models\ChildrenSurcharge;
 use App\Services\RoomAvailabilityService;
 use App\Services\PricingService;
 use App\Models\Room;
 use App\Models\RoomType;
+use App\Services\PolicySelectorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -772,50 +776,59 @@ class RoomAvailabilityController extends Controller
      * Get available room packages for customers
      * Returns room packages with calculated rooms needed and total pricing
      */
+
     public function getAvailablePackages(Request $request): JsonResponse
     {
         try {
             Log::info('=== RoomAvailabilityController@getAvailablePackages START ===');
-            Log::info('Request data: ', $request->all());
+            Log::info('Request data:', $request->all());
 
+            // Validate input
             $validated = $request->validate([
                 'check_in_date' => 'required|date',
                 'check_out_date' => 'required|date|after:check_in_date',
-                'guest_count' => 'required|integer|min:1',
+                'rooms' => 'required|array|min:1',
+                'rooms.*.adults' => 'required|integer|min:1',
+                'rooms.*.children' => 'required|integer|min:0',
+                'rooms.*.childrenAges' => 'nullable|array',
+                'rooms.*.childrenAges.*.age' => 'required|integer|min:0',
             ]);
 
             $checkInDate = $validated['check_in_date'];
             $checkOutDate = $validated['check_out_date'];
-            $guestCount = $validated['guest_count'];
+            $rooms = $validated['rooms'];
+            $roomsRequested = count($rooms);
+            $totalAdults = collect($rooms)->sum('adults');
+            $totalChildren = collect($rooms)->sum('children');
 
-            // Calculate rooms needed (2 guests per room)
-            $roomsNeeded = ceil($guestCount / 2);
-
-            Log::info("Search criteria: check_in={$checkInDate}, check_out={$checkOutDate}, guests={$guestCount}, rooms_needed={$roomsNeeded}");
-
-            // Calculate nights for pricing
             $checkIn = \Carbon\Carbon::parse($checkInDate);
             $checkOut = \Carbon\Carbon::parse($checkOutDate);
             $nights = $checkIn->diffInDays($checkOut);
 
-            // Get available room types with sufficient rooms
-            $availableRoomTypes = $this->getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsNeeded);
+            $childrenSurchargeRules = ChildrenSurcharge::all();
+
+            $roomSurcharges = collect($rooms)->map(function ($room) use ($childrenSurchargeRules, $nights) {
+                $surchargePerNight = $this->calculateChildrenSurcharge($room, $childrenSurchargeRules);
+                return [
+                    'room' => $room,
+                    'surcharge_per_night' => $surchargePerNight,
+                    'total_surcharge' => $surchargePerNight * $nights
+                ];
+            });
+
+            Log::info("Search criteria: check_in={$checkInDate}, check_out={$checkOutDate}, total_adults={$totalAdults}, total_children={$totalChildren}");
+
+            $availableRoomTypes = $this->getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsRequested);
 
             if ($availableRoomTypes->isEmpty()) {
                 return response()->json([
                     'success' => true,
                     'data' => [],
-                    'message' => 'Không tìm thấy loại phòng nào đủ yêu cầu cho số khách và thời gian này',
-                    'summary' => [
-                        'total_packages' => 0,
-                        'search_criteria' => $validated,
-                        'rooms_needed' => $roomsNeeded,
-                        'nights' => $nights
-                    ]
+                    'message' => 'Không tìm thấy loại phòng nào đủ yêu cầu cho thời gian này',
+                    'summary' => compact('roomsRequested', 'nights', 'checkInDate', 'checkOutDate')
                 ]);
             }
 
-            // Get packages for available room types
             $packages = $this->getRoomTypePackagesWithServices($availableRoomTypes->pluck('room_type_id')->toArray());
 
             if ($packages->isEmpty()) {
@@ -823,43 +836,60 @@ class RoomAvailabilityController extends Controller
                     'success' => true,
                     'data' => [],
                     'message' => 'Không tìm thấy gói dịch vụ nào cho các loại phòng có sẵn',
-                    'summary' => [
-                        'total_packages' => 0,
-                        'search_criteria' => $validated,
-                        'rooms_needed' => $roomsNeeded,
-                        'nights' => $nights
-                    ]
+                    'summary' => compact('roomsRequested', 'nights', 'checkInDate', 'checkOutDate')
                 ]);
             }
 
-            // Build result with full information
-            $result = [];
             $packagesByRoomType = $packages->groupBy('room_type_id');
+            $result = [];
 
             foreach ($availableRoomTypes as $roomType) {
                 $roomTypeId = $roomType->room_type_id;
                 $roomTypePackages = $packagesByRoomType->get($roomTypeId, collect());
 
-                if ($roomTypePackages->isEmpty()) {
+                if ($roomTypePackages->isEmpty()) continue;
+
+                $adjustedPrice = $this->calculateAdjustedPrice($roomTypeId, $request);
+                $childrenSurchargeTotal = $roomSurcharges->sum('total_surcharge');
+
+                $maxAdultsPerRoom = $roomType->max_guests;
+                $maxChildrenPerRoom = 4;
+
+                $minRoomsForAdults = (int)ceil($totalAdults / $maxAdultsPerRoom);
+                $minRoomsForChildren = $totalChildren > 0 ? (int)ceil($totalChildren / $maxChildrenPerRoom) : 0;
+                $minRoomsNeeded = max($minRoomsForAdults, $minRoomsForChildren);
+
+                if ($roomsRequested < $minRoomsNeeded) {
+                    Log::info("⚠️ Room type {$roomType->room_type_name} không đáp ứng đủ max_guests. Cần tối thiểu {$minRoomsNeeded} phòng.");
                     continue;
                 }
 
-                // Get adjusted price for this room type
-                $adjustedPrice = $this->calculateAdjustedPrice($roomTypeId, $request);
-
-                // Get additional room type information
                 $images = $this->getRoomTypeImages($roomTypeId);
-                Log::info("Tìm thấy " . count($images) . " ảnh cho room_type_id: $roomTypeId");
                 $allAmenities = [];
                 $highlightedAmenities = [];
                 $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
 
-                // Process each package for this room type
-                $packageOptions = [];
+                $selector = new PolicySelectorService();
+                $occupancyPercent = $this->calculateOccupancyPercent($roomTypeId, $checkIn);
+                $isHoliday = $this->isHoliday($checkIn);
+
+                $policies = $selector->selectPolicies([
+                    'room_type_id' => $roomTypeId,
+                    'date' => $checkIn,
+                    'occupancy_percent' => $occupancyPercent,
+                    'is_holiday' => $isHoliday,
+                ]);
+                Log::info("🔍🔍🔍🔍Policies for room type!!!!!! {$roomType->room_type_name}: " . json_encode($policies));
+                $policySnapshot = [
+                    'cancellation' => $policies['cancellation_policy_applied'],
+                    'deposit' => $policies['deposit_policy_applied'],
+                    'check_out' => $policies['check_out_policy_applied'],
+                ];
+
+                
                 foreach ($roomTypePackages as $package) {
-                    // Calculate total price: (adjusted_price + package_modifier) * rooms_needed * nights
                     $pricePerRoomPerNight = $adjustedPrice + $package->price_modifier_vnd;
-                    $totalPackagePrice = $pricePerRoomPerNight * $roomsNeeded * $nights;
+                    $totalPackagePrice = ($pricePerRoomPerNight * $roomsRequested * $nights) + $childrenSurchargeTotal;
 
                     $packageOptions[] = [
                         'package_id' => $package->package_id,
@@ -874,31 +904,24 @@ class RoomAvailabilityController extends Controller
                             'adjusted_price_per_night' => $adjustedPrice,
                             'package_modifier' => $package->price_modifier_vnd,
                             'final_price_per_room_per_night' => $pricePerRoomPerNight,
-                            'rooms_needed' => $roomsNeeded,
+                            'rooms_requested' => $roomsRequested,
                             'nights' => $nights,
+                            'children_surcharge_total' => $childrenSurchargeTotal,
                             'total_price' => $totalPackagePrice,
                             'currency' => 'VND'
                         ]
                     ];
                 }
 
-                // Sort packages by total price (ascending)
-                usort($packageOptions, function ($a, $b) {
-                    return $a['total_package_price'] <=> $b['total_package_price'];
-                });
+                usort($packageOptions, fn($a, $b) => $a['total_package_price'] <=> $b['total_package_price']);
 
-                // Set main image
-                $mainImage = null;
-                if (!empty($images)) {
-                    $mainImage = collect($images)->firstWhere('is_main', true) ?: $images[0];
-                }
+                $mainImage = !empty($images) ? (collect($images)->firstWhere('is_main', true) ?: $images[0]) : null;
 
                 $result[] = [
                     'room_type_id' => $roomTypeId,
                     'room_type_name' => $roomType->room_type_name,
                     'bed_type_name' => $roomType->bed_type_names,
                     'room_code' => $roomType->room_code,
-                    'bed_type_name' => $roomType->bed_type_names,
                     'description' => $roomType->description,
                     'size' => $roomType->size,
                     'max_guests' => $roomType->max_guests,
@@ -906,7 +929,8 @@ class RoomAvailabilityController extends Controller
                     'base_price' => $roomType->base_price,
                     'adjusted_price' => $adjustedPrice,
                     'available_rooms' => $roomType->available_rooms,
-                    'rooms_needed' => $roomsNeeded,
+                    'rooms_requested' => $roomsRequested,
+                    'min_rooms_needed' => $minRoomsNeeded,
                     'images' => $images,
                     'main_image' => $mainImage,
                     'amenities' => $allAmenities,
@@ -914,18 +938,25 @@ class RoomAvailabilityController extends Controller
                     'package_options' => $packageOptions,
                     'cheapest_package_price' => $packageOptions[0]['total_package_price'] ?? 0,
                     'search_criteria' => [
-                        'guest_count' => $guestCount,
                         'check_in_date' => $checkInDate,
                         'check_out_date' => $checkOutDate,
-                        'nights' => $nights
-                    ]
+                        'nights' => $nights,
+                        'room_count' => $roomsRequested,
+                        'total_adults' => $totalAdults,
+                        'total_children' => $totalChildren,
+                        'children_ages' => array_map(fn($room) => $room['childrenAges'] ?? [], $rooms)
+                    ],
+                    'policies' => [
+                        'cancellation_policy_id' => $policies['cancellation_policy_id'],
+                        'deposit_policy_id' => $policies['deposit_policy_id'],
+                        'check_out_policy_id' => $policies['check_out_policy_id'],
+                        'policy_applied_date' => $checkIn->toDateString(),
+                        'policy_snapshot' => $policySnapshot,
+                    ],
                 ];
             }
 
-            // Sort result by cheapest package price
-            usort($result, function ($a, $b) {
-                return $a['cheapest_package_price'] <=> $b['cheapest_package_price'];
-            });
+            usort($result, fn($a, $b) => $a['cheapest_package_price'] <=> $b['cheapest_package_price']);
 
             Log::info('=== RoomAvailabilityController@getAvailablePackages SUCCESS ===');
             Log::info('Found ' . count($result) . ' room types with packages');
@@ -935,12 +966,11 @@ class RoomAvailabilityController extends Controller
                 'data' => $result,
                 'summary' => [
                     'total_room_types' => count($result),
-                    'total_packages' => array_sum(array_map(function ($rt) {
-                        return count($rt['package_options']);
-                    }, $result)),
-                    'search_criteria' => $validated,
-                    'rooms_needed' => $roomsNeeded,
-                    'nights' => $nights
+                    'total_packages' => array_sum(array_map(fn($rt) => count($rt['package_options']), $result)),
+                    'rooms_requested' => $roomsRequested,
+                    'nights' => $nights,
+                    'total_adults' => $totalAdults,
+                    'total_children' => $totalChildren
                 ],
                 'message' => 'Danh sách gói phòng có sẵn đã được tải thành công'
             ]);
@@ -956,7 +986,6 @@ class RoomAvailabilityController extends Controller
             Log::error('Error message: ' . $e->getMessage());
             Log::error('File: ' . $e->getFile());
             Log::error('Line: ' . $e->getLine());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'success' => false,
@@ -968,74 +997,131 @@ class RoomAvailabilityController extends Controller
         }
     }
 
+
+    protected function calculateChildrenSurcharge(array $room, $childrenSurchargeRules): int
+    {
+        if (empty($room['childrenAges'])) {
+            return 0;
+        }
+
+        $surchargeTotal = 0;
+
+        foreach ($room['childrenAges'] as $child) {
+            $age = $child['age'];
+
+            $rule = $childrenSurchargeRules->first(function ($rule) use ($age) {
+                return $age >= $rule->min_age && $age <= $rule->max_age;
+            });
+
+            if (!$rule) {
+                Log::warning("Không tìm thấy quy định phụ thu cho độ tuổi {$age}");
+                continue;
+            }
+
+            if ($rule->is_free) {
+                continue;
+            }
+
+            // Không xử lý giường phụ, nên chỉ cần cộng surcharge_amount_vnd
+            $surchargeAmount = $rule->surcharge_amount_vnd ?? 0;
+            $surchargeTotal += $surchargeAmount;
+        }
+
+        return $surchargeTotal;
+    }
+
+
+    private function calculateOccupancyPercent($roomTypeId, $date)
+    {
+        $booked = DB::table('room_occupancy')
+            ->where('room_type_id', $roomTypeId)
+            ->where('date', $date->toDateString())
+            ->value('booked_rooms');
+
+        $total = DB::table('room')
+            ->where('room_type_id', $roomTypeId)
+            ->count();
+
+        return $total > 0 ? intval(($booked / $total) * 100) : 0;
+    }
+
+    private function isHoliday($date)
+    {
+        return DB::table('holidays')
+            ->where('start_date', '<=', $date)
+            ->where('end_date', '>=', $date)
+            ->exists();
+    }
+
+
     /**
      * Get available room types with sufficient rooms for packages
      */
-  private function getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsNeeded)
-{
-    try {
-        $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
-        if (empty($roomTableExists)) {
-            $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
+    private function getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsNeeded)
+    {
+        try {
+            $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
             if (empty($roomTableExists)) {
-                throw new \Exception('No room table found');
+                $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
+                if (empty($roomTableExists)) {
+                    throw new \Exception('No room table found');
+                }
+                $roomTable = 'rooms';
+                $roomIdColumn = 'id';
+            } else {
+                $roomTable = 'room';
+                $roomIdColumn = 'room_id';
             }
-            $roomTable = 'rooms';
-            $roomIdColumn = 'id';
-        } else {
-            $roomTable = 'room';
-            $roomIdColumn = 'room_id';
+
+            // Build the query using raw SQL similar to your provided query
+            $sql = "
+            WITH booking_summary AS (
+                SELECT 
+                    room_type_id,
+                    SUM(quantity) AS booked_quantity
+                FROM booking
+                WHERE 
+                    status IN ('pending', 'confirmed')
+                    AND check_in_date < ?
+                    AND check_out_date > ?
+                GROUP BY room_type_id
+            ),
+            available_rooms AS (
+                SELECT 
+                    rt.room_type_id,
+                    rt.name AS room_type_name,
+                    rt.room_code,
+                    rt.description,
+                    rt.base_price,
+                    rt.room_area as size,
+                    rt.max_guests,
+                    rt.rating,
+                    COUNT(r.{$roomIdColumn}) AS total_rooms,
+                    COALESCE(bs.booked_quantity, 0) AS booked_rooms,
+                    COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms,
+                    GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
+                FROM room_types rt
+                JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
+                LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
+                LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
+                WHERE rt.is_active = 1
+                GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
+                HAVING COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) >= ?
+            )
+            SELECT * FROM available_rooms
+            ORDER BY room_type_id
+            ";
+
+            $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);
+
+            Log::info("Found " . count($availableRoomTypes) . " room types with at least {$roomsNeeded} available rooms");
+
+            return collect($availableRoomTypes);
+        } catch (\Exception $e) {
+            Log::error('Error getting available room types for packages: ' . $e->getMessage());
+            throw $e;
         }
-
-        // Build the query using raw SQL similar to your provided query
-        $sql = "
-        WITH booking_summary AS (
-            SELECT 
-                room_type_id,
-                SUM(quantity) AS booked_quantity
-            FROM booking
-            WHERE 
-                status IN ('pending', 'confirmed')
-                AND check_in_date < ?
-                AND check_out_date > ?
-            GROUP BY room_type_id
-        ),
-        available_rooms AS (
-            SELECT 
-                rt.room_type_id,
-                rt.name AS room_type_name,
-                rt.room_code,
-                rt.description,
-                rt.base_price,
-                rt.room_area as size,
-                rt.max_guests,
-                rt.rating,
-                COUNT(r.{$roomIdColumn}) AS total_rooms,
-                COALESCE(bs.booked_quantity, 0) AS booked_rooms,
-                COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms,
-                GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
-            FROM room_types rt
-            JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
-            LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
-            LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
-            WHERE rt.is_active = 1
-            GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
-            HAVING COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) >= ?
-        )
-        SELECT * FROM available_rooms
-        ORDER BY room_type_id
-        ";
-
-        $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);
-
-        Log::info("Found " . count($availableRoomTypes) . " room types with at least {$roomsNeeded} available rooms");
-
-        return collect($availableRoomTypes);
-    } catch (\Exception $e) {
-        Log::error('Error getting available room types for packages: ' . $e->getMessage());
-        throw $e;
     }
-}
 
     /**
      * Get room type packages with services
