@@ -30,6 +30,7 @@ import NotFound from "./pages/NotFound";
 import SearchResults from "./pages/SearchResults";
 import RoomTypesDetailsPage from "./pages/RoomTypesDetailsPage";
 import BookingConfirmation from "./pages/BookingConfirmation"
+import RoomTypesDemo from "./pages/RoomTypesDemo";
 
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
@@ -127,6 +128,7 @@ const App: React.FC = React.memo(() => {
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+            <Route path="/room-types-demo" element={<RoomTypesDemo />} />
 
             {/* Auth Routes */}
             <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />

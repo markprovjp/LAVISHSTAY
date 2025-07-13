@@ -1,0 +1,229 @@
+/* Room Type Showcase Styles */
+.room-type-showcase {
+  @apply w-full;
+}
+
+.horizontal-room-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent !important;
+    overflow: hidden;
+}
+
+.horizontal-room-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.room-carousel .ant-carousel-dots {
+    bottom: 16px;
+}
+
+.room-carousel .ant-carousel-dots li button {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+}
+
+.room-carousel .ant-carousel-dots li.ant-carousel-dot-active button {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.room-carousel .slick-arrow {
+    z-index: 10;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.room-carousel .slick-arrow:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.room-carousel .slick-arrow:before {
+    display: none;
+}
+
+.room-carousel .slick-prev {
+    left: 16px;
+}
+
+.room-carousel .slick-next {
+    right: 16px;
+}
+
+/* Custom dots for carousel */
+.custom-dots .slick-dots {
+  bottom: 16px !important;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-dots .slick-dots li {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+}
+
+.custom-dots .slick-dots li button {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transition: all 0.3s ease !important;
+}
+
+.custom-dots .slick-dots li.slick-active button {
+  background: rgba(255, 255, 255, 0.9) !important;
+  width: 12px !important;
+  height: 12px !important;
+  transform: scale(1.2);
+}
+
+.custom-dots .slick-dots li button:hover {
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Smooth animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.room-type-showcase .ant-card {
+  animation: slideInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* Hover effects */
+.room-type-showcase .ant-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Image hover effects */
+.room-type-showcase .ant-image:hover img {
+  transform: scale(1.05);
+}
+
+/* Button hover effects */
+.room-type-showcase .ant-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Stats cards animation */
+.stats-card {
+  transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Amenity item hover */
+.amenity-item {
+  transition: all 0.2s ease;
+}
+
+.amenity-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  transform: translateX(4px);
+}
+
+/* Badge animations */
+.room-type-badge {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .room-type-showcase .ant-card {
+    margin-bottom: 24px;
+  }
+  
+  .custom-dots .slick-dots {
+    bottom: 8px !important;
+  }
+}
+
+/* Loading animation */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+.room-type-showcase * {
+  transition: all 0.3s ease;
+}
+
+/* Custom scrollbar */
+.room-type-showcase::-webkit-scrollbar {
+  width: 6px;
+}
+
+.room-type-showcase::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.room-type-showcase::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.room-type-showcase::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

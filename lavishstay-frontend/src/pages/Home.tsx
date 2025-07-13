@@ -8,7 +8,7 @@ import SearchForm from "../components/SearchForm";
 import SectionHeader from "../components/SectionHeader";
 import Testimonial from "../components/Testimonial";
 import Newsletter from "../components/Newsletter";
-import RoomTypeCard from "../components/ui/RoomTypeCard";
+import RoomTypeShowcase from '../components/ui/RoomTypeShowcaseNew';
 import Awards from "../components/ui/Awards";
 import HotelActivities from "../components/ui/HotelActivities";
 
@@ -119,26 +119,9 @@ const Home: React.FC = () => {
             <div className="text-center py-10">
               <Spin size="large" tip="Đang tải loại phòng..." />
             </div>
-          ) : roomTypesData?.data?.length ? (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-            {roomTypesData.data.map((roomType: any) => (
-              <RoomTypeCard
-                key={roomType.id}
-                id={roomType.id}
-                name={roomType.name}
-                //base_price vnd
-                base_price={roomType.base_price}
-                adjusted_price={roomType.adjusted_price}
-                room_code={roomType.room_code}
-                size={roomType.size}
-                view={roomType.view}
-                max_guests={roomType.max_guests}
-                amenities={roomType.amenities || []}
-                highlighted_amenities={roomType.highlighted_amenities || []}
-                main_image={roomType.main_image}
-                rating={roomType.rating}
-            />
-            ))}
-          </div>) : (
+          ) : roomTypesData?.data?.length ? (
+            <RoomTypeShowcase searchResult={roomTypesData} />
+          ) : (
             <div className="text-center py-10">
               <p>Không có loại phòng nào vào thời điểm hiện tại</p>
             </div>

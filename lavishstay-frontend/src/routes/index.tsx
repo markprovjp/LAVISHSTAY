@@ -15,6 +15,7 @@ import Home from "../pages/Home";
 import About from "../pages/About";
 import SearchResults from "../pages/SearchResults";
 import RoomDetailsPage from "../pages/RoomTypesDetailsPage";
+import RoomTypesDemo from "../pages/RoomTypesDemo";
 // import Login from "../pages/Login";
 // import Register from "../pages/Register";
 import Dashboard from "../pages/dashboard/Dashboard";
@@ -32,6 +33,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/about" element={<About />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+          <Route path="/room-types-demo" element={<RoomTypesDemo />} />
         </Route>
       </Route>
       {/* Các tuyến đường Auth - Chỉ dành cho người dùng không xác định nha */}
