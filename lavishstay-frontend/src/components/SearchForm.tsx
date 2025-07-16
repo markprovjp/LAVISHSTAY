@@ -312,7 +312,7 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
                         icon={<PlusOutlined />}
                         size="small"
                         onClick={() => handleRoomGuestChange(roomIndex, 'adults', 'increase')}
-                        disabled={room.adults >= 2}
+                        disabled={room.adults >= 4}
                         className="w-6 h-6"
                       />
                     </div>
