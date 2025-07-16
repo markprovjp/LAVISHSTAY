@@ -25,7 +25,6 @@ yarn-error.log*
 # Laravel
 /lavishstay-backend/vendor/
 /lavishstay-backend/.env
-/lavishstay-backend/storage/
 /lavishstay-backend/node_modules/
 /lavishstay-backend/.phpunit.result.cache
 /lavishstay-backend/bootstrap/cache/
