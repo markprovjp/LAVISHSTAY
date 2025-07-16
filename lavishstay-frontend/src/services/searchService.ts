@@ -18,6 +18,28 @@ interface RoomPackageApiResponse {
     message: string;
 }
 
+interface PolicyInfo {
+    policy_id?: number;
+    name?: string;
+    description?: string;
+    free_cancellation_days?: number;
+    penalty_percentage?: number;
+    penalty_fixed_amount_vnd?: number;
+    deposit_percentage?: number;
+    deposit_fixed_amount_vnd?: number;
+    early_check_out_fee_vnd?: number;
+    late_check_out_fee_vnd?: number;
+    standard_check_out_time?: string;
+    applies_to_weekend?: boolean;
+    applies_to_holiday?: boolean;
+}
+
+interface PackagePolicies {
+    cancellation?: PolicyInfo;
+    deposit?: PolicyInfo;
+    check_out?: PolicyInfo;
+}
+
 interface RoomPackageData {
     room_type_id: number;
     bed_type_name: string; // Added bed_type_name
@@ -77,6 +99,7 @@ interface RoomPackageData {
             total_price: number;
             currency: string;
         };
+        policies?: PackagePolicies; // Added policies field
     }>;
     cheapest_package_price: number;
     search_criteria: {
@@ -85,6 +108,7 @@ interface RoomPackageData {
         check_out_date: string;
         nights: number;
     };
+    policies?: PackagePolicies; // Added policies field for room type
 }
 
 interface FrontendSearchResult {
@@ -194,7 +218,7 @@ export const searchService = {
     transformRoomPackageData(roomPackages: RoomPackageData[], summary: any): any[] {
         return roomPackages.map(packageData => {
             // Get main image
-            const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url ;
+            const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url;
 
             // Get all images
             const images = packageData.images?.map(img => img.image_url) || [mainImage];
@@ -212,8 +236,20 @@ export const searchService = {
                 maxGuests: packageData.max_guests,
                 minGuests: 1,
                 roomType: packageData.room_code,
-                cancellationPolicy: 'Free cancellation before 24h',
-                paymentPolicy: 'Pay at hotel or online',
+                // Get cancellation policy from API instead of hardcoding
+                cancellationPolicy: pkg.policies?.cancellation?.description || 'Chính sách hủy phòng theo quy định',
+                freeCancellationDays: pkg.policies?.cancellation?.free_cancellation_days,
+                penaltyPercentage: pkg.policies?.cancellation?.penalty_percentage,
+                penaltyFixedAmount: pkg.policies?.cancellation?.penalty_fixed_amount_vnd,
+                // Get payment policy from API
+                paymentPolicy: pkg.policies?.deposit?.description || 'Chính sách thanh toán theo quy định',
+                depositPercentage: pkg.policies?.deposit?.deposit_percentage,
+                depositFixedAmount: pkg.policies?.deposit?.deposit_fixed_amount_vnd,
+                // Get check-out policy from API
+                checkOutPolicy: pkg.policies?.check_out?.description || 'Chính sách trả phòng theo quy định',
+                standardCheckOutTime: pkg.policies?.check_out?.standard_check_out_time,
+                lateCheckOutFee: pkg.policies?.check_out?.late_check_out_fee_vnd,
+                earlyCheckOutFee: pkg.policies?.check_out?.early_check_out_fee_vnd,
                 availability: parseInt(packageData.available_rooms) || 0,
                 additionalServices: pkg.services || [],
                 promotion: pkg.price_modifier_vnd !== "0.00" ? {
@@ -223,7 +259,9 @@ export const searchService = {
                 } : null,
                 recommended: pkg.package_name.toLowerCase().includes('standard'),
                 mostPopular: pkg.package_name.toLowerCase().includes('premium'),
-                pricing: pkg.pricing_breakdown
+                pricing: pkg.pricing_breakdown,
+                // Include full policy information
+                policies: pkg.policies
             }));
 
             // Add base option if no package options exist
@@ -240,8 +278,18 @@ export const searchService = {
                     maxGuests: packageData.max_guests,
                     minGuests: 1,
                     roomType: packageData.room_code,
-                    cancellationPolicy: 'Free cancellation before 24h',
-                    paymentPolicy: 'Pay at hotel or online',
+                    // Use policies from room type if available
+                    cancellationPolicy: packageData.policies?.cancellation?.description || 'Chính sách hủy phòng theo quy định',
+                    freeCancellationDays: packageData.policies?.cancellation?.free_cancellation_days,
+                    penaltyPercentage: packageData.policies?.cancellation?.penalty_percentage,
+                    penaltyFixedAmount: packageData.policies?.cancellation?.penalty_fixed_amount_vnd,
+                    paymentPolicy: packageData.policies?.deposit?.description || 'Chính sách thanh toán theo quy định',
+                    depositPercentage: packageData.policies?.deposit?.deposit_percentage,
+                    depositFixedAmount: packageData.policies?.deposit?.deposit_fixed_amount_vnd,
+                    checkOutPolicy: packageData.policies?.check_out?.description || 'Chính sách trả phòng theo quy định',
+                    standardCheckOutTime: packageData.policies?.check_out?.standard_check_out_time,
+                    lateCheckOutFee: packageData.policies?.check_out?.late_check_out_fee_vnd,
+                    earlyCheckOutFee: packageData.policies?.check_out?.early_check_out_fee_vnd,
                     availability: parseInt(packageData.available_rooms) || 0,
                     additionalServices: [],
                     promotion: null,
@@ -256,7 +304,8 @@ export const searchService = {
                         nights: summary.nights,
                         total_price: packageData.adjusted_price * summary.nights,
                         currency: "VND"
-                    }
+                    },
+                    policies: packageData.policies
                 });
             }
 
@@ -265,7 +314,7 @@ export const searchService = {
                 name: packageData.room_type_name,
                 roomType: packageData.room_code,
                 room_code: packageData.room_code,
-                description: packageData.description ,
+                description: packageData.description,
                 image: mainImage,
                 images: images,
                 size: packageData.size,

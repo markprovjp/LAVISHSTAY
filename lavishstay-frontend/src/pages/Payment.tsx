@@ -247,6 +247,26 @@ const Payment: React.FC = () => {
                         option_id: roomSummary.optionId,
                         option_name: roomSummary.option.name,
                         option_price: optionPricePerNight, // Price per night for option
+                        // Include full policies information from room summary
+                        policies: (roomSummary.room as any)?.policies || (roomSummary.option as any)?.policies || {},
+                        // Include individual policy fields for easier backend access
+                        package_id: (roomSummary.option as any)?.id?.replace('pkg-', '') || null,
+                        meal_type: (roomSummary.option as any)?.mealType || null,
+                        bed_type: (roomSummary.option as any)?.bedType || null,
+                        most_popular: (roomSummary.option as any)?.mostPopular ? 1 : 0,
+                        recommended: (roomSummary.option as any)?.recommended ? 1 : 0,
+                        urgency_message: (roomSummary.option as any)?.urgencyMessage || null,
+                        recommendation_score: (roomSummary.option as any)?.recommendationScore || null,
+                        // Policy fields for easier access
+                        cancellation_policy: (roomSummary.option as any)?.cancellationPolicy,
+                        payment_policy: (roomSummary.option as any)?.paymentPolicy,
+                        check_out_policy: (roomSummary.option as any)?.checkOutPolicy,
+                        deposit_percentage: (roomSummary.option as any)?.depositPercentage,
+                        deposit_fixed_amount: (roomSummary.option as any)?.depositFixedAmount,
+                        free_cancellation_days: (roomSummary.option as any)?.freeCancellationDays,
+                        penalty_percentage: (roomSummary.option as any)?.penaltyPercentage,
+                        penalty_fixed_amount: (roomSummary.option as any)?.penaltyFixedAmount,
+                        standard_check_out_time: (roomSummary.option as any)?.standardCheckOutTime
                     };
 
                     console.log(`🔍 Debug - Room ${i} payload:`, roomPayload);
@@ -277,6 +297,17 @@ const Payment: React.FC = () => {
                         option_id: roomSummary.optionId,
                         option_name: roomSummary.option.name,
                         option_price: optionPricePerNight,
+                        // Add missing fields for consistency
+                        policies: (roomSummary.option as any)?.policies || 
+                                 (roomSummary as any)?.policies || 
+                                 {
+                                     cancellation: { description: 'Chính sách hủy phòng sẽ được áp dụng theo quy định' },
+                                     deposit: { description: 'Chính sách thanh toán theo quy định' },
+                                     check_out: { description: 'Chính sách trả phòng theo quy định' }
+                                 },
+                        package_id: (roomSummary.option as any)?.packageId || null,
+                        meal_type: (roomSummary.option as any)?.mealType || null,
+                        bed_type: (roomSummary.option as any)?.bedType || null,
                     };
                 }));
             }
@@ -664,3 +695,4 @@ const Payment: React.FC = () => {
 };
 
 export default Payment;
+

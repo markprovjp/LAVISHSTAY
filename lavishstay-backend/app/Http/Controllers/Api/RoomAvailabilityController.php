@@ -880,13 +880,15 @@ class RoomAvailabilityController extends Controller
                     'is_holiday' => $isHoliday,
                 ]);
                 Log::info("🔍🔍🔍🔍Policies for room type!!!!!! {$roomType->room_type_name}: " . json_encode($policies));
+                
+                // Construct complete policy information
                 $policySnapshot = [
                     'cancellation' => $policies['cancellation_policy_applied'],
                     'deposit' => $policies['deposit_policy_applied'],
                     'check_out' => $policies['check_out_policy_applied'],
                 ];
 
-                
+                $packageOptions = [];
                 foreach ($roomTypePackages as $package) {
                     $pricePerRoomPerNight = $adjustedPrice + $package->price_modifier_vnd;
                     $totalPackagePrice = ($pricePerRoomPerNight * $roomsRequested * $nights) + $childrenSurchargeTotal;
@@ -909,6 +911,41 @@ class RoomAvailabilityController extends Controller
                             'children_surcharge_total' => $childrenSurchargeTotal,
                             'total_price' => $totalPackagePrice,
                             'currency' => 'VND'
+                        ],
+                        // Add complete policy information to each package
+                        'policies' => [
+                            'cancellation' => [
+                                'policy_id' => $policies['cancellation_policy_id'],
+                                'name' => $policies['cancellation_policy_applied']?->name,
+                                'free_cancellation_days' => $policies['cancellation_policy_applied']?->free_cancellation_days,
+                                'penalty_percentage' => $policies['cancellation_policy_applied']?->penalty_percentage,
+                                'penalty_fixed_amount_vnd' => $policies['cancellation_policy_applied']?->penalty_fixed_amount_vnd,
+                                'description' => $policies['cancellation_policy_applied']?->description,
+                                'applies_to_weekend' => $policies['cancellation_policy_applied']?->applies_to_weekend,
+                                'applies_to_holiday' => $policies['cancellation_policy_applied']?->applies_to_holiday
+                            ],
+                            'deposit' => [
+                                'policy_id' => $policies['deposit_policy_id'],
+                                'name' => $policies['deposit_policy_applied']?->name,
+                                'deposit_percentage' => $policies['deposit_policy_applied']?->deposit_percentage,
+                                'deposit_fixed_amount_vnd' => $policies['deposit_policy_applied']?->deposit_fixed_amount_vnd,
+                                'description' => $policies['deposit_policy_applied']?->description,
+                                'min_days_before_checkin' => $policies['deposit_policy_applied']?->min_days_before_checkin,
+                                'applies_to_weekend' => $policies['deposit_policy_applied']?->applies_to_weekend,
+                                'applies_to_holiday' => $policies['deposit_policy_applied']?->applies_to_holiday
+                            ],
+                            'check_out' => [
+                                'policy_id' => $policies['check_out_policy_id'],
+                                'name' => $policies['check_out_policy_applied']?->name,
+                                'early_check_out_fee_vnd' => $policies['check_out_policy_applied']?->early_check_out_fee_vnd,
+                                'late_check_out_fee_vnd' => $policies['check_out_policy_applied']?->late_check_out_fee_vnd,
+                                'late_check_out_max_hours' => $policies['check_out_policy_applied']?->late_check_out_max_hours,
+                                'early_check_out_max_hours' => $policies['check_out_policy_applied']?->early_check_out_max_hours,
+                                'standard_check_out_time' => $policies['check_out_policy_applied']?->standard_check_out_time,
+                                'description' => $policies['check_out_policy_applied']?->description,
+                                'applies_to_weekend' => $policies['check_out_policy_applied']?->applies_to_weekend,
+                                'applies_to_holiday' => $policies['check_out_policy_applied']?->applies_to_holiday
+                            ]
                         ]
                     ];
                 }

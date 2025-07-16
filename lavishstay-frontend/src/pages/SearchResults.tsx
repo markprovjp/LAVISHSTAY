@@ -40,9 +40,9 @@ import {
     RotateLeftOutlined,
     RotateRightOutlined,
     SwapOutlined,
-    UndoOutlined ,
+    UndoOutlined,
     LeftOutlined,
-  RightOutlined,
+    RightOutlined,
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
@@ -178,8 +178,6 @@ const SearchResults: React.FC = () => {
         }));
     };    // Handle booking with rooms_needed from API
     const handleBookRoom = (room: any, packageOption: any) => {
-
-
         // Khi người dùng chọn một gói phòng, họ chỉ đặt 1 phòng, không phải nhiều phòng
         const roomsNeeded = 1;
 
@@ -202,9 +200,32 @@ const SearchResults: React.FC = () => {
         // Đã được tính toán đúng và hiển thị trên UI
         const totalPrice = packageOption.totalPrice || 0;
 
+        // Prepare room data with full policy information
+        const roomDataWithPolicies = {
+            ...room,
+            option_name: packageOption.name,
+            option_price: packageOption.totalPrice,
+            room_price: packageOption.pricePerNight?.vnd || packageOption.totalPrice,
+            package_id: packageOption.id.replace('pkg-', ''), // Remove prefix if exists
+            // Include full policies data from API
+            policies: packageOption.policies || {},
+            // Include individual policy fields for easier access
+            cancellation_policy: packageOption.cancellationPolicy,
+            payment_policy: packageOption.paymentPolicy,
+            check_out_policy: packageOption.checkOutPolicy,
+            deposit_percentage: packageOption.depositPercentage,
+            deposit_fixed_amount: packageOption.depositFixedAmount,
+            free_cancellation_days: packageOption.freeCancellationDays,
+            penalty_percentage: packageOption.penaltyPercentage,
+            penalty_fixed_amount: packageOption.penaltyFixedAmount,
+            standard_check_out_time: packageOption.standardCheckOutTime,
+            meal_type: packageOption.mealType,
+            bed_type: packageOption.bedType
+        };
+
         // Dispatch đơn giản để chuẩn bị cho trang thanh toán
         dispatch(initializeBookingSelection({
-            room: room,
+            room: roomDataWithPolicies, // Pass room with policies
             option: packageOption,
             quantity: roomsNeeded
         }));
@@ -447,7 +468,7 @@ const SearchResults: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                                                       {/* Image Gallery */}
+                                                {/* Image Gallery */}
                                                 <div className="mb-6">
                                                     <Row gutter={[12, 12]}>
                                                         {/* Get all images for this room */}
@@ -479,43 +500,43 @@ const SearchResults: React.FC = () => {
                                                                             },
                                                                         ) => (
                                                                             <Space size={12} className="flex items-center justify-center w-full px-4 py-3 bg-black/80 rounded-lg">
-                                                                                <LeftOutlined 
-                                                                                    onClick={() => onActive?.(-1)} 
+                                                                                <LeftOutlined
+                                                                                    onClick={() => onActive?.(-1)}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-                                                                                <RightOutlined 
-                                                                                    onClick={() => onActive?.(1)} 
+                                                                                <RightOutlined
+                                                                                    onClick={() => onActive?.(1)}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-                                                                                <SwapOutlined 
-                                                                                    rotate={90} 
-                                                                                    onClick={onFlipY} 
+                                                                                <SwapOutlined
+                                                                                    rotate={90}
+                                                                                    onClick={onFlipY}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-                                                                                <SwapOutlined 
-                                                                                    onClick={onFlipX} 
+                                                                                <SwapOutlined
+                                                                                    onClick={onFlipX}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-                                                                                <RotateLeftOutlined 
-                                                                                    onClick={onRotateLeft} 
+                                                                                <RotateLeftOutlined
+                                                                                    onClick={onRotateLeft}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-                                                                                <RotateRightOutlined 
-                                                                                    onClick={onRotateRight} 
+                                                                                <RotateRightOutlined
+                                                                                    onClick={onRotateRight}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
-                                                                                <ZoomOutOutlined 
-                                                                                    disabled={scale === 1} 
-                                                                                    onClick={onZoomOut} 
+                                                                                <ZoomOutOutlined
+                                                                                    disabled={scale === 1}
+                                                                                    onClick={onZoomOut}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl disabled:text-gray-500"
                                                                                 />
-                                                                                <ZoomInOutlined 
-                                                                                    disabled={scale === 50} 
-                                                                                    onClick={onZoomIn} 
+                                                                                <ZoomInOutlined
+                                                                                    disabled={scale === 50}
+                                                                                    onClick={onZoomIn}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl disabled:text-gray-500"
                                                                                 />
-                                                                                <UndoOutlined 
-                                                                                    onClick={onReset} 
+                                                                                <UndoOutlined
+                                                                                    onClick={onReset}
                                                                                     className="text-white hover:text-blue-400 cursor-pointer transition-colors text-xl"
                                                                                 />
                                                                             </Space>
@@ -560,7 +581,7 @@ const SearchResults: React.FC = () => {
                                                                             {allImageUrls.slice(1, 7).map((imageUrl: string, index: number) => {
                                                                                 const isLastThumbnail = index === 5 && allImageUrls.length > 5;
                                                                                 const remainingImages = allImageUrls.length - 5;
-                                                                                
+
                                                                                 return (
                                                                                     <div key={index} className="relative overflow-hidden rounded-xl group">
                                                                                         <Image
@@ -626,7 +647,7 @@ const SearchResults: React.FC = () => {
                                                             }}
                                                             className="text-blue-600"
                                                         >
-                                                            So sánh gói
+                                                            Xem chi tiết và so sánh gói
                                                         </Button>
                                                     </div>
 
@@ -1128,16 +1149,49 @@ const SearchResults: React.FC = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Package Features */}
+                                                    {/* Package Features - Using API data instead of hardcoded values */}
                                                     <div className="space-y-2">
-                                                        <div className="flex items-center text-sm">
-                                                            <CheckOutlined className="text-green-500 mr-2" />
-                                                            <span>Hủy miễn phí trước 24h</span>
-                                                        </div>
-                                                        <div className="flex items-center text-sm">
-                                                            <CheckOutlined className="text-green-500 mr-2" />
-                                                            <span>Thanh toán tại khách sạn hoặc online</span>
-                                                        </div>
+                                                        {/* Cancellation Policy */}
+                                                        {option.cancellationPolicy && (
+                                                            <div className="flex items-center text-sm">
+                                                                <CheckOutlined className="text-green-500 mr-2" />
+                                                                <span>{option.cancellationPolicy}</span>
+                                                                {option.freeCancellationDays && (
+                                                                    <span className="text-gray-500 ml-1">
+                                                                        (Miễn phí {option.freeCancellationDays} ngày trước check-in)
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Payment Policy */}
+                                                        {option.paymentPolicy && (
+                                                            <div className="flex items-center text-sm">
+                                                                <CheckOutlined className="text-green-500 mr-2" />
+                                                                <span>{option.paymentPolicy}</span>
+                                                                {(option.depositPercentage || option.depositFixedAmount) && (
+                                                                    <span className="text-gray-500 ml-1">
+                                                                        (Đặt cọc: {option.depositPercentage ? `${option.depositPercentage}%` : ''}
+                                                                        {option.depositFixedAmount ? `${formatVND(option.depositFixedAmount)}` : ''})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Check-out Policy */}
+                                                        {option.checkOutPolicy && (
+                                                            <div className="flex items-center text-sm">
+                                                                <CheckOutlined className="text-green-500 mr-2" />
+                                                                <span>{option.checkOutPolicy}</span>
+                                                                {option.standardCheckOutTime && (
+                                                                    <span className="text-gray-500 ml-1">
+                                                                        (Trả phòng: {option.standardCheckOutTime})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Always show instant confirmation */}
                                                         <div className="flex items-center text-sm">
                                                             <CheckOutlined className="text-green-500 mr-2" />
                                                             <span>Xác nhận ngay lập tức</span>

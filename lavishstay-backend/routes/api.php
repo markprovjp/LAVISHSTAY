@@ -140,6 +140,9 @@ Route::prefix('payment')->group(function () {
     Route::post('/create-vietqr', [PaymentController::class, 'createVietQRPayment']);
     Route::post('/verify-vietqr', [PaymentController::class, 'verifyVietQRPayment']);
     
+    // Complete booking after successful payment
+    Route::post('/complete-booking', [PaymentController::class, 'completeBookingAfterSuccessfulPayment']);
+    
     // CPay payment check route
     Route::post('/check-cpay', [PaymentController::class, 'checkCPayPayment']);
     

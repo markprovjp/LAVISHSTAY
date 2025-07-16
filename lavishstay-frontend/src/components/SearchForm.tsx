@@ -153,8 +153,12 @@ const SearchForm: React.FC<SearchFormProps> = React.memo(({
       dispatch(setSearchLoading(true));
 
       // Update date range if changed
-      if (values.dateRange && values.dateRange !== searchData.dateRange) {
-        dispatch(setDateRange(values.dateRange));
+      if (values.dateRange) {
+        const newDateRange: [string, string] = [
+          dayjs(values.dateRange[0]).format('YYYY-MM-DD'),
+          dayjs(values.dateRange[1]).format('YYYY-MM-DD')
+        ];
+        dispatch(setDateRange(newDateRange));
       }
 
       // Validate guest details
