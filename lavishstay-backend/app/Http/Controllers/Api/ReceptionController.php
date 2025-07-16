@@ -721,14 +721,14 @@ class ReceptionController extends Controller
                     'b.check_out_date',
                     'b.total_price_vnd',
                     'b.guest_count',
-                    'b.adults',
-                    'b.children',
-                    'b.children_age',
+                    'br.adults',
+                    'br.children',
+                    'br.children_age',
                     'b.status as booking_status',
                     'b.notes',
                     'b.created_at',
                     'b.updated_at',
-                    
+
                     // Payment info
                     'p.amount_vnd as payment_amount',
                     'p.payment_type',
@@ -752,7 +752,7 @@ class ReceptionController extends Controller
                 ->groupBy([
                     'b.booking_id', 'b.booking_code', 'b.guest_name', 'b.guest_email', 'b.guest_phone',
                     'b.check_in_date', 'b.check_out_date', 'b.total_price_vnd', 'b.guest_count',
-                    'b.adults', 'b.children', 'b.children_age', 'b.status', 'b.notes',
+                    'br.adults', 'br.children', 'br.children_age', 'b.status', 'b.notes',
                     'b.created_at', 'b.updated_at', 'p.amount_vnd', 'p.payment_type',
                     'p.status', 'p.transaction_id', 'rep.full_name', 'rep.phone_number', 'rep.email'
                 ]);
@@ -798,7 +798,8 @@ class ReceptionController extends Controller
                     ->orderBy('booking_room_children.child_index')
                     ->pluck('age')
                     ->toArray();
-
+                // list người lớn
+                
                 $transformedBookings[] = [
                     'booking_id' => $booking->booking_id,
                     'booking_code' => $booking->booking_code,
@@ -833,7 +834,7 @@ class ReceptionController extends Controller
                     'booking_status' => $booking->booking_status,
                 ];
             }
-
+           
             return response()->json([
                 'success' => true,
                 'message' => 'Bookings retrieved successfully',

@@ -294,16 +294,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
                         </div>
                     </Space>
                 </Card>
-
-                {/* Session Timer */}
-                <Card size="small" style={{ backgroundColor: '#fff1f0', border: '1px solid #ffccc7' }}>
-                    <div style={{ textAlign: 'center' }}>
-                        <ClockCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                            Vui lòng hoàn tất đặt phòng trong thời gian quy định
-                        </Text>
-                    </div>
-                </Card>
             </Space>
         </Card>
     );

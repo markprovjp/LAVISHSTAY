@@ -28,6 +28,8 @@ class PaymentService {
         message: string;
     }> {
         try {
+            console.log('🔍 Checking payment for booking:', bookingCode, 'Amount:', expectedAmount);
+
             const response = await fetch(`${this.API_BASE_URL}/payment/check-cpay`, {
                 method: 'POST',
                 headers: {
@@ -39,8 +41,18 @@ class PaymentService {
                 })
             });
 
+            console.log('📡 Payment check response status:', response.status);
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Get error details from response
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    // If response is not JSON, use default message
+                }
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();

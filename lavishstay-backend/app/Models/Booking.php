@@ -27,7 +27,8 @@ class Booking extends Model
         'guest_phone',
         'quantity',
         'room_id',
-        'room_type_id'
+        'room_type_id',
+        'notes'
     ];
 
     protected $casts = [
