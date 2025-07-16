@@ -24,7 +24,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Laravel specific
-/public/storage
+
 /storage/*.key
 /public/hot
 Homestead.json
