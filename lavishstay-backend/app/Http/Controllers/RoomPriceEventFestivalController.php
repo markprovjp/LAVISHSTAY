@@ -156,8 +156,6 @@ public function getRooms()
             ->orderBy('room_name')
             ->get();
         
-        \Log::info('Rooms found:', ['count' => $rooms->count(), 'data' => $rooms->toArray()]);
-        
         return response()->json($rooms);
         
     } catch (\Exception $e) {

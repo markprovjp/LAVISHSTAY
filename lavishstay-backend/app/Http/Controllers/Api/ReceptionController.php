@@ -703,7 +703,7 @@ class ReceptionController extends Controller
     public function getBookings(Request $request): JsonResponse
     {
         try {
-            // Comprehensive booking query with all related data
+                       
             $query = DB::table('booking as b')
                 ->leftJoin('payment as p', 'b.booking_id', '=', 'p.booking_id')
                 ->leftJoin('booking_rooms as br', 'b.booking_id', '=', 'br.booking_id')
@@ -711,50 +711,40 @@ class ReceptionController extends Controller
                 ->leftJoin('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
                 ->leftJoin('representatives as rep', 'b.booking_id', '=', 'rep.booking_id')
                 ->select([
-                    // Main booking info
                     'b.booking_id',
                     'b.booking_code',
                     'b.guest_name',
-                    'b.guest_email', 
+                    'b.guest_email',
                     'b.guest_phone',
                     'b.check_in_date',
                     'b.check_out_date',
                     'b.total_price_vnd',
-                    'b.guest_count',
-                    'br.adults',
-                    'br.children',
-                    'br.children_age',
                     'b.status as booking_status',
                     'b.notes',
                     'b.created_at',
                     'b.updated_at',
-
-                    // Payment info
                     'p.amount_vnd as payment_amount',
                     'p.payment_type',
                     'p.status as payment_status',
                     'p.transaction_id',
-                    
-                    // Count total rooms for this booking
-                    DB::raw('COUNT(DISTINCT br.id) as total_rooms'),
-                    
-                    // Aggregate room info (for display)
+                    DB::raw('COUNT(br.id) as total_rooms'),
                     DB::raw('GROUP_CONCAT(DISTINCT r.name ORDER BY r.name SEPARATOR ", ") as room_names'),
                     DB::raw('GROUP_CONCAT(DISTINCT rt.name ORDER BY rt.name SEPARATOR ", ") as room_type_names'),
-                    DB::raw('SUM(br.adults) as total_adults_from_rooms'),
-                    DB::raw('SUM(br.children) as total_children_from_rooms'),
+                    DB::raw('COALESCE(SUM(br.adults), 0) as total_adults'),
+                    DB::raw('COALESCE(SUM(br.children), 0) as total_children'),
+                    // hiển thị tên gói option_name của booking_rooms
+                    DB::raw('GROUP_CONCAT(DISTINCT br.option_name ORDER BY br.option_name SEPARATOR ", ") as option_names'),
                     
-                    // Representative info
                     'rep.full_name as representative_name',
                     'rep.phone_number as representative_phone',
                     'rep.email as representative_email'
                 ])
                 ->groupBy([
                     'b.booking_id', 'b.booking_code', 'b.guest_name', 'b.guest_email', 'b.guest_phone',
-                    'b.check_in_date', 'b.check_out_date', 'b.total_price_vnd', 'b.guest_count',
-                    'br.adults', 'br.children', 'br.children_age', 'b.status', 'b.notes',
-                    'b.created_at', 'b.updated_at', 'p.amount_vnd', 'p.payment_type',
-                    'p.status', 'p.transaction_id', 'rep.full_name', 'rep.phone_number', 'rep.email'
+                    'b.check_in_date', 'b.check_out_date', 'b.total_price_vnd',
+                    'b.status', 'b.notes', 'b.created_at', 'b.updated_at',
+                    'p.amount_vnd', 'p.payment_type', 'p.status', 'p.transaction_id',
+                    'rep.full_name', 'rep.phone_number', 'rep.email'
                 ]);
 
             // Apply filters
@@ -785,7 +775,7 @@ class ReceptionController extends Controller
             // Order by creation date (newest first)
             $query->orderBy('b.created_at', 'desc');
 
-            $bookings = $query->paginate($request->get('per_page', 20));
+$bookings = $query->paginate($request->get('per_page', 20));
 
             // Transform data for frontend
             $transformedBookings = [];
@@ -809,10 +799,10 @@ class ReceptionController extends Controller
                     'check_in_date' => $booking->check_in_date,
                     'check_out_date' => $booking->check_out_date,
                     'total_price_vnd' => (float) $booking->total_price_vnd,
-                    'guest_count' => (int) $booking->guest_count,
-                    'adults' => (int) ($booking->total_adults_from_rooms ?: $booking->adults),
-                    'children' => (int) ($booking->total_children_from_rooms ?: $booking->children),
-                    'children_age' => $allChildrenAges, // Get from booking_room_children table
+                    // hiển thị số lượng người lớn và trẻ em từ booking_rooms
+                    'adults' => (int) $booking->total_adults,
+                    'children' => (int) $booking->total_children,
+                    'children_age' => $allChildrenAges, // Lấy danh sách độ tuổi
                     'status' => $booking->booking_status,
                     'notes' => $booking->notes,
                     'created_at' => $booking->created_at,
@@ -827,14 +817,14 @@ class ReceptionController extends Controller
                     'representative_name' => $booking->representative_name,
                     'representative_phone' => $booking->representative_phone,
                     'representative_email' => $booking->representative_email,
-                    
+                    'option_names' => $booking->option_names, // Hiển thị tên gói option_name của booking_rooms
                     // Compatibility fields for frontend
                     'id' => $booking->booking_id,
                     'total_amount' => (float) $booking->total_price_vnd,
                     'booking_status' => $booking->booking_status,
                 ];
             }
-           
+            // Log::info('Bookings retrieved successfully', ['data' => $transformedBookings]);
             return response()->json([
                 'success' => true,
                 'message' => 'Bookings retrieved successfully',
@@ -1230,8 +1220,11 @@ class ReceptionController extends Controller
                 'payment_type' => $paymentInfo ? $paymentInfo->payment_type : null,
                 'total_amount' => (float) $booking->total_price_vnd,
                 'booking_status' => $booking->status
-            ];
-
+            ];  
+            // Log::info('Booking details retrieved successfully', [
+            //     'booking_id' => $bookingId,
+            //     'booking_details' => $bookingDetails
+            // ]);
             return response()->json([
                 'success' => true,
                 'data' => $bookingDetails,
@@ -1272,9 +1265,7 @@ class ReceptionController extends Controller
                 'subtotal' => 'required|numeric',
                 'representativeMode' => 'required|in:individual,all',
                 'bookingData' => 'sometimes|array',
-                'bookingData.adults' => 'sometimes|integer|min:1',
-                'bookingData.children' => 'sometimes|array',
-                'bookingData.children.*.age' => 'sometimes|integer|min:0|max:12',
+
                 'bookingData.notes' => 'sometimes|string|nullable'
             ]);
 
@@ -1334,9 +1325,7 @@ class ReceptionController extends Controller
                     'total_price_vnd' => $request->subtotal,
                     'status' => 'confirmed', // Set to confirmed since reception is creating it
                     'quantity' => count($request->rooms),
-                    'adults' => $adults,
-                    'children' => count($childrenAges),
-                    'children_age' => !empty($childrenAges) ? implode(',', $childrenAges) : '', // Store as comma-separated string
+
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);
@@ -1381,9 +1370,9 @@ class ReceptionController extends Controller
 
                 // Update room status to 'deposited'
                 $roomIds = array_map('intval', array_column($request->rooms, 'id')); // Convert to int
-                DB::table('room')
-                    ->whereIn('room_id', $roomIds)
-                    ->update(['status' => 'deposited', 'updated_at' => Carbon::now()]);
+                // DB::table('room')
+                //     ->whereIn('room_id', $roomIds)
+                //     ->update(['status' => 'deposited', 'updated_at' => Carbon::now()]);
 
                 DB::commit();
 

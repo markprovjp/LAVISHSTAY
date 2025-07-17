@@ -79,8 +79,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
                         roomStatus: filters.roomStatus || undefined,
                     }}
                 >
-                    <Row gutter={16}>
-                        <Col xs={24} sm={12} md={6} lg={4}>
+                     <Row gutter={16}>
+                      {/*  <Col xs={24} sm={12} md={6} lg={4}>
                             <Form.Item label="Tên khách hàng" name="customerName">
                                 <Input
                                     placeholder="Nhập tên khách hàng"
@@ -89,7 +89,30 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                 />
                             </Form.Item>
                         </Col>
-
+ <Col xs={24} sm={12} md={6} lg={3}>
+                            <Form.Item label="Số phòng" name="roomNumber">
+                                <Input
+                                    placeholder="Nhập số phòng"
+                                    allowClear
+                                    onChange={handleFieldChange}
+                                />
+                            </Form.Item>
+                        </Col>
+ <Col xs={24} sm={12} md={6} lg={3}>
+                            <Form.Item label="Trạng thái" name="roomStatus">
+                                <Select
+                                    placeholder="Chọn trạng thái"
+                                    allowClear
+                                    onChange={handleFieldChange}
+                                >
+                                    {statusOptions.map(status => (
+                                        <Option key={status.value} value={status.value}>
+                                            {status.label}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col> */}
                         <Col xs={24} sm={12} md={6} lg={5}>
                             <Form.Item label="Ngày nhận - trả phòng khả dụng" name="dateRange">
                                 <RangePicker
@@ -101,16 +124,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                             </Form.Item>
                         </Col>
 
-                        <Col xs={24} sm={12} md={6} lg={3}>
-                            <Form.Item label="Số phòng" name="roomNumber">
-                                <Input
-                                    placeholder="Nhập số phòng"
-                                    allowClear
-                                    onChange={handleFieldChange}
-                                />
-                            </Form.Item>
-                        </Col>
-
+                       
                         <Col xs={24} sm={12} md={6} lg={3}>
                             <Form.Item label="Loại phòng" name="roomType">
                                 <Select
@@ -127,21 +141,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                             </Form.Item>
                         </Col>
 
-                        <Col xs={24} sm={12} md={6} lg={3}>
-                            <Form.Item label="Trạng thái" name="roomStatus">
-                                <Select
-                                    placeholder="Chọn trạng thái"
-                                    allowClear
-                                    onChange={handleFieldChange}
-                                >
-                                    {statusOptions.map(status => (
-                                        <Option key={status.value} value={status.value}>
-                                            {status.label}
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Col>
+                       
 
                         <Col xs={24} sm={12} md={6} lg={6}>
                             <Form.Item label="Hành động" className="mb-0">
@@ -166,7 +166,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     </Row>
 
                     <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                        <div className="flex items-center space-x-4">
+                        {/* <div className="flex items-center space-x-4">
                             <span className="text-sm">Chế độ xem:</span>
                             <Space>
                                 <span className={`text-sm ${viewMode === 'grid' ? 'font-semibold' : ''}`}>
@@ -181,7 +181,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                     Timeline
                                 </span>
                             </Space>
-                        </div>
+                        </div> */}
 
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">

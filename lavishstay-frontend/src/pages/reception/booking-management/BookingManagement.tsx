@@ -87,6 +87,7 @@ interface BookingTableData {
     representative_name: string;
     representative_phone: string;
     representative_email: string;
+    option_names: string; // New field for option names
     // Compatibility fields
     room_id?: number | null;
     room_name?: string;
@@ -214,7 +215,7 @@ const BookingManagement: React.FC = () => {
                 representative_name: String(booking.representative_name || ''),
                 representative_phone: String(booking.representative_phone || ''),
                 representative_email: String(booking.representative_email || ''),
-
+                option_names: String(booking.option_names || ''), // New field for option names
                 // Compatibility fields
                 room_id: booking.room_id ? Number(booking.room_id) : null,
                 room_name: String(roomNames.split(',')[0] || ''), // First room for compatibility
@@ -260,7 +261,7 @@ const BookingManagement: React.FC = () => {
             title: 'Mã đặt phòng',
             dataIndex: 'booking_code',
             key: 'booking_code',
-            width: 160,
+            width: 140,
             fixed: 'left',
             render: (code: string) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -290,7 +291,7 @@ const BookingManagement: React.FC = () => {
         {
             title: 'Thông tin khách',
             key: 'guest',
-            width: 220,
+            width: 200,
             render: (_, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Avatar
@@ -358,12 +359,66 @@ const BookingManagement: React.FC = () => {
             },
         },
         {
-            title: 'Người lớn',
-            dataIndex: 'adults',
-            key: 'adults',
-            width: 80,
+            title: 'Tổng khách',
+            key: 'total_guests',
+            width: 120,
             align: 'center',
-            render: (adults: number) => (
+            render: (_, record) => {
+                const adults = record.adults || 0;
+                const children = record.num_children || 0;
+
+                return (
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 4
+                        }}>
+                            <TeamOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+                            <Text strong style={{ fontSize: '13px' }}>
+                                {adults} NL {children > 0 ? `+ ${children} TE` : ''}
+                            </Text>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Gói phòng',
+            key: 'option_names',
+            width: 200,
+            render: (_, record) => {
+                const options = record.option_names ? record.option_names.split(',').map(name => name.trim()) : [];
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '6px',
+                            backgroundColor: '#f6ffed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: 8,
+                        }}>
+                            <HomeOutlined style={{ color: '#52c41a', fontSize: '14px' }} />
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: 600, fontSize: '13px', color: '#262626', marginBottom: 2 }}>
+                                {options.length > 0 ? options.join(', ') : 'Chưa chọn tùy chọn'}
+                            </div>
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Số phòng',
+            key: 'total_rooms',
+            width: 100,
+            align: 'center',
+            render: (_, record) => (
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         display: 'flex',
@@ -371,102 +426,11 @@ const BookingManagement: React.FC = () => {
                         justifyContent: 'center',
                         gap: 4
                     }}>
-                        <TeamOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
-                        <Text strong style={{ fontSize: '13px' }}>{adults || 0}</Text>
+                        <HomeOutlined style={{ color: '#52c41a', fontSize: '14px' }} />
+                        <Text strong style={{ fontSize: '13px' }}>{record.total_rooms || 1}</Text>
                     </div>
                 </div>
             ),
-        },
-        {
-            title: 'Trẻ em',
-            key: 'num_children',
-            width: 100,
-            align: 'center',
-            render: (_, record) => {
-                // Ultra safe children value extraction
-                let children = 0;
-                try {
-                    children = Number(record.num_children) || 0;
-                    if (isNaN(children)) children = 0;
-                } catch (error) {
-                    console.error('Error processing children in render:', error);
-                    children = 0;
-                }
-
-                const childrenAges = record.children_age;
-                let tooltipTitle = 'Không có thông tin độ tuổi';
-
-                if (childrenAges) {
-                    try {
-                        // Handle both new API format (array of numbers) and old format (JSON string)
-                        let ages: number[] = [];
-
-                        if (Array.isArray(childrenAges)) {
-                            // New API format: direct array of ages
-                            ages = childrenAges.filter(age => typeof age === 'number');
-                        } else if (typeof childrenAges === 'string' && childrenAges.trim()) {
-                            // Old format: JSON string
-                            try {
-                                const parsed = JSON.parse(childrenAges);
-                                if (Array.isArray(parsed)) {
-                                    // Handle multi-room format: [[], [{"id": "room_2_child_1", "age": 3}, ...], ...]
-                                    parsed.forEach((roomAges: any) => {
-                                        if (Array.isArray(roomAges)) {
-                                            roomAges.forEach((child: any) => {
-                                                if (typeof child === 'object' && child.age) {
-                                                    ages.push(child.age);
-                                                } else if (typeof child === 'number') {
-                                                    ages.push(child);
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-                            } catch (parseError) {
-                                // Fallback: treat as comma-separated string
-                                ages = childrenAges.split(',').map(age => parseInt(age.trim())).filter(age => !isNaN(age));
-                            }
-                        }
-
-                        if (ages.length > 0) {
-                            tooltipTitle = `Độ tuổi: ${ages.join(', ')} tuổi`;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing children_age:', e);
-                        if (typeof childrenAges === 'string' && childrenAges.length > 0) {
-                            tooltipTitle = `Độ tuổi: ${childrenAges.split(',').join(', ')}`;
-                        }
-                    }
-                }
-
-                const content = (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 4
-                    }}>
-                        <SmileOutlined style={{ color: '#fa8c16', fontSize: '14px' }} />
-                        <Text strong style={{ fontSize: '13px' }}>{children}</Text>
-                    </div>
-                );
-
-                if (children > 0) {
-                    return (
-                        <Tooltip title={tooltipTitle}>
-                            <div style={{ textAlign: 'center' }}>
-                                {content}
-                            </div>
-                        </Tooltip>
-                    );
-                }
-
-                return (
-                    <div style={{ textAlign: 'center' }}>
-                        {content}
-                    </div>
-                );
-            },
         },
         {
             title: 'Phòng',
@@ -780,7 +744,6 @@ const BookingManagement: React.FC = () => {
                         boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
                     }}
                 >
-                    {/* Table with robust error handling */}
                     <ErrorBoundary
                         fallback={
                             <Alert
@@ -792,486 +755,44 @@ const BookingManagement: React.FC = () => {
                             />
                         }
                     >
-                        {(() => {
-                            try {
-                                if (!Array.isArray(bookings)) {
-                                    return (
-                                        <Alert
-                                            message="Dữ liệu không hợp lệ"
-                                            description="Dữ liệu đặt phòng không đúng định dạng."
-                                            type="warning"
-                                            showIcon
-                                            style={{ margin: '16px 0' }}
-                                        />
-                                    );
+                        <Table
+                            columns={columns}
+                            dataSource={bookings}
+                            loading={isLoading}
+                            rowKey={(record) => record.key}
+                            pagination={{
+                                pageSize: 20,
+                                showSizeChanger: true,
+                                showQuickJumper: true,
+                                showTotal: (total, range) =>
+                                    `${range[0]}-${range[1]} của ${total} đặt phòng`,
+                                pageSizeOptions: ['10', '20', '50', '100'],
+                                style: {
+                                    padding: '16px 0',
                                 }
-
-                                if (bookings.length === 0 && !isLoading) {
-                                    return (
-                                        <Alert
-                                            message="Không có dữ liệu"
-                                            description="Không tìm thấy đặt phòng nào."
-                                            type="info"
-                                            showIcon
-                                            style={{ margin: '16px 0' }}
-                                        />
-                                    );
-                                }
-
-                                // Create ULTRA safe data - completely flatten and validate all fields
-                                const safeBookings = bookings.map((booking, index) => {
-                                    // Deep clean all fields to ensure no nested objects
-                                    const cleanedBooking = {
-                                        key: `booking-${booking.booking_id}-${index}`,
-                                        booking_id: Number(booking.booking_id) || 0,
-                                        booking_code: String(booking.booking_code || ''),
-                                        guest_name: String(booking.guest_name || ''),
-                                        guest_email: String(booking.guest_email || ''),
-                                        guest_phone: String(booking.guest_phone || ''),
-                                        guest_count: Number(booking.guest_count) || 0,
-                                        adults: Number(booking.adults) || 0,
-                                        num_children: Number(booking.num_children) || 0,
-                                        children_age: booking.children_age, // Convert JSON to string
-                                        total_price_vnd: Number(booking.total_price_vnd) || 0,
-                                        status: String(booking.status || 'pending'),
-                                        check_in_date: String(booking.check_in_date || ''),
-                                        check_out_date: String(booking.check_out_date || ''),
-                                        created_at: String(booking.created_at || ''),
-                                        updated_at: String(booking.updated_at || ''),
-                                        room_id: booking.room_id ? Number(booking.room_id) : null,
-                                        room_name: String(booking.room_name || ''),
-                                        room_id_display: booking.room_id_display ? Number(booking.room_id_display) : null
-                                    };
-
-                                    // Additional validation: ensure NO nested objects remain
-                                    Object.keys(cleanedBooking).forEach(key => {
-                                        const value = cleanedBooking[key as keyof typeof cleanedBooking];
-                                        if (value !== null && typeof value === 'object') {
-                                            console.warn(`Found nested object in ${key}:`, value);
-                                            // Convert to string as fallback
-                                            (cleanedBooking as any)[key] = String(value);
-                                        }
-                                    });
-
-                                    return cleanedBooking;
-                                });
-
-
-                                // Final safety check - ensure dataSource is valid array
-                                const validatedDataSource = Array.isArray(safeBookings) ? safeBookings : [];
-
-
-                                try {
-                                    // SAFE: Create test data WITH num_children field using string conversion
-                                    const safeTestData = validatedDataSource.map((booking) => ({
-                                        key: `safe-${booking.booking_id}`,
-                                        booking_id: booking.booking_id,
-                                        booking_code: booking.booking_code,
-                                        // Convert num_children to string first, then back to number to ensure it's safe
-                                        num_children: Number(String(booking.num_children || 0)),
-                                        adults: Number(String(booking.adults || 1)),
-                                        guest_name: booking.guest_name,
-                                        status: booking.status,
-                                        total_price_vnd: booking.total_price_vnd,
-                                        check_in_date: booking.check_in_date,
-                                        check_out_date: booking.check_out_date,
-                                        room_name: booking.room_name,
-                                        room_id_display: booking.room_id_display,
-                                        guest_email: booking.guest_email,
-                                        guest_phone: booking.guest_phone,
-                                        children_age: (() => {
-                                            try {
-                                                if (Array.isArray(booking.children_age)) {
-                                                    return booking.children_age;
-                                                }
-                                                if (typeof booking.children_age === 'string' && booking.children_age.trim()) {
-                                                    return JSON.parse(booking.children_age);
-                                                }
-                                                return [];
-                                            } catch (e) {
-                                                console.error('Error parsing children_age for booking:', booking.booking_id, e);
-                                                return [];
-                                            }
-                                        })()
-                                    }));
-
-                                    // Beautiful columns similar to original design
-                                    const beautifulColumns = [
-                                        {
-                                            title: 'Mã đặt phòng',
-                                            dataIndex: 'booking_code',
-                                            key: 'booking_code',
-                                            width: 160,
-                                            fixed: 'left' as const,
-                                            render: (code: string) => (
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <div style={{
-                                                        width: 32,
-                                                        height: 32,
-                                                        borderRadius: '6px',
-                                                        backgroundColor: '#e6f4ff',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        marginRight: 10,
-                                                    }}>
-                                                        <CalendarOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
-                                                    </div>
-                                                    <div>
-                                                        <Text strong style={{ color: '#1890ff', fontSize: '13px' }}>
-                                                            {code}
-                                                        </Text>
-                                                        <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
-                                                            Đặt phòng
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ),
-                                        },
-                                        {
-                                            title: 'Thông tin khách',
-                                            key: 'guest',
-                                            width: 220,
-                                            render: (_: any, record: any) => (
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Avatar
-                                                        size={40}
-                                                        icon={<UserOutlined />}
-                                                        style={{
-                                                            backgroundColor: '#f56a00',
-                                                            marginRight: 12,
-                                                            flexShrink: 0
-                                                        }}
-                                                    />
-                                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#262626', marginBottom: 2 }}>
-                                                            {record.guest_name}
-                                                        </div>
-                                                        <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: 1 }}>
-                                                            <PhoneOutlined style={{ marginRight: 4, fontSize: '11px' }} />
-                                                            {record.guest_phone}
-                                                        </div>
-                                                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                                                            <MailOutlined style={{ marginRight: 4, fontSize: '11px' }} />
-                                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
-                                                                {record.guest_email}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ),
-                                        },
-                                        {
-                                            title: 'Thời gian lưu trú',
-                                            key: 'dates',
-                                            width: 160,
-                                            render: (_: any, record: any) => {
-                                                const checkIn = dayjs(record.check_in_date);
-                                                const checkOut = dayjs(record.check_out_date);
-                                                const nights = checkOut.diff(checkIn, 'day');
-
-                                                return (
-                                                    <div>
-                                                        <div style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            marginBottom: 4,
-                                                            padding: '4px 8px',
-                                                            backgroundColor: '#f6ffed',
-                                                            borderRadius: '4px',
-                                                            fontSize: '12px',
-                                                            fontWeight: 500,
-                                                            color: '#52c41a'
-                                                        }}>
-                                                            <CalendarOutlined style={{ marginRight: 4 }} />
-                                                            {checkIn.format('DD/MM')} - {checkOut.format('DD/MM')}
-                                                        </div>
-                                                        <div style={{
-                                                            fontSize: '12px',
-                                                            color: '#8c8c8c',
-                                                            textAlign: 'center',
-                                                            fontWeight: 500
-                                                        }}>
-                                                            {nights} đêm
-                                                        </div>
-                                                    </div>
-                                                );
-                                            },
-                                        },
-                                        {
-                                            title: 'Người lớn',
-                                            dataIndex: 'adults',
-                                            key: 'adults',
-                                            width: 80,
-                                            align: 'center' as const,
-                                            render: (adults: number) => (
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        gap: 4
-                                                    }}>
-                                                        <TeamOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
-                                                        <Text strong style={{ fontSize: '13px' }}>{adults || 0}</Text>
-                                                    </div>
-                                                </div>
-                                            ),
-                                        },
-                                        {
-                                            title: 'Trẻ em',
-                                            dataIndex: 'num_children',
-                                            key: 'num_children',
-                                            width: 100,
-                                            align: 'center' as const,
-                                            render: (children: number, record: any) => {
-                                                // Ultra safe processing
-                                                const safeChildren = Number(children) || 0;
-
-                                                const childrenAges = record.children_age;
-                                                let tooltipTitle = 'Không có thông tin độ tuổi';
-
-                                                if (Array.isArray(childrenAges) && childrenAges.length > 0) {
-                                                    // Handle the multi-room format: [[], [{"id": "room_2_child_1", "age": 3}, ...], ...]
-                                                    const allAges: number[] = [];
-                                                    childrenAges.forEach((roomAges: any) => {
-                                                        if (Array.isArray(roomAges)) {
-                                                            roomAges.forEach((child: any) => {
-                                                                if (typeof child === 'object' && child.age) {
-                                                                    allAges.push(child.age);
-                                                                } else if (typeof child === 'number') {
-                                                                    allAges.push(child);
-                                                                }
-                                                            });
-                                                        }
-                                                    });
-
-                                                    if (allAges.length > 0) {
-                                                        tooltipTitle = `Độ tuổi: ${allAges.join(', ')} tuổi`;
-                                                    }
-                                                }
-
-                                                const content = (
-                                                    <div style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        gap: 4
-                                                    }}>
-                                                        <SmileOutlined style={{ color: '#fa8c16', fontSize: '14px' }} />
-                                                        <Text strong style={{ fontSize: '13px' }}>{safeChildren}</Text>
-                                                    </div>
-                                                );
-
-                                                if (safeChildren > 0) {
-                                                    return (
-                                                        <Tooltip title={tooltipTitle}>
-                                                            <div style={{ textAlign: 'center' }}>
-                                                                {content}
-                                                            </div>
-                                                        </Tooltip>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <div style={{ textAlign: 'center' }}>
-                                                        {content}
-                                                    </div>
-                                                );
-                                            },
-                                        },
-                                        {
-                                            title: 'Phòng',
-                                            key: 'room',
-                                            width: 140,
-                                            render: (_: any, record: any) => {
-                                                if (record.room_name) {
-                                                    return (
-                                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                            <div style={{
-                                                                width: 32,
-                                                                height: 32,
-                                                                borderRadius: '6px',
-                                                                backgroundColor: '#f6ffed',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                marginRight: 8,
-                                                            }}>
-                                                                <HomeOutlined style={{ color: '#52c41a', fontSize: '14px' }} />
-                                                            </div>
-                                                            <div>
-                                                                <div style={{ fontWeight: 600, fontSize: '13px', color: '#262626' }}>
-                                                                    {record.room_name}
-                                                                </div>
-                                                                <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
-                                                                    ID: {record.room_id_display}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return (
-                                                    <div style={{ textAlign: 'center', color: '#8c8c8c', fontSize: '12px' }}>
-                                                        <HomeOutlined style={{ marginRight: 4 }} />
-                                                        Chưa chọn phòng
-                                                    </div>
-                                                );
-                                            },
-                                        },
-                                        {
-                                            title: 'Tổng tiền',
-                                            dataIndex: 'total_price_vnd',
-                                            key: 'total_price_vnd',
-                                            width: 130,
-                                            align: 'right' as const,
-                                            render: (amount: number) => (
-                                                <div style={{ textAlign: 'right' }}>
-                                                    <div style={{ fontWeight: 600, fontSize: '14px', color: '#f50', marginBottom: 2 }}>
-                                                        {new Intl.NumberFormat('vi-VN').format(amount || 0)}₫
-                                                    </div>
-                                                    <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
-                                                        Tổng cộng
-                                                    </div>
-                                                </div>
-                                            ),
-                                        },
-                                        {
-                                            title: 'Trạng thái',
-                                            dataIndex: 'status',
-                                            key: 'status',
-                                            width: 130,
-                                            align: 'center' as const,
-                                            render: (status: string) => (
-                                                <Tag
-                                                    color={bookingStatusConfig[status as keyof typeof bookingStatusConfig]?.color || 'default'}
-                                                    style={{
-                                                        borderRadius: '6px',
-                                                        fontWeight: 500,
-                                                        fontSize: '12px',
-                                                        padding: '4px 8px'
-                                                    }}
-                                                >
-                                                    {bookingStatusConfig[status as keyof typeof bookingStatusConfig]?.text || status}
-                                                </Tag>
-                                            ),
-                                        },
-                                        {
-                                            title: 'Thao tác',
-                                            key: 'actions',
-                                            width: 120,
-                                            fixed: 'right' as const,
-                                            align: 'center' as const,
-                                            render: (_: any, record: any) => (
-                                                <Space size="small">
-                                                    <Tooltip title="Xem chi tiết">
-                                                        <Button
-                                                            type="text"
-                                                            icon={<EyeOutlined />}
-                                                            size="small"
-                                                            style={{
-                                                                borderRadius: '6px',
-                                                                backgroundColor: '#f0f2ff',
-                                                                color: '#1890ff'
-                                                            }}
-                                                            onClick={() => {
-                                                                setSelectedBooking(record);
-                                                                setIsDetailModalVisible(true);
-                                                            }}
-                                                        />
-                                                    </Tooltip>
-                                                    {record.status === 'pending' && (
-                                                        <Tooltip title="Hủy đặt phòng">
-                                                            <Button
-                                                                type="text"
-                                                                danger
-                                                                icon={<DeleteOutlined />}
-                                                                size="small"
-                                                                style={{
-                                                                    borderRadius: '6px',
-                                                                    backgroundColor: '#fff2f0'
-                                                                }}
-                                                                onClick={() => handleCancelBooking(record.booking_id)}
-                                                            />
-                                                        </Tooltip>
-                                                    )}
-                                                </Space>
-                                            ),
-                                        },
-                                    ] as const;
-
-                                    const tableComponent = (<Table
-                                        columns={beautifulColumns as any}
-                                        dataSource={safeTestData}
-                                        loading={isLoading}
-                                        rowKey={(record) => `safe-${record.booking_id}`}
-                                        pagination={{
-                                            pageSize: 20,
-                                            showSizeChanger: true,
-                                            showQuickJumper: true,
-                                            showTotal: (total, range) =>
-                                                `${range[0]}-${range[1]} của ${total} đặt phòng`,
-                                            pageSizeOptions: ['10', '20', '50', '100'],
-                                            style: {
-                                                padding: '16px 0',
-                                            }
-                                        }}
-                                        scroll={{ x: 1400, y: 600 }}
-                                        size="middle"
-                                        style={{
-                                            background: '#fff',
-                                            borderRadius: '8px'
-                                        }}
-                                        bordered={false}
-                                        showHeader
-                                        locale={{
-                                            emptyText: (
-                                                <div style={{ padding: '60px 0', textAlign: 'center' }}>
-                                                    <CalendarOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: 16 }} />
-                                                    <div style={{ fontSize: '16px', color: '#595959', marginBottom: 8 }}>
-                                                        Không có đặt phòng nào
-                                                    </div>
-                                                    <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
-                                                        Chưa có dữ liệu đặt phòng nào được tìm thấy
-                                                    </div>
-                                                </div>
-                                            )
-                                        }}
-                                    />);
-
-                                    return tableComponent;
-                                } catch (tableError) {
-                                    console.error('CRITICAL: Error creating Table component:', tableError);
-                                    if (tableError instanceof Error) {
-                                        console.error('Stack trace:', tableError.stack);
-                                    }
-                                    console.error('DataSource that caused error:', validatedDataSource);
-
-                                    const errorMessage = tableError instanceof Error ? tableError.message : 'Unknown error';
-
-                                    return (
-                                        <Alert
-                                            message="Lỗi khởi tạo bảng"
-                                            description={`Có lỗi xảy ra khi khởi tạo bảng: ${errorMessage}`}
-                                            type="error"
-                                            showIcon
-                                            style={{ margin: '16px 0' }}
-                                        />
-                                    );
-                                }
-                            } catch (error) {
-                                console.error('Error rendering table:', error);
-                                return (
-                                    <Alert
-                                        message="Lỗi hiển thị bảng"
-                                        description="Có lỗi xảy ra khi hiển thị bảng. Vui lòng thử lại."
-                                        type="error"
-                                        showIcon
-                                        style={{ margin: '16px 0' }}
-                                    />
-                                );
-                            }
-                        })()}
+                            }}
+                            scroll={{ x: 1400, y: 600 }}
+                            size="middle"
+                            style={{
+                                background: '#fff',
+                                borderRadius: '8px'
+                            }}
+                            bordered={false}
+                            showHeader
+                            locale={{
+                                emptyText: (
+                                    <div style={{ padding: '60px 0', textAlign: 'center' }}>
+                                        <CalendarOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: 16 }} />
+                                        <div style={{ fontSize: '16px', color: '#595959', marginBottom: 8 }}>
+                                            Không có đặt phòng nào
+                                        </div>
+                                        <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
+                                            Chưa có dữ liệu đặt phòng nào được tìm thấy
+                                        </div>
+                                    </div>
+                                )
+                            }}
+                        />
                     </ErrorBoundary>
                 </Card>
 
