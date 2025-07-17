@@ -1,0 +1,13 @@
+với vai trò là 1 coder chuyên nghiệp cho dự án khách sạn , bạn tìm hiểu về dự án và bạn có thể kiểm tra databse , tôi cần với những đơn booking mà chưa có room cụ thể nào được đặt . Thay vì mỗi dòng là 1 phòng như hiện tại, mỗi dòng nên là 1 booking chính, có thể mở rộng chi tiết:
+
+➤ Dạng bảng gợi ý:
+Mã booking Khách hàng Thời gian lưu trú Tổng khách Số phòng Trạng thái Tổng tiền Chi tiết
+LVS2025... Nguyễn Văn Quyền 17/07 - 24/07 4 NL + 1 TE 2 Confirmed 42.000₫ 👁️ Mở
+
+Khi click nút 👁️ “Mở” → hiện danh sách các phòng:
+
+➤ Bảng con (chi tiết từng phòng):
+Phòng Người lớn Trẻ em Tuổi Giá Trạng thái
+0204 2 1 8 21.000₫ Confirmed
+0205 2 0 - 21.000₫ Confirmed
+. tiếp theo là bên cạnh nút chi tiết của đơn booking có 1 nút chọn phòng , nếu là đơn booking chưa chọn phòng cụ thể thì mới có nút chọn phòng đó , click vào thì 1 popup table dạng lưới , dựa theo thông tin của đơn booking khách đã đặt như đặt bao nhiêu phòng , loại phòng nào , ngày check in out là gì , thì có sẵn hàm lọc phòng available trong controller , dựa theo đó rồi tạo hàm mới nhé , tức là sẽ hiển thị các phòng còn trống sẵn trong khoảng thời gian khách đặt , hiển thị theo tầng , số phòng nhé , mỗi ô check box là có số phòng ở trên

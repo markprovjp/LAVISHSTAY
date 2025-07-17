@@ -1084,7 +1084,7 @@ const fetchBookingDetails = async () => {
                 check_out_date: room.check_out_date || '',
                 adults: room.adults || 0,
                 children: room.children || 0,
-                children_age: safeParseArray(room.children_age),
+                children_age: room.children_age,
                 representative: room.representative || {}
             }));
         } catch (e) {

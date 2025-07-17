@@ -1332,7 +1332,7 @@ class PaymentController extends Controller
             $mainRepresentativeId = DB::table('representatives')->insertGetId([
                 'booking_id' => $booking->booking_id,
                 'booking_code' => $bookingCode,
-                'room_id' => $rooms[0]['room_id'],
+                'room_id' => NULL,
                 'full_name' => $booking->guest_name,
                 'phone_number' => $booking->guest_phone,
                 'email' => $booking->guest_email,
@@ -1405,7 +1405,7 @@ class PaymentController extends Controller
                 $bookingRoomId = DB::table('booking_rooms')->insertGetId([
                     'booking_id' => $booking->booking_id,
                     'booking_code' => $bookingCode,
-                    'room_id' => $roomData['room_id'],
+                    'room_id' => NULL,
                     'option_id' => $optionId,
                     'option_name' => $roomData['option_name'] ?? 'Custom Package',
                     'option_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
@@ -1443,10 +1443,10 @@ class PaymentController extends Controller
             }
 
             // Cập nhật booking status
-            $booking->update([
-                'status' => $paymentMethod === 'pay_at_hotel' ? 'confirmed' : 'pending_payment',
-                'room_id' => NULL
-            ]);
+            // $booking->update([
+            //     'status' => $paymentMethod === 'pay_at_hotel' ? 'confirmed' : 'pending_payment',
+            //     'room_id' => NULL
+            // ]);
 
             // Xóa cache data vì đã xử lý xong
             cache()->forget("booking_rooms_data_{$bookingCode}");

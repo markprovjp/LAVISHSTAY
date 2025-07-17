@@ -16,12 +16,6 @@ class PolicySelectorService
         $occupancyPercent = $input['occupancy_percent'];
         $isHoliday = $input['is_holiday'];
 
-        Log::info("PolicySelector Input:", [
-            'room_type_id' => $roomTypeId,
-            'date' => $date->toDateString(),
-            'occupancy_percent' => $occupancyPercent,
-            'is_holiday' => $isHoliday
-        ]);
 
         $types = ['cancellation', 'deposit', 'check_out'];
         $result = [];
@@ -59,11 +53,7 @@ class PolicySelectorService
 
             $policyApplication = $query->first();
 
-            Log::info("Policy Application found for {$type}:", [
-                'found' => $policyApplication ? true : false,
-                'policy_id' => $policyApplication?->policy_id,
-                'priority' => $policyApplication?->priority
-            ]);
+       
 
             // Set policy ID
             $result[$type . '_policy_id'] = $policyApplication?->policy_id;
@@ -77,11 +67,7 @@ class PolicySelectorService
                 };
 
                 $realPolicy = $policyModel::find($policyApplication->policy_id);
-                
-                Log::info("Real policy found for {$type}:", [
-                    'policy_found' => $realPolicy ? true : false,
-                    'policy_name' => $realPolicy?->name ?? 'N/A'
-                ]);
+            
 
                 // Set the real policy content
                 $result[$type . '_policy_applied'] = $realPolicy;

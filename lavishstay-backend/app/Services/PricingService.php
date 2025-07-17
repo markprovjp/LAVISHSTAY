@@ -544,13 +544,13 @@ class PricingService
                 ->sum('room_availability.total_rooms');
 
             // If no rooms available, don't update occupancy
-            if ($totalRooms == 0) {
-                Log::info("No rooms found for occupancy calculation", [
-                    'room_type_id' => $roomTypeId, 
-                    'date' => $date
-                ]);
-                return;
-            }
+            // if ($totalRooms == 0) {
+            //     Log::info("No rooms found for occupancy calculation", [
+            //         'room_type_id' => $roomTypeId, 
+            //         'date' => $date
+            //     ]);
+            //     return;
+            // }
 
             $availableRooms = DB::table('room')
                 ->join('room_option', 'room.room_id', '=', 'room_option.room_id')

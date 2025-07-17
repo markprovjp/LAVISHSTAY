@@ -40,12 +40,16 @@ class RoomAvailabilityController extends Controller
             $validated = $request->validate([
                 'check_in_date' => 'required|date',
                 'check_out_date' => 'required|date|after:check_in_date',
+                // 'guest_count' => 'required|integer|min:1',
+                'room_type_id' => 'nullable|integer|exists:room_types,room_type_id'
             ]);
 
             Log::info('Validated data: ', $validated);
 
             $checkInDate = $validated['check_in_date'];
             $checkOutDate = $validated['check_out_date'];
+            // $guestCount = $validated['guest_count'] ?? null;
+            $roomTypeId = $validated['room_type_id'] ?? null;
 
             // Kiểm tra bảng room tồn tại
             $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
@@ -70,7 +74,7 @@ class RoomAvailabilityController extends Controller
             // Kiểm tra dữ liệu cơ bản
             $totalRooms = DB::table($roomTable)->count();
             $totalRoomTypes = DB::table('room_types')->count();
-
+            
             Log::info("Total rooms: $totalRooms, Total room types: $totalRoomTypes");
 
             if ($totalRooms == 0) {
@@ -98,14 +102,10 @@ class RoomAvailabilityController extends Controller
             // Build query với logic kiểm tra booking
             $query = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->join('bed_types as bt', 'r.bed_type_fixed', '=', 'bt.id') // Thêm JOIN với bed_types
                 ->select([
                     'r.' . $roomIdColumn . ' as room_id',
                     'r.room_type_id',
                     'r.status',
-                    'r.name as room_name', // Cột mới
-                    'r.bed_type_fixed', // Cột mới
-                    'bt.type_name as bed_type_name', // Lấy tên loại giường từ bed_types
                     'rt.name as room_type_name',
                     'rt.description',
                     'rt.base_price',
@@ -117,7 +117,7 @@ class RoomAvailabilityController extends Controller
 
             Log::info('Base query built');
 
-            // Thêm bộ lọc
+            // Add filters step by step
             try {
                 $roomColumns = DB::select("SHOW COLUMNS FROM $roomTable LIKE 'status'");
                 if (!empty($roomColumns)) {
@@ -138,8 +138,16 @@ class RoomAvailabilityController extends Controller
                 Log::warning('Could not check is_active column: ' . $e->getMessage());
             }
 
-            // Loại trừ phòng đã được đặt
-            $query->whereNotIn('r.' . $roomIdColumn, function ($subQuery) use ($checkInDate, $checkOutDate) {
+            // $query->where('rt.max_guests', '>=', $guestCount);
+            // Log::info("Added guest count filter: >= $guestCount");
+
+            if ($roomTypeId) {
+                $query->where('rt.room_type_id', $roomTypeId);
+                Log::info("Added room_type_id filter: $roomTypeId");
+            }
+
+            // Thêm logic loại trừ phòng đã được đặt
+            $query->whereNotIn('r.' . $roomIdColumn, function($subQuery) use ($checkInDate, $checkOutDate) {
                 $subQuery->select('br.room_id')
                     ->from('booking_rooms as br')
                     ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
@@ -151,24 +159,25 @@ class RoomAvailabilityController extends Controller
 
             Log::info('Added booking conflict filter');
 
-            // Log truy vấn SQL
+            // Log the SQL query
             $sql = $query->toSql();
             $bindings = $query->getBindings();
             Log::info('SQL Query: ' . $sql);
             Log::info('Bindings: ', $bindings);
 
-            // Thực thi truy vấn
+            // Execute query
             $availableRooms = $query->get();
             Log::info('Query executed. Found rooms: ' . $availableRooms->count());
 
             if ($availableRooms->isEmpty()) {
+                // Debug: Check what rooms exist without filters
                 $allRooms = DB::table($roomTable . ' as r')
                     ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
                     ->select('r.*', 'rt.name', 'rt.max_guests')
                     ->get();
-
+                
                 Log::info('All rooms in database: ', $allRooms->toArray());
-
+                
                 return response()->json([
                     'success' => true,
                     'data' => [],
@@ -183,29 +192,32 @@ class RoomAvailabilityController extends Controller
                 ]);
             }
 
-            // Xử lý kết quả
+            // Process results
             $result = [];
             $groupedRooms = $availableRooms->groupBy('room_type_id');
 
             foreach ($groupedRooms as $roomTypeId => $rooms) {
                 $firstRoom = $rooms->first();
 
-                // Tính giá điều chỉnh
+
+               
+                // Calculate adjusted price using PricingService
                 $adjustedPrice = $this->calculateAdjustedPrice($roomTypeId, $request);
+                // Calculate pricing
+                // Get amenities based on room type ID
                 $allAmenities = [];
                 $highlightedAmenities = [];
+
                 $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
                 $checkIn = \Carbon\Carbon::parse($checkInDate);
                 $checkOut = \Carbon\Carbon::parse($checkOutDate);
                 $nights = $checkIn->diffInDays($checkOut);
                 $totalPrice = $firstRoom->base_price * $nights;
-
+                
                 $roomTypeData = [
                     'room_type_id' => $roomTypeId,
                     'room_code' => $firstRoom->room_code,
                     'name' => $firstRoom->room_type_name,
-                    'room_name' => $firstRoom->room_name, // Thêm tên phòng
-                    'bed_type_name' => $firstRoom->bed_type_name, // Thêm loại giường
                     'description' => $firstRoom->description,
                     'base_price' => $firstRoom->base_price,
                     'adjusted_price' => $adjustedPrice,
@@ -226,17 +238,16 @@ class RoomAvailabilityController extends Controller
                     ]
                 ];
 
-                // Thiết lập ảnh chính
+                // Set main image
                 if (!empty($roomTypeData['images'])) {
                     $mainImage = collect($roomTypeData['images'])->firstWhere('is_main', true);
                     $roomTypeData['main_image'] = $mainImage ?: $roomTypeData['images'][0];
                 }
 
+                // Add room details
                 foreach ($rooms as $room) {
                     $roomTypeData['available_rooms'][] = [
                         'room_id' => $room->room_id,
-                        'room_name' => $room->room_name, // Thêm tên phòng
-                        'bed_type_name' => $room->bed_type_name, // Thêm loại giường
                         'room_status' => $room->status
                     ];
                 }
@@ -256,6 +267,7 @@ class RoomAvailabilityController extends Controller
                 ],
                 'message' => 'Danh sách phòng trống đã được tải thành công'
             ]);
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation error: ', $e->errors());
             return response()->json([
@@ -269,7 +281,7 @@ class RoomAvailabilityController extends Controller
             Log::error('File: ' . $e->getFile());
             Log::error('Line: ' . $e->getLine());
             Log::error('Stack trace: ' . $e->getTraceAsString());
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Có lỗi xảy ra khi tìm kiếm phòng trống',
@@ -300,15 +312,11 @@ class RoomAvailabilityController extends Controller
                 return [];
             }
 
-            Log::info("Using images table: $tableName for room_type_id: $roomTypeId");
-
             // Kiểm tra cấu trúc bảng
             $columns = DB::select("SHOW COLUMNS FROM $tableName");
             $columnNames = array_map(function ($col) {
                 return $col->Field;
             }, $columns);
-
-            Log::info("Available columns in $tableName: " . implode(', ', $columnNames));
 
             // Xác định tên cột ID
             $imageIdColumn = 'image_id';
@@ -331,8 +339,6 @@ class RoomAvailabilityController extends Controller
             $images = DB::table($tableName)
                 ->where('room_type_id', $roomTypeId)
                 ->get();
-
-            Log::info("Found " . $images->count() . " images for room_type_id: " . $roomTypeId);
 
             if ($images->isEmpty()) {
                 // Debug: Kiểm tra có data nào trong bảng không
@@ -389,8 +395,6 @@ class RoomAvailabilityController extends Controller
             $allAmenities = [];
             $highlightedAmenities = [];
             $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
-
-            Log::info("Found " . count($highlightedAmenities) . " highlighted amenities for room_type_id: " . $roomTypeId);
 
             return $highlightedAmenities;
         } catch (\Exception $e) {
@@ -461,8 +465,6 @@ class RoomAvailabilityController extends Controller
             $highlightedAmenities = [];
             $this->getAmenitiesForRoomType($roomTypeId, $allAmenities, $highlightedAmenities);
 
-            Log::info("Found " . count($allAmenities) . " amenities for room_type_id: " . $roomTypeId);
-
             return $allAmenities;
         } catch (\Exception $e) {
             Log::error('Error getting room type amenities: ' . $e->getMessage());
@@ -510,8 +512,6 @@ class RoomAvailabilityController extends Controller
                 ->where('a.is_active', 1)
                 ->select('a.*', 'rta.is_highlighted')
                 ->get();
-
-            Log::info("Raw amenities query result for room_type_id $roomTypeId: " . $roomTypeAmenities->count());
 
             $allAmenities = [];
             $highlightedAmenities = [];
@@ -780,15 +780,13 @@ class RoomAvailabilityController extends Controller
     public function getAvailablePackages(Request $request): JsonResponse
     {
         try {
-            Log::info('=== RoomAvailabilityController@getAvailablePackages START ===');
-            Log::info('Request data:', $request->all());
-
+          
             // Validate input
             $validated = $request->validate([
                 'check_in_date' => 'required|date',
                 'check_out_date' => 'required|date|after:check_in_date',
                 'rooms' => 'required|array|min:1',
-                'rooms.*.adults' => 'required|integer|min:1',
+                // 'rooms.*.adults' => 'required|integer|min:1',
                 'rooms.*.children' => 'required|integer|min:0',
                 'rooms.*.childrenAges' => 'nullable|array',
                 'rooms.*.childrenAges.*.age' => 'required|integer|min:0',
@@ -815,8 +813,6 @@ class RoomAvailabilityController extends Controller
                     'total_surcharge' => $surchargePerNight * $nights
                 ];
             });
-
-            Log::info("Search criteria: check_in={$checkInDate}, check_out={$checkOutDate}, total_adults={$totalAdults}, total_children={$totalChildren}");
 
             $availableRoomTypes = $this->getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsRequested);
 
@@ -879,7 +875,6 @@ class RoomAvailabilityController extends Controller
                     'occupancy_percent' => $occupancyPercent,
                     'is_holiday' => $isHoliday,
                 ]);
-                Log::info("🔍🔍🔍🔍Policies for room type!!!!!! {$roomType->room_type_name}: " . json_encode($policies));
                 
                 // Construct complete policy information
                 $policySnapshot = [
@@ -994,9 +989,6 @@ class RoomAvailabilityController extends Controller
             }
 
             usort($result, fn($a, $b) => $a['cheapest_package_price'] <=> $b['cheapest_package_price']);
-
-            Log::info('=== RoomAvailabilityController@getAvailablePackages SUCCESS ===');
-            Log::info('Found ' . count($result) . ' room types with packages');
 
             return response()->json([
                 'success' => true,
@@ -1151,8 +1143,6 @@ class RoomAvailabilityController extends Controller
 
             $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);
 
-            Log::info("Found " . count($availableRoomTypes) . " room types with at least {$roomsNeeded} available rooms");
-
             return collect($availableRoomTypes);
         } catch (\Exception $e) {
             Log::error('Error getting available room types for packages: ' . $e->getMessage());
@@ -1185,8 +1175,6 @@ class RoomAvailabilityController extends Controller
                 ->orderBy('rtp.room_type_id')
                 ->orderBy('rtp.price_modifier_vnd')
                 ->get();
-
-            Log::info("Found " . $packages->count() . " packages for room types: " . implode(', ', $roomTypeIds));
 
             return $packages;
         } catch (\Exception $e) {
