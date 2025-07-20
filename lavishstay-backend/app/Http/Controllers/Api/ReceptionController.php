@@ -719,6 +719,7 @@ class ReceptionController extends Controller
                     'b.check_in_date',
                     'b.check_out_date',
                     'b.total_price_vnd',
+                    'b.guest_count',
                     'b.status as booking_status',
                     'b.notes',
                     'b.created_at',
@@ -775,7 +776,7 @@ class ReceptionController extends Controller
             // Order by creation date (newest first)
             $query->orderBy('b.created_at', 'desc');
 
-$bookings = $query->paginate($request->get('per_page', 20));
+$bookings = $query->paginate($request->get('per_page', 500));
 
             // Transform data for frontend
             $transformedBookings = [];
@@ -799,6 +800,7 @@ $bookings = $query->paginate($request->get('per_page', 20));
                     'check_in_date' => $booking->check_in_date,
                     'check_out_date' => $booking->check_out_date,
                     'total_price_vnd' => (float) $booking->total_price_vnd,
+                    'guest_count' => (int) $booking->guest_count, // Sửa từ guest_count thành total_guests
                     // hiển thị số lượng người lớn và trẻ em từ booking_rooms
                     'adults' => (int) $booking->total_adults,
                     'children' => (int) $booking->total_children,
@@ -824,7 +826,7 @@ $bookings = $query->paginate($request->get('per_page', 20));
                     'booking_status' => $booking->booking_status,
                 ];
             }
-            // Log::info('Bookings retrieved successfully', ['data' => $transformedBookings]);
+            Log::info('Bookings retrieved successfully', ['data' => $transformedBookings]);
             return response()->json([
                 'success' => true,
                 'message' => 'Bookings retrieved successfully',
@@ -1057,6 +1059,14 @@ $bookings = $query->paginate($request->get('per_page', 20));
         }
     }
 
+
+
+
+
+
+
+
+
     /**
     * Get detailed booking information with all rooms
     */
@@ -1082,6 +1092,7 @@ $bookings = $query->paginate($request->get('per_page', 20));
                 ->first();
 
             // Get all rooms for this booking with detailed information
+         
             $bookingRooms = DB::table('booking_rooms')
                 ->leftJoin('room', 'booking_rooms.room_id', '=', 'room.room_id')
                 ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
@@ -1090,6 +1101,9 @@ $bookings = $query->paginate($request->get('per_page', 20));
                 ->select([
                     'booking_rooms.id as booking_room_id',
                     'booking_rooms.room_id',
+                    // 'booking.room_type_id', // <-- XÓA DÒNG NÀY
+                    'booking_rooms.option_name',
+                    'booking_rooms.option_price',
                     'booking_rooms.price_per_night',
                     'booking_rooms.nights',
                     'booking_rooms.total_price',
@@ -1097,11 +1111,12 @@ $bookings = $query->paginate($request->get('per_page', 20));
                     'booking_rooms.check_out_date',
                     'booking_rooms.adults',
                     'booking_rooms.children',
-                    'booking_rooms.children_age',
                     'booking_rooms.representative_id',
                     'room.name as room_name',
                     'room.floor_id as room_floor',
                     'room.status as room_status',
+                    'room.bed_type_fixed',
+                    'room_types.room_type_id', // <-- LẤY room_type_id TỪ BẢNG room_types
                     'room_types.name as room_type_name',
                     'room_types.description as room_type_description',
                     'room_types.base_price as room_type_price',
@@ -1126,29 +1141,34 @@ $bookings = $query->paginate($request->get('per_page', 20));
                     'room_id'
                 ])
                 ->get();
+                
+               
 
             $transformedBookingRooms = [];
+                       
             foreach ($bookingRooms as $room) {
-                // Lấy children ages từ bảng booking_room_children
-                $childrenAges = DB::table('booking_room_children')
+                      $childrenAges = DB::table('booking_room_children')
                     ->where('booking_room_id', $room->booking_room_id)
                     ->orderBy('child_index')
                     ->pluck('age')
                     ->toArray();
-                
                 $transformedBookingRooms[] = [
                     'booking_room_id' => $room->booking_room_id,
                     'room_id' => $room->room_id,
                     'room_name' => $room->room_name,
                     'room_floor' => $room->room_floor,
                     'room_status' => $room->room_status,
+                    'option_name' => $room->option_name,
+                    'option_price' => (float) $room->option_price,
                     'room_type' => [
+                        'id' => $room->room_type_id,
                         'name' => $room->room_type_name,
                         'description' => $room->room_type_description,
                         'base_price' => (float) $room->room_type_price,
                         'max_guests' => (int) $room->room_type_max_guests,
                         'room_area' => $room->room_area
                     ],
+                    'bed_type' => $room->bed_type_fixed,
                     'price_per_night' => (float) $room->price_per_night,
                     'nights' => (int) $room->nights,
                     'total_price' => (float) $room->total_price,
@@ -1156,7 +1176,7 @@ $bookings = $query->paginate($request->get('per_page', 20));
                     'check_out_date' => $room->check_out_date,
                     'adults' => (int) $room->adults,
                     'children' => (int) $room->children,
-                    'children_age' => $childrenAges, // Lấy từ bảng booking_room_children
+                    'children_age' => $childrenAges,
                     'representative' => [
                         'id' => $room->representative_id,
                         'name' => $room->representative_name,
@@ -1178,6 +1198,13 @@ $bookings = $query->paginate($request->get('per_page', 20));
                     'room_id' => $rep->room_id
                 ];
             }
+$allChildrenAges = DB::table('booking_room_children')
+    ->join('booking_rooms', 'booking_room_children.booking_room_id', '=', 'booking_rooms.id')
+    ->where('booking_rooms.booking_id', $bookingId)
+    ->orderBy('booking_room_children.booking_room_id')
+    ->orderBy('booking_room_children.child_index')
+    ->pluck('age')
+    ->toArray();
 
             $bookingDetails = [
                 'booking_id' => $booking->booking_id,
@@ -1188,12 +1215,13 @@ $bookings = $query->paginate($request->get('per_page', 20));
                 'guest_count' => (int) $booking->guest_count,
                 'adults' => (int) ($booking->adults ?? 1),
                 'children' => (int) ($booking->children ?? 0),
-                'children_age' => $booking->children_age,
+                'children_age' => $allChildrenAges,
                 'check_in_date' => $booking->check_in_date,
                 'check_out_date' => $booking->check_out_date,
                 'total_price_vnd' => (float) $booking->total_price_vnd,
                 'status' => $booking->status,
                 'notes' => $booking->notes,
+                'room_type_id' => $booking->room_type_id,
                 'quantity' => (int) ($booking->quantity ?? count($transformedBookingRooms)),
                 'created_at' => $booking->created_at,
                 'updated_at' => $booking->updated_at,
@@ -1221,13 +1249,13 @@ $bookings = $query->paginate($request->get('per_page', 20));
                 'total_amount' => (float) $booking->total_price_vnd,
                 'booking_status' => $booking->status
             ];  
-            // Log::info('Booking details retrieved successfully', [
-            //     'booking_id' => $bookingId,
-            //     'booking_details' => $bookingDetails
-            // ]);
+            
+            // Trả về mảng chứa một phần tử duy nhất thay vì object
+            $responseData = [$bookingDetails];
+            
             return response()->json([
                 'success' => true,
-                'data' => $bookingDetails,
+                'data' => $responseData,
                 'message' => 'Booking details retrieved successfully'
             ]);
 
@@ -1242,6 +1270,145 @@ $bookings = $query->paginate($request->get('per_page', 20));
         }
     }
 
+    /**
+     * Get available rooms for a specific booking room entry.
+     */
+
+    public function getAssignmentPreview(Request $request, $bookingId): JsonResponse
+    {
+        try {
+            $booking = DB::table('booking')->where('booking_id', $bookingId)->first();
+            if (!$booking) {
+                return response()->json(['success' => false, 'message' => 'Booking not found.'], 404);
+            }
+    
+            // Lấy danh sách booking_rooms của booking này
+            $bookingRooms = DB::table('booking_rooms')
+                ->where('booking_id', $bookingId)
+                ->select(['id', 'room_id', 'option_name'])
+                ->get();
+    
+            if ($bookingRooms->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No rooms associated with this booking.'], 404);
+            }
+    
+            $roomTypeId = $booking->room_type_id;
+            $assignmentPreview = [];
+            $checkInDate = $booking->check_in_date;
+            $checkOutDate = $booking->check_out_date;
+    
+            // Tìm các phòng bị trùng lịch
+            $conflictingRoomIds = DB::table('booking_rooms as br')
+                ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                ->whereIn('b.status', ['Confirmed', 'Operational'])
+                ->where('b.booking_id', '!=', $bookingId)
+                ->whereNotNull('br.room_id')
+                ->where(function ($query) use ($checkInDate, $checkOutDate) {
+                    $query->where('br.check_in_date', '<', $checkOutDate)
+                          ->where('br.check_out_date', '>', $checkInDate);
+                })
+                ->pluck('br.room_id');
+    
+            // Lấy thông tin loại phòng
+            $roomType = DB::table('room_types')->where('room_type_id', $roomTypeId)->first();
+            if (!$roomType) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Room type '{$roomTypeId}' not found.",
+                    'assignment_options' => []
+                ]);
+            }
+    
+            $roomsNeededCount = $bookingRooms->count();
+    
+            // Lấy danh sách phòng còn trống theo loại phòng
+            $availableRooms = DB::table('room')
+                ->where('room_type_id', $roomTypeId)
+                ->whereNotIn('room_id', $conflictingRoomIds)
+                ->orderBy('floor_id', 'asc')
+                ->orderBy('name', 'asc')
+                ->select(['room_id as id', 'name', 'floor_id as floor', 'room_type_id']) // Sửa lại ở đây
+                ->get();
+    
+            $assignmentPreview[] = [
+                'room_type_id' => $roomTypeId,
+                'room_type_name' => $roomType->name,
+                'rooms_needed' => $roomsNeededCount,
+                'available_rooms' => $availableRooms,
+                'booking_room_ids' => $bookingRooms->pluck('id')->toArray(),
+            ];
+    
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'booking_id' => $bookingId,
+                    'check_in_date' => $checkInDate,
+                    'check_out_date' => $checkOutDate,
+                    'assignment_options' => $assignmentPreview,
+                ]
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Error getting assignment preview: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while generating the assignment preview.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+    /**
+     * Assign multiple rooms to booking_room entries.
+     */
+    public function assignMultipleRoomsToBooking(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'assignments' => 'required|array|min:1',
+            'assignments.*.booking_room_id' => 'required|integer|exists:booking_rooms,id',
+            'assignments.*.room_id' => 'required|integer|exists:room,room_id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $assignedCount = 0;
+            foreach ($request->assignments as $assignment) {
+                // Update booking_rooms table
+                DB::table('booking_rooms')
+                    ->where('id', $assignment['booking_room_id'])
+                    ->update([
+                        'room_id' => $assignment['room_id'],
+                        'updated_at' => Carbon::now()
+                    ]);
+                
+                // Update the booking status to 'operational' 
+                DB::table('booking')
+                    ->where('booking_id', $assignment['booking_room_id'])
+                    ->update(['status' => 'operational']);
+
+                $assignedCount++;
+            }
+
+            DB::commit();
+            Log::info('Successfully assigned multiple rooms to booking', [
+                'assignments' => $request->assignments,
+                'assigned_count' => $assignedCount
+            ]);
+            return response()->json(['success' => true, 'message' => "Successfully assigned {$assignedCount} rooms."]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error assigning multiple rooms to booking: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to assign rooms.', 'error' => $e->getMessage()], 500);
+        }
+    }
 
     /**
      * Create a new booking with multiple rooms and representatives

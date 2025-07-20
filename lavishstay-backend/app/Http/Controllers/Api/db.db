@@ -145,3 +145,39 @@ CREATE TABLE `representatives` (
   CONSTRAINT `representatives_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
   CONSTRAINT `representatives_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE `room_types` (
+  `room_type_id` int NOT NULL AUTO_INCREMENT,
+  `room_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `total_room` int NOT NULL,
+  `base_price` decimal(10,2) NOT NULL,
+  `room_area` int NOT NULL,
+  `view` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `rating` int DEFAULT '0',
+  `max_guests` int DEFAULT '0',
+  `is_active` tinyint DEFAULT '1',
+  PRIMARY KEY (`room_type_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE `room` (
+  `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng',
+  `room_type_id` int NOT NULL COMMENT 'Khóa ngoại, mã loại phòng',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên phòng',
+  `image` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Đường dẫn ảnh chính',
+  `floor_id` int DEFAULT NULL COMMENT 'Tầng của phòng',
+  `bed_type_fixed` int DEFAULT NULL COMMENT 'Loại giường mặc định',
+  `status` enum('available','out_of_service') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết phòng',
+  `last_cleaned` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`room_id`),
+  KEY `idx_room_type_id` (`room_type_id`),
+  KEY `bed_type_fixed` (`bed_type_fixed`),
+  KEY `floor_id` (`floor_id`),
+  CONSTRAINT `room_ibfk_2` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `room_ibfk_3` FOREIGN KEY (`bed_type_fixed`) REFERENCES `bed_types` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `room_ibfk_4` FOREIGN KEY (`floor_id`) REFERENCES `floors` (`floor_number`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB AUTO_INCREMENT=296 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin phòng'

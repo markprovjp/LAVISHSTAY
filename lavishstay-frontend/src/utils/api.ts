@@ -242,6 +242,11 @@ export const receptionAPI = {
     return response.data;
   },
 
+  getAssignmentPreview: async (bookingId: number) => {
+    const response = await api.get(`/reception/bookings/${bookingId}/assignment-preview`);
+    return response.data;
+  },
+
   createBooking: async (data: any) => {
     const response = await api.post('/reception/bookings', data);
     return response.data;
@@ -256,7 +261,14 @@ export const receptionAPI = {
     const response = await api.put(`/reception/bookings/${bookingId}/cancel`);
     return response.data;
   },
-
+ assignRoomToBooking: async (params: { booking_room_id: number; room_id: number }) => {
+   const response = await api.post('/reception/bookings/assign-room', params);
+   return response.data;
+ },
+  assignMultipleRooms: async (assignments: { booking_room_id: number; room_id: number }[]) => {
+    const response = await api.post('/reception/bookings/assign-multiple-rooms', { assignments });
+    return response.data;
+  },
   getAvailableRooms: async (checkIn: string, checkOut: string) => {
     const response = await api.get('/rooms/available', {
       params: { check_in: checkIn, check_out: checkOut }

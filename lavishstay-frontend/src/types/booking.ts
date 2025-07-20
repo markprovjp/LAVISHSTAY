@@ -10,7 +10,7 @@ export interface Booking {
     guest_count: number;
     adults: number;
     children?: number;
-    children_age?: any; // JSON field
+    children_age?: number[]; // JSON field
     status: 'pending' | 'confirmed' | 'cancelled' | 'completed'; // Enum theo schema
     quantity?: number;
     created_at: string;

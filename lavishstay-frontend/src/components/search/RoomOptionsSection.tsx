@@ -25,8 +25,8 @@ const { Text, Title } = Typography;
 
 interface RoomOptionsSectionProps {
     room: Room;
-    selectedRooms: { [roomId: string]: { [optionId: string]: number } };
-    onQuantityChange: (roomId: string, optionId: string, quantity: number) => void;
+    selectedRooms: { [room_type_id: string]: { [optionId: string]: number } };
+    onQuantityChange: (room_type_id: string, optionId: string, quantity: number) => void;
     formatVND: (price: number) => string;
     getNights?: () => number;
 }

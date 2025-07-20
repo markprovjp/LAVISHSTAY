@@ -171,10 +171,10 @@ const SearchResults: React.FC = () => {
     };
 
     // Handle package selection
-    const handlePackageSelect = (roomId: string, packageId: string) => {
+    const handlePackageSelect = (room_type_id: string, packageId: string) => {
         setSelectedPackages(prev => ({
             ...prev,
-            [roomId]: packageId
+            [room_type_id]: packageId
         }));
     };    // Handle booking with rooms_needed from API
     const handleBookRoom = (room: any, packageOption: any) => {
@@ -224,11 +224,11 @@ const SearchResults: React.FC = () => {
         };
 
         // Dispatch đơn giản để chuẩn bị cho trang thanh toán
-        dispatch(initializeBookingSelection({
-            room: roomDataWithPolicies, // Pass room with policies
-            option: packageOption,
-            quantity: roomsNeeded
-        }));
+                                 dispatch(initializeBookingSelection({
+                        room: { ...roomDataWithPolicies, room_type_id: room.id },
+                        option: { ...packageOption, room_type_id: room.id },
+                        quantity: roomsNeeded
+                    }));
 
         // Set giá trị tổng cộng chính xác
         const correctTotals = {
@@ -337,6 +337,7 @@ const SearchResults: React.FC = () => {
         groups[group].push(room);
         return groups;
     }, {});
+
 
     return (
         <div className="">

@@ -180,6 +180,8 @@ Route::prefix('reception')->group(function () {
     Route::get('/bookings', [ReceptionController::class, 'getBookings']);
     Route::get('/bookings/statistics', [ReceptionController::class, 'getBookingStatistics']);
     Route::get('/bookings/{bookingId}', [ReceptionController::class, 'getBookingDetails']);
+    Route::get('/bookings/{bookingId}/assignment-preview', [ReceptionController::class, 'getAssignmentPreview']);
+    Route::post('/bookings/assign-multiple-rooms', [ReceptionController::class, 'assignMultipleRoomsToBooking']);
     Route::post('/bookings', [ReceptionController::class, 'createReceptionBooking']);
     Route::post('/bookings/create', [ReceptionController::class, 'createBooking']);
     Route::put('/bookings/{bookingId}/status', [ReceptionController::class, 'updateBookingStatus']);

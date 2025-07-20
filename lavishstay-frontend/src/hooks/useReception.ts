@@ -4,6 +4,12 @@ import { receptionAPI } from '../utils/api';
 import { message } from 'antd';
 import { BookingFilters, CreateBookingRequest } from '../types/booking';
 
+// Interface for the assignment payload
+interface Assignment {
+    booking_room_id: number;
+    room_id: number;
+}
+
 // Get all rooms for reception dashboard
 export const useGetReceptionRooms = (params?: any) => {
     return useQuery({
@@ -172,6 +178,36 @@ export const useGetBookingStatistics = () => {
         staleTime: 2 * 60 * 1000,
         gcTime: 5 * 60 * 1000,
         refetchInterval: 60 * 1000, // Refresh every minute
+    });
+};
+
+export const useGetAssignmentPreview = (bookingId: number) => {
+    return useQuery({
+        queryKey: ['assignment-preview', bookingId],
+        queryFn: () => receptionAPI.getAssignmentPreview(bookingId),
+        enabled: !!bookingId, // Only run query if bookingId is available
+        staleTime: 1 * 60 * 1000, // 1 minute
+    });
+};
+
+// New hook for assigning multiple rooms
+export const useAssignMultipleRooms = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (assignments: Assignment[]) => receptionAPI.assignMultipleRooms(assignments),
+        onSuccess: () => {
+            message.success('Gán phòng thành công!');
+            // Invalidate relevant queries to refetch data
+            queryClient.invalidateQueries({ queryKey: ['assignment-preview'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'room-bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        },
+        onError: (error: any) => {
+            message.error(`Lỗi gán phòng: ${error.response?.data?.message || error.message}`);
+        },
     });
 };
 

@@ -237,6 +237,7 @@ const Payment: React.FC = () => {
 
                     const roomPayload = {
                         room_id: roomSummary.room.id,
+                                                                                               room_type_id: roomSummary.room.room_type_id || roomSummary.room.id,
                         room_price: roomPrice, // Total price for the entire stay
                         guest_name: roomGuestName,
                         guest_email: roomGuestEmail,
@@ -324,6 +325,7 @@ const Payment: React.FC = () => {
                 total_price: totals.finalTotal,
                 payment_method: selectedPaymentMethod,
                 notes: values.specialRequests,
+                room_type_id: roomsPayload[0].room_type_id, // Include room type ID
                 rooms: roomsPayload,
                 totals: {
                     roomsTotal: totals.roomsTotal,
@@ -337,7 +339,7 @@ const Payment: React.FC = () => {
             };
 
             console.log('Submitting booking to backend:', JSON.stringify(bookingPayload, null, 2));
-
+console.log('roomsPayload:', roomsPayload);
             // Use retry mechanism for better reliability
             const result = await createBookingWithRetry(bookingPayload);
 

@@ -205,7 +205,7 @@ const RoomManagementDashboard: React.FC = () => {
                     <div className="mb-6 flex justify-between items-start">
                         <div>
                             <h1 className="text-2xl font-bold  mb-2">
-                                Quản lý phòng khách sạn
+                                Quản lý phòng khách sạn 
                             </h1>
                             <p className="">
                                 Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng
