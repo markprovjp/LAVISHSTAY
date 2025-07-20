@@ -48,6 +48,8 @@ class PaymentController extends Controller
         'payment_method' => 'required|string|in:vietqr,pay_at_hotel',
         'rooms' => 'required|array|min:1',
         'rooms.*.room_id' => 'required|integer',
+        'rooms.*.room_type_id' => 'required|integer',
+
         'rooms.*.adults' => 'required|integer|min:1',
         'rooms.*.children' => 'integer|min:0',
     ]);
@@ -120,6 +122,7 @@ class PaymentController extends Controller
             'total_price_vnd' => $request->input('total_price'),
             'status' => 'pending', // Vẫn pending cho đến khi thanh toán
             'notes' => $request->input('notes'),
+            'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
             'user_id' => null,
             'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
 
@@ -142,11 +145,11 @@ class PaymentController extends Controller
         // Lưu vào cache với key là booking_code để xử lý sau
         cache()->put("booking_rooms_data_{$bookingCode}", $roomsData, now()->addHours(24));
 
-        // 5. Chỉ tạo 1 payment record tối thiểu
+ 
         $payment = Payment::create([
             'booking_id' => $booking->booking_id,
             'amount_vnd' => $booking->total_price_vnd,
-            'payment_type' => $request->input('payment_method') === 'pay_at_hotel' ? 'at_hotel' : 'full',
+            'payment_type' => $request->input('payment_method'), // Lưu đúng giá trị FE gửi lên
             'status' => 'pending',
         ]);
 

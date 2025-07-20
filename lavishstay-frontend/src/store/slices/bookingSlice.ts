@@ -64,6 +64,7 @@ export interface BookingRoom {
     amenities?: string[];
     mainAmenities?: string[];
     roomType: "deluxe" | "premium" | "suite" | "presidential" | "theLevelPremium" | "theLevelPremiumCorner" | "theLevelSuite";
+    room_type_id?: string; // Optional room type ID
     rating?: number;
     maxGuests?: number;
     availableRooms?: number;
@@ -71,7 +72,7 @@ export interface BookingRoom {
 }
 
 export interface SelectedRoom {
-    roomId: string;
+    room_type_id: string;
     optionId: string;
     quantity: number;
     room: BookingRoom;
@@ -83,7 +84,7 @@ export interface SelectedRoom {
 
 // Define SelectedRooms as a record/dictionary
 export interface SelectedRooms {
-    [roomId: string]: {
+    [room_type_id: string]: {
         [optionId: string]: number; // quantity
     };
 }
@@ -177,8 +178,8 @@ const calculateTotals = (
     let roomsTotal = 0;
 
     // Calculate rooms total
-    Object.entries(selectedRooms).forEach(([roomId, options]) => {
-        const room = roomsData.find(r => r.id.toString() === roomId);
+    Object.entries(selectedRooms).forEach(([room_type_id, options]) => {
+        const room = roomsData.find(r => r.id.toString() === room_type_id);
         if (!room) return;
 
         Object.entries(options).forEach(([optionId, quantity]) => {
@@ -305,26 +306,26 @@ const bookingSlice = createSlice({
         updateRoomSelection: (
             state,
             action: PayloadAction<{
-                roomId: string;
+                room_type_id: string;
                 optionId: string;
                 quantity: number;
                 nights: number;
                 guestCount: number;
             }>
         ) => {
-            const { roomId, optionId, quantity, nights, guestCount } = action.payload;
+            const { room_type_id, optionId, quantity, nights, guestCount } = action.payload;
 
-            if (!state.selectedRooms[roomId]) {
-                state.selectedRooms[roomId] = {};
+            if (!state.selectedRooms[room_type_id]) {
+                state.selectedRooms[room_type_id] = {};
             }
 
             if (quantity <= 0) {
-                delete state.selectedRooms[roomId][optionId];
-                if (Object.keys(state.selectedRooms[roomId]).length === 0) {
-                    delete state.selectedRooms[roomId];
+                delete state.selectedRooms[room_type_id][optionId];
+                if (Object.keys(state.selectedRooms[room_type_id]).length === 0) {
+                    delete state.selectedRooms[room_type_id];
                 }
             } else {
-                state.selectedRooms[roomId][optionId] = quantity;
+                state.selectedRooms[room_type_id][optionId] = quantity;
             }
 
             // Recalculate totals
@@ -344,18 +345,18 @@ const bookingSlice = createSlice({
         removeRoomSelection: (
             state,
             action: PayloadAction<{
-                roomId: string;
+                room_type_id: string;
                 optionId: string;
                 nights: number;
                 guestCount: number;
             }>
         ) => {
-            const { roomId, optionId, nights, guestCount } = action.payload;
+            const { room_type_id, optionId, nights, guestCount } = action.payload;
 
-            if (state.selectedRooms[roomId]) {
-                delete state.selectedRooms[roomId][optionId];
-                if (Object.keys(state.selectedRooms[roomId]).length === 0) {
-                    delete state.selectedRooms[roomId];
+            if (state.selectedRooms[room_type_id]) {
+                delete state.selectedRooms[room_type_id][optionId];
+                if (Object.keys(state.selectedRooms[room_type_id]).length === 0) {
+                    delete state.selectedRooms[room_type_id];
                 }
             }
 
@@ -576,8 +577,8 @@ export const selectSelectedRoomsSummary = createSelector(
     (selectedRooms, roomsData, totals) => {
         const summary: SelectedRoom[] = [];
 
-        Object.entries(selectedRooms).forEach(([roomId, options]) => {
-            const room = roomsData.find(r => r.id.toString() === roomId);
+        Object.entries(selectedRooms).forEach(([room_type_id, options]) => {
+            const room = roomsData.find(r => r.id.toString() === room_type_id);
             if (!room) return;
 
             Object.entries(options).forEach(([optionId, quantity]) => {
@@ -593,14 +594,14 @@ export const selectSelectedRoomsSummary = createSelector(
                         // Unroll the quantity to create one entry per room instance
                         for (let i = 0; i < numericQuantity; i++) {
                             summary.push({
-                                roomId,
+                                room_type_id,
                                 optionId,
                                 quantity: 1, // Each entry represents one room
                                 room,
                                 option,
                                 pricePerNight,
                                 totalPrice: totalPrice, // Use the calculated or stored total price
-                                key: `${roomId}-${optionId}-${i}`, // Unique key for this room instance
+                                key: `${room_type_id}-${optionId}-${i}`, // Unique key for this room instance
                             });
                         }
                     }

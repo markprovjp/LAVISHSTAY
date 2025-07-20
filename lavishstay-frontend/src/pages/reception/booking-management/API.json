@@ -1,0 +1,142 @@
+// http://localhost:8888/api/reception/bookings/138/assignment-preview
+{
+    "success": true,
+    "data": {
+        "booking_id": "138",
+        "check_in_date": "2025-07-17",
+        "check_out_date": "2025-07-18",
+        "assignment_options": [
+            {
+                "option_name": "Suite Package",
+                "room_type_id": 5,
+                "rooms_needed": 2,
+                "available_rooms": [
+                    {
+                        "id": 255,
+                        "room_number": "2501",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 256,
+                        "room_number": "2502",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 257,
+                        "room_number": "2503",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 258,
+                        "room_number": "2504",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 259,
+                        "room_number": "2505",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 260,
+                        "room_number": "2506",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 261,
+                        "room_number": "2507",
+                        "floor": 25,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 262,
+                        "room_number": "2601",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 263,
+                        "room_number": "2602",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 264,
+                        "room_number": "2603",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 265,
+                        "room_number": "2604",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 266,
+                        "room_number": "2605",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 267,
+                        "room_number": "2606",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 268,
+                        "room_number": "2607",
+                        "floor": 26,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 269,
+                        "room_number": "2701",
+                        "floor": 27,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 270,
+                        "room_number": "2702",
+                        "floor": 27,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 271,
+                        "room_number": "2703",
+                        "floor": 27,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 272,
+                        "room_number": "2704",
+                        "floor": 27,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 273,
+                        "room_number": "2705",
+                        "floor": 27,
+                        "room_type_name": "The Level Suite"
+                    },
+                    {
+                        "id": 274,
+                        "room_number": "2706",
+                        "floor": 27,
+                        "room_type_name": "The Level Suite"
+                    }
+                ],
+                "booking_room_ids": [
+                    123,
+                    124
+                ]
+            }
+        ]
+    }
+}

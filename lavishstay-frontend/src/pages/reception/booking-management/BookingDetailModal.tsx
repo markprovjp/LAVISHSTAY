@@ -26,106 +26,18 @@ import {
     MenuProps,
     Progress,
     Statistic,
+    Descriptions,
+    Collapse
 } from 'antd';
-import {
-    UserOutlined,
-    PhoneOutlined,
-    MailOutlined,
-    CalendarOutlined,
-    HomeOutlined,
-    DollarOutlined,
-    TeamOutlined,
-    EditOutlined,
-    SaveOutlined,
-    CloseOutlined,
-    SwapOutlined,
-    CheckCircleOutlined,
-    CloseCircleOutlined,
-    ExclamationCircleOutlined,
-    DeleteOutlined,
-    MoreOutlined,
-    ClockCircleOutlined,
-    CreditCardOutlined,
-} from '@ant-design/icons';
+import { HomeOutlined, EditOutlined, SaveOutlined, CloseOutlined, MoreOutlined, UserOutlined, PhoneOutlined, MailOutlined, DollarOutlined, TeamOutlined, CreditCardOutlined, SwapOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, ExclamationCircleOutlined , CalendarOutlined } from '@ant-design/icons';
+import { BedDouble, CalendarDays, UserRound, Pencil, DoorOpen, LogOut, XCircle, Ban, ArrowRightLeft } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-// Thêm ngay sau phần import, trước khi định nghĩa các components
-// Bọc component Table để đảm bảo dataSource luôn là mảng
-const SafeTable = (props: any) => {
-  const { dataSource, ...rest } = props;
-  
-  // Đảm bảo dataSource luôn là mảng
-  let safeDataSource = [];
-  
-  try {
-    // Kiểm tra nếu là chuỗi JSON
-    if (typeof dataSource === 'string') {
-      try {
-        const parsed = JSON.parse(dataSource);
-        safeDataSource = Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        safeDataSource = [];
-      }
-    } 
-    // Kiểm tra nếu là mảng
-    else if (Array.isArray(dataSource)) {
-      safeDataSource = dataSource;
-    } 
-    // Trường hợp còn lại
-    else {
-      safeDataSource = [];
-    }
-  } catch (e) {
-    console.error("Error processing dataSource", e);
-    safeDataSource = [];
-  }
-  
-  return <Table {...rest} dataSource={safeDataSource} />;
-};
-// Helper function to safely format children ages
-const formatChildrenAges = (children: number, childrenAge: any): string => {
-    if (!children || children <= 0) return 'Không có trẻ em';
-    
-    // If no age data available
-    if (!childrenAge) return `${children} trẻ em`;
-    
-    // If it's an array of numbers
-    if (Array.isArray(childrenAge)) {
-        if (childrenAge.length === 0) return `${children} trẻ em`;
-        
-        const validAges = childrenAge.filter(age => 
-            typeof age === 'number' && age > 0 && age <= 17
-        );
-        
-        if (validAges.length > 0) {
-            return validAges.map((age, index) => 
-                `Trẻ ${index + 1}: ${age} tuổi`
-            ).join(' • ');
-        }
-        return `${children} trẻ em`;
-    }
-    
-    // If it's a string, try to parse it
-    if (typeof childrenAge === 'string') {
-        try {
-            const parsed = JSON.parse(childrenAge);
-            if (Array.isArray(parsed)) {
-                return formatChildrenAges(children, parsed); // Recursively call with parsed array
-            }
-            return `${children} trẻ em`;
-        } catch {
-            // If can't parse, just return the string
-            return childrenAge.toString();
-        }
-    }
-    
-    // Fallback
-    return `${children} trẻ em`;
-};
+import RoomSelectionModal from './RoomSelectionModal';
+
 const { Text } = Typography;
 const { Option } = Select;
 const { TabPane } = Tabs;
-
 
 // Status badge component
 const StatusBadge: React.FC<{ status: string; type: 'booking' | 'payment' | 'room' }> = ({ status, type }) => {
@@ -148,7 +60,6 @@ const StatusBadge: React.FC<{ status: string; type: 'booking' | 'payment' | 'roo
             };
             return configs[status as keyof typeof configs] || configs.pending;
         }
-        // room status
         const configs = {
             available: { color: '#52c41a', bg: '#f6ffed', text: 'Trống' },
             occupied: { color: '#ff4d4f', bg: '#fff2f0', text: 'Có khách' },
@@ -182,17 +93,19 @@ const StatusBadge: React.FC<{ status: string; type: 'booking' | 'payment' | 'roo
 
 interface BookingRoom {
     booking_room_id: number;
-    room_id: number;
-    room_name: string;
-    room_floor: number;
-    room_status: string;
+    room_id: number | null;
+    room_name: string | null;
+    room_floor: number | null;
+    room_status: string | null;
     room_type: {
-        name: string;
-        description: string;
+        name: string | null;
+        description: string | null;
         base_price: number;
         max_guests: number;
-        room_area: number;
+        room_area: number | null;
     };
+    option_name?: string;
+    option_price?: number;
     price_per_night: number;
     nights: number;
     total_price: number;
@@ -200,15 +113,15 @@ interface BookingRoom {
     check_out_date: string;
     adults: number;
     children: number;
-    children_age?: number[] | string; // Support both array from new API and string for backward compatibility
+    children_age?: number[] | string;
     representative: {
         id: number;
         name: string;
         phone: string;
         email: string;
-        date_of_birth: string;
+        date_of_birth?: string;
         identity_number: string;
-        nationality: string;
+        nationality?: string;
     };
 }
 
@@ -217,10 +130,10 @@ interface Representative {
     full_name: string;
     phone_number: string;
     email: string;
-    date_of_birth: string;
+    date_of_birth?: string;
     identity_number: string;
-    nationality: string;
-    room_number: string;
+    nationality?: string;
+    room_number?: string;
 }
 
 interface BookingDetail {
@@ -232,7 +145,7 @@ interface BookingDetail {
     guest_count: number;
     adults: number;
     children: number;
-    children_age?: number[] | string; // Support both array from new API and string for backward compatibility
+    children_age?: number[] | string;
     check_in_date: string;
     check_out_date: string;
     total_price_vnd: number;
@@ -251,7 +164,6 @@ interface BookingDetail {
     booking_rooms: BookingRoom[];
     total_rooms: number;
     representatives: Representative[];
-    // Compatibility fields
     id: number;
     payment_status: string;
     payment_type: string;
@@ -277,154 +189,78 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     const [bookingDetail, setBookingDetail] = useState<BookingDetail | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
-
-    // Status configurations
-    const bookingStatusConfig = {
-        pending: { color: 'orange', text: 'Chờ xác nhận' },
-        confirmed: { color: 'blue', text: 'Đã xác nhận' },
-        completed: { color: 'green', text: 'Đã hoàn thành' },
-        cancelled: { color: 'red', text: 'Đã hủy' },
-    };
-
-    const paymentStatusConfig = {
-        pending: { color: 'orange', text: 'Chờ thanh toán' },
-        completed: { color: 'green', text: 'Đã thanh toán' },
-        failed: { color: 'red', text: 'Thanh toán thất bại' },
-        refunded: { color: 'purple', text: 'Đã hoàn tiền' },
-    };
-
-    const roomStatusConfig = {
-        available: { color: 'green', text: 'Trống' },
-        occupied: { color: 'red', text: 'Có khách' },
-        cleaning: { color: 'blue', text: 'Dọn dẹp' },
-        maintenance: { color: 'orange', text: 'Bảo trì' },
-        deposited: { color: 'purple', text: 'Đã cọc' },
-        no_show: { color: 'volcano', text: 'Không đến' },
-        check_in: { color: 'cyan', text: 'Đang nhận' },
-        check_out: { color: 'lime', text: 'Đang trả' },
-    };
-
-const fetchBookingDetails = async () => {
-    if (!bookingId) return;
-
-    setLoading(true);
-    try {
-        const response = await fetch(`http://localhost:8888/api/reception/bookings/${bookingId}`);
-        const rawData = await response.json();
-        console.log('API Response (raw):', rawData);
-        
-        if (rawData.success && rawData.data) {
-            // Tạo bản sao để không thay đổi dữ liệu gốc
-            const data = { ...rawData.data };
-            
-            // 1. Đảm bảo booking_rooms là mảng
-            if (data.booking_rooms) {
-                try {
-                    if (typeof data.booking_rooms === 'string') {
-                        data.booking_rooms = JSON.parse(data.booking_rooms);
-                    }
-                    
-                    // Nếu vẫn không phải mảng sau khi parse
-                    if (!Array.isArray(data.booking_rooms)) {
-                        data.booking_rooms = [];
-                    }
-                    
-                    // Map từng room để đảm bảo an toàn
-                    data.booking_rooms = data.booking_rooms.map((room: any) => {
-                        // Đảm bảo children_age là mảng
-                        try {
-                            if (room.children_age && typeof room.children_age === 'string') {
-                                room.children_age = JSON.parse(room.children_age);
-                            }
-                            if (!Array.isArray(room.children_age)) {
-                                room.children_age = [];
-                            }
-                        } catch (e) {
-                            room.children_age = [];
-                        }
-                        
-                        // Đảm bảo representative là object
-                        if (!room.representative || typeof room.representative !== 'object') {
-                            room.representative = {};
-                        }
-                        
-                        // Đảm bảo room_type là object
-                        if (!room.room_type || typeof room.room_type !== 'object') {
-                            room.room_type = {};
-                        }
-                        
-                        return room;
-                    });
-                } catch (e) {
-                    console.error("Error processing booking_rooms:", e);
-                    data.booking_rooms = [];
-                }
-            } else {
-                data.booking_rooms = [];
-            }
-            
-            // 2. Đảm bảo representatives là mảng
-            if (data.representatives) {
-                try {
-                    if (typeof data.representatives === 'string') {
-                        data.representatives = JSON.parse(data.representatives);
-                    }
-                    if (!Array.isArray(data.representatives)) {
-                        data.representatives = [];
-                    }
-                } catch (e) {
-                    console.error("Error processing representatives:", e);
-                    data.representatives = [];
-                }
-            } else {
-                data.representatives = [];
-            }
-            
-            // 3. Đảm bảo payment là object
-            if (!data.payment) {
-                data.payment = null;
-            }
-            
-            console.log('Processed data:', data);
-            setBookingDetail(data);
-            
-            // Form setup
-            form.setFieldsValue({
-                guest_name: data.guest_name || '',
-                guest_email: data.guest_email || '',
-                guest_phone: data.guest_phone || '',
-                guest_count: data.guest_count || 0,
-                adults: data.adults || 0,
-                children: data.children || 0,
-                check_in_date: data.check_in_date ? dayjs(data.check_in_date) : null,
-                check_out_date: data.check_out_date ? dayjs(data.check_out_date) : null,
-                status: data.status || 'pending',
-                payment_status: data.payment?.status || data.payment_status || 'pending',
-                payment_type: data.payment?.payment_type || data.payment_type || '',
-                notes: data.notes || '',
-            });
-        } else {
-            message.error('Không thể tải thông tin đặt phòng');
-            setBookingDetail(null);
-        }
-    } catch (error) {
-        console.error('Error fetching booking details:', error);
-        message.error('Có lỗi xảy ra khi tải thông tin');
-        setBookingDetail(null);
-    } finally {
-        setLoading(false);
-    }
+    // Room selection modal state
+    const [roomSelectionModal, setRoomSelectionModal] = useState({
+        visible: false,
+        bookingRoomId: null,
+        roomType: '',
+        checkInDate: '',
+        checkOutDate: '',
+        requiredRooms: 1,
+    });
+const handleOpenRoomSelectModal = (bookingRoomId: number) => {
+    setRoomSelectionModal({
+        visible: true,
+        bookingRoomId,
+    });
 };
+    const fetchBookingDetails = async () => {
+        if (!bookingId) return;
+        setLoading(true);
+        try {
+            const response = await fetch(`http://localhost:8888/api/reception/bookings/${bookingId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const rawData = await response.json();
+            if (rawData.success && rawData.data && Array.isArray(rawData.data) && rawData.data.length > 0) {
+                const data = rawData.data[0];
+                data.status = data.status?.toLowerCase() || 'pending';
+                data.payment_status = data.payment_status?.toLowerCase() || 'pending';
+                data.children_age = Array.isArray(data.children_age) ? data.children_age : [];
+                let rooms = Array.isArray(data.booking_rooms) ? data.booking_rooms : [];
+                rooms = rooms.map((room: BookingRoom) => ({
+                    ...room,
+                    children_age: Array.isArray(room.children_age) ? room.children_age : [],
+                }));
+                data.booking_rooms = rooms;
+                let representatives = Array.isArray(data.representatives) ? data.representatives : [];
+                data.representatives = representatives;
+                data.payment = data.payment || null;
+                setBookingDetail(data);
+                form.setFieldsValue({
+                    guest_name: data.guest_name || '',
+                    guest_email: data.guest_email || '',
+                    guest_phone: data.guest_phone || '',
+                    check_in_date: data.check_in_date ? dayjs(data.check_in_date) : null,
+                    check_out_date: data.check_out_date ? dayjs(data.check_out_date) : null,
+                    status: data.status,
+                    notes: data.notes || '',
+                    payment_status: data.payment_status,
+                    payment_type: data.payment_type || '',
+                });
+            } else {
+                console.error('No valid data found:', rawData);
+                message.error('Không thể tải thông tin đặt phòng');
+                setBookingDetail(null);
+            }
+        } catch (error) {
+            console.error('Error fetching booking details:', error);
+            message.error('Có lỗi xảy ra khi tải thông tin');
+            setBookingDetail(null);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (visible && bookingId) {
             fetchBookingDetails();
         }
     }, [visible, bookingId]);
 
-    // Handle form submit
     const handleSubmit = async (values: any) => {
         if (!bookingDetail) return;
-
         setLoading(true);
         try {
             const response = await fetch(`http://localhost:8888/api/reception/bookings/${bookingDetail.id}`, {
@@ -438,7 +274,6 @@ const fetchBookingDetails = async () => {
                     check_out_date: values.check_out_date.format('YYYY-MM-DD'),
                 }),
             });
-
             const data = await response.json();
             if (data.success) {
                 message.success('Cập nhật thông tin thành công');
@@ -455,13 +290,11 @@ const fetchBookingDetails = async () => {
         }
     };
 
-    // Room action handlers
     const handleRoomAction = async (action: string, roomIds: number[]) => {
         if (roomIds.length === 0) {
             message.warning('Vui lòng chọn ít nhất một phòng');
             return;
         }
-
         try {
             const response = await fetch('http://localhost:8888/api/reception/room-actions', {
                 method: 'POST',
@@ -474,7 +307,6 @@ const fetchBookingDetails = async () => {
                     room_ids: roomIds,
                 }),
             });
-
             const data = await response.json();
             if (data.success) {
                 message.success(`${action} thành công`);
@@ -488,7 +320,6 @@ const fetchBookingDetails = async () => {
         }
     };
 
-    // Room columns with beautiful design
     const roomColumns: ColumnsType<BookingRoom> = [
         {
             title: '',
@@ -530,16 +361,32 @@ const fetchBookingDetails = async () => {
                     </div>
                     <div>
                         <div style={{ fontWeight: 600, fontSize: '14px', color: '#262626', marginBottom: 2 }}>
-                            {name}
+                            {name || record.option_name || 'Chưa chỉ định phòng'}
                         </div>
                         <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            Tầng {record.room_floor} • {record.room_type?.name || 'N/A'}
+                            Tầng {record.room_floor || 'N/A'} • {record.room_type?.name || 'N/A'}
                         </div>
+                        {isUnassigned && (
+                            <Button
+                                type="primary"
+                                size="small"
+                                style={{ borderRadius: '6px', marginTop: 4 }}
+                                onClick={() => {
+                                    setRoomSelectionModal({
+                                        visible: true,
+                                        bookingRoomId: record.booking_room_id,
+                                        roomType: record.room_type?.name || '',
+                                        checkInDate: record.check_in_date,
+                                        checkOutDate: record.check_out_date,
+                                        requiredRooms: 1,
+                                    });
+                                }}
+                            >
+                                Chọn phòng
+                            </Button>
+                        )}
                         <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
                             Tối đa {record.room_type?.max_guests || 0} khách • {record.room_type?.room_area || 0}m²
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                            {record.adults} người lớn, {record.children} trẻ em
                         </div>
                     </div>
                 </div>
@@ -553,24 +400,17 @@ const fetchBookingDetails = async () => {
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                         <span style={{ fontSize: '12px', color: '#8c8c8c' }}>Người lớn:</span>
-                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#1890ff' }}>{record.adults}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#1890ff' }}>
+                            {Number(record.adults || 0)}
+                        </span>
+            
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                         <span style={{ fontSize: '12px', color: '#8c8c8c' }}>Trẻ em:</span>
-                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#fa8c16' }}>{record.children}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#fa8c16' }}>
+                            {Number(record.children || 0)}
+                        </span>
                     </div>
-                    {record.children > 0 && (
-                        <div style={{
-                            padding: '4px 6px',
-                            backgroundColor: '#fff7e6',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            color: '#fa8c16',
-                            textAlign: 'center'
-                        }}>
-                            {formatChildrenAges(record.children, record.children_age)}
-                        </div>
-                    )}
                 </div>
             ),
         },
@@ -580,7 +420,7 @@ const fetchBookingDetails = async () => {
             key: 'room_status',
             width: 120,
             align: 'center',
-            render: (status: string) => <StatusBadge status={status} type="room" />,
+            render: (status: string) => <StatusBadge status={status || 'available'} type="room" />,
         },
         {
             title: 'Thời gian lưu trú',
@@ -849,9 +689,6 @@ const fetchBookingDetails = async () => {
             <Spin spinning={loading}>
                 {bookingDetail && (
                     <>
-
-
-                        {/* Phần thông tin khách hàng */}
                         <Card
                             title="Thông tin đặt phòng"
                             style={{ marginBottom: 24 }}
@@ -975,139 +812,109 @@ const fetchBookingDetails = async () => {
                             </Form>
                         </Card>
 
-                        {/* Phần Tabs */}
                         <Tabs defaultActiveKey="rooms">
-                            <TabPane tab={
+                                             <TabPane tab={
                                 <span>
                                     <HomeOutlined style={{ marginRight: 8 }} />
                                     Chi tiết phòng ({Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0})
                                 </span>
                             } key="rooms">
-                                <Card
-                                    style={{
-                                        borderRadius: '12px',
-                                        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)',
-                                        border: '1px solid #f0f0f0'
-                                    }}
-                                    bodyStyle={{ padding: '20px' }}
+                                <Collapse
+                                    accordion
+                                    style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)', border: '1px solid #f0f0f0' }}
                                 >
-                                    <div style={{
-                                        marginBottom: 20,
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: '16px 20px',
-                                        backgroundColor: '#fafafa',
-                                        borderRadius: '8px',
-                                        border: '1px solid #f0f0f0'
-                                    }}>
-                                        <Space size={16}>
-                                            <Checkbox
-                                                indeterminate={selectedRooms.length > 0 && selectedRooms.length < (Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0)}
-                                                checked={selectedRooms.length === (Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0) && (Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0) > 0}
-                                                onChange={(e) => {
-                                                    if (e.target.checked && Array.isArray(bookingDetail.booking_rooms)) {
-                                                        setSelectedRooms(bookingDetail.booking_rooms.map(room => room.booking_room_id));
-                                                    } else {
-                                                        setSelectedRooms([]);
-                                                    }
-                                                }}
+                                    {Array.isArray(bookingDetail.booking_rooms) && bookingDetail.booking_rooms.length > 0 ? (
+                                        bookingDetail.booking_rooms.map((room, idx) => (
+                                            <Collapse.Panel
+                                                header={
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                        <BedDouble size={20} style={{ color: '#1890ff' }} />
+                                                        <span style={{ fontWeight: 600, fontSize: '15px' }}>{room.option_name || 'Chưa chỉ định'} - Phòng #{idx + 1}</span>
+                                                        {room.room_name ? (
+                                                            <span style={{ color: '#52c41a', fontWeight: 500, marginLeft: 8 }}><DoorOpen size={18} /> {room.room_name}</span>
+                                                        ) : (
+                                                            <Button type="dashed" icon={<DoorOpen size={16} />} size="small" onClick={() => handleOpenRoomSelectModal(room.booking_room_id)} style={{ marginLeft: 8 }}>
+                                                                Chọn phòng
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                }
+                                                key={room.booking_room_id}
                                             >
-                                                <span style={{ fontWeight: 500, color: '#262626' }}>
-                                                    Chọn tất cả
-                                                </span>
-                                            </Checkbox>
-                                            <Badge
-                                                count={selectedRooms.length}
-                                                style={{ backgroundColor: '#1890ff' }}
-                                                showZero={false}
-                                            >
-                                                <span style={{ color: '#8c8c8c', fontSize: '13px' }}>
-                                                    ({selectedRooms.length}/{Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0} phòng)
-                                                </span>
-                                            </Badge>
-                                        </Space>
-                                        <Space>
-                                            <Dropdown
-                                                menu={{
-                                                    items: roomActionMenuItems,
-                                                }}
-                                                disabled={selectedRooms.length === 0}
-                                            >
-                                                <Button
-                                                    type="primary"
-                                                    icon={<MoreOutlined />}
-                                                    disabled={selectedRooms.length === 0}
-                                                    style={{ borderRadius: '8px' }}
+                                                <Card
+                                                    style={{ borderRadius: 8, background: '#fafafa', border: '1px solid #f0f0f0', marginBottom: 12 }}
+                                                    bodyStyle={{ padding: '16px' }}
                                                 >
-                                                    Thao tác hàng loạt ({selectedRooms.length})
-                                                </Button>
-                                            </Dropdown>
-                                        </Space>
-                                    </div>
-                                         
-<SafeTable
-    columns={roomColumns as any}
-    dataSource={(() => {
-        try {
-            if (!bookingDetail?.booking_rooms) return [];
-            
-            // Parse nếu là string
-            let parsedRooms = bookingDetail.booking_rooms;
-            if (typeof parsedRooms === 'string') {
-                try {
-                    parsedRooms = JSON.parse(parsedRooms);
-                } catch (e) {
-                    console.error("Error parsing booking_rooms", e);
-                    parsedRooms = [];
-                }
-            }
-            
-            // Đảm bảo là array
-            if (!Array.isArray(parsedRooms)) {
-                return [];
-            }
-            
-            // Map dữ liệu an toàn
-            return parsedRooms.map((room: any) => ({
-                key: `room-${room.booking_room_id || Math.random()}`, // Đảm bảo luôn có key duy nhất
-                booking_room_id: room.booking_room_id || 0,
-                room_id: room.room_id || 0,
-                room_name: room.room_name || '',
-                room_floor: room.room_floor || 0,
-                room_status: room.room_status || 'available',
-                room_type: room.room_type || {},
-                price_per_night: room.price_per_night || 0,
-                nights: room.nights || 0,
-                total_price: room.total_price || 0,
-                check_in_date: room.check_in_date || '',
-                check_out_date: room.check_out_date || '',
-                adults: room.adults || 0,
-                children: room.children || 0,
-                children_age: room.children_age,
-                representative: room.representative || {}
-            }));
-        } catch (e) {
-            console.error("Error processing rooms for table", e);
-            return [];
-        }
-    })()}
-    rowKey="booking_room_id"
-    pagination={false}
-    size="middle"
-    scroll={{ x: 'max-content' }}
-    rowClassName={(record) =>
-        selectedRooms.includes(record.booking_room_id) ? 'selected-row' : ''
-    }
-/>
-                                </Card>
+                                                    <Descriptions
+                                                        title={<span><CalendarDays size={16} style={{ marginRight: 6 }} />Thông tin phòng</span>}
+                                                        bordered
+                                                        size="middle"
+                                                        column={2}
+                                                        style={{ marginBottom: 12 }}
+                                                    >
+                                                        <Descriptions.Item label={<span><UserRound size={14} style={{ marginRight: 4 }} />Người lớn</span>}>{room.adults} người</Descriptions.Item>
+                                                        <Descriptions.Item label={<span><UserRound size={14} style={{ marginRight: 4 }} />Trẻ em</span>}>{room.children} trẻ</Descriptions.Item>
+                                                        <Descriptions.Item label={<CalendarDays size={14} style={{ marginRight: 4 }} />}>Ngày nhận phòng: {room.check_in_date}</Descriptions.Item>
+                                                        <Descriptions.Item label={<CalendarDays size={14} style={{ marginRight: 4 }} />}>Ngày trả phòng: {room.check_out_date}</Descriptions.Item>
+                                                        <Descriptions.Item label={<span><LogOut size={14} style={{ marginRight: 4 }} />Số đêm</span>}>{room.nights}</Descriptions.Item>
+                                                        <Descriptions.Item label={<DollarOutlined style={{ marginRight: 4, color: '#f50' }} />}>Tổng tiền: <span style={{ color: '#f50', fontWeight: 600 }}>{new Intl.NumberFormat('vi-VN').format(room.total_price || 0)} ₫</span></Descriptions.Item>
+                                                    </Descriptions>
+                                                    {room.children > 0 && Array.isArray(room.children_age) && room.children_age.length > 0 && (
+                                                        <Descriptions
+                                                            title={<span><UserRound size={14} style={{ marginRight: 4 }} />Độ tuổi trẻ em</span>}
+                                                            bordered
+                                                            size="small"
+                                                            column={2}
+                                                            style={{ marginBottom: 12, background: '#fffbe6', borderRadius: 8 }}
+                                                        >
+                                                            {room.children_age.map((age, index) => (
+                                                                <Descriptions.Item
+                                                                    key={index}
+                                                                    label={`Trẻ em ${index + 1}`}
+                                                                    labelStyle={{ fontWeight: 500, color: '#fa8c16' }}
+                                                                    contentStyle={{ color: '#fa8c16', fontWeight: 500 }}
+                                                                >
+                                                                    {age} tuổi
+                                                                </Descriptions.Item>
+                                                            ))}
+                                                        </Descriptions>
+                                                    )}
+                                                    <Divider style={{ margin: '12px 0' }} />
+                                                    <Descriptions
+                                                        title={<span><UserRound size={14} style={{ marginRight: 4 }} />Người đại diện</span>}
+                                                        bordered
+                                                        size="small"
+                                                        column={2}
+                                                    >
+                                                        <Descriptions.Item label="Tên">{room.representative?.name || '-'}</Descriptions.Item>
+                                                        <Descriptions.Item label="SĐT">{room.representative?.phone || '-'}</Descriptions.Item>
+                                                        <Descriptions.Item label="Email">{room.representative?.email || '-'}</Descriptions.Item>
+                                                        <Descriptions.Item label="CMND/CCCD">{room.representative?.identity_number || '-'}</Descriptions.Item>
+                                                    </Descriptions>
+                                                    <Divider style={{ margin: '12px 0' }} />
+                                                    <Space wrap>
+                                                        <Button icon={<ArrowRightLeft size={16} />} onClick={() => handleRoomAction('transfer', [room.booking_room_id])}>Đổi phòng</Button>
+                                                        <Button icon={<LogOut size={16} />} onClick={() => handleRoomAction('check_in', [room.booking_room_id])}>Check-in</Button>
+                                                        <Button icon={<XCircle size={16} />} onClick={() => handleRoomAction('check_out', [room.booking_room_id])}>Check-out</Button>
+                                                        <Button icon={<Ban size={16} />} danger onClick={() => handleRoomAction('cancel', [room.booking_room_id])}>Hủy</Button>
+                                                        <Button icon={<ExclamationCircleOutlined />} danger onClick={() => handleRoomAction('no_show', [room.booking_room_id])}>No show</Button>
+                                                    </Space>
+                                                </Card>
+                                            </Collapse.Panel>
+                                        ))
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <Text type="secondary">Chưa có thông tin phòng</Text>
+                                        </div>
+                                    )}
+                                </Collapse>
                             </TabPane>
                             <TabPane tab={
                                 <span>
                                     <UserOutlined style={{ marginRight: 8 }} />
-                                    Đại diện phòng ({Array.isArray(bookingDetail.representatives) ? bookingDetail.representatives.length : 0})
+                                    Chi tiết đã đặt ({Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0})
                                 </span>
-                            } key="representatives">
+                            } key="bookedDetails">
                                 <Card
                                     style={{
                                         borderRadius: '12px',
@@ -1118,10 +925,7 @@ const fetchBookingDetails = async () => {
                                 >
                                     <div style={{ marginBottom: 20 }}>
                                         <Text strong style={{ fontSize: '16px', color: '#262626' }}>
-                                            Thông tin đại diện theo phòng
-                                        </Text>
-                                        <Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: '14px' }}>
-                                            Danh sách người đại diện và thông tin khách cho từng phòng
+                                            Thông tin các phòng đã đặt
                                         </Text>
                                     </div>
                                     {Array.isArray(bookingDetail?.booking_rooms) && bookingDetail.booking_rooms.length > 0 ? (
@@ -1139,12 +943,16 @@ const fetchBookingDetails = async () => {
                                                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                                                 <HomeOutlined style={{ marginRight: 8, color: '#1890ff' }} />
                                                                 <span style={{ fontWeight: 600, fontSize: '14px' }}>
-                                                                    {room.room_name} ({room.room_type?.name})
+                                                                    {room.option_name || 'Chưa chỉ định'}
                                                                 </span>
                                                             </div>
                                                         }
                                                     >
                                                         <div style={{ marginBottom: 12 }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                                                                <span style={{ color: '#8c8c8c', fontSize: '12px' }}>Giá mỗi đêm:</span>
+                                                                <span style={{ fontWeight: 500, color: '#1890ff' }}>{new Intl.NumberFormat('vi-VN').format(room.option_price || 0)} ₫</span>
+                                                            </div>
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                                                                 <span style={{ color: '#8c8c8c', fontSize: '12px' }}>Người lớn:</span>
                                                                 <span style={{ fontWeight: 500, color: '#1890ff' }}>{room.adults} người</span>
@@ -1153,7 +961,7 @@ const fetchBookingDetails = async () => {
                                                                 <span style={{ color: '#8c8c8c', fontSize: '12px' }}>Trẻ em:</span>
                                                                 <span style={{ fontWeight: 500, color: '#fa8c16' }}>{room.children} trẻ</span>
                                                             </div>
-                                                            {room.children > 0 && (
+                                                            {room.children > 0 && Array.isArray(room.children_age) && room.children_age.length > 0 && (
                                                                 <div style={{ marginTop: 8 }}>
                                                                     <div style={{ color: '#8c8c8c', fontSize: '12px', marginBottom: 4 }}>
                                                                         Độ tuổi trẻ em:
@@ -1166,7 +974,7 @@ const fetchBookingDetails = async () => {
                                                                         color: '#fa8c16',
                                                                         fontWeight: 500
                                                                     }}>
-                                                                        {formatChildrenAges(room.children, room.children_age)}
+                                                                        {room.children_age.map((age, index) => `Trẻ ${index + 1}: ${age} tuổi`).join(' • ')}
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -1192,9 +1000,6 @@ const fetchBookingDetails = async () => {
                                                                         </div>
                                                                         <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
                                                                             📞 {room.representative.phone || 'Chưa có SĐT'}
-                                                                        </div>
-                                                                        <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
-                                                                            🆔 {room.representative.identity_number || 'Chưa có CCCD'}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -1222,87 +1027,98 @@ const fetchBookingDetails = async () => {
                                     )}
                                 </Card>
                             </TabPane>
-                            <TabPane tab={
-                                <span>
-                                    <CreditCardOutlined style={{ marginRight: 8 }} />
-                                    Thanh toán
-                                </span>
-                            } key="payment">
-                                <Card
-                                    style={{
-                                        borderRadius: '12px',
-                                        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)',
-                                        border: '1px solid #f0f0f0'
-                                    }}
-                                    bodyStyle={{ padding: '20px' }}
-                                >
-                                    {bookingDetail.payment ? (
-                                        <Row gutter={[24, 24]}>
-                                            <Col span={12}>
-                                                <Statistic
-                                                    title="Số tiền thanh toán"
-                                                    value={bookingDetail.payment.amount_vnd}
-                                                    formatter={(value) => `${new Intl.NumberFormat('vi-VN').format(Number(value))} ₫`}
-                                                    valueStyle={{ color: '#f50', fontSize: '24px', fontWeight: 600 }}
-                                                />
-                                            </Col>
-                                            <Col span={12}>
+                        <TabPane tab={
+                            <span>
+                                <CreditCardOutlined style={{ marginRight: 8 }} />
+                                Thanh toán
+                            </span>
+                        } key="payment">
+                            <Card
+                                style={{
+                                    borderRadius: '12px',
+                                    boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)',
+                                    border: '1px solid #f0f0f0'
+                                }}
+                                bodyStyle={{ padding: '20px' }}
+                            >
+                                {bookingDetail.payment ? (
+                                    <Row gutter={[24, 24]}>
+                                        <Col span={12}>
+                                            <Statistic
+                                                title="Số tiền thanh toán"
+                                                value={bookingDetail.payment.amount_vnd}
+                                                formatter={(value) => `${new Intl.NumberFormat('vi-VN').format(Number(value))} ₫`}
+                                                valueStyle={{ color: '#f50', fontSize: '24px', fontWeight: 600 }}
+                                            />
+                                        </Col>
+                                        <Col span={12}>
+                                            <div style={{ marginBottom: 16 }}>
+                                                <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                                                    Trạng thái:
+                                                </Text>
+                                                <span style={{ marginLeft: 8 }}>
+                                                    <StatusBadge status={bookingDetail.payment.status} type="payment" />
+                                                </span>
+                                            </div>
+                                            <div style={{ marginBottom: 16 }}>
+                                                <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                                                    Hình thức:
+                                                </Text>
+                                                <span style={{ marginLeft: 8, fontSize: '14px' }}>
+                                                    {bookingDetail.payment.payment_type || 'Chưa xác định'}
+                                                </span>
+                                            </div>
+                                            {bookingDetail.payment.transaction_id && (
                                                 <div style={{ marginBottom: 16 }}>
                                                     <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                        Trạng thái:
+                                                        Mã giao dịch:
                                                     </Text>
-                                                    <span style={{ marginLeft: 8 }}>
-                                                        <StatusBadge status={bookingDetail.payment.status} type="payment" />
+                                                    <span style={{ marginLeft: 8, fontSize: '14px', fontFamily: 'monospace' }}>
+                                                        {bookingDetail.payment.transaction_id}
                                                     </span>
                                                 </div>
-                                                <div style={{ marginBottom: 16 }}>
-                                                    <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                        Hình thức:
-                                                    </Text>
-                                                    <span style={{ marginLeft: 8, fontSize: '14px' }}>
-                                                        {bookingDetail.payment.payment_type || 'Chưa xác định'}
-                                                    </span>
-                                                </div>
-                                                {bookingDetail.payment.transaction_id && (
-                                                    <div style={{ marginBottom: 16 }}>
-                                                        <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                            Mã giao dịch:
-                                                        </Text>
-                                                        <span style={{ marginLeft: 8, fontSize: '14px', fontFamily: 'monospace' }}>
-                                                            {bookingDetail.payment.transaction_id}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                        Thời gian thanh toán:
-                                                    </Text>
-                                                    <span style={{ marginLeft: 8, fontSize: '14px' }}>
-                                                        {dayjs(bookingDetail.payment.created_at).format('DD/MM/YYYY HH:mm')}
-                                                    </span>
-                                                </div>
-                                            </Col>
-                                        </Row>
-                                    ) : (
-                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                            <Text type="secondary">Chưa có thông tin thanh toán</Text>
-                                        </div>
-                                    )}
-                                </Card>
-                            </TabPane>
-                            <TabPane tab="Hóa đơn" key="invoice">
-                                <Card>
+                                            )}
+                                            <div>
+                                                <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                                                    Thời gian thanh toán:
+                                                </Text>
+                                                <span style={{ marginLeft: 8, fontSize: '14px' }}>
+                                                    {dayjs(bookingDetail.payment.created_at).format('DD/MM/YYYY HH:mm')}
+                                                </span>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                ) : (
                                     <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                        <Text type="secondary">Tính năng hóa đơn sẽ được phát triển trong phiên bản tiếp theo</Text>
+                                        <Text type="secondary">Chưa có thông tin thanh toán</Text>
                                     </div>
-                                </Card>
-                            </TabPane>
-                        </Tabs>
-                    </>
-                )}
-            </Spin>
-        </Modal>
-    );
+                                )}
+                            </Card>
+                        </TabPane>
+                        <TabPane tab="Hóa đơn" key="invoice">
+                            <Card>
+                                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                    <Text type="secondary">Tính năng hóa đơn sẽ được phát triển trong phiên bản tiếp theo</Text>
+                                </div>
+                            </Card>
+                        </TabPane>
+                    </Tabs>
+                    <RoomSelectionModal
+    visible={roomSelectionModal.visible}
+    onClose={() => setRoomSelectionModal({ visible: false, bookingRoomId: null })}
+    bookingId={bookingDetail?.id || null}
+    bookingRoomId={roomSelectionModal.bookingRoomId}
+    onAssignmentSuccess={() => {
+        setRoomSelectionModal({ visible: false, bookingRoomId: null });
+        fetchBookingDetails();
+    }}
+/>
+                </>
+            )}
+        </Spin>
+    </Modal>
+    
+);
 };
 
 export default BookingDetailModal;

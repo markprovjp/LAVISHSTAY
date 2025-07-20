@@ -33,7 +33,7 @@ import { motion } from "framer-motion";
 import CountUp from "react-countup";
 import { Bed, MapPin, Star } from "lucide-react";
 import AmenityDisplay from '../common/AmenityDisplay';
-import './RoomTypeShowcase.css';
+// import './RoomTypeShowcase.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -219,7 +219,7 @@ const RoomTypeCard: React.FC<{ roomType: RoomTypeData; index: number }> = ({ roo
                                 </span>
                             )}
                             <span className="flex items-center gap-1">
-                                <TeamOutlined /> {roomType.max_guests} khách
+                                <TeamOutlined /> {roomType.max_guests} khách 
                             </span>
                         </div>
                     </div>

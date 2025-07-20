@@ -43,7 +43,7 @@ import BookingFilterBar from '../../../components/booking-management/BookingFilt
 import ErrorBoundary from '../../../components/common/ErrorBoundary';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
-
+import RoomSelectionModal from './RoomSelectionModal';
 dayjs.locale('vi');
 
 const { Content } = Layout;
@@ -68,7 +68,7 @@ interface BookingTableData {
     guest_count: number;
     adults: number;
     num_children: number;
-    children_age?: number[] | string; // Support both array from new API and string for backward compatibility
+    children_age?: number[];
     total_price_vnd: number;
     status: string;
     check_in_date: string;
@@ -98,6 +98,9 @@ const BookingManagement: React.FC = () => {
     const [filters, setFilters] = useState<BookingFilters>({});
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+    // State cho RoomSelectionModal
+    const [isRoomSelectionModalVisible, setIsRoomSelectionModalVisible] = useState(false);
+    const [roomSelectionBookingId, setRoomSelectionBookingId] = useState<number | null>(null);
 
     // API hooks
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
@@ -149,28 +152,34 @@ const BookingManagement: React.FC = () => {
             const totalRooms = booking.total_rooms || 1;
 
             // ULTRA SAFE processing of children and adults values
+                       // ...existing code...
             let safeChildren = 0;
             let safeAdults = 1;
-
+            
             try {
-                // Use aggregated values from backend if available
-                const backendAdults = booking.total_adults_from_rooms || booking.adults;
-                const backendChildren = booking.total_children_from_rooms || booking.children;
-
+                // Ưu tiên lấy từ backend nếu có
+                const backendAdults = booking.total_adults_from_rooms ?? booking.adults ?? booking.guest_count;
+                const backendChildren = booking.total_children_from_rooms ?? booking.children ?? 0;
+            
+                // Nếu chưa có dữ liệu phòng, lấy từ guest_count (giả sử tất cả là người lớn)
+                if ((backendAdults === null || backendAdults === undefined) && booking.guest_count !== undefined) {
+                    safeAdults = Number(booking.guest_count) || 1;
+                } else if (backendAdults !== null && backendAdults !== undefined) {
+                    const adultsVal = Number(backendAdults);
+                    safeAdults = isNaN(adultsVal) ? 1 : Math.max(1, Math.floor(adultsVal));
+                }
+            
                 if (backendChildren !== null && backendChildren !== undefined) {
                     const childrenVal = Number(backendChildren);
                     safeChildren = isNaN(childrenVal) ? 0 : Math.max(0, Math.floor(childrenVal));
                 }
-
-                if (backendAdults !== null && backendAdults !== undefined) {
-                    const adultsVal = Number(backendAdults);
-                    safeAdults = isNaN(adultsVal) ? 1 : Math.max(1, Math.floor(adultsVal));
-                }
+                // console.log(`Processed booking ${bookingId}: Adults=${safeAdults}, Children=${safeChildren}`);
             } catch (error) {
                 console.error('Error processing children/adults values:', error);
                 safeChildren = 0;
-                safeAdults = 1;
+                safeAdults = booking.guest_count ? Number(booking.guest_count) : 1;
             }
+            // ...existing code...
 
             const processedBooking = {
                 // Use booking_id as primary key
@@ -182,6 +191,7 @@ const BookingManagement: React.FC = () => {
                 booking_code: String(booking.booking_code || ''),
                 user_id: booking.user_id ? Number(booking.user_id) : null,
                 option_id: booking.option_id ? Number(booking.option_id) : null,
+                children_age: Array.isArray(booking.children_age) ? booking.children_age : [],
                 check_in_date: String(booking.check_in_date || ''),
                 check_out_date: String(booking.check_out_date || ''),
                 total_price_vnd: Number(totalAmount) || 0,
@@ -223,7 +233,6 @@ const BookingManagement: React.FC = () => {
                 booking_status: String(booking.status || 'pending'),
             };
 
-            console.log('Final processed booking:', processedBooking);
 
             return processedBooking;
         });
@@ -373,13 +382,19 @@ const BookingManagement: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 4
+                            gap: 4,
+                            marginBottom: 4
                         }}>
                             <TeamOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
                             <Text strong style={{ fontSize: '13px' }}>
                                 {adults} NL {children > 0 ? `+ ${children} TE` : ''}
                             </Text>
                         </div>
+                        {record.children_age && record.children_age.length > 0 && (
+                            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                                Tuổi TE: {record.children_age.join(', ')}
+                            </div>
+                        )}
                     </div>
                 );
             },
@@ -465,8 +480,8 @@ const BookingManagement: React.FC = () => {
                                     {roomNames.length > 2 && `... +${roomNames.length - 2}`}
                                 </div>
                                 <div style={{ fontSize: '10px', color: '#8c8c8c', maxWidth: '150px' }}>
-                                    {roomTypes.length > 0 ? roomTypes.slice(0, 2).join(', ') : ''}
-                                    {roomTypes.length > 2 && `... +${roomTypes.length - 2}`}
+                                    {roomTypes.length > 0 ? roomTypes.slice(0, 4).join(', ') : ''}
+                                    {roomTypes.length > 4 && `... +${roomTypes.length - 4}`}
                                 </div>
                             </div>
                         </div>
@@ -549,49 +564,68 @@ const BookingManagement: React.FC = () => {
         {
             title: 'Thao tác',
             key: 'actions',
-            width: 120,
+            width: 180,
             fixed: 'right',
             align: 'center',
-            render: (_, record) => (
-                <Space size="small">
-                    <Tooltip title="Xem chi tiết">
-                        <Button
-                            type="text"
-                            icon={<EyeOutlined />}
-                            size="small"
-                            style={{
-                                borderRadius: '6px',
-                                backgroundColor: '#f0f2ff',
-                                color: '#1890ff'
-                            }}
-                            onClick={() => {
-                                setSelectedBooking(record as any);
-                                setIsDetailModalVisible(true);
-                            }}
-                        />
-                    </Tooltip>
-                    {record.status === 'pending' && (
-                        <Tooltip title="Hủy đặt phòng">
+            render: (_, record) => {
+                const hasUnassignedRoom = !record.room_names || record.room_names.trim() === '' || record.room_names.includes('null') || record.room_names.includes('undefined');
+                return (
+                    <Space size="small">
+                        <Tooltip title="Xem chi tiết">
                             <Button
                                 type="text"
-                                danger
-                                icon={<DeleteOutlined />}
+                                icon={<EyeOutlined />}
                                 size="small"
                                 style={{
                                     borderRadius: '6px',
-                                    backgroundColor: '#fff2f0'
+                                    backgroundColor: '#f0f2ff',
+                                    color: '#1890ff'
                                 }}
-                                onClick={() => handleCancelBooking(record.booking_id)}
+                                onClick={() => {
+                                    setSelectedBooking(record as any);
+                                    setIsDetailModalVisible(true);
+                                }}
                             />
                         </Tooltip>
-                    )}
-                </Space>
-            ),
+                        {hasUnassignedRoom && (
+                            <Tooltip title="Chọn phòng cho khách">
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    style={{ borderRadius: '6px', backgroundColor: '#e6f7ff', color: '#1890ff' }}
+                                    icon={<HomeOutlined />}
+                                    onClick={() => {
+                                        setRoomSelectionBookingId(record.booking_id || record.booking_id);
+                                        setIsRoomSelectionModalVisible(true);
+                                    }}
+                                >
+                                    
+                                </Button>
+                            </Tooltip>
+                        )}
+                        {record.status === 'Pending' && (
+                            <Tooltip title="Hủy đặt phòng">
+                                <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    style={{
+                                        borderRadius: '6px',
+                                        backgroundColor: '#fff2f0'
+                                    }}
+                                    onClick={() => handleCancelBooking(record.booking_id)}
+                                />
+                            </Tooltip>
+                        )}
+                    </Space>
+                );
+            },
         },
     ];
 
     return (
-        <Layout className="min-h-screen" style={{ backgroundColor: '#f5f5f5' }}>
+        <Layout className="min-h-screen" >
             <Content className="p-6">
                 {/* Header Section */}
                 <div style={{
@@ -808,6 +842,20 @@ const BookingManagement: React.FC = () => {
                         refetch();
                     }}
                 />
+                {/* Room Selection Modal */}
+                {isRoomSelectionModalVisible && (
+                    <RoomSelectionModal
+                        visible={isRoomSelectionModalVisible}
+                        bookingId={roomSelectionBookingId}
+                        onClose={() => {
+                            setIsRoomSelectionModalVisible(false);
+                            setRoomSelectionBookingId(null);
+                        }}
+                        onUpdate={() => {
+                            refetch();
+                        }}
+                    />
+                )}
             </Content>
         </Layout>
     );

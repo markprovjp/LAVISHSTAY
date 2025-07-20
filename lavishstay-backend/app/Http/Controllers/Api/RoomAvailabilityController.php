@@ -1060,19 +1060,23 @@ class RoomAvailabilityController extends Controller
     }
 
 
-    private function calculateOccupancyPercent($roomTypeId, $date)
-    {
-        $booked = DB::table('room_occupancy')
-            ->where('room_type_id', $roomTypeId)
-            ->where('date', $date->toDateString())
-            ->value('booked_rooms');
+private function calculateOccupancyPercent($roomTypeId, $date)
+{
+    $booked = DB::table('room_occupancy')
+        ->where('room_type_id', $roomTypeId)
+        ->where('date', $date->toDateString())
+        ->value('booked_rooms');
 
-        $total = DB::table('room')
-            ->where('room_type_id', $roomTypeId)
-            ->count();
+    $total = DB::table('room')
+        ->where('room_type_id', $roomTypeId)
+        ->count();
 
-        return $total > 0 ? intval(($booked / $total) * 100) : 0;
+    if ($total == 0) {
+        return 0;
     }
+
+    return intval(($booked / $total) * 100);
+}
 
     private function isHoliday($date)
     {
