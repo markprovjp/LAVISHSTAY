@@ -99,13 +99,16 @@ class RoomAvailabilityController extends Controller
                 ], 500);
             }
 
-            // Build query với logic kiểm tra booking
+            // Build query with logic to check booking and join with floors
             $query = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                ->leftJoin('floors as f', 'r.floor_id', '=', 'f.floor_id') // Assuming room has floor_id and floors table has id
                 ->select([
                     'r.' . $roomIdColumn . ' as room_id',
+                    'r.name as room_name', // <--- GET THE ACTUAL ROOM NAME
                     'r.room_type_id',
                     'r.status',
+                    'f.floor_number', // Select the floor number
                     'rt.name as room_type_name',
                     'rt.description',
                     'rt.base_price',
@@ -244,10 +247,12 @@ class RoomAvailabilityController extends Controller
                     $roomTypeData['main_image'] = $mainImage ?: $roomTypeData['images'][0];
                 }
 
-                // Add room details
+                // Add room details, now including name and floor
                 foreach ($rooms as $room) {
                     $roomTypeData['available_rooms'][] = [
                         'room_id' => $room->room_id,
+                        'room_name' => $room->room_name, // <-- PASS THE ROOM NAME
+                        'floor_number' => $room->floor_number, // <-- PASS THE FLOOR NUMBER
                         'room_status' => $room->status
                     ];
                 }
