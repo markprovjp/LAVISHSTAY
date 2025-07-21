@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ChatController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -229,3 +231,6 @@ Route::get('/test-db', function () {
 
 //FAQs API
 Route::apiResource('faqs', FAQController::class);
+
+//Chat API
+Route::post('/chat/send', [ChatController::class, 'sendMessage']);

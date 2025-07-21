@@ -9,6 +9,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingExtensionController;
 use App\Http\Controllers\BookingRescheduleController;
 use App\Http\Controllers\CancellationPolicyController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\CheckoutRequestController;
@@ -60,13 +61,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         return view('pages/settings/notifications');
     })->name('notifications');
 
-
+    
 
 
 
     //Bắt đầu code từ đây
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    Route::get('/dashboard/realtime-stats', [DashboardController::class, 'getRealtimeStats'])->name('admin.dashboard.realtime-stats');
+    Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartDataAjax'])->name('admin.dashboard.chart-data');
+    Route::get('/dashboard/booking-stats', [DashboardController::class, 'getBookingStats'])->name('admin.dashboard.booking-stats');
+    Route::get('/dashboard/booking-stats', [DashboardController::class, 'getBookingStats'])->name('admin.dashboard.realtime-stats');
     Route::get('/admin/users', [UserController::class, 'index'])->name('admin.users');
 
     Route::get('/admin/rooms', [RoomController::class, 'index'])->name('admin.rooms');
@@ -289,9 +293,28 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     //////////////// Bookings/////////////////////////////////////////////////////////////////
-    Route::get('/admin/bookings/trading', [BookingController::class, 'trading'])->name('admin.bookings.trading');
-    Route::get('/admin/bookings/transaction_history', [BookingController::class, 'transaction_history'])->name('admin.bookings.transaction_history');
+    Route::get('/bookings', [BookingController::class, 'index'])->name('admin.bookings');
+    Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('admin.bookings.show');
+    Route::get('/bookings/{id}/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('admin.bookings.available-rooms');
+    Route::post('/bookings/{id}/assign-room', [BookingController::class, 'assignRoom'])->name('admin.bookings.assign-room');
+    Route::post('/bookings/{id}/confirm', [BookingController::class, 'confirm'])->name('admin.bookings.confirm');
+    Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('admin.bookings.cancel');
+    Route::get('/bookings/{id}/print', [BookingController::class, 'print'])->name('admin.bookings.print');
+    Route::post('/bookings/{id}/send-email', [BookingController::class, 'sendConfirmationEmail'])->name('admin.bookings.send-email');
 
+    // Bulk operations
+    Route::post('/bookings/bulk-confirm', [BookingController::class, 'bulkConfirm'])->name('admin.bookings.bulk-confirm');
+    Route::post('/bookings/bulk-cancel', [BookingController::class, 'bulkCancel'])->name('admin.bookings.bulk-cancel');
+    Route::post('/bookings/bulk-update-status', [BookingController::class, 'bulkUpdateStatus'])->name('admin.bookings.bulk-update-status');
+    
+    // Export and analytics
+    Route::get('/bookings/export', [BookingController::class, 'export'])->name('admin.bookings.export');
+    Route::get('/bookings/analytics', [BookingController::class, 'analytics'])->name('admin.bookings.analytics');
+    Route::get('/bookings/stats', [BookingController::class, 'getStats'])->name('admin.bookings.stats');
+    
+    // New booking
+    Route::get('/bookings/new/modal', [BookingController::class, 'showNewBookingModal'])->name('admin.bookings.new-modal');
+    Route::post('/bookings/store', [BookingController::class, 'store'])->name('admin.bookings.store');
 
 
 
@@ -565,4 +588,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/test', [PaymentController::class, 'showTestPaymentForm'])->name('test');
         Route::post('/test', [PaymentController::class, 'processTestPayment'])->name('test.process');
     });
+
+
+
+    //Chat bot
+    Route::get('/admin/chatbot', [ChatController::class, 'show'])->name('admin.chat-support');
 });
