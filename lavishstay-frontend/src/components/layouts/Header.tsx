@@ -133,13 +133,10 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     // Reception menu with dropdown
     {
       key: "/reception",
-      label: "🏨 Lễ tân",
+      label: "Lễ tân",
       icon: null,
     },
-    // Development only - Auth test page
-    ...(process.env.NODE_ENV === 'development' ? [
-      { key: "/auth-test", label: "🔐 Auth Test", icon: null }
-    ] : []),
+   
   ];
 
   // User menu dropdown
