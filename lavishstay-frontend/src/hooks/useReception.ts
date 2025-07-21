@@ -263,20 +263,36 @@ export const useCancelBooking = () => {
     });
 };
 
+// Define a specific type for available rooms parameters for better type safety
+interface AvailableRoomsParams {
+    check_in_date?: string;
+    check_out_date?: string;
+    room_type_id?: number;
+}
+
 // Get available rooms for specific dates
-export const useGetAvailableRooms = (params?: { check_in_date?: string; check_out_date?: string }) => {
+export const useGetAvailableRooms = (params?: AvailableRoomsParams) => {
     return useQuery({
         queryKey: ['room-availability', params],
         queryFn: () => {
             if (!params?.check_in_date || !params?.check_out_date) {
                 return Promise.resolve({ data: [] });
             }
-            // Use the correct API endpoint
-            return fetch(`http://localhost:8888/api/rooms/available?check_in_date=${params.check_in_date}&check_out_date=${params.check_out_date}`)
-                .then(res => res.json());
+            
+            // Use URLSearchParams to dynamically build the query string
+            const searchParams = new URLSearchParams();
+            searchParams.append('check_in_date', params.check_in_date);
+            searchParams.append('check_out_date', params.check_out_date);
+            if (params.room_type_id) {
+                searchParams.append('room_type_id', params.room_type_id.toString());
+            }
+
+            const url = `http://localhost:8888/api/rooms/available?${searchParams.toString()}`;
+            console.log('API request:', url); // Debug log
+            return fetch(url).then(res => res.json());
         },
         enabled: !!params?.check_in_date && !!params?.check_out_date,
-        staleTime: 1 * 60 * 1000, // 1 minute
+        staleTime: 1 * 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
 };

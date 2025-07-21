@@ -543,14 +543,11 @@ class PricingService
                 ->where('room_availability.date', $date)
                 ->sum('room_availability.total_rooms');
 
-            // If no rooms available, don't update occupancy
-            // if ($totalRooms == 0) {
-            //     Log::info("No rooms found for occupancy calculation", [
-            //         'room_type_id' => $roomTypeId, 
-            //         'date' => $date
-            //     ]);
-            //     return;
-            // }
+            // If no rooms available, don't update occupancy to prevent division by zero in triggers
+            if ($totalRooms == 0) {
+                Log::info("Skipping occupancy update for room_type_id: {$roomTypeId} on date: {$date} because totalRooms is zero.");
+                return;
+            }
 
             $availableRooms = DB::table('room')
                 ->join('room_option', 'room.room_id', '=', 'room_option.room_id')

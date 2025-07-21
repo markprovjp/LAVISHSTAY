@@ -40,6 +40,7 @@ import PaymentBookingReception from "./pages/reception/room-management/PaymentBo
 import RoomManagementDashboard from "./pages/reception/room-management/RoomManagementDashboard";
 import BookingManagementPage from "./pages/reception/booking-management";
 
+import ChatBot from "./components/ui/ChatBot";
 
 // Import profile components
 import {
@@ -164,6 +165,7 @@ const App: React.FC = React.memo(() => {
             <Route path="*" element={<NotFound />} />
           </Routes>
           <FloatButton.BackTop />
+          <ChatBot />
         </Content>
         <Footer />
       </Router>
