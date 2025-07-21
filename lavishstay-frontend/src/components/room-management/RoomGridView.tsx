@@ -28,6 +28,7 @@ interface RoomGridViewProps {
     multiSelectMode?: boolean;
     selectedRooms?: Set<string>;
     onRoomSelect?: (roomId: string, selected: boolean) => void;
+    onBulkRoomSelect?: (roomIds: string[], select: boolean) => void; // Add new prop
     onProceedToBooking?: () => void;
     guestCount?: number;
     onGuestCountChange?: (count: number) => void;
@@ -44,6 +45,7 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     multiSelectMode = false,
     selectedRooms = new Set(),
     onRoomSelect,
+    onBulkRoomSelect, // Destructure the new prop
     onProceedToBooking,
     guestCount = 2,
     onGuestCountChange,
@@ -203,7 +205,7 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     }
 
     const roomsByFloor = rooms.reduce((acc: any, room: any) => {
-        const floor = room.floor || Math.floor(parseInt(room.name) / 100) || 1;
+        const floor = room.floor || 'Chưa xác định'; // Use the reliable floor property from the data
         if (!acc[floor]) acc[floor] = [];
         acc[floor].push(room);
         return acc;
@@ -315,11 +317,12 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
                                 size="small"
                                 onClick={() => {
                                     const floorRooms = roomsByFloor[floor].filter((r: any) => r.status === 'available');
+                                    const floorRoomIds = floorRooms.map((r: any) => r.id);
                                     const allSelected = floorRooms.every((r: any) => selectedRooms.has(r.id));
-                                    floorRooms.forEach((r: any) => onRoomSelect?.(r.id, !allSelected));
+                                    onBulkRoomSelect?.(floorRoomIds, !allSelected);
                                 }}
                             >
-                                Chọn cả tầng
+                                {roomsByFloor[floor].every((r: any) => selectedRooms.has(r.id)) ? 'Bỏ chọn cả tầng' : 'Chọn cả tầng'}
                             </Button>
                         )}
                     </Flex>
@@ -342,7 +345,7 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
                 centered
             >
                 {selectedRoomForBooking && (
-                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="mb-6 p-4 bg-gray-50  border border-gray-200">
                         <Flex justify="space-between" align="center">
                             <div>
                                 <Title level={5} className="!mb-1">Phòng {selectedRoomForBooking.name}</Title>
