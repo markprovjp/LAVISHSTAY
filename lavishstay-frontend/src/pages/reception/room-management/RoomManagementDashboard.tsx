@@ -37,10 +37,11 @@ const RoomManagementDashboard: React.FC = () => {
     const { data: availableRoomsData, isLoading: isLoadingAvailable } = useGetAvailableRooms(
         hasDateRange ? {
             check_in_date: currentFilters.dateRange![0],
-            check_out_date: currentFilters.dateRange![1]
+            check_out_date: currentFilters.dateRange![1],
+            room_type_id: currentFilters.roomType // Pass roomType as room_type_id
         } : undefined
     );
-
+console.log('availableRoomsData:', availableRoomsData);
     // Fetch regular rooms when no date range
     const { data: roomsData, isLoading: isLoadingRooms } = useGetReceptionRooms(
         !hasDateRange ? {
@@ -48,24 +49,31 @@ const RoomManagementDashboard: React.FC = () => {
             include: 'room_type'
         } : undefined
     );
-
+console.log('currentFilters:', currentFilters);
+console.log('hasDateRange:', hasDateRange);
+if (hasDateRange) {
+    console.log('API params:', {
+        check_in_date: currentFilters.dateRange![0],
+        check_out_date: currentFilters.dateRange![1]
+    });
+}
     // Use appropriate data source based on filter
     const rooms = hasDateRange
         ? (availableRoomsData?.data || []).flatMap((roomType: any) =>
             roomType.available_rooms?.map((room: any) => ({
                 id: room.room_id,
-                name: room.room_name || `Room ${room.room_id}`,
+                name: room.room_name, // Use the actual room name from API
+                floor: room.floor_number, // Use the actual floor number from API
                 room_type: {
                     name: roomType.name,
                     base_price: roomType.base_price,
                     adjusted_price: roomType.adjusted_price,
                     max_guests: roomType.max_guests
                 },
-                status: 'available' // Available rooms from API
+                status: 'available'
             })) || []
         )
-        : (roomsData?.data || []);
-
+        : (roomsData?.data || []);        console.log('rooms:', rooms);
     const isLoading = hasDateRange ? isLoadingAvailable : isLoadingRooms;
 
     const handleSearch = (searchFilters: RoomFilters) => {
@@ -96,13 +104,27 @@ const RoomManagementDashboard: React.FC = () => {
     };
 
     const handleRoomSelect = (roomId: string, selected: boolean) => {
-        const newSelected = new Set(selectedRooms);
-        if (selected) {
-            newSelected.add(roomId);
-        } else {
-            newSelected.delete(roomId);
-        }
-        setSelectedRooms(newSelected);
+        setSelectedRooms(prevSelected => {
+            const newSelected = new Set(prevSelected);
+            if (selected) {
+                newSelected.add(roomId);
+            } else {
+                newSelected.delete(roomId);
+            }
+            return newSelected;
+        });
+    };
+
+    const handleBulkRoomSelect = (roomIds: string[], select: boolean) => {
+        setSelectedRooms(prevSelected => {
+            const newSelected = new Set(prevSelected);
+            if (select) {
+                roomIds.forEach(id => newSelected.add(id));
+            } else {
+                roomIds.forEach(id => newSelected.delete(id));
+            }
+            return newSelected;
+        });
     };
 
     const handleProceedToBooking = () => {
@@ -240,6 +262,7 @@ const RoomManagementDashboard: React.FC = () => {
                                 multiSelectMode={multiSelectMode}
                                 selectedRooms={selectedRooms}
                                 onRoomSelect={handleRoomSelect}
+                                onBulkRoomSelect={handleBulkRoomSelect} // Pass the new handler down
                                 onProceedToBooking={handleProceedToBooking}
                                 guestCount={guestCount}
                                 onGuestCountChange={setGuestCount}

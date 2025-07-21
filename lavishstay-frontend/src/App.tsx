@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ConfigProvider, FloatButton, App as AntApp, Layout } from "antd";
+import {  ConfigProvider, FloatButton, App as AntApp, Layout } from "antd";
 import { useSelector } from "react-redux";
 import { RootState } from "./store";
 import ThemeProvider from "./providers/ThemeProvider";
@@ -40,7 +40,8 @@ import PaymentBookingReception from "./pages/reception/room-management/PaymentBo
 import RoomManagementDashboard from "./pages/reception/room-management/RoomManagementDashboard";
 import BookingManagementPage from "./pages/reception/booking-management";
 
-
+import ChatBot from "./components/ui/ChatBot";
+import ContactFloatButton from './components/ui/ContactFloatButton';
 // Import profile components
 import {
   ProfileLayout,
@@ -163,6 +164,13 @@ const App: React.FC = React.memo(() => {
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ContactFloatButton
+            phoneNumber="+84123456789"
+            facebookUrl="https://www.facebook.com/yourhotel"
+            zaloUrl="https://zalo.me/yourphonenumber"
+            emailAddress="contact@lavishstay.com"
+          />
+          <ChatBot />
           <FloatButton.BackTop />
         </Content>
         <Footer />
