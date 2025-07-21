@@ -40,6 +40,10 @@ class BookingRoom extends Model
         return $this->belongsTo(Room::class, 'room_id', 'room_id');
     }
 
+    public function roomType()
+    {
+        return $this->belongsTo(RoomType::class, 'room_type_id', 'room_type_id');
+    }
     // Quan hệ với Representative
     public function representative()
     {

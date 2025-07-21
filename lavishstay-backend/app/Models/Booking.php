@@ -58,7 +58,7 @@ class Booking extends Model
     }
 
     
-    public function rooms()
+    public function room()
     {
         return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
     }
