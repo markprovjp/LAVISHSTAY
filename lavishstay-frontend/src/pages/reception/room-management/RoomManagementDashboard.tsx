@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layout, message, Modal, Descriptions, Tag, Button, Space } from 'antd';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useRoomManagementStore } from '../../../stores/roomManagementStore';
-import { RoomFilters, FullCalendarEvent } from '../../../types/room';
+import { RoomFilters } from '../../../types/room';
 import FilterBar from '../../../components/room-management/FilterBar';
 import RoomGridView from '../../../components/room-management/RoomGridView';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
@@ -23,58 +23,46 @@ const RoomManagementDashboard: React.FC = () => {
     const [roomDetailVisible, setRoomDetailVisible] = useState(false);
     const [currentFilters, setCurrentFilters] = useState<RoomFilters>({});
     const [multiSelectMode, setMultiSelectMode] = useState(false);
-    const [selectedRooms, setSelectedRooms] = useState<Set<string>>(new Set());
+    const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(new Set());
     const [guestCount, setGuestCount] = useState(2);
 
-    // Fetch room types using real API
+    // --- API HOOKS ---
     const { data: roomTypesData } = useGetReceptionRoomTypes();
     const roomTypes = roomTypesData?.data || [];
 
-    // Check if we have date range filter
-    const hasDateRange = currentFilters.dateRange && currentFilters.dateRange.length === 2;
+    const { data: allRoomsData, isLoading: isLoadingRooms } = useGetReceptionRooms({ include: 'room_type' });
+    const masterRoomList = useMemo(() => allRoomsData?.data || [], [allRoomsData]);
 
-    // Fetch available rooms when date range is provided
+    const hasDateRange = currentFilters.dateRange && currentFilters.dateRange.length === 2;
     const { data: availableRoomsData, isLoading: isLoadingAvailable } = useGetAvailableRooms(
         hasDateRange ? {
             check_in_date: currentFilters.dateRange![0],
             check_out_date: currentFilters.dateRange![1],
-            room_type_id: currentFilters.roomType // Pass roomType as room_type_id
         } : undefined
     );
-console.log('availableRoomsData:', availableRoomsData);
-    // Fetch regular rooms when no date range
-    const { data: roomsData, isLoading: isLoadingRooms } = useGetReceptionRooms(
-        !hasDateRange ? {
-            ...currentFilters,
-            include: 'room_type'
-        } : undefined
-    );
-console.log('currentFilters:', currentFilters);
-console.log('hasDateRange:', hasDateRange);
-if (hasDateRange) {
-    console.log('API params:', {
-        check_in_date: currentFilters.dateRange![0],
-        check_out_date: currentFilters.dateRange![1]
-    });
-}
-    // Use appropriate data source based on filter
-    const rooms = hasDateRange
-        ? (availableRoomsData?.data || []).flatMap((roomType: any) =>
-            roomType.available_rooms?.map((room: any) => ({
-                id: room.room_id,
-                name: room.room_name, // Use the actual room name from API
-                floor: room.floor_number, // Use the actual floor number from API
-                room_type: {
-                    name: roomType.name,
-                    base_price: roomType.base_price,
-                    adjusted_price: roomType.adjusted_price,
-                    max_guests: roomType.max_guests
-                },
-                status: 'available'
-            })) || []
-        )
-        : (roomsData?.data || []);        console.log('rooms:', rooms);
-    const isLoading = hasDateRange ? isLoadingAvailable : isLoadingRooms;
+
+    const availableRoomIdSet = useMemo(() => {
+        if (!hasDateRange) return null;
+        const ids = new Set<string>();
+        (availableRoomsData?.data || []).forEach((roomType: any) => {
+            roomType.available_rooms?.forEach((room: any) => ids.add(room.room_id));
+        });
+        return ids;
+    }, [hasDateRange, availableRoomsData]);
+
+    const filteredRoomsToDisplay = useMemo(() => {
+        return masterRoomList.filter((room: any) => {
+            if (availableRoomIdSet && !availableRoomIdSet.has(room.id)) {
+                return false;
+            }
+            if (currentFilters.roomType && String(room.room_type?.id) !== String(currentFilters.roomType)) {
+                return false;
+            }
+            return true;
+        });
+    }, [masterRoomList, availableRoomIdSet, currentFilters.roomType]);
+
+    const isLoading = isLoadingRooms || (hasDateRange && isLoadingAvailable);
 
     const handleSearch = (searchFilters: RoomFilters) => {
         setCurrentFilters(searchFilters);
@@ -85,65 +73,46 @@ if (hasDateRange) {
         setRoomDetailVisible(true);
     };
 
-    const handleEventClick = (event: FullCalendarEvent) => {
-        const room = rooms.find((r: any) => r.id === event.resourceId);
-        if (room) {
-            handleRoomClick(room);
-        }
-    };
-
-    const handleDateSelect = (start: string, end: string) => {
-        message.info(`Đã chọn từ ${dayjs(start).format('DD/MM/YYYY')} đến ${dayjs(end).format('DD/MM/YYYY')}`);
-    };
-
     const handleMultiSelectModeChange = (enabled: boolean) => {
         setMultiSelectMode(enabled);
         if (!enabled) {
-            setSelectedRooms(new Set());
+            setSelectedRoomIds(new Set());
         }
     };
 
     const handleRoomSelect = (roomId: string, selected: boolean) => {
-        setSelectedRooms(prevSelected => {
-            const newSelected = new Set(prevSelected);
-            if (selected) {
-                newSelected.add(roomId);
-            } else {
-                newSelected.delete(roomId);
-            }
-            return newSelected;
+        setSelectedRoomIds(prev => {
+            const newSet = new Set(prev);
+            if (selected) newSet.add(roomId);
+            else newSet.delete(roomId);
+            return newSet;
         });
     };
 
     const handleBulkRoomSelect = (roomIds: string[], select: boolean) => {
-        setSelectedRooms(prevSelected => {
-            const newSelected = new Set(prevSelected);
-            if (select) {
-                roomIds.forEach(id => newSelected.add(id));
-            } else {
-                roomIds.forEach(id => newSelected.delete(id));
-            }
-            return newSelected;
+        setSelectedRoomIds(prev => {
+            const newSet = new Set(prev);
+            roomIds.forEach(id => {
+                if (select) newSet.add(id);
+                else newSet.delete(id);
+            });
+            return newSet;
         });
     };
 
     const handleProceedToBooking = () => {
-        if (selectedRooms.size === 0) {
+        if (selectedRoomIds.size === 0) {
             message.warning('Vui lòng chọn ít nhất một phòng');
             return;
         }
+        const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
 
-        const selectedRoomsList = rooms.filter((room: any) => selectedRooms.has(room.id));
-
-        // Chuyển sang trang confirm với dữ liệu phòng đã chọn
         navigate('/reception/confirm-representative-payment', {
             state: {
                 selectedRooms: selectedRoomsList,
                 guestCount,
-                // Truyền thông tin ngày từ filter nếu có
                 checkInDate: hasDateRange ? currentFilters.dateRange![0] : undefined,
                 checkOutDate: hasDateRange ? currentFilters.dateRange![1] : undefined,
-                // Truyền booking data để giữ nguyên logic
                 bookingData: hasDateRange ? {
                     checkInDate: currentFilters.dateRange![0],
                     checkOutDate: currentFilters.dateRange![1],
@@ -161,61 +130,15 @@ if (hasDateRange) {
 
     const renderRoomDetail = () => {
         if (!selectedRoom) return null;
-
         const roomType = selectedRoom.room_type || {};
-
-
         return (
             <Descriptions column={2} bordered size="small">
-                <Descriptions.Item label="Số phòng">
-                    {selectedRoom.name || selectedRoom.number || 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Tầng">
-                    Tầng {selectedRoom.floor || Math.floor(parseInt(selectedRoom.name || '0') / 100) || 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Loại phòng">
-                    {roomType.name || selectedRoom.roomType || 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Giá phòng">
-                    {roomType.base_price ?
-                        `${new Intl.NumberFormat('vi-VN').format(roomType.base_price)} VNĐ/đêm` :
-                        'N/A'
-                    }
-                </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
-                    <Tag color={statusOptions.find(s => s.value === selectedRoom.status)?.color || 'default'}>
-                        {statusOptions.find(s => s.value === selectedRoom.status)?.label || selectedRoom.status}
-                    </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="ID phòng">
-                    {selectedRoom.id}
-                </Descriptions.Item>
-                <Descriptions.Item label="Sức chứa" span={2}>
-                    {roomType.max_guests ? `${roomType.max_guests} khách` : 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Diện tích">
-                    {roomType.room_area ? `${roomType.room_area}m²` : 'N/A'}
-                </Descriptions.Item>
-                <Descriptions.Item label="Mô tả">
-                    {roomType.description || 'N/A'}
-                </Descriptions.Item>
-
-                {selectedRoom.guestName && (
-                    <>
-                        <Descriptions.Item label="Tên khách" span={2}>
-                            {selectedRoom.guestName}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Số người">
-                            {selectedRoom.guestCount}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Ngày nhận phòng">
-                            {selectedRoom.checkInDate ? dayjs(selectedRoom.checkInDate).format('DD/MM/YYYY') : '-'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Ngày trả phòng" span={2}>
-                            {selectedRoom.checkOutDate ? dayjs(selectedRoom.checkOutDate).format('DD/MM/YYYY') : '-'}
-                        </Descriptions.Item>
-                    </>
-                )}
+                <Descriptions.Item label="Số phòng">{selectedRoom.name || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Tầng">Tầng {selectedRoom.floor || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Loại phòng">{roomType.name || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Giá phòng">{roomType.base_price ? `${new Intl.NumberFormat('vi-VN').format(roomType.base_price)} VNĐ/đêm` : 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái"><Tag color={statusOptions.find(s => s.value === selectedRoom.status)?.color || 'default'}>{statusOptions.find(s => s.value === selectedRoom.status)?.label || selectedRoom.status}</Tag></Descriptions.Item>
+                <Descriptions.Item label="ID phòng">{selectedRoom.id}</Descriptions.Item>
             </Descriptions>
         );
     };
@@ -226,21 +149,11 @@ if (hasDateRange) {
                 <div className="">
                     <div className="mb-6 flex justify-between items-start">
                         <div>
-                            <h1 className="text-2xl font-bold  mb-2">
-                                Quản lý phòng khách sạn 
-                            </h1>
-                            <p className="">
-                                Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng
-                            </p>
+                            <h1 className="text-2xl font-bold mb-2">Quản lý phòng khách sạn</h1>
+                            <p className="">Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng</p>
                         </div>
                         <Space>
-                            <Button
-                                type="primary"
-                                icon={<UnorderedListOutlined />}
-                                onClick={() => navigate('/reception/booking-management')}
-                            >
-                                Quản lý đặt phòng
-                            </Button>
+                            <Button type="primary" icon={<UnorderedListOutlined />} onClick={() => navigate('/reception/booking-management')}>Quản lý đặt phòng</Button>
                         </Space>
                     </div>
 
@@ -248,24 +161,22 @@ if (hasDateRange) {
                         roomTypes={roomTypes}
                         onSearch={handleSearch}
                         loading={isLoading}
-                        selectedRoomsCount={selectedRooms.size}
+                        selectedRoomsCount={selectedRoomIds.size}
                         onMultiSelectModeChange={handleMultiSelectModeChange}
                         multiSelectMode={multiSelectMode}
                     />
 
-                    <div className=" rounded-lg shadow-sm p-6">
+                    <div className="rounded-lg shadow-sm p-6">
                         {viewMode === 'grid' ? (
                             <RoomGridView
-                                rooms={rooms}
+                                rooms={filteredRoomsToDisplay}
+                                allRooms={masterRoomList} // Pass the master list here
                                 loading={isLoading}
                                 onRoomClick={handleRoomClick}
                                 multiSelectMode={multiSelectMode}
-                                selectedRooms={selectedRooms}
+                                selectedRooms={selectedRoomIds}
                                 onRoomSelect={handleRoomSelect}
-                                onBulkRoomSelect={handleBulkRoomSelect} // Pass the new handler down
-                                onProceedToBooking={handleProceedToBooking}
-                                guestCount={guestCount}
-                                onGuestCountChange={setGuestCount}
+                                onBulkRoomSelect={handleBulkRoomSelect}
                                 navigate={navigate}
                                 hasDateFilter={hasDateRange}
                                 checkInDate={hasDateRange ? currentFilters.dateRange![0] : undefined}
@@ -273,21 +184,15 @@ if (hasDateRange) {
                             />
                         ) : (
                             <RoomTimelineView
-                                rooms={rooms}
+                                rooms={filteredRoomsToDisplay}
                                 loading={isLoading}
-                                onEventClick={handleEventClick}
-                                onDateSelect={handleDateSelect}
+                                onEventClick={() => {}}
+                                onDateSelect={() => {}}
                             />
                         )}
                     </div>
 
-                    <Modal
-                        title="Chi tiết phòng"
-                        open={roomDetailVisible}
-                        onCancel={handleCloseModal}
-                        footer={null}
-                        width={800}
-                    >
+                    <Modal title="Chi tiết phòng" open={roomDetailVisible} onCancel={handleCloseModal} footer={null} width={800}>
                         {renderRoomDetail()}
                     </Modal>
                 </div>
