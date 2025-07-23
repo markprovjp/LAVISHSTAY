@@ -158,10 +158,12 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     }, [bookingForm]);
 
     const handleConfirmBooking = useCallback(async () => {
+        console.log("hàm handleConfirmBooking được gọi");
         if (!navigate || !checkInDate || !checkOutDate) {
             message.error("Thiếu thông tin ngày để tiến hành đặt phòng.");
             return;
         };
+        console.log("Booking target:", bookingTarget);
         try {
             const values = await bookingForm.validateFields();
             const cleanedGuestsData: RoomGuestData = {};
@@ -184,7 +186,9 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
                     children: bookingPayload.guests[room.id]?.children || [],
                 }))
             };
+            console.log("Quote payload:", quotePayload);
             const quoteResult = await calculateQuote(quotePayload);
+            
             navigate('/reception/confirm-representative-payment', {
                 state: { selectedRooms: bookingTarget, bookingData: bookingPayload, checkInDate, checkOutDate, quoteData: quoteResult.data }
             });
