@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\ChatBotService;
 use Illuminate\Support\ServiceProvider;
 use App\Services\RoomAvailabilityService;
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
         
         $this->app->bind(\App\Services\GmailService::class, function ($app) {
             return $app->make(\App\Contracts\GmailServiceInterface::class);
+        });
+        $this->app->singleton(ChatBotService::class, function ($app) {
+            return new ChatBotService();
         });
     }
 
