@@ -53,7 +53,7 @@ class ChatBotService
      */
     private function findBestMatch(string $message): ?Faq
     {
-        $faqs = Faq::active()->byPriority()->get();
+        $faqs = Faq::active()->orderBy('priority')->get();
         $bestMatch = null;
         $bestScore = 0;
 
