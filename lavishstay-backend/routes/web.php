@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChatSupportController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolePermissionController;
@@ -9,7 +10,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingExtensionController;
 use App\Http\Controllers\BookingRescheduleController;
 use App\Http\Controllers\CancellationPolicyController;
-use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\CheckoutRequestController;
@@ -46,7 +47,7 @@ use App\Http\Controllers\NewsController\NewsController;
 use App\Http\Controllers\NewsController\MediaController;
 
 Route::redirect('/', 'login');
-
+Route::get('/home', [DashboardController::class, 'index'])->name('home');
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Phần này giữ nguyên
@@ -593,4 +594,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     //Chat bot
     Route::get('/admin/chatbot', [ChatController::class, 'show'])->name('admin.chat-support');
+    // Admin Chat Support Routes
+   Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/chat-support', [ChatSupportController::class, 'index'])->name('chat-support');
+        Route::post('/chat-support/{conversation}/send', [ChatSupportController::class, 'sendMessage'])->name('chat-support.send');
+        Route::post('/chat-support/{conversation}/status', [ChatSupportController::class, 'updateStatus'])->name('chat-support.status');
+        Route::get('/chat-support/{conversation}/messages/latest', [ChatSupportController::class, 'getLatestMessages'])->name('chat-support.messages.latest');
+        Route::post('/chat-support/{conversation}/read', [ChatSupportController::class, 'markAsRead'])->name('chat-support.read');
+        Route::delete('/chat-support/{conversation}', [ChatSupportController::class, 'deleteConversation'])->name('chat-support.delete');
+        Route::get('/chat-support/{conversation}/export', [ChatSupportController::class, 'exportConversation'])->name('chat-support.export');
+    });
+
 });

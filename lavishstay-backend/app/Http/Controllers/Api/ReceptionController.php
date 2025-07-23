@@ -1287,11 +1287,12 @@ $allChildrenAges = DB::table('booking_room_children')
                 ->where('booking_id', $bookingId)
                 ->select(['id', 'room_id', 'option_name'])
                 ->get();
-    
+            // Kiểm tra xem có booking_rooms nào không
+            Log::info('Booking rooms for booking ID ' . $bookingId, ['booking_rooms' => $bookingRooms]);
             if ($bookingRooms->isEmpty()) {
                 return response()->json(['success' => false, 'message' => 'No rooms associated with this booking.'], 404);
             }
-    
+            Log::error('error in getAssignmentPreview for booking ID ' . $bookingId, ['booking' => $booking]);
             $roomTypeId = $booking->room_type_id;
             $assignmentPreview = [];
             $checkInDate = $booking->check_in_date;

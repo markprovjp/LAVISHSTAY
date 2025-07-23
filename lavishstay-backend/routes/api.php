@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Api\ChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -233,4 +233,9 @@ Route::get('/test-db', function () {
 Route::apiResource('faqs', FAQController::class);
 
 //Chat API
-Route::post('/chat/send', [ChatController::class, 'sendMessage']);
+Route::prefix('chat')->name('chat.')->group(function () {
+    Route::post('/send', [ChatController::class, 'sendMessage'])->name('send');
+    Route::get('/conversation', [ChatController::class, 'getConversation'])->name('conversation');
+    Route::get('/messages/new', [ChatController::class, 'getNewMessages'])->name('messages.new');
+    Route::get('/faqs', [ChatController::class, 'getFaqs'])->name('faqs');
+});

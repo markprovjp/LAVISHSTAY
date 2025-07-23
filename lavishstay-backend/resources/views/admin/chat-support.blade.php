@@ -132,7 +132,7 @@
             <div class="col-span-3 bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
                 @if ($activeConversation)
                     <!-- Header hội thoại -->
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+                    <div class="px-6 dark:bg-gray-800  py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <!-- Avatar lớn -->
@@ -262,7 +262,7 @@
                     </div>
 
                     {{-- Quick replies templates --}}
-                    <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+                    <div class="px-6 py-3 dark:bg-gray-800  border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
                         <div class="flex space-x-2 overflow-x-auto">
                             <button class="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors" 
                                     onclick="insertQuickReply('Xin chào! Tôi có thể giúp gì cho bạn?')">
