@@ -1,314 +1,247 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Modal, Button, message, Spin, Card, Typography, Row, Col, Empty, Alert, Tag, Collapse, Select , Checkbox } from 'antd';
-import { Building, BedDouble, ArrowRight, Hotel } from 'lucide-react';
+import { Modal, Button, message, Spin, Card, Typography, Row, Col, Divider, Empty, Alert, Tag, List, Grid, Flex, Avatar } from 'antd';
+import { Building, BedDouble, ArrowRight, Hotel, KeyRound, CheckCircle2 } from 'lucide-react';
 import { useGetAssignmentPreview, useAssignMultipleRooms } from '../../../hooks/useReception';
+import { motion, AnimatePresence } from 'framer-motion';
 
+const { Title, Text, Paragraph } = Typography;
+const { useBreakpoint } = Grid;
 
-const { Title, Text } = Typography;
-const { Panel } = Collapse;
-const { Option } = Select;
-
-interface Room {
+// Interfaces matching the API response
+interface AvailableRoom {
     id: number;
-    room_number: string;
+    name: string;
     floor: number;
-    room_type_name: string;
+    room_type_id: number;
 }
 
 interface AssignmentOption {
-    option_name: string;
     room_type_id: number;
+    room_type_name: string;
     rooms_needed: number;
-    available_rooms: Room[];
+    available_rooms: AvailableRoom[];
     booking_room_ids: number[];
-    error?: string;
-}
-
-interface PreviewData {
-    booking_id: string;
-    check_in_date: string;
-    check_out_date: string;
-    assignment_options: AssignmentOption[];
 }
 
 interface RoomSelectionModalProps {
     visible: boolean;
     onClose: () => void;
     bookingId: number | null;
-    onAssignmentSuccess: () => void;
+    onUpdate: () => void; // Changed from onAssignmentSuccess for consistency
 }
 
-// Interface for the assignment payload
-interface Assignment {
-    booking_room_id: number;
-    room_id: number;
-}
+const RoomSelectionModal: React.FC<RoomSelectionModalProps> = ({ visible, onClose, bookingId, onUpdate }) => {
+    const screens = useBreakpoint();
+    const { data: previewData, isLoading, error, refetch } = useGetAssignmentPreview(bookingId);
+    const assignRoomsMutation = useAssignMultipleRooms();
 
-const RoomSelectionModal: React.FC<RoomSelectionModalProps> = ({
-    visible,
-    onClose,
-    bookingId,
-    onAssignmentSuccess
-}) => {
-    const { data: previewData, isLoading, error, refetch } = useGetAssignmentPreview(bookingId!);
-    const assignMultipleRoomsMutation = useAssignMultipleRooms();
-    const [selectedRooms, setSelectedRooms] = useState<Record<string, number | null>>({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    // State to manage assignments: { booking_room_id: room_id }
+    const [assignments, setAssignments] = useState<Record<number, number | null>>({});
+    // State to track the currently selected "slot" to be assigned
+    const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 
     useEffect(() => {
         if (visible && bookingId) {
             refetch();
-            setSelectedRooms({}); // Reset selections when modal opens
         }
+        // Reset state when modal is closed or bookingId changes
+        setAssignments({});
+        setSelectedSlot(null);
     }, [visible, bookingId, refetch]);
 
-    const handleSelectRoom = (bookingRoomId: number, roomId: number | null) => {
-        setSelectedRooms(prev => {
-            const newSelectedRooms = { ...prev };
+    const assignmentOptions = useMemo(() => previewData?.data?.assignment_options || [], [previewData]);
 
-            // If a room is being unselected
-            if (roomId === null) {
-                newSelectedRooms[bookingRoomId] = null;
-                return newSelectedRooms;
-            }
-
-            // Check if the selected room is already assigned to another booking_room_id
-            for (const [key, value] of Object.entries(newSelectedRooms)) {
-                if (value === roomId && Number(key) !== bookingRoomId) {
-                    message.warning(`Phòng ${roomId} đã được chọn cho mục #${key}. Vui lòng bỏ chọn trước.`);
-                    return prev; // Prevent selection if already assigned elsewhere
-                }
-            }
-
-            newSelectedRooms[bookingRoomId] = roomId;
-            return newSelectedRooms;
-        });
+    const handleSelectSlot = (bookingRoomId: number) => {
+        setSelectedSlot(prev => (prev === bookingRoomId ? null : bookingRoomId)); // Toggle selection
     };
 
-    const handleSubmit = async () => {
-        const assignments: Assignment[] = Object.entries(selectedRooms)
-            .filter(([, room_id]) => room_id !== null)
-            .map(([booking_room_id, room_id]) => ({
-                booking_room_id: Number(booking_room_id),
-                room_id: room_id!,
-            }));
-
-        if (assignments.length === 0) {
-            message.error('Bạn chưa chọn phòng nào để gán.');
+    const handleSelectRoom = (room: AvailableRoom) => {
+        if (!selectedSlot) {
+            message.info('Vui lòng chọn một suất cần gán ở cột bên trái trước.');
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            await assignMultipleRoomsMutation.mutateAsync(assignments);
-
-            onAssignmentSuccess();
-            onClose();
-        } catch (err: any) {
-            message.error('Đã có lỗi xảy ra khi gán phòng: ' + (err.response?.data?.message || err.message));
-        } finally {
-            setIsSubmitting(false);
+        // Un-assign if the room is already assigned to the current slot
+        if (assignments[selectedSlot] === room.id) {
+            setAssignments(prev => ({ ...prev, [selectedSlot]: null }));
+            return;
         }
+
+        // Check if the room is already assigned to another slot
+        const isRoomAlreadyAssigned = Object.values(assignments).includes(room.id);
+        if (isRoomAlreadyAssigned) {
+            message.warning(`Phòng ${room.name} đã được gán cho một suất khác.`);
+            return;
+        }
+
+        // Assign the room
+        setAssignments(prev => ({ ...prev, [selectedSlot]: room.id }));
+        
+        // Automatically select the next unassigned slot
+        const allSlots = assignmentOptions.flatMap(opt => opt.booking_room_ids);
+        const currentIndex = allSlots.indexOf(selectedSlot);
+        const nextSlot = allSlots.find((slotId, index) => index > currentIndex && !assignments[slotId]);
+        setSelectedSlot(nextSlot || null);
     };
 
-    const assignmentOptions = previewData?.data?.assignment_options || [];
-    const totalRoomsToAssign = assignmentOptions.reduce((acc, opt) => acc + (opt.rooms_needed || 0), 0);
-    const totalRoomsSelected = Object.values(selectedRooms).filter(id => id !== null).length;
+    const handleSubmit = async () => {
+        const finalAssignments = Object.entries(assignments)
+            .filter(([, roomId]) => roomId !== null)
+            .map(([bookingRoomId, roomId]) => ({
+                booking_room_id: Number(bookingRoomId),
+                room_id: Number(roomId),
+            }));
+
+        const totalNeeded = assignmentOptions.reduce((acc, opt) => acc + opt.rooms_needed, 0);
+
+        if (finalAssignments.length < totalNeeded) {
+            message.error('Vui lòng gán đủ số lượng phòng theo yêu cầu.');
+            return;
+        }
+
+        await assignRoomsMutation.mutateAsync(finalAssignments, {
+            onSuccess: () => {
+                message.success('Gán phòng thành công!');
+                onUpdate(); // Call refetch from parent
+                onClose();
+            },
+            onError: (err: any) => {
+                message.error(`Lỗi khi gán phòng: ${err.response?.data?.message || err.message}`);
+            }
+        });
+    };
+
+    const assignedRoomIds = new Set(Object.values(assignments).filter(Boolean));
+    const allSlotsCount = assignmentOptions.reduce((sum, opt) => sum + opt.rooms_needed, 0);
+    const assignedSlotsCount = Object.values(assignments).filter(Boolean).length;
+    const isSubmitDisabled = assignedSlotsCount < allSlotsCount || assignRoomsMutation.isPending;
+
+    const renderContent = () => {
+        if (isLoading) return <div className="flex justify-center items-center h-64"><Spin size="large" /></div>;
+        if (error) return <Alert message="Lỗi tải dữ liệu" description={(error as any).message} type="error" showIcon />;
+        if (assignmentOptions.length === 0) return <Empty description="Không có thông tin gán phòng cho đơn hàng này." />;
+
+        return (
+            <Row gutter={[32, 16]}>
+                {/* Left Column: Slots to be Assigned */}
+                <Col xs={24} md={8}>
+                    <Title level={5}>Suất cần gán ({assignedSlotsCount}/{allSlotsCount})</Title>
+                    <Paragraph type="secondary">Chọn một suất rồi chọn phòng trống bên phải để gán.</Paragraph>
+                    <List
+                        itemLayout="horizontal"
+                        dataSource={assignmentOptions.flatMap(opt => opt.booking_room_ids)}
+                        renderItem={(bookingRoomId) => {
+                            const assignedRoomId = assignments[bookingRoomId];
+                            const assignedRoom = assignedRoomId ? assignmentOptions.flatMap(opt => opt.available_rooms).find(r => r.id === assignedRoomId) : null;
+                            const isSelected = selectedSlot === bookingRoomId;
+
+                            return (
+                                <List.Item
+                                    onClick={() => handleSelectSlot(bookingRoomId)}
+                                    style={{
+                                        borderLeft: isSelected ? '4px solid #1677ff' : '4px solid transparent',
+                                        backgroundColor: isSelected ? '#e6f4ff' : '#fff',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease-in-out',
+                                    }}
+                                >
+                                    <List.Item.Meta
+                                        avatar={<Avatar size="large" icon={<KeyRound />} style={{ backgroundColor: assignedRoom ? '#52c41a' : '#f0f0f0', color: assignedRoom ? '#fff' : '#595959' }} />}
+                                        title={<Text strong>Suất #{bookingRoomId}</Text>}
+                                        description={
+                                            assignedRoom ?
+                                            <Tag color="green" icon={<CheckCircle2 size={14} />}>Đã gán: {assignedRoom.name}</Tag> :
+                                            <Tag color="gold">Đang chờ gán...</Tag>
+                                        }
+                                    />
+                                </List.Item>
+                            );
+                        }}
+                    />
+                </Col>
+
+                {/* Right Column: Available Rooms */}
+                <Col xs={24} md={16}>
+                    <Title level={5}>Phòng trống khả dụng</Title>
+                    <Paragraph type="secondary">
+                        Hiển thị các phòng trống phù hợp với loại phòng của các suất bên trái.
+                    </Paragraph>
+                    <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '8px' }}>
+                        {assignmentOptions.map(option => (
+                            <div key={option.room_type_id}>
+                                <Divider orientation="left">
+                                    <Text strong>{option.room_type_name} ({option.available_rooms.length} phòng trống)</Text>
+                                </Divider>
+                                <Row gutter={[16, 16]}>
+                                    <AnimatePresence>
+                                        {option.available_rooms.map(room => {
+                                            const isAssigned = assignedRoomIds.has(room.id);
+                                            return (
+                                                <Col xs={24} sm={12} lg={8} key={room.id}>
+                                                    <motion.div
+                                                        layout
+                                                        initial={{ opacity: 0, scale: 0.8 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        exit={{ opacity: 0, scale: 0.8 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    >
+                                                        <Card
+                                                            hoverable
+                                                            onClick={() => handleSelectRoom(room)}
+                                                            bodyStyle={{ padding: 16 }}
+                                                            style={{
+                                                                border: selectedSlot && !isAssigned ? '2px solid #1677ff' : '1px solid #f0f0f0',
+                                                                opacity: isAssigned ? 0.5 : 1,
+                                                                cursor: isAssigned ? 'not-allowed' : 'pointer',
+                                                            }}
+                                                        >
+                                                            <Flex justify="space-between" align="center">
+                                                                <Flex vertical>
+                                                                    <Text strong style={{ fontSize: 16 }}>Phòng {room.name}</Text>
+                                                                    <Text type="secondary"><Building size={14} /> Tầng {room.floor}</Text>
+                                                                </Flex>
+                                                                {isAssigned && <Tag color="blue">Đã gán</Tag>}
+                                                            </Flex>
+                                                        </Card>
+                                                    </motion.div>
+                                                </Col>
+                                            );
+                                        })}
+                                    </AnimatePresence>
+                                </Row>
+                            </div>
+                        ))}
+                    </div>
+                </Col>
+            </Row>
+        );
+    };
 
     return (
         <Modal
-            title={<span className="text-lg font-semibold text-gray-800">Gán phòng cho Đơn hàng #{previewData?.data?.booking_id || ''}</span>}
+            title={<Title level={4}>Gán phòng cho đơn: #{previewData?.data?.booking_id}</Title>}
             open={visible}
             onCancel={onClose}
-            width={1200}
+            width={screens.lg ? '70%' : '90%'}
+            destroyOnClose
             footer={[
-                <Button key="back" onClick={onClose} className="px-4 py-2 rounded-md">
-                    Hủy
-                </Button>,
+                <Button key="back" onClick={onClose}>Hủy</Button>,
                 <Button
                     key="submit"
                     type="primary"
-                    loading={isSubmitting || assignMultipleRoomsMutation.isPending}
+                    loading={assignRoomsMutation.isPending}
                     onClick={handleSubmit}
-                    disabled={totalRoomsSelected === 0}
-                    className="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={isSubmitDisabled}
+                    icon={<CheckCircle2 size={14} />}
                 >
-                    Xác nhận gán {totalRoomsSelected} phòng
+                    Xác nhận gán phòng
                 </Button>,
             ]}
-            className="p-4"
         >
-            <Spin spinning={isLoading} tip="Đang tải dữ liệu...">
-                {error && <Alert message="Lỗi tải dữ liệu" description={(error as any).message} type="error" showIcon className="mb-4" />}
-                {!isLoading && !error && (
-                    assignmentOptions.length > 0 ? (
-                        <div className="space-y-6">
-                            {assignmentOptions.map((option, index) => (
-                                <Card key={index} className="shadow-lg rounded-lg border border-gray-200">
-                                    <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-200">
-                                        <Title level={4} className="!mb-0 text-blue-700 flex items-center">
-                                            <Hotel size={24} className="mr-2" />
-                                            {option.option_name} - <span className="text-gray-600 ml-2">Cần {option.rooms_needed} phòng</span>
-                                        </Title>
-                                        {option.error && <Alert message={option.error} type="error" showIcon className="ml-4" />}
-                                    </div>
-
-                                    <Row gutter={[24, 24]}>
-                                        <Col span={10}>
-                                            <Title level={5} className="!mb-4 text-gray-700">Các phòng cần gán</Title>
-                                            <div className="space-y-3">
-                                                {option.booking_room_ids.map(bookingRoomId => (
-                                                    <div key={bookingRoomId} className="flex items-center p-2 bg-gray-50 rounded-md shadow-sm">
-                                                        <Tag color="blue" className="text-base py-1 px-3 rounded-full">Mục #{bookingRoomId}</Tag>
-                                                        <ArrowRight size={20} className="mx-3 text-gray-500" />
-                                                        <Text className="font-semibold text-gray-800">
-                                                            {selectedRooms[bookingRoomId] ? 
-                                                                `Đã gán: Phòng ${option.available_rooms.find(r => r.id === selectedRooms[bookingRoomId])?.room_number}` :
-                                                                "Chưa gán"
-                                                            }
-                                                        </Text>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </Col>
-                                        <Col span={14}>
-                                            <Title level={5} className="!mb-4 text-gray-700">Phòng trống khả dụng</Title>
-                                            {option.available_rooms.length > 0 ? (
-                                                <RoomSelectionByFloor
-                                                    availableRooms={option.available_rooms}
-                                                    selectedRooms={selectedRooms}
-                                                    handleSelectRoom={handleSelectRoom}
-                                                    bookingRoomIds={option.booking_room_ids}
-                                                />
-                                            ) : (
-                                                <Text type="danger" className="text-lg">Không c�� phòng trống cho loại phòng này.</Text>
-                                            )}
-                                        </Col>
-                                    </Row>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <Empty description="Không tìm thấy thông tin gán phòng cho đơn hàng này." className="py-8" />
-                    )
-                )}
-            </Spin>
+            {renderContent()}
         </Modal>
-    );
-};
-
-interface RoomSelectionByFloorProps {
-    availableRooms: Room[];
-    selectedRooms: Record<string, number | null>;
-    handleSelectRoom: (bookingRoomId: number, roomId: number | null) => void;
-    bookingRoomIds: number[];
-}
-
-const RoomSelectionByFloor: React.FC<RoomSelectionByFloorProps> = ({
-    availableRooms,
-    selectedRooms,
-    handleSelectRoom,
-    bookingRoomIds,
-}) => {
-    const roomsGroupedByFloor = useMemo(() => {
-        return availableRooms.reduce((acc, room) => {
-            const floor = room.floor.toString();
-            if (!acc[floor]) {
-                acc[floor] = [];
-            }
-            acc[floor].push(room);
-            return acc;
-        }, {} as Record<string, Room[]>);
-    }, [availableRooms]);
-
-    const sortedFloors = Object.keys(roomsGroupedByFloor).sort((a, b) => parseInt(a) - parseInt(b));
-
-    const getAssignedBookingRoomId = (roomId: number) => {
-        for (const [bookingRoomId, assignedRoomId] of Object.entries(selectedRooms)) {
-            if (assignedRoomId === roomId) {
-                return Number(bookingRoomId);
-            }
-        }
-        return null;
-    };
-
-    const handleRoomCardClick = (room: Room) => {
-        const assignedToBookingRoomId = getAssignedBookingRoomId(room.id);
-
-        if (assignedToBookingRoomId !== null) {
-            // If the room is already selected, unselect it
-            handleSelectRoom(assignedToBookingRoomId, null);
-        } else {
-            // Find the first booking_room_id that needs a room from this option
-            const unassignedBookingRoomId = bookingRoomIds.find(
-                (brId) => selectedRooms[brId] === null
-            );
-
-            if (unassignedBookingRoomId !== undefined) {
-                // Assign the room to the found booking_room_id
-                handleSelectRoom(unassignedBookingRoomId, room.id);
-            } else {
-                message.warning('Tất cả các mục đặt phòng đã được gán phòng. Vui lòng bỏ chọn một phòng khác trước.');
-            }
-        }
-    };
-
-    return (
-        <Collapse accordion className="bg-white rounded-lg shadow-md">
-            {sortedFloors.map(floor => (
-                <Panel
-                    header={<span className="font-semibold text-lg text-gray-800 flex items-center"><Building size={20} className="mr-2" /> Tầng {floor}</span>}
-                    key={floor}
-                    className="border-b border-gray-200 last:border-b-0"
-                >
-                    <Row gutter={[16, 16]} className="p-2">
-                        {roomsGroupedByFloor[floor].map(room => {
-                            const isSelected = Object.values(selectedRooms).includes(room.id);
-                            const assignedBookingRoomId = getAssignedBookingRoomId(room.id);
-                            const isAssignedToCurrentOption = assignedBookingRoomId !== null && bookingRoomIds.includes(assignedBookingRoomId);
-                            const isAssignedToOtherOption = assignedBookingRoomId !== null && !bookingRoomIds.includes(assignedBookingRoomId);
-
-                            let cardClassName = 'cursor-pointer hover:shadow-lg';
-                            let tagColor = 'blue';
-                            let tagText = '';
-
-                            if (isAssignedToCurrentOption) {
-                                cardClassName += ' border-blue-500 ring-2 ring-blue-200 bg-blue-50';
-                                tagColor = 'green';
-                                tagText = `Mục #${assignedBookingRoomId}`;
-                            } else if (isAssignedToOtherOption) {
-                                cardClassName += ' border-gray-400 bg-gray-100 opacity-70 cursor-not-allowed';
-                                tagColor = 'red';
-                                tagText = `Đã gán cho #${assignedBookingRoomId}`;
-                            } else {
-                                cardClassName += ' border-gray-200';
-                            }
-
-                            return (
-                                <Col xs={24} sm={12} md={8} lg={6} key={room.id}>
-                                    <Card
-                                        className={`transition-all duration-200 ease-in-out ${cardClassName}`}
-                                        bodyStyle={{ padding: '12px' }}
-                                        onClick={() => !isAssignedToOtherOption && handleRoomCardClick(room)}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center">
-                                                <BedDouble size={20} className="text-gray-600 mr-2" />
-                                                <Text className="font-bold text-lg text-gray-800">{room.room_number}</Text>
-                                            </div>
-                                            {assignedBookingRoomId !== null && (
-                                                <Tag color={tagColor} className="text-xs">{tagText}</Tag>
-                                            )}
-                                        </div>
-                                        <Text type="secondary" className="text-sm mt-1 block">{room.room_type_name}</Text>
-                                    </Card>
-                                </Col>
-                            );
-                        })}
-                    </Row>
-                </Panel>
-            ))}
-        </Collapse>
     );
 };
 

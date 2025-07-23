@@ -14,11 +14,8 @@ import {
     Table,
     Avatar,
     Tooltip,
-    Dropdown,
-    Menu,
-    Flex
 } from 'antd';
-import type { TableProps } from 'antd';
+import type { TableColumnsType } from 'antd';
 import {
     EyeOutlined,
     DeleteOutlined,
@@ -26,11 +23,11 @@ import {
     ClockCircleOutlined,
     DollarOutlined,
     UserOutlined,
-    MoreOutlined,
-    HomeOutlined,
     PhoneOutlined,
     MailOutlined,
     TeamOutlined,
+    SmileOutlined,
+    HomeOutlined,
 } from '@ant-design/icons';
 import {
     useGetBookings,
@@ -273,28 +270,64 @@ const BookingManagement: React.FC = () => {
             title: 'Mã đặt phòng',
             dataIndex: 'booking_code',
             key: 'booking_code',
-            width: 180, // Increased width
+            width: 140,
             fixed: 'left',
-            sorter: (a, b) => a.booking_code.localeCompare(b.booking_code),
             render: (code: string) => (
-                <Text strong copyable style={{ color: '#1677ff' }}>{code}</Text>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '6px',
+                        backgroundColor: '#e6f4ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 10,
+                    }}>
+                        <CalendarOutlined style={{ color: '#1890ff', fontSize: '14px' }} />
+                    </div>
+                    <div>
+                        <Text strong style={{ color: '#1890ff', fontSize: '13px' }}>
+                            {code}
+                        </Text>
+                        <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
+                            Đặt phòng
+                        </div>
+                    </div>
+                </div>
             ),
         },
         {
             title: 'Thông tin khách',
             key: 'guest',
-            width: 250,
+            width: 200,
             render: (_, record) => (
-                <Flex gap="middle" align="start">
-                    <Avatar size={40} icon={<UserOutlined />} style={{ backgroundColor: '#f56a00', flexShrink: 0 }} />
-                    <Flex vertical>
-                        <Text strong>{record.guest_name}</Text>
-                        <Text type="secondary">{record.guest_phone}</Text>
-                        <Tooltip title={record.guest_email}>
-                            <Text type="secondary" style={{ maxWidth: 150 }} ellipsis>{record.guest_email}</Text>
-                        </Tooltip>
-                    </Flex>
-                </Flex>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar
+                        size={40}
+                        icon={<UserOutlined />}
+                        style={{
+                            backgroundColor: '#f56a00',
+                            marginRight: 12,
+                            flexShrink: 0
+                        }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#262626', marginBottom: 2 }}>
+                            {record.guest_name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c', marginBottom: 1 }}>
+                            <PhoneOutlined style={{ marginRight: 4, fontSize: '11px' }} />
+                            {record.guest_phone}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            <MailOutlined style={{ marginRight: 4, fontSize: '11px' }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                                {record.guest_email}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             ),
         },
         {
@@ -512,60 +545,80 @@ const BookingManagement: React.FC = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            width: 150,
+            width: 130,
             align: 'center',
-            filters: Object.entries(bookingStatusConfig).map(([key, { text }]) => ({ text, value: key })),
-            onFilter: (value, record) => record.status.toLowerCase() === String(value).toLowerCase(),
-            render: (status: string) => {
-                const statusKey = status.toLowerCase();
-                const config = bookingStatusConfig[statusKey as keyof typeof bookingStatusConfig];
-                return (
-                    <Tag color={config?.color || 'default'} style={{ fontWeight: 500 }}>
-                        {config?.text || status}
-                    </Tag>
-                );
-            },
+            render: (status: string) => (
+                <Tag
+                    color={bookingStatusConfig[status as keyof typeof bookingStatusConfig]?.color || 'default'}
+                    style={{
+                        borderRadius: '6px',
+                        fontWeight: 500,
+                        fontSize: '12px',
+                        padding: '4px 8px'
+                    }}
+                >
+                    {bookingStatusConfig[status as keyof typeof bookingStatusConfig]?.text || status}
+                </Tag>
+            ),
         },
         {
             title: 'Thao tác',
             key: 'actions',
-            width: 120,
+            width: 180,
             fixed: 'right',
             align: 'center',
             render: (_, record) => {
                 const hasUnassignedRoom = !record.room_names || record.room_names.trim() === '' || record.room_names.includes('null') || record.room_names.includes('undefined');
-                const menu = (
-                    <Menu onClick={({ key }) => {
-                        if (key === 'view') {
-                            setSelectedBooking(record as any);
-                            setIsDetailModalVisible(true);
-                        } else if (key === 'assign') {
-                            setRoomSelectionBookingId(record.booking_id);
-                            setIsRoomSelectionModalVisible(true);
-                        } else if (key === 'cancel') {
-                            handleCancelBooking(record.booking_id);
-                        }
-                    }}>
-                        <Menu.Item key="view" icon={<EyeOutlined />}>
-                            Xem chi tiết
-                        </Menu.Item>
-                        {hasUnassignedRoom && (
-                            <Menu.Item key="assign" icon={<HomeOutlined />}>
-                                Gán phòng
-                            </Menu.Item>
-                        )}
-                        {(record.status.toLowerCase() === 'pending' || record.status.toLowerCase() === 'confirmed') && (
-                             <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>
-                                Hủy đặt phòng
-                            </Menu.Item>
-                        )}
-                    </Menu>
-                );
-
                 return (
-                    <Dropdown overlay={menu} trigger={['click']}>
-                        <Button type="text" icon={<MoreOutlined />} />
-                    </Dropdown>
+                    <Space size="small">
+                        <Tooltip title="Xem chi tiết">
+                            <Button
+                                type="text"
+                                icon={<EyeOutlined />}
+                                size="small"
+                                style={{
+                                    borderRadius: '6px',
+                                    backgroundColor: '#f0f2ff',
+                                    color: '#1890ff'
+                                }}
+                                onClick={() => {
+                                    setSelectedBooking(record as any);
+                                    setIsDetailModalVisible(true);
+                                }}
+                            />
+                        </Tooltip>
+                        {hasUnassignedRoom && (
+                            <Tooltip title="Chọn phòng cho khách">
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    style={{ borderRadius: '6px', backgroundColor: '#e6f7ff', color: '#1890ff' }}
+                                    icon={<HomeOutlined />}
+                                    onClick={() => {
+                                        setRoomSelectionBookingId(record.booking_id || record.booking_id);
+                                        setIsRoomSelectionModalVisible(true);
+                                    }}
+                                >
+                                    
+                                </Button>
+                            </Tooltip>
+                        )}
+                        {record.status === 'Pending' && (
+                            <Tooltip title="Hủy đặt phòng">
+                                <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    style={{
+                                        borderRadius: '6px',
+                                        backgroundColor: '#fff2f0'
+                                    }}
+                                    onClick={() => handleCancelBooking(record.booking_id)}
+                                />
+                            </Tooltip>
+                        )}
+                    </Space>
                 );
             },
         },
