@@ -10,6 +10,17 @@ interface Assignment {
     room_id: number;
 }
 
+// Interface for the booking quote payload
+export interface BookingQuotePayload {
+    checkInDate: string;
+    checkOutDate: string;
+    rooms: Array<{
+        room_id: string;
+        adults: number;
+        children: Array<{ age: number }>;
+    }>;
+}
+
 // Get all rooms for reception dashboard
 export const useGetReceptionRooms = (params?: any) => {
     return useQuery({
@@ -294,5 +305,20 @@ export const useGetAvailableRooms = (params?: AvailableRoomsParams) => {
         enabled: !!params?.check_in_date && !!params?.check_out_date,
         staleTime: 1 * 60 * 1000,
         gcTime: 5 * 60 * 1000,
+    });
+};
+
+// --- NEW: Hook for calculating booking price ---
+export const useCalculateBookingQuote = () => {
+    return useMutation({
+        mutationFn: (payload: BookingQuotePayload) => receptionAPI.calculatePrice(payload),
+        onSuccess: (data) => {
+            // You can optionally show a success message here if needed
+            // message.success('Tải báo giá thành công!');
+            return data;
+        },
+        onError: (error: any) => {
+            // message.error(`Lỗi tính giá: ${error.response?.data?.message || error.message}`);
+        },
     });
 };
