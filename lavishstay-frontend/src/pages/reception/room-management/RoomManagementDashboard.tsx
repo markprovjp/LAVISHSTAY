@@ -106,7 +106,7 @@ const RoomManagementDashboard: React.FC = () => {
             return;
         }
         const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
-
+      
         navigate('/reception/confirm-representative-payment', {
             state: {
                 selectedRooms: selectedRoomsList,
