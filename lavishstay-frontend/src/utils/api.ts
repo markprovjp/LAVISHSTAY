@@ -1,5 +1,6 @@
 // src/utils/api.ts
 import axios from 'axios';
+import { BookingQuotePayload } from '../hooks/useReception'; // Import the type
 
 // Create a base axios instance
 const api = axios.create({
@@ -337,6 +338,12 @@ export const receptionAPI = {
 
   getRoomTypes: async () => {
     const response = await api.get('/reception/room-types');
+    return response.data;
+  },
+
+  // --- NEW: Function for calculating booking price ---
+  calculatePrice: async (payload: BookingQuotePayload) => {
+    const response = await api.post('/reception/bookings/calculate-price', payload);
     return response.data;
   },
 };
