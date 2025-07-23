@@ -1,3768 +1,561 @@
-//  http://127.0.0.1:8888/api/rooms/available?check_in_date=2025-07-20&check_out_date=2025-07-22
-
 {
     "success": true,
-    "data": [
-        {
-            "room_type_id": 1,
-            "room_code": "deluxe",
-            "name": "Deluxe Room",
-            "description": "Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.",
-            "base_price": "5000.00",
-            "adjusted_price": 6500,
-            "size": 32,
-            "max_guests": 2,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 29,
-                    "room_type_id": 1,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/1/1.jpg",
-                    "alt_text": "Phòng Loại Sang (Deluxe Room) - Ảnh 1",
-                    "is_main": 0
-                },
-                {
-                    "id": 30,
-                    "room_type_id": 1,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/1/2.jpg",
-                    "alt_text": "Phòng Loại Sang (Deluxe Room) - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 31,
-                    "room_type_id": 1,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/1/3.webp",
-                    "alt_text": "Phòng Loại Sang (Deluxe Room) - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 32,
-                    "room_type_id": 1,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/1/4.webp",
-                    "alt_text": "Phòng Loại Sang (Deluxe Room) - Ảnh 4",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 29,
+    "data": {
+        "booking_id": "153",
+        "check_in_date": "2025-08-18",
+        "check_out_date": "2025-08-22",
+        "assignment_options": [
+            {
                 "room_type_id": 1,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/1/1.jpg",
-                "alt_text": "Phòng Loại Sang (Deluxe Room) - Ảnh 1",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 15,
-                    "name": "Thiết kế hiện đại nâu-trắng",
-                    "icon": "Palette",
-                    "category": "comfort",
-                    "description": "Nội thất hiện đại với gam màu nâu ấm và trắng"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 43,
-                    "name": "Dịch vụ phòng 24/7",
-                    "icon": "RoomService",
-                    "category": "service",
-                    "description": "Dịch vụ phòng 24/7"
-                },
-                {
-                    "id": 44,
-                    "name": "Dọn phòng 2 lần/ngày",
-                    "icon": "Broom",
-                    "category": "service",
-                    "description": "Dọn phòng 2 lần/ngày"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 15,
-                    "name": "Thiết kế hiện đại nâu-trắng",
-                    "icon": "Palette",
-                    "category": "comfort",
-                    "description": "Nội thất hiện đại với gam màu nâu ấm và trắng"
-                }
-            ],
-            "available_room_count": 89,
-            "available_rooms": [
-                {
-                    "room_id": 1,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 2,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 3,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 5,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 6,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 7,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 8,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 9,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 10,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 11,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 12,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 13,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 14,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 15,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 16,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 17,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 18,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 19,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 20,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 21,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 22,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 23,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 24,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 25,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 26,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 27,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 28,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 29,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 30,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 31,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 32,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 33,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 34,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 35,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 36,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 37,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 38,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 39,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 40,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 41,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 42,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 43,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 44,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 45,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 46,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 47,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 48,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 49,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 50,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 51,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 52,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 53,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 54,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 55,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 56,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 57,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 58,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 59,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 60,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 61,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 62,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 63,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 64,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 65,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 66,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 67,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 68,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 69,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 70,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 71,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 72,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 73,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 74,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 75,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 76,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 77,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 78,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 79,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 80,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 81,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 82,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 83,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 84,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 85,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 86,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 87,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 88,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 89,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 90,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "5000.00",
-                "total_price": 10000,
-                "currency": "VND"
+                "room_type_name": "Deluxe Room",
+                "rooms_needed": 2,
+                "available_rooms": [
+                    {
+                        "id": 1,
+                        "name": "0201",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 2,
+                        "name": "0202",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 3,
+                        "name": "0203",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 4,
+                        "name": "0204",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 5,
+                        "name": "0205",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 6,
+                        "name": "0206",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 7,
+                        "name": "0207",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 8,
+                        "name": "0208",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 9,
+                        "name": "0209",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 10,
+                        "name": "0210",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 11,
+                        "name": "0211",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 12,
+                        "name": "0212",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 13,
+                        "name": "0213",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 14,
+                        "name": "0214",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 15,
+                        "name": "0215",
+                        "floor": 2,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 16,
+                        "name": "0301",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 17,
+                        "name": "0302",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 18,
+                        "name": "0303",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 19,
+                        "name": "0304",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 20,
+                        "name": "0305",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 21,
+                        "name": "0306",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 22,
+                        "name": "0307",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 23,
+                        "name": "0308",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 24,
+                        "name": "0309",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 25,
+                        "name": "0310",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 26,
+                        "name": "0311",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 27,
+                        "name": "0312",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 28,
+                        "name": "0313",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 29,
+                        "name": "0314",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 30,
+                        "name": "0315",
+                        "floor": 3,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 31,
+                        "name": "0401",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 32,
+                        "name": "0402",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 33,
+                        "name": "0403",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 34,
+                        "name": "0404",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 35,
+                        "name": "0405",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 36,
+                        "name": "0406",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 37,
+                        "name": "0407",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 38,
+                        "name": "0408",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 39,
+                        "name": "0409",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 40,
+                        "name": "0410",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 41,
+                        "name": "0411",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 42,
+                        "name": "0412",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 43,
+                        "name": "0413",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 44,
+                        "name": "0414",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 45,
+                        "name": "0415",
+                        "floor": 4,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 46,
+                        "name": "0501",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 47,
+                        "name": "0502",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 48,
+                        "name": "0503",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 49,
+                        "name": "0504",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 50,
+                        "name": "0505",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 51,
+                        "name": "0506",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 52,
+                        "name": "0507",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 53,
+                        "name": "0508",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 54,
+                        "name": "0509",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 55,
+                        "name": "0510",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 56,
+                        "name": "0511",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 57,
+                        "name": "0512",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 58,
+                        "name": "0513",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 59,
+                        "name": "0514",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 60,
+                        "name": "0515",
+                        "floor": 5,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 61,
+                        "name": "0801",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 62,
+                        "name": "0802",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 63,
+                        "name": "0803",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 64,
+                        "name": "0804",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 65,
+                        "name": "0805",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 66,
+                        "name": "0806",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 67,
+                        "name": "0807",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 68,
+                        "name": "0808",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 69,
+                        "name": "0809",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 70,
+                        "name": "0810",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 71,
+                        "name": "0811",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 72,
+                        "name": "0812",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 73,
+                        "name": "0813",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 74,
+                        "name": "0814",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 75,
+                        "name": "0815",
+                        "floor": 8,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 76,
+                        "name": "0901",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 77,
+                        "name": "0902",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 78,
+                        "name": "0903",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 79,
+                        "name": "0904",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 80,
+                        "name": "0905",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 81,
+                        "name": "0906",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 82,
+                        "name": "0907",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 83,
+                        "name": "0908",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 84,
+                        "name": "0909",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 85,
+                        "name": "0910",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 86,
+                        "name": "0911",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 87,
+                        "name": "0912",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 88,
+                        "name": "0913",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 89,
+                        "name": "0914",
+                        "floor": 9,
+                        "room_type_id": 1
+                    },
+                    {
+                        "id": 90,
+                        "name": "0915",
+                        "floor": 9,
+                        "room_type_id": 1
+                    }
+                ],
+                "booking_room_ids": [
+                    137,
+                    138
+                ]
             }
-        },
-        {
-            "room_type_id": 2,
-            "room_code": "premium_corner",
-            "name": "Premium Corner",
-            "description": "Phòng giường đôi rộng rãi này có máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm.",
-            "base_price": "1500000.00",
-            "adjusted_price": 2100000,
-            "size": 64,
-            "max_guests": 2,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 33,
-                    "room_type_id": 2,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/2/1.jpg",
-                    "alt_text": "Premium Corner - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 34,
-                    "room_type_id": 2,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/2/2.jpg",
-                    "alt_text": "Premium Corner - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 35,
-                    "room_type_id": 2,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/2/3.webp",
-                    "alt_text": "Premium Corner - Ảnh 4",
-                    "is_main": 0
-                },
-                {
-                    "id": 36,
-                    "room_type_id": 2,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/2/4.jpg",
-                    "alt_text": "Premium Corner - Ảnh 5",
-                    "is_main": 0
-                },
-                {
-                    "id": 37,
-                    "room_type_id": 2,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/2/5.webp",
-                    "alt_text": "Premium Corner - Ảnh 6",
-                    "is_main": 0
-                },
-                {
-                    "id": 38,
-                    "room_type_id": 2,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/2/6.webp",
-                    "alt_text": "Premium Corner - Ảnh 7",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 33,
-                "room_type_id": 2,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/2/1.jpg",
-                "alt_text": "Premium Corner - Ảnh 2",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 13,
-                    "name": "Tường kính bao quanh",
-                    "icon": "City",
-                    "category": "view",
-                    "description": "Thiết kế tường kính tạo tầm nhìn 360 độ"
-                },
-                {
-                    "id": 14,
-                    "name": "Vị trí góc yên tĩnh",
-                    "icon": "EyeOff",
-                    "category": "comfort",
-                    "description": "Phòng ở vị trí góc tòa nhà, không bị làm phiền"
-                },
-                {
-                    "id": 16,
-                    "name": "Sàn gạch nâu với thảm xám vàng",
-                    "icon": "Image",
-                    "category": "comfort",
-                    "description": "Sàn nhà lát gạch nâu nhạt với thảm xám đậm có hoa văn vàng"
-                },
-                {
-                    "id": 17,
-                    "name": "Nội thất sang trọng",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Đồ nội thất cao cấp, thiết kế tinh tế"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 42,
-                    "name": "Hệ thống âm thanh Bluetooth",
-                    "icon": "Speaker",
-                    "category": "entertainment",
-                    "description": "Hệ thống âm thanh Bluetooth"
-                },
-                {
-                    "id": 43,
-                    "name": "Dịch vụ phòng 24/7",
-                    "icon": "RoomService",
-                    "category": "service",
-                    "description": "Dịch vụ phòng 24/7"
-                },
-                {
-                    "id": 44,
-                    "name": "Dọn phòng 2 lần/ngày",
-                    "icon": "Broom",
-                    "category": "service",
-                    "description": "Dọn phòng 2 lần/ngày"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 13,
-                    "name": "Tường kính bao quanh",
-                    "icon": "City",
-                    "category": "view",
-                    "description": "Thiết kế tường kính tạo tầm nhìn 360 độ"
-                },
-                {
-                    "id": 14,
-                    "name": "Vị trí góc yên tĩnh",
-                    "icon": "EyeOff",
-                    "category": "comfort",
-                    "description": "Phòng ở vị trí góc tòa nhà, không bị làm phiền"
-                },
-                {
-                    "id": 16,
-                    "name": "Sàn gạch nâu với thảm xám vàng",
-                    "icon": "Image",
-                    "category": "comfort",
-                    "description": "Sàn nhà lát gạch nâu nhạt với thảm xám đậm có hoa văn vàng"
-                },
-                {
-                    "id": 17,
-                    "name": "Nội thất sang trọng",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Đồ nội thất cao cấp, thiết kế tinh tế"
-                }
-            ],
-            "available_room_count": 96,
-            "available_rooms": [
-                {
-                    "room_id": 91,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 92,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 93,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 94,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 95,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 96,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 97,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 98,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 99,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 100,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 101,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 102,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 103,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 104,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 105,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 106,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 107,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 108,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 109,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 110,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 111,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 112,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 113,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 114,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 115,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 116,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 117,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 118,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 119,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 120,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 121,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 122,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 123,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 124,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 125,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 126,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 127,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 128,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 129,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 130,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 131,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 132,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 133,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 134,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 135,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 136,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 137,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 138,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 139,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 140,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 141,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 142,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 143,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 144,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 145,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 146,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 147,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 148,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 149,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 150,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 151,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 152,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 153,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 154,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 155,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 156,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 157,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 158,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 159,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 160,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 161,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 162,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 163,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 164,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 165,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 166,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 167,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 168,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 169,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 170,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 171,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 172,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 173,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 174,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 175,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 176,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 177,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 178,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 179,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 180,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 181,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 182,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 183,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 184,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 185,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 186,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "1500000.00",
-                "total_price": 3000000,
-                "currency": "VND"
-            }
-        },
-        {
-            "room_type_id": 3,
-            "room_code": "the_level_premium",
-            "name": "The Level Premium",
-            "description": "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.",
-            "base_price": "1000000.00",
-            "adjusted_price": 1300000,
-            "size": 92,
-            "max_guests": 2,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 39,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/1.jpg",
-                    "alt_text": "The Level Premium - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 40,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/2.webp",
-                    "alt_text": "The Level Premium - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 41,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/3.jpg",
-                    "alt_text": "The Level Premium - Ảnh 4",
-                    "is_main": 0
-                },
-                {
-                    "id": 42,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/4.jpg",
-                    "alt_text": "The Level Premium - Ảnh 5",
-                    "is_main": 0
-                },
-                {
-                    "id": 43,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/5.jpg",
-                    "alt_text": "The Level Premium - Ảnh 6",
-                    "is_main": 0
-                },
-                {
-                    "id": 44,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/6.webp",
-                    "alt_text": "The Level Premium - Ảnh 7",
-                    "is_main": 0
-                },
-                {
-                    "id": 45,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/7.jpg",
-                    "alt_text": "The Level Premium - Ảnh 8",
-                    "is_main": 0
-                },
-                {
-                    "id": 46,
-                    "room_type_id": 3,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/3/8.webp",
-                    "alt_text": "The Level Premium - Ảnh 9",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 39,
-                "room_type_id": 3,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/3/1.jpg",
-                "alt_text": "The Level Premium - Ảnh 2",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 26,
-                    "name": "Quyền truy cập Executive Lounge",
-                    "icon": "Crown",
-                    "category": "service",
-                    "description": "Lounge VIP tầng 33 dành riêng cho khách The Level"
-                },
-                {
-                    "id": 27,
-                    "name": "Trà cà phê miễn phí Lounge",
-                    "icon": "CoffeeOutlined",
-                    "category": "service",
-                    "description": "Thưởng thức trà, cà phê, bánh quy miễn phí (09:30–22:00)"
-                },
-                {
-                    "id": 28,
-                    "name": "Happy hour đồ uống có cồn",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Happy hour với đồ uống có cồn (17:30–19:00)"
-                },
-                {
-                    "id": 29,
-                    "name": "Check-in/out riêng tư VIP",
-                    "icon": "Bell",
-                    "category": "service",
-                    "description": "Nhận/trả phòng riêng tư tại sảnh VIP"
-                },
-                {
-                    "id": 30,
-                    "name": "3h sử dụng phòng họp miễn phí",
-                    "icon": "Calendar",
-                    "category": "service",
-                    "description": "3 giờ sử dụng phòng họp miễn phí"
-                },
-                {
-                    "id": 31,
-                    "name": "Bộ sách tô màu chánh niệm",
-                    "icon": "Book",
-                    "category": "service",
-                    "description": "Bộ sách tô màu thư giãn tinh thần"
-                },
-                {
-                    "id": 32,
-                    "name": "Dịch vụ trà cà phê cao cấp",
-                    "icon": "Coffee",
-                    "category": "service",
-                    "description": "Dịch vụ trà và cà phê cao cấp phục vụ tại phòng"
-                },
-                {
-                    "id": 33,
-                    "name": "Dịch vụ phòng ưu tiên",
-                    "icon": "Star",
-                    "category": "service",
-                    "description": "Room service được ưu tiên xử lý nhanh"
-                },
-                {
-                    "id": 34,
-                    "name": "Không gian riêng tư cao cấp",
-                    "icon": "Lock",
-                    "category": "service",
-                    "description": "Môi trường riêng tư và thanh bình hơn"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 42,
-                    "name": "Hệ thống âm thanh Bluetooth",
-                    "icon": "Speaker",
-                    "category": "entertainment",
-                    "description": "Hệ thống âm thanh Bluetooth"
-                },
-                {
-                    "id": 44,
-                    "name": "Dọn phòng 2 lần/ngày",
-                    "icon": "Broom",
-                    "category": "service",
-                    "description": "Dọn phòng 2 lần/ngày"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 26,
-                    "name": "Quyền truy cập Executive Lounge",
-                    "icon": "Crown",
-                    "category": "service",
-                    "description": "Lounge VIP tầng 33 dành riêng cho khách The Level"
-                },
-                {
-                    "id": 27,
-                    "name": "Trà cà phê miễn phí Lounge",
-                    "icon": "CoffeeOutlined",
-                    "category": "service",
-                    "description": "Thưởng thức trà, cà phê, bánh quy miễn phí (09:30–22:00)"
-                },
-                {
-                    "id": 28,
-                    "name": "Happy hour đồ uống có cồn",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Happy hour với đồ uống có cồn (17:30–19:00)"
-                },
-                {
-                    "id": 29,
-                    "name": "Check-in/out riêng tư VIP",
-                    "icon": "Bell",
-                    "category": "service",
-                    "description": "Nhận/trả phòng riêng tư tại sảnh VIP"
-                },
-                {
-                    "id": 34,
-                    "name": "Không gian riêng tư cao cấp",
-                    "icon": "Lock",
-                    "category": "service",
-                    "description": "Môi trường riêng tư và thanh bình hơn"
-                }
-            ],
-            "available_room_count": 36,
-            "available_rooms": [
-                {
-                    "room_id": 187,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 188,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 189,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 190,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 191,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 192,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 193,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 194,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 195,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 196,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 197,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 198,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 199,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 200,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 201,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 202,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 203,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 204,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 205,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 206,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 207,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 208,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 209,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 210,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 211,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 212,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 213,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 214,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 215,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 216,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 217,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 218,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 219,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 220,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 221,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 222,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "1000000.00",
-                "total_price": 2000000,
-                "currency": "VND"
-            }
-        },
-        {
-            "room_type_id": 4,
-            "room_code": "the_level_premium_corner",
-            "name": "The Level Premium Corner",
-            "description": "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.\n\n",
-            "base_price": "1000000.00",
-            "adjusted_price": 1370000,
-            "size": 20,
-            "max_guests": 2,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 54,
-                    "room_type_id": 4,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/4/1.webp",
-                    "alt_text": "The Level Premium Corner - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 55,
-                    "room_type_id": 4,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/4/2.jpg",
-                    "alt_text": "The Level Premium Corner - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 56,
-                    "room_type_id": 4,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/4/3.webp",
-                    "alt_text": "The Level Premium Corner - Ảnh 4",
-                    "is_main": 0
-                },
-                {
-                    "id": 57,
-                    "room_type_id": 4,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/4/4.jpg",
-                    "alt_text": "The Level Premium Corner - Ảnh 5",
-                    "is_main": 0
-                },
-                {
-                    "id": 58,
-                    "room_type_id": 4,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/4/5.webp",
-                    "alt_text": "The Level Premium Corner - Ảnh 6",
-                    "is_main": 0
-                },
-                {
-                    "id": 59,
-                    "room_type_id": 4,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/4/6.jpg",
-                    "alt_text": "The Level Premium Corner - Ảnh 7",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 54,
-                "room_type_id": 4,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/4/1.webp",
-                "alt_text": "The Level Premium Corner - Ảnh 2",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 13,
-                    "name": "Tường kính bao quanh",
-                    "icon": "City",
-                    "category": "view",
-                    "description": "Thiết kế tường kính tạo tầm nhìn 360 độ"
-                },
-                {
-                    "id": 14,
-                    "name": "Vị trí góc yên tĩnh",
-                    "icon": "EyeOff",
-                    "category": "comfort",
-                    "description": "Phòng ở vị trí góc tòa nhà, không bị làm phiền"
-                },
-                {
-                    "id": 16,
-                    "name": "Sàn gạch nâu với thảm xám vàng",
-                    "icon": "Image",
-                    "category": "comfort",
-                    "description": "Sàn nhà lát gạch nâu nhạt với thảm xám đậm có hoa văn vàng"
-                },
-                {
-                    "id": 17,
-                    "name": "Nội thất sang trọng",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Đồ nội thất cao cấp, thiết kế tinh tế"
-                },
-                {
-                    "id": 26,
-                    "name": "Quyền truy cập Executive Lounge",
-                    "icon": "Crown",
-                    "category": "service",
-                    "description": "Lounge VIP tầng 33 dành riêng cho khách The Level"
-                },
-                {
-                    "id": 27,
-                    "name": "Trà cà phê miễn phí Lounge",
-                    "icon": "CoffeeOutlined",
-                    "category": "service",
-                    "description": "Thưởng thức trà, cà phê, bánh quy miễn phí (09:30–22:00)"
-                },
-                {
-                    "id": 28,
-                    "name": "Happy hour đồ uống có cồn",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Happy hour với đồ uống có cồn (17:30–19:00)"
-                },
-                {
-                    "id": 29,
-                    "name": "Check-in/out riêng tư VIP",
-                    "icon": "Bell",
-                    "category": "service",
-                    "description": "Nhận/trả phòng riêng tư tại sảnh VIP"
-                },
-                {
-                    "id": 30,
-                    "name": "3h sử dụng phòng họp miễn phí",
-                    "icon": "Calendar",
-                    "category": "service",
-                    "description": "3 giờ sử dụng phòng họp miễn phí"
-                },
-                {
-                    "id": 31,
-                    "name": "Bộ sách tô màu chánh niệm",
-                    "icon": "Book",
-                    "category": "service",
-                    "description": "Bộ sách tô màu thư giãn tinh thần"
-                },
-                {
-                    "id": 32,
-                    "name": "Dịch vụ trà cà phê cao cấp",
-                    "icon": "Coffee",
-                    "category": "service",
-                    "description": "Dịch vụ trà và cà phê cao cấp phục vụ tại phòng"
-                },
-                {
-                    "id": 33,
-                    "name": "Dịch vụ phòng ưu tiên",
-                    "icon": "Star",
-                    "category": "service",
-                    "description": "Room service được ưu tiên xử lý nhanh"
-                },
-                {
-                    "id": 34,
-                    "name": "Không gian riêng tư cao cấp",
-                    "icon": "Lock",
-                    "category": "service",
-                    "description": "Môi trường riêng tư và thanh bình hơn"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 42,
-                    "name": "Hệ thống âm thanh Bluetooth",
-                    "icon": "Speaker",
-                    "category": "entertainment",
-                    "description": "Hệ thống âm thanh Bluetooth"
-                },
-                {
-                    "id": 43,
-                    "name": "Dịch vụ phòng 24/7",
-                    "icon": "RoomService",
-                    "category": "service",
-                    "description": "Dịch vụ phòng 24/7"
-                },
-                {
-                    "id": 46,
-                    "name": "Champagne chào mừng",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Champagne chào mừng"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 13,
-                    "name": "Tường kính bao quanh",
-                    "icon": "City",
-                    "category": "view",
-                    "description": "Thiết kế tường kính tạo tầm nhìn 360 độ"
-                },
-                {
-                    "id": 14,
-                    "name": "Vị trí góc yên tĩnh",
-                    "icon": "EyeOff",
-                    "category": "comfort",
-                    "description": "Phòng ở vị trí góc tòa nhà, không bị làm phiền"
-                },
-                {
-                    "id": 26,
-                    "name": "Quyền truy cập Executive Lounge",
-                    "icon": "Crown",
-                    "category": "service",
-                    "description": "Lounge VIP tầng 33 dành riêng cho khách The Level"
-                },
-                {
-                    "id": 27,
-                    "name": "Trà cà phê miễn phí Lounge",
-                    "icon": "CoffeeOutlined",
-                    "category": "service",
-                    "description": "Thưởng thức trà, cà phê, bánh quy miễn phí (09:30–22:00)"
-                },
-                {
-                    "id": 28,
-                    "name": "Happy hour đồ uống có cồn",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Happy hour với đồ uống có cồn (17:30–19:00)"
-                },
-                {
-                    "id": 29,
-                    "name": "Check-in/out riêng tư VIP",
-                    "icon": "Bell",
-                    "category": "service",
-                    "description": "Nhận/trả phòng riêng tư tại sảnh VIP"
-                }
-            ],
-            "available_room_count": 32,
-            "available_rooms": [
-                {
-                    "room_id": 223,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 224,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 225,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 226,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 227,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 228,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 229,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 230,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 231,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 232,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 233,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 234,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 235,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 236,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 237,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 238,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 239,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 240,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 241,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 242,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 243,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 244,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 245,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 246,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 247,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 248,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 249,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 250,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 251,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 252,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 253,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 254,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "1000000.00",
-                "total_price": 2000000,
-                "currency": "VND"
-            }
-        },
-        {
-            "room_type_id": 5,
-            "room_code": "the_level_suite",
-            "name": "The Level Suite",
-            "description": "Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.\n\n",
-            "base_price": "1000000.00",
-            "adjusted_price": 1300000,
-            "size": 48,
-            "max_guests": 2,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 60,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/1.webp",
-                    "alt_text": "The Level Suite - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 61,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/2.webp",
-                    "alt_text": "The Level Suite - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 62,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/3.webp",
-                    "alt_text": "The Level Suite - Ảnh 4",
-                    "is_main": 0
-                },
-                {
-                    "id": 63,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/4.jpg",
-                    "alt_text": "The Level Suite - Ảnh 5",
-                    "is_main": 0
-                },
-                {
-                    "id": 64,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/5.jpg",
-                    "alt_text": "The Level Suite - Ảnh 6",
-                    "is_main": 0
-                },
-                {
-                    "id": 65,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/6.jpg",
-                    "alt_text": "The Level Suite - Ảnh 7",
-                    "is_main": 0
-                },
-                {
-                    "id": 66,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/7.webp",
-                    "alt_text": "The Level Suite - Ảnh 8",
-                    "is_main": 0
-                },
-                {
-                    "id": 67,
-                    "room_type_id": 5,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/5/8.jpg",
-                    "alt_text": "The Level Suite - Ảnh 9",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 60,
-                "room_type_id": 5,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/5/1.webp",
-                "alt_text": "The Level Suite - Ảnh 2",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 18,
-                    "name": "Tường ốp gỗ",
-                    "icon": "Log",
-                    "category": "comfort",
-                    "description": "Tường ốp gỗ cao cấp tạo không gian ấm cúng"
-                },
-                {
-                    "id": 19,
-                    "name": "Trang trí vải nỉ xám đậm",
-                    "icon": "Fabric",
-                    "category": "comfort",
-                    "description": "Tấm vải nỉ mềm mại màu xám đậm trang trí tường"
-                },
-                {
-                    "id": 20,
-                    "name": "Tông màu trắng nâu trầm",
-                    "icon": "Palette",
-                    "category": "comfort",
-                    "description": "Phối màu chủ đạo trắng và nâu trầm tạo không gian nhẹ nhàng"
-                },
-                {
-                    "id": 21,
-                    "name": "Phòng khách riêng biệt",
-                    "icon": "Home",
-                    "category": "comfort",
-                    "description": "Khu vực phòng khách tách biệt với giường ngủ"
-                },
-                {
-                    "id": 22,
-                    "name": "Ghế sofa cao cấp",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Bộ sofa thoải mái trong phòng khách"
-                },
-                {
-                    "id": 23,
-                    "name": "Khu vực làm việc",
-                    "icon": "Briefcase",
-                    "category": "comfort",
-                    "description": "Bàn làm việc gỗ cao cấp với ghế nệm da"
-                },
-                {
-                    "id": 24,
-                    "name": "Bàn gỗ với ghế nệm da",
-                    "icon": "Chair",
-                    "category": "comfort",
-                    "description": "Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp"
-                },
-                {
-                    "id": 25,
-                    "name": "Thiết kế mở",
-                    "icon": "Unlock",
-                    "category": "comfort",
-                    "description": "Không gian mở rộng rãi, thoáng đãng"
-                },
-                {
-                    "id": 26,
-                    "name": "Quyền truy cập Executive Lounge",
-                    "icon": "Crown",
-                    "category": "service",
-                    "description": "Lounge VIP tầng 33 dành riêng cho khách The Level"
-                },
-                {
-                    "id": 27,
-                    "name": "Trà cà phê miễn phí Lounge",
-                    "icon": "CoffeeOutlined",
-                    "category": "service",
-                    "description": "Thưởng thức trà, cà phê, bánh quy miễn phí (09:30–22:00)"
-                },
-                {
-                    "id": 28,
-                    "name": "Happy hour đồ uống có cồn",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Happy hour với đồ uống có cồn (17:30–19:00)"
-                },
-                {
-                    "id": 29,
-                    "name": "Check-in/out riêng tư VIP",
-                    "icon": "Bell",
-                    "category": "service",
-                    "description": "Nhận/trả phòng riêng tư tại sảnh VIP"
-                },
-                {
-                    "id": 30,
-                    "name": "3h sử dụng phòng họp miễn phí",
-                    "icon": "Calendar",
-                    "category": "service",
-                    "description": "3 giờ sử dụng phòng họp miễn phí"
-                },
-                {
-                    "id": 31,
-                    "name": "Bộ sách tô màu chánh niệm",
-                    "icon": "Book",
-                    "category": "service",
-                    "description": "Bộ sách tô màu thư giãn tinh thần"
-                },
-                {
-                    "id": 32,
-                    "name": "Dịch vụ trà cà phê cao cấp",
-                    "icon": "Coffee",
-                    "category": "service",
-                    "description": "Dịch vụ trà và cà phê cao cấp phục vụ tại phòng"
-                },
-                {
-                    "id": 33,
-                    "name": "Dịch vụ phòng ưu tiên",
-                    "icon": "Star",
-                    "category": "service",
-                    "description": "Room service được ưu tiên xử lý nhanh"
-                },
-                {
-                    "id": 34,
-                    "name": "Không gian riêng tư cao cấp",
-                    "icon": "Lock",
-                    "category": "service",
-                    "description": "Môi trường riêng tư và thanh bình hơn"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 42,
-                    "name": "Hệ thống âm thanh Bluetooth",
-                    "icon": "Speaker",
-                    "category": "entertainment",
-                    "description": "Hệ thống âm thanh Bluetooth"
-                },
-                {
-                    "id": 43,
-                    "name": "Dịch vụ phòng 24/7",
-                    "icon": "RoomService",
-                    "category": "service",
-                    "description": "Dịch vụ phòng 24/7"
-                },
-                {
-                    "id": 44,
-                    "name": "Dọn phòng 2 lần/ngày",
-                    "icon": "Broom",
-                    "category": "service",
-                    "description": "Dọn phòng 2 lần/ngày"
-                },
-                {
-                    "id": 45,
-                    "name": "Butler cá nhân",
-                    "icon": "User",
-                    "category": "service",
-                    "description": "Butler cá nhân"
-                },
-                {
-                    "id": 46,
-                    "name": "Champagne chào mừng",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Champagne chào mừng"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 21,
-                    "name": "Phòng khách riêng biệt",
-                    "icon": "Home",
-                    "category": "comfort",
-                    "description": "Khu vực phòng khách tách biệt với giường ngủ"
-                },
-                {
-                    "id": 22,
-                    "name": "Ghế sofa cao cấp",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Bộ sofa thoải mái trong phòng khách"
-                },
-                {
-                    "id": 23,
-                    "name": "Khu vực làm việc",
-                    "icon": "Briefcase",
-                    "category": "comfort",
-                    "description": "Bàn làm việc gỗ cao cấp với ghế nệm da"
-                },
-                {
-                    "id": 24,
-                    "name": "Bàn gỗ với ghế nệm da",
-                    "icon": "Chair",
-                    "category": "comfort",
-                    "description": "Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp"
-                },
-                {
-                    "id": 25,
-                    "name": "Thiết kế mở",
-                    "icon": "Unlock",
-                    "category": "comfort",
-                    "description": "Không gian mở rộng rãi, thoáng đãng"
-                },
-                {
-                    "id": 26,
-                    "name": "Quyền truy cập Executive Lounge",
-                    "icon": "Crown",
-                    "category": "service",
-                    "description": "Lounge VIP tầng 33 dành riêng cho khách The Level"
-                }
-            ],
-            "available_room_count": 20,
-            "available_rooms": [
-                {
-                    "room_id": 255,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 256,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 257,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 258,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 259,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 260,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 261,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 262,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 263,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 264,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 265,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 266,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 267,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 268,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 269,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 270,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 271,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 272,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 273,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 274,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "1000000.00",
-                "total_price": 2000000,
-                "currency": "VND"
-            }
-        },
-        {
-            "room_type_id": 6,
-            "room_code": "suite",
-            "name": "Suite",
-            "description": "Suite rộng rãi này được bố trí 1 phòng ngủ, khu vực ghế ngồi và 1 phòng tắm với buồng tắm đứng cùng bồn tắm. Suite này có máy điều hòa, TV màn hình phẳng, tường cách âm, minibar, khu vực ăn uống cũng như tầm nhìn ra thành phố. Căn này được trang bị 1 giường.",
-            "base_price": "1000000.00",
-            "adjusted_price": 1300000,
-            "size": 45,
-            "max_guests": 2,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 47,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/1.webp",
-                    "alt_text": "Suite - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 48,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/2.webp",
-                    "alt_text": "Suite - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 49,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/3.webp",
-                    "alt_text": "Suite - Ảnh 4",
-                    "is_main": 0
-                },
-                {
-                    "id": 50,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/4.webp",
-                    "alt_text": "Suite - Ảnh 5",
-                    "is_main": 0
-                },
-                {
-                    "id": 51,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/5.jpg",
-                    "alt_text": "Suite - Ảnh 6",
-                    "is_main": 0
-                },
-                {
-                    "id": 52,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/6.jpg",
-                    "alt_text": "Suite - Ảnh 7",
-                    "is_main": 0
-                },
-                {
-                    "id": 53,
-                    "room_type_id": 6,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/6/7.webp",
-                    "alt_text": "Suite - Ảnh 8",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 47,
-                "room_type_id": 6,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/6/1.webp",
-                "alt_text": "Suite - Ảnh 2",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 12,
-                    "name": "View thành phố",
-                    "icon": "Building2",
-                    "category": "view",
-                    "description": "Tầm nhìn toàn cảnh ra thành phố"
-                },
-                {
-                    "id": 18,
-                    "name": "Tường ốp gỗ",
-                    "icon": "Log",
-                    "category": "comfort",
-                    "description": "Tường ốp gỗ cao cấp tạo không gian ấm cúng"
-                },
-                {
-                    "id": 19,
-                    "name": "Trang trí vải nỉ xám đậm",
-                    "icon": "Fabric",
-                    "category": "comfort",
-                    "description": "Tấm vải nỉ mềm mại màu xám đậm trang trí tường"
-                },
-                {
-                    "id": 20,
-                    "name": "Tông màu trắng nâu trầm",
-                    "icon": "Palette",
-                    "category": "comfort",
-                    "description": "Phối màu chủ đạo trắng và nâu trầm tạo không gian nhẹ nhàng"
-                },
-                {
-                    "id": 21,
-                    "name": "Phòng khách riêng biệt",
-                    "icon": "Home",
-                    "category": "comfort",
-                    "description": "Khu vực phòng khách tách biệt với giường ngủ"
-                },
-                {
-                    "id": 22,
-                    "name": "Ghế sofa cao cấp",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Bộ sofa thoải mái trong phòng khách"
-                },
-                {
-                    "id": 23,
-                    "name": "Khu vực làm việc",
-                    "icon": "Briefcase",
-                    "category": "comfort",
-                    "description": "Bàn làm việc gỗ cao cấp với ghế nệm da"
-                },
-                {
-                    "id": 24,
-                    "name": "Bàn gỗ với ghế nệm da",
-                    "icon": "Chair",
-                    "category": "comfort",
-                    "description": "Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp"
-                },
-                {
-                    "id": 25,
-                    "name": "Thiết kế mở",
-                    "icon": "Unlock",
-                    "category": "comfort",
-                    "description": "Không gian mở rộng rãi, thoáng đãng"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 42,
-                    "name": "Hệ thống âm thanh Bluetooth",
-                    "icon": "Speaker",
-                    "category": "entertainment",
-                    "description": "Hệ thống âm thanh Bluetooth"
-                },
-                {
-                    "id": 43,
-                    "name": "Dịch vụ phòng 24/7",
-                    "icon": "RoomService",
-                    "category": "service",
-                    "description": "Dịch vụ phòng 24/7"
-                },
-                {
-                    "id": 44,
-                    "name": "Dọn phòng 2 lần/ngày",
-                    "icon": "Broom",
-                    "category": "service",
-                    "description": "Dọn phòng 2 lần/ngày"
-                },
-                {
-                    "id": 45,
-                    "name": "Butler cá nhân",
-                    "icon": "User",
-                    "category": "service",
-                    "description": "Butler cá nhân"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 21,
-                    "name": "Phòng khách riêng biệt",
-                    "icon": "Home",
-                    "category": "comfort",
-                    "description": "Khu vực phòng khách tách biệt với giường ngủ"
-                },
-                {
-                    "id": 22,
-                    "name": "Ghế sofa cao cấp",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Bộ sofa thoải mái trong phòng khách"
-                },
-                {
-                    "id": 23,
-                    "name": "Khu vực làm việc",
-                    "icon": "Briefcase",
-                    "category": "comfort",
-                    "description": "Bàn làm việc gỗ cao cấp với ghế nệm da"
-                },
-                {
-                    "id": 24,
-                    "name": "Bàn gỗ với ghế nệm da",
-                    "icon": "Chair",
-                    "category": "comfort",
-                    "description": "Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp"
-                },
-                {
-                    "id": 25,
-                    "name": "Thiết kế mở",
-                    "icon": "Unlock",
-                    "category": "comfort",
-                    "description": "Không gian mở rộng rãi, thoáng đãng"
-                }
-            ],
-            "available_room_count": 20,
-            "available_rooms": [
-                {
-                    "room_id": 275,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 276,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 277,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 278,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 279,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 280,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 281,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 282,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 283,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 284,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 285,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 286,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 287,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 288,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 289,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 290,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 291,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 292,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 293,
-                    "room_status": "available"
-                },
-                {
-                    "room_id": 294,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "1000000.00",
-                "total_price": 2000000,
-                "currency": "VND"
-            }
-        },
-        {
-            "room_type_id": 7,
-            "room_code": "presidential_suite",
-            "name": "Presidential Suite",
-            "description": "Suite rộng rãi này được bố trí 1 phòng khách, 2 phòng ngủ riêng biệt và 2 phòng tắm với buồng tắm đứng cùng đồ vệ sinh cá nhân miễn phí. Suite này có máy điều hòa, khu vực ghế ngồi với TV màn hình phẳng, tường cách âm, minibar, máy pha cà phê cũng như khu vực ăn uống. Căn này được trang bị 2 giường.",
-            "base_price": "1000000.00",
-            "adjusted_price": 1300000,
-            "size": 10,
-            "max_guests": 4,
-            "rating": 0,
-            "images": [
-                {
-                    "id": 68,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/1.webp",
-                    "alt_text": "Presidential Suite - Ảnh 2",
-                    "is_main": 0
-                },
-                {
-                    "id": 69,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/2.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 3",
-                    "is_main": 0
-                },
-                {
-                    "id": 70,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/3.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 4",
-                    "is_main": 0
-                },
-                {
-                    "id": 71,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/4.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 5",
-                    "is_main": 0
-                },
-                {
-                    "id": 72,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/5.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 6",
-                    "is_main": 0
-                },
-                {
-                    "id": 73,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/6.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 7",
-                    "is_main": 0
-                },
-                {
-                    "id": 74,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/7.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 8",
-                    "is_main": 0
-                },
-                {
-                    "id": 75,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/8.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 9",
-                    "is_main": 0
-                },
-                {
-                    "id": 76,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/9.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 10",
-                    "is_main": 0
-                },
-                {
-                    "id": 77,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/10.webp",
-                    "alt_text": "Presidential Suite - Ảnh 11",
-                    "is_main": 0
-                },
-                {
-                    "id": 78,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/11.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 12",
-                    "is_main": 0
-                },
-                {
-                    "id": 79,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/12.webp",
-                    "alt_text": "Presidential Suite - Ảnh 13",
-                    "is_main": 0
-                },
-                {
-                    "id": 80,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/13.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 14",
-                    "is_main": 0
-                },
-                {
-                    "id": 81,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/14.webp",
-                    "alt_text": "Presidential Suite - Ảnh 15",
-                    "is_main": 0
-                },
-                {
-                    "id": 82,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/15.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 16",
-                    "is_main": 0
-                },
-                {
-                    "id": 83,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/16.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 17",
-                    "is_main": 0
-                },
-                {
-                    "id": 84,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/17.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 18",
-                    "is_main": 0
-                },
-                {
-                    "id": 85,
-                    "room_type_id": 7,
-                    "image_url": "http://127.0.0.1:8888/storage/room-types/7/18.jpg",
-                    "alt_text": "Presidential Suite - Ảnh 19",
-                    "is_main": 0
-                }
-            ],
-            "main_image": {
-                "id": 68,
-                "room_type_id": 7,
-                "image_url": "http://127.0.0.1:8888/storage/room-types/7/1.webp",
-                "alt_text": "Presidential Suite - Ảnh 2",
-                "is_main": 0
-            },
-            "amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 3,
-                    "name": "Minibar với nước miễn phí",
-                    "icon": "CupSoda",
-                    "category": "basic",
-                    "description": "Minibar với 2 chai nước suối, trà, cà phê miễn phí"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 5,
-                    "name": "Két sắt",
-                    "icon": "Lock",
-                    "category": "security",
-                    "description": "Két sắt điện tử bảo mật cá nhân"
-                },
-                {
-                    "id": 6,
-                    "name": "Vòi sen riêng biệt",
-                    "icon": "ShowerHead",
-                    "category": "bathroom",
-                    "description": "Vòi sen áp lực cao riêng biệt với vòi sen"
-                },
-                {
-                    "id": 7,
-                    "name": "Bồn tắm riêng biệt",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Bồn tắm ngâm người lớn riêng biệt với vòi sen"
-                },
-                {
-                    "id": 8,
-                    "name": "Phòng tắm rộng rãi",
-                    "icon": "Bath",
-                    "category": "bathroom",
-                    "description": "Phòng tắm hiện đại với diện tích rộng rãi"
-                },
-                {
-                    "id": 9,
-                    "name": "Đồ vệ sinh cao cấp",
-                    "icon": "Soap",
-                    "category": "bathroom",
-                    "description": "Bộ amenities cao cấp đầy đủ"
-                },
-                {
-                    "id": 10,
-                    "name": "Máy sấy tóc",
-                    "icon": "Wind",
-                    "category": "bathroom",
-                    "description": "Máy sấy tóc công suất cao"
-                },
-                {
-                    "id": 11,
-                    "name": "Cửa kính kịch trần",
-                    "icon": "Window",
-                    "category": "view",
-                    "description": "Cửa kính lớn từ trần tới sàn tạo view panoramic"
-                },
-                {
-                    "id": 13,
-                    "name": "Tường kính bao quanh",
-                    "icon": "City",
-                    "category": "view",
-                    "description": "Thiết kế tường kính tạo tầm nhìn 360 độ"
-                },
-                {
-                    "id": 18,
-                    "name": "Tường ốp gỗ",
-                    "icon": "Log",
-                    "category": "comfort",
-                    "description": "Tường ốp gỗ cao cấp tạo không gian ấm cúng"
-                },
-                {
-                    "id": 19,
-                    "name": "Trang trí vải nỉ xám đậm",
-                    "icon": "Fabric",
-                    "category": "comfort",
-                    "description": "Tấm vải nỉ mềm mại màu xám đậm trang trí tường"
-                },
-                {
-                    "id": 20,
-                    "name": "Tông màu trắng nâu trầm",
-                    "icon": "Palette",
-                    "category": "comfort",
-                    "description": "Phối màu chủ đạo trắng và nâu trầm tạo không gian nhẹ nhàng"
-                },
-                {
-                    "id": 21,
-                    "name": "Phòng khách riêng biệt",
-                    "icon": "Home",
-                    "category": "comfort",
-                    "description": "Khu vực phòng khách tách biệt với giường ngủ"
-                },
-                {
-                    "id": 22,
-                    "name": "Ghế sofa cao cấp",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Bộ sofa thoải mái trong phòng khách"
-                },
-                {
-                    "id": 23,
-                    "name": "Khu vực làm việc",
-                    "icon": "Briefcase",
-                    "category": "comfort",
-                    "description": "Bàn làm việc gỗ cao cấp với ghế nệm da"
-                },
-                {
-                    "id": 24,
-                    "name": "Bàn gỗ với ghế nệm da",
-                    "icon": "Chair",
-                    "category": "comfort",
-                    "description": "Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp"
-                },
-                {
-                    "id": 25,
-                    "name": "Thiết kế mở",
-                    "icon": "Unlock",
-                    "category": "comfort",
-                    "description": "Không gian mở rộng rãi, thoáng đãng"
-                },
-                {
-                    "id": 35,
-                    "name": "Ga trải giường cao cấp",
-                    "icon": "BedDouble",
-                    "category": "comfort",
-                    "description": "Ga cotton Ai Cập thread count cao"
-                },
-                {
-                    "id": 36,
-                    "name": "Gối memory foam",
-                    "icon": "Pillow",
-                    "category": "comfort",
-                    "description": "Gối êm ái hỗ trợ giấc ngủ tốt"
-                },
-                {
-                    "id": 37,
-                    "name": "Rèm cửa blackout",
-                    "icon": "Moon",
-                    "category": "comfort",
-                    "description": "Rèm che ánh sáng hoàn toàn"
-                },
-                {
-                    "id": 38,
-                    "name": "Áo choàng tắm cotton",
-                    "icon": "Bathrobe",
-                    "category": "comfort",
-                    "description": "Áo choàng tắm cotton 100% cao cấp"
-                },
-                {
-                    "id": 39,
-                    "name": "Dép đi trong phòng",
-                    "icon": "Slippers",
-                    "category": "comfort",
-                    "description": "Dép đi trong phòng bằng vải cao cấp"
-                },
-                {
-                    "id": 40,
-                    "name": "Cổng sạc USB đa năng",
-                    "icon": "Usb",
-                    "category": "connectivity",
-                    "description": "Ổ cắm USB đa năng cho các thiết bị điện tử"
-                },
-                {
-                    "id": 41,
-                    "name": "Điện thoại bàn quốc tế",
-                    "icon": "Phone",
-                    "category": "connectivity",
-                    "description": "Điện thoại bàn quốc tế"
-                },
-                {
-                    "id": 42,
-                    "name": "Hệ thống âm thanh Bluetooth",
-                    "icon": "Speaker",
-                    "category": "entertainment",
-                    "description": "Hệ thống âm thanh Bluetooth"
-                },
-                {
-                    "id": 43,
-                    "name": "Dịch vụ phòng 24/7",
-                    "icon": "RoomService",
-                    "category": "service",
-                    "description": "Dịch vụ phòng 24/7"
-                },
-                {
-                    "id": 44,
-                    "name": "Dọn phòng 2 lần/ngày",
-                    "icon": "Broom",
-                    "category": "service",
-                    "description": "Dọn phòng 2 lần/ngày"
-                },
-                {
-                    "id": 45,
-                    "name": "Butler cá nhân",
-                    "icon": "User",
-                    "category": "service",
-                    "description": "Butler cá nhân"
-                },
-                {
-                    "id": 46,
-                    "name": "Champagne chào mừng",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Champagne chào mừng"
-                }
-            ],
-            "highlighted_amenities": [
-                {
-                    "id": 1,
-                    "name": "Điều hòa không khí",
-                    "icon": "Snowflake",
-                    "category": "basic",
-                    "description": "Hệ thống điều hòa nhiệt độ hiện đại"
-                },
-                {
-                    "id": 2,
-                    "name": "TV truyền hình cáp",
-                    "icon": "Tv2",
-                    "category": "entertainment",
-                    "description": "Smart TV màn hình phẳng với truyền hình cáp"
-                },
-                {
-                    "id": 4,
-                    "name": "WiFi miễn phí",
-                    "icon": "Wifi",
-                    "category": "connectivity",
-                    "description": "Kết nối wifi tốc độ cao 24/7"
-                },
-                {
-                    "id": 21,
-                    "name": "Phòng khách riêng biệt",
-                    "icon": "Home",
-                    "category": "comfort",
-                    "description": "Khu vực phòng khách tách biệt với giường ngủ"
-                },
-                {
-                    "id": 22,
-                    "name": "Ghế sofa cao cấp",
-                    "icon": "Sofa",
-                    "category": "comfort",
-                    "description": "Bộ sofa thoải mái trong phòng khách"
-                },
-                {
-                    "id": 23,
-                    "name": "Khu vực làm việc",
-                    "icon": "Briefcase",
-                    "category": "comfort",
-                    "description": "Bàn làm việc gỗ cao cấp với ghế nệm da"
-                },
-                {
-                    "id": 24,
-                    "name": "Bàn gỗ với ghế nệm da",
-                    "icon": "Chair",
-                    "category": "comfort",
-                    "description": "Bàn làm việc bằng gỗ đặc với ghế bọc da cao cấp"
-                },
-                {
-                    "id": 25,
-                    "name": "Thiết kế mở",
-                    "icon": "Unlock",
-                    "category": "comfort",
-                    "description": "Không gian mở rộng rãi, thoáng đãng"
-                },
-                {
-                    "id": 45,
-                    "name": "Butler cá nhân",
-                    "icon": "User",
-                    "category": "service",
-                    "description": "Butler cá nhân"
-                },
-                {
-                    "id": 46,
-                    "name": "Champagne chào mừng",
-                    "icon": "Wine",
-                    "category": "service",
-                    "description": "Champagne chào mừng"
-                }
-            ],
-            "available_room_count": 1,
-            "available_rooms": [
-                {
-                    "room_id": 295,
-                    "room_status": "available"
-                }
-            ],
-            "pricing_summary": {
-                "nights": 2,
-                "price_per_night": "1000000.00",
-                "total_price": 2000000,
-                "currency": "VND"
-            }
-        }
-    ],
-    "summary": {
-        "total_room_types": 7,
-        "total_available_rooms": 294,
-        "search_criteria": {
-            "check_in_date": "2025-07-20",
-            "check_out_date": "2025-07-22"
-        }
-    },
-    "message": "Danh sách phòng trống đã được tải thành công"
+        ]
+    }
 }
