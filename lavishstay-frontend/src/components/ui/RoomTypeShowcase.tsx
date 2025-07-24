@@ -136,7 +136,7 @@ const RoomTypeCard: React.FC<{ roomType: RoomTypeData; index: number }> = ({ roo
         <div
             className={`absolute top-1/2 transform -translate-y-1/2 z-10 
         ${direction === 'left' ? 'left-4' : 'right-4'}
-        w-10 h-10 bg-white/90 hover:bg-white rounded-full 
+        w-10 h-10   rounded-full 
         flex items-center justify-center cursor-pointer shadow-lg
         transition-all duration-300 hover:scale-110`}
             onClick={onClick}

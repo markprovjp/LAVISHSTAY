@@ -24,7 +24,7 @@ const ReceptionDashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-10">
       <Title level={2} className="mb-6">
          Bảng điều khiển Lễ tân
       </Title>

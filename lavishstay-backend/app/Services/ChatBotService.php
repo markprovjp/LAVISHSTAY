@@ -2,174 +2,131 @@
 
 namespace App\Services;
 
-use App\Models\Faq;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class ChatBotService
 {
     /**
-     * Get bot response for user message
+     * Get bot response by parsing a markdown file for context.
      */
     public function getResponse(string $message): ?array
     {
-        $message = $this->normalizeMessage($message);
-        
-        // Search for matching FAQ
-        $faq = $this->findBestMatch($message);
-        
-        if ($faq && $this->calculateConfidence($message, $faq) >= 0.6) {
-            // Increment usage count
-            $faq->incrementUsage();
-            
+        $answer = $this->getResponseFromMarkdown($message);
+
+        if ($answer) {
             return [
-                'answer' => $faq->answer,
-                'faq_id' => $faq->id,
-                'confidence' => $this->calculateConfidence($message, $faq),
+                'answer' => $answer,
+                'faq_id' => null,
+                'confidence' => 0.9, // High confidence as it's a direct match
             ];
         }
+
+        return null; // Escalate if no relevant section is found
+    }
+
+    /**
+     * Reads and parses the markdown file to find a relevant section.
+     */
+    private function getResponseFromMarkdown(string $message): ?string
+    {
+        // Use base_path() to create a relative and system-agnostic path
+        $path = base_path('../lavishstay.mm.md');
+
+        if (!File::exists($path)) {
+            return 'Lỗi: Không tìm thấy tệp dữ liệu (lavishstay.mm.md).';
+        }
+
+        $content = File::get($path);
         
+        // 1. Parse the markdown content into a structured array (topic => content)
+        $sections = $this->parseMarkdownIntoSections($content);
+        
+        // 2. Find the best matching section based on the user's message
+        $normalizedMessage = $this->normalizeText($message);
+        $bestMatchTopic = null;
+        $highestScore = 0;
+
+        foreach ($sections as $topic => $topicContent) {
+            $normalizedTopic = $this->normalizeText($topic);
+            $score = $this->calculateSimilarity($normalizedMessage, $normalizedTopic);
+
+            if ($score > $highestScore) {
+                $highestScore = $score;
+                $bestMatchTopic = $topic;
+            }
+        }
+
+        // 3. If a sufficiently good match is found, return its content
+        if ($highestScore > 0.3 && $bestMatchTopic) { // Using a threshold to avoid bad matches
+            return "Về **{$bestMatchTopic}**:\n\n" . $sections[$bestMatchTopic];
+        }
+
         return null;
     }
 
     /**
-     * Normalize message for better matching
+     * Parses markdown text into an associative array where keys are headings.
      */
-    private function normalizeMessage(string $message): string
+    private function parseMarkdownIntoSections(string $content): array
     {
-        // Convert to lowercase
-        $message = Str::lower($message);
-        
-        // Remove special characters
-        $message = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $message);
-        
-        // Remove extra spaces
-        $message = preg_replace('/\s+/', ' ', trim($message));
-        
-        return $message;
-    }
+        $sections = [];
+        $currentTopic = 'Thông tin chung';
+        $currentContent = '';
 
-    /**
-     * Find best matching FAQ
-     */
-    private function findBestMatch(string $message): ?Faq
-    {
-        $faqs = Faq::active()->orderBy('priority')->get();
-        $bestMatch = null;
-        $bestScore = 0;
+        $lines = explode("\n", $content);
 
-        foreach ($faqs as $faq) {
-            $score = $this->calculateConfidence($message, $faq);
-            
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $bestMatch = $faq;
-            }
-        }
-
-        return $bestMatch;
-    }
-
-    /**
-     * Calculate confidence score between message and FAQ
-     */
-    private function calculateConfidence(string $message, Faq $faq): float
-    {
-        $questionScore = $this->calculateSimilarity($message, Str::lower($faq->question));
-        
-        $keywordScore = 0;
-        if ($faq->keywords) {
-            foreach ($faq->keywords as $keyword) {
-                if (Str::contains($message, Str::lower($keyword))) {
-                    $keywordScore += 0.3;
+        foreach ($lines as $line) {
+            // Check for level 2 or 3 headings
+            if (Str::startsWith($line, '## ') || Str::startsWith($line, '### ')) {
+                // If we have content for the previous topic, save it
+                if (!empty(trim($currentContent))) {
+                    $sections[$currentTopic] = trim($currentContent);
                 }
+                // Start a new topic
+                $currentTopic = trim(preg_replace('/^#+\s*/', '', $line));
+                $currentContent = '';
+            } else {
+                // Append content to the current topic
+                $currentContent .= $line . "\n";
             }
         }
-        
-        // Combine scores
-        $totalScore = ($questionScore * 0.7) + min($keywordScore, 0.3);
-        
-        return min($totalScore, 1.0);
+
+        // Add the last section
+        if (!empty(trim($currentContent))) {
+            $sections[$currentTopic] = trim($currentContent);
+        }
+
+        return $sections;
     }
 
     /**
-     * Calculate similarity between two strings
+     * Normalizes text for better matching (removes accents, special chars).
+     */
+    private function normalizeText(string $text): string
+    {
+        $text = Str::lower($text);
+        $text = Str::ascii($text); // Removes accents
+        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
+        $text = preg_replace('/\s+/', ' ', trim($text));
+        return $text;
+    }
+
+    /**
+     * Calculates a similarity score between two strings based on common words.
      */
     private function calculateSimilarity(string $str1, string $str2): float
     {
-        // Simple word matching algorithm
-        $words1 = explode(' ', $str1);
-        $words2 = explode(' ', $str2);
+        $words1 = array_unique(explode(' ', $str1));
+        $words2 = array_unique(explode(' ', $str2));
         
-        $matches = 0;
-        $totalWords = max(count($words1), count($words2));
-        
-        foreach ($words1 as $word1) {
-            if (strlen($word1) < 3) continue; // Skip short words
-            
-            foreach ($words2 as $word2) {
-                if (Str::contains($word2, $word1) || Str::contains($word1, $word2)) {
-                    $matches++;
-                    break;
-                }
-            }
-        }
-        
-        return $totalWords > 0 ? $matches / $totalWords : 0;
-    }
+        $intersect = count(array_intersect($words1, $words2));
+        $union = count(array_unique(array_merge($words1, $words2)));
 
-    /**
-     * Get suggested responses based on context
-     */
-    public function getSuggestedResponses(string $context): array
-    {
-        $suggestions = [
-            'greeting' => [
-                'Xin chào! Tôi có thể giúp gì cho bạn?',
-                'Chào bạn! Bạn cần hỗ trợ gì không?',
-            ],
-            'booking' => [
-                'Bạn có thể đặt phòng trực tuyến tại website của chúng tôi.',
-                'Để đặt phòng, vui lòng truy cập trang đặt phòng hoặc gọi hotline.',
-            ],
-            'policy' => [
-                'Bạn có thể xem chính sách của chúng tôi tại trang chính sách.',
-                'Chính sách hủy phòng và hoàn tiền được quy định rõ ràng.',
-            ],
-            'contact' => [
-                'Bạn có thể liên hệ với chúng tôi qua hotline hoặc email.',
-                'Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giúp đỡ bạn.',
-            ],
-        ];
+        if ($union == 0) {
+            return 0;
+        }
 
-        // Determine context and return appropriate suggestions
-        $detectedContext = $this->detectContext($context);
-        
-        return $suggestions[$detectedContext] ?? $suggestions['greeting'];
-    }
-
-    /**
-     * Detect context from message
-     */
-    private function detectContext(string $message): string
-    {
-        $message = Str::lower($message);
-        
-        if (Str::contains($message, ['xin chào', 'hello', 'hi', 'chào'])) {
-            return 'greeting';
-        }
-        
-        if (Str::contains($message, ['đặt phòng', 'booking', 'reservation', 'book'])) {
-            return 'booking';
-        }
-        
-        if (Str::contains($message, ['chính sách', 'policy', 'quy định', 'điều khoản'])) {
-            return 'policy';
-        }
-        
-        if (Str::contains($message, ['liên hệ', 'contact', 'hotline', 'phone'])) {
-            return 'contact';
-        }
-        
-        return 'general';
+        return $intersect / $union;
     }
 }
