@@ -108,7 +108,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
 
   // Phong cách tiêu đề động dựa trên cuộn và prop trong suốt
   const headerStyle = {
-    position: "fixed" as "fixed",
+    position: "fixed",
+    top: 0,
     width: "100%",
     zIndex: 1000,
     background: transparent && !scrolled ? "transparent" : token.colorBgBase,

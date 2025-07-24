@@ -97,7 +97,7 @@ const RoomCard: React.FC<{
             <Menu.Divider />
             <Menu.SubMenu key="status" title="Cập nhật trạng thái" icon={<SettingOutlined />}>
                 {statusOptions.map(s => (
-                    <Menu.Item key={`status-${s.value}`} icon={typeof s.icon === 'string' ? iconMap[s.icon as keyof typeof iconMap] : s.icon}>
+                    <Menu.Item >
                         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             {typeof s.icon === 'string' ? iconMap[s.icon as keyof typeof iconMap] : s.icon}
                             {s.label}
@@ -111,7 +111,7 @@ const RoomCard: React.FC<{
     const cardClasses = [
         "h-full", "cursor-pointer", "transition-all", "duration-300", "ease-in-out", "shadow-sm", "hover:shadow-xl", "border",
         isSelected ? "ring-2 ring-blue-500 border-blue-400" : "border-gray-200",
-        booking_info ? "bg-orange-50" : "bg-white",
+        booking_info ? "bg-orange-50" : "",
         room.status !== 'available' && !booking_info ? "bg-gray-50" : "",
     ].join(' ');
 
@@ -284,7 +284,7 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     return (
         <div className="space-y-8">
             {multiSelectMode && (
-                <Card bordered={false} className="bg-blue-50 border border-blue-200">
+                <Card bordered={false} className=" border border-blue-200">
                     <Flex justify="space-between" align="center">
                         <Badge count={selectedRooms.size} overflowCount={99}>
                             <Title level={5} className="!m-0 mr-4">Phòng đã chọn</Title>
