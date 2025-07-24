@@ -101,16 +101,16 @@ const ReviewBooking: React.FC = () => {
         action: 'https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload',
         listType: "picture-card",
         maxCount: 5,
-        accept: 'image/png, image/jpeg, video/mp4, video/quicktime',
+        accept: 'image/*,video/*', // Cho phép tất cả định dạng ảnh và video phổ biến
         beforeUpload: file => {
+            // Debug log
+            console.log('File type:', file.type, 'File size:', file.size);
             const isImage = file.type.startsWith('image/');
             const isVideo = file.type.startsWith('video/');
-            
             if (!isImage && !isVideo) {
                 message.error('Bạn chỉ có thể tải lên file ảnh hoặc video!');
                 return Upload.LIST_IGNORE;
             }
-
             const isLt50M = file.size / 1024 / 1024 < 50;
             if (!isLt50M) {
                 message.error('File media phải nhỏ hơn 50MB!');
@@ -138,7 +138,7 @@ const ReviewBooking: React.FC = () => {
     };
 
     return (
-        <Layout style={{ background: '#f0f2f5', minHeight: '100vh' }}>
+        <Layout style={{ minHeight: '100vh' }}>
             <Content style={{ padding: '48px 12px' }}>
                 <Row justify="center">
                     <Col xs={24} sm={22} md={20} lg={16} xl={12}>
@@ -148,7 +148,7 @@ const ReviewBooking: React.FC = () => {
                                 Hãy giúp LavishStay phục vụ tốt hơn bằng cách hoàn thành bài đánh giá dưới đây.
                             </Paragraph>
 
-                            <Card style={{ marginBottom: 32, background: '#fafafa' }} bordered={false}>
+                            <Card style={{ marginBottom: 32, }} bordered={false}>
                                 <Descriptions title="Tóm tắt kỳ nghỉ" column={{ xs: 1, sm: 2 }}>
                                     <Descriptions.Item label={<Space><HomeOutlined />Phòng</Space>}><Text strong>{mockBookingDetails.roomName}</Text></Descriptions.Item>
                                     <Descriptions.Item label={<Space><CalendarOutlined />Thời gian</Space>}>{mockBookingDetails.checkInDate} → {mockBookingDetails.checkOutDate}</Descriptions.Item>

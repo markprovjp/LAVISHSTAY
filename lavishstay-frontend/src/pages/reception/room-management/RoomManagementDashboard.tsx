@@ -158,7 +158,7 @@ const RoomManagementDashboard: React.FC = () => {
                     <Row gutter={[24, 24]}>
                         <Col span={10}>
                             <Space direction="vertical" size="large" className="w-full">
-                                <Card title="Thông tin phòng" headStyle={{ backgroundColor: '#f0f5ff' }}>
+                                <Card title="Thông tin phòng" >
                                     <Flex justify="space-between">
                                         <Text strong>Loại phòng:</Text>
                                         <Text>{room.room_type_name}</Text>
@@ -177,7 +177,7 @@ const RoomManagementDashboard: React.FC = () => {
                                     </Flex>
                                 </Card>
 
-                                <Card title="Thông tin hiện tại" headStyle={{ backgroundColor: '#e6f7ff' }}>
+                                <Card title="Thông tin hiện tại" >
                                     {currentBooking ? (
                                         <Space direction="vertical" className="w-full">
                                             <Flex align="center" gap={8}>
@@ -201,7 +201,7 @@ const RoomManagementDashboard: React.FC = () => {
                         </Col>
 
                         <Col span={14}>
-                            <Card title="Lịch sử & Đặt phòng tương lai" headStyle={{ backgroundColor: '#fafafa' }}>
+                            <Card title="Lịch sử & Đặt phòng tương lai" >
                                 {bookingHistory.length > 0 ? (
                                     <div className="max-h-[400px] overflow-y-auto pr-2">
                                         <List
@@ -240,7 +240,7 @@ const RoomManagementDashboard: React.FC = () => {
     };
 
     return (
-        <Layout style={{ background: '#f5f5f5' }}>
+        <Layout >
             <Content style={{ padding: '24px' }}>
                 <Card style={{ marginBottom: 24 }}>
                     <Flex justify="space-between" align="start">
