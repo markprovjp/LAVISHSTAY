@@ -43,7 +43,7 @@
                 @else
                     <div class="flex gap-2">
                         <a href="{{ route('admin.rooms.create', $roomType->room_type_id) }}"
-                           class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                        class="btn bg-violet-500 hover:bg-violet-600 text-white">
                             <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="16" height="16">
                                 <path
                                     d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
@@ -57,14 +57,15 @@
                                 </svg>
                                 <span class="ml-2">Nhập Excel</span>
                             </button>
-                            <div id="importForm" class="hidden absolute mt-2 right-0 bg-white dark:bg-gray-800 shadow-lg rounded-md p-2 z-10">
+                            <div id="importForm" class="hidden absolute mt-2 right-0 bg-white dark:bg-gray-800 shadow-lg rounded-md p-4 z-20 min-w-[250px]">
                                 <form action="{{ route('admin.rooms.import-excel', ['room_type_id' => $roomType->room_type_id]) }}" method="POST" enctype="multipart/form-data" id="excelForm">
                                     @csrf
-                                    <div class="flex items-center mb-2">
-                                        <input type="file" name="excel_file" id="excelFile" class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500" onchange="updateFileName()">
+                                    <div class="flex items-center mb-3">
+                                        <input type="file" name="excel_file" id="excelFile" accept=".xls,.xlsx" class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                                         <button type="button" id="clearFile" class="ml-2 text-red-500 hover:text-red-700" style="display: none;">X</button>
                                     </div>
-                                    <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white text-sm mt-2 w-full">Xác nhận</button>
+                                    <span id="fileName" class="text-sm text-gray-600 dark:text-gray-400 block mb-2" style="display: none;"></span>
+                                    <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white text-sm w-full">Xác nhận</button>
                                 </form>
                             </div>
                         </div>
@@ -119,23 +120,19 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     <!-- Search -->
                     <div>
-                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Tìm
-                            kiếm</label>
+                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Tìm kiếm</label>
                         <input type="text" name="search" value="{{ request('search') }}"
                             placeholder="Tên phòng, tầng, số phòng..."
                             class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-                            placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                            w-full">
+                            placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                     </div>
 
                     <!-- Status -->
                     <div>
-                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng
-                            thái</label>
+                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái</label>
                         <select name="status"
                             class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
-                                dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                w-full">
+                            dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 w-full">
                             <option value="">Tất cả trạng thái</option>
                             @foreach ($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ request('status') == $value ? 'selected' : '' }}>
@@ -147,16 +144,13 @@
 
                     <!-- Max Guests -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số khách tối
-                            đa</label>
+                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Số khách tối đa</label>
                         <select name="max_guests"
                             class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
-                                dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                w-full">
+                            dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 w-full">
                             <option value="">Tất cả</option>
                             @for ($i = 1; $i <= 10; $i++)
-                                <option value="{{ $i }}"
-                                    {{ request('max_guests') == $i ? 'selected' : '' }}>
+                                <option value="{{ $i }}" {{ request('max_guests') == $i ? 'selected' : '' }}>
                                     {{ $i }}+ khách
                                 </option>
                             @endfor
@@ -165,12 +159,10 @@
 
                     <!-- View -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hướng
-                            nhìn</label>
+                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Hướng nhìn</label>
                         <select name="view"
                             class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
-                                dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                w-full">
+                            dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 w-full">
                             <option value="">Tất cả hướng</option>
                         </select>
                     </div>
@@ -179,46 +171,26 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     <!-- Check-in Date -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày nhận
-                            phòng</label>
+                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày nhận phòng</label>
                         <input type="date" name="check_in" value="{{ request('check_in') }}"
                             class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-                            placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                            w-full">
+                            placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                     </div>
 
                     <!-- Check-out Date -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày trả
-                            phòng</label>
+                        <label class="block text-sm mt-4 font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày trả phòng</label>
                         <input type="date" name="check_out" value="{{ request('check_out') }}"
                             class="form-input block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-                                placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                w-full">
+                            placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
                     </div>
 
-                    <!-- Price Range -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giá phòng
-                            (VND)</label>
-                        <div class="flex space-x-2 gap-4">
-                        </div>
-                    </div>
-
-                    <!-- Size Range -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diện tích
-                            <!-- Size Range -->
-                            <div>
-                                <div class="flex space-x-2 gap-4">
-                                </div>
-                            </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-3">
-                        <button type="submit" class="btn me-3 bg-violet-500 hover:bg-violet-600 text-white">
-                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 16 16" width="16"
-                                height="16">
+                    <!-- Submit and Reset -->
+                    <div class="flex flex-wrap mt-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"></label>
+                        <div class="mt-6 ">
+                            <button type="submit" class="btn me-3 bg-violet-500 hover:bg-violet-600 text-white">
+                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 16 16" width="16" height="16">
                                 <path
                                     d="m14.707 13.293-1.414 1.414-2.4-2.4 1.414-1.414 2.4 2.4ZM6.8 12.6A6 6 0 1 1 12.6 6.8a6 6 0 0 1-5.8 5.8ZM2 6a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z" />
                             </svg>
@@ -227,16 +199,17 @@
 
                         <a href="{{ route('admin.rooms.by-type', $roomType->room_type_id) }}"
                             class="btn border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
-                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 16 16" width="16"
-                                height="16">
+                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 16 16" width="16" height="16">
                                 <path
                                     d="M12.72 3.293a1 1 0 010 1.414L9.414 8l3.306 3.293a1 1 0 01-1.414 1.414L8 9.414l-3.293 3.293a1 1 0 01-1.414-1.414L6.586 8 3.293 4.707a1 1 0 011.414-1.414L8 6.586l3.293-3.293a1 1 0 011.414 0z" />
                             </svg>
                             <span class="ml-2">Xóa bộ lọc</span>
                         </a>
+                        </div>
                     </div>
-            </form>
-        </div>
+                </form>
+            </div>
+
 
         <!-- Sort and View Options -->
         <div class="flex px-6 flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -443,7 +416,11 @@
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cấu hình SweetAlert2
     const swalWithBootstrapButtons = Swal.mixin({
         customClass: {
             confirmButton: "btn btn-success mx-2",
@@ -452,136 +429,162 @@
         buttonsStyling: false
     });
 
-    document.getElementById('deleteSelected').addEventListener('click', function(event) {
-        swalWithBootstrapButtons.fire({
-            title: "Bạn có chắc chắn?",
-            text: "Hành động này sẽ xóa tất cả các phòng đã chọn!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Xóa!",
-            cancelButtonText: "Hủy",
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('deleteForm').submit();
-                swalWithBootstrapButtons.fire({
-                    title: "Đã xóa!",
-                    text: "Danh sách phòng đã được xóa.",
-                    icon: "success"
-                });
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                swalWithBootstrapButtons.fire({
-                    title: "Đã hủy",
-                    text: "Phòng vẫn được giữ nguyên.",
-                    icon: "error"
-                });
-            }
-        });
+    // Animation cho thông báo
+    ['notification', 'notification-error'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('translate-y-0', 'opacity-100');
+            el.classList.remove('-translate-y-full', 'opacity-0');
+            setTimeout(() => {
+                el.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => el.remove(), 300);
+            }, 5000);
+        }
     });
-</script>
 
-
-    <script>
-        // Animation khi hiển thị
-        ['notification', 'notification-error'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.add('translate-y-0', 'opacity-100');
-                el.classList.remove('-translate-y-full', 'opacity-0');
-
-                setTimeout(() => {
-                    el.classList.add('opacity-0', 'scale-95');
-                    setTimeout(() => el.remove(), 300);
-                }, 5000);
-            }
-        });
-
-        function closeNotification() {
-            const el = document.getElementById('notification');
-            if (el) {
-                el.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => el.remove(), 300);
-            }
+    // Đóng thông báo
+    function closeNotification() {
+        const el = document.getElementById('notification');
+        if (el) {
+            el.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => el.remove(), 300);
         }
+    }
 
-        function closeNotificationError() {
-            const el = document.getElementById('notification-error');
-            if (el) {
-                el.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => el.remove(), 300);
-            }
+    function closeNotificationError() {
+        const el = document.getElementById('notification-error');
+        if (el) {
+            el.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => el.remove(), 300);
         }
+    }
 
-        // JavaScript cho chức năng xóa nhiều phòng
-        document.getElementById('selectAll').addEventListener('change', function() {
+    // Chọn tất cả checkbox
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
             const checkboxes = document.querySelectorAll('.room-checkbox');
             checkboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
             updateDeleteButtonVisibility();
         });
+    } else {
+        console.error('Không tìm thấy selectAll');
+    }
 
-        document.querySelectorAll('.room-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', updateDeleteButtonVisibility);
-        });
+    // Cập nhật trạng thái nút xóa
+    document.querySelectorAll('.room-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateDeleteButtonVisibility);
+    });
 
-        function updateDeleteButtonVisibility() {
-            const checkedCheckboxes = document.querySelectorAll('.room-checkbox:checked');
-            const deleteButton = document.getElementById('deleteSelected');
+    function updateDeleteButtonVisibility() {
+        const checkedCheckboxes = document.querySelectorAll('.room-checkbox:checked');
+        const deleteButton = document.getElementById('deleteSelected');
+        if (deleteButton) {
             deleteButton.classList.toggle('hidden', checkedCheckboxes.length === 0);
         }
+    }
 
-        // // Thêm xác nhận trước khi xóa nhiều phòng
-        // document.getElementById('deleteSelected').addEventListener('click', function(event) {
-        //     const confirmed = confirm('Bạn có chắc chắn muốn xóa tất cả các phòng đã chọn?');
-        //     if (!confirmed) {
-        //         event.preventDefault(); // Ngăn form submit nếu không xác nhận
-        //     }
-        // });
+    // Xác nhận xóa nhiều phòng
+    const deleteSelected = document.getElementById('deleteSelected');
+    if (deleteSelected) {
+        deleteSelected.addEventListener('click', function(event) {
+            event.preventDefault(); // Ngăn hành động mặc định
+            swalWithBootstrapButtons.fire({
+                title: "Bạn có chắc chắn?",
+                text: "Hành động này sẽ xóa tất cả các phòng đã chọn!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xóa!",
+                cancelButtonText: "Hủy",
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteForm').submit();
+                }
+            });
+        });
+    } else {
+        console.error('Không tìm thấy deleteSelected');
+    }
 
-        // Ẩn form khi click ra ngoài
-        document.addEventListener('click', function(event) {
-            const toggleButton = document.getElementById('toggleImport');
-            const form = document.getElementById('importForm');
-            if (!toggleButton.contains(event.target) && !form.contains(event.target)) {
-                form.classList.add('hidden');
+    // Toggle form nhập Excel
+    const toggleImport = document.getElementById('toggleImport');
+    const importForm = document.getElementById('importForm');
+    if (toggleImport && importForm) {
+        toggleImport.addEventListener('click', function(event) {
+            event.stopPropagation(); // Ngăn sự kiện lan ra ngoài
+            console.log('Toggle Import clicked'); // Debug
+            importForm.classList.toggle('hidden');
+        });
+    } else {
+        console.error('Không tìm thấy toggleImport hoặc importForm');
+    }
+
+    // Kiểm tra định dạng file Excel
+    const excelFile = document.getElementById('excelFile');
+    const fileNameSpan = document.getElementById('fileName');
+    const clearFile = document.getElementById('clearFile');
+    if (excelFile && fileNameSpan && clearFile) {
+        excelFile.addEventListener('change', function() {
+            const file = this.files[0];
+            const allowedTypes = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+
+            if (file && !allowedTypes.includes(file.type)) {
+                swalWithBootstrapButtons.fire({
+                    title: 'Lỗi định dạng file',
+                    text: 'Vui lòng chọn file Excel có định dạng .xls hoặc .xlsx!',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                this.value = ''; // Reset input file
+                fileNameSpan.textContent = '';
+                fileNameSpan.style.display = 'none';
+                clearFile.style.display = 'none';
+                return;
             }
-        });
 
-        document.getElementById('toggleImport').addEventListener('click', function() {
-            const form = document.getElementById('importForm');
-            form.classList.toggle('hidden');
-        });
-
-        function updateFileName() {
-            const fileInput = document.getElementById('excelFile');
-            const fileNameSpan = document.getElementById('fileName');
-            const clearButton = document.getElementById('clearFile');
-            if (fileInput.files.length > 0) {
-                fileNameSpan.textContent = fileInput.files[0].name;
-                fileNameSpan.style.display = 'inline-block';
-                clearButton.style.display = 'inline-block';
+            // Cập nhật tên file nếu hợp lệ
+            if (file) {
+                fileNameSpan.textContent = file.name;
+                fileNameSpan.style.display = 'block';
+                clearFile.style.display = 'inline-block';
             } else {
                 fileNameSpan.textContent = '';
                 fileNameSpan.style.display = 'none';
-                clearButton.style.display = 'none';
+                clearFile.style.display = 'none';
             }
-        }
+        });
 
-        document.getElementById('clearFile').addEventListener('click', function() {
-            const fileInput = document.getElementById('excelFile');
-            const fileNameSpan = document.getElementById('fileName');
-            fileInput.value = ''; // Reset input file
+        clearFile.addEventListener('click', function() {
+            excelFile.value = ''; // Reset input file
             fileNameSpan.textContent = '';
             fileNameSpan.style.display = 'none';
             this.style.display = 'none'; // Ẩn nút X
         });
+    } else {
+        console.error('Không tìm thấy excelFile, fileName hoặc clearFile');
+    }
 
-        // Coming Soon Modal Script
-        function showComingSoon(feature) {
-            alert(`Chức năng "${feature}" đang được phát triển và sẽ sớm ra mắt!`);
+    // Đóng form khi click ra ngoài
+    document.addEventListener('click', function(event) {
+        if (toggleImport && importForm && !toggleImport.contains(event.target) && !importForm.contains(event.target)) {
+            importForm.classList.add('hidden');
         }
-    </script>
+    });
+
+    // Coming Soon Modal
+    function showComingSoon(feature) {
+        swalWithBootstrapButtons.fire({
+            title: 'Chức năng đang phát triển',
+            text: `Chức năng "${feature}" đang được phát triển và sẽ sớm ra mắt!`,
+            icon: 'info',
+            confirmButtonText: 'OK'
+        });
+    }
+});
+</script>
 
     
 </x-app-layout>

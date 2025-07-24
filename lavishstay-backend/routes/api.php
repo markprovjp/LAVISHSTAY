@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\RoomTypeController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReceptionController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Api\TranslationController;
+use App\Http\Controllers\Api\ReviewController;
+
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -58,8 +61,15 @@ Route::get('/rooms/type/{roomTypeId}', [\App\Http\Controllers\Api\RoomController
 Route::get('/rooms/type-slug/{slug}', [\App\Http\Controllers\Api\RoomController::class, 'roomsByTypeSlug']);
 Route::get('/rooms/{roomId}/calendar', [\App\Http\Controllers\Api\RoomController::class, 'getCalendarData']);
 
-
-
+// Reviews API
+Route::get('/reviews/list', [ReviewController::class, 'apiReviewsList']);
+Route::get('/reviews/detail/{id}', [ReviewController::class, 'apiReviewsDetail']);
+Route::delete('/reviews/delete/{id}', [ReviewController::class, 'apiReviewsDelete']);
+Route::patch('/reviews/reject/{id}', [ReviewController::class, 'apiReviewsReject']);
+Route::patch('/reviews/approve/{id}', [ReviewController::class, 'apiReviewsApprove']);
+Route::post('/reviews/create', [ReviewController::class, 'apiReviewsCreate']);
+Route::put('/reviews/update/{id}', [ReviewController::class, 'apiReviewsUpdate']);
+Route::get('/reviews/room-type/{id}', [ReviewController::class, 'apiRoomTypeDetails']);
 
 
 
@@ -159,6 +169,11 @@ Route::prefix('reception')->group(function () {
     Route::get('/payment-status/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'paymentStatus']);
     Route::get('/bookings-legacy', [\App\Http\Controllers\Api\ReceptionBookController::class, 'list']);
 });
+
+
+    
+
+    
 
 //FAQs API
 Route::apiResource('faqs', FAQController::class);
