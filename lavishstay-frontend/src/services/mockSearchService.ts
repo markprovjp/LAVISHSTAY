@@ -72,61 +72,32 @@ class MockSearchService {
         // if (searchData.guestDetails) {
         //     const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
         //     filteredRooms = filteredRooms.filter(room => room.maxGuests >= totalGuests);
-        // }// Filter by availability (simplified for single hotel)
+        // }        // Filter by availability (simplified for single hotel)
         if (searchData.dateRange && searchData.dateRange.length === 2) {
             // For single hotel, we assume rooms are available unless specifically unavailable
             // You can add more complex availability logic here if needed
-            filteredRooms = filteredRooms.filter(room => room.availableRooms > 0);
-        }
-
-        // Filter by guest type preferences (adjusted for single hotel room types)
-        if (searchData.guestType) {
-            switch (searchData.guestType) {
-                case 'business':
-                    filteredRooms = filteredRooms.filter(room =>
-                        room.roomType === 'deluxe' ||
-                        room.roomType === 'premium' ||
-                        room.amenities.includes('Bàn làm việc') ||
-                        room.amenities.includes('WiFi')
-                    );
-                    break;
-                case 'couple':
-                    filteredRooms = filteredRooms.filter(room =>
-                        room.roomType === 'suite' ||
-                        room.roomType === 'presidential' ||
-                        room.roomType === 'theLevel' ||
-                        room.maxGuests <= 2
-                    );
-                    break;
-                case 'solo':
-                    filteredRooms = filteredRooms.filter(room =>
-                        room.roomType === 'deluxe' ||
-                        room.maxGuests <= 2
-                    );
-                    break;
-                case 'family_young':
-                    filteredRooms = filteredRooms.filter(room =>
-                        room.roomType === 'suite' ||
-                        room.roomType === 'presidential' ||
-                        room.maxGuests >= 4
-                    );
-                    break;
-                case 'group':
-                    filteredRooms = filteredRooms.filter(room =>
-                        room.roomType === 'suite' ||
-                        room.roomType === 'presidential' ||
-                        room.maxGuests >= 6
-                    );
-                    break;
-            }
-        }
-
-        // Pagination
+            // Removed availableRooms filter to show all rooms
+        }        // REMOVED: Filter by guest type - we now show ALL room types regardless of guest preferences
+        // This allows users to see all available options and make informed decisions
+        // Room capacity validation and suggestions are handled in the frontend UI instead
+        
+        // Guest type is now only used for UI hints and suggestions, not for filtering results
+        console.log('DEBUG: MockSearchService - Guest type is', searchData.guestType, 'but NOT filtering rooms by guest type');
+        console.log('DEBUG: MockSearchService - Returning all', filteredRooms.length, 'rooms regardless of guest preferences');        // Pagination
         const total = filteredRooms.length;
         const totalPages = Math.ceil(total / limit);
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
         const paginatedRooms = filteredRooms.slice(startIndex, endIndex);
+
+        console.log('DEBUG: MockSearchService - FINAL RESULTS:');
+        console.log('DEBUG: MockSearchService - Total rooms after all filtering:', total);
+        console.log('DEBUG: MockSearchService - Room types returned:', paginatedRooms.map(r => r.roomType));
+        console.log('DEBUG: MockSearchService - Search params were:', { 
+            location: searchData.location, 
+            guestType: searchData.guestType, 
+            totalGuests: searchData.guestDetails ? (searchData.guestDetails.adults + searchData.guestDetails.children) : searchData.guests 
+        });
 
         return {
             rooms: paginatedRooms,
@@ -146,11 +117,10 @@ class MockSearchService {
         const room = sampleRooms.find((r: Room) => r.id.toString() === roomId);
         if (!room) {
             throw new Error('Room not found');
-        }
-
-        // For single hotel, simplified availability check
+        }        // For single hotel, simplified availability check
         // In real implementation, this would check actual booking database
-        const isAvailable = room.availableRooms > 0;
+        // Always assume available for now
+        const isAvailable = true;
 
         return {
             available: isAvailable,

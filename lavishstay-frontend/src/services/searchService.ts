@@ -1,278 +1,347 @@
-// Search service with Mirage.js integration for development
 import { SearchData } from '../store/slices/searchSlice';
+import dayjs from 'dayjs';
 
-// Import mock service for fallback
-import { mockSearchService } from './mockSearchService';
-import type {
-    SearchResponse,
-    AvailabilityResponse,
-    SearchSuggestionsResponse,
-    SearchHistoryResponse
-} from './mockSearchService';
-
-// Configuration
-const USE_MIRAGE_API = true; // Set to false to use mockSearchService directly
-const API_BASE_URL = '/api'; // Mirage intercepts this
-
-// Room interface from Mirage (adjusted for single hotel)
-interface MirageRoom {
-    id: number;
-    name: string;
-    roomType: string;
-    description: string;
-    priceVND: number;
-    amenities: string[];
-    images: string[];
-    maxGuests: number;
-    availableRooms: number;
-    discount?: number;
+interface RoomPackageApiResponse {
+    success: boolean;
+    data: RoomPackageData[];
+    summary: {
+        total_room_types: number;
+        total_packages: number;
+        search_criteria: {
+            check_in_date: string;
+            check_out_date: string;
+            guest_count: string;
+        };
+        rooms_needed: number;
+        nights: number;
+    };
+    message: string;
 }
 
-// Search service class
-class SearchService {
-    // Search for rooms using Mirage API
-    async searchRooms(searchData: SearchData, page: number = 1, limit: number = 10): Promise<SearchResponse> {
-        if (!USE_MIRAGE_API) {
-            return mockSearchService.searchRooms(searchData, page, limit);
-        }
+interface PolicyInfo {
+    policy_id?: number;
+    name?: string;
+    description?: string;
+    free_cancellation_days?: number;
+    penalty_percentage?: number;
+    penalty_fixed_amount_vnd?: number;
+    deposit_percentage?: number;
+    deposit_fixed_amount_vnd?: number;
+    early_check_out_fee_vnd?: number;
+    late_check_out_fee_vnd?: number;
+    standard_check_out_time?: string;
+    applies_to_weekend?: boolean;
+    applies_to_holiday?: boolean;
+}
 
+interface PackagePolicies {
+    cancellation?: PolicyInfo;
+    deposit?: PolicyInfo;
+    check_out?: PolicyInfo;
+}
+
+interface RoomPackageData {
+    room_type_id: number;
+    bed_type_name: string; // Added bed_type_name
+    room_type_name: string;
+    room_code: string;
+    description: string;
+    size: number;
+    max_guests: number;
+    rating: number;
+    base_price: string;
+    adjusted_price: number;
+    available_rooms: string;
+    rooms_needed: number;
+    images: Array<{
+        id: number;
+        room_type_id: number;
+        image_url: string;
+        alt_text: string;
+        is_main: number;
+    }>;
+    main_image: {
+        id: number;
+        room_type_id: number;
+        image_url: string;
+        alt_text: string;
+        is_main: number;
+    } | null;
+    amenities: Array<{
+        id: number;
+        name: string;
+        icon: string;
+        category: string;
+        description: string;
+    }>;
+    highlighted_amenities: Array<{
+        id: number;
+        name: string;
+        icon: string;
+        category: string;
+        description: string;
+    }>;
+    package_options: Array<{
+        package_id: number;
+        package_name: string;
+        package_description: string;
+        price_modifier_vnd: string;
+        price_per_room_per_night: number;
+        total_package_price: number;
+        services: any[];
+        pricing_breakdown: {
+            base_price_per_night: string;
+            adjusted_price_per_night: number;
+            package_modifier: string;
+            final_price_per_room_per_night: number;
+            rooms_needed: number;
+            nights: number;
+            total_price: number;
+            currency: string;
+        };
+        policies?: PackagePolicies; // Added policies field
+    }>;
+    cheapest_package_price: number;
+    search_criteria: {
+        guest_count: string;
+        check_in_date: string;
+        check_out_date: string;
+        nights: number;
+    };
+    policies?: PackagePolicies; // Added policies field for room type
+}
+
+interface FrontendSearchResult {
+    rooms: any[];
+    total: number;
+    searchSummary: {
+        totalRooms: number;
+        nights: number;
+        checkIn: string;
+        checkOut: string;
+        adults: number;
+        children: number;
+        childrenAges: number[];
+        guestType: string;
+        totalGuests: number;
+    };
+}
+
+export const searchService = {
+    async searchRooms(searchData: SearchData): Promise<FrontendSearchResult> {
         try {
-            // Fetch all rooms from Mirage
-            const response = await fetch(`${API_BASE_URL}/rooms`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            } const data = await response.json();
-            let filteredRooms = data.rooms || [];            // Apply client-side filtering to match search criteria
-            filteredRooms = this.filterRoomsBySearchData(filteredRooms, searchData);
+            console.log('🔍 Calling room packages API with search data:', searchData);
 
-            // Pagination
-            const total = filteredRooms.length;
-            const totalPages = Math.ceil(total / limit);
-            const startIndex = (page - 1) * limit;
-            const endIndex = startIndex + limit;
-            const paginatedRooms = filteredRooms.slice(startIndex, endIndex);
+            // Xử lý ngày nhận và trả
+            const checkInDate = searchData.dateRange?.[0]
+                ? (typeof searchData.dateRange[0] === 'string'
+                    ? searchData.dateRange[0]
+                    : dayjs(searchData.dateRange[0]).format('YYYY-MM-DD'))
+                : dayjs().format('YYYY-MM-DD');
 
-            return {
-                rooms: paginatedRooms,
-                total,
-                page,
-                limit,
-                totalPages
+            const checkOutDate = searchData.dateRange?.[1]
+                ? (typeof searchData.dateRange[1] === 'string'
+                    ? searchData.dateRange[1]
+                    : dayjs(searchData.dateRange[1]).format('YYYY-MM-DD'))
+                : dayjs().add(1, 'day').format('YYYY-MM-DD');
+
+            // Tạo danh sách rooms từ dữ liệu đầu vào
+            const rooms = searchData.rooms && searchData.rooms.length > 0
+                ? searchData.rooms.map(r => ({
+                    adults: r.adults || 2,
+                    children: r.children || 0,
+                    childrenAges: r.childrenAges || [] // 👈 bổ sung dòng này
+                }))
+                : [{
+                    adults: searchData.guestDetails?.adults || 2,
+                    children: searchData.guestDetails?.children || 0,
+                    childrenAges: searchData.guestDetails?.childrenAges || [] // 👈 bổ sung dòng này
+                }];
+
+
+            const totalGuests = rooms.reduce((sum, r) => sum + r.adults + r.children, 0);
+
+            const requestBody = {
+                check_in_date: checkInDate,
+                check_out_date: checkOutDate,
+                rooms: rooms
             };
-        } catch (error) {
-            console.error('Error fetching rooms from Mirage:', error);
-            // Fallback to mock service
-            return mockSearchService.searchRooms(searchData, page, limit);
-        }
-    }    // Helper method to filter rooms based on search criteria (adjusted for single hotel)
-    private filterRoomsBySearchData(rooms: MirageRoom[], searchData: SearchData): MirageRoom[] {
-        let filtered = [...rooms];
 
-        // Filter by location field (used as room search in single hotel context)
-        if (searchData.location && searchData.location.trim()) {
-            const searchTerm = searchData.location.toLowerCase();
-            filtered = filtered.filter(room =>
-                room.name.toLowerCase().includes(searchTerm) ||
-                room.roomType.toLowerCase().includes(searchTerm)
-            );
-        }        // DON'T FILTER by guest count - just prioritize in sorting later
-        // Allow all rooms to be shown, warnings will be handled in dynamic pricing
-        // The filtering below was preventing 5+ guests from seeing any rooms
+            console.log('📤 Room packages API body:', requestBody);
 
-        // const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-        // filtered = filtered.filter(room => room.maxGuests >= totalGuests);
-
-        // Instead of filtering, we'll store guest count for prioritization
-        if (searchData.guestDetails) {
-            const totalGuests = searchData.guestDetails.adults + searchData.guestDetails.children;
-            // Add guest count as property for later sorting, but don't filter
-            filtered = filtered.map(room => ({
-                ...room,
-                _searchGuestCount: totalGuests
-            }));
-        }        // DON'T FILTER by guest type preferences - show all rooms with prioritization
-        // This allows users to see all available options and make informed decisions
-        // Warnings and calculations will be handled in the room options
-
-        if (searchData.guestType) {
-            // Instead of filtering, we'll add preference scoring for sorting
-            switch (searchData.guestType) {
-                case 'business':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: (room.roomType === 'deluxe' || room.roomType === 'premium') ? 10 :
-                            room.amenities.some(amenity =>
-                                amenity.toLowerCase().includes('wifi') ||
-                                amenity.toLowerCase().includes('work') ||
-                                amenity.toLowerCase().includes('desk') ||
-                                amenity.toLowerCase().includes('bàn làm việc')
-                            ) ? 5 : 0
-                    }));
-                    break;
-                case 'couple':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: (room.roomType === 'suite' || room.roomType === 'presidential' || room.roomType === 'theLevel') ? 10 :
-                            room.maxGuests <= 2 ? 8 : 3
-                    }));
-                    break;
-                case 'solo':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: room.roomType === 'deluxe' ? 10 :
-                            room.maxGuests <= 2 ? 8 : 3
-                    }));
-                    break;
-                case 'family_young':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: (room.roomType === 'suite' || room.roomType === 'presidential') ? 10 :
-                            room.maxGuests >= 4 ? 8 : 5
-                    }));
-                    break;
-                case 'group':
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: room.roomType === 'presidential' ? 10 :
-                            room.roomType === 'suite' ? 8 :
-                                room.maxGuests >= 4 ? 6 : 3
-                    }));
-                    break;
-                default:
-                    filtered = filtered.map(room => ({
-                        ...room,
-                        _preferenceScore: 5 // Default neutral score
-                    }));
-                    break;
-            }
-        } else {
-            // No guest type specified, give all rooms equal preference
-            filtered = filtered.map(room => ({
-                ...room,
-                _preferenceScore: 5
-            }));
-        }        // Filter by availability (only show rooms with available inventory)
-        filtered = filtered.filter(room => room.availableRooms > 0);
-
-        // Sort rooms by preference and capacity match
-        filtered.sort((a, b) => {
-            const aPreference = (a as any)._preferenceScore || 5;
-            const bPreference = (b as any)._preferenceScore || 5;
-            const aGuestCount = (a as any)._searchGuestCount || 2;
-
-            // First priority: preference score
-            if (aPreference !== bPreference) {
-                return bPreference - aPreference; // Higher preference first
-            }
-
-            // Second priority: capacity match (for guest count)
-            if (aGuestCount > 0) {
-                const aMatch = a.maxGuests >= aGuestCount;
-                const bMatch = b.maxGuests >= aGuestCount;
-
-                if (aMatch && !bMatch) return -1;
-                if (!aMatch && bMatch) return 1;
-
-                // If both match or both don't match, prefer Presidential (higher capacity)
-                if (a.roomType === 'presidential' && b.roomType !== 'presidential') return -1;
-                if (a.roomType !== 'presidential' && b.roomType === 'presidential') return 1;
-            }
-
-            // Third priority: price (ascending)
-            return a.priceVND - b.priceVND;
-        });
-
-        // Clean up temporary properties
-        filtered = filtered.map(room => {
-            const { _preferenceScore, _searchGuestCount, ...cleanRoom } = room as any;
-            return cleanRoom;
-        });
-
-        return filtered;
-    }// Check room availability
-    async checkAvailability(
-        roomId: string,
-        checkIn: string,
-        checkOut: string
-    ): Promise<AvailabilityResponse> {
-        if (!USE_MIRAGE_API) {
-            return mockSearchService.checkAvailability(roomId, checkIn, checkOut);
-        }
-
-        try {
-            // For Mirage, we'll use the mock service logic since Mirage doesn't have
-            // a specific availability endpoint yet
-            return mockSearchService.checkAvailability(roomId, checkIn, checkOut);
-        } catch (error) {
-            console.error('Error checking availability:', error);
-            // Fallback to mock service
-            return mockSearchService.checkAvailability(roomId, checkIn, checkOut);
-        }
-    }    // Get search suggestions (adjusted for single hotel room types)
-    async getSearchSuggestions(query: string): Promise<SearchSuggestionsResponse> {
-        if (!USE_MIRAGE_API) {
-            return mockSearchService.getSearchSuggestions(query);
-        }
-
-        try {
-            // Generate suggestions based on available room types and names from Mirage
-            const response = await fetch(`${API_BASE_URL}/rooms`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            const rooms = data.rooms || [];
-
-            if (!query || query.length < 2) {
-                return { suggestions: [] };
-            }
-
-            const queryLower = query.toLowerCase();
-            const roomSuggestions = new Set<string>();
-
-            // Extract unique room names and types that match the query
-            rooms.forEach((room: MirageRoom) => {
-                if (room.name && room.name.toLowerCase().includes(queryLower)) {
-                    roomSuggestions.add(room.name);
-                }
-                if (room.roomType && room.roomType.toLowerCase().includes(queryLower)) {
-                    roomSuggestions.add(room.roomType);
-                }
+            const response = await fetch(`http://localhost:8888/api/room-packages/search`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
             });
 
-            const suggestions = Array.from(roomSuggestions).slice(0, 8);
-            return { suggestions };
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const apiResponse: RoomPackageApiResponse = await response.json();
+            console.log('📥 Room packages API response:', apiResponse);
+
+            if (!apiResponse.success) {
+                throw new Error(apiResponse.message || 'Search failed');
+            }
+
+            const transformedRooms = this.transformRoomPackageData(apiResponse.data, apiResponse.summary);
+
+            return {
+                rooms: transformedRooms,
+                total: transformedRooms.length,
+                searchSummary: {
+                    totalRooms: apiResponse.summary.total_room_types,
+                    nights: apiResponse.summary.nights,
+                    checkIn: checkInDate,
+                    checkOut: checkOutDate,
+                    adults: searchData.guestDetails?.adults || 2,
+                    children: searchData.guestDetails?.children || 0,
+                    childrenAges: (searchData.guestDetails?.childrenAges || []).map((child: any) =>
+                        typeof child === 'object' ? child.age : child
+                    ),
+                    guestType: searchData.guestType,
+                    totalGuests: totalGuests,
+                }
+            };
         } catch (error) {
-            console.error('Error fetching search suggestions:', error);
-            // Fallback to mock service
-            return mockSearchService.getSearchSuggestions(query);
+            console.error('❌ Search service error:', error);
+            throw error;
         }
+    },
+
+    // Transform room package data to frontend format
+    transformRoomPackageData(roomPackages: RoomPackageData[], summary: any): any[] {
+        return roomPackages.map(packageData => {
+            // Get main image
+            const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url;
+
+            // Get all images
+            const images = packageData.images?.map(img => img.image_url) || [mainImage];
+
+            // Create options from package options
+            const options = packageData.package_options.map(pkg => ({
+                id: `pkg-${pkg.package_id}`,
+                name: pkg.package_name,
+                description: pkg.package_description,
+                pricePerNight: {
+                    vnd: pkg.price_per_room_per_night,
+                    originalVnd: packageData.adjusted_price
+                },
+                totalPrice: pkg.total_package_price,
+                maxGuests: packageData.max_guests,
+                minGuests: 1,
+                roomType: packageData.room_code,
+                // Get cancellation policy from API instead of hardcoding
+                cancellationPolicy: pkg.policies?.cancellation?.description || 'Chính sách hủy phòng theo quy định',
+                freeCancellationDays: pkg.policies?.cancellation?.free_cancellation_days,
+                penaltyPercentage: pkg.policies?.cancellation?.penalty_percentage,
+                penaltyFixedAmount: pkg.policies?.cancellation?.penalty_fixed_amount_vnd,
+                // Get payment policy from API
+                paymentPolicy: pkg.policies?.deposit?.description || 'Chính sách thanh toán theo quy định',
+                depositPercentage: pkg.policies?.deposit?.deposit_percentage,
+                depositFixedAmount: pkg.policies?.deposit?.deposit_fixed_amount_vnd,
+                // Get check-out policy from API
+                checkOutPolicy: pkg.policies?.check_out?.description || 'Chính sách trả phòng theo quy định',
+                standardCheckOutTime: pkg.policies?.check_out?.standard_check_out_time,
+                lateCheckOutFee: pkg.policies?.check_out?.late_check_out_fee_vnd,
+                earlyCheckOutFee: pkg.policies?.check_out?.early_check_out_fee_vnd,
+                availability: parseInt(packageData.available_rooms) || 0,
+                additionalServices: pkg.services || [],
+                promotion: pkg.price_modifier_vnd !== "0.00" ? {
+                    type: 'package',
+                    value: parseFloat(pkg.price_modifier_vnd),
+                    description: `Gói ${pkg.package_name}`
+                } : null,
+                recommended: pkg.package_name.toLowerCase().includes('standard'),
+                mostPopular: pkg.package_name.toLowerCase().includes('premium'),
+                pricing: pkg.pricing_breakdown,
+                // Include full policy information
+                policies: pkg.policies
+            }));
+
+            // Add base option if no package options exist
+            if (options.length === 0) {
+                options.push({
+                    id: `base-${packageData.room_type_id}`,
+                    name: 'Standard Room',
+                    description: 'Basic room booking',
+                    pricePerNight: {
+                        vnd: packageData.adjusted_price,
+                        originalVnd: parseFloat(packageData.base_price)
+                    },
+                    totalPrice: packageData.adjusted_price * summary.nights,
+                    maxGuests: packageData.max_guests,
+                    minGuests: 1,
+                    roomType: packageData.room_code,
+                    // Use policies from room type if available
+                    cancellationPolicy: packageData.policies?.cancellation?.description || 'Chính sách hủy phòng theo quy định',
+                    freeCancellationDays: packageData.policies?.cancellation?.free_cancellation_days,
+                    penaltyPercentage: packageData.policies?.cancellation?.penalty_percentage,
+                    penaltyFixedAmount: packageData.policies?.cancellation?.penalty_fixed_amount_vnd,
+                    paymentPolicy: packageData.policies?.deposit?.description || 'Chính sách thanh toán theo quy định',
+                    depositPercentage: packageData.policies?.deposit?.deposit_percentage,
+                    depositFixedAmount: packageData.policies?.deposit?.deposit_fixed_amount_vnd,
+                    checkOutPolicy: packageData.policies?.check_out?.description || 'Chính sách trả phòng theo quy định',
+                    standardCheckOutTime: packageData.policies?.check_out?.standard_check_out_time,
+                    lateCheckOutFee: packageData.policies?.check_out?.late_check_out_fee_vnd,
+                    earlyCheckOutFee: packageData.policies?.check_out?.early_check_out_fee_vnd,
+                    availability: parseInt(packageData.available_rooms) || 0,
+                    additionalServices: [],
+                    promotion: null,
+                    recommended: true,
+                    mostPopular: false,
+                    pricing: {
+                        base_price_per_night: packageData.base_price,
+                        adjusted_price_per_night: packageData.adjusted_price,
+                        package_modifier: "0.00",
+                        final_price_per_room_per_night: packageData.adjusted_price,
+                        rooms_needed: packageData.rooms_needed,
+                        nights: summary.nights,
+                        total_price: packageData.adjusted_price * summary.nights,
+                        currency: "VND"
+                    },
+                    policies: packageData.policies
+                });
+            }
+
+            return {
+                id: packageData.room_type_id.toString(),
+                name: packageData.room_type_name,
+                roomType: packageData.room_code,
+                room_code: packageData.room_code,
+                description: packageData.description,
+                image: mainImage,
+                images: images,
+                size: packageData.size,
+                roomSize: packageData.size,
+                view: 'Tầm nhìn thành phố', // Default view
+                bedType: packageData.bed_type_name, // Default bed type
+                amenities: packageData.amenities?.map(a => a.name) || [],
+                mainAmenities: packageData.highlighted_amenities?.slice(0, 5).map(a => a.name) || [],
+                highlighted_amenities: packageData.highlighted_amenities?.map(a => a.name) || [],
+                rating: packageData.rating,
+                maxGuests: packageData.max_guests,
+                availableRooms: parseInt(packageData.available_rooms) || 0,
+                roomsNeeded: packageData.rooms_needed,
+
+                // Pricing info
+                priceVND: packageData.cheapest_package_price || (packageData.adjusted_price * summary.nights),
+                pricePerNight: packageData.adjusted_price,
+                originalPrice: parseFloat(packageData.base_price),
+                cheapestPrice: packageData.cheapest_package_price,
+
+                // Options for booking
+                options: options,
+
+                // Additional data
+                packageData: packageData,
+                searchCriteria: packageData.search_criteria
+            };
+        });
     }
-
-    // Get search history - delegate to mock service for now
-    async getSearchHistory(): Promise<SearchHistoryResponse> {
-        return mockSearchService.getSearchHistory();
-    }
-
-    // Save search to history - delegate to mock service for now
-    async saveSearchToHistory(location: string): Promise<void> {
-        return mockSearchService.saveSearchToHistory(location);
-    }
-
-    // Clear search history - delegate to mock service for now
-    async clearSearchHistory(): Promise<void> {
-        return mockSearchService.clearSearchHistory();
-    }
-}
-
-// Export singleton instance
-export const searchService = new SearchService();
-
-// Re-export types from mock service for convenience
-export type {
-    SearchResponse,
-    AvailabilityResponse,
-    SearchSuggestionsResponse,
-    SearchHistoryResponse
-} from './mockSearchService';
+};

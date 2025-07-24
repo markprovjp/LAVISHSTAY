@@ -7,25 +7,34 @@ use Illuminate\Database\Eloquent\Model;
 class Booking extends Model
 {
     protected $table = 'booking';
-    protected $primaryKey = 'booking_id';
+    protected $primaryKey = 'booking_id'; // Auto-increment integer ID
+    public $incrementing = true; // Đảm bảo sử dụng auto-increment
     
     protected $fillable = [
+        'booking_code',
         'user_id',
         'option_id',
         'check_in_date',
         'check_out_date',
         'total_price_vnd',
         'guest_count',
+        'adults',
+        'children',
+        'children_age',
         'status',
         'guest_name',
         'guest_email',
-        'guest_phone'
+        'guest_phone',
+        'quantity',
+        'room_id',
+        'room_type_id',
+        'notes'
     ];
 
     protected $casts = [
         'check_in_date' => 'date',
         'check_out_date' => 'date',
-        'total_price_vnd' => 'decimal:2',
+        'total_price_vnd' => 'integer',
         'guest_count' => 'integer',
     ];
 
@@ -46,5 +55,16 @@ class Booking extends Model
     public function checkoutRequests()
     {
         return $this->hasMany(CheckoutRequest::class, 'booking_id', 'booking_id');
+    }
+
+    
+    public function room()
+    {
+        return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
+    }
+    
+    public function representatives()
+    {
+        return $this->hasMany(Representative::class, 'booking_code', 'booking_code');
     }
 }

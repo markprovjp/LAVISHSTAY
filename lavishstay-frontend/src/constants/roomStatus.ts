@@ -1,0 +1,46 @@
+import { RoomStatus } from '../types/room';
+
+export const statusColorMap: Record<RoomStatus, string> = {
+    occupied: 'bg-red-500',
+    available: 'bg-green-500',
+    empty: 'bg-green-500',
+    cleaning: 'bg-orange-400',
+    maintenance: 'bg-gray-400',
+    no_show: 'bg-pink-400',
+    check_in: 'bg-blue-500',
+    check_out: 'bg-purple-500',
+    deposited: 'bg-yellow-500',
+};
+
+export const statusTextMap: Record<RoomStatus, string> = {
+    occupied: 'Khách nghỉ ngơi',
+    available: 'Phòng trống',
+    empty: 'Phòng trống',
+    cleaning: 'Phòng dọn khách',
+    maintenance: 'Phòng đang sửa',
+    no_show: 'Không đến',
+    check_in: 'Phòng đón khách',
+    check_out: 'Phòng đang có khách ở',
+    deposited: 'Khách đã cọc tiền',
+};
+
+export const statusOptions = [
+    { value: 'available', label: 'Có sẵn', color: '#52c41a' , icon: 'CheckCircleFilled' },
+    { value: 'occupied', label: 'Đã có khách', color: '#f5222d' , icon: 'UserOutlined' },
+    { value: 'maintenance', label: 'Bảo trì', color: '#8c8c8c' , icon: 'SettingOutlined' },
+    { value: 'cleaning', label: 'Đang dọn dẹp', color: '#fa8c16' , icon: 'ClockCircleOutlined' },
+    { value: 'deposited', label: 'Đã cọc tiền', color: '#faad14' , icon: 'DollarCircleOutlined' },
+    { value: 'no_show', label: 'Không đến', color: '#ff4d4f' , icon: 'CloseCircleOutlined' },
+    { value: 'check_in', label: 'Đón khách', color: '#1890ff' , icon: 'CheckCircleFilled' },
+    { value: 'check_out', label: 'Trả phòng', color: '#722ed1' , icon: 'CheckCircleFilled' },
+];
+
+export const fullCalendarStatusColors = {
+    available: '#52c41a',       // Phòng trống - xanh lá
+    check_in: '#1890ff',        // Phòng đón khách - xanh dương
+    occupied: '#52c41a',        // Khách nghỉ ngơi - xanh lá
+    check_out: '#722ed1',       // Phòng đang có khách ở - tím
+    no_show: '#ff4d4f',         // Không đến - đỏ
+    maintenance: '#8c8c8c',     // Phòng đang sửa - xám
+    deposited: '#faad14',       // Khách đã cọc tiền - vàng
+};

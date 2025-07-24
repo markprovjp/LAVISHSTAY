@@ -7,21 +7,32 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
-    /**
-     * Define the application's command schedule.
-     */
-    protected function schedule(Schedule $schedule): void
+    protected $commands = [
+        Commands\SyncOccupancyData::class,
+        Commands\ClearPricingCache::class,
+        Commands\CleanupPendingBookings::class,
+    ];
+
+    protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Update occupancy data every hour
+        $schedule->command('pricing:update-occupancy')
+                 ->hourly()
+                 ->withoutOverlapping();
+                 
+        // Clear old pricing cache daily at midnight
+        $schedule->command('pricing:clear-cache')
+                 ->daily();
+                 
+        // Clean up pending bookings every 5 minutes
+        $schedule->command('app:cleanup-pending-bookings')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping();
     }
 
-    /**
-     * Register the commands for the application.
-     */
-    protected function commands(): void
+    protected function commands()
     {
         $this->load(__DIR__.'/Commands');
-
         require base_path('routes/console.php');
     }
 }

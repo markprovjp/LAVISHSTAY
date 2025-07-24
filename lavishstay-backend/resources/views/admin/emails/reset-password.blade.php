@@ -1,3 +1,4 @@
+
 <p>Xin chào,</p>
 
 <p>Mật khẩu của bạn đã được reset bởi quản trị viên.</p>

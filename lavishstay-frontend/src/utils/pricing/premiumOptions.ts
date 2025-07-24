@@ -26,8 +26,8 @@ export const createPremiumOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 20,
-            remaining: 15
+            total: 96, // Cập nhật theo sơ đồ tầng: 96 phòng Premium Corner
+            remaining: 85
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
@@ -54,8 +54,8 @@ export const createPremiumOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 10,
-            remaining: 7
+            total: 96,
+            remaining: 78
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -71,13 +71,14 @@ export const createPremiumOptions = (
             savings: 0,
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 90
-        }
-    });    // 4 options cho 2 người
+        }    });
+
+    // 4 options cho 3 người (cập nhật theo model data)
     options.push({
         id: `premium_double_basic`,
-        name: `Premium Basic - 2 khách`,
+        name: `Premium Basic - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3, // Cập nhật theo model: Premium Corner có thể chứa 3 khách
         minGuests: 1,
         roomType: 'premium',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
@@ -85,8 +86,8 @@ export const createPremiumOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
         }, availability: {
-            total: 25,
-            remaining: 20
+            total: 96,
+            remaining: 78
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
@@ -106,13 +107,11 @@ export const createPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `premium_double_standard`,
-        name: `Premium Standard - 2 khách`,
+        name: `Premium Standard - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'premium',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
@@ -120,8 +119,8 @@ export const createPremiumOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 15,
-            remaining: 12
+            total: 96,
+            remaining: 70
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi miễn phí", included: true },
@@ -138,22 +137,20 @@ export const createPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 88
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `premium_double_premium`,
-        name: `Premium Plus - 2 khách`,
+        name: `Premium Plus - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'premium',
-        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
-        paymentPolicy: {
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)), paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
-        }, availability: {
-            total: 10,
-            remaining: 6
+        },
+        availability: {
+            total: 96,
+            remaining: 62
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -170,22 +167,20 @@ export const createPremiumOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 82
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `premium_double_luxury`,
-        name: `Premium Luxury - 2 khách`,
+        name: `Premium Luxury - 3 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 3,
         minGuests: 1,
         roomType: 'premium',
-        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)),
-        paymentPolicy: {
+        cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.singleGuest.premium * priceMultiplier)), paymentPolicy: {
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
-        }, availability: {
-            total: 10,
-            remaining: 3
+        },
+        availability: {
+            total: 96,
+            remaining: 48
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },

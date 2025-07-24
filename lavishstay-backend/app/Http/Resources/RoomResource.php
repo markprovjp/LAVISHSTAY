@@ -40,7 +40,7 @@ class RoomResource extends JsonResource
             'maxGuests' => $this->max_guests,
             'totalRooms' => $this->total_rooms,
             'description' => $this->getTranslatedAttribute('description', $lang),
-            'images' => $this->images->pluck('image_url')->toArray(),
+            'images' => $this->images->pluck('image_path')->toArray(),
             'options' => RoomOptionResource::collection($this->options),
         ];
     }

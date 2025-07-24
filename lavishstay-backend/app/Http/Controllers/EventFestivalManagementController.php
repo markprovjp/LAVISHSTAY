@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Holiday;
+<<<<<<< HEAD
 use App\Models\RoomType;
+=======
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -18,9 +21,14 @@ class EventFestivalManagementController extends Controller
      */
     public function index()
     {
+<<<<<<< HEAD
         return view('admin.room_prices.event_festival');
     }
 
+=======
+       return view('admin.pricing.event_festival');
+    }
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
     /**
      * Get statistics data
      */
@@ -30,8 +38,12 @@ class EventFestivalManagementController extends Controller
             $stats = [
                 'total_events' => Event::count(),
                 'total_holidays' => Holiday::count(),
+<<<<<<< HEAD
                 'total_pricing_rules' => DB::table('flexible_pricing_rules')->count(),
                 'active_rules' => DB::table('flexible_pricing_rules')->where('is_active', 1)->count(),
+=======
+                'active_total' => Event::where('is_active', 1)->count() + Holiday::where('is_active', 1)->count(),
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
                 'upcoming_total' => $this->getUpcomingCount()
             ];
 
@@ -100,11 +112,16 @@ class EventFestivalManagementController extends Controller
     }
 
     /**
+<<<<<<< HEAD
      * Get paginated pricing rules data
+=======
+     * Get paginated data
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
      */
     public function getData(Request $request)
     {
         try {
+<<<<<<< HEAD
             $query = DB::table('flexible_pricing_rules as fpr')
                 ->leftJoin('room_types as rt', 'fpr.room_type_id', '=', 'rt.room_type_id')
                 ->leftJoin('events as e', 'fpr.event_id', '=', 'e.event_id')
@@ -147,12 +164,50 @@ class EventFestivalManagementController extends Controller
             $data = $query->orderBy('fpr.created_at', 'desc')->paginate(10);
 
             return response()->json($data);
+=======
+            $data = collect();
+
+            // Get events
+            $eventsQuery = Event::select('event_id as id', 'name', 'description', 'start_date', 'end_date', 'is_active', 'created_at')
+                ->selectRaw("'event' as type");
+
+            // Get holidays
+            $holidaysQuery = Holiday::select('holiday_id as id', 'name', 'description', 'start_date', 'end_date', 'is_active', 'created_at')
+                ->selectRaw("'holiday' as type");
+
+            // Apply filters
+            if ($request->filled('type')) {
+                if ($request->type === 'events') {
+                    $holidaysQuery = $holidaysQuery->whereRaw('1 = 0'); // Exclude holidays
+                } elseif ($request->type === 'holidays') {
+                    $eventsQuery = $eventsQuery->whereRaw('1 = 0'); // Exclude events
+                }
+            }
+
+            if ($request->filled('start_date')) {
+                $eventsQuery->where('start_date', '>=', $request->start_date);
+                $holidaysQuery->where('start_date', '>=', $request->start_date);
+            }
+
+            if ($request->filled('end_date')) {
+                $eventsQuery->where('start_date', '<=', $request->end_date);
+                $holidaysQuery->where('start_date', '<=', $request->end_date);
+            }
+
+            // Combine queries
+            $combined = $eventsQuery->union($holidaysQuery)
+                ->orderBy('start_date', 'desc')
+                ->paginate(10);
+
+            return response()->json($combined);
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to load data'], 500);
         }
     }
 
     /**
+<<<<<<< HEAD
      * Get room types for dropdown
      */
     public function getRoomTypes()
@@ -205,6 +260,9 @@ class EventFestivalManagementController extends Controller
 
     /**
      * Store new pricing rule
+=======
+     * Store new event or holiday
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
      */
     public function store(Request $request)
     {
@@ -222,6 +280,7 @@ class EventFestivalManagementController extends Controller
             DB::beginTransaction();
 
             $data = [
+<<<<<<< HEAD
                 'room_type_id' => $request->room_type_id ?: null,
                 'rule_type' => $request->rule_type,
                 'price_adjustment' => $request->price_adjustment,
@@ -513,6 +572,8 @@ class EventFestivalManagementController extends Controller
             DB::beginTransaction();
 
             $data = [
+=======
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
                 'name' => $request->name,
                 'description' => $request->description,
                 'start_date' => $request->start_date,
@@ -587,7 +648,11 @@ class EventFestivalManagementController extends Controller
      */
     public function updateEvent(Request $request, $id)
     {
+<<<<<<< HEAD
         $validator = $this->validateEventHolidayData($request);
+=======
+        $validator = $this->validateData($request);
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
 
         if ($validator->fails()) {
             return response()->json([
@@ -630,7 +695,11 @@ class EventFestivalManagementController extends Controller
      */
     public function updateHoliday(Request $request, $id)
     {
+<<<<<<< HEAD
         $validator = $this->validateEventHolidayData($request);
+=======
+        $validator = $this->validateData($request);
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
 
         if ($validator->fails()) {
             return response()->json([
@@ -677,6 +746,7 @@ class EventFestivalManagementController extends Controller
             DB::beginTransaction();
 
             $event = Event::findOrFail($id);
+<<<<<<< HEAD
             
             // Check if event is used in pricing rules
             $rulesCount = DB::table('flexible_pricing_rules')->where('event_id', $id)->count();
@@ -687,6 +757,8 @@ class EventFestivalManagementController extends Controller
                 ], 400);
             }
 
+=======
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             $event->delete();
 
             DB::commit();
@@ -714,6 +786,7 @@ class EventFestivalManagementController extends Controller
             DB::beginTransaction();
 
             $holiday = Holiday::findOrFail($id);
+<<<<<<< HEAD
             
             // Check if holiday is used in pricing rules
             $rulesCount = DB::table('flexible_pricing_rules')->where('holiday_id', $id)->count();
@@ -724,6 +797,8 @@ class EventFestivalManagementController extends Controller
                 ], 400);
             }
 
+=======
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             $holiday->delete();
 
             DB::commit();
@@ -749,6 +824,11 @@ class EventFestivalManagementController extends Controller
     {
         try {
             // Implementation for export functionality
+<<<<<<< HEAD
+=======
+            // Similar to RoomPriceEventFestivalController export method
+            
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             return response()->json([
                 'success' => true,
                 'message' => 'Export functionality will be implemented'
@@ -762,11 +842,16 @@ class EventFestivalManagementController extends Controller
     }
 
     /**
+<<<<<<< HEAD
      * Validate pricing rule data
+=======
+     * Validate request data
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
      */
     private function validateData(Request $request)
     {
         $rules = [
+<<<<<<< HEAD
             'rule_type' => 'required|in:weekend,event,holiday,season',
             'room_type_id' => 'nullable|exists:room_types,room_type_id',
             'price_adjustment' => 'required|numeric|min:-100|max:1000',
@@ -831,6 +916,8 @@ class EventFestivalManagementController extends Controller
     private function validateEventHolidayData(Request $request)
     {
         $rules = [
+=======
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             'type' => 'required|in:event,holiday',
             'name' => 'required|string|max:100',
             'description' => 'nullable|string',
@@ -875,4 +962,7 @@ class EventFestivalManagementController extends Controller
         return $eventsCount + $holidaysCount;
     }
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7

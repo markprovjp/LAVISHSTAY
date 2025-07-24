@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { Button, Tabs, Spin } from "antd";
+import React from "react";
+import { Spin } from "antd";
 import { useTranslation } from "react-i18next";
 
 // Import custom components
@@ -8,37 +8,36 @@ import SearchForm from "../components/SearchForm";
 import SectionHeader from "../components/SectionHeader";
 import Testimonial from "../components/Testimonial";
 import Newsletter from "../components/Newsletter";
-import RoomSwiper from "../components/ui/RoomSwiper";
+import RoomTypeShowcase from '../components/ui/RoomTypeShowcaseNew';
 import Awards from "../components/ui/Awards";
 import HotelActivities from "../components/ui/HotelActivities";
-import SwiftPande from "../components/ui/swiftPanda";
 
-// Import API hooks with axios
-import { useGetAllRooms, useGetRoomsByType } from "../hooks/useApi";
-// Import Room type from models
-import { Room } from "../mirage/models";
+// Import API hooks for backend integration
+import { useGetRoomTypes } from "../hooks/useRoomTypes";
+import { useRoomTypes } from "../contexts/RoomTypesContext";
 
 const Home: React.FC = () => {
   const { t } = useTranslation();
+  const { setRoomTypes } = useRoomTypes();
 
-  // Fetch all rooms for the sale section using axios
-  const { data: allRoomsData, isLoading: isAllRoomsLoading } = useGetAllRooms();
-  // Fetch rooms by type for the tabs using axios
-  const { data: deluxeRoomsData, isLoading: isDeluxeLoading } = useGetRoomsByType("deluxe");
-  const { data: premiumRoomsData, isLoading: isPremiumLoading } = useGetRoomsByType("premium");
-  const { data: suiteRoomsData, isLoading: isSuiteLoading } = useGetRoomsByType("suite");
-  const { data: presidentialRoomsData, isLoading: isPresidentialLoading } = useGetRoomsByType("presidential");
-  const { data: theLevelRoomsData, isLoading: isTheLevelLoading } = useGetRoomsByType("theLevel");
+  // Fetch room types for display using backend API
+  const { data: roomTypesData, isLoading: isRoomTypesLoading } = useGetRoomTypes();
 
-  // Process rooms with discounts for the sale section
-  const saleRooms = useMemo(() => {
-    if (allRoomsData?.rooms) {
-      return allRoomsData.rooms
-        .filter((room: Room) => room.discount)
-        .map((room: Room) => ({ ...room, isSale: true }));
+  React.useEffect(() => {
+    if (roomTypesData?.data) {
+      setRoomTypes(roomTypesData.data);
     }
-    return [];
-  }, [allRoomsData]);
+  }, [roomTypesData, setRoomTypes]);
+
+  // Process rooms with discounts for the sale section (commented out for now)
+  // const saleRooms = useMemo(() => {
+  //   if (allRoomsData?.data) {
+  //     return allRoomsData.data
+  //       .filter((room: Room) => room.discount && room.discount > 0)
+  //       .map((room: Room) => ({ ...room, isSale: true }));
+  //   }
+  //   return [];
+  // }, [allRoomsData]);
 
   // Mẫu lời chứng thực
   const testimonials = [
@@ -107,11 +106,31 @@ const Home: React.FC = () => {
       <div className="container mx-auto mt-4 mb-4 relative z-10 ">
         <SearchForm className="mx-auto shadow-xl" />
       </div>{" "}      {/* Awards Section */}
-      <Awards />
-
-
-      {/* Sale Rooms Section */}
+      <Awards />      {/* Room Types Section */}
       <div className="container mx-auto px-4 mb-16">
+        <SectionHeader
+          title="Các loại phòng của chúng tôi"
+          subtitle="Khám phá đa dạng các loại phòng sang trọng tại LavishStay"
+          centered
+          withDivider
+        />
+        <div className="mt-8">
+          {isRoomTypesLoading ? (
+            <div className="text-center py-10">
+              <Spin size="large" tip="Đang tải loại phòng..." />
+            </div>
+          ) : roomTypesData?.data?.length ? (
+            <RoomTypeShowcase searchResult={roomTypesData} />
+          ) : (
+            <div className="text-center py-10">
+              <p>Không có loại phòng nào vào thời điểm hiện tại</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sale Rooms Section - Commented out */}
+      {/* <div className="container mx-auto px-4 mb-16">
         <SectionHeader
           title="Ưu đãi đặc biệt"
           subtitle="Những phòng cao cấp với giá ưu đãi hấp dẫn"
@@ -130,186 +149,8 @@ const Home: React.FC = () => {
               <p>Không có phòng khuyến mãi nào vào thời điểm hiện tại</p>
             </div>
           )}
-        </div>
-      </div>{" "}
-      {/* All Rooms Section with Tabs */}
-      <div className="container mx-auto px-4 mb-16">
-        <SectionHeader
-          title="Các loại phòng của chúng tôi"
-          subtitle="Khám phá đa dạng các loại phòng để có kỳ nghỉ hoàn hảo"
-          centered
-          withDivider
-        />{" "}
-        <div className="mt-8">
-          <Tabs
-            defaultActiveKey="theLevel"
-            centered
-            size="large"
-            tabBarStyle={{
-              marginBottom: "24px",
-              fontWeight: 500,
-            }}
-            tabBarGutter={40}
-            className="room-category-tabs" items={[{
-              key: "deluxe",
-              label: (
-                <span style={{ fontSize: "18px", color: "#6366f1", fontWeight: "600" }}>Phòng Deluxe</span>
-              ), children: (
-                <div
-                  className="py-4 px-2"
-                  style={{
-                    backgroundColor: "rgba(99, 102, 241, 0.08)",
-                    borderRadius: "12px",
-                  }}
-                >
-                  {isDeluxeLoading ? (
-                    <div className="text-center py-10">
-                      <Spin size="large" tip="Đang tải phòng..." />
-                    </div>
-                  ) : deluxeRoomsData?.rooms?.length ? (
-                    <RoomSwiper rooms={deluxeRoomsData.rooms} />
-                  ) : (
-                    <div className="text-center py-10">
-                      <p>Không có phòng Deluxe nào</p>
-                    </div>
-                  )}
-                </div>
-              ),
-            }, {
-              key: "premium",
-              label: (
-                <span style={{ fontSize: "18px", color: "#059669", fontWeight: "600" }}>Phòng Premium</span>
-              ), children: (
-                <div
-                  className="py-4 px-2"
-                  style={{
-                    backgroundColor: "rgba(5, 150, 105, 0.08)",
-                    borderRadius: "12px",
-                  }}
-                >
-                  {isPremiumLoading ? (
-                    <div className="text-center py-10">
-                      <Spin size="large" tip="Đang tải phòng..." />
-                    </div>
-                  ) : premiumRoomsData?.rooms?.length ? (
-                    <RoomSwiper rooms={premiumRoomsData.rooms} />
-                  ) : (
-                    <div className="text-center py-10">
-                      <p>Không có phòng Premium nào</p>
-                    </div>
-                  )}
-                </div>
-              ),
-            }, {
-              key: "suite",
-              label: (
-                <span style={{ fontSize: "18px", color: "#dc2626", fontWeight: "600" }}>Phòng Suite</span>
-              ), children: (
-                <div
-                  className="py-4 px-2"
-                  style={{
-                    backgroundColor: "rgba(220, 38, 38, 0.08)",
-                    borderRadius: "12px",
-                  }}
-                >
-                  {isSuiteLoading ? (
-                    <div className="text-center py-10">
-                      <Spin size="large" tip="Đang tải phòng..." />
-                    </div>
-                  ) : suiteRoomsData?.rooms?.length ? (
-                    <RoomSwiper rooms={suiteRoomsData.rooms} />
-                  ) : (
-                    <div className="text-center py-10">
-                      <p>Không có phòng Suite nào</p>
-                    </div>
-                  )}
-                </div>
-              ),
-            }, {
-              key: "theLevel",
-              label: (
-                <span style={{ fontSize: "18px", color: "#0ea5e9", fontWeight: "600" }}>
-                  The Level
-                </span>
-              ),
-              children: (<div
-                className="py-4 px-2"
-                style={{
-                  backgroundColor: "rgba(14, 165, 233, 0.08)",
-                  borderRadius: "12px",
-                }}
-              >
-                {isTheLevelLoading ? (
-                  <div className="text-center py-10">
-                    <Spin size="large" tip="Đang tải phòng..." />
-                  </div>
-                ) : theLevelRoomsData?.rooms?.length ? (
-                  <RoomSwiper rooms={theLevelRoomsData.rooms} />
-                ) : (
-                  <div className="text-center py-10">
-                    <p>Không có phòng The Level nào</p>
-                  </div>
-                )}
-              </div>
-              ),
-            }, {
-              key: "presidential",
-              label: (
-                <span
-                  style={{
-                    fontSize: "18px",
-                    color: "#d97706",
-                    fontWeight: "600",
-                  }}
-                >
-                  Phòng Presidential
-                </span>
-              ),
-              children: (<div
-                className="py-4 px-2"
-                style={{
-                  backgroundColor: "rgba(217, 119, 6, 0.08)",
-                  borderRadius: "12px",
-                }}
-              >
-                {isPresidentialLoading ? (
-                  <div className="text-center py-10">
-                    <Spin size="large" tip="Đang tải phòng..." />
-                  </div>
-                ) : presidentialRoomsData?.rooms?.length ? (
-                  <RoomSwiper rooms={presidentialRoomsData.rooms} />
-                ) : (
-                  <div className="text-center py-10">
-                    <p>Không có phòng tổng thống nào</p>
-                  </div>
-                )}
-              </div>
-              ),
-            },
-            ]}
-          />
-        </div>
-        <div className="text-center mt-10">
-          <Button type="primary" size="large">
-            Xem tất cả phòng
-          </Button>
-        </div>
-      </div>{" "}
-      {/* Phần hoạt động của khách sạn */}
-      <HotelActivities />     
-       
-      {/* Hotel Gallery 3D Carousel */}
-      {/* <div className="mt-11">
-        <div className="container mx-auto ">
-          <SectionHeader
-            title="Khám phá LavishStay"
-            subtitle="Trải nghiệm không gian sang trọng qua từng góc nhìn"
-            centered
-            withDivider
-          />
-        </div>
-        <SwiftPande />
-      </div> */}
+        </div>      {/* Phần hoạt động của khách sạn */}
+      <HotelActivities />
 
       {/* Testimonials Section */}
       <div className="py-16  ">
@@ -334,3 +175,6 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+
+
+

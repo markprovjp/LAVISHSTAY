@@ -70,10 +70,10 @@
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl mb-6">
             <div class="p-6">
                 <div class="flex items-center gap-6">
-                    <div class="flex-shrink-0 ">
+                    <div class="flex-shrink-0">
                         @if($roomType->images->where('is_main', true)->first())
                             <img class="w-30 h-20 rounded-lg object-cover" 
-                                 src="{{ $roomType->images->where('is_main', true)->first()->image_url }}" 
+                                 src="{{ $roomType->images->where('is_main', true)->first()->image_path }}" 
                                  alt="{{ $roomType->name }}">
                         @else
                             <div class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
@@ -155,7 +155,7 @@
 
             <div class="p-6">
                 @if($images->count() > 0)
-                    <div id="imagesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    <div id="imagesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
                                             @foreach ($images as $image)
                         <div class="image-item relative group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
                              data-image-id="{{ $image->image_id }}"
@@ -180,14 +180,14 @@
 
                             <!-- Image Container -->
                             <div class="relative aspect-square overflow-hidden rounded-t-xl cursor-pointer"
-                                 onclick="viewImageFullSize('{{ $image->image_url }}', '{{ $image->alt_text }}')">
-                                <img src="{{ $image->image_url }}" 
+                                 onclick="viewImageFullSize('{{ $image->image_path }}', '{{ $image->alt_text }}')">
+                                <img src="{{ $image->image_path }}" 
                                      alt="{{ $image->alt_text }}"
                                      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                      onerror="handleImageError(this)">
                                 
                                 <!-- Hover Overlay -->
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
+                                <div class="absolute inset-0  group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
                                     <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                         <div class="bg-white bg-opacity-90 text-gray-800 px-4 py-2 rounded-lg">
                                             <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1617,9 +1617,4 @@
     </style>
 </x-app-layout>
 
-<<<<<<< HEAD
     
-
-=======
-    
->>>>>>> d3d6154b8e36fbf29dafa15923efa07757dc20dc

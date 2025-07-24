@@ -1,16 +1,20 @@
 import React from 'react';
 import { Space, Typography } from 'antd';
+import { useSelector } from 'react-redux';
 import RoomCard from './RoomCard';
-import { Room } from '../../mirage/models';
+import { selectBookingState } from '../../store/slices/bookingSlice';
+import { Room } from '../../types/room';
 
 const { Title } = Typography;
 
 interface RoomTypeSectionProps {
     roomType: string;
     rooms: Room[];
-    selectedRooms: { [roomId: string]: { [optionId: string]: number } };
     onQuantityChange: (roomId: string, optionId: string, quantity: number) => void;
     onShowImageGallery: (room: Room) => void;
+    onShowRoomDetail?: (room: Room) => void;
+    onViewDetail?: (roomId: string) => void;
+    onBookNow?: (roomId: string) => void;
     shouldShowSuggestion: () => boolean;
     searchData: any;
     formatVND: (price: number) => string;
@@ -21,7 +25,6 @@ interface RoomTypeSectionProps {
 const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({
     roomType,
     rooms,
-    selectedRooms,
     onQuantityChange,
     onShowImageGallery,
     shouldShowSuggestion,
@@ -30,6 +33,7 @@ const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({
     getNights,
     getRoomTypeDisplayName
 }) => {
+    const bookingState = useSelector(selectBookingState);
     return (
         <div id={`room-type-${roomType}`} className="scroll-mt-24">
             <div className="mb-6">
@@ -39,17 +43,16 @@ const RoomTypeSection: React.FC<RoomTypeSectionProps> = ({
             </div>
             <Space direction="vertical" size="large" className="w-full">
                 {rooms.map((room) => (
-                    <div key={room.id} className="w-full">
-                        <RoomCard
-                            room={room}
-                            selectedRooms={selectedRooms}
-                            onQuantityChange={onQuantityChange}
-                            onShowImageGallery={onShowImageGallery}
-                            shouldShowSuggestion={shouldShowSuggestion}
-                            searchData={searchData}
-                            formatVND={formatVND}
-                            getNights={getNights}
-                        />
+                    <div key={room.id} className="w-full">                        <RoomCard
+                        room={room}
+                        selectedRooms={bookingState.selectedRooms}
+                        onQuantityChange={onQuantityChange}
+                        onShowImageGallery={(room) => onShowImageGallery(room)}
+                        shouldShowSuggestion={shouldShowSuggestion}
+                        searchData={searchData}
+                        formatVND={formatVND}
+                        getNights={getNights}
+                    />
                     </div>
                 ))}
             </Space>

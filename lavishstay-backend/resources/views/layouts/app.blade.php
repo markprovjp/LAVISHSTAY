@@ -36,6 +36,7 @@
         x-data="{ sidebarOpen: false, sidebarExpanded: localStorage.getItem('sidebar-expanded') == 'true' }"
         x-init="$watch('sidebarExpanded', value => localStorage.setItem('sidebar-expanded', value))"    
     >
+@include('components.app.preloader')
 
         <script>
             if (localStorage.getItem('sidebar-expanded') == 'true') {
@@ -48,12 +49,12 @@
         <!-- Page wrapper -->
         <div class="flex h-[100dvh] overflow-hidden">
 
-            <x-app.sidebar :variant="$attributes['sidebarVariant']" />
+            <x-app.sidebar :variant="$attributes['sidebarVariant'] ?? null" />
 
             <!-- Content area -->
-            <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden @if($attributes['background']){{ $attributes['background'] }}@endif" x-ref="contentarea">
+            <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden @if(isset($attributes['background'])){{ $attributes['background'] }}@endif" x-ref="contentarea">
 
-                <x-app.header :variant="$attributes['headerVariant']" />
+                <x-app.header :variant="$attributes['headerVariant'] ?? null" />
 
                 <main class="grow">
                     {{ $slot }}
@@ -66,3 +67,35 @@
         @livewireScriptConfig
     </body>
 </html>
+<script>
+// Điều chỉnh thời gian preloader dựa trên số lượng queries
+document.addEventListener('DOMContentLoaded', function() {
+    // Lấy thông tin từ Laravel (có thể truyền qua view)
+    const queryCount = {{ $queryCount ?? 5 }}; // Số lượng queries
+    const pageComplexity = '{{ $pageComplexity ?? "medium" }}'; // simple, medium, complex
+    
+    // Tính toán thời gian load dựa trên độ phức tạp
+    let loadTime = 1000; // Base time
+    
+    switch(pageComplexity) {
+        case 'simple':
+            loadTime = 800;
+            break;
+        case 'medium':
+            loadTime = 1200;
+            break;
+        case 'complex':
+            loadTime = 2000;
+            break;
+    }
+    
+    // Thêm thời gian dựa trên số queries
+    loadTime += (queryCount * 100);
+    
+    // Cập nhật preloader timing
+    if (window.updatePreloaderTiming) {
+        window.updatePreloaderTiming(loadTime);
+    }
+});
+</script>
+

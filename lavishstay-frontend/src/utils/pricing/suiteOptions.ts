@@ -25,8 +25,8 @@ export const createSuiteOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 10,
-            remaining: 8
+            total: 20, // Tầng 28-31: 5 phòng/tầng = 20 phòng Suite
+            remaining: 18
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -58,8 +58,8 @@ export const createSuiteOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 5,
-            remaining: 3
+            total: 20,
+            remaining: 17
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -81,14 +81,12 @@ export const createSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 85
         }
-    });
-
-    // 4 options cho 2 người
+    });    // 4 options cho 4 người (cập nhật theo model data)
     options.push({
         id: `suite_double_basic`,
-        name: `Suite Basic - 2 khách`,
+        name: `Suite Basic - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.basic * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4, // Cập nhật theo model: Suite có thể chứa 4 khách
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.basic * priceMultiplier)),
@@ -96,8 +94,8 @@ export const createSuiteOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay - Giá tốt nhất"
         }, availability: {
-            total: 12,
-            remaining: 10
+            total: 20, // Tầng 28-31: 5 phòng/tầng = 20 phòng Suite
+            remaining: 15
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -118,13 +116,11 @@ export const createSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 95
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `suite_double_standard`,
-        name: `Suite Standard - 2 khách`,
+        name: `Suite Standard - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.standard * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.standard * priceMultiplier)),
@@ -132,8 +128,8 @@ export const createSuiteOptions = (
             type: "pay_now_with_vietQR",
             description: "Thanh toán ngay"
         }, availability: {
-            total: 7,
-            remaining: 5
+            total: 20, // Tầng 28-31: 5 phòng/tầng = 20 phòng Suite
+            remaining: 12
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi cao cấp", included: true },
@@ -151,13 +147,11 @@ export const createSuiteOptions = (
             urgencyLevel: isUrgentBooking ? 'urgent' : 'low',
             recommendationScore: 88
         }
-    });
-
-    options.push({
+    });    options.push({
         id: `suite_double_premium`,
-        name: `Suite Premium - 2 khách`,
+        name: `Suite Premium - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.premium * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.premium * priceMultiplier)),
@@ -165,8 +159,8 @@ export const createSuiteOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 4,
-            remaining: 2
+            total: 20,
+            remaining: 8
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -187,11 +181,10 @@ export const createSuiteOptions = (
         }
     });
 
-    options.push({
-        id: `suite_double_luxury`,
-        name: `Suite Luxury - 2 khách`,
+    options.push({        id: `suite_double_luxury`,
+        name: `Suite Luxury - 4 khách`,
         pricePerNight: { vnd: Math.round(pricing.doubleGuest.luxury * priceMultiplier) },
-        maxGuests: 2,
+        maxGuests: 4,
         minGuests: 1,
         roomType: 'suite',
         cancellationPolicy: calculateCancellationPolicy(context, Math.round(pricing.doubleGuest.luxury * priceMultiplier)),
@@ -199,8 +192,8 @@ export const createSuiteOptions = (
             type: "pay_at_hotel",
             description: "Thanh toán tại khách sạn"
         }, availability: {
-            total: 1,
-            remaining: 1
+            total: 20,
+            remaining: 4
         },
         additionalServices: [
             { icon: "WifiOutlined", name: "Wi-Fi VIP", included: true },
@@ -227,3 +220,9 @@ export const createSuiteOptions = (
 
     return options;
 };
+
+/**
+ * CẬP NHẬT AVAILABILITY SUITE OPTIONS THEO SƠ ĐỒ TẦNG:
+ * - Suite: 20 phòng (tầng 28-31: 5 phòng/tầng)
+ * Cập nhật tất cả total từ 5-12 thành 20
+ */

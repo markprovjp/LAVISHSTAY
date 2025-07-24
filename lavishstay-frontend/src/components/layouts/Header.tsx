@@ -44,6 +44,13 @@ interface HeaderProps {
   transparent?: boolean;
 }
 
+interface MenuItem {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  children?: MenuItem[];
+}
+
 const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -56,6 +63,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   );
   const { token } = theme.useToken(); // Lấy token từ theme
   const { t } = useTranslation();
+
+
 
   // Xử lý đăng xuất
   const handleLogout = async () => {
@@ -73,23 +82,13 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
 
   // Sample notification data
   const notifications = [
+
     {
       id: 1,
-      message: "Đặt phòng được xác nhận cho Dynasty Hotel",
-      read: false,
-      time: "10 vài phút trước",
-    },
-    {
-      id: 2,
-      message: "Ưu đãi đặc biệt: Giảm 25% vào cuối tuần",
-      read: false,
-      time: "1 giờ trước",
-    },
-    {
-      id: 3,
-      message: "Đánh giá của bạn đã được đăng",
+      message: "Hãy viết đánh giá cho chuyến đi của bạn!",
       read: true,
       time: "1 ngày trước",
+      link: "/review-booking",
     },
   ];
 
@@ -109,7 +108,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
 
   // Phong cách tiêu đề động dựa trên cuộn và prop trong suốt
   const headerStyle = {
-    position: "fixed" as "fixed",
+    position: "fixed",
+    top: 0,
     width: "100%",
     zIndex: 1000,
     background: transparent && !scrolled ? "transparent" : token.colorBgBase,
@@ -118,15 +118,19 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     backdropFilter: scrolled ? "blur(12px)" : "none",
     borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
   };  // Navigation items
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
-
     { key: "/about", label: "Về chúng tôi", icon: null },
-    // Development only - Auth test page
-    ...(process.env.NODE_ENV === 'development' ? [
-      { key: "/auth-test", label: "🔐 Auth Test", icon: null }
-    ] : []),
-  ];// User menu dropdown
+    // Reception menu with dropdown
+    {
+      key: "/reception",
+      label: "Lễ tân",
+      icon: null,
+    },
+
+  ];
+
+  // User menu dropdown
   const userMenu = (
     <Menu
       style={{
@@ -186,19 +190,20 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                 ? token.colorPrimary + "20"
                 : token.colorPrimary + "10"
               : undefined,
+            padding: 0,
           }}
         >
-          <div>
-            <div className="flex justify-between">
-              <Text style={{ color: token.colorTextBase }}>
-                {notification.message}
+          <Link to={notification.link} style={{ display: 'block', padding: '12px 16px' }}>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <Text style={{ color: token.colorTextBase }}>{notification.message}</Text>
+                {!notification.read && <Badge color={token.colorPrimary} style={{ marginLeft: 8 }} />}
+              </div>
+              <Text type="secondary" className="text-xs">
+                {notification.time}
               </Text>
-              {!notification.read && <Badge color={token.colorPrimary} />}
             </div>
-            <Text type="secondary" className="text-xs">
-              {notification.time}
-            </Text>
-          </div>
+          </Link>
         </Menu.Item>
       ))}
     </Menu>
@@ -224,24 +229,60 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
         <div className="hidden lg:flex flex-1 justify-center mx-8">
           <div className="flex items-center space-x-8">
             {menuItems.map((item) => (
-              <Link
-                key={item.key}
-                to={item.key}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
-                  ? `bg-opacity-20 font-semibold`
-                  : 'font-medium'
-                  }`}
-                style={{
-                  color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
-                }}
-              >
-                {item.icon && (
-                  <span style={{ fontSize: "16px" }}>{item.icon}</span>
-                )}
-                <span style={{ fontFamily: token.fontFamily }}>
-                  {item.label}
-                </span>
-              </Link>
+              item.children ? (
+                <Dropdown
+                  key={item.key}
+                  overlay={
+                    <Menu>
+                      {item.children.map((child) => (
+                        <Menu.Item key={child.key}>
+                          <Link to={child.key} style={{ color: token.colorTextBase }}>
+                            {child.label}
+                          </Link>
+                        </Menu.Item>
+                      ))}
+                    </Menu>
+                  }
+                  trigger={["hover"]}
+                  placement="bottomCenter"
+                >
+                  <span
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 cursor-pointer ${location.pathname.startsWith(item.key)
+                      ? `bg-opacity-20 font-semibold`
+                      : 'font-medium'
+                      }`}
+                    style={{
+                      color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+                    }}
+                  >
+                    {item.icon && (
+                      <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                    )}
+                    <span style={{ fontFamily: token.fontFamily }}>
+                      {item.label}
+                    </span>
+                  </span>
+                </Dropdown>
+              ) : (
+                <Link
+                  key={item.key}
+                  to={item.key}
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10 ${location.pathname === item.key
+                    ? `bg-opacity-20 font-semibold`
+                    : 'font-medium'
+                    }`}
+                  style={{
+                    color: transparent && !scrolled ? "#ffffff" : token.colorTextBase,
+                  }}
+                >
+                  {item.icon && (
+                    <span style={{ fontSize: "16px" }}>{item.icon}</span>
+                  )}
+                  <span style={{ fontFamily: token.fontFamily }}>
+                    {item.label}
+                  </span>
+                </Link>
+              )
             ))}
           </div>
         </div>{" "}        {/* Desktop Right Menu */}
@@ -253,7 +294,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
           {/* Notifications */}
           <Dropdown
             overlay={notificationMenu}
-            
+
             trigger={["hover"]}
             placement="bottomRight"
           >
@@ -346,28 +387,45 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
             header: { background: token.colorBgBase },
             body: { background: token.colorBgBase, padding: "16px" },
           }}
-        >
-          <Menu
+        >          <Menu
             mode="vertical"
             selectedKeys={[location.pathname]}
             style={{ border: "none", background: token.colorBgBase }}
-          >
-            {menuItems.map((item) => (
-              <Menu.Item
-                key={item.key}
-                icon={item.icon}
-                style={{ color: token.colorTextBase }}
-              >
-                <Link
-                  to={item.key}
-                  onClick={() => setMobileMenuOpen(false)}
-                  style={{ color: token.colorTextBase }}
-                >
-                  {item.label}
-                </Link>
-              </Menu.Item>
-            ))}
-          </Menu>
+            items={menuItems.map((item) => {
+              if (item.children) {
+                return {
+                  key: item.key,
+                  label: item.label,
+                  icon: item.icon,
+                  children: item.children.map((child) => ({
+                    key: child.key,
+                    label: (
+                      <Link
+                        to={child.key}
+                        onClick={() => setMobileMenuOpen(false)}
+                        style={{ color: token.colorTextBase }}
+                      >
+                        {child.label}
+                      </Link>
+                    ),
+                  })),
+                };
+              }
+              return {
+                key: item.key,
+                label: (
+                  <Link
+                    to={item.key}
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{ color: token.colorTextBase }}
+                  >
+                    {item.label}
+                  </Link>
+                ),
+                icon: item.icon,
+              };
+            })}
+          />
 
           <Divider />
 
