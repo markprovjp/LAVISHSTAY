@@ -232,10 +232,11 @@ Route::get('/test-db', function () {
 //FAQs API
 Route::apiResource('faqs', FAQController::class);
 
-//Chat API
+//Chat API - New flow: FE calls AI, BE logs conversation
 Route::prefix('chat')->name('chat.')->group(function () {
-    Route::post('/send', [ChatController::class, 'sendMessage'])->name('send');
-    Route::get('/conversation', [ChatController::class, 'getConversation'])->name('conversation');
-    Route::get('/messages/new', [ChatController::class, 'getNewMessages'])->name('messages.new');
-    Route::get('/faqs', [ChatController::class, 'getFaqs'])->name('faqs');
+    // NEW: Provides the hotel info from markdown file to the frontend AI
+    Route::get('/hotel-context', [ChatController::class, 'getHotelContext'])->name('context');
+    
+    // MODIFIED: Logs the user question and the AI response
+    Route::post('/log', [ChatController::class, 'logConversation'])->name('log');
 });

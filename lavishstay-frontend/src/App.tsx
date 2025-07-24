@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import {  ConfigProvider, FloatButton, App as AntApp, Layout } from "antd";
+import { ConfigProvider, FloatButton, App as AntApp, Layout } from "antd";
 import { useSelector } from "react-redux";
 import { RootState } from "./store";
 import ThemeProvider from "./providers/ThemeProvider";
@@ -31,7 +31,7 @@ import SearchResults from "./pages/SearchResults";
 import RoomTypesDetailsPage from "./pages/RoomTypesDetailsPage";
 import BookingConfirmation from "./pages/BookingConfirmation"
 import RoomTypesDemo from "./pages/RoomTypesDemo";
-
+import ReviewBooking from "./pages/ReviewBooking";
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
@@ -118,9 +118,9 @@ const App: React.FC = React.memo(() => {
         <Breadcrumb />
         <Content
           style={{
-            paddingTop: "64px", // Chiều cao của tiêu đề cố định
+  
             background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
-            minHeight: "calc(100vh - 64px - 70px)", // Điều chỉnh Minheight dựa trên chiều cao tiêu đề và chân trang
+           
           }}
         >
           <Routes>            {/* Main Pages */}
@@ -130,6 +130,7 @@ const App: React.FC = React.memo(() => {
             <Route path="/search" element={<SearchResults />} />
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/room-types-demo" element={<RoomTypesDemo />} />
+            <Route path="/review-booking" element={<ReviewBooking />} />
 
             {/* Auth Routes */}
             <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />

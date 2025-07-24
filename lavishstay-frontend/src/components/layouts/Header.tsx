@@ -82,23 +82,13 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
 
   // Sample notification data
   const notifications = [
+
     {
       id: 1,
-      message: "Đặt phòng được xác nhận cho Dynasty Hotel",
-      read: false,
-      time: "10 vài phút trước",
-    },
-    {
-      id: 2,
-      message: "Ưu đãi đặc biệt: Giảm 25% vào cuối tuần",
-      read: false,
-      time: "1 giờ trước",
-    },
-    {
-      id: 3,
-      message: "Đánh giá của bạn đã được đăng",
+      message: "Hãy viết đánh giá cho chuyến đi của bạn!",
       read: true,
       time: "1 ngày trước",
+      link: "/review-booking",
     },
   ];
 
@@ -136,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       label: "Lễ tân",
       icon: null,
     },
-   
+
   ];
 
   // User menu dropdown
@@ -199,19 +189,20 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                 ? token.colorPrimary + "20"
                 : token.colorPrimary + "10"
               : undefined,
+            padding: 0,
           }}
         >
-          <div>
-            <div className="flex justify-between">
-              <Text style={{ color: token.colorTextBase }}>
-                {notification.message}
+          <Link to={notification.link} style={{ display: 'block', padding: '12px 16px' }}>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <Text style={{ color: token.colorTextBase }}>{notification.message}</Text>
+                {!notification.read && <Badge color={token.colorPrimary} style={{ marginLeft: 8 }} />}
+              </div>
+              <Text type="secondary" className="text-xs">
+                {notification.time}
               </Text>
-              {!notification.read && <Badge color={token.colorPrimary} />}
             </div>
-            <Text type="secondary" className="text-xs">
-              {notification.time}
-            </Text>
-          </div>
+          </Link>
         </Menu.Item>
       ))}
     </Menu>

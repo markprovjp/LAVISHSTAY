@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Input, Avatar, Button, FloatButton, Flex, Skeleton, Typography, Popover, Tag, InputRef } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { sendChatMessage } from '../../services/chatService';
+// MODIFIED: Import new service functions
+import { getHotelContext, logChatMessage } from '../../services/chatService';
 import { MessageOutlined, SendOutlined, UserOutlined, CloseOutlined } from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -18,8 +19,8 @@ interface Message {
 const quickQuestions = [
     "Giờ nhận phòng và trả phòng?",
     "Khách sạn có những tiện nghi gì?",
-    "Tôi có thể xem thực đơn nhà hàng không?",
     "Chính sách hủy phòng như thế nào?",
+    "Các loại phòng và giá cả?",
 ];
 const CHAT_HISTORY_KEY = 'lavishstay_chat_history';
 
@@ -34,7 +35,8 @@ const MessageBubble = ({ msg }: { msg: Message }) => {
             <div
                 className={`px-4 py-2 rounded-2xl max-w-[85%] text-sm shadow-sm ${isUser ? 'bg-[var(--color-primary)] text-white rounded-br-none' : 'bg-[var(--color-bg-container)] border border-[var(--color-border)] rounded-bl-none'}`}
             >
-                <Text style={{ color: isUser ? 'white' : 'var(--color-text-base)' }}>{msg.text}</Text>
+                {/* Use pre-wrap to respect newlines from the AI response */}
+                <Text style={{ color: isUser ? 'white' : 'var(--color-text-base)', whiteSpace: 'pre-wrap' }}>{msg.text}</Text>
             </div>
             {isUser && (
                 <Avatar
@@ -64,7 +66,6 @@ const ChatBot = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showInitialSuggestions, setShowInitialSuggestions] = useState(true);
 
-    // Load initial messages from localStorage or set default
     const [messages, setMessages] = useState<Message[]>(() => {
         try {
             const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
@@ -84,53 +85,102 @@ const ChatBot = () => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<InputRef>(null);
 
-    // Effect for scrolling
     useEffect(() => {
         if (chatContainerRef.current) {
-            const { scrollHeight } = chatContainerRef.current;
-            chatContainerRef.current.scrollTo({ top: scrollHeight, behavior: 'smooth' });
+            chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
         }
     }, [messages, isLoading]);
 
-    // Effect for saving history to localStorage
     useEffect(() => {
-        try {
-            localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
-        } catch (error) {
-            console.error("Failed to save chat history to localStorage", error);
-        }
+        localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
     }, [messages]);
 
-    // Effect for focusing input
     useEffect(() => {
         if (!isLoading && popoverVisible && inputRef.current) {
             inputRef.current.focus();
         }
     }, [isLoading, popoverVisible]);
 
+    // --- MODIFIED: Main logic for handling chat messages ---
     const handleSend = async (textToSend?: string) => {
-        const trimmedInput = (textToSend || inputValue).trim();
-        if (!trimmedInput) return;
+        const userMessageText = (textToSend || inputValue).trim();
+        if (!userMessageText) return;
 
         if (showInitialSuggestions) {
             setShowInitialSuggestions(false);
         }
 
-        const userMessage: Message = { from: 'user', text: trimmedInput };
+        const userMessage: Message = { from: 'user', text: userMessageText };
         setMessages(prev => [...prev, userMessage]);
         setInputValue('');
         setIsLoading(true);
 
+        let botResponseText = 'Rất tiếc, đã có lỗi xảy ra. Vui lòng thử lại sau.';
+
         try {
-            const res = await sendChatMessage(trimmedInput);
-            const botMessage: Message = { from: 'bot', text: res.reply || 'Xin lỗi, tôi chưa thể trả lời câu hỏi này.' };
-            setMessages(prev => [...prev, botMessage]);
+            // 1. Fetch hotel context from our backend
+            const hotelContext = await getHotelContext();
+
+            // 2. Construct the prompt for Gemini
+            const prompt = `Dựa vào thông tin khách sạn sau đây: 
+
+---
+${hotelContext}
+---
+
+Hãy trả lời câu hỏi của khách hàng một cách chi tiết và thân thiện. Câu hỏi: "${userMessageText}"`;
+
+            // 3. Call Gemini API
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            if (!apiKey) {
+                throw new Error("VITE_GEMINI_API_KEY is not defined in .env file.");
+            }
+
+            // Use the v1 API endpoint and a current model like gemini-1.5-flash
+            const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+            const requestBody = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json();
+                console.error("Gemini API Error:", errorBody);
+                throw new Error(`Gemini API request failed: ${errorBody.error?.message || response.statusText}`);
+            }
+
+            const responseData = await response.json();
+            const geminiResponse = responseData.candidates[0]?.content?.parts[0]?.text;
+
+            if (!geminiResponse) {
+                throw new Error("Invalid response structure from Gemini API.");
+            }
+            
+            botResponseText = geminiResponse;
+
         } catch (err) {
-            const errorMessage: Message = { from: 'bot', text: 'Rất tiếc, đã có lỗi xảy ra. Vui lòng thử lại sau.' };
-            setMessages(prev => [...prev, errorMessage]);
-            console.error("Error sending chat message:", err);
+            console.error("Error during chat process:", err);
+            // The default error message will be used.
         } finally {
+            // 4. Display the bot's response
+            const botMessage: Message = { from: 'bot', text: botResponseText };
+            setMessages(prev => [...prev, botMessage]);
             setIsLoading(false);
+
+            // 5. Log the conversation to the backend (fire and forget)
+            logChatMessage(userMessageText, botResponseText).catch(logErr => {
+                console.error("Failed to log chat message:", logErr);
+            });
         }
     };
 
@@ -154,8 +204,8 @@ const ChatBot = () => {
                 {messages.map((msg, idx) => <MessageBubble key={idx} msg={msg} />)}
                 <AnimatePresence>
                     {showInitialSuggestions && (
-                        <motion.div exit={{ opacity: 0, height: 0, marginBottom: 0 }} transition={{ duration: 0.3 }} className="mb-4">
-                            <Flex vertical gap="small">
+                        <motion.div exit={{ opacity: 0, height: 0, marginBottom: 0 }} transition={{ duration: 0.3 }}>
+                            <Flex vertical gap="small" className="mt-4">
                                 <Text type="secondary">Hoặc chọn một trong các gợi ý sau:</Text>
                                 <Flex gap="small" wrap="wrap">
                                     {quickQuestions.map((q, i) => (

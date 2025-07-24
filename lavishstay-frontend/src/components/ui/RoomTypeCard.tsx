@@ -184,7 +184,7 @@ const RoomTypeCard: React.FC<RoomTypeProps> = ({
 
         {/* Room Type Badge */}
         <div className="absolute top-3 left-3">
-          <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+          <div className=" backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
             <div className="flex items-center gap-1.5">
               <CrownOutlined className="text-gray-700 text-xs" />
               <span className="text-xs font-medium text-gray-700">{roomTypeDisplayName}</span>
