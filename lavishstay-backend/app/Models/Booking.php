@@ -62,4 +62,10 @@ class Booking extends Model
     {
         return $this->hasMany(Representative::class, 'booking_code', 'booking_code');
     }
+
+    public function roomType()
+{
+    return $this->belongsTo(RoomType::class, 'room_type_id');
+}
+
 }

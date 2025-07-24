@@ -39,6 +39,7 @@ use App\Http\Controllers\RoomPriceHistoryController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\RoomTypeServiceController;
 use App\Http\Controllers\FloorController;
+use App\Http\Controllers\ReviewController;
 
 Route::redirect('/', 'login');
 
@@ -172,6 +173,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/floors/destroy/{floorId}', [FloorController::class, 'destroy'])->name('admin.floors.destroy');
     Route::get('/admin/floors/show/{floorId}', [FloorController::class, 'show'])->name('admin.floors.show');
 
+    //Reviews 
+    Route::get('/admin/reviews', [ReviewController::class, 'index'])->name('admin.reviews');
+    Route::delete('/admin/reviews/destroy/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+    Route::patch('/admin/reviews/toggle-status/{id}', [ReviewController::class, 'toggleStatus'])->name('admin.reviews.toggle-status');
+    Route::post('/admin/reviews/{id}/approve', [\App\Http\Controllers\ReviewController::class, 'approve'])->name('admin.reviews.approve');
 
     // Cách liiiiiiiiiiiiiiiiiiii
 
