@@ -25,14 +25,14 @@ export const statusTextMap: Record<RoomStatus, string> = {
 };
 
 export const statusOptions = [
-    { value: 'available', label: 'Có sẵn', color: '#52c41a' },
-    { value: 'occupied', label: 'Đã có khách', color: '#f5222d' },
-    { value: 'maintenance', label: 'Bảo trì', color: '#8c8c8c' },
-    { value: 'cleaning', label: 'Đang dọn dẹp', color: '#fa8c16' },
-    { value: 'deposited', label: 'Đã cọc tiền', color: '#faad14' },
-    { value: 'no_show', label: 'Không đến', color: '#ff4d4f' },
-    { value: 'check_in', label: 'Đón khách', color: '#1890ff' },
-    { value: 'check_out', label: 'Trả phòng', color: '#722ed1' },
+    { value: 'available', label: 'Có sẵn', color: '#52c41a' , icon: 'CheckCircleFilled' },
+    { value: 'occupied', label: 'Đã có khách', color: '#f5222d' , icon: 'UserOutlined' },
+    { value: 'maintenance', label: 'Bảo trì', color: '#8c8c8c' , icon: 'SettingOutlined' },
+    { value: 'cleaning', label: 'Đang dọn dẹp', color: '#fa8c16' , icon: 'ClockCircleOutlined' },
+    { value: 'deposited', label: 'Đã cọc tiền', color: '#faad14' , icon: 'DollarCircleOutlined' },
+    { value: 'no_show', label: 'Không đến', color: '#ff4d4f' , icon: 'CloseCircleOutlined' },
+    { value: 'check_in', label: 'Đón khách', color: '#1890ff' , icon: 'CheckCircleFilled' },
+    { value: 'check_out', label: 'Trả phòng', color: '#722ed1' , icon: 'CheckCircleFilled' },
 ];
 
 export const fullCalendarStatusColors = {
