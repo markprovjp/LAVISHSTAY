@@ -148,7 +148,7 @@ class RoomController extends Controller
     public function create(RoomType $roomType){
         try {
             $statusOptions = [
-                'available' => 'Có sẵn',
+                'available' => 'Sẵn sàng',
                 'occupied' => 'Đã đặt',
                 'maintenance' => 'Bảo trì',
                 'cleaning' => 'Đang dọn dẹp'

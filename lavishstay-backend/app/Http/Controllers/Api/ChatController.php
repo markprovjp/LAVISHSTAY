@@ -5,223 +5,91 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\Faq;
-use App\Services\ChatBotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class ChatController extends Controller
 {
-    protected $chatBotService;
-
-    public function __construct(ChatBotService $chatBotService)
+    /**
+     * NEW: Get the hotel context from the markdown file.
+     * This endpoint provides the necessary information for the AI on the frontend.
+     */
+    public function getHotelContext()
     {
-        $this->chatBotService = $chatBotService;
+        try {
+            // Correctly build the path to the markdown file from the Laravel project root
+            $path = base_path('../lavishstay.mm.md');
+
+            if (!File::exists($path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy tệp dữ liệu của khách sạn.',
+                ], 404);
+            }
+
+            $content = File::get($path);
+
+            return response()->json([
+                'success' => true,
+                'context' => $content,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to read hotel context file: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi máy chủ khi đọc dữ liệu khách sạn.',
+            ], 500);
+        }
     }
 
     /**
-     * Send a message from user/guest
+     * MODIFIED: Log the conversation (user message and AI response).
+     * The AI response is now generated on the frontend.
      */
-    public function sendMessage(Request $request)
+    public function logConversation(Request $request)
     {
         $request->validate([
-            'message' => 'required|string|max:1000',
+            'user_message' => 'required|string|max:2000',
+            'ai_response' => 'required|string|max:5000',
             'client_token' => 'nullable|string',
         ]);
 
         $userId = Auth::id();
-        $clientToken = $request->client_token;
-
-        // If no user and no client token, generate one
-        if (!$userId && !$clientToken) {
-            $clientToken = Str::uuid()->toString();
-        }
+        $clientToken = $request->client_token ?? Str::uuid()->toString();
 
         // Find or create conversation
         $conversation = $this->findOrCreateConversation($userId, $clientToken);
 
         // Save user message
-        $userMessage = Message::create([
+        Message::create([
             'conversation_id' => $conversation->id,
             'sender_type' => $userId ? 'user' : 'guest',
             'sender_id' => $userId,
-            'message' => $request->message,
+            'message' => $request->user_message,
             'is_from_bot' => false,
         ]);
 
-        $messages = [
-            [
-                'id' => $userMessage->id,
-                'message' => $userMessage->message,
-                'sender_type' => $userMessage->sender_type,
-                'is_from_bot' => false,
-                'created_at' => $userMessage->created_at->toISOString(),
-            ]
-        ];
-
-        // Try to get bot response
-        $botResponse = $this->chatBotService->getResponse($request->message);
-
-        if ($botResponse) {
-            // Save bot response
-            $botMessage = Message::create([
-                'conversation_id' => $conversation->id,
-                'sender_type' => 'staff',
-                'sender_id' => null,
-                'message' => $botResponse['answer'],
-                'is_from_bot' => true,
-                'metadata' => [
-                    'faq_id' => $botResponse['faq_id'] ?? null,
-                    'confidence' => $botResponse['confidence'] ?? null,
-                ],
-            ]);
-
-            $messages[] = [
-                'id' => $botMessage->id,
-                'message' => $botMessage->message,
-                'sender_type' => $botMessage->sender_type,
-                'is_from_bot' => true,
-                'created_at' => $botMessage->created_at->toISOString(),
-            ];
-
-            // Update conversation timestamp
-            $conversation->touch();
-
-            return response()->json([
-                'success' => true,
-                'conversation_id' => $conversation->id,
-                'client_token' => $clientToken,
-                'messages' => $messages,
-            ]);
-        } else {
-            // No bot response, escalate to human
-            $conversation->update([
-                'is_bot_only' => false,
-                'status' => 'pending',
-            ]);
-
-            // Add system message about escalation
-            $systemMessage = Message::create([
-                'conversation_id' => $conversation->id,
-                'sender_type' => 'staff',
-                'sender_id' => null,
-                'message' => 'Câu hỏi của bạn đã được chuyển đến nhân viên hỗ trợ. Chúng tôi sẽ trả lời sớm nhất có thể.',
-                'is_from_bot' => true,
-                'message_type' => 'system',
-            ]);
-
-            $messages[] = [
-                'id' => $systemMessage->id,
-                'message' => $systemMessage->message,
-                'sender_type' => $systemMessage->sender_type,
-                'is_from_bot' => true,
-                'created_at' => $systemMessage->created_at->toISOString(),
-            ];
-
-            return response()->json([
-                'success' => true,
-                'conversation_id' => $conversation->id,
-                'client_token' => $clientToken,
-                'escalated' => true,
-                'message' => 'Câu hỏi của bạn đã được chuyển đến nhân viên hỗ trợ. Chúng tôi sẽ trả lời sớm nhất có thể.',
-                'messages' => $messages,
-            ]);
-        }
-    }
-
-    /**
-     * Get conversation messages
-     */
-    public function getConversation(Request $request)
-    {
-        $request->validate([
-            'conversation_id' => 'required|exists:conversations,id',
-            'client_token' => 'nullable|string',
+        // Save AI response
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_type' => 'staff',
+            'sender_id' => null,
+            'message' => $request->ai_response,
+            'is_from_bot' => true,
         ]);
-
-        $conversation = Conversation::with(['messages' => function($query) {
-            $query->orderBy('created_at', 'asc');
-        }])->find($request->conversation_id);
-
-        // Verify access
-        if (!$this->canAccessConversation($conversation, $request->client_token)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
 
         return response()->json([
             'success' => true,
-            'conversation' => [
-                'id' => $conversation->id,
-                'status' => $conversation->status,
-                'messages' => $conversation->messages->map(function($message) {
-                    return [
-                        'id' => $message->id,
-                        'message' => $message->message,
-                        'sender_type' => $message->sender_type,
-                        'is_from_bot' => $message->is_from_bot,
-                        'created_at' => $message->created_at->toISOString(),
-                    ];
-                }),
-            ],
+            'message' => 'Cuộc trò chuyện đã được ghi lại.',
+            'conversation_id' => $conversation->id,
         ]);
     }
 
     /**
-     * Get new messages since last check
-     */
-    public function getNewMessages(Request $request)
-    {
-        $request->validate([
-            'conversation_id' => 'required|exists:conversations,id',
-            'last_message_id' => 'required|integer',
-            'client_token' => 'nullable|string',
-        ]);
-
-        $conversation = Conversation::find($request->conversation_id);
-
-        // Verify access
-        if (!$this->canAccessConversation($conversation, $request->client_token)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $newMessages = Message::where('conversation_id', $request->conversation_id)
-            ->where('id', '>', $request->last_message_id)
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'messages' => $newMessages->map(function($message) {
-                return [
-                    'id' => $message->id,
-                    'message' => $message->message,
-                    'sender_type' => $message->sender_type,
-                    'is_from_bot' => $message->is_from_bot,
-                    'created_at' => $message->created_at->toISOString(),
-                ];
-            }),
-        ]);
-    }
-
-    /**
-     * Get FAQs for quick responses
-     */
-    public function getFaqs(Request $request)
-    {
-        $faqs = Faq::active()
-            ->byPriority()
-            ->limit(10)
-            ->get(['id', 'question', 'answer', 'category']);
-
-        return response()->json([
-            'success' => true,
-            'faqs' => $faqs,
-        ]);
-    }
-
-    /**
-     * Find or create conversation
+     * Find or create a conversation record.
      */
     private function findOrCreateConversation($userId, $clientToken)
     {
@@ -241,27 +109,15 @@ class ChatController extends Controller
             $conversation = Conversation::create([
                 'user_id' => $userId,
                 'client_token' => $clientToken,
-                'status' => 'pending',
+                'status' => 'open', // Bot conversations are always open
                 'is_bot_only' => true,
             ]);
         }
 
         return $conversation;
     }
-
-    /**
-     * Check if user can access conversation
-     */
-    private function canAccessConversation($conversation, $clientToken)
-    {
-        if (Auth::check() && $conversation->user_id === Auth::id()) {
-            return true;
-        }
-
-        if (!Auth::check() && $conversation->client_token === $clientToken) {
-            return true;
-        }
-
-        return false;
-    }
+    
+    // Note: The original sendMessage, getConversation, etc. can be kept, modified, or removed
+    // depending on whether you want to support a hybrid mode or just the AI logging.
+    // For clarity, I'm assuming they are no longer the primary flow.
 }
