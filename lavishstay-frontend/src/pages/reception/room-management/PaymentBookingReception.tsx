@@ -1,332 +1,265 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Radio, Space, Row, Col, Divider, Alert, Descriptions, Typography, Image, App, Table } from 'antd';
-import { QrcodeOutlined, BankOutlined } from '@ant-design/icons';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { Card, Button, Radio, Space, Row, Col, Divider, Alert, Descriptions, Typography, Image, App, Layout, Timeline } from 'antd';
+import { QrcodeOutlined, BankOutlined, CheckCircleOutlined, CalendarOutlined, HomeOutlined, UserSwitchOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { useCreateQuickBooking, useConfirmBooking } from '../../../hooks/useReception';
+import { formatCurrency } from '../../../utils/helpers';
+import { CreateMultiRoomBookingRequest } from '../../../types/booking';
+import { paymentAPI } from '../../../utils/api';
 
-const { Text, Title } = Typography;
-
-const formatVND = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(amount);
-};
+const { Title, Text, Paragraph } = Typography;
+const { Content } = Layout;
 
 const generateVietQRUrl = (amount: number, content: string) => {
+    if (!amount || !content) return '';
     return `https://img.vietqr.io/image/MB-0335920306-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}`;
 };
+
+type CheckHistoryStatus = 'checking' | 'not_found' | 'found' | 'error' | 'stopped';
+
+interface CheckHistoryItem {
+    time: string;
+    status: CheckHistoryStatus;
+    message: string;
+}
 
 const PaymentBookingReception: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { message } = App.useApp();
+    const createBookingMutation = useCreateQuickBooking();
+    const confirmBookingMutation = useConfirmBooking();
 
-    // Lấy bookingCode từ state hoặc query
-    const bookingCode = location.state?.bookingCode || new URLSearchParams(window.location.search).get('bookingCode');
-    const [bookingInfo, setBookingInfo] = useState<any>(null);
+    const { bookingDetails: initialBookingDetails } = (location.state || {}) as { bookingDetails?: CreateMultiRoomBookingRequest };
+
+    const [bookingDetails] = useState(initialBookingDetails);
+    const [bookingId, setBookingId] = useState<number | null>(null);
+    const [bookingCode, setBookingCode] = useState<string | null>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr');
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [countdown, setCountdown] = useState(900); // 15 minutes
-    const [loading, setLoading] = useState(true);
 
-    // Lấy thông tin booking thực tế từ backend
+    const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+    const [checkHistory, setCheckHistory] = useState<CheckHistoryItem[]>([]);
+    const [stopCheck, setStopCheck] = useState(false);
+
+    // useRef to prevent multiple booking creations
+    const bookingCreationCalled = useRef(false);
+
+    const addToHistory = (status: CheckHistoryStatus, msg: string) => {
+        const newEntry: CheckHistoryItem = { time: new Date().toLocaleTimeString('vi-VN'), status, message: msg };
+        setCheckHistory(prev => [newEntry, ...prev.slice(0, 4)]);
+    };
+
     useEffect(() => {
-        if (!bookingCode) {
-            message.error('Không tìm thấy mã đặt phòng.');
-            navigate('/reception');
-            return;
-        }
-
-        const fetchBookingInfo = async () => {
-            setLoading(true);
-            try {
-                // Import paymentAPI dynamically
-                const { paymentAPI } = await import('../../../utils/api');
-                const data = await paymentAPI.getBookingInfo(bookingCode);
-
-                if (data.success && data.booking) {
-                    setBookingInfo(data.booking);
-                    setCountdown(data.booking.countdown || 900);
-                } else {
-                    message.error('Không tìm thấy thông tin đặt phòng.');
-                    navigate('/reception');
+        const createInitialBooking = async () => {
+            // Only run if there are details, no booking ID/code exists yet, and creation hasn't been called.
+            if (bookingDetails && !bookingId && !bookingCode && !bookingCreationCalled.current) {
+                // Set flag to true immediately to prevent re-entry.
+                bookingCreationCalled.current = true;
+                try {
+                    const result = await createBookingMutation.mutateAsync(bookingDetails);
+                    setBookingId(result.booking_id);
+                    setBookingCode(result.booking_code);
+                    message.success(`Đã tạo booking tạm thời: ${result.booking_code}`);
+                } catch (error) {
+                    message.error('Tạo đặt phòng tạm thời thất bại.');
+                    // Reset flag on failure to allow retry if needed.
+                    bookingCreationCalled.current = false;
                 }
-            } catch (error) {
-                message.error('Lỗi khi lấy thông tin đặt phòng.');
-                navigate('/reception');
-            } finally {
-                setLoading(false);
             }
         };
+        createInitialBooking();
+    }, [bookingDetails, bookingId, bookingCode, createBookingMutation, message]);
 
-        fetchBookingInfo();
-    }, [bookingCode, navigate]);
+    const summary = useMemo(() => {
+        if (!bookingDetails) return null;
+        const { booking_details } = bookingDetails;
+        const nights = dayjs(booking_details.check_out_date).diff(dayjs(booking_details.check_in_date), 'day');
+        const paymentContent = `Thanh toan dat phong ${bookingCode}`;
+        return { ...booking_details, nights, bookingCode, paymentContent };
+    }, [bookingDetails, bookingCode]);
 
-    // Countdown
-    useEffect(() => {
-        if (countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
+    const navigateToSuccess = useCallback(() => {
+        message.success({ content: `Thanh toán thành công! Mã đặt phòng: ${bookingCode}`, key: 'booking', duration: 4 });
+        navigate('/reception/payment-success', { state: { bookingCode: bookingCode, bookingDetails: summary } });
+    }, [bookingCode, navigate, summary, message]);
+
+    const handlePaymentCheck = useCallback(async () => {
+        if (!bookingCode || !summary?.total_price) {
+            message.error("Chưa có mã đặt phòng hoặc tổng tiền, không thể kiểm tra.");
+            return;
         }
-    }, [countdown]);
+        setStopCheck(false);
+        setIsCheckingPayment(true);
+        setCheckHistory([]);
+        addToHistory('checking', 'Bắt đầu kiểm tra...');
 
-    // Poll trạng thái thanh toán nếu chọn VietQR
-    useEffect(() => {
-        if (bookingInfo && selectedPaymentMethod === 'vietqr' && bookingInfo.status !== 'paid') {
-            const interval = setInterval(async () => {
-                try {
-                    // Import paymentAPI dynamically
-                    const { paymentAPI } = await import('../../../utils/api');
-                    const data = await paymentAPI.getPaymentStatus(bookingCode);
+        // Log bookingCode và amount để debug
+        console.log('Kiểm tra thanh toán với:', { bookingCode, amount: summary.total_price });
 
-                    if (data.success && data.payment_status === 'confirmed') {
-                        setBookingInfo((prev: any) => ({ ...prev, status: 'paid' }));
-                        message.success('Thanh toán đã được xác nhận!');
-                        clearInterval(interval);
-                    }
-                } catch (error) {
-                    console.error('Error checking payment status:', error);
+        const maxAttempts = 12;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (stopCheck) {
+                addToHistory('stopped', 'Đã dừng kiểm tra.');
+                setIsCheckingPayment(false);
+                break;
+            }
+            try {
+                addToHistory('checking', `Đang kiểm tra lần ${attempt}/${maxAttempts}...`);
+                console.log(`Lần ${attempt}: Gửi bookingCode=${bookingCode}, amount=${summary.total_price}`);
+                const response = await paymentAPI.checkCPayPayment(bookingCode, summary.total_price);
+                console.log('Kết quả trả về:', response.data);
+                if (response.data.success) {
+                    addToHistory('found', 'Thanh toán đã được xác nhận!');
+                    message.success("Thanh toán thành công!");
+                    setIsCheckingPayment(false);
+                    navigateToSuccess();
+                    return;
+                } else {
+                    addToHistory('not_found', response.data.message || 'Chưa tìm thấy giao dịch.');
                 }
-            }, 10000);
-            return () => clearInterval(interval);
+                if (attempt < maxAttempts) await new Promise(resolve => setTimeout(resolve, 5000));
+            } catch (error: any) {
+                const errorMessage = error.response?.data?.message || 'Lỗi kết nối server.';
+                addToHistory('error', errorMessage);
+                console.log('Lỗi khi kiểm tra thanh toán:', errorMessage);
+                if (attempt === maxAttempts) message.error("Không thể xác nhận thanh toán tự động.");
+                if (attempt < maxAttempts) await new Promise(resolve => setTimeout(resolve, 5000));
+            }
         }
-    }, [bookingInfo, selectedPaymentMethod, bookingCode]);
+        setIsCheckingPayment(false);
+    }, [bookingCode, summary, stopCheck, navigateToSuccess]);
 
-    const handleConfirmPayment = () => {
-        setIsProcessing(true);
-        setTimeout(() => {
-            setIsProcessing(false);
-            message.success('Thanh toán thành công!');
-            navigate('/reception/payment-success', { state: { bookingCode } });
-        }, 1500);
-    };
+    const handleFinalizePayAtHotel = useCallback(async () => {
+        if (!bookingId || !bookingDetails) {
+            message.error('Không có thông tin đặt phòng để xác nhận.');
+            return;
+        }
+        message.loading({ content: 'Đang hoàn tất đặt phòng...', key: 'booking' });
+        const finalPayload = { ...bookingDetails, booking_id: bookingId, payment_method: 'pay_at_hotel' };
+        try {
+            const result = await confirmBookingMutation.mutateAsync(finalPayload);
+            message.success({ content: `Đặt phòng thành công! Mã: ${result.booking_code}`, key: 'booking', duration: 4 });
+            navigate('/reception/payment-success', { state: { bookingCode: result.booking_code, bookingDetails: summary } });
+        } catch (error) {
+            message.error({ content: 'Xác nhận đặt phòng thất bại.', key: 'booking', duration: 3 });
+        }
+    }, [bookingId, bookingDetails, confirmBookingMutation, message, navigate, summary]);
 
-    const handleBack = () => {
-        navigate(-1);
-    };
-
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
-
-    if (loading || !bookingInfo) {
-        return <div className="p-6 text-center">Đang tải thông tin đặt phòng...</div>;
+    if (!summary || !bookingDetails) {
+        return (
+            <Content className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+                <Alert message="Lỗi" description="Không có thông tin đặt phòng." type="error" showIcon action={<Button type="primary" onClick={() => navigate('/reception/room-management-list')}>Quay lại</Button>} />
+            </Content>
+        );
     }
 
-    const { rooms = [], representatives = {}, total_amount = 0, check_in, check_out, status, payment_content } = bookingInfo;
-    // Sử dụng payment_content từ backend, fallback là format chuẩn
-    const paymentContent = payment_content || `LAVISHSTAY_${bookingCode}`;
+    const { total_price, check_in_date, check_out_date, paymentContent, nights, adults, children } = summary;
+
+    const getStatusIcon = (status: CheckHistoryStatus) => {
+        switch (status) {
+            case 'checking': return <ClockCircleOutlined style={{ color: '#1890ff' }} />;
+            case 'found': return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+            case 'error': return <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />;
+            case 'stopped': return <ExclamationCircleOutlined style={{ color: '#faad14' }} />;
+            default: return <ClockCircleOutlined style={{ color: '#faad14' }} />;
+        }
+    };
 
     return (
-        <div className="p-6 ">
-            <Title level={2} className="mb-6">Thanh toán đặt phòng lễ tân</Title>
+        <Content className="p-10 bg-gray-50 min-h-screen">
+            <div>
+                <Title level={2} className="mb-6 text-center">Hoàn tất đặt phòng</Title>
+                <Row gutter={[24, 24]}>
+                    <Col xs={24} lg={16}>
+                        <Space direction="vertical" size="large" className="w-full">
+                            <Card title="1. Thông tin người đại diện">
+                                {bookingDetails.representative_info.mode === 'all' ? (
+                                    <Descriptions column={2} bordered size="small">
+                                        <Descriptions.Item label="Họ tên" span={2}>{bookingDetails.representative_info.details.fullName}</Descriptions.Item>
+                                        <Descriptions.Item label="Email">{bookingDetails.representative_info.details.email}</Descriptions.Item>
+                                        <Descriptions.Item label="Điện thoại">{bookingDetails.representative_info.details.phoneNumber}</Descriptions.Item>
+                                    </Descriptions>
+                                ) : (
+                                    <Alert message="Thông tin người đại diện cho từng phòng đã được lưu." type="info" showIcon />
+                                )}
+                            </Card>
 
-            {/* Thông tin đặt phòng dưới dạng bảng */}
-            <Card title="Thông tin đặt phòng" className="mb-4">
-                <Descriptions column={2} size="small" className="mb-4">
-                    <Descriptions.Item label="Mã đặt phòng">
-                        <Text strong style={{ color: '#52c41a' }}>{bookingCode}</Text>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Trạng thái">
-                        <Text strong type={status === 'paid' ? 'success' : 'warning'}>
-                            {status === 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán'}
-                        </Text>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày nhận phòng">
-                        {check_in ? dayjs(check_in).format('DD/MM/YYYY') : '-'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Ngày trả phòng">
-                        {check_out ? dayjs(check_out).format('DD/MM/YYYY') : '-'}
-                    </Descriptions.Item>
-                </Descriptions>
-                <Table
-                    columns={[
-                        {
-                            title: 'Số phòng',
-                            dataIndex: 'name',
-                            key: 'name',
-                            render: (text: string) => <Text strong>{text}</Text>
-                        },
-                        {
-                            title: 'Loại phòng',
-                            dataIndex: ['room_type', 'name'],
-                            key: 'roomType',
-                            render: (_: any, room: any) => <Text>{room.room_type?.name}</Text>
-                        },
-                        {
-                            title: 'Check-in',
-                            dataIndex: 'checkIn',
-                            key: 'checkIn',
-                            render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY') : '-'
-                        },
-                        {
-                            title: 'Check-out',
-                            dataIndex: 'checkOut',
-                            key: 'checkOut',
-                            render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY') : '-'
-                        },
-                        {
-                            title: 'Số đêm',
-                            dataIndex: 'nights',
-                            key: 'nights',
-                            align: 'center' as const,
-                        },
-                        {
-                            title: 'Giá/đêm',
-                            dataIndex: ['room_type', 'adjusted_price'],
-                            key: 'basePrice',
-                            render: (_: any, room: any) => formatVND(room.room_type?.adjusted_price || 0)
-                        },
-                        {
-                            title: 'Tổng tiền',
-                            dataIndex: 'totalPrice',
-                            key: 'totalPrice',
-                            render: (value: number, room: any) => formatVND(value || (room.room_type?.adjusted_price * (room.nights || 1)))
-                        },
-                        {
-                            title: 'Người đại diện',
-                            key: 'representative',
-                            render: (_: any, room: any) => (
-                                representatives[room.id]
-                                    ? <span>{representatives[room.id].fullName} - {representatives[room.id].phoneNumber}</span>
-                                    : <span className="text-gray-400 italic">Chưa có</span>
-                            )
-                        }
-                    ]}
-                    dataSource={rooms}
-                    rowKey="id"
-                    pagination={false}
-                    bordered
-                    scroll={{ x: 900 }}
-                />
-            </Card>
+                            <Card title="2. Chọn phương thức thanh toán">
+                                <Radio.Group value={selectedPaymentMethod} onChange={e => setSelectedPaymentMethod(e.target.value)} style={{ width: '100%' }}>
+                                    <Space direction="vertical" style={{ width: '100%' }}>
+                                        <Radio value="vietqr" className="w-full">
+                                            <Card size="small" hoverable><Space><QrcodeOutlined /> <Text strong>Chuyển khoản VietQR (Tự động)</Text></Space></Card>
+                                        </Radio>
+                                        <Radio value="pay_at_hotel" className="w-full">
+                                            <Card size="small" hoverable><Space><BankOutlined /> <Text strong>Thanh toán tại khách sạn</Text></Space></Card>
+                                        </Radio>
+                                    </Space>
+                                </Radio.Group>
+                            </Card>
 
-            <Card title="Phương thức thanh toán" className="mb-4">
-                <Radio.Group
-                    value={selectedPaymentMethod}
-                    onChange={e => setSelectedPaymentMethod(e.target.value)}
-                    optionType="button"
-                    buttonStyle="solid"
-                    className="w-full"
-                >
-                    <Space direction="horizontal" className="w-full" size="middle">
-                        <Radio.Button value="vietqr" style={{ minWidth: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            <QrcodeOutlined style={{ fontSize: 18, color: '#1890ff' }} /> VietQR
-                        </Radio.Button>
-                        <Radio.Button value="pay_at_hotel" style={{ minWidth: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            <BankOutlined style={{ fontSize: 18, color: '#52c41a' }} /> Thanh toán tại khách sạn
-                        </Radio.Button>
-                    </Space>
-                </Radio.Group>
-            </Card>
+                            {selectedPaymentMethod === 'vietqr' && (
+                                <Card title="3. Thực hiện thanh toán & Kiểm tra">
+                                    <Row gutter={[24, 24]} align="top">
+                                        <Col xs={24} md={10} className="text-center">
+                                            <Image src={generateVietQRUrl(total_price, paymentContent)} alt="VietQR Code" width={250} preview={false} />
+                                            <Paragraph type="secondary" style={{ marginTop: 8 }}>Quét mã để thanh toán</Paragraph>
+                                        </Col>
+                                        <Col xs={24} md={14}>
+                                            <Descriptions column={1} bordered size="small" className="mb-4">
+                                                <Descriptions.Item label="Số tiền"><Text strong copyable className="text-red-600 text-lg">{formatCurrency(total_price)}</Text></Descriptions.Item>
+                                                <Descriptions.Item label="Nội dung"><Text strong copyable>{paymentContent}</Text></Descriptions.Item>
+                                            </Descriptions>
+                                            <Space direction="vertical" className="w-full">
+                                                <Button type="primary" onClick={handlePaymentCheck} loading={isCheckingPayment} disabled={isCheckingPayment || !bookingCode}>
+                                                    {isCheckingPayment ? 'Đang kiểm tra...' : 'Kiểm tra thanh toán'}
+                                                </Button>
+                                                {isCheckingPayment && (
+                                                    <Button onClick={() => setStopCheck(true)}>Dừng kiểm tra</Button>
+                                                )}
+                                                {checkHistory.length > 0 && (
+                                                    <Timeline style={{ marginTop: 16 }} items={checkHistory.map((entry, index) => ({
+                                                        dot: getStatusIcon(entry.status),
+                                                        children: <Text type={index === 0 ? 'success' : 'secondary'}>{entry.time} - {entry.message}</Text>
+                                                    }))} />
+                                                )}
+                                            </Space>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            )}
 
-            {selectedPaymentMethod === 'vietqr' && (
-                <Card title="Quét mã QR để thanh toán" className="shadow-sm mb-4">
-                    <Row gutter={24} align="top">
-                        <Col span={14}>
-                            <div className="text-center">
-                                <div className="rounded-lg inline-block">
-                                    <Image
-                                        src={generateVietQRUrl(total_amount, paymentContent)}
-                                        alt="VietQR Payment Code"
-                                        width="100%"
-                                        height="100%"
-                                        preview={false}
-                                        style={{ borderRadius: 8 }}
-                                    />
+                            {selectedPaymentMethod === 'pay_at_hotel' && (
+                                <Card title="3. Hoàn tất">
+                                    <Alert message="Khách hàng sẽ thanh toán tại quầy lễ tân. Nhấn 'Hoàn tất' để xác nhận đặt phòng." type="info" showIcon />
+                                    <Button type="primary" icon={<CheckCircleOutlined />} loading={confirmBookingMutation.isPending} onClick={handleFinalizePayAtHotel} style={{ marginTop: 16 }}>
+                                        Hoàn tất
+                                    </Button>
+                                </Card>
+                            )}
+                        </Space>
+                    </Col>
+                    <Col xs={24} lg={8}>
+                        <Card title="Tóm tắt đặt phòng" className="sticky top-6">
+                            <Space direction="vertical" className="w-full" size="middle">
+                                <Descriptions column={1} bordered size="small">
+                                    <Descriptions.Item label="Mã Booking (tạm thời)"><Text strong>{bookingCode || "Đang tạo..."}</Text></Descriptions.Item>
+                                    <Descriptions.Item label={<><CalendarOutlined /> Nhận phòng</>}><Text strong>{dayjs(check_in_date).format('DD/MM/YYYY')}</Text></Descriptions.Item>
+                                    <Descriptions.Item label={<><CalendarOutlined /> Trả phòng</>}><Text strong>{dayjs(check_out_date).format('DD/MM/YYYY')}</Text></Descriptions.Item>
+                                    <Descriptions.Item label={<><HomeOutlined /> Số đêm</>}><Text strong>{nights}</Text></Descriptions.Item>
+                                    <Descriptions.Item label={<><UserSwitchOutlined /> Số khách</>}><Text strong>{adults} NL, {children.length} TE</Text></Descriptions.Item>
+                                </Descriptions>
+                                <Divider className="my-0" />
+                                <div className="flex justify-between items-center">
+                                    <Title level={4} className="!mb-0">Tổng cộng:</Title>
+                                    <Title level={4} className="!mb-0 text-blue-600">{formatCurrency(total_price)}</Title>
                                 </div>
-                            </div>
-                        </Col>
-                        <Col span={10}>
-                            <div className="space-y-4">
-                                <Alert
-                                    message="Thông tin chuyển khoản"
-                                    type="info"
-                                    showIcon={false}
-                                    className="mb-4"
-                                    style={{ backgroundColor: '#f6f8fa', border: '1px solid #e1e4e8', borderRadius: '8px' }}
-                                />
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                        <Text className="text-gray-600">Ngân hàng:</Text>
-                                        <Text strong>MB Bank</Text>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                        <Text className="text-gray-600">Số tài khoản:</Text>
-                                        <Text strong className="bg-blue-50 px-2 py-1 rounded text-blue-700 font-mono">0335920306</Text>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                        <Text className="text-gray-600">Chủ tài khoản:</Text>
-                                        <Text strong>NGUYEN VAN QUYEN</Text>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                                        <Text className="text-gray-600">Số tiền:</Text>
-                                        <Text strong className="text-red-600 text-lg">{formatVND(total_amount)}</Text>
-                                    </div>
-                                    <div className="flex justify-between items-start py-2 border-b border-gray-100">
-                                        <Text className="text-gray-600">Nội dung:</Text>
-                                        <Text strong className="bg-green-50 px-2 py-1 rounded text-green-700 text-right font-mono">{paymentContent}</Text>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2">
-                                        <Text className="text-gray-600">Mã đặt phòng:</Text>
-                                        <Text strong className="text-green-600 font-mono">{bookingCode}</Text>
-                                    </div>
-                                </div>
-                                <Alert
-                                    message={`Thời gian còn lại: ${formatTime(countdown)}`}
-                                    description="Vui lòng hoàn tất thanh toán trong thời gian quy định"
-                                    type="warning"
-                                    showIcon
-                                    className="mt-4"
-                                />
-                            </div>
-                        </Col>
-                    </Row>
-                    <Divider />
-                    <Space>
-                        <Button onClick={handleBack}>Quay lại</Button>
-                        <Button type="primary" loading={isProcessing} onClick={handleConfirmPayment} disabled={status === 'paid'}>
-                            {status === 'paid' ? 'Đã thanh toán' : 'Đã chuyển khoản'}
-                        </Button>
-                    </Space>
-                </Card>
-            )}
-
-            {selectedPaymentMethod === 'pay_at_hotel' && (
-                <Card title="Thanh toán tại khách sạn" className="shadow-sm mb-4">
-                    <Alert
-                        message="Thanh toán tại khách sạn"
-                        description="Bạn sẽ thanh toán trực tiếp tại quầy lễ tân khi nhận phòng. Vui lòng mang theo giấy tờ tùy thân và thông tin đặt phòng."
-                        type="info"
-                        showIcon
-                        className="mb-4"
-                    />
-                    <Descriptions column={1} size="small" className="mb-4">
-                        <Descriptions.Item label="Mã đặt phòng">
-                            <Text strong style={{ color: '#52c41a' }}>{bookingCode}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Tổng tiền cần thanh toán">
-                            <Text strong style={{ color: '#f5222d', fontSize: '1.1em' }}>{formatVND(total_amount)}</Text>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Hình thức thanh toán">
-                            <Text>Tiền mặt hoặc thẻ tín dụng/ghi nợ</Text>
-                        </Descriptions.Item>
-                    </Descriptions>
-                    <Divider />
-                    <Space>
-                        <Button onClick={handleBack}>Quay lại</Button>
-                        <Button type="primary" loading={isProcessing} onClick={handleConfirmPayment} disabled={status === 'paid'}>
-                            {status === 'paid' ? 'Đã thanh toán' : 'Xác nhận đặt phòng'}
-                        </Button>
-                    </Space>
-                </Card>
-            )}
-        </div>
+                            </Space>
+                        </Card>
+                    </Col>
+                </Row>
+            </div>
+        </Content>
     );
 };
 

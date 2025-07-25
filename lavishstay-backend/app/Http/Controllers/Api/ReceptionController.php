@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\PricingService;
 use App\Models\BookingRoomChildren;
+use App\Models\Booking;
+use App\Models\Payment;
+use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -1440,159 +1443,231 @@ $allChildrenAges = DB::table('booking_room_children')
         }
     }
 
-    /**
-     * Create a new booking with multiple rooms and representatives
+       /**
+     * Create a new temporary booking record.
+     * This only creates the main booking entry with a 'pending' status.
      */
     public function createBooking(Request $request): JsonResponse
     {
+        Log::info('Reception: Create Booking Request Received:', $request->all());
+
+        // Adapt validation from frontend structure
+        $validator = Validator::make($request->all(), [
+            'booking_details.check_in_date' => 'required|date',
+            'booking_details.check_out_date' => 'required|date|after:booking_details.check_in_date',
+            'booking_details.total_price' => 'required|numeric|min:0',
+            'representative_info.details.fullName' => 'required|string|max:255',
+            'representative_info.details.email' => 'required|email|max:255',
+            'representative_info.details.phoneNumber' => 'required|string|max:20',
+            'rooms' => 'required|array|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Reception: Booking validation failed', $validator->errors()->toArray());
+            return response()->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.', 'errors' => $validator->errors()], 422);
+        }
+
+        DB::beginTransaction();
         try {
-            // Log the incoming request for debugging
-            Log::info('Incoming booking request:', $request->all());
+            $bookingDetails = $request->input('booking_details');
+            $repDetails = $request->input('representative_info.details');
+            
+            $checkInDate = Carbon::parse($bookingDetails['check_in_date']);
+            $checkOutDate = Carbon::parse($bookingDetails['check_out_date']);
 
-            $validator = Validator::make($request->all(), [
-                'rooms' => 'required|array|min:1',
-                'rooms.*.id' => 'required|string',
-                'rooms.*.name' => 'required|string',
-                'rooms.*.room_type' => 'required|array',
-                'rooms.*.room_type.adjusted_price' => 'required|numeric',
-                'representatives' => 'required|array',
-                'checkInDate' => 'required|date',
-                'checkOutDate' => 'required|date|after:checkInDate',
-                'guestCount' => 'required|integer|min:1',
-                'subtotal' => 'required|numeric',
-                'representativeMode' => 'required|in:individual,all',
-                'bookingData' => 'sometimes|array',
-
-                'bookingData.notes' => 'sometimes|string|nullable'
+            // Create a minimal booking record
+            $booking = Booking::create([
+                'booking_code' => '', // Will be updated
+                'guest_name' => $repDetails['fullName'],
+                'guest_email' => $repDetails['email'],
+                'guest_phone' => $repDetails['phoneNumber'],
+                'check_in_date' => $checkInDate,
+                'check_out_date' => $checkOutDate,
+                'guest_count' => $bookingDetails['adults'] + count($bookingDetails['children']),
+                'total_price_vnd' => $bookingDetails['total_price'],
+                'status' => 'pending',
+                'notes' => $bookingDetails['notes'] ?? null,
             ]);
 
-            if ($validator->fails()) {
-                Log::error('Validation failed:', $validator->errors()->toArray());
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 400);
-            }
+            // Generate and save booking code
+            $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');
+            $booking->booking_code = $bookingCode;
+            $booking->save();
 
-            DB::beginTransaction();
+            $paymentMethod = $request->input('payment_method', 'vietqr');
 
-            try {
-                // Generate booking code
-                $bookingCode = 'LVS' . date('YmdHis') . rand(100, 999);
-                
-                // Get main representative (for 'all' mode use 'all' key, for individual use first room)
-                $mainRepresentative = $request->representativeMode === 'all' 
-                    ? $request->representatives['all'] 
-                    : reset($request->representatives);
+            // Map frontend values to the correct ENUM values in the database
+            $paymentTypeMap = [
+                'vietqr' => 'vietqr',
+                'pay_at_hotel' => 'at_hotel'
+            ];
+            $dbPaymentType = $paymentTypeMap[$paymentMethod] ?? $paymentMethod;
 
-                // Get booking data if available
-                $bookingData = $request->bookingData ?? null;
-                $adults = $bookingData['adults'] ?? 1;
-                $children = $bookingData['children'] ?? [];
-                $notes = $bookingData['notes'] ?? null;
+            // Create a pending payment record
+            Payment::create([
+                'booking_id' => $booking->booking_id,
+                'amount_vnd' => $booking->total_price_vnd,
+                'payment_type' => $dbPaymentType,
+                'status' => 'pending',
+            ]);
 
-                // Prepare children ages array
-                $childrenAges = [];
-                if ($bookingData && isset($bookingData['children']) && is_array($bookingData['children'])) {
-                    foreach ($bookingData['children'] as $child) {
-                        if (isset($child['age'])) {
-                            $childrenAges[] = $child['age'];
-                        }
-                    }
-                }
-                
-                // Debug logging
-                Log::info('Quick booking creation - childrenAges data:', [
-                    'bookingData' => $bookingData,
-                    'childrenAges' => $childrenAges,
-                    'childrenAges_json' => json_encode($childrenAges),
-                    'childrenAges_isEmpty' => empty($childrenAges)
-                ]);
+            DB::commit();
 
-                // Create main booking record
-                $bookingId = DB::table('booking')->insertGetId([
-                    'booking_code' => $bookingCode,
-                    'guest_name' => $mainRepresentative['fullName'],
-                    'guest_email' => $mainRepresentative['email'],
-                    'guest_phone' => $mainRepresentative['phoneNumber'],
-                    'guest_count' => $request->guestCount,
-                    'check_in_date' => $request->checkInDate,
-                    'check_out_date' => $request->checkOutDate,
-                    'total_price_vnd' => $request->subtotal,
-                    'status' => 'confirmed', // Set to confirmed since reception is creating it
-                    'quantity' => count($request->rooms),
+            Log::info('Reception: Temporary booking created successfully', ['booking_code' => $bookingCode, 'booking_id' => $booking->booking_id]);
 
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now()
-                ]);
-
-                // Create booking room records
-                foreach ($request->rooms as $room) {
-                    $representative = $request->representativeMode === 'all' 
-                        ? $request->representatives['all'] 
-                        : $request->representatives[$room['id']];
-
-                    $nights = Carbon::parse($request->checkOutDate)->diffInDays(Carbon::parse($request->checkInDate));
-                    $totalPrice = $room['room_type']['adjusted_price'] * $nights;
-
-                    // First insert representative to get the ID
-                    $representativeId = DB::table('representatives')->insertGetId([
-                        'booking_id' => $bookingId,
-                        'booking_code' => $bookingCode,
-                        'room_id' => intval($room['id']), // Convert string to int
-                        'full_name' => $representative['fullName'],
-                        'phone_number' => $representative['phoneNumber'],
-                        'email' => $representative['email'],
-                        'id_card' => $representative['idCard'],
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now()
-                    ]);
-
-                    // Then insert into booking_rooms table with representative_id
-                    DB::table('booking_rooms')->insert([
-                        'booking_id' => $bookingId,
-                        'booking_code' => $bookingCode,
-                        'room_id' => intval($room['id']), // Convert string to int
-                        'representative_id' => $representativeId,
-                        'price_per_night' => $room['room_type']['adjusted_price'],
-                        'nights' => $nights,
-                        'total_price' => $totalPrice,
-                        'check_in_date' => $request->checkInDate,
-                        'check_out_date' => $request->checkOutDate,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now()
-                    ]);
-                }
-
-                // Update room status to 'deposited'
-                $roomIds = array_map('intval', array_column($request->rooms, 'id')); // Convert to int
-                // DB::table('room')
-                //     ->whereIn('room_id', $roomIds)
-                //     ->update(['status' => 'deposited', 'updated_at' => Carbon::now()]);
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Booking created successfully',
-                    'booking_code' => $bookingCode,
-                    'booking_id' => $bookingId,
-                    'payment_content' => "LAVISHSTAY_$bookingCode"
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                throw $e;
-            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạo đơn đặt phòng tạm thời thành công!',
+                'booking_id' => $booking->booking_id,
+                'booking_code' => $bookingCode,
+            ], 201);
 
         } catch (\Exception $e) {
-            Log::error('Error creating booking: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Reception: Error creating temporary booking: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Lỗi khi tạo đặt phòng tạm thời.', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Confirm a booking after payment check.
+     */
+    public function confirmBooking(Request $request): JsonResponse
+    {
+        Log::info('Confirm booking request received:', $request->all());
+
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|integer|exists:booking,booking_id',
+            'payment_method' => 'required|string',
+            'booking_details' => 'required|array',
+            'rooms' => 'required|array|min:1',
+            'representative_info' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Booking confirmation validation failed:', $validator->errors()->toArray());
+            return response()->json(['success' => false, 'message' => 'Dữ liệu xác nhận không hợp lệ.', 'errors' => $validator->errors()], 422);
+        }
+
+        $data = $request->all();
+        $bookingId = $data['booking_id'];
+        $paymentMethod = $data['payment_method'];
+
+        // ** Step 1: Check Payment Status (Simulated) **
+        $paymentSuccessful = false;
+        if ($paymentMethod === 'pay_at_hotel') {
+            $paymentSuccessful = true;
+        } else {
+            // Placeholder for other payment gateway checks (e.g., VietQR)
+            $paymentSuccessful = true;
+        }
+
+        if (!$paymentSuccessful) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error creating booking',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'Thanh toán chưa hoàn tất. Đơn đặt phòng vẫn ở trạng thái chờ.',
+            ]);
+        }
+
+        // ** Step 2: If payment is successful, build the full booking **
+        DB::beginTransaction();
+        try {
+            $bookingDetails = $data['booking_details'];
+            $representativeInfo = $data['representative_info'];
+            $roomData = $data['rooms'];
+
+            $booking = DB::table('booking')->where('booking_id', $bookingId)->lockForUpdate()->first();
+
+            if ($booking->status !== 'pending') {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => 'Đặt phòng này đã được xử lý.'], 409);
+            }
+
+            foreach ($roomData as $room) {
+                $repDetails = ($representativeInfo['mode'] === 'all')
+                    ? $representativeInfo['details']
+                    : ($representativeInfo['details'][$room['room_id']] ?? null);
+
+                if (!$repDetails) continue;
+
+                $representativeId = DB::table('representatives')->insertGetId([
+                    'booking_id' => $bookingId,
+                    'booking_code' => $booking->booking_code,
+                    'room_id' => $room['room_id'],
+                    'full_name' => $repDetails['fullName'],
+                    'phone_number' => $repDetails['phoneNumber'],
+                    'email' => $repDetails['email'],
+                    'id_card' => $repDetails['idCard'],
+                    'notes' => $repDetails['notes'] ?? null,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                $package = DB::table('packages')->where('package_id', $room['package_id'])->first();
+                $nights = Carbon::parse($bookingDetails['check_out_date'])->diffInDays(Carbon::parse($bookingDetails['check_in_date']));
+
+                $bookingRoomId = DB::table('booking_rooms')->insertGetId([
+                    'booking_id' => $bookingId,
+                    'booking_code' => $booking->booking_code,
+                    'room_id' => $room['room_id'],
+                    'representative_id' => $representativeId,
+                    'option_name' => $package->package_name ?? 'Default Package',
+                    'price_per_night' => $package->price_per_room_per_night ?? 0,
+                    'nights' => $nights,
+                    'total_price' => ($package->price_per_room_per_night ?? 0) * $nights,
+                    'check_in_date' => $bookingDetails['check_in_date'],
+                    'check_out_date' => $bookingDetails['check_out_date'],
+                    'adults' => $room['adults'],
+                    'children' => count($room['children']),
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                if (!empty($room['children'])) {
+                    $childrenData = array_map(function($child, $index) use ($bookingRoomId) {
+                        return [
+                            'booking_room_id' => $bookingRoomId,
+                            'child_index' => $index + 1,
+                            'age' => $child['age'],
+                        ];
+                    }, $room['children'], array_keys($room['children']));
+                    DB::table('booking_room_children')->insert($childrenData);
+                }
+            }
+
+            $checkInDate = Carbon::parse($booking->check_in_date);
+            $newStatus = $checkInDate->isToday() ? 'operational' : 'confirmed';
+
+            DB::table('booking')->where('booking_id', $bookingId)->update([
+                'status' => $newStatus,
+                'updated_at' => Carbon::now(),
+            ]);
+
+            $roomIds = array_column($roomData, 'room_id');
+            DB::table('room')->whereIn('room_id', $roomIds)->update(['status' => 'occupied']);
+
+            DB::table('payment')->insert([
+                'booking_id' => $bookingId,
+                'amount_vnd' => $bookingDetails['total_price'],
+                'payment_type' => $paymentMethod,
+                'status' => 'completed',
+                'transaction_id' => 'RECEPTION_' . $booking->booking_code,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đặt phòng đã được xác nhận thành công!',
+                'booking_code' => $booking->booking_code,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error confirming booking: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Lỗi khi xác nhận đặt phòng.', 'error' => $e->getMessage()], 500);
         }
     }
 
