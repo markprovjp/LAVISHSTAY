@@ -39,7 +39,7 @@ import ConfirmRepresentativePayment from "./pages/reception/room-management/Conf
 import PaymentBookingReception from "./pages/reception/room-management/PaymentBookingReception";
 import RoomManagementDashboard from "./pages/reception/room-management/RoomManagementDashboard";
 import BookingManagementPage from "./pages/reception/booking-management";
-
+import PaymentSuccess from "./pages/reception/room-management/PaymentSuccess";
 import ChatBot from "./components/ui/ChatBot";
 import ContactFloatButton from './components/ui/ContactFloatButton';
 // Import profile components
@@ -156,6 +156,7 @@ const App: React.FC = React.memo(() => {
               <Route path="confirm-representative-payment" element={<ConfirmRepresentativePayment />} />
               <Route path="payment-booking" element={<PaymentBookingReception />} />
               <Route path="room-management/today" element={<RoomManagementDashboard />} />
+              <Route path="payment-success" element={<PaymentSuccess />} />
             </Route>            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />

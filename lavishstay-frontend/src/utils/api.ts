@@ -1,6 +1,7 @@
 // src/utils/api.ts
 import axios from 'axios';
 import { BookingQuotePayload } from '../hooks/useReception'; // Import the type
+import { CreateMultiRoomBookingRequest } from '../types/booking';
 
 // Create a base axios instance
 const api = axios.create({
@@ -249,7 +250,14 @@ export const receptionAPI = {
   },
 
   createBooking: async (data: any) => {
-    const response = await api.post('/reception/bookings', data);
+    const response = await api.post('/reception/bookings/create', data);
+    return response.data;
+  },
+
+ 
+ 
+  confirmBooking: async (data: any) => {
+    const response = await api.post('/reception/bookings/confirm', data);
     return response.data;
   },
 
@@ -361,7 +369,10 @@ export const paymentAPI = {
   getPaymentStatus: async (bookingId: string) => {
     const response = await api.get(`/payment/status/${bookingId}`);
     return response.data;
-  }
+  },
+  checkCPayPayment: async (bookingCode: string, amount: number) => {
+    return api.post('/payment/check-cpay', { booking_code: bookingCode, amount: amount });
+  },
 };
 
 export default api;

@@ -149,8 +149,8 @@ Route::prefix('payment')->group(function () {
     Route::post('/check-cpay', [PaymentController::class, 'checkCPayPayment']);
     
     // Debug route for CPay (development only)
-    Route::get('/debug-cpay', [PaymentController::class, 'debugCPayAPI']);
 });
+Route::post('/test-cpay-payment', [PaymentController::class, 'testCPayPayment']);
 
 // Pricing API Routes - Enhanced
 Route::prefix('pricing')->group(function () {
@@ -186,6 +186,7 @@ Route::prefix('reception')->group(function () {
     Route::post('/bookings/assign-multiple-rooms', [ReceptionController::class, 'assignMultipleRoomsToBooking']);
     Route::post('/bookings', [ReceptionController::class, 'createReceptionBooking']);
     Route::post('/bookings/create', [ReceptionController::class, 'createBooking']);
+    Route::post('/bookings/confirm', [ReceptionController::class, 'confirmBooking']);
     Route::put('/bookings/{bookingId}/status', [ReceptionController::class, 'updateBookingStatus']);
     Route::put('/bookings/{bookingId}/cancel', [ReceptionController::class, 'cancelBooking']);
     Route::post('/bookings/transfer', [ReceptionController::class, 'transferBooking']);

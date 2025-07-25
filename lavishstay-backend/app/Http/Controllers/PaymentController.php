@@ -18,7 +18,32 @@ use Illuminate\Support\Facades\Mail;
 
 class PaymentController extends Controller
 {
-
+public function testCPayPayment(Request $request)
+    {
+        $bookingCode = $request->get('booking_code');
+        $amount = $request->get('amount');
+        if (!$bookingCode || !$amount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thiếu booking_code hoặc amount'
+            ], 400);
+        }
+        try {
+            $result = $this->checkCPayAPI($bookingCode, $amount);
+            return response()->json([
+                'success' => !!$result,
+                'result' => $result,
+                'booking_code' => $bookingCode,
+                'amount' => $amount
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
 
     /**
      * Admin view
@@ -776,7 +801,7 @@ class PaymentController extends Controller
                 // Có cached data, hoàn thành tạo booking (tạo tất cả data cần thiết)
                 $this->completeBookingAfterPayment($request->booking_code);
             } else {
-                Log::warning("No cached rooms data found for booking: {$request->booking_code}, skip completing booking");
+                Log::warning("No cached rooms data found for booking 1: {$request->booking_code}, skip completing booking");
             }
 
             // Update booking status
@@ -1091,13 +1116,13 @@ class PaymentController extends Controller
                 
                 try {
                     // Kiểm tra xem có rooms data cached không trước khi complete booking
+                    Log::info("Checking cached rooms data for booking: {$bookingCode}");
                     $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
-                    
                     if ($roomsData) {
                         // Có cached data, hoàn thành booking trước
                         $this->completeBookingAfterPayment($bookingCode);
                     } else {
-                        Log::warning("No cached rooms data found for booking: {$bookingCode}, skip completing booking");
+                        Log::warning("No cached rooms data found for booking 2: {$bookingCode}, skip completing booking");
                     }
 
                     // Update booking status
@@ -1167,15 +1192,19 @@ class PaymentController extends Controller
     public function checkCPayAPI($bookingCode, $expectedAmount)
     {
         try {
-            Log::info("Calling CPay Google Apps Script API for booking: {$bookingCode}, amount: {$expectedAmount}");
+            $normalizedBookingCode = strtolower(trim(str_replace(' ', '', $bookingCode)));
+            Log::info("Calling CPay Google Apps Script API for booking: {$bookingCode} (Normalized: {$normalizedBookingCode}), amount: {$expectedAmount}");
             
             // URL của Google Apps Script đã deploy
             $cPayApiUrl = env('CPAY_GOOGLE_SCRIPT_URL', 'https://script.google.com/macros/s/AKfycbx8VhqXhSp0oY1uPrcM9nEr3iZZE2b8u8nXq7dKYX3UXQ0PmDe5Yh4sYNfU-QNGRgDN/exec');
             
+            // The content must match what the user is instructed to enter
+            Log::info("CPay API booking code to be sent: " . $normalizedBookingCode);
+
             // Prepare request data
             $requestData = [
                 'action' => 'checkPayment',
-                'booking_code' => $bookingCode,
+                'booking_code' => $normalizedBookingCode, // Send the normalized content string
                 'amount' => $expectedAmount
             ];
             
@@ -1314,7 +1343,7 @@ class PaymentController extends Controller
             // Lấy rooms data từ cache
             $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
             if (!$roomsData) {
-                Log::warning("No cached rooms data found for booking: {$bookingCode}");
+                Log::warning("No cached rooms data found for booking 3: {$bookingCode}");
                 return; // Không throw exception, chỉ log warning
             }
 

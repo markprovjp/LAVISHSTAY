@@ -1,6 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, message, Modal, Card, Tag, Button, Space, Spin, Timeline, List, Avatar, Empty, Alert, Typography, Row, Col, Flex, Divider, Statistic } from 'antd';
-import { UnorderedListOutlined, UserOutlined, CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined, SyncOutlined, QuestionCircleOutlined, TeamOutlined, HomeOutlined, ApartmentOutlined } from '@ant-design/icons';
+import {
+    Layout, message, Modal, Card, Tag, Button, Space, Spin, List, Avatar, Empty,
+    Alert, Typography, Row, Col, Flex, Divider, Statistic, Radio, Collapse, Descriptions, Tabs
+} from 'antd';
+import {
+    UnorderedListOutlined, UserOutlined, CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined,
+    SyncOutlined, QuestionCircleOutlined, TeamOutlined, HomeOutlined, ApartmentOutlined, WalletOutlined,
+    InfoCircleOutlined, StopOutlined
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useRoomManagementStore } from '../../../stores/roomManagementStore';
 import { RoomFilters } from '../../../types/room';
@@ -11,21 +18,23 @@ import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms, u
 import { statusOptions } from '../../../constants/roomStatus';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
+import { formatCurrency } from '../../../utils/helpers';
 
 dayjs.locale('vi');
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
+const { Panel } = Collapse;
 
 const RoomManagementDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { viewMode } = useRoomManagementStore();
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const [roomDetailVisible, setRoomDetailVisible] = useState(false);
+    const [bookingModalVisible, setBookingModalVisible] = useState(false);
     const [currentFilters, setCurrentFilters] = useState<RoomFilters>({});
-    const [multiSelectMode, setMultiSelectMode] = useState(false);
     const [selectedRoomIds, setSelectedRoomIds] = useState<Set<string>>(new Set());
-    const [guestCount, setGuestCount] = useState(2);
+    const [selectedPackages, setSelectedPackages] = useState<Record<string, number>>({});
 
     // --- API HOOKS ---
     const { data: roomTypesData } = useGetReceptionRoomTypes();
@@ -39,23 +48,26 @@ const RoomManagementDashboard: React.FC = () => {
         hasDateRange ? {
             check_in_date: currentFilters.dateRange![0],
             check_out_date: currentFilters.dateRange![1],
-        } : undefined
+        } : undefined,
+        {
+            enabled: hasDateRange, // Only run query if dates are selected
+        }
     );
 
     const { data: roomDetailsData, isLoading: isDetailsLoading, error: detailsError } = useGetRoomDetails(selectedRoomId);
 
     const availableRoomIdSet = useMemo(() => {
-        if (!hasDateRange) return null;
+        if (!hasDateRange || !availableRoomsData) return null;
         const ids = new Set<string>();
-        (availableRoomsData?.data || []).forEach((roomType: any) => {
-            roomType.available_rooms?.forEach((room: any) => ids.add(room.room_id));
+        (availableRoomsData.data || []).forEach((roomType: any) => {
+            roomType.available_rooms?.forEach((room: any) => ids.add(room.room_id.toString()));
         });
         return ids;
     }, [hasDateRange, availableRoomsData]);
 
     const filteredRoomsToDisplay = useMemo(() => {
         return masterRoomList.filter((room: any) => {
-            if (availableRoomIdSet && !availableRoomIdSet.has(room.id)) {
+            if (availableRoomIdSet && !availableRoomIdSet.has(room.id.toString())) {
                 return false;
             }
             if (currentFilters.roomType && String(room.room_type?.id) !== String(currentFilters.roomType)) {
@@ -69,18 +81,13 @@ const RoomManagementDashboard: React.FC = () => {
 
     const handleSearch = (searchFilters: RoomFilters) => {
         setCurrentFilters(searchFilters);
+        setSelectedRoomIds(new Set());
+        setSelectedPackages({});
     };
 
-    const handleRoomClick = (room: any) => {
-        setSelectedRoomId(room.id);
+    const handleViewDetails = (roomId: string) => {
+        setSelectedRoomId(roomId);
         setRoomDetailVisible(true);
-    };
-
-    const handleMultiSelectModeChange = (enabled: boolean) => {
-        setMultiSelectMode(enabled);
-        if (!enabled) {
-            setSelectedRoomIds(new Set());
-        }
     };
 
     const handleRoomSelect = (roomId: string, selected: boolean) => {
@@ -105,23 +112,50 @@ const RoomManagementDashboard: React.FC = () => {
 
     const handleProceedToBooking = () => {
         if (selectedRoomIds.size === 0) {
-            message.warning('Vui lòng chọn ít nhất một phòng');
+            message.warning('Vui lòng chọn ít nhất một phòng.');
             return;
         }
+        if (!hasDateRange) {
+            message.error('Vui lòng chọn ngày nhận và trả phòng để tiếp tục.');
+            return;
+        }
+        const initialPackages: Record<string, number> = {};
         const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
+        const groupedByRoomType = groupRoomsByType(selectedRoomsList);
+
+        Object.keys(groupedByRoomType).forEach(roomTypeId => {
+            const roomTypeData = availableRoomsData?.data.find((rt: any) => rt.room_type_id.toString() === roomTypeId);
+            if (roomTypeData && roomTypeData.package_options && roomTypeData.package_options.length > 0) {
+                const cheapestPackage = roomTypeData.package_options.reduce((prev: any, curr: any) =>
+                    prev.price_per_room_per_night < curr.price_per_room_per_night ? prev : curr
+                );
+                initialPackages[roomTypeId] = cheapestPackage.package_id;
+            }
+        });
+        setSelectedPackages(initialPackages);
+        setBookingModalVisible(true);
+    };
+
+    const handleConfirmAndPay = () => {
+        const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
+
+        const guestRoomsForBooking = Array(selectedRoomsList.length).fill({
+            adults: 1, // Default value, can be changed in the next step
+            children: [],
+        });
+
+        const bookingData = {
+            checkInDate: currentFilters.dateRange![0],
+            checkOutDate: currentFilters.dateRange![1],
+            guestRooms: guestRoomsForBooking,
+            selectedPackages,
+            availableRoomsData: availableRoomsData,
+        };
 
         navigate('/reception/confirm-representative-payment', {
             state: {
                 selectedRooms: selectedRoomsList,
-                guestCount,
-                checkInDate: hasDateRange ? currentFilters.dateRange![0] : undefined,
-                checkOutDate: hasDateRange ? currentFilters.dateRange![1] : undefined,
-                bookingData: hasDateRange ? {
-                    checkInDate: currentFilters.dateRange![0],
-                    checkOutDate: currentFilters.dateRange![1],
-                    adults: 1,
-                    children: []
-                } : undefined
+                bookingData,
             }
         });
     };
@@ -129,6 +163,167 @@ const RoomManagementDashboard: React.FC = () => {
     const handleCloseModal = () => {
         setRoomDetailVisible(false);
         setSelectedRoomId(null);
+    };
+
+    const groupRoomsByType = (rooms: any[]) => {
+        return rooms.reduce((acc, room) => {
+            const typeId = room.room_type.id.toString();
+            if (!acc[typeId]) {
+                acc[typeId] = {
+                    roomTypeName: room.room_type.name,
+                    rooms: [],
+                };
+            }
+            acc[typeId].rooms.push(room);
+            return acc;
+        }, {} as Record<string, { roomTypeName: string; rooms: any[] }>);
+    };
+
+    const renderPolicy = (policy: any, type: 'cancellation' | 'deposit' | 'check_out') => {
+        if (!policy) return <Text type="secondary">Không có thông tin.</Text>;
+
+        const descriptions = {
+            cancellation: (
+                <>
+                    <Descriptions.Item label="Tên chính sách">{policy.name}</Descriptions.Item>
+                    <Descriptions.Item label="Huỷ miễn phí trước">{policy.free_cancellation_days} ngày</Descriptions.Item>
+                    <Descriptions.Item label="Phí huỷ">{policy.penalty_percentage > 0 ? `${policy.penalty_percentage}%` : formatCurrency(policy.penalty_fixed_amount_vnd)}</Descriptions.Item>
+                    <Descriptions.Item label="Mô tả" span={3}>{policy.description}</Descriptions.Item>
+                </>
+            ),
+            deposit: (
+                <>
+                    <Descriptions.Item label="Tên chính sách">{policy.name}</Descriptions.Item>
+                    <Descriptions.Item label="Phần trăm cọc">{policy.deposit_percentage}%</Descriptions.Item>
+                    <Descriptions.Item label="Số tiền cọc cố định">{formatCurrency(policy.deposit_fixed_amount_vnd)}</Descriptions.Item>
+                    <Descriptions.Item label="Mô tả" span={3}>{policy.description}</Descriptions.Item>
+                </>
+            ),
+            check_out: (
+                <>
+                    <Descriptions.Item label="Tên chính sách">{policy.name}</Descriptions.Item>
+                    <Descriptions.Item label="Giờ trả phòng">{policy.standard_check_out_time}</Descriptions.Item>
+                    <Descriptions.Item label="Phí trả phòng trễ">{formatCurrency(policy.late_check_out_fee_vnd)}</Descriptions.Item>
+                    <Descriptions.Item label="Mô tả" span={3}>{policy.description}</Descriptions.Item>
+                </>
+            ),
+        };
+
+        return (
+            <Descriptions bordered size="small" column={1}>
+                {descriptions[type]}
+            </Descriptions>
+        );
+    };
+
+    const renderBookingConfirmationModal = () => {
+        const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
+        const groupedRooms = groupRoomsByType(selectedRoomsList);
+
+        if (!availableRoomsData) {
+            return (
+                <Modal title="Xác nhận đặt phòng" open={bookingModalVisible} onCancel={() => setBookingModalVisible(false)} footer={null}>
+                    <Spin tip="Đang tải thông tin gói phòng..." />
+                </Modal>
+            );
+        }
+
+        let totalCost = 0;
+        Object.entries(groupedRooms).forEach(([roomTypeId, { rooms }]) => {
+            const roomTypeData = availableRoomsData.data.find((rt: any) => rt.room_type_id.toString() === roomTypeId);
+            const selectedPackageId = selectedPackages[roomTypeId];
+            if (roomTypeData && selectedPackageId) {
+                const selectedPackage = roomTypeData.package_options.find((p: any) => p.package_id === selectedPackageId);
+                if (selectedPackage) {
+                    totalCost += selectedPackage.price_per_room_per_night * rooms.length;
+                }
+            }
+        });
+
+        return (
+            <Modal
+                title={<Flex align="center" gap="middle"><ApartmentOutlined /><Title level={3} className="!m-0">Xác nhận lựa chọn gói phòng</Title></Flex>}
+                open={bookingModalVisible}
+                onCancel={() => setBookingModalVisible(false)}
+                width={1200}
+                centered
+                footer={[
+                    <Button key="back" onClick={() => setBookingModalVisible(false)}>
+                        Huỷ
+                    </Button>,
+                    <Button key="submit" type="primary" icon={<WalletOutlined />} onClick={handleConfirmAndPay} disabled={Object.keys(selectedPackages).length === 0}>
+                        Xác nhận & Thanh toán ({formatCurrency(totalCost)})
+                    </Button>,
+                ]}
+            >
+                <Paragraph type="secondary">
+                    Vui lòng chọn gói dịch vụ cho từng loại phòng bạn đã chọn.
+                    Giá và chính sách sẽ được áp dụng tương ứng.
+                </Paragraph>
+                <Row gutter={[16, 16]}>
+                    {Object.entries(groupedRooms).map(([roomTypeId, { roomTypeName, rooms }]) => {
+                        const roomTypeData = availableRoomsData.data.find((rt: any) => rt.room_type_id.toString() === roomTypeId);
+                        if (!roomTypeData) return null;
+
+                        const selectedPackageId = selectedPackages[roomTypeId];
+                        const selectedPackageDetails = roomTypeData.package_options.find((p: any) => p.package_id === selectedPackageId);
+
+                        return (
+                            <Col span={24} key={roomTypeId}>
+                                <Card
+                                    title={<Text strong>{`${roomTypeName} (${rooms.length} phòng)`}</Text>}
+                                    extra={<Text>Phòng: {rooms.map(r => r.name).join(', ')}</Text>}
+                                >
+                                    <Radio.Group
+                                        onChange={(e) => setSelectedPackages(prev => ({ ...prev, [roomTypeId]: e.target.value }))}
+                                        value={selectedPackageId}
+                                        style={{ width: '100%' }}
+                                    >
+                                        <Space direction="vertical" style={{ width: '100%' }}>
+                                            {roomTypeData.package_options.map((pkg: any) => (
+                                                <Radio key={pkg.package_id} value={pkg.package_id} style={{ width: '100%' }}>
+                                                    <Card size="small" hoverable>
+                                                        <Flex justify="space-between" align="center">
+                                                            <div>
+                                                                <Text strong>{pkg.package_name}</Text>
+                                                                <Paragraph type="secondary" className="!mb-0">{pkg.package_description}</Paragraph>
+                                                            </div>
+                                                            <Statistic
+                                                                title="Giá mỗi đêm"
+                                                                value={formatCurrency(pkg.price_per_room_per_night)}
+                                                                valueStyle={{ color: '#3f8600', fontSize: '1.2rem' }}
+                                                            />
+                                                        </Flex>
+                                                    </Card>
+                                                </Radio>
+                                            ))}
+                                        </Space>
+                                    </Radio.Group>
+
+                                    {selectedPackageDetails && (
+                                        <Collapse ghost style={{ marginTop: 16 }}>
+                                            <Panel header={<Text strong>Chi tiết chính sách của gói đã chọn</Text>} key="1">
+                                                <Tabs defaultActiveKey="cancellation" size="small">
+                                                    <Tabs.TabPane tab={<><StopOutlined /> Chính sách huỷ</>} key="cancellation">
+                                                        {renderPolicy(selectedPackageDetails.policies.cancellation, 'cancellation')}
+                                                    </Tabs.TabPane>
+                                                    <Tabs.TabPane tab={<><WalletOutlined /> Chính sách cọc</>} key="deposit">
+                                                        {renderPolicy(selectedPackageDetails.policies.deposit, 'deposit')}
+                                                    </Tabs.TabPane>
+                                                    <Tabs.TabPane tab={<><CalendarOutlined /> Chính sách trả phòng</>} key="check_out">
+                                                        {renderPolicy(selectedPackageDetails.policies.check_out, 'check_out')}
+                                                    </Tabs.TabPane>
+                                                </Tabs>
+                                            </Panel>
+                                        </Collapse>
+                                    )}
+                                </Card>
+                            </Col>
+                        );
+                    })}
+                </Row>
+            </Modal>
+        );
     };
 
     const renderRoomDetailModal = () => {
@@ -259,25 +454,19 @@ const RoomManagementDashboard: React.FC = () => {
                     onSearch={handleSearch}
                     loading={isLoading}
                     selectedRoomsCount={selectedRoomIds.size}
-                    onMultiSelectModeChange={handleMultiSelectModeChange}
-                    multiSelectMode={multiSelectMode}
+                    onProceedToBooking={handleProceedToBooking}
                 />
 
                 <Card>
                     {viewMode === 'grid' ? (
                         <RoomGridView
                             rooms={filteredRoomsToDisplay}
-                            allRooms={masterRoomList}
                             loading={isLoading}
-                            onRoomClick={handleRoomClick}
-                            multiSelectMode={multiSelectMode}
+                            multiSelectMode={true}
                             selectedRooms={selectedRoomIds}
                             onRoomSelect={handleRoomSelect}
                             onBulkRoomSelect={handleBulkRoomSelect}
-                            navigate={navigate}
-                            hasDateFilter={hasDateRange}
-                            checkInDate={hasDateRange ? currentFilters.dateRange![0] : undefined}
-                            checkOutDate={hasDateRange ? currentFilters.dateRange![1] : undefined}
+                            onViewDetails={handleViewDetails}
                         />
                     ) : (
                         <RoomTimelineView
@@ -290,6 +479,7 @@ const RoomManagementDashboard: React.FC = () => {
                 </Card>
 
                 {renderRoomDetailModal()}
+                {renderBookingConfirmationModal()}
             </Content>
         </Layout>
     );
