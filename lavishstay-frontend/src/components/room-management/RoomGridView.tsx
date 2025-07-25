@@ -1,12 +1,20 @@
 import React, { memo, useState, useCallback } from 'react';
-import { Card, Row, Col, Typography, Empty, Spin, Tag, Checkbox, Button, Space, Dropdown, Menu, Modal, Form, Input, InputNumber, Select, Divider, Flex, App } from 'antd';
-import { UserOutlined, SettingOutlined, PlusOutlined, MinusCircleOutlined, TeamOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Typography, Empty, Spin, Tag, Checkbox, Button, Space, Dropdown, Menu, Modal, Form, Input, InputNumber, Select, Divider, Flex, App, Badge } from 'antd';
+import { UserOutlined, SettingOutlined, PlusOutlined, MinusCircleOutlined, TeamOutlined, ClockCircleOutlined, DollarCircleOutlined, HomeOutlined, CheckCircleFilled, CloseCircleOutlined } from '@ant-design/icons';
 import { statusOptions } from '../../constants/roomStatus';
 import { useUpdateRoomStatus, useCalculateBookingQuote, BookingQuotePayload } from '../../hooks/useReception';
 
-const { Text, Title } = Typography;
+const { Text, Title, Paragraph } = Typography;
 const { Option } = Select;
-
+const iconMap = {
+    CheckCircleFilled: <CheckCircleFilled />,
+    UserOutlined: <UserOutlined />,
+    SettingOutlined: <SettingOutlined />,
+    ClockCircleOutlined: <ClockCircleOutlined />,
+    DollarCircleOutlined: <DollarCircleOutlined />,
+    HomeOutlined: <HomeOutlined />,
+    CloseCircleOutlined: <CloseCircleOutlined />,
+};
 // --- Type Definitions ---
 interface Child { age: number; }
 interface GuestInfo { adults: number; children: Child[]; }
@@ -67,12 +75,19 @@ const RoomCard: React.FC<{
     onMenuClick: (key: string, room: any) => void;
     hasDateFilter: boolean;
 }> = memo(({ room, isSelected, multiSelectMode, onRoomSelect, onRoomClick, onMenuClick, hasDateFilter }) => {
-    const statusInfo = statusOptions.find(s => s.value === room.status) || { label: room.status, color: 'default' };
+    const statusInfoRaw = statusOptions.find(s => s.value === room.status);
+    const statusInfo = statusInfoRaw
+        ? {
+            ...statusInfoRaw,
+            icon: typeof statusInfoRaw.icon === 'string' ? iconMap[statusInfoRaw.icon as keyof typeof iconMap] : statusInfoRaw.icon
+        }
+        : { label: room.status, color: 'default', icon: <HomeOutlined /> };
+    const { booking_info } = room;
 
     const contextMenu = (
         <Menu onClick={({ key }) => onMenuClick(key, room)}>
             {hasDateFilter ? (
-                <Menu.Item key="book-normal" icon={<PlusOutlined />}>Đặt phòng</Menu.Item>
+                <Menu.Item key="book-normal" icon={<PlusOutlined />}>Đặt phòng theo ngày</Menu.Item>
             ) : (
                 <>
                     <Menu.Item key="book-quick-1" icon={<ClockCircleOutlined />}>Đặt nhanh 1 đêm</Menu.Item>
@@ -81,42 +96,96 @@ const RoomCard: React.FC<{
             )}
             <Menu.Divider />
             <Menu.SubMenu key="status" title="Cập nhật trạng thái" icon={<SettingOutlined />}>
-                {statusOptions.map(s => <Menu.Item key={`status-${s.value}`}>{s.label}</Menu.Item>)}
+                {statusOptions.map(s => (
+                    <Menu.Item >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {typeof s.icon === 'string' ? iconMap[s.icon as keyof typeof iconMap] : s.icon}
+                            {s.label}
+                        </span>
+                    </Menu.Item>
+                ))}
             </Menu.SubMenu>
         </Menu>
     );
 
+    const cardClasses = [
+        "h-full", "cursor-pointer", "transition-all", "duration-300", "ease-in-out", "shadow-sm", "hover:shadow-xl", "border",
+        isSelected ? "ring-2 ring-blue-500 border-blue-400" : "border-gray-200",
+        booking_info ? "bg-orange-50" : "",
+        room.status !== 'available' && !booking_info ? "bg-gray-50" : "",
+    ].join(' ');
+
+    const handleCardClick = () => {
+        if (multiSelectMode && room.status === 'available') {
+            onRoomSelect(room.id, !isSelected);
+        } else {
+            onRoomClick(room);
+        }
+    };
+
     return (
         <Dropdown overlay={contextMenu} trigger={['contextMenu']}>
-            <Card
-                className={`h-full cursor-pointer transition-all duration-300 ease-in-out border ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'} ${room.status !== 'available' && !multiSelectMode ? 'bg-gray-50' : 'bg-white'} hover:shadow-lg hover:border-blue-400`}
-                onClick={() => multiSelectMode ? onRoomSelect(room.id, !isSelected) : onRoomClick(room)}
-                size="small" styles={{ body: { padding: 0, height: '100%' } }}
-            >
-                <Flex vertical className="h-full">
-                    <div className="p-3">
+            <div className="relative h-full">
+                <Card
+                    className={cardClasses}
+                    onClick={handleCardClick}
+                    size="small"
+                    styles={{ body: { padding: '12px', height: '100%' } }}
+                >
+                    <Flex vertical className="h-full">
                         <Flex justify="space-between" align="start">
-                            <Flex align="center" gap={8}>
-                                {multiSelectMode && room.status === 'available' && (
-                                    <Checkbox
-                                        checked={isSelected}
-                                        onChange={(e) => {
-                                            e.stopPropagation();
-                                            onRoomSelect(room.id, e.target.checked);
-                                        }}
-                                    />
-                                )}
-                                <Title level={5} className="!mb-0">{room.name}</Title>
-                            </Flex>
-                            <Tag color={statusInfo.color}>{statusInfo.label}</Tag>
+                            <Title level={5} className="!mb-0 pr-2 truncate">{room.name}</Title>
+                            <Tag icon={statusInfo.icon} color={statusInfo.color}>{statusInfo.label}</Tag>
                         </Flex>
-                        <Text type="secondary" className="text-xs">{room.room_type?.name || 'N/A'}</Text>
+                        <Text type="secondary" className="text-xs block mb-2">{room.room_type?.name || 'N/A'}</Text>
+
+                        {booking_info ? (
+                            <Card size="small" className="mt-2 bg-orange-100 border-orange-200 flex-grow">
+                                <Flex align="center" gap={8}>
+                                    <UserOutlined className="text-orange-700" />
+                                    <Text strong className="text-sm text-orange-900 truncate" title={booking_info.guest_name}>
+                                        {booking_info.guest_name}
+                                    </Text>
+                                </Flex>
+                                <Divider className="my-1" />
+                                <Flex align="center" gap={8}>
+                                    <ClockCircleOutlined className="text-orange-700" />
+                                    <Text className="text-xs text-gray-700">
+                                        {booking_info.check_in} → {booking_info.check_out}
+                                    </Text>
+                                </Flex>
+                            </Card>
+                        ) : (
+                            <div className="flex-grow flex items-center justify-center">
+                                <Flex vertical align="center" gap={4}>
+                                    <DollarCircleOutlined className="text-2xl text-gray-300" />
+                                    <Text className="font-semibold text-lg text-gray-700">
+                                        {new Intl.NumberFormat('vi-VN').format(room.room_type?.adjusted_price || 0)}
+                                    </Text>
+                                    <Text type="secondary" className="text-xs">VNĐ / đêm</Text>
+                                </Flex>
+                            </div>
+                        )}
+
+                        <div className="mt-auto pt-2 text-center">
+                            <Text className="text-xs text-gray-400">Nhấn chuột phải để xem tùy chọn</Text>
+                        </div>
+                    </Flex>
+                </Card>
+                {multiSelectMode && room.status === 'available' && (
+                    <Checkbox
+                        className="absolute top-2 right-2 z-10"
+                        checked={isSelected}
+                        onClick={(e) => e.stopPropagation()} // Prevent card click
+                        onChange={(e) => onRoomSelect(room.id, e.target.checked)}
+                    />
+                )}
+                {isSelected && (
+                    <div className="absolute top-0 left-0 w-full h-full bg-blue-500 bg-opacity-10 pointer-events-none flex items-center justify-center">
+                        <CheckCircleFilled className="text-4xl text-white text-opacity-80" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }} />
                     </div>
-                    <div className="mt-auto p-2 border-t border-gray-100 bg-gray-50 text-center">
-                        <Text className="text-xs text-gray-400">Nhấn chuột phải để xem tùy chọn</Text>
-                    </div>
-                </Flex>
-            </Card>
+                )}
+            </div>
         </Dropdown>
     );
 });
@@ -126,11 +195,11 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     rooms,
     allRooms,
     loading = false,
-    onRoomClick = () => {},
+    onRoomClick = () => { },
     multiSelectMode = false,
     selectedRooms = new Set(),
-    onRoomSelect = () => {},
-    onBulkRoomSelect = () => {},
+    onRoomSelect = () => { },
+    onBulkRoomSelect = () => { },
     navigate,
     hasDateFilter = false,
     checkInDate,
@@ -158,12 +227,10 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     }, [bookingForm]);
 
     const handleConfirmBooking = useCallback(async () => {
-        console.log("hàm handleConfirmBooking được gọi");
         if (!navigate || !checkInDate || !checkOutDate) {
             message.error("Thiếu thông tin ngày để tiến hành đặt phòng.");
             return;
         };
-        console.log("Booking target:", bookingTarget);
         try {
             const values = await bookingForm.validateFields();
             const cleanedGuestsData: RoomGuestData = {};
@@ -186,9 +253,8 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
                     children: bookingPayload.guests[room.id]?.children || [],
                 }))
             };
-            console.log("Quote payload:", quotePayload);
             const quoteResult = await calculateQuote(quotePayload);
-            
+
             navigate('/reception/confirm-representative-payment', {
                 state: { selectedRooms: bookingTarget, bookingData: bookingPayload, checkInDate, checkOutDate, quoteData: quoteResult.data }
             });
@@ -205,8 +271,8 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
         else if (key.startsWith('status-')) updateRoomStatusMutation.mutate({ roomId: parseInt(room.id), status: key.replace('status-', '') });
     }, [openBookingModal, updateRoomStatusMutation]);
 
-    if (loading) return <div className="flex justify-center items-center h-64"><Spin size="large" /></div>;
-    if (rooms.length === 0) return <Empty description="Không có phòng nào phù hợp" />;
+    if (loading) return <div className="flex justify-center items-center h-96"><Spin size="large" tip="Đang tải danh sách phòng..." /></div>;
+    if (rooms.length === 0) return <Empty className="py-16" description={<Title level={5}>Không có phòng nào phù hợp</Title>} />;
 
     const roomsByFloor = rooms.reduce((acc: any, room: any) => {
         const floor = room.floor || 'Chưa xác định';
@@ -216,13 +282,16 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
     }, {});
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {multiSelectMode && (
-                <Card>
+                <Card bordered={false} className=" border border-blue-200">
                     <Flex justify="space-between" align="center">
-                        <Text strong>Đã chọn: {selectedRooms.size} phòng</Text>
+                        <Badge count={selectedRooms.size} overflowCount={99}>
+                            <Title level={5} className="!m-0 mr-4">Phòng đã chọn</Title>
+                        </Badge>
+                        <Paragraph type="secondary" className="!m-0 flex-grow">Chọn các phòng còn trống để thêm vào danh sách đặt phòng.</Paragraph>
                         {selectedRooms.size > 0 && (
-                            <Button type="primary" size="large" onClick={() => openBookingModal(allRooms.filter(r => selectedRooms.has(r.id)))}>
+                            <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => openBookingModal(allRooms.filter(r => selectedRooms.has(r.id)))}>
                                 Tiến hành đặt {selectedRooms.size} phòng
                             </Button>
                         )}
@@ -233,18 +302,18 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
             {Object.keys(roomsByFloor).sort((a, b) => parseInt(a) - parseInt(b)).map(floor => (
                 <div key={floor}>
                     <Flex justify="space-between" align="center" className="mb-4">
-                        <Title level={4}>Tầng {floor}</Title>
+                        <Title level={3} className="!mb-0">Tầng {floor}</Title>
                         {multiSelectMode && (
-                            <Button size="small" onClick={() => {
+                            <Button type="link" onClick={() => {
                                 const floorRoomIds = roomsByFloor[floor].filter((r: any) => r.status === 'available').map((r: any) => r.id);
                                 const allSelected = floorRoomIds.every((id: string) => selectedRooms.has(id));
                                 onBulkRoomSelect(floorRoomIds, !allSelected);
                             }}>
-                                {roomsByFloor[floor].filter((r: any) => r.status === 'available').every((r: any) => selectedRooms.has(r.id)) ? 'Bỏ chọn cả tầng' : 'Chọn cả tầng'}
+                                {roomsByFloor[floor].filter((r: any) => r.status === 'available').every((r: any) => selectedRooms.has(r.id)) ? 'Bỏ chọn tất cả' : 'Chọn tất cả phòng trống'}
                             </Button>
                         )}
                     </Flex>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[20, 20]}>
                         {roomsByFloor[floor].map((room: any) => (
                             <Col key={room.id} xs={12} sm={8} md={6} lg={6} xl={4}>
                                 <RoomCard

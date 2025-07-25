@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, message, Modal, Descriptions, Tag, Button, Space } from 'antd';
-import { UnorderedListOutlined } from '@ant-design/icons';
+import { Layout, message, Modal, Card, Tag, Button, Space, Spin, Timeline, List, Avatar, Empty, Alert, Typography, Row, Col, Flex, Divider, Statistic } from 'antd';
+import { UnorderedListOutlined, UserOutlined, CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined, SyncOutlined, QuestionCircleOutlined, TeamOutlined, HomeOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useRoomManagementStore } from '../../../stores/roomManagementStore';
 import { RoomFilters } from '../../../types/room';
 import FilterBar from '../../../components/room-management/FilterBar';
 import RoomGridView from '../../../components/room-management/RoomGridView';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
-import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms } from '../../../hooks/useReception';
+import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms, useGetRoomDetails } from '../../../hooks/useReception';
 import { statusOptions } from '../../../constants/roomStatus';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
@@ -15,11 +15,12 @@ import 'dayjs/locale/vi';
 dayjs.locale('vi');
 
 const { Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
 
 const RoomManagementDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { viewMode } = useRoomManagementStore();
-    const [selectedRoom, setSelectedRoom] = useState<any>(null);
+    const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const [roomDetailVisible, setRoomDetailVisible] = useState(false);
     const [currentFilters, setCurrentFilters] = useState<RoomFilters>({});
     const [multiSelectMode, setMultiSelectMode] = useState(false);
@@ -40,6 +41,8 @@ const RoomManagementDashboard: React.FC = () => {
             check_out_date: currentFilters.dateRange![1],
         } : undefined
     );
+
+    const { data: roomDetailsData, isLoading: isDetailsLoading, error: detailsError } = useGetRoomDetails(selectedRoomId);
 
     const availableRoomIdSet = useMemo(() => {
         if (!hasDateRange) return null;
@@ -69,7 +72,7 @@ const RoomManagementDashboard: React.FC = () => {
     };
 
     const handleRoomClick = (room: any) => {
-        setSelectedRoom(room);
+        setSelectedRoomId(room.id);
         setRoomDetailVisible(true);
     };
 
@@ -106,7 +109,7 @@ const RoomManagementDashboard: React.FC = () => {
             return;
         }
         const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
-      
+
         navigate('/reception/confirm-representative-payment', {
             state: {
                 selectedRooms: selectedRoomsList,
@@ -125,77 +128,168 @@ const RoomManagementDashboard: React.FC = () => {
 
     const handleCloseModal = () => {
         setRoomDetailVisible(false);
-        setSelectedRoom(null);
+        setSelectedRoomId(null);
     };
 
-    const renderRoomDetail = () => {
-        if (!selectedRoom) return null;
-        const roomType = selectedRoom.room_type || {};
+    const renderRoomDetailModal = () => {
+        const room = roomDetailsData?.data?.room;
+        const currentBooking = roomDetailsData?.data?.current_booking;
+        const bookingHistory = roomDetailsData?.data?.booking_history || [];
+        const statusStyles: { [key: string]: { color: string; icon: React.ReactNode; text: string } } = {
+            Completed: { color: 'green', icon: <CheckCircleOutlined />, text: 'Hoàn thành' },
+            Confirmed: { color: 'blue', icon: <SyncOutlined spin />, text: 'Đã xác nhận' },
+            Operational: { color: 'cyan', icon: <SyncOutlined spin />, text: 'Đang ở' },
+            Cancelled: { color: 'red', icon: <CloseCircleOutlined />, text: 'Đã hủy' },
+            default: { color: 'default', icon: <QuestionCircleOutlined />, text: 'Không xác định' },
+        };
+
         return (
-            <Descriptions column={2} bordered size="small">
-                <Descriptions.Item label="Số phòng">{selectedRoom.name || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Tầng">Tầng {selectedRoom.floor || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Loại phòng">{roomType.name || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Giá phòng">{roomType.base_price ? `${new Intl.NumberFormat('vi-VN').format(roomType.base_price)} VNĐ/đêm` : 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Trạng thái"><Tag color={statusOptions.find(s => s.value === selectedRoom.status)?.color || 'default'}>{statusOptions.find(s => s.value === selectedRoom.status)?.label || selectedRoom.status}</Tag></Descriptions.Item>
-                <Descriptions.Item label="ID phòng">{selectedRoom.id}</Descriptions.Item>
-            </Descriptions>
+            <Modal
+                title={<Flex align="center" gap="middle"><HomeOutlined /><Title level={3} className="!m-0">Chi tiết phòng {room?.name}</Title></Flex>}
+                open={roomDetailVisible}
+                onCancel={handleCloseModal}
+                footer={<Button key="close" type="primary" onClick={handleCloseModal} size="large">Đóng</Button>}
+                width={1000}
+                centered
+            >
+                {isDetailsLoading && <div className="text-center p-20"><Spin size="large" /></div>}
+                {detailsError && <Alert message="Lỗi" description="Không thể tải chi tiết phòng." type="error" showIcon />}
+                {room && !isDetailsLoading && (
+                    <Row gutter={[24, 24]}>
+                        <Col span={10}>
+                            <Space direction="vertical" size="large" className="w-full">
+                                <Card title="Thông tin phòng" >
+                                    <Flex justify="space-between">
+                                        <Text strong>Loại phòng:</Text>
+                                        <Text>{room.room_type_name}</Text>
+                                    </Flex>
+                                    <Divider className="my-2" />
+                                    <Flex justify="space-between">
+                                        <Text strong>Tầng:</Text>
+                                        <Text>{room.floor_id}</Text>
+                                    </Flex>
+                                    <Divider className="my-2" />
+                                    <Flex justify="space-between">
+                                        <Text strong>Trạng thái:</Text>
+                                        <Tag color={statusOptions.find(s => s.value === room.status)?.color || 'default'}>
+                                            {statusOptions.find(s => s.value === room.status)?.label || room.status}
+                                        </Tag>
+                                    </Flex>
+                                </Card>
+
+                                <Card title="Thông tin hiện tại" >
+                                    {currentBooking ? (
+                                        <Space direction="vertical" className="w-full">
+                                            <Flex align="center" gap={8}>
+                                                <UserOutlined className="text-blue-600" />
+                                                <Text strong>{currentBooking.guest_name}</Text>
+                                            </Flex>
+                                            <Flex align="center" gap={8}>
+                                                <TeamOutlined className="text-blue-600" />
+                                                <Text>{currentBooking.adults} người lớn, {currentBooking.children || 0} trẻ em</Text>
+                                            </Flex>
+                                            <Flex align="center" gap={8}>
+                                                <CalendarOutlined className="text-blue-600" />
+                                                <Text>{dayjs(currentBooking.check_in_date).format('DD/MM/YYYY')} - {dayjs(currentBooking.check_out_date).format('DD/MM/YYYY')}</Text>
+                                            </Flex>
+                                        </Space>
+                                    ) : (
+                                        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Phòng hiện đang trống" />
+                                    )}
+                                </Card>
+                            </Space>
+                        </Col>
+
+                        <Col span={14}>
+                            <Card title="Lịch sử & Đặt phòng tương lai" >
+                                {bookingHistory.length > 0 ? (
+                                    <div className="max-h-[400px] overflow-y-auto pr-2">
+                                        <List
+                                            itemLayout="horizontal"
+                                            dataSource={bookingHistory}
+                                            renderItem={(item: any) => {
+                                                const style = statusStyles[item.booking_status] || statusStyles.default;
+                                                return (
+                                                    <List.Item>
+                                                        <List.Item.Meta
+                                                            avatar={<Avatar size="large" icon={style.icon} style={{ backgroundColor: style.color }} />}
+                                                            title={<Text strong>{item.guest_name}</Text>}
+                                                            description={
+                                                                <Flex justify="space-between" align="center">
+                                                                    <Text type="secondary">
+                                                                        {dayjs(item.check_in_date).format('DD/MM/YY')} → {dayjs(item.check_out_date).format('DD/MM/YY')}
+                                                                    </Text>
+                                                                    <Tag color={style.color}>{style.text}</Tag>
+                                                                </Flex>
+                                                            }
+                                                        />
+                                                    </List.Item>
+                                                );
+                                            }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <Empty description="Chưa có lịch sử đặt phòng" />
+                                )}
+                            </Card>
+                        </Col>
+                    </Row>
+                )}
+            </Modal>
         );
     };
 
     return (
-        <Layout className="50">
-            <Content className="p-6">
-                <div className="">
-                    <div className="mb-6 flex justify-between items-start">
+        <Layout >
+            <Content style={{ padding: '24px' }}>
+                <Card style={{ marginBottom: 24 }}>
+                    <Flex justify="space-between" align="start">
                         <div>
-                            <h1 className="text-2xl font-bold mb-2">Quản lý phòng khách sạn</h1>
-                            <p className="">Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng</p>
+                            <Title level={2} className="!mt-0">Quản lý phòng khách sạn</Title>
+                            <Paragraph type="secondary">Quản lý trạng thái phòng, đặt phòng và lịch sử khách hàng.</Paragraph>
                         </div>
-                        <Space>
-                            <Button type="primary" icon={<UnorderedListOutlined />} onClick={() => navigate('/reception/booking-management')}>Quản lý đặt phòng</Button>
-                        </Space>
-                    </div>
+                        <Button type="primary" size="large" icon={<UnorderedListOutlined />} onClick={() => navigate('/reception/booking-management')}>
+                            Quản lý đặt phòng
+                        </Button>
+                    </Flex>
+                </Card>
 
-                    <FilterBar
-                        roomTypes={roomTypes}
-                        onSearch={handleSearch}
-                        loading={isLoading}
-                        selectedRoomsCount={selectedRoomIds.size}
-                        onMultiSelectModeChange={handleMultiSelectModeChange}
-                        multiSelectMode={multiSelectMode}
-                    />
+                <FilterBar
+                    roomTypes={roomTypes}
+                    onSearch={handleSearch}
+                    loading={isLoading}
+                    selectedRoomsCount={selectedRoomIds.size}
+                    onMultiSelectModeChange={handleMultiSelectModeChange}
+                    multiSelectMode={multiSelectMode}
+                />
 
-                    <div className="rounded-lg shadow-sm p-6">
-                        {viewMode === 'grid' ? (
-                            <RoomGridView
-                                rooms={filteredRoomsToDisplay}
-                                allRooms={masterRoomList} // Pass the master list here
-                                loading={isLoading}
-                                onRoomClick={handleRoomClick}
-                                multiSelectMode={multiSelectMode}
-                                selectedRooms={selectedRoomIds}
-                                onRoomSelect={handleRoomSelect}
-                                onBulkRoomSelect={handleBulkRoomSelect}
-                                navigate={navigate}
-                                hasDateFilter={hasDateRange}
-                                checkInDate={hasDateRange ? currentFilters.dateRange![0] : undefined}
-                                checkOutDate={hasDateRange ? currentFilters.dateRange![1] : undefined}
-                            />
-                        ) : (
-                            <RoomTimelineView
-                                rooms={filteredRoomsToDisplay}
-                                loading={isLoading}
-                                onEventClick={() => {}}
-                                onDateSelect={() => {}}
-                            />
-                        )}
-                    </div>
+                <Card>
+                    {viewMode === 'grid' ? (
+                        <RoomGridView
+                            rooms={filteredRoomsToDisplay}
+                            allRooms={masterRoomList}
+                            loading={isLoading}
+                            onRoomClick={handleRoomClick}
+                            multiSelectMode={multiSelectMode}
+                            selectedRooms={selectedRoomIds}
+                            onRoomSelect={handleRoomSelect}
+                            onBulkRoomSelect={handleBulkRoomSelect}
+                            navigate={navigate}
+                            hasDateFilter={hasDateRange}
+                            checkInDate={hasDateRange ? currentFilters.dateRange![0] : undefined}
+                            checkOutDate={hasDateRange ? currentFilters.dateRange![1] : undefined}
+                        />
+                    ) : (
+                        <RoomTimelineView
+                            rooms={filteredRoomsToDisplay}
+                            loading={isLoading}
+                            onEventClick={() => { }}
+                            onDateSelect={() => { }}
+                        />
+                    )}
+                </Card>
 
-                    <Modal title="Chi tiết phòng" open={roomDetailVisible} onCancel={handleCloseModal} footer={null} width={800}>
-                        {renderRoomDetail()}
-                    </Modal>
-                </div>
+                {renderRoomDetailModal()}
             </Content>
         </Layout>
     );
