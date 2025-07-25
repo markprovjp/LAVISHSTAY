@@ -241,3 +241,5 @@ Route::prefix('chat')->name('chat.')->group(function () {
     // MODIFIED: Logs the user question and the AI response
     Route::post('/log', [ChatController::class, 'logConversation'])->name('log');
 });
+
+Route::get('/test-complete/{bookingCode}', [PaymentController::class, 'testCompleteBooking']);

@@ -11,6 +11,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useRoomManagementStore } from '../../../stores/roomManagementStore';
 import { RoomFilters } from '../../../types/room';
+// Định nghĩa lại GuestRoom cho type an toàn
+interface GuestRoom {
+    adults: number;
+    children: { age: number }[];
+}
+
 import FilterBar from '../../../components/room-management/FilterBar';
 import RoomGridView from '../../../components/room-management/RoomGridView';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
@@ -138,10 +144,39 @@ const RoomManagementDashboard: React.FC = () => {
 
     const handleConfirmAndPay = () => {
         const selectedRoomsList = masterRoomList.filter((room: any) => selectedRoomIds.has(room.id));
+        // Map guestRooms cho từng phòng đã chọn
+        const guestRoomsForBooking: GuestRoom[] = (currentFilters as any).guestRooms && (currentFilters as any).guestRooms.length === selectedRoomsList.length
+            ? (currentFilters as any).guestRooms
+            : Array(selectedRoomsList.length).fill({ adults: 1, children: [] });
 
-        const guestRoomsForBooking = Array(selectedRoomsList.length).fill({
-            adults: 1, // Default value, can be changed in the next step
-            children: [],
+        // Tạo roomsWithGuests: mapping từng phòng với số người/phòng và các trường backend cần
+        const roomsWithGuests = selectedRoomsList.map((room: any, idx: number) => {
+            const guestConfig: GuestRoom = guestRoomsForBooking[idx] || { adults: 1, children: [] };
+            // Nếu có option/gói dịch vụ, lấy từ selectedPackages và availableRoomsData
+            const roomTypeId = room.room_type.id.toString();
+            const packageId = selectedPackages[roomTypeId];
+            let option_id = null, option_name = null, room_price = 0;
+            if (availableRoomsData) {
+                const roomTypeData = availableRoomsData.data.find((rt: any) => rt.room_type_id.toString() === roomTypeId);
+                if (roomTypeData) {
+                    const pkg = roomTypeData.package_options.find((p: any) => p.package_id === packageId);
+                    if (pkg) {
+                        option_id = pkg.package_id;
+                        option_name = pkg.package_name;
+                        room_price = pkg.price_per_room_per_night;
+                    }
+                }
+            }
+            return {
+                room_id: room.id,
+                package_id: packageId,
+                option_id,
+                option_name,
+                room_price,
+                adults: guestConfig.adults,
+                children: guestConfig.children,
+                children_age: guestConfig.children.map((child: { age: number }) => child.age),
+            };
         });
 
         const bookingData = {
@@ -150,6 +185,7 @@ const RoomManagementDashboard: React.FC = () => {
             guestRooms: guestRoomsForBooking,
             selectedPackages,
             availableRoomsData: availableRoomsData,
+            roomsWithGuests, // Truyền sang màn confirm để FE sau dùng
         };
 
         navigate('/reception/confirm-representative-payment', {
