@@ -69,6 +69,18 @@ class RoomType extends Model
         return $this->hasMany(Room::class, 'room_type_id', 'room_type_id');
     }
 
+    public function reviews()
+{
+    return $this->hasManyThrough(
+        Review::class,
+        Room::class,
+        'room_type_id', // Foreign key trên bảng rooms
+        'room_id',      // Foreign key trên bảng reviews
+        'room_type_id', // Local key trên RoomType
+        'room_id'       // Local key trên Room
+    )->whereHas('booking'); // Đảm bảo chỉ lấy reviews có booking
+}
+
     public function dynamicPricingRules()
     {
         return $this->hasMany(DynamicPricingRule::class, 'room_type_id', 'room_type_id');
