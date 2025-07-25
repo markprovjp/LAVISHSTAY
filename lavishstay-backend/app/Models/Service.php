@@ -55,6 +55,11 @@ class Service extends Model
         )->withTimestamps();
     }
 
+    public function packages(){
+        return $this->belongsToMany(RoomTypePackage::class, 'room_type_package_services', 'service_id', 'package_id')
+                    ->withTimestamps();
+    }
+
     /**
      * Scope for active services
      */
