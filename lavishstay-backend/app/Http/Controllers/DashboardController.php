@@ -37,7 +37,7 @@ class DashboardController extends Controller
         // 9. Chỉ số tài chính
         $financialMetrics = $this->getFinancialMetrics();
 
-        return view('pages.dashboard.dashboard', compact(
+        return view('admin.dashboard.dashboard', compact(
             'businessSummary',
             'chartData', 
             'detailTables',
@@ -46,6 +46,19 @@ class DashboardController extends Controller
             'bookingChannelStats',
             'customerStats',
             'alerts',
+            'financialMetrics'
+        ));
+    }
+
+    public function analytics($id = null)
+    {
+        
+        
+        // 9. Chỉ số tài chính
+        $financialMetrics = $this->getFinancialMetrics();
+
+        return view('admin.dashboard.analytics', compact(
+            
             'financialMetrics'
         ));
     }
