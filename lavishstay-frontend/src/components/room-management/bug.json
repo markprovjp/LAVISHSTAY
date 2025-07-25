@@ -1,43 +1,19 @@
-🔄 Booking attempt 1/3 {url: 'http://localhost:8888/api/payment/create-booking', payload: {…}}
-paymentService.ts:31 🔍 Checking payment for booking: LVS934133151 Amount: 572000
-paymentService.ts:44 📡 Payment check response status: 200
-paymentService.ts:60 🔍 CPay backend response: {success: true, message: 'Giao dịch thanh toán đã được xác nhận', transaction: {…}}
-PaymentCheck.tsx:69 🔍 PaymentCheck attempt 1: result = {found: true, transaction: {…}, message: 'Giao dịch thanh toán đã được xác nhận'}
-PaymentCheck.tsx:74 🎉 PaymentCheck: Payment found, calling onPaymentConfirmed with: {id: null, booking_code: 'LVS934133151', amount: '572000.00', status: 'completed', payment_method: 'vietqr', …}
-PaymentStep.tsx:63 💰 PaymentStep: Payment confirmed, calling parent callback with: {id: null, booking_code: 'LVS934133151', amount: '572000.00', status: 'completed', payment_method: 'vietqr', …}
-Payment.tsx:445 🔄 handleConfirmPayment called with: {transaction: {…}, selectedPaymentMethod: 'vietqr'}
-Payment.tsx:453 ✅ Payment confirmed via CPay auto-check: {id: null, booking_code: 'LVS934133151', amount: '572000.00', status: 'completed', payment_method: 'vietqr', …}
-{
-    "success": true,
-    "result": {
-        "transaction_id": "CPAY_LVS932122925_1753362299",
-        "amount": 6400000,
-        "status": "success",
-        "bank_name": "2025-07-19 23:30:00",
-        "account_number": "0335920306",
-        "transaction_time": "2025-07-24T13:04:59.549729Z",
-        "description": "lvs932122925",
-        "reference_code": "0335920306",
-        "cpay_data": {
-            "date": "MBBank",
-            "bank": "2025-07-19 23:30:00",
-            "account": "0335920306",
-            "content": "lvs932122925",
-            "type": "Tiền vào",
-            "amount": 6400000,
-            "reference_code": "0335920306",
-            "row_number": 59
-        }
-    },
-    "booking_code": "LVS932122925",
-    "amount": 6400000
-}
-[2025-07-24 13:28:47] local.INFO: ❌ CPay payment not found for booking: LVS933125439  
-[2025-07-24 13:28:53] local.INFO: Checking CPay payment for booking: LVS933125439, amount: 6400000  
-[2025-07-24 13:28:53] local.INFO: Calling CPay Google Apps Script API for booking: LVS933125439 (Normalized: lvs933125439), amount: 6400000  
-[2025-07-24 13:28:53] local.INFO: CPay API booking code to be sent: lvs933125439  
-[2025-07-24 13:28:53] local.INFO: CPay API Request {"action":"checkPayment","booking_code":"lvs933125439","amount":6400000} 
-[2025-07-24 13:28:53] local.INFO: CPay API: SSL verification disabled for local development  
-[2025-07-24 13:28:56] local.INFO: CPay API Response Status: 200  
-[2025-07-24 13:28:56] local.INFO: CPay API HTTP Status: 200  
-[2025-07-24 13:28:56] local.INFO: CPay API Response {"status":"success","message":"No payment found","data":[],"debug_info":{"total_rows":62,"search_pattern":"lvs933125439","expected_amount":6400000}} 
+[2025-07-25 16:22:43] local.INFO: Reception: Create Booking Request Received: {"booking_details":{"check_in_date":"2025-07-25","check_out_date":"2025-07-26","adults":3,"children":[],"total_price":11500},"rooms":[{"room_id":1,"package_id":1,"adults":3,"children":[]}],"representative_info":{"mode":"all","details":{"fullName":"Quyền Nguyễn Văn","phoneNumber":"0335920306","email":"quyenjpn@gmail.com","idCard":"qweqweqweqwe"}},"payment_method":"pay_at_hotel"} 
+[2025-07-25 16:22:43] local.INFO: Reception: Temporary booking created successfully {"booking_code":"LVS989162243","booking_id":989} 
+[2025-07-25 16:22:57] local.INFO: Checking CPay payment for booking: LVS989162243, amount: 11500  
+[2025-07-25 16:22:57] local.INFO: Calling CPay Google Apps Script API for booking: LVS989162243 (Normalized: lvs989162243), amount: 11500  
+[2025-07-25 16:22:57] local.INFO: CPay API booking code to be sent: lvs989162243  
+[2025-07-25 16:22:57] local.INFO: CPay API Request {"action":"checkPayment","booking_code":"lvs989162243","amount":11500} 
+[2025-07-25 16:22:57] local.INFO: CPay API: SSL verification disabled for local development  
+[2025-07-25 16:23:00] local.INFO: CPay API Response Status: 200  
+[2025-07-25 16:23:00] local.INFO: CPay API HTTP Status: 200  
+[2025-07-25 16:23:00] local.INFO: CPay API Response {"status":"success","message":"Payment found","data":[{"date":"MBBank","bank":"2025-07-17 10:41:00","account":"0335920306","content":"thanh toan dat phong lvs989162243","type":"Tiền vào","amount":11500,"reference_code":"FT25198059645987","row_number":58}]} 
+[2025-07-25 16:23:00] local.INFO: ✅ CPay payment found {"date":"MBBank","bank":"2025-07-17 10:41:00","account":"0335920306","content":"thanh toan dat phong lvs989162243","type":"Tiền vào","amount":11500,"reference_code":"FT25198059645987","row_number":58} 
+[2025-07-25 16:23:00] local.INFO: [DEBUG] Starting completeBookingAfterPayment for: LVS989162243  
+[2025-07-25 16:23:00] local.INFO: [DEBUG] Found booking ID: 989  
+[2025-07-25 16:23:00] local.ERROR: [DEBUG] No booking_rooms found for booking: LVS989162243  
+[2025-07-25 16:23:00] local.INFO: Starting to send booking confirmation email for booking ID: 989  
+[2025-07-25 16:23:00] local.WARNING: No representative found for booking ID: 989, using booking guest info  
+[2025-07-25 16:23:00] local.INFO: Sending booking confirmation email to: quyenjpn@gmail.com  
+[2025-07-25 16:23:04] local.INFO: Booking confirmation email sent successfully for booking ID: 989  
+[2025-07-25 16:23:04] local.INFO: Booking LVS989162243 confirmed successfully.  

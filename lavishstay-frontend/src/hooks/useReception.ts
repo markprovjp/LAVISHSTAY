@@ -236,22 +236,22 @@ export const useAssignMultipleRooms = () => {
     });
 };
 
-export const useCreateBooking = () => {
-    const queryClient = useQueryClient();
+// export const useCreateBooking = () => {
+//     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: (data: CreateBookingRequest) => receptionAPI.createBooking(data),
-        onSuccess: () => {
-            message.success('Đặt phòng thành công');
-            queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
-            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
-        },
-        onError: (error: any) => {
-            message.error(`Lỗi tạo đặt phòng: ${error.response?.data?.message || error.message}`);
-        },
-    });
-};
+//     return useMutation({
+//         mutationFn: (data: CreateBookingRequest) => receptionAPI.createBooking(data),
+//         onSuccess: () => {
+//             message.success('Đặt phòng thành công');
+//             queryClient.invalidateQueries({ queryKey: ['bookings'] });
+//             queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
+//             queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+//         },
+//         onError: (error: any) => {
+//             message.error(`Lỗi tạo đặt phòng: ${error.response?.data?.message || error.message}`);
+//         },
+//     });
+// };
 
 
 
@@ -340,35 +340,30 @@ export const useCalculateBookingQuote = () => {
     });
 };
 
-export const useCreateQuickBooking = () => {
+export const useCreateBooking = () => {
     const queryClient = useQueryClient();
-
     return useMutation({
-        mutationFn: (data: any) => receptionAPI.createBooking(data),
+        mutationFn: (bookingData: CreateMultiRoomBookingRequest) => receptionAPI.createBooking(bookingData),
         onSuccess: () => {
-            // message.success('Đặt phòng nhanh thành công!');
-            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
-            queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
-        },
-        onError: (error: any) => {
-            message.error(`Lỗi đặt phòng nhanh: ${error.response?.data?.message || error.message}`);
+            // Invalidate and refetch relevant queries after a booking is created
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['roomStatistics'] });
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
         },
     });
 };
 
-export const useConfirmBooking = () => {
+export const useConfirmPaidBooking = () => {
     const queryClient = useQueryClient();
-
     return useMutation({
-        mutationFn: (data: any) => receptionAPI.confirmBooking(data),
-        onSuccess: () => {
-            message.success('Xác nhận đặt phòng thành công!');
-            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
-            queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
+        mutationFn: (data: { booking_id: number; transaction_id?: string }) => 
+            receptionAPI.confirmBooking(data.booking_id, data.transaction_id),
+        onSuccess: (data, variables) => {
+            // Invalidate and refetch relevant queries after confirmation
             queryClient.invalidateQueries({ queryKey: ['bookings'] });
-        },
-        onError: (error: any) => {
-            message.error(`Lỗi xác nhận đặt phòng: ${error.response?.data?.message || error.message}`);
+            queryClient.invalidateQueries({ queryKey: ['booking', variables.booking_id] });
+            queryClient.invalidateQueries({ queryKey: ['roomStatistics'] });
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
         },
     });
 };

@@ -253,6 +253,10 @@ export const receptionAPI = {
     const response = await api.post('/reception/bookings/create', data);
     return response.data;
   },
+  createBookingReception: async (data: any) => {
+    const response = await api.post('/reception/bookings/createBookingReception', data);
+    return response.data;
+  },
 
  
  
