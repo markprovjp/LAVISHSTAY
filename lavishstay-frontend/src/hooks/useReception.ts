@@ -20,6 +20,20 @@ export interface BookingQuotePayload {
         children: Array<{ age: number }>;
     }>;
 }
+// export const useGetReceptionRooms = (params: any = {}) => {
+//     return useQuery({
+//         queryKey: ['receptionRooms', params],
+//         queryFn: () => receptionService.getRooms(params),
+//     });
+// };
+
+// export const useGetRoomDetails = (roomId: string | number) => {
+//     return useQuery({
+//         queryKey: ['roomDetails', roomId],
+//         queryFn: () => receptionService.getRoomDetails(roomId),
+//         enabled: !!roomId, // Chỉ chạy query khi roomId có giá trị
+//     });
+// };
 
 // Get all rooms for reception dashboard
 export const useGetReceptionRooms = (params?: any) => {
@@ -322,3 +336,5 @@ export const useCalculateBookingQuote = () => {
         },
     });
 };
+
+

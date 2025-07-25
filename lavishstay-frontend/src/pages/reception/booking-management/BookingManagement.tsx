@@ -621,7 +621,6 @@ const BookingManagement: React.FC = () => {
                                     width: 40,
                                     height: 40,
                                     borderRadius: '8px',
-                                    backgroundColor: '#e6f4ff',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -671,7 +670,6 @@ const BookingManagement: React.FC = () => {
                                     width: 40,
                                     height: 40,
                                     borderRadius: '8px',
-                                    backgroundColor: '#f6ffed',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -808,4 +806,4 @@ const BookingManagement: React.FC = () => {
     );
 };
 
-export default BookingManagement;
+export default BookingManagement;               

@@ -85,8 +85,8 @@ const ReceptionLayout: React.FC = () => {
                     height: '100vh',
                     position: 'fixed',
                     left: 0,
-                    top: 110,
-                    bottom: 0,
+                    top: 80,
+               
                 }}
             >
                 <div className="p-4 border-b">

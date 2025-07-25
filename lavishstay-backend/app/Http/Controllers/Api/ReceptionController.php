@@ -27,77 +27,110 @@ class ReceptionController extends Controller
     public function getRooms(Request $request): JsonResponse
     {
         try {
-            $query = DB::table('room')
+            $today = Carbon::now()->toDateString();
+
+            $baseQuery = DB::table('room')
                 ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
-                ->leftJoin('bed_types', 'room.bed_type_fixed', '=', 'bed_types.id')
-                ->select([
-                    'room.room_id as id',
-                    'room.name',
-                    'room.status',
-                    'room.floor_id as floor',
-                    'room.created_at',
-                    'room.updated_at',
-                    'room_types.room_type_id',
-                    'room_types.name as room_type_name',
-                    'room_types.description as room_type_description',
-                    'room_types.base_price',
-                    'room_types.room_area',
-                    'room_types.max_guests',
-                    'bed_types.type_name as bed_type_name'
-                ]);
+                ->leftJoin('bed_types', 'room.bed_type_fixed', '=', 'bed_types.id');
+
+            // Subquery để chỉ lấy booking đang hoạt động cho mỗi phòng
+            $bookingSubquery = DB::table('booking_rooms as br')
+                ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                ->select(
+                    'br.room_id',
+                    'b.guest_name',
+                    'b.check_in_date',
+                    'b.check_out_date',
+                    'br.adults',
+                    'br.children'
+                )
+                ->whereNotNull('br.room_id')
+                ->where('b.check_in_date', '<=', $today)
+                ->where('b.check_out_date', '>=', $today);
+
+            // Join với subquery
+            $query = $baseQuery->leftJoinSub($bookingSubquery, 'booking_info', function ($join) {
+                $join->on('room.room_id', '=', 'booking_info.room_id');
+            })
+            ->select([
+                'room.room_id as id',
+                'room.name',
+                'room.status',
+                'room.floor_id as floor',
+                'room.created_at',
+                'room.updated_at',
+                'room_types.room_type_id',
+                'room_types.name as room_type_name',
+                'room_types.description as room_type_description',
+                'room_types.base_price',
+                'room_types.room_area',
+                'room_types.max_guests',
+                'bed_types.type_name as bed_type_name',
+                'booking_info.guest_name as booking_guest_name',
+                'booking_info.check_in_date as booking_check_in',
+                'booking_info.check_out_date as booking_check_out',
+                'booking_info.adults as booking_adults',
+                'booking_info.children as booking_children'
+            ]);
 
             // Apply filters
             if ($request->has('status') && !empty($request->status)) {
                 $statuses = is_array($request->status) ? $request->status : [$request->status];
                 $query->whereIn('room.status', $statuses);
             }
-
             if ($request->has('room_type_id') && !empty($request->room_type_id)) {
                 $roomTypes = is_array($request->room_type_id) ? $request->room_type_id : [$request->room_type_id];
                 $query->whereIn('room.room_type_id', $roomTypes);
             }
-
             if ($request->has('floor') && !empty($request->floor)) {
                 $floors = is_array($request->floor) ? $request->floor : [$request->floor];
                 $query->whereIn('room.floor_id', $floors);
             }
-
             if ($request->has('search') && !empty($request->search)) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('room.name', 'LIKE', "%{$search}%")
-                        ->orWhere('room_types.name', 'LIKE', "%{$search}%");
+                      ->orWhere('room_types.name', 'LIKE', "%{$search}%")
+                      ->orWhere('booking_info.guest_name', 'LIKE', "%{$search}%");
                 });
             }
 
-            // Order by floor and room name
-            $query->orderBy('room.floor_id', 'asc')
-                ->orderBy('room.name', 'asc');
-
+            $query->orderBy('room.floor_id', 'asc')->orderBy('room.name', 'asc');
             $rooms = $query->get();
 
-            // Format response
             $formattedRooms = $rooms->map(function ($room) use ($request) {
-                // Calculate adjusted price using the same logic as RoomTypeController
                 $adjustedPrice = $this->calculateAdjustedPrice($room->room_type_id, $request);
                 
+                $bookingInfo = null;
+                if ($room->booking_guest_name) {
+                    $bookingInfo = [
+                        'guest_name' => $room->booking_guest_name,
+                        'check_in' => $room->booking_check_in,
+                        'check_out' => $room->booking_check_out,
+                        'adults' => $room->booking_adults,
+                        'children' => $room->booking_children,
+                        'total_guests' => ($room->booking_adults ?? 0) + ($room->booking_children ?? 0)
+                    ];
+                }
+
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
                     'status' => $room->status,
                     'floor' => $room->floor,
-                    'created_at' => $room->created_at,
-                    'updated_at' => $room->updated_at,
+                    'booking_info' => $bookingInfo,
                     'room_type' => [
                         'id' => $room->room_type_id,
                         'name' => $room->room_type_name,
                         'description' => $room->room_type_description,
                         'base_price' => $room->base_price,
-                        'adjusted_price' => $adjustedPrice, // Add adjusted price
+                        'adjusted_price' => $adjustedPrice,
                         'room_area' => $room->room_area,
                         'max_guests' => $room->max_guests,
                     ],
                     'bed_type_name' => $room->bed_type_name,
+                    'created_at' => $room->created_at,
+                    'updated_at' => $room->updated_at,
                 ];
             });
 
@@ -108,7 +141,7 @@ class ReceptionController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error getting rooms: ' . $e->getMessage());
+            Log::error('Error getting rooms: ' . $e->getMessage() . ' on line ' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'message' => 'Error retrieving rooms',
@@ -264,8 +297,7 @@ class ReceptionController extends Controller
                     'room_types.name as room_type_name',
                     'room_types.description as room_type_description',
                     'room_types.base_price',
-                    'room_types.adjusted_price',
-                    'room_types.size',
+                    'room_types.room_area',
                     'room_types.max_guests',
                     'bed_types.type_name as bed_type_name',
                     'floors.floor_name',
@@ -275,43 +307,40 @@ class ReceptionController extends Controller
                 ->first();
 
             if (!$room) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Room not found'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Room not found'], 404);
             }
 
-            // Get current booking if room is occupied
-            $currentBooking = null;
-            if ($room->status === 'occupied') {
-                $currentBooking = DB::table('booking')
-                    ->leftJoin('booking_rooms', 'booking.booking_id', '=', 'booking_rooms.booking_id')
-                    ->leftJoin('representatives', 'booking_rooms.representative_id', '=', 'representatives.id')
-                    ->select([
-                        'booking.booking_id',
-                        'booking.booking_code',
-                        'booking.guest_name',
-                        'booking.guest_email',
-                        'booking.guest_phone',
-                        'booking.check_in_date',
-                        'booking.check_out_date',
-                        'booking.guest_count',
-                        'booking.status as booking_status',
-                        'representatives.name as representative_name',
-                        'representatives.phone as representative_phone'
-                    ])
-                    ->where('booking_rooms.room_id', $roomId)
-                    ->where('booking.status', 'confirmed')
-                    ->where('booking.check_in_date', '<=', Carbon::now()->format('Y-m-d'))
-                    ->where('booking.check_out_date', '>=', Carbon::now()->format('Y-m-d'))
-                    ->first();
-            }
+            // Lấy toàn bộ lịch sử đặt phòng của phòng này
+            $bookingHistory = DB::table('booking_rooms as br')
+                ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                ->leftJoin('representatives as rep', 'br.representative_id', '=', 'rep.id')
+                ->where('br.room_id', $roomId)
+                ->select([
+                    'b.booking_id',
+                    'b.booking_code',
+                    'b.guest_name',
+                    'b.check_in_date',
+                    'b.check_out_date',
+                    'b.status as booking_status',
+                    'br.adults',
+                    'br.children',
+                    'rep.full_name as representative_name'
+                ])
+                ->orderBy('b.check_in_date', 'desc') // Sắp xếp mới nhất trước
+                ->get();
+
+            // Tìm đơn đặt phòng hiện tại từ lịch sử
+            $today = Carbon::now();
+            $currentBooking = $bookingHistory->first(function ($booking) use ($today) {
+                return $today->between(Carbon::parse($booking->check_in_date), Carbon::parse($booking->check_out_date));
+            });
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'room' => $room,
-                    'current_booking' => $currentBooking
+                    'current_booking' => $currentBooking,
+                    'booking_history' => $bookingHistory
                 ],
                 'message' => 'Room details retrieved successfully'
             ]);
@@ -1392,7 +1421,7 @@ $allChildrenAges = DB::table('booking_room_children')
                 // Update the booking status to 'operational' 
                 DB::table('booking')
                     ->where('booking_id', $assignment['booking_room_id'])
-                    ->update(['status' => 'operational']);
+                    ->update(['status' => 'Operational']);
 
                 $assignedCount++;
             }

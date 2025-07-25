@@ -31,7 +31,6 @@ import { motion } from "framer-motion";
 import { Bed, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AmenityDisplay from '../common/AmenityDisplay';
-import './RoomTypeShowcase.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -194,7 +193,6 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                     borderRadius: "16px",
                                     overflow: "hidden",
                                     boxShadow: "0 12px 40px rgba(0, 0, 0, 0.15)",
-                                    background: "#ffffff",
                                     border: `1px solid ${roomStyle.color}40`,
                                 }}
                             >
@@ -261,7 +259,7 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                                 <div className="flex-1">
                                                     <Title
                                                         level={3}
-                                                        style={{ margin: "0 0 4px 0", color: "#2c3e50" }}
+                                                        style={{ margin: "0 0 4px 0" }}
                                                     >
                                                         {roomType.room_type_name}
                                                     </Title>
@@ -272,7 +270,7 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                                         {(roomType.rating && roomType.rating > 0) && (
                                                             <Flex gap={4} align="center">
                                                                 <StarFilled style={{ color: "#ffc107", fontSize: "14px" }} />
-                                                                <Text strong style={{ fontSize: "13px", color: "#555" }}>
+                                                                <Text strong style={{ fontSize: "13px" }}>
                                                                     {roomType.rating.toFixed(1)}
                                                                 </Text>
                                                             </Flex>
@@ -313,7 +311,7 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                                 <div style={{ marginBottom: "16px" }}>
                                                     <Paragraph
                                                         ellipsis={{ rows: 3, expandable: true, symbol: 'xem thêm' }}
-                                                        style={{ color: "#555", marginBottom: 0, fontSize: "13px" }}
+                                                        style={{ marginBottom: 0, fontSize: "13px" }}
                                                     >
                                                         {roomType.description}
                                                     </Paragraph>
@@ -357,7 +355,6 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                                     <Text
                                                         strong
                                                         style={{
-                                                            color: "#34495e",
                                                             fontSize: "14px",
                                                             display: "block",
                                                             marginBottom: "8px"
@@ -371,6 +368,51 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                                         maxDisplay={6}
                                                         layout="inline"
                                                     />
+                                                </div>
+                                            )}
+
+                                            {/* Cheapest Package Offer */}
+                                            {cheapestPackage && (
+                                                <div
+                                                    style={{
+                                                        marginBottom: "20px",
+                                                        padding: "16px",
+                                                        borderRadius: "12px",
+                                                        background: 'linear-gradient(135deg, #e6f7ff 0%, #f6ffed 100%)',
+                                                        border: '1px solid #91d5ff'
+                                                    }}
+                                                >
+                                                    <Flex justify="space-between" align="center">
+                                                        <div>
+                                                            <Flex align="center" gap={8} style={{ marginBottom: '8px' }}>
+                                                                <Tag color="success" icon={<GiftOutlined />} style={{ fontWeight: 500 }}>
+                                                                    Gói Tốt Nhất
+                                                                </Tag>
+                                                                <Text strong style={{ fontSize: "15px", color: '#389e0d' }}>
+                                                                    {cheapestPackage.package_name}
+                                                                </Text>
+                                                            </Flex>
+                                                            <Text type="secondary" style={{ fontSize: '13px' }}>
+                                                                {cheapestPackage.package_description}
+                                                            </Text>
+                                                        </div>
+                                                        <Button
+                                                            type="primary"
+                                                            size="large"
+                                                            icon={<CalendarOutlined />}
+                                                            onClick={() => handleViewDetails(roomType)}
+                                                            style={{
+                                                                borderRadius: "8px",
+                                                                height: "44px",
+                                                                fontSize: "14px",
+                                                                fontWeight: "600",
+                                                                padding: "0 24px",
+                                                                boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)'
+                                                            }}
+                                                        >
+                                                            Chọn phòng
+                                                        </Button>
+                                                    </Flex>
                                                 </div>
                                             )}
 
@@ -392,7 +434,7 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
                                                     }}
                                                     className="hover:bg-blue-50"
                                                 >
-                                                    Xem chi tiết
+                                                    Xem chi tiết & các gói khác
                                                 </Button>
                                             </Flex>
                                         </div>
