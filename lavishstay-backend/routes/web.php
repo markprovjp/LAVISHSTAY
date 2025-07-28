@@ -52,8 +52,23 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Phần này giữ nguyên
     Route::get('/json-data-feed', [DataFeedController::class, 'getDataFeed'])->name('json_data_feed');
 
-    Route::get('/dashboard/analytics', [DashboardController::class, 'analytics'])->name('analytics');
-    // Route::get('/dashboard/analytics/{id}', [DashboardController::class, 'analytics'])->name('analytics_id');
+    Route::get('/dashboard/analytics', [DashboardController::class, 'analytics'])
+        ->name('analytics');
+
+    // AJAX endpoint for chart data
+    Route::get('/dashboard/analytics/chart-data', [DashboardController::class, 'getAnalyticsChartData'])
+        ->name('admin.analytics.chart-data');
+
+    // Export analytics data (e.g., CSV, PDF)
+    Route::get('/dashboard/analytics/export', [DashboardController::class, 'exportAnalytics'])
+        ->name('admin.analytics.export');
+
+    // Filter analytics by custom period (optional, for future expansion)
+    Route::post('/dashboard/analytics/filter', [DashboardController::class, 'filterAnalytics'])
+        ->name('admin.analytics.filter');
+    Route::get('/dashboard/analytics/realtime-stats', [DashboardController::class, 'getRealtimeStats'])
+        ->name('admin.analytics.realtime-stats');
+
 
 
     Route::get('/settings/account', function () {

@@ -1031,7 +1031,3 @@
     </script>
  
 </x-app-layout>
-
-
-
-
