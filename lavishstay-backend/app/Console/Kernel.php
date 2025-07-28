@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:cleanup-pending-bookings')
                  ->everyFiveMinutes()
                  ->withoutOverlapping();
+        $schedule->command('room-occupancy:daily-update')->daily();
     }
 
     protected function commands()

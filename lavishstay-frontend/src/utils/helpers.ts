@@ -175,3 +175,12 @@ export const calculatePricingSummary = (
     formattedBreakdown: formatPriceBreakdown(totalRooms, nights, avgPricePerNight)
   };
 };
+
+export const validateForm = async (values: any) => {
+  // Implement your form validation logic here
+  // For example, you can use a library like Yup or write your own validation rules
+  if (!values.bookingId) {
+    throw new Error('Booking ID is required');
+  }
+  // Add more validation rules as needed
+};

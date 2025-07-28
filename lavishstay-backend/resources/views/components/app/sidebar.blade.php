@@ -51,12 +51,12 @@
 
         <!-- Links -->
         <div class="space-y-8">
-            <!-- Pages group -->
+            {{-- Cấu hình hệ thống --}}
             <div>
-                <h3 class="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
-                    <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6"
-                        aria-hidden="true">•••</span>
-                    <span class="lg:hidden lg:sidebar-expanded:block 2xl:block">Pages</span>
+                <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
+                    <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
+                    <span class="lg:hidden lg:sidebar-expanded:block 2xl:block">Cấu hình hệ thống</span>
+                    <span class="flex-1 ml-2 h-px bg-gray-300 dark:bg-gray-600 opacity-40"></span>
                 </h3>
                 <ul class="mt-3">
                     <!-- Dashboard -->
@@ -157,7 +157,102 @@
                             </ul>
                         </div>
                     </li>
+					
+                    {{-- Room Pricing --}}
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['pricing'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                            href="{{ route('admin.pricing.index') }}">
+                            <div class="flex items-center">
+                                <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }}@endif" width="20px" height="20px"						
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                            </svg>
+                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Pricing</span>
+                            </div>
+                        </a>
+                    </li>
 
+					<!-- Authentication -->
+                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0" x-data="{ open: false }">
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition"
+                            :class="open ? '' : 'hover:text-gray-900 dark:hover:text-white'" href="#0"
+                            @click.prevent="open = !open; sidebarExpanded = true">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="shrink-0 fill-current text-gray-400 dark:text-gray-500"
+                                        xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                        viewBox="0 0 16 16">
+                                        <path
+                                            d="M11.442 4.576a1 1 0 1 0-1.634-1.152L4.22 11.35 1.773 8.366A1 1 0 1 0 .227 9.634l3.281 4a1 1 0 0 0 1.59-.058l6.344-9ZM15.817 4.576a1 1 0 1 0-1.634-1.152l-5.609 7.957a1 1 0 0 0-1.347 1.453l.656.8a1 1 0 0 0 1.59-.058l6.344-9Z" />
+                                    </svg>
+                                    <span
+                                        class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Authentication</span>
+                                </div>
+                                <!-- Icon -->
+                                <div
+                                    class="flex shrink-0 ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500"
+                                        :class="{ 'rotate-180': open }" viewBox="0 0 12 12">
+                                        <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="lg:hidden lg:sidebar-expanded:block 2xl:block">
+                            <ul class="pl-8 mt-1" :class="{ 'hidden': !open }" x-cloak>
+                                <li class="mb-1 last:mb-0">
+                                    <form method="POST" action="{{ route('logout') }}" x-data>
+                                        @csrf
+
+                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate"
+                                            href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                                            <span
+                                                class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Sign
+                                                In</span>
+                                        </a>
+                                    </form>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <form method="POST" action="{{ route('logout') }}" x-data>
+                                        @csrf
+
+                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate"
+                                            href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                                            <span
+                                                class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Sign
+                                                Up</span>
+                                        </a>
+                                    </form>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <form method="POST" action="{{ route('logout') }}" x-data>
+                                        @csrf
+
+                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate"
+                                            href="{{ route('logout') }}" @click.prevent="$root.submit();">
+                                            <span
+                                                class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Reset
+                                                Password</span>
+                                        </a>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+					
+
+                </ul>
+            </div>
+
+
+            {{-- User Management && Client --}}
+            <div>
+                <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
+                    <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
+                    <span class="lg:hidden lg:sidebar-expanded:block 2xl:block">Người dùng</span>
+                    <span class="flex-1 ml-2 h-px bg-gray-300 dark:bg-gray-600 opacity-40"></span> 
+                </h3>
+                <ul class="mt-3">
                     {{-- User --}}
                     @if (Auth::user()?->hasPermission('quan_ly_nhan_vien') || Auth::user()?->hasPermission('quan_ly_khach_hang'))
                         <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
@@ -219,7 +314,62 @@
                             </div>
                         </li>
                     @endif
+					
+					{{-- Chat support --}}
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['chat-support'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['chat-support'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                            href="{{ route('admin.chat-support') }}">
+                            <div class="flex items-center">
+                                <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['chat-support'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                    width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                                </svg>
+                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Chat Support</span>
+                            </div>
+                        </a>
+                    </li>
+					
+					{{-- Reviews --}}
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['reviews'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['reviews'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                            href="{{ route('admin.reviews') }}">
+                            <div class="flex items-center">
+                                <svg class="shrink-0 fill-current @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['reviews'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif" width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                                </svg>
+                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Reviews</span>
+                            </div>
+                        </a>
+                    </li>
+					
+					{{-- FAQs --}}
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['faqs'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                            href="{{ route('admin.faqs') }}">
+                            <div class="flex items-center">
+                                <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                    width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                                </svg>
+                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">FAQs</span>
+                            </div>
+                        </a>
+                    </li>
 
+                </ul>
+            </div>
+
+            {{-- Quản lý phòng && Đặt phòng --}}
+            <div>
+                <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
+                    <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
+                    <span class="lg:hidden lg:sidebar-expanded:block 2xl:block">Quản lý phòng & đặt phòng</span>
+                    <span class="flex-1 ml-2 h-px bg-gray-300 dark:bg-gray-600 opacity-40"></span> 
+                </h3>
+                <ul class="mt-3">
                     {{-- Bookings --}}
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.bookings*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ request()->routeIs('admin.bookings*') ? 1 : 0 }} }">
@@ -271,8 +421,8 @@
                             </ul>
                         </div>
                     </li>
-
-                    {{-- Room Modification --}}
+					
+					{{-- Room Modification --}}
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.booking_extensions*') ||
                             request()->routeIs('admin.booking_reschedules*') ||
                             request()->routeIs('admin.room_transfers*') ||
@@ -346,8 +496,62 @@
                             </ul>
                         </div>
                     </li>
-
-                    {{-- Policy --}}
+					
+					{{-- Room Management --}}
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                        x-data="{ open: {{ in_array(Request::segment(2), ['room-types', 'rooms']) ? 1 : 0 }} }">
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                            href="#0" @click.prevent="open = !open; sidebarExpanded = true">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                        xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"
+                                        viewBox="0 0 18 18">
+                                        <path d="M2 3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3ZM9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V4ZM2 8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8Z" />
+                                    </svg>
+                                    <span class="text-sm font-medium ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Management</span>
+                                </div>
+                                <!-- Icon -->
+                                <div class="flex shrink-0 ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 transition-transform duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'rotate-180' }} @endif"
+                                        :class="open ? 'rotate-180' : 'rotate-0'" viewBox="0 0 12 12">
+                                        <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="lg:hidden lg:sidebar-expanded:block 2xl:block">
+                            <ul class="pl-8 mt-1 overflow-hidden submenu-transition"
+                                x-show="open" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 max-h-0"
+                                x-transition:enter-end="opacity-100 max-h-96"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 max-h-96"
+                                x-transition:leave-end="opacity-0 max-h-0">
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Request::segment(2) === 'room-types') {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.room-types') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Types</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Request::segment(2) === 'rooms') {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.rooms') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Rooms</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Request::segment(2) === 'floors') {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.floors') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Floors</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+					
+					{{-- Policy --}}
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.cancellation-policies*') ||
                             request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.children-surcharge*') ||
                             request()->routeIs('admin.checkout-policies*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
@@ -418,61 +622,18 @@
                             </ul>
                         </div>
                     </li>
+					
+                </ul>
+            </div>
 
-                    {{-- Room Management --}}
-                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
-                        x-data="{ open: {{ in_array(Request::segment(2), ['room-types', 'rooms']) ? 1 : 0 }} }">
-                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
-                            href="#0" @click.prevent="open = !open; sidebarExpanded = true">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
-                                        xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"
-                                        viewBox="0 0 18 18">
-                                        <path d="M2 3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3ZM9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V4ZM2 8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8Z" />
-                                    </svg>
-                                    <span class="text-sm font-medium ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Management</span>
-                                </div>
-                                <!-- Icon -->
-                                <div class="flex shrink-0 ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 transition-transform duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'rotate-180' }} @endif"
-                                        :class="open ? 'rotate-180' : 'rotate-0'" viewBox="0 0 12 12">
-                                        <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </a>
-                        <div class="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                            <ul class="pl-8 mt-1 overflow-hidden submenu-transition"
-                                x-show="open" 
-                                x-transition:enter="transition ease-out duration-300"
-                                x-transition:enter-start="opacity-0 max-h-0"
-                                x-transition:enter-end="opacity-100 max-h-96"
-                                x-transition:leave="transition ease-in duration-200"
-                                x-transition:leave-start="opacity-100 max-h-96"
-                                x-transition:leave-end="opacity-0 max-h-0">
-                                <li class="mb-1 last:mb-0">
-                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Request::segment(2) === 'room-types') {{ 'text-violet-500!' }} @endif"
-                                        href="{{ route('admin.room-types') }}">
-                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Types</span>
-                                    </a>
-                                </li>
-                                <li class="mb-1 last:mb-0">
-                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Request::segment(2) === 'rooms') {{ 'text-violet-500!' }} @endif"
-                                        href="{{ route('admin.rooms') }}">
-                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Rooms</span>
-                                    </a>
-                                </li>
-                                <li class="mb-1 last:mb-0">
-                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Request::segment(2) === 'floors') {{ 'text-violet-500!' }} @endif"
-                                        href="{{ route('admin.floors') }}">
-                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Floors</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-
+            {{-- Dịch vụ && Nội dung --}}
+            <div>
+                <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
+                    <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
+                    <span class="lg:hidden lg:sidebar-expanded:block 2xl:block">Dịch vụ & nội dung</span>
+                    <span class="flex-1 ml-2 h-px bg-gray-300 dark:bg-gray-600 opacity-40"></span> 
+                </h3>
+                <ul class="mt-3">
                     {{-- Services --}}
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (Request::segment(2) === 'services') {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ Request::segment(2) === 'services' ? 1 : 0 }} }">
@@ -647,133 +808,9 @@
                             </ul>
                         </div>
                     </li>
-
-                    {{-- Room Pricing --}}
-                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
-                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['pricing'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
-                            href="{{ route('admin.pricing.index') }}">
-                            <div class="flex items-center">
-                                <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }}@endif" width="20px" height="20px"						
-                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-                            </svg>
-                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Room Pricing</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    {{-- FAQs --}}
-                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
-                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['faqs'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
-                            href="{{ route('admin.faqs') }}">
-                            <div class="flex items-center">
-                                <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
-                                    width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                                </svg>
-                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">FAQs</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    {{-- Box Chat --}}
-                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['chat-support'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
-                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['chat-support'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
-                            href="{{ route('admin.chat-support') }}">
-                            <div class="flex items-center">
-                                <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['chat-support'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
-                                    width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
-                                </svg>
-                                <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Chat Support</span>
-                            </div>
-                        </a>
-                    </li>
-                    
                 </ul>
             </div>
-
-            <!-- More group -->
-            <div>
-                <h3 class="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
-                    <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6"
-                        aria-hidden="true">•••</span>
-                    <span class="lg:hidden lg:sidebar-expanded:block 2xl:block">More</span>
-                </h3>
-                <ul class="mt-3">
-                    <!-- Authentication -->
-                    <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0" x-data="{ open: false }">
-                        <a class="block text-gray-800 dark:text-gray-100 truncate transition"
-                            :class="open ? '' : 'hover:text-gray-900 dark:hover:text-white'" href="#0"
-                            @click.prevent="open = !open; sidebarExpanded = true">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <svg class="shrink-0 fill-current text-gray-400 dark:text-gray-500"
-                                        xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                        viewBox="0 0 16 16">
-                                        <path
-                                            d="M11.442 4.576a1 1 0 1 0-1.634-1.152L4.22 11.35 1.773 8.366A1 1 0 1 0 .227 9.634l3.281 4a1 1 0 0 0 1.59-.058l6.344-9ZM15.817 4.576a1 1 0 1 0-1.634-1.152l-5.609 7.957a1 1 0 0 0-1.347 1.453l.656.8a1 1 0 0 0 1.59-.058l6.344-9Z" />
-                                    </svg>
-                                    <span
-                                        class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Authentication</span>
-                                </div>
-                                <!-- Icon -->
-                                <div
-                                    class="flex shrink-0 ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500"
-                                        :class="{ 'rotate-180': open }" viewBox="0 0 12 12">
-                                        <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </a>
-                        <div class="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                            <ul class="pl-8 mt-1" :class="{ 'hidden': !open }" x-cloak>
-                                <li class="mb-1 last:mb-0">
-                                    <form method="POST" action="{{ route('logout') }}" x-data>
-                                        @csrf
-
-                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate"
-                                            href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                                            <span
-                                                class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Sign
-                                                In</span>
-                                        </a>
-                                    </form>
-                                </li>
-                                <li class="mb-1 last:mb-0">
-                                    <form method="POST" action="{{ route('logout') }}" x-data>
-                                        @csrf
-
-                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate"
-                                            href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                                            <span
-                                                class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Sign
-                                                Up</span>
-                                        </a>
-                                    </form>
-                                </li>
-                                <li class="mb-1 last:mb-0">
-                                    <form method="POST" action="{{ route('logout') }}" x-data>
-                                        @csrf
-
-                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition truncate"
-                                            href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                                            <span
-                                                class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Reset
-                                                Password</span>
-                                        </a>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-
-                </ul>
-            </div>
+            
         </div>
 
         <!-- Expand / collapse button -->

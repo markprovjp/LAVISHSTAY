@@ -11,14 +11,13 @@ import {
     Statistic,
     Typography,
     Alert,
-    Table,
     Avatar,
     Tooltip,
     Dropdown,
     Menu,
     Flex
 } from 'antd';
-import type { TableProps } from 'antd';
+import { ProTable, type ProColumns } from '@ant-design/pro-components';
 import {
     EyeOutlined,
     DeleteOutlined,
@@ -28,8 +27,8 @@ import {
     UserOutlined,
     MoreOutlined,
     HomeOutlined,
-    PhoneOutlined,
-    MailOutlined,
+    // PhoneOutlined,
+    // MailOutlined,
     TeamOutlined,
 } from '@ant-design/icons';
 import {
@@ -155,15 +154,15 @@ const BookingManagement: React.FC = () => {
             const totalRooms = booking.total_rooms || 1;
 
             // ULTRA SAFE processing of children and adults values
-                       // ...existing code...
+            // ...existing code...
             let safeChildren = 0;
             let safeAdults = 1;
-            
+
             try {
                 // Ưu tiên lấy từ backend nếu có
                 const backendAdults = booking.total_adults_from_rooms ?? booking.adults ?? booking.guest_count;
                 const backendChildren = booking.total_children_from_rooms ?? booking.children ?? 0;
-            
+
                 // Nếu chưa có dữ liệu phòng, lấy từ guest_count (giả sử tất cả là người lớn)
                 if ((backendAdults === null || backendAdults === undefined) && booking.guest_count !== undefined) {
                     safeAdults = Number(booking.guest_count) || 1;
@@ -171,7 +170,7 @@ const BookingManagement: React.FC = () => {
                     const adultsVal = Number(backendAdults);
                     safeAdults = isNaN(adultsVal) ? 1 : Math.max(1, Math.floor(adultsVal));
                 }
-            
+
                 if (backendChildren !== null && backendChildren !== undefined) {
                     const childrenVal = Number(backendChildren);
                     safeChildren = isNaN(childrenVal) ? 0 : Math.max(0, Math.floor(childrenVal));
@@ -267,24 +266,24 @@ const BookingManagement: React.FC = () => {
         });
     };
 
-    // Table columns definition
-    const columns: TableColumnsType<BookingTableData> = [
+    // ProTable columns definition
+    const columns: ProColumns<BookingTableData>[] = [
         {
             title: 'Mã đặt phòng',
             dataIndex: 'booking_code',
             key: 'booking_code',
             width: 180, // Increased width
             fixed: 'left',
-            sorter: (a, b) => a.booking_code.localeCompare(b.booking_code),
-            render: (code: string) => (
-                <Text strong copyable style={{ color: '#1677ff' }}>{code}</Text>
+            sorter: (a: BookingTableData, b: BookingTableData) => a.booking_code.localeCompare(b.booking_code),
+            render: (_: any, record: BookingTableData) => (
+                <Text strong copyable style={{ color: '#1677ff' }}>{record.booking_code}</Text>
             ),
         },
         {
             title: 'Thông tin khách',
             key: 'guest',
             width: 250,
-            render: (_, record) => (
+            render: (_: any, record: BookingTableData) => (
                 <Flex gap="middle" align="start">
                     <Avatar size={40} icon={<UserOutlined />} style={{ backgroundColor: '#f56a00', flexShrink: 0 }} />
                     <Flex vertical>
@@ -301,7 +300,7 @@ const BookingManagement: React.FC = () => {
             title: 'Thời gian lưu trú',
             key: 'dates',
             width: 160,
-            render: (_, record) => {
+            render: (_: any, record: BookingTableData) => {
                 const checkIn = dayjs(record.check_in_date);
                 const checkOut = dayjs(record.check_out_date);
                 const nights = checkOut.diff(checkIn, 'day');
@@ -313,7 +312,6 @@ const BookingManagement: React.FC = () => {
                             alignItems: 'center',
                             marginBottom: 4,
                             padding: '4px 8px',
-                            backgroundColor: '#f6ffed',
                             borderRadius: '4px',
                             fontSize: '12px',
                             fontWeight: 500,
@@ -339,7 +337,7 @@ const BookingManagement: React.FC = () => {
             key: 'total_guests',
             width: 120,
             align: 'center',
-            render: (_, record) => {
+            render: (_: any, record: BookingTableData) => {
                 const adults = record.adults || 0;
                 const children = record.num_children || 0;
 
@@ -370,7 +368,7 @@ const BookingManagement: React.FC = () => {
             title: 'Gói phòng',
             key: 'option_names',
             width: 200,
-            render: (_, record) => {
+            render: (_: any, record: BookingTableData) => {
                 const options = record.option_names ? record.option_names.split(',').map(name => name.trim()) : [];
                 return (
                     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -378,7 +376,6 @@ const BookingManagement: React.FC = () => {
                             width: 32,
                             height: 32,
                             borderRadius: '6px',
-                            backgroundColor: '#f6ffed',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -400,7 +397,7 @@ const BookingManagement: React.FC = () => {
             key: 'total_rooms',
             width: 100,
             align: 'center',
-            render: (_, record) => (
+            render: (_: any, record: BookingTableData) => (
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         display: 'flex',
@@ -418,7 +415,7 @@ const BookingManagement: React.FC = () => {
             title: 'Phòng',
             key: 'room',
             width: 200,
-            render: (_, record) => {
+            render: (_: any, record: BookingTableData) => {
                 if (record.total_rooms > 1) {
                     // Multiple rooms
                     const roomNames = record.room_names ? record.room_names.split(',').map(name => name.trim()) : [];
@@ -430,7 +427,6 @@ const BookingManagement: React.FC = () => {
                                 width: 32,
                                 height: 32,
                                 borderRadius: '6px',
-                                backgroundColor: '#f6ffed',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -464,7 +460,6 @@ const BookingManagement: React.FC = () => {
                                 width: 32,
                                 height: 32,
                                 borderRadius: '6px',
-                                backgroundColor: '#f6ffed',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -497,10 +492,10 @@ const BookingManagement: React.FC = () => {
             key: 'total_price_vnd',
             width: 130,
             align: 'right',
-            render: (amount: number) => (
+            render: (_: any, record: BookingTableData) => (
                 <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 600, fontSize: '14px', color: '#f50', marginBottom: 2 }}>
-                        {new Intl.NumberFormat('vi-VN').format(amount || 0)}₫
+                        {new Intl.NumberFormat('vi-VN').format(record.total_price_vnd || 0)}₫
                     </div>
                     <div style={{ fontSize: '11px', color: '#8c8c8c' }}>
                         Tổng cộng
@@ -515,13 +510,13 @@ const BookingManagement: React.FC = () => {
             width: 150,
             align: 'center',
             filters: Object.entries(bookingStatusConfig).map(([key, { text }]) => ({ text, value: key })),
-            onFilter: (value, record) => record.status.toLowerCase() === String(value).toLowerCase(),
-            render: (status: string) => {
-                const statusKey = status.toLowerCase();
+            onFilter: (value: string | number, record: BookingTableData) => record.status.toLowerCase() === String(value).toLowerCase(),
+            render: (_: any, record: BookingTableData) => {
+                const statusKey = record.status.toLowerCase();
                 const config = bookingStatusConfig[statusKey as keyof typeof bookingStatusConfig];
                 return (
                     <Tag color={config?.color || 'default'} style={{ fontWeight: 500 }}>
-                        {config?.text || status}
+                        {config?.text || record.status}
                     </Tag>
                 );
             },
@@ -532,7 +527,7 @@ const BookingManagement: React.FC = () => {
             width: 120,
             fixed: 'right',
             align: 'center',
-            render: (_, record) => {
+            render: (_: any, record: BookingTableData) => {
                 const hasUnassignedRoom = !record.room_names || record.room_names.trim() === '' || record.room_names.includes('null') || record.room_names.includes('undefined');
                 const menu = (
                     <Menu onClick={({ key }) => {
@@ -555,7 +550,7 @@ const BookingManagement: React.FC = () => {
                             </Menu.Item>
                         )}
                         {(record.status.toLowerCase() === 'pending' || record.status.toLowerCase() === 'confirmed') && (
-                             <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>
+                            <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>
                                 Hủy đặt phòng
                             </Menu.Item>
                         )}
@@ -645,7 +640,6 @@ const BookingManagement: React.FC = () => {
                                     width: 40,
                                     height: 40,
                                     borderRadius: '8px',
-                                    backgroundColor: '#fff7e6',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -694,7 +688,6 @@ const BookingManagement: React.FC = () => {
                                     width: 40,
                                     height: 40,
                                     borderRadius: '8px',
-                                    backgroundColor: '#fff2f0',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -734,30 +727,31 @@ const BookingManagement: React.FC = () => {
                             />
                         }
                     >
-                        <Table
+                        <ProTable<BookingTableData>
                             columns={columns}
                             dataSource={bookings}
                             loading={isLoading}
-                            rowKey={(record) => record.key}
+                            rowKey="key"
                             pagination={{
                                 pageSize: 20,
                                 showSizeChanger: true,
                                 showQuickJumper: true,
-                                showTotal: (total, range) =>
-                                    `${range[0]}-${range[1]} của ${total} đặt phòng`,
+                                showTotal: (total: number, range: [number, number]) => `${range[0]}-${range[1]} của ${total} đặt phòng`,
                                 pageSizeOptions: ['10', '20', '50', '100'],
-                                style: {
-                                    padding: '16px 0',
-                                }
+                                style: { padding: '16px 0' }
                             }}
-                            scroll={{ x: 1400, y: 600 }}
                             size="middle"
-                            style={{
-                                background: '#fff',
-                                borderRadius: '8px'
-                            }}
                             bordered={false}
-                            showHeader
+                            search={false}
+                            options={{
+                                density: true,
+                                reload: true,
+                                setting: true,
+                                fullScreen: true,
+                            }}
+                            toolbar={{
+                                title: 'Danh sách đặt phòng',
+                            }}
                             locale={{
                                 emptyText: (
                                     <div style={{ padding: '60px 0', textAlign: 'center' }}>

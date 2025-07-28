@@ -35,6 +35,7 @@ import ReviewBooking from "./pages/ReviewBooking";
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
+
 import ConfirmRepresentativePayment from "./pages/reception/room-management/ConfirmRepresentativePayment";
 import PaymentBookingReception from "./pages/reception/room-management/PaymentBookingReception";
 import RoomManagementDashboard from "./pages/reception/room-management/RoomManagementDashboard";
@@ -157,6 +158,7 @@ const App: React.FC = React.memo(() => {
               <Route path="payment-booking" element={<PaymentBookingReception />} />
               <Route path="room-management/today" element={<RoomManagementDashboard />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
+
             </Route>            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />
