@@ -64,11 +64,7 @@ const ReceptionLayout: React.FC = () => {
                 }
             ]
         },
-        {
-            key: '/reception/schedule',
-            icon: <CalendarOutlined />,
-            label: <Link to="/reception/schedule">Lịch đặt phòng</Link>,
-        }
+
     ];
 
     return (

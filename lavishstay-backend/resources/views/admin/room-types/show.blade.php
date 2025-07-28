@@ -45,8 +45,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
+        <div class="space-y-6">
             <!-- Main Content -->
             <div class="xl:col-span-2 space-y-6">
 
@@ -332,7 +331,7 @@
                 </div>
 
                 <!-- All Images Gallery Modal -->
-                <div id="allImagesModal" class="fixed modal-overlay inset-0 bg-black bg-opacity-95 z-50 hidden">
+                <div id="allImagesModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden">
                     <div class="h-full flex flex-col">
 
                         <!-- Header -->
@@ -352,73 +351,9 @@
 
                         <!-- Images Grid -->
                         <div class="flex-1 overflow-y-auto p-6">
-                            <div class="flex flex-wrap gap-4">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 @foreach ($roomType->images as $index => $image)
                                     <div class="relative group cursor-pointer"
-                                        style="width: calc(20% - 16px); min-width: 200px;">
-                                        <div class="relative overflow-hidden rounded-lg"
-                                            onclick="viewSingleImageFromGallery('{{ $image->image_path }}', '{{ $roomType->name }} - Ảnh {{ $index + 1 }}')">
-                                            <img src="{{ $image->image_path }}"
-                                                alt="Ảnh {{ $index + 1 }} - {{ $roomType->name }}"
-                                                class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105">
-
-                                            @if ($image->is_main)
-                                                <div
-                                                    class="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
-                                                    ⭐ Ảnh chính
-                                                </div>
-                                            @endif
-
-                                            <!-- Hover Overlay -->
-                                            <div
-                                                class="absolute inset-0 bg-black opacity-0 group-hover:opacity-40 transition-opacity duration-300">
-                                            </div>
-                                            <div
-                                                class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <div class="bg-white text-gray-800 px-3 py-2 rounded-lg">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-                <!-- All Images Gallery Modal (Updated with flex) -->
-                <div id="allImagesModal" class="fixed inset-0 bg-black bg-opacity-90 z-500 hidden"
-                    style=" background-color: rgba(0, 0, 0, 0.9);">
-                    <div class="h-full flex flex-col">
-
-                        <!-- Header -->
-                        <div class="flex justify-between items-center p-6 bg-black bg-opacity-50">
-                            <div>
-                                <h2 class="text-2xl font-bold text-white">Tất cả ảnh - {{ $roomType->name }}</h2>
-                                <p class="text-gray-300">{{ $roomType->images->count() }} ảnh</p>
-                            </div>
-                            <button onclick="closeAllImagesModal()"
-                                class="text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-2">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- Images Grid using flex-wrap -->
-                        <div class="flex-1 overflow-y-auto p-6">
-                            <div class="flex flex-wrap gap-4">
-                                @foreach ($roomType->images as $index => $image)
-                                    <div class="relative group cursor-pointer flex-shrink-0"
-                                        style="width: calc(20% - 12px); min-width: 200px;"
                                         onclick="viewImageFromGallery({{ $index }})">
                                         <img src="{{ $image->image_path }}"
                                             alt="Ảnh {{ $index + 1 }} - {{ $roomType->name }}"
@@ -435,12 +370,11 @@
                                         <div
                                             class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
                                             <div class="bg-white bg-opacity-90 text-gray-800 px-3 py-2 rounded-lg">
-                                                <svg class="w-5 h-5 inline-block mr-1" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
+                                                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                                 Xem
@@ -572,7 +506,7 @@
                                 <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        d="M19 11H5m14 0a2 2 0 002 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                 </svg>
                                 <p class="text-gray-500 dark:text-gray-400">Chưa có tiện ích nào</p>
                             </div>
@@ -582,61 +516,221 @@
 
             </div>
 
-            <!-- Services -->
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl mt-6">
+            
+
+            <!-- Package Management Section -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
                 <div class="px-5 flex justify-between py-4 border-b border-gray-100 dark:border-gray-700/60">
-                    <h2 class="font-semibold text-gray-800 dark:text-gray-100">
-                        Dịch vụ
-                        <span class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->services->count() }})</span>
+                    <h2 class="font-medium text-lg text-gray-800 dark:text-gray-100">
+                        Quản lý gói dịch vụ
+                        <span class="text-gray-400 dark:text-gray-500 font-medium">({{ $roomType->packages->count() ?? 0 }})</span>
                     </h2>
-                    <button onclick="openServiceManager({{ $roomType->room_type_id }})"
-                        class="btn cursor-pointer bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-200">
-                        <svg class="shrink-0 me-2" width="16px" height="16px"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        <span class="max-xs:sr-only content-center">Quản lý dịch vụ</span>
+                    <button onclick="openPackageModal({{ $roomType->room_type_id }}, null, 'create')"
+                            class="btn cursor-pointer bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-colors duration-200">
+                        <svg class="shrink-0 me-2" width="16px" height="16px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        <span class="max-xs:sr-only content-center">Thêm gói mới</span>
                     </button>
                 </div>
                 <div class="p-5">
-                    @if ($roomType->services->count() > 0)
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
-                            @foreach ($roomType->services as $service)
-                                <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg {{ $service->is_active ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20' : '' }}">
-                                    <div class="flex-shrink-0">
-                                    </div>
-                                    <div class="ml-3 flex-1">
-                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ $service->name }}
-                                            @if ($service->is_active)
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                                    Hoạt động
-                                                </span>
-                                            @else
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-red-500 text-red-800 border border-red-700 dark:bg-red-900/30 dark:text-red-400 dark:border-red-500">
-                                                    Ngưng hoạt động
-                                                </span>
-                                            @endif
-                                        </p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $service->price_with_unit }}</p>
-                                    </div>
-                                </div>
-                            @endforeach
+                    @if ($roomType->packages->count() > 0)
+                        <div class="overflow-x-visible">
+                            <table class="w-full table-auto text-sm text-left text-gray-900 dark:text-gray-100">
+                                <thead class="bg-gray-50 dark:bg-gray-700 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-6 py-3">ID</th>
+                                        <th class="px-6 py-3">Tên gói</th>
+                                        <th class="px-6 py-3">Phụ thu (VND)</th>
+                                        <th class="px-6 py-3">Bao gồm tất cả dịch vụ</th>
+                                        <th class="px-6 py-3">Số dịch vụ</th>
+                                        <th class="px-6 py-3">Trạng thái</th>
+                                        <th class="px-6 py-3">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                    @foreach ($roomType->packages as $package)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $package->package_id }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="max-w-xs truncate">{{ $package->name }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ number_format($package->price_modifier_vnd, 0, ',', '.') }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">{{ $package->include_all_services ? 'Có' : 'Không' }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                                {{ $package->services->count() }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <button type="button"
+                                                    onclick="togglePackageStatus({{ $package->package_id }}, {{ $package->is_active ? 'true' : 'false' }}, '{{ $package->name }}')"
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium focus:outline-none transition-colors
+                                                        {{ $package->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200' }}">
+                                                    {{ $package->is_active ? 'Hoạt động' : 'Ngưng hoạt động' }}
+                                                </button>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center align-middle relative">
+                                                <div class="flex justify-center items-center h-full">
+                                                    <button type="button"
+                                                        class="button-action inline-flex items-center justify-center w-8 h-8 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors duration-200"
+                                                        onclick="togglePackageDropdown({{ $package->package_id }})"
+                                                        id="dropdown-package-button-{{ $package->package_id }}">
+                                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                                        </svg>
+                                                    </button>
+                                                    <!-- Dropdown Menu -->
+                                                    <div id="dropdown-package-menu-{{ $package->package_id }}"
+                                                        class="hidden absolute right-0 top-full z-50 min-w-[180px] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-2">
+                                                        <div class="py-1" role="menu">
+                                                            <!-- Edit -->
+                                                            <button
+                                                                onclick="openPackageModal({{ $roomType->room_type_id }}, {{ $package->package_id }}, 'edit'); closePackageDropdown({{ $package->package_id }})"
+                                                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                                                                role="menuitem">
+                                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M11 5H6a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                                </svg>
+                                                                Sửa
+                                                            </button>
+                                                            <!-- Manage Services -->
+                                                            <button
+                                                                onclick="managePackageServices({{ $roomType->room_type_id }}, {{ $package->package_id }}); closePackageDropdown({{ $package->package_id }})"
+                                                                class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                                                                role="menuitem">
+                                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M9 12h6m-3 3v-3m-3-3h6m2-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                                </svg>
+                                                                Quản lý dịch vụ
+                                                            </button>
+                                                            <!-- Divider -->
+                                                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                                            <!-- Delete -->
+                                                            <form action="{{ route('admin.room-types.packages.destroy', [$roomType->room_type_id, $package->package_id]) }}" method="POST" class="inline"
+                                                                onsubmit="return confirmDeletePackage(this, '{{ $package->name }}');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit"
+                                                                        class="delete-btn flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
+                                                                        role="menuitem">
+                                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                    </svg>
+                                                                    Xóa
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Expandable Details Row -->
+                                        <tr id="package-details-{{ $package->package_id }}"
+                                            class="hidden bg-gray-50 dark:bg-gray-700/50">
+                                            <td colspan="6" class="px-6 py-4">
+                                                <div class="space-y-4">
+                                                    <div>
+                                                        <h4 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
+                                                            Chi tiết gói dịch vụ</h4>
+                                                        <div class="space-y-2">
+                                                            <div>
+                                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Tên:</span>
+                                                                <p class="text-sm text-green-600 dark:text-green-400">
+                                                                    {{ $package->name }}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Phụ thu:</span>
+                                                                <p class="text-sm text-green-600 dark:text-green-400">
+                                                                    {{ number_format($package->price_modifier_vnd, 0, ',', '.') }} VND
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Bao gồm tất cả dịch vụ:</span>
+                                                                <p class="text-sm text-green-600 dark:text-green-400">
+                                                                    {{ $package->include_all_services ? 'Có' : 'Không' }}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Mô tả:</span>
+                                                                <p class="text-sm text-green-600 dark:text-green-400">
+                                                                    {{ $package->description ?? 'Chưa có mô tả' }}
+                                                                </p>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Trạng thái:</span>
+                                                                <p class="text-sm text-green-600 dark:text-green-400">
+                                                                    {{ $package->is_active ? 'Hoạt động' : 'Ngưng hoạt động' }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     @else
                         <div class="text-center py-8">
                             <svg class="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 01-2 2z" />
                             </svg>
-                            <p class="text-gray-500 dark:text-gray-400">Chưa có dịch vụ nào</p>
+                            <p class="text-gray-500 dark:text-gray-400">Chưa có gói dịch vụ nào</p>
                         </div>
                     @endif
                 </div>
             </div>
+
+                <!-- Package Modal -->
+                <div id="packageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50" onclick="closePackageModal(event)">
+                    <div class="modal-content bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md mx-auto mt-20">
+                        <h2 id="modalTitle" class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4"></h2>
+                        <form id="packageForm" method="POST">
+                            @csrf
+                            <input type="hidden" name="package_id" id="packageId">
+                            <input type="hidden" name="_method" id="packageMethod" value="POST">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tên gói</label>
+                                <input type="text" name="name" id="packageName" class="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phụ thu (VND)</label>
+                                <input type="number" name="price_modifier_vnd" id="packagePrice" class="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bao gồm tất cả dịch vụ</label>
+                                <select name="include_all_services" id="packageIncludeAll" class="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                                    <option value="1">Có</option>
+                                    <option value="0">Không</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mô tả</label>
+                                <textarea name="description" id="packageDescription" class="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" rows="3"></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Trạng thái</label>
+                                <select name="is_active" id="packageIsActive" class="mt-1 block w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                                    <option value="1">Hoạt động</option>
+                                    <option value="0">Ngưng hoạt động</option>
+                                </select>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="closePackageModal()" class="btn bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-400 dark:hover:bg-gray-500 transition-colors duration-200 px-4 py-2 rounded">
+                                    Hủy
+                                </button>
+                                <button type="submit" class="btn bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200 px-4 py-2 rounded">
+                                    Lưu
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 
             <!-- Sidebar -->
             <div class="space-y-6">
@@ -656,7 +750,7 @@
                                     width="24" height="24">
                                     <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
                                     <path fill-rule="evenodd"
-                                        d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
+                                        d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110-2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
                                         clip-rule="evenodd"></path>
                                 </svg>
                                 Xem danh sách phòng
@@ -833,74 +927,70 @@
             </div>
         </div>
     </div>
+    
 
     <!-- Scripts -->
     <script>
-        // Global variables for image gallery
+        // SweetAlert2 confirm delete
+        function confirmDeletePackage(form, packageName = '') {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Bạn có chắc muốn xóa????    ?',
+                text: packageName ? `Xóa gói: ${packageName}` : "Bạn sẽ không thể hoàn tác thao tác này!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+            return false;
+        }
+
+        // Image gallery logic
         let currentImageIndex = 0;
         let allImages = @json($roomType->images->values());
 
-        // Image Viewer Functions
         function viewImage(imageUrl, title, description = '') {
             const modal = document.getElementById('imageViewerModal');
             const image = document.getElementById('viewerImage');
             const titleElement = document.getElementById('viewerTitle');
             const descriptionElement = document.getElementById('viewerDescription');
             const loader = document.getElementById('imageLoader');
-
-            // Show loader
             loader.classList.remove('hidden');
-
-            // Set image source and info
-            image.onload = function() {
-                loader.classList.add('hidden');
-            };
-
+            image.onload = function() { loader.classList.add('hidden'); };
             image.src = imageUrl;
             titleElement.textContent = title;
             descriptionElement.textContent = description;
-
-            // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-
-            // Prevent body scroll
             document.body.style.overflow = 'hidden';
         }
-
         function closeImageViewer() {
             const modal = document.getElementById('imageViewerModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-
-            // Restore body scroll
             document.body.style.overflow = 'auto';
         }
-
-        // All Images Gallery Functions
-        function viewAllImages(roomTypeId) {
-            const modal = document.getElementById('allImagesModal');
-            modal.classList.remove('hidden');
+        function openAllImagesModal() {
+            document.getElementById('allImagesModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
-
         function closeAllImagesModal() {
-            const modal = document.getElementById('allImagesModal');
-            modal.classList.add('hidden');
+            document.getElementById('allImagesModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
-
         function viewImageFromGallery(index) {
             if (allImages && allImages[index]) {
                 currentImageIndex = index;
                 const image = allImages[index];
                 const title = `{{ $roomType->name }} - Ảnh ${index + 1}`;
                 const description = image.is_main ? 'Ảnh chính' : `Ảnh ${index + 1}`;
-
-                // Close gallery modal first
                 closeAllImagesModal();
-
-                // Then open image viewer
                 setTimeout(() => {
                     viewImage(image.image_path, title, description);
                 }, 100);
@@ -943,11 +1033,14 @@
         // Thêm function hiển thị loading overlay
         function showLoadingOverlay(message = 'Đang tải...') {
             // Tạo overlay nếu chưa có
+
+
+
             let overlay = document.getElementById('pageLoadingOverlay');
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.id = 'pageLoadingOverlay';
-                overlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+                overlay.className = 'fixed h-full inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
                 overlay.innerHTML = `
                     <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3 shadow-xl">
                         <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -1030,6 +1123,14 @@
                 document.getElementById('prevImageBtn').classList.remove('hidden');
                 document.getElementById('nextImageBtn').classList.remove('hidden');
             }
+
+            // Xử lý lỗi ảnh
+            document.querySelectorAll('img').forEach(function(img) {
+                img.addEventListener('error', function() {
+                    this.src = '/images/placeholder-room.jpg';
+                    this.alt = 'Ảnh không tải được';
+                });
+            });
         });
 
         // Utility function to preload images for better performance
@@ -1187,377 +1288,195 @@
         }
 
         function openServiceManager(roomTypeId) {
-        window.location.href = '{{ route("admin.room-types.services", [":id"]) }}'.replace(':id', roomTypeId);
-    }
+            window.location.href = '{{ route("admin.room-types.services", [":id"]) }}'.replace(':id', roomTypeId);
+        }
+
+        function openPackageModal(roomTypeId, packageId = null, mode = 'create') {
+            const form = document.getElementById('packageForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const methodInput = document.getElementById('packageMethod');
+
+            // Đặt tiêu đề và trạng thái mặc định
+            modalTitle.textContent = mode === 'create' ? 'Thêm gói dịch vụ' : 'Sửa gói dịch vụ';
+            document.getElementById('packageId').value = packageId || '';
+            document.getElementById('packageName').value = '';
+            document.getElementById('packagePrice').value = '';
+            document.getElementById('packageIncludeAll').value = '0';
+            document.getElementById('packageDescription').value = '';
+            document.getElementById('packageIsActive').value = '1';
+            methodInput.value = mode === 'create' ? 'POST' : 'PUT';
+
+            if (mode === 'edit' && packageId) {
+                fetch(`/admin/room-types/packages/${packageId}/edit`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Lỗi phản hồi từ server');
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Dữ liệu từ server (edit):', data);
+                        document.getElementById('packageId').value = data.package_id;
+                        document.getElementById('packageName').value = data.name || '';
+                        document.getElementById('packagePrice').value = data.price_modifier_vnd || '';
+                        document.getElementById('packageIncludeAll').value = data.include_all_services ? '1' : '0';
+                        document.getElementById('packageDescription').value = data.description || '';
+                        document.getElementById('packageIsActive').value = data.is_active ? '1' : '0';
+                        form.action = `/admin/room-types/packages/${data.package_id}`;
+                        document.getElementById('packageModal').classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                    })
+                    .catch(error => console.error('Lỗi khi tải dữ liệu gói:', error));
+            } else {
+                form.action = `/admin/room-types/${roomTypeId}/packages`;
+                document.getElementById('packageModal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closePackageModal() {
+            const modal = document.getElementById('packageModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('packageModal');
+            const modalContent = modal.querySelector('.modal-content');
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closePackageModal();
+                }
+            });
+
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            document.getElementById('packageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                console.log('Dữ liệu gửi đi:', Object.fromEntries(formData));
+                console.log('Action URL:', this.action);
+                console.log('Method:', this.querySelector('[name="_method"]').value);
+
+                fetch(this.action, {
+                    method: 'POST', // Sử dụng POST với _method để xử lý PUT
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Phản hồi từ server:', data);
+                    if (data.success) {
+                        closePackageModal();
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Cập nhật thất bại');
+                    }
+                })
+                .catch(error => console.error('Lỗi khi gửi request:', error));
+            });
+        });
+
+        // Package Management Functions
+        function togglePackageDetails(packageId) {
+            const detailsRow = document.getElementById(`package-details-${packageId}`);
+            const allDetails = document.querySelectorAll('[id^="package-details-"]');
+            allDetails.forEach(detail => {
+                if (detail.id !== `package-details-${packageId}`) {
+                    detail.classList.add('hidden');
+                }
+            });
+            detailsRow.classList.toggle('hidden');
+            if (!detailsRow.classList.contains('hidden')) {
+                setTimeout(() => {
+                    detailsRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
+        }
+
+        function togglePackageDropdown(packageId) {
+            const dropdown = document.getElementById(`dropdown-package-menu-${packageId}`);
+            const allDropdowns = document.querySelectorAll('[id^="dropdown-package-menu-"]');
+            allDropdowns.forEach(menu => {
+                if (menu.id !== `dropdown-package-menu-${packageId}`) {
+                    menu.classList.add('hidden');
+                }
+            });
+            dropdown.classList.toggle('hidden');
+        }
+
+        function closePackageDropdown(packageId) {
+            const dropdown = document.getElementById(`dropdown-package-menu-${packageId}`);
+            dropdown.classList.add('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdowns = document.querySelectorAll('[id^="dropdown-package-menu-"]');
+            const buttons = document.querySelectorAll('[id^="dropdown-package-button-"]');
+            let clickedInsideDropdown = false;
+            dropdowns.forEach(dropdown => {
+                if (dropdown.contains(event.target)) clickedInsideDropdown = true;
+            });
+            buttons.forEach(button => {
+                if (button.contains(event.target)) clickedInsideDropdown = true;
+            });
+            if (!clickedInsideDropdown) {
+                dropdowns.forEach(dropdown => dropdown.classList.add('hidden'));
+            }
+        });
+
+        function managePackageServices(roomTypeId, packageId) {
+            showLoadingOverlay('Đang chuyển đến quản lý dịch vụ...');
+            setTimeout(() => {
+                window.location.href = `/admin/room-types/${roomTypeId}/packages/${packageId}/manage-services`;
+            }, 500);
+        }
+
+        function togglePackageStatus(packageId, isActive, packageName) {
+            Swal.fire({
+                title: isActive ? 'Ngưng hoạt động gói này??????' : 'Kích hoạt gói này?',
+                text: `Bạn có chắc muốn ${isActive ? 'ngưng hoạt động' : 'kích hoạt'} gói: ${packageName}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: isActive ? 'Ngưng hoạt động' : 'Kích hoạt',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: isActive ? '#d33' : '#3085d6'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/room-types/packages/${packageId}/toggle-status`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Thành công!',
+                                text: data.message || 'Đã cập nhật trạng thái.',
+                                icon: 'success',
+                                timer: 1200,
+                                showConfirmButton: false
+                            });
+                            setTimeout(() => location.reload(), 1200);
+                        } else {
+                            Swal.fire('Lỗi', data.message || 'Không thể cập nhật trạng thái.', 'error');
+                        }
+                    })
+                    .catch(() => Swal.fire('Lỗi', 'Không thể kết nối server.', 'error'));
+                }
+            });
+        }
+
+        
     </script>
-    <!-- CSS với tỷ lệ cố định -->
-    <style>
-        .modal-overlay {
-            z-index: 50;
-            background-color: rgba(0, 0, 0, 0.768)
-        }
-        /* Gallery Container - Main Layout */
-        .gallery-container {
-            display: flex;
-            gap: 1rem;
-            height: 400px;
-        }
-
-        /* Main Image - Tỷ lệ 2:3 (width:height) */
-        .gallery-main-image {
-            flex: 1;
-            min-width: 0;
-        }
-
-        /* Grid Container - 2x2 */
-        .gallery-grid {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 0.5rem;
-            min-width: 0;
-        }
-
-        /* Grid Items - Tỷ lệ 1:1 (vuông) */
-        .gallery-grid-item {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            /* Cố định tỷ lệ vuông */
-            overflow: hidden;
-            border-radius: 0.5rem;
-        }
-
-        /* Image Wrapper - Container cho tất cả ảnh */
-        .gallery-image-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            border-radius: 0.75rem;
-            transition: all 0.3s ease;
-        }
-
-        .gallery-main-image .gallery-image-wrapper {
-            aspect-ratio: 3 / 2;
-            /* Ảnh chính tỷ lệ 3:2 */
-            height: 100%;
-        }
-
-        /* Images - Cố định object-fit */
-        .gallery-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            transition: transform 0.3s ease;
-        }
-
-        .gallery-image-wrapper:hover .gallery-image {
-            transform: scale(1.05);
-        }
-
-        /* Badge cho ảnh chính */
-        .gallery-badge {
-            position: absolute;
-            top: 0.75rem;
-            left: 0.75rem;
-            background: #2563eb;
-            color: white;
-            padding: 0.5rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            z-index: 10;
-        }
-
-        /* Hover Overlays */
-        .gallery-overlay {
-            position: absolute;
-            inset: 0;
-            background: black;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .gallery-image-wrapper:hover .gallery-overlay {
-            opacity: 0.2;
-        }
-
-        .gallery-hover-content {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .gallery-image-wrapper:hover .gallery-hover-content {
-            opacity: 1;
-        }
-
-        .gallery-hover-button {
-            background: white;
-            color: #374151;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        /* "+X more" Overlay */
-        .gallery-more-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .gallery-more-overlay:hover {
-            background: rgba(0, 0, 0, 0.8);
-        }
-
-        .gallery-more-content {
-            text-align: center;
-            color: white;
-        }
-
-        /* Placeholder Styles */
-        .gallery-placeholder {
-            width: 100%;
-            height: 100%;
-            background: #f3f4f6;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .gallery-placeholder:hover {
-            background: #e5e7eb;
-        }
-
-        .dark .gallery-placeholder {
-            background: #374151;
-        }
-
-        .dark .gallery-placeholder:hover {
-            background: #4b5563;
-        }
-
-        .gallery-placeholder-content {
-            text-align: center;
-            color: #9ca3af;
-        }
-
-        .dark .gallery-placeholder-content {
-            color: #6b7280;
-        }
-
-        /* Modal Gallery Grid - Tỷ lệ cố định */
-        .gallery-modal-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .gallery-modal-item {
-            position: relative;
-            aspect-ratio: 1 / 1;
-            /* Cố định tỷ lệ vuông */
-            overflow: hidden;
-            border-radius: 0.5rem;
-        }
-
-        .gallery-modal-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            border-radius: 0.5rem;
-            transition: transform 0.3s ease;
-        }
-
-        .gallery-modal-wrapper:hover {
-            transform: scale(1.02);
-        }
-
-        .gallery-modal-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            transition: transform 0.3s ease;
-        }
-
-        .gallery-modal-wrapper:hover .gallery-modal-image {
-            transform: scale(1.1);
-        }
-
-        .gallery-modal-badge {
-            position: absolute;
-            top: 0.5rem;
-            left: 0.5rem;
-            background: #2563eb;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            z-index: 10;
-        }
-
-        .gallery-modal-overlay {
-            position: absolute;
-            inset: 0;
-            background: black;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .gallery-modal-wrapper:hover .gallery-modal-overlay {
-            opacity: 0.4;
-        }
-
-        .gallery-modal-hover {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .gallery-modal-wrapper:hover .gallery-modal-hover {
-            opacity: 1;
-        }
-
-        .gallery-modal-button {
-            background: white;
-            color: #374151;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .gallery-container {
-                flex-direction: column;
-                height: auto;
-                gap: 1rem;
-            }
-
-            .gallery-main-image {
-                height: 250px;
-            }
-
-            .gallery-main-image .gallery-image-wrapper {
-                aspect-ratio: 16 / 9;
-                /* Mobile: tỷ lệ 16:9 */
-            }
-
-            .gallery-grid {
-                height: 200px;
-                grid-template-columns: repeat(4, 1fr);
-                grid-template-rows: 1fr;
-            }
-
-            .gallery-grid-item {
-                aspect-ratio: 1 / 1;
-                /* Vẫn giữ vuông trên mobile */
-            }
-
-            /* Modal responsive */
-            .gallery-modal-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 0.75rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .gallery-grid {
-                grid-template-columns: repeat(2, 1fr);
-                grid-template-rows: repeat(2, 1fr);
-                height: 160px;
-            }
-
-            .gallery-modal-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 0.5rem;
-            }
-        }
-
-        /* Tablet */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .gallery-modal-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            }
-        }
-
-        /* Large Desktop */
-        @media (min-width: 1200px) {
-            .gallery-modal-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            }
-        }
-
-        /* Loading Animation */
-        .gallery-image[src=""],
-        .gallery-modal-image[src=""] {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% {
-                background-position: 200% 0;
-            }
-
-            100% {
-                background-position: -200% 0;
-            }
-        }
-
-        /* Dark mode loading */
-        .dark .gallery-image[src=""],
-        .dark .gallery-modal-image[src=""] {
-            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
-            background-size: 200% 100%;
-        }
-
-        /* Z-index management */
-        #singleImageModal {
-            z-index: 60;
-        }
-
-        #allImagesModal {
-            z-index: 55;
-        }
-
-        /* Smooth transitions */
-        * {
-            box-sizing: border-box;
-        }
-
-        .gallery-image-wrapper,
-        .gallery-modal-wrapper {
-            backface-visibility: hidden;
-            transform: translateZ(0);
-        }
-    </style>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-app-layout>
+
+

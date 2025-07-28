@@ -176,16 +176,12 @@ class RoomController extends Controller
                 'status' => 'required|in:available,occupied,maintenance,cleaning',
                 'description' => 'nullable|string',
                 'last_cleaned' => 'nullable|date',
-                'base_price_vnd' => 'required|numeric|min:0',
             ];
 
             $validator = Validator::make($request->all(), $rules, [
                 'name.unique' => 'Tên phòng đã tồn tại trong hệ thống.',
                 'name.required' => 'Tên phòng là bắt buộc.',
                 'name.max' => 'Tên phòng không được vượt quá 100 ký tự.',
-                'base_price_vnd.required' => 'Giá cơ bản là bắt buộc.',
-                'base_price_vnd.numeric' => 'Giá cơ bản phải là số.',
-                'base_price_vnd.min' => 'Giá cơ bản không được nhỏ hơn 0.',
             ]);
 
             if ($validator->fails()) {
@@ -212,7 +208,6 @@ class RoomController extends Controller
                 'status' => $request->status,
                 'description' => $request->description,
                 'last_cleaned' => $request->last_cleaned,
-                'base_price_vnd' => $request->base_price_vnd,
             ];
 
             $room = Room::create($data);
@@ -474,9 +469,9 @@ class RoomController extends Controller
             \Log::info('Update method called', ['room_id' => $room->room_id, 'request' => $request->all()]);
 
             $rules = [
-                'name' => ['required', 'string', 'max:100', 'unique:room,name,' . $room->room_id], // Sửa từ 'rooms' thành 'room'
+                'name' => ['required', 'string', 'max:100', 'unique:room,name,' . $room->room_id. ',room_id'], // Sửa từ 'rooms' thành 'room'
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'floor_id' => 'required|exists:floors,floor_id',
+                'floor_id' => 'required|exists:floors,floor_id',        
                 'bed_type_fixed' => 'required|exists:bed_types,id',
                 'status' => 'required|in:available,occupied,maintenance,cleaning',
                 'description' => 'nullable|string',

@@ -5,7 +5,6 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\StaffController;
-use App\Http\Controllers\RoomPriceEventFestivalController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingExtensionController;
 use App\Http\Controllers\BookingRescheduleController;
@@ -32,7 +31,6 @@ use App\Http\Controllers\DepositPolicyController;
 use App\Http\Controllers\DynamicPricingController;
 use App\Http\Controllers\EventFestivalManagementController;
 use App\Http\Controllers\FlexiblePricingController;
-use App\Http\Controllers\RoomPriceController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\WeekendPriceController;
@@ -45,6 +43,7 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NewsController\NewsController;
 use App\Http\Controllers\NewsController\MediaController;
+use App\Http\Controllers\ReviewController;
 
 Route::redirect('/', 'login');
 Route::get('/home', [DashboardController::class, 'index'])->name('home');
@@ -53,8 +52,25 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Phần này giữ nguyên
     Route::get('/json-data-feed', [DataFeedController::class, 'getDataFeed'])->name('json_data_feed');
 
-    Route::get('/dashboard/analytics', [DashboardController::class, 'analytics'])->name('analytics');
-    Route::get('/dashboard/analytics/{id}', [DashboardController::class, 'analytics'])->name('analytics_id');
+    Route::get('/dashboard/analytics', [DashboardController::class, 'analytics'])
+        ->name('analytics');
+
+    // AJAX endpoint for chart data
+    Route::get('/dashboard/analytics/chart-data', [DashboardController::class, 'getAnalyticsChartData'])
+        ->name('admin.analytics.chart-data');
+
+    // Export analytics data (e.g., CSV, PDF)
+    Route::get('/dashboard/analytics/export', [DashboardController::class, 'exportAnalytics'])
+        ->name('admin.analytics.export');
+
+    // Filter analytics by custom period (optional, for future expansion)
+    Route::post('/dashboard/analytics/filter', [DashboardController::class, 'filterAnalytics'])
+        ->name('admin.analytics.filter');
+    Route::get('/dashboard/analytics/realtime-stats', [DashboardController::class, 'getRealtimeStats'])
+        ->name('admin.analytics.realtime-stats');
+
+
+
     Route::get('/settings/account', function () {
         return view('pages/settings/account');
     })->name('account');
@@ -142,8 +158,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::put('/admin/room-types/update/{roomTypeId}', [RoomTypeController::class, 'update'])->name('admin.room-types.update');
     Route::post('/admin/room-types/destroy/{roomTypeId}', [RoomTypeController::class, 'destroy'])->name('admin.room-types.destroy');
     Route::get('/admin/room-types/show/{roomTypeId}', [RoomTypeController::class, 'show'])->name('admin.room-types.show');
-
-
+    Route::post('/admin/room-types/{roomType}/packages', [RoomTypeController::class, 'storePackage'])->name('admin.room-types.packages.store');
+    Route::get('/admin/room-types/packages/{package}/edit', [RoomTypeController::class, 'editPackage'])->name('admin.room-types.packages.edit');
+    Route::put('/admin/room-types/packages/{package}', [RoomTypeController::class, 'updatePackage'])->name('admin.room-types.packages.update');
+    Route::delete('/admin/room-types/{roomType}/packages/{package}', [RoomTypeController::class, 'destroyPackage'])->name('admin.room-types.packages.destroy');
+    Route::get('/admin/room-types/{roomType}/manage-packages-services', [RoomTypeController::class, 'managePackagesServices'])->name('admin.room-types.manage-packages-services'); 
+    Route::get('/admin/room-types/packages/{package}/services', [RoomTypeController::class, 'getPackageServices'])->name('admin.room-types.packages.services');
+    Route::post('/admin/room-types/packages/{package}/services', [RoomTypeController::class, 'storePackageServices'])->name('admin.room-types.packages.services.store');
+    Route::delete('/admin/room-types/packages/{package}/services/{service}', [RoomTypeController::class, 'destroyPackageService'])->name('admin.room-types.packages.services.destroy');   
+    Route::get('/admin/room-types/{roomType}/packages/{package}/manage-services', [RoomTypeController::class, 'managePackageServices'])->name('admin.room-types.packages.manage-services');
+    Route::post('/admin/room-types/packages/{package}/toggle-status', [RoomTypeController::class, 'togglePackageStatus'])->name('admin.room-types.packages.toggle-status');    
 
     // Room //////////////////////////////////////////
     Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
@@ -171,6 +195,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/floors/destroy/{floorId}', [FloorController::class, 'destroy'])->name('admin.floors.destroy');
     Route::get('/admin/floors/show/{floorId}', [FloorController::class, 'show'])->name('admin.floors.show');
 
+    //Reviews 
+    Route::get('/admin/reviews', [ReviewController::class, 'index'])->name('admin.reviews');
+    Route::delete('/admin/reviews/destroy/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+    Route::patch('/admin/reviews/toggle-status/{id}', [ReviewController::class, 'toggleStatus'])->name('admin.reviews.toggle-status');
+    Route::post('/admin/reviews/{id}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
 
     // Cách liiiiiiiiiiiiiiiiiiii
 
