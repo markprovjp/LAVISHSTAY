@@ -29,7 +29,7 @@
         @endif
 
         <!-- Table -->
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg ">
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-x-auto">
             <div class="p-6">
                 @if ($categories->count())
                     <table class="w-full table-auto text-sm">
@@ -112,7 +112,7 @@
         </div>
 
         <!-- Modal: Tạo mới -->
-        <div x-show="showCreate" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        <div x-show="showCreate" class="fixed inset-0  bg-opacity-50 z-50 flex items-center justify-center"
             style="display: none;">
             <div @click.away="showCreate = false"
                 class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg">
@@ -138,7 +138,7 @@
         </div>
 
         <!-- Modal: Sửa -->
-        <div x-show="editModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        <div x-show="editModal" class="fixed inset-0  bg-opacity-50 z-50 flex items-center justify-center"
             style="display: none;">
             <div @click.away="editModal = false"
                 class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-lg">

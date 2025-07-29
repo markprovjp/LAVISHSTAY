@@ -2,23 +2,18 @@
 
 namespace App\Models\News;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User; // Import model User
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
-use App\Models\News\NewsCategory;
-use App\Models\User;
-use App\Models\News\MediaFile;
-use App\Models\News\SeoScore;
+use Illuminate\Database\Eloquent\Model;
 
 class News extends Model
 {
     use HasFactory;
 
+    protected $table = 'news';
 
     protected $fillable = [
-        'title',
         'slug',
-        'summary',
         'content',
         'thumbnail_id',
         'author_id',
@@ -29,39 +24,65 @@ class News extends Model
         'schema_json',
         'views',
         'status',
-        'published_at'
+        'published_at',
+        'category_id',
     ];
 
     /**
-     * Ép kiểu các trường dữ liệu
+     * Khai báo các cột ngày tháng để Laravel tự động chuyển thành Carbon
+     */
+    protected $dates = [
+        'published_at',
+    ];
+
+    /**
+     * Hoặc sử dụng casts (tùy phiên bản Laravel)
      */
     protected $casts = [
         'published_at' => 'datetime',
+        'status' => 'boolean',
+        'views' => 'integer',
     ];
 
-    public function author()
+    /**
+     * Quan hệ với bảng NewsCategory
+     */
+    public function category()
     {
-        return $this->belongsTo(User::class, 'author_id');
+        return $this->belongsTo(NewsCategory::class, 'category_id');
     }
 
+    /**
+     * Quan hệ với bảng MediaFile (thumbnail)
+     */
     public function thumbnail()
     {
         return $this->belongsTo(MediaFile::class, 'thumbnail_id');
     }
 
-    public function categories()
+    /**
+     * Quan hệ nhiều-nhiều với MediaFile qua bảng news_media_files
+     */
+    public function mediaFiles()
     {
-        return $this->belongsToMany(
-            NewsCategory::class,
-            'news_category_pivot',
-            'news_id',
-            'category_id'
-        );
+        return $this->belongsToMany(MediaFile::class, 'news_media_files', 'news_id', 'media_file_id');
     }
 
-    // app/Models/News/News.php
-    public function seoScore()
+    /**
+     * Quan hệ với bảng User (tác giả)
+     */
+    public function author()
     {
-        return $this->hasOne(SeoScore::class, 'news_id');
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    
+
+    /**
+     * Lấy URL ảnh đại diện
+     */
+    public function getThumbnailUrlAttribute()
+    {
+        return $this->thumbnail ? $this->thumbnail->filepath : asset('storage/no-image.png');
     }
 }
