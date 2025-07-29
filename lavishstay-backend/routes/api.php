@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\NewsApiController;
+use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\SitemapController;
+use App\Http\Controllers\NewsController\NewsCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -253,3 +257,16 @@ Route::prefix('chat')->name('chat.')->group(function () {
 });
 
 Route::get('/test-complete/{bookingCode}', [PaymentController::class, 'testCompleteBooking']);
+
+
+
+// News API
+Route::get('/news/categories', [NewsApiController::class, 'getCategories']);
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
+Route::get('/news/categories', [NewsCategoryController::class, 'index']);
+// php artisan make:observer NewsObserver --model=News
+Route::get('/sitemap', [SitemapController::class, 'index']);
+Route::get('/sitemap-main', [SitemapController::class, 'main']);
+Route::get('/sitemap-categories', [SitemapController::class, 'categories']);
+Route::get('/sitemap-news', [SitemapController::class, 'news']);

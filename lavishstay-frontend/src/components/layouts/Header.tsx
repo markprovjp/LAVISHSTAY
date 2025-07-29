@@ -127,6 +127,11 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       label: "Lễ tân",
       icon: null,
     },
+    {
+      key: "/tin-tuc",
+      label: "Tin tức",
+      icon: null,
+    },  
 
   ];
 

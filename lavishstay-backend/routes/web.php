@@ -544,40 +544,41 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     // ---------------- DANH MỤC ----------------
-    Route::get('admin/news/categories', [NewsCategoryController::class, 'index'])->name('admin.news.categories.index');         // Danh sách
-    Route::get('admin/news/categories/create', [NewsCategoryController::class, 'create'])->name('admin.news.categories.create'); // Form tạo
-    Route::post('admin/news/categories', [NewsCategoryController::class, 'store'])->name('admin.news.categories.store');        // Lưu
+// Nhóm route cho danh mục tin tức
+Route::prefix('admin/news')->name('admin.news.')->group(function () {
+    Route::get('categories', [NewsCategoryController::class, 'index'])->name('categories.index');
+    Route::get('categories/create', [NewsCategoryController::class, 'create'])->name('categories.create');
+    Route::post('categories', [NewsCategoryController::class, 'store'])->name('categories.store');
+    Route::get('categories/{category}/edit', [NewsCategoryController::class, 'edit'])->name('categories.edit');
+    Route::put('categories/{category}', [NewsCategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [NewsCategoryController::class, 'destroy'])->name('categories.destroy');
+});
 
-    Route::get('admin/news/categories/{category}/edit', [NewsCategoryController::class, 'edit'])->name('admin.news.categories.edit'); // Sửa
-    Route::put('admin/news/categories/{category}', [NewsCategoryController::class, 'update'])->name('admin.news.categories.update');  // Cập nhật
-    Route::delete('admin/news/categories/{category}', [NewsCategoryController::class, 'destroy'])->name('admin.news.categories.destroy'); // Xoá
+// Route xử lý upload ảnh cho CKEditor
+    Route::post('admin/news/create/ckeditor', [NewsController::class, 'uploadImage'])->name('admin.news.create.ckeditor');
+    Route::post('admin/news/edit/ckeditor', [NewsController::class, 'uploadImage'])->name('admin.news.edit.ckeditor');
+    // Route::post('/admin/news/create/ckeditor', [NewsController::class, 'uploadCkeditorImage'])->name('admin.news.create.ckeditor');
+// ---------------- BÀI VIẾT ----------------
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Route cho bài viết
+    Route::get('news', [NewsController::class, 'index'])->name('news.index');
+    Route::get('news/create', [NewsController::class, 'create'])->name('news.create');
+    Route::post('news/store', [NewsController::class, 'store'])->name('news.store');
+    Route::get('news/edit/{news}', [NewsController::class, 'edit'])->name('news.edit');
+    Route::put('news/update/{news}', [NewsController::class, 'update'])->name('news.update');
+    Route::delete('news/destroy/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
+    Route::delete('news/destroy/{id}', [NewsController::class, 'destroyMedia'])->name('media.destroy');
 
-    // ---------------- BÀI VIẾT ----------------
-    Route::prefix('admin')->name('admin.')->group(function () {
-        // ---------- BÀI VIẾT ----------
-        Route::get('news',               [NewsController::class, 'index'])->name('news.index');
-        Route::get('news/create',        [NewsController::class, 'create'])->name('news.create');
-        Route::post('news',              [NewsController::class, 'store'])->name('news.store');
+    Route::get('news/show/{news}', [NewsController::class, 'show'])->name('news.show');
+    Route::post('news/bulk-action', [NewsController::class, 'bulkAction'])->name('news.bulk');
 
-        Route::get('news/edit/{news}',   [NewsController::class, 'edit'])->name('news.edit');
-        Route::put('news/{news}',        [NewsController::class, 'update'])->name('news.update');
-        Route::delete('news/{news}',     [NewsController::class, 'destroy'])->name('news.destroy');
-        Route::get('news/{news}',        [NewsController::class, 'show'])->name('news.show');
-
-        Route::post('news/bulk-action',  [NewsController::class, 'bulkAction'])->name('news.bulk');
-
-        // CKEditor upload
-        Route::post('ckeditor/upload', [NewsController::class, 'uploadImage'])->name('ckeditor.upload');
-
-        // Media
-        Route::get('news/media',          [MediaController::class, 'index'])->name('media.index');
-        Route::post('news/media',          [MediaController::class, 'store'])->name('media.store');
-        Route::post('news/media/upload',   [MediaController::class, 'upload'])->name('media.bulkUpload');
-
-        Route::post('media/meta/{media}', [MediaController::class, 'updateMeta'])->name('media.meta');
-        Route::delete('media/{media}',     [MediaController::class, 'destroy'])->name('media.destroy');
-        Route::post('media/bulk-destroy', [MediaController::class, 'bulkDestroy'])->name('media.bulkDestroy');
-    });
+    // Route cho media
+    Route::get('news/media', [MediaController::class, 'index'])->name('media.index');
+    Route::post('news/media', [MediaController::class, 'store'])->name('media.store');
+    Route::post('news/media/upload', [MediaController::class, 'upload'])->name('media.upload');
+    Route::post('media/meta/{media}', [MediaController::class, 'updateMeta'])->name('media.updateMeta');
+    Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+});
 
 
 

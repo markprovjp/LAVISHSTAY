@@ -288,12 +288,6 @@
                                     x-transition:leave="transition ease-in duration-200"
                                     x-transition:leave-start="opacity-100 max-h-96"
                                     x-transition:leave-end="opacity-0 max-h-0">
-                                    <li class="mb-1 last:mb-0">
-                                        <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.users')) {{ 'text-violet-500!' }} @endif"
-                                            href="{{ route('admin.users') }}">
-                                            <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">User</span>
-                                        </a>
-                                    </li>
                                     @if (Auth::user()?->hasPermission('quan_ly_nhan_vien'))
                                         <li class="mb-1 last:mb-0">
                                             <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.staffs')) {{ 'text-violet-500!' }} @endif"
