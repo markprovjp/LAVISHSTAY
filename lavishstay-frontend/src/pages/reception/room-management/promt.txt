@@ -1,137 +1,81 @@
-Design a room management dashboard interface for a hotel management system using the following tech stack:
+Nguyên nhân phổ biến:
+Render lại toàn bộ grid/phòng khi state thay đổi (ví dụ: chọn phòng, xem chi tiết).
+Không tối ưu memoization, không dùng virtualization.
+Component RoomCard/RoomGridView không memo hóa, không tách nhỏ, không dùng PureComponent.
+Checkbox dùng Antd mặc định, không tối ưu cho số lượng lớn.
+API trả về quá nhiều dữ liệu, không phân trang/lazy load.
+Giải pháp tối ưu hóa hiệu năng
+1. Dùng Virtual List/Grid cho phòng
+Ant Design Pro có ProList và Ant Design có List hỗ trợ virtualization.
+Hoặc dùng react-window cho grid lớn.
 
-Framework & Routing: React 18 with React Router v7
+Ví dụ dùng ProList:
 
-State Management: Redux Toolkit (auth, theme, search), Zustand (cart, simple state)
+import { ProList } from '@ant-design/pro-components';
 
-UI Framework: Ant Design v5.25.4
+<ProList
+  dataSource={filteredRoomsToDisplay}
+  rowKey="id"
+  pagination={{
+    pageSize: 20,
+  }}
+  renderItem={(item) => (
+    <ProList.Item
+      title={item.name}
+      subTitle={item.room_type?.name}
+      actions={[
+        <ProFormCheckbox
+          checked={selectedRooms.has(item.id)}
+          onChange={e => handleRoomSelect(item.id, e.target.checked)}
+        >
+          Chọn
+        </ProFormCheckbox>,
+        <Button icon={<EyeOutlined />} onClick={() => onViewDetails(item.id)}>Chi tiết</Button>,
+      ]}
+      extra={<Tag color="blue">{item.status}</Tag>}
+    />
+  )}
+/>
+2. Memo hóa RoomCard, RoomGridView
+Đã dùng memo, nhưng nên dùng thêm useCallback cho các hàm truyền xuống.
+Đảm bảo props không thay đổi không cần thiết.
+3. Chuyển Checkbox sang ProFormCheckbox
+Thay Checkbox của Antd bằng ProFormCheckbox của Ant Design Pro, tối ưu cho form/grid lớn.
 
-Styling: Tailwind CSS + Styled Components
+Ví dụ:import { ProFormCheckbox } from '@ant-design/pro-components';
 
-Build Tool: Vite
+<ProFormCheckbox
+  checked={isSelected}
+  onChange={e => onRoomSelect(room.id, e.target.checked)}
+  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
+>
+  Chọn
+</ProFormCheckbox>
+2. Memo hóa RoomCard, RoomGridView
+Đã dùng memo, nhưng nên dùng thêm useCallback cho các hàm truyền xuống.
+Đảm bảo props không thay đổi không cần thiết.
+3. Chuyển Checkbox sang ProFormCheckbox
+Thay Checkbox của Antd bằng ProFormCheckbox của Ant Design Pro, tối ưu cho form/grid lớn.import { ProFormCheckbox } from '@ant-design/pro-components';
 
-Data Fetching: Axios + React Query (TanStack Query)
+<ProFormCheckbox
+  checked={isSelected}
+  onChange={e => onRoomSelect(room.id, e.target.checked)}
+  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
+>
+  Chọn
+</ProFormCheckbox>
+4. Phân trang/Lazy load phòng
+Nếu API trả về quá nhiều phòng, hãy phân trang hoặc lazy load theo tầng/phân loại.
 
-Form Handling: Ant Design Forms
-
-Date Handling: Day.js
-
-Internationalization: i18next
-
-🧱 Structure Overview
-1. Page Layout (Header Fixed)
-
-Top section contains filters:
-
-Customer Name (text input)
-
-Date Picker (Ant Design)
-
-Room Number (input)
-
-Room Type (select)
-
-Room Status (select)
-
-Reset Button
-
-Search Button
-
-Toggle View Options: Display by Date, Room Type, or Floor
-
-A "Filter" button for advanced options
-
-2. Main Content Area (Split by Components)
-
-Based on selected view option, show:
-
-➤ A. Room Grid View (Daily Snapshot)
-Display each room as a color-coded card block
-
-Color indicates room status:
-
-ts
-Sao chép
-Chỉnh sửa
-statusColorMap = {
-  occupied: 'bg-red-500',
-  empty: 'bg-green-500',
-  cleaning: 'bg-orange-400',
-  maintenance: 'bg-gray-400',
-  no_show: 'bg-pink-400',
-}
-Each block shows:
-
-Room number and short code (e.g., "201 - ST")
-
-Guest name (if applicable)
-
-Number of guests
-
-Stay dates
-
-Optional icon representing status
-
-Group by floor (e.g., “Tầng 2”, “Tầng 3”)
-
-Tailwind layout should support 4–5 columns per row with spacing
-
-➤ B. FullCalendar View (By Room Type or Floor Timeline)
-Use @fullcalendar/react with @fullcalendar/resource-timeline plugin
-
-Y-axis: List of rooms grouped by room type (e.g., Superior Twin, Deluxe Room)
-
-X-axis: Timeline from 2022-11-01 to 2022-11-18
-
-Scrollable both horizontally and vertically
-
-FullCalendar Data Format:
-ts
-Sao chép
-Chỉnh sửa
-resources: [
-  { id: '201', title: '201', group: 'Superior Twin' },
-  { id: '301', title: '301', group: 'Deluxe Room' },
-],
-events: [
-  {
-    id: '1',
-    resourceId: '201',
-    title: 'Nguyễn Văn A',
-    start: '2022-11-01',
-    end: '2022-11-03',
-    backgroundColor: '#1890ff' // currently staying
-  },
-  {
-    id: '2',
-    resourceId: '203',
-    title: 'Yến Th...',
-    start: '2022-11-02',
-    end: '2022-11-02',
-    backgroundColor: '#ff4d4f' // no show
-  }
-]
-Requirements:
-Grouped by room type (Superior Twin, Deluxe Room…)
-
-Each row = 1 room, each column = 1 day
-
-Color-coded event blocks showing guest info
-
-Show total number of occupied and available rooms per day below the chart
-
-Responsive and clean layout with Tailwind
-
-Use Ant Design Modal or Tooltip for showing more room/guest details on hover or click
-
-💡 Split everything into React components:
-
-<FilterBar />
-
-<RoomGridView /> for daily status grid
-
-<RoomTimelineView /> for FullCalendar
-
-Use Zustand or Redux for view mode toggle state
-
-All room and booking data fetched via React Query from backend
+5. Tối ưu API
+Nếu dùng umi-request, hãy kiểm tra API có trả về dữ liệu dư thừa không.
+Chỉ lấy các trường cần thiết cho grid, chi tiết phòng chỉ lấy khi click.
+6. Tối ưu state
+Tránh lưu toàn bộ phòng vào state nếu không cần thiết.
+Chỉ lưu selectedRooms dưới dạng Set hoặc Map.
+Tóm tắt giải pháp
+Dùng ProList hoặc react-window cho grid lớn.
+Chuyển Checkbox sang ProFormCheckbox.
+Memo hóa các component và callback.
+Phân trang/lazy load nếu phòng quá nhiều.
+Tối ưu API, chỉ lấy dữ liệu cần thiết.

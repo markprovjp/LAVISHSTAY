@@ -183,7 +183,7 @@ const RoomGridView: React.FC<RoomGridViewProps> = ({
 
     return (
         <div className="space-y-8">
-            <div className="sticky top-0 bg-white z-20 py-3 px-4 border-b">
+            <div className="sticky top-0  z-20 py-3 px-4 border-b">
                 <Input.Search
                     placeholder="Nhập số phòng hoặc tầng (ví dụ: 101, Tầng 1)"
                     enterButton={<Button type="primary" icon={<SearchOutlined />}>Đi đến</Button>}
