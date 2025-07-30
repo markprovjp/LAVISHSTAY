@@ -1,19 +1,168 @@
-[2025-07-25 16:22:43] local.INFO: Reception: Create Booking Request Received: {"booking_details":{"check_in_date":"2025-07-25","check_out_date":"2025-07-26","adults":3,"children":[],"total_price":11500},"rooms":[{"room_id":1,"package_id":1,"adults":3,"children":[]}],"representative_info":{"mode":"all","details":{"fullName":"Quyền Nguyễn Văn","phoneNumber":"0335920306","email":"quyenjpn@gmail.com","idCard":"qweqweqweqwe"}},"payment_method":"pay_at_hotel"} 
-[2025-07-25 16:22:43] local.INFO: Reception: Temporary booking created successfully {"booking_code":"LVS989162243","booking_id":989} 
-[2025-07-25 16:22:57] local.INFO: Checking CPay payment for booking: LVS989162243, amount: 11500  
-[2025-07-25 16:22:57] local.INFO: Calling CPay Google Apps Script API for booking: LVS989162243 (Normalized: lvs989162243), amount: 11500  
-[2025-07-25 16:22:57] local.INFO: CPay API booking code to be sent: lvs989162243  
-[2025-07-25 16:22:57] local.INFO: CPay API Request {"action":"checkPayment","booking_code":"lvs989162243","amount":11500} 
-[2025-07-25 16:22:57] local.INFO: CPay API: SSL verification disabled for local development  
-[2025-07-25 16:23:00] local.INFO: CPay API Response Status: 200  
-[2025-07-25 16:23:00] local.INFO: CPay API HTTP Status: 200  
-[2025-07-25 16:23:00] local.INFO: CPay API Response {"status":"success","message":"Payment found","data":[{"date":"MBBank","bank":"2025-07-17 10:41:00","account":"0335920306","content":"thanh toan dat phong lvs989162243","type":"Tiền vào","amount":11500,"reference_code":"FT25198059645987","row_number":58}]} 
-[2025-07-25 16:23:00] local.INFO: ✅ CPay payment found {"date":"MBBank","bank":"2025-07-17 10:41:00","account":"0335920306","content":"thanh toan dat phong lvs989162243","type":"Tiền vào","amount":11500,"reference_code":"FT25198059645987","row_number":58} 
-[2025-07-25 16:23:00] local.INFO: [DEBUG] Starting completeBookingAfterPayment for: LVS989162243  
-[2025-07-25 16:23:00] local.INFO: [DEBUG] Found booking ID: 989  
-[2025-07-25 16:23:00] local.ERROR: [DEBUG] No booking_rooms found for booking: LVS989162243  
-[2025-07-25 16:23:00] local.INFO: Starting to send booking confirmation email for booking ID: 989  
-[2025-07-25 16:23:00] local.WARNING: No representative found for booking ID: 989, using booking guest info  
-[2025-07-25 16:23:00] local.INFO: Sending booking confirmation email to: quyenjpn@gmail.com  
-[2025-07-25 16:23:04] local.INFO: Booking confirmation email sent successfully for booking ID: 989  
-[2025-07-25 16:23:04] local.INFO: Booking LVS989162243 confirmed successfully.  
+{selectedRooms: Array(2), bookingData: {…}}
+bookingData
+: 
+availableRoomsData
+: 
+{success: true, data: Array(7), summary: {…}, message: 'Danh sách phòng trống đã được tải thành công'}
+checkInDate
+: 
+"2025-07-30"
+checkOutDate
+: 
+"2025-07-31"
+guestRooms
+: 
+Array(2)
+0
+: 
+adults
+: 
+2
+children
+: 
+[]
+[[Prototype]]
+: 
+Object
+1
+: 
+adults
+: 
+1
+children
+: 
+[{…}]
+[[Prototype]]
+: 
+Object
+length
+: 
+2
+[[Prototype]]
+: 
+Array(0)
+roomsWithGuests
+: 
+Array(2)
+0
+: 
+adults
+: 
+2
+children
+: 
+[]
+children_age
+: 
+[]
+option_id
+: 
+1
+option_name
+: 
+"Standard Package"
+package_id
+: 
+1
+room_id
+: 
+5
+room_price
+: 
+11000
+[[Prototype]]
+: 
+Object
+1
+: 
+adults
+: 
+1
+children
+: 
+[7]
+children_age
+: 
+[7]
+option_id
+: 
+1
+option_name
+: 
+"Standard Package"
+package_id
+: 
+1
+room_id
+: 
+6
+room_price
+: 
+11000
+[[Prototype]]
+: 
+Object
+length
+: 
+2
+[[Prototype]]
+: 
+Array(0)
+selectedPackages
+: 
+1
+: 
+1
+[[Prototype]]
+: 
+Object
+[[Prototype]]
+: 
+Object
+selectedRooms
+: 
+Array(2)
+0
+: 
+bed_type_name
+: 
+"King"
+booking_info
+: 
+null
+created_at
+: 
+"2025-06-24 12:00:15"
+floor
+: 
+2
+id
+: 
+5
+name
+: 
+"0205"
+room_type
+: 
+{id: 1, name: 'Deluxe Room', description: 'Phòng giường đôi rộng rãi này được bố trí máy điề…ar, tủ để quần áo cũng như tầm nhìn ra thành phố.', base_price: '5000.00', adjusted_price: 6000, …}
+status
+: 
+"available"
+updated_at
+: 
+"2025-06-24 12:00:15"
+[[Prototype]]
+: 
+Object
+1
+: 
+{id: 6, name: '0206', status: 'available', floor: 2, booking_info: null, …}
+length
+: 
+2
+[[Prototype]]
+: 
+Array(0)
+[[Prototype]]
+: 
+Object

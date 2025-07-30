@@ -173,13 +173,13 @@ const FilterBar: React.FC<FilterBarProps> = ({
                         <Form.Item label="Loại phòng" name="roomType"><Select placeholder="Tất cả" allowClear>{roomTypes.map(type => <Option key={type.id} value={type.id}>{type.name}</Option>)}</Select></Form.Item>
                     </Col>
 
-                    <Col xs={24} sm={12} md={8} lg={5}>
+                    {/* <Col xs={24} sm={12} md={8} lg={5}>
                         <Form.Item label="Số lượng khách">
                             <Popover content={guestPopoverContent} title="Chỉnh sửa số lượng khách" trigger="click" placement="bottomLeft" open={popoverVisible} onOpenChange={setPopoverVisible}>
                                 <Input readOnly value={formatGuestSummary()} prefix={<UserOutlined />} style={{ cursor: 'pointer' }} />
                             </Popover>
                         </Form.Item>
-                    </Col>
+                    </Col> */}
                     <Col xs={24} sm={24} md={24} lg={24} xl={3}>
                         <Form.Item label=" ">
                                 <Space>

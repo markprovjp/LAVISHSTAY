@@ -61,8 +61,8 @@ const { Content } = Layout;
 const { Title, Text, Link } = Typography;
 
 const bookingStatusConfig = {
-    pending: { color: 'gold', text: 'Chờ xác nhận', icon: <ClockCircleOutlined /> },
-    confirmed: { color: 'blue', text: 'Đã xác nhận', icon: <CheckCircleOutlined /> },
+    pending: { color: 'gold', text: 'Chờ thanh toán', icon: <ClockCircleOutlined /> },
+    confirmed: { color: 'blue', text: 'Đã thanh toán', icon: <CheckCircleOutlined /> },
     cancelled: { color: 'red', text: 'Đã hủy', icon: <CloseCircleOutlined /> },
     completed: { color: 'green', text: 'Hoàn thành', icon: <CheckCircleOutlined /> },
     processing: { color: 'purple', text: 'Đang xử lý', icon: <SyncOutlined spin /> },
