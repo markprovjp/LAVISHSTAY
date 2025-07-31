@@ -32,12 +32,53 @@ class ReceptionController extends Controller
         try {
             $today = Carbon::now()->toDateString();
 
-            $baseQuery = DB::table('room')
+            // Truy vấn tất cả phòng
+            $baseRooms = DB::table('room')
                 ->leftJoin('room_types', 'room.room_type_id', '=', 'room_types.room_type_id')
-                ->leftJoin('bed_types', 'room.bed_type_fixed', '=', 'bed_types.id');
+                ->leftJoin('bed_types', 'room.bed_type_fixed', '=', 'bed_types.id')
+                ->select([
+                    'room.room_id as id',
+                    'room.name',
+                    'room.status',
+                    'room.floor_id as floor',
+                    'room.created_at',
+                    'room.updated_at',
+                    'room_types.room_type_id',
+                    'room_types.name as room_type_name',
+                    'room_types.description as room_type_description',
+                    'room_types.base_price',
+                    'room_types.room_area',
+                    'room_types.max_guests',
+                    'bed_types.type_name as bed_type_name',
+                ]);
 
-            // Subquery để chỉ lấy booking đang hoạt động cho mỗi phòng
-            $bookingSubquery = DB::table('booking_rooms as br')
+            // Apply filters
+            if ($request->has('status') && !empty($request->status)) {
+                $statuses = is_array($request->status) ? $request->status : [$request->status];
+                $baseRooms->whereIn('room.status', $statuses);
+            }
+            if ($request->has('room_type_id') && !empty($request->room_type_id)) {
+                $roomTypes = is_array($request->room_type_id) ? $request->room_type_id : [$request->room_type_id];
+                $baseRooms->whereIn('room.room_type_id', $roomTypes);
+            }
+            if ($request->has('floor') && !empty($request->floor)) {
+                $floors = is_array($request->floor) ? $request->floor : [$request->floor];
+                $baseRooms->whereIn('room.floor_id', $floors);
+            }
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $baseRooms->where(function ($q) use ($search) {
+                    $q->where('room.name', 'LIKE', "%{$search}%")
+                      ->orWhere('room_types.name', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $baseRooms->orderBy('room.floor_id', 'asc')->orderBy('room.name', 'asc');
+            $rooms = $baseRooms->get();
+
+            // Lấy booking hiện tại cho từng phòng
+            $roomIds = $rooms->pluck('id')->toArray();
+            $bookings = DB::table('booking_rooms as br')
                 ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
                 ->select(
                     'br.room_id',
@@ -47,75 +88,27 @@ class ReceptionController extends Controller
                     'br.adults',
                     'br.children'
                 )
-                ->whereNotNull('br.room_id')
+                ->whereIn('br.room_id', $roomIds)
                 ->where('b.check_in_date', '<=', $today)
-                ->where('b.check_out_date', '>=', $today);
+                ->where('b.check_out_date', '>=', $today)
+                ->get();
 
-            // Join với subquery
-            $query = $baseQuery->leftJoinSub($bookingSubquery, 'booking_info', function ($join) {
-                $join->on('room.room_id', '=', 'booking_info.room_id');
-            })
-            ->select([
-                'room.room_id as id',
-                'room.name',
-                'room.status',
-                'room.floor_id as floor',
-                'room.created_at',
-                'room.updated_at',
-                'room_types.room_type_id',
-                'room_types.name as room_type_name',
-                'room_types.description as room_type_description',
-                'room_types.base_price',
-                'room_types.room_area',
-                'room_types.max_guests',
-                'bed_types.type_name as bed_type_name',
-                'booking_info.guest_name as booking_guest_name',
-                'booking_info.check_in_date as booking_check_in',
-                'booking_info.check_out_date as booking_check_out',
-                'booking_info.adults as booking_adults',
-                'booking_info.children as booking_children'
-            ]);
-
-            // Apply filters
-            if ($request->has('status') && !empty($request->status)) {
-                $statuses = is_array($request->status) ? $request->status : [$request->status];
-                $query->whereIn('room.status', $statuses);
-            }
-            if ($request->has('room_type_id') && !empty($request->room_type_id)) {
-                $roomTypes = is_array($request->room_type_id) ? $request->room_type_id : [$request->room_type_id];
-                $query->whereIn('room.room_type_id', $roomTypes);
-            }
-            if ($request->has('floor') && !empty($request->floor)) {
-                $floors = is_array($request->floor) ? $request->floor : [$request->floor];
-                $query->whereIn('room.floor_id', $floors);
-            }
-            if ($request->has('search') && !empty($request->search)) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('room.name', 'LIKE', "%{$search}%")
-                      ->orWhere('room_types.name', 'LIKE', "%{$search}%")
-                      ->orWhere('booking_info.guest_name', 'LIKE', "%{$search}%");
-                });
+            // Map booking theo room_id
+            $bookingMap = [];
+            foreach ($bookings as $booking) {
+                $bookingMap[$booking->room_id] = [
+                    'guest_name' => $booking->guest_name,
+                    'check_in' => $booking->check_in_date,
+                    'check_out' => $booking->check_out_date,
+                    'adults' => $booking->adults,
+                    'children' => $booking->children,
+                    'total_guests' => ($booking->adults ?? 0) + ($booking->children ?? 0)
+                ];
             }
 
-            $query->orderBy('room.floor_id', 'asc')->orderBy('room.name', 'asc');
-            $rooms = $query->get();
-
-            $formattedRooms = $rooms->map(function ($room) use ($request) {
+            $formattedRooms = $rooms->map(function ($room) use ($request, $bookingMap) {
                 $adjustedPrice = $this->calculateAdjustedPrice($room->room_type_id, $request);
-                
-                $bookingInfo = null;
-                if ($room->booking_guest_name) {
-                    $bookingInfo = [
-                        'guest_name' => $room->booking_guest_name,
-                        'check_in' => $room->booking_check_in,
-                        'check_out' => $room->booking_check_out,
-                        'adults' => $room->booking_adults,
-                        'children' => $room->booking_children,
-                        'total_guests' => ($room->booking_adults ?? 0) + ($room->booking_children ?? 0)
-                    ];
-                }
-
+                $bookingInfo = $bookingMap[$room->id] ?? null;
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
@@ -136,7 +129,10 @@ class ReceptionController extends Controller
                     'updated_at' => $room->updated_at,
                 ];
             });
-
+            Log::info('Retrieved rooms for management dashboard', [
+                'count' => $formattedRooms->count(),
+                'filters' => $request->all()
+            ]);
             return response()->json([
                 'success' => true,
                 'data' => $formattedRooms,
@@ -1438,6 +1434,7 @@ $allChildrenAges = DB::table('booking_room_children')
                 'total_price_vnd' => $bookingDetails['total_price'],
                 'status' => 'pending', // Start as pending
                 'notes' => $bookingDetails['notes'] ?? null,
+                'room_type_id' => $roomData[0]['room_type_id'] ?? null,
             ]);
 
             $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');

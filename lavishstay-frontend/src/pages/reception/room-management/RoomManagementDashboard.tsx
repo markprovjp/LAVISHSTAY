@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
-    Layout, message, Modal, Card, Tag, Button, Space, Spin, List, Avatar, Empty,
-    Alert, Typography, Row, Col, Flex, Divider, Statistic, Radio, Collapse, Descriptions, Tabs
+    Layout, message, Modal, Card, Button, Space, Spin, List, Avatar, Empty,
+    Alert, Typography, Row, Col, Flex, Divider, Statistic, Radio, Collapse, Descriptions, Tabs, Select, Badge
 } from 'antd';
+import { Tag } from 'antd';
+import { CheckCard } from '@ant-design/pro-components';
 import {
     UnorderedListOutlined, UserOutlined, CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined,
     SyncOutlined, QuestionCircleOutlined, TeamOutlined, HomeOutlined, ApartmentOutlined, WalletOutlined,
@@ -14,7 +16,7 @@ import { RoomFilters } from '../../../types/room';
 import { ProFormDigit, ProFormGroup } from '@ant-design/pro-components';
 
 import FilterBar from '../../../components/room-management/FilterBar';
-import RoomGridView from '../../../components/room-management/RoomGridView';
+import RoomCheckCardList from '../../../components/room-management/RoomCheckCardList';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
 import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms, useGetRoomDetails } from '../../../hooks/useReception';
 import { statusOptions } from '../../../constants/roomStatus';
@@ -61,7 +63,7 @@ const RoomManagementDashboard: React.FC = () => {
     const { data: roomTypesData } = useGetReceptionRoomTypes();
     const roomTypes = roomTypesData?.data || [];
 
-    const { data: allRoomsData, isLoading: isLoadingRooms } = useGetReceptionRooms({ include: 'room_type' });
+    const { data: allRoomsData, isLoading: isLoadingRooms } = useGetReceptionRooms({ ...currentFilters, include: 'room_type' });
     const masterRoomList = useMemo(() => allRoomsData?.data || [], [allRoomsData]);
 
     const hasDateRange = currentFilters.dateRange && currentFilters.dateRange.length === 2;
@@ -87,40 +89,35 @@ const RoomManagementDashboard: React.FC = () => {
     }, [hasDateRange, availableRoomsData]);
 
     const filteredRoomsToDisplay = useMemo(() => {
-        return masterRoomList.filter((room: any) => {
-            if (availableRoomIdSet && !availableRoomIdSet.has(room.id.toString())) {
-                return false;
-            }
-            if (currentFilters.roomType && String(room.room_type?.id) !== String(currentFilters.roomType)) {
-                return false;
-            }
-            return true;
-        });
-    }, [masterRoomList, availableRoomIdSet, currentFilters.roomType]);
+        if (availableRoomIdSet) {
+            return masterRoomList.filter((room: any) => availableRoomIdSet.has(room.id.toString()));
+        }
+        return masterRoomList;
+    }, [masterRoomList, availableRoomIdSet]);
 
     const isLoading = isLoadingRooms || (hasDateRange && isLoadingAvailable);
 
-    const handleSearch = (searchFilters: RoomFilters) => {
+    const handleSearch = useCallback((searchFilters: RoomFilters) => {
         setCurrentFilters(searchFilters);
         setSelectedRoomIds(new Set());
         setSelectedPackages({});
-    };
+    }, []);
 
-    const handleViewDetails = (roomId: string) => {
+    const handleViewDetails = useCallback((roomId: string) => {
         setSelectedRoomId(roomId);
         setRoomDetailVisible(true);
-    };
+    }, []);
 
-    const handleRoomSelect = (roomId: string, selected: boolean) => {
+    const handleRoomSelect = useCallback((roomId: string, selected: boolean) => {
         setSelectedRoomIds(prev => {
             const newSet = new Set(prev);
             if (selected) newSet.add(roomId);
             else newSet.delete(roomId);
             return newSet;
         });
-    };
+    }, []);
 
-    const handleBulkRoomSelect = (roomIds: string[], select: boolean) => {
+    const handleBulkRoomSelect = useCallback((roomIds: string[], select: boolean) => {
         setSelectedRoomIds(prev => {
             const newSet = new Set(prev);
             roomIds.forEach(id => {
@@ -129,7 +126,7 @@ const RoomManagementDashboard: React.FC = () => {
             });
             return newSet;
         });
-    };
+    }, []);
 
     const handleProceedToBooking = () => {
         if (selectedRoomIds.size === 0) {
@@ -183,69 +180,44 @@ const RoomManagementDashboard: React.FC = () => {
             }
         }
 
-        const roomsWithGuests = selectedRoomsList.map((room: any) => {
-            const guestConfig = guestDetails[room.id] || { adults: 1, children: 0, childrenAges: [] };
-            const roomTypeId = room.room_type.id.toString();
-            const packageId = selectedPackages[roomTypeId];
-            let option_id = null, option_name = null, room_price = 0;
-
-            if (availableRoomsData) {
-                const roomTypeData = availableRoomsData.data.find((rt: any) => rt.room_type_id.toString() === roomTypeId);
-                if (roomTypeData) {
-                    const pkg = roomTypeData.package_options.find((p: any) => p.package_id === packageId);
-                    if (pkg) {
-                        option_id = pkg.package_id;
-                        option_name = pkg.package_name;
-                        room_price = pkg.price_per_room_per_night;
-                    }
-                }
-            }
-
-            return {
-                room_id: room.id,
-                package_id: packageId,
-                option_id,
-                option_name,
-                room_price,
-                adults: guestConfig.adults,
-                children: guestConfig.childrenAges, // Backend expects an array of ages
-                children_age: guestConfig.childrenAges,
-            };
-        });
-
+        // Ensure childrenAges array is always filled to match children count
         const bookingData = {
             checkInDate: currentFilters.dateRange![0],
             checkOutDate: currentFilters.dateRange![1],
             guestRooms: selectedRoomsList.map(room => {
                 const details = guestDetails[room.id] || { adults: 1, children: 0, childrenAges: [] };
+                // Fill childrenAges with default age if not set
+                const childrenAges = Array.from({ length: details.children }, (_, idx) => details.childrenAges[idx] || 8);
                 return {
                     adults: details.adults,
-                    children: details.childrenAges.map(age => ({ age }))
+                    children: childrenAges.map(age => ({ age }))
                 };
             }),
             selectedPackages,
             availableRoomsData: availableRoomsData,
-            roomsWithGuests,
+            rooms: selectedRoomsList.map(room => {
+                const details = guestDetails[room.id] || { adults: 1, children: 0, childrenAges: [] };
+                const childrenAges = Array.from({ length: details.children }, (_, idx) => details.childrenAges[idx] || 8);
+                return {
+                    room_id: room.id,
+                    package_id: selectedPackages[room.room_type.id.toString()],
+                    room_type_id: room.room_type.id, // Ensure room_type_id is included
+                    adults: details.adults,
+                    children: childrenAges.map(age => ({ age }))
+                };
+            })
         };
 
-              navigate('/reception/confirm-representative-payment', {
+        const navigateState = {
             state: {
                 selectedRooms: selectedRoomsList,
                 bookingData,
-                guestDetails: selectedRoomsList.map(room => {
-                    const details = guestDetails[room.id] || { adults: 1, children: 0, childrenAges: [] };
-                    return {
-                        adults: details.adults,
-                        children: details.children,
-                        childrenAges: details.childrenAges,
-                    };
-                }),
-                adults: selectedRoomsList.reduce((sum, room) => sum + (guestDetails[room.id]?.adults || 1), 0),
-                children: selectedRoomsList.reduce((sum, room) => sum + (guestDetails[room.id]?.children || 0), 0),
-                checkInDate: currentFilters.dateRange?.[0],
-                checkOutDate: currentFilters.dateRange?.[1],
             }
-        });
+        };
+
+        console.log("Navigating to ConfirmRepresentativePayment with state:", navigateState);
+
+        navigate('/reception/confirm-representative-payment', navigateState);
     };
 
 
@@ -328,7 +300,15 @@ const RoomManagementDashboard: React.FC = () => {
                 }
             }
         });
-
+        // consolog ra toàn bộ thông tin để kiểm tra
+        console.log("Booking Modal Data:", {
+            selectedRooms: selectedRoomsList,
+            groupedRooms,
+            availableRoomsData,
+            selectedPackages,
+            guestDetails,
+            totalCost
+        });
         return (
             <Modal
                 title={<Flex align="center" gap="middle"><ApartmentOutlined /><Title level={3} className="!m-0">Xác nhận lựa chọn gói phòng</Title></Flex>}
@@ -360,93 +340,94 @@ const RoomManagementDashboard: React.FC = () => {
                         return (
                             <Col span={24} key={roomTypeId}>
                                 <Card
-                                    title={<Text strong>{`${roomTypeName} (${rooms.length} phòng)`}</Text>}
-                                    extra={<Text>Phòng: {rooms.map(r => r.name).join(', ')}</Text>}
+                                    title={<Text strong>{roomTypeName}</Text>}
+                                    extra={<Badge.Ribbon color="blue" text={`${rooms.length} phòng đã chọn`} />}
+                                    style={{ marginBottom: 24, borderRadius: 16, boxShadow: '0 2px 8px #e0e7ff' }}
                                 >
-                                    <Radio.Group
-                                        onChange={(e) => setSelectedPackages(prev => ({ ...prev, [roomTypeId]: e.target.value }))}
-                                        value={selectedPackageId}
-                                        style={{ width: '100%' }}
-                                    >
-                                        <Space direction="vertical" style={{ width: '100%' }}>
+                                    {/* CheckCard horizontal for package options */}
+                                    <div style={{ marginBottom: 16 }}>
+                                        <CheckCard.Group
+                                            multiple={false}
+                                            onChange={value => setSelectedPackages(prev => ({ ...prev, [roomTypeId]: value }))}
+                                            value={selectedPackageId}
+                                            style={{ display: 'flex', gap: 16 }}
+                                        >
                                             {roomTypeData.package_options.map((pkg: any) => (
-                                                <Radio key={pkg.package_id} value={pkg.package_id} style={{ width: '100%' }}>
-                                                    <Card size="small" hoverable>
-                                                        <Flex justify="space-between" align="center">
-                                                            <div>
-                                                                <Text strong>{pkg.package_name}</Text>
-                                                                <Paragraph type="secondary" className="!mb-0">{pkg.package_description}</Paragraph>
-                                                            </div>
-                                                            <Statistic
-                                                                title="Giá mỗi đêm"
-                                                                value={formatCurrency(pkg.price_per_room_per_night)}
-                                                                valueStyle={{ color: '#3f8600', fontSize: '1.2rem' }}
-                                                            />
-                                                        </Flex>
-                                                    </Card>
-                                                </Radio>
+                                                <CheckCard
+                                                    key={pkg.package_id}
+                                                    title={<span style={{ fontWeight: 600, fontSize: 16 }}>{pkg.package_name}</span>}
+                                                    description={<span style={{ fontSize: 13 }}>{pkg.package_description}</span>}
+                                                    value={pkg.package_id}
+                                                    style={{ minWidth: 220, borderRadius: 12, background: selectedPackageId === pkg.package_id ? '#e6f7ff' : '#fff', border: selectedPackageId === pkg.package_id ? '2px solid #1890ff' : '1px solid #eee', marginBottom: 0 }}
+                                                    extra={<Tag color="blue">Gói #{pkg.package_id}</Tag>}
+                                                >
+                                                    <div style={{ textAlign: 'right', marginTop: 8 }}>
+                                                        <Text strong style={{ fontSize: 18, color: '#16a34a' }}>{formatCurrency(pkg.price_per_room_per_night)}</Text>
+                                                        <div style={{ fontSize: 12, color: '#64748b' }}>/đêm</div>
+                                                    </div>
+                                                </CheckCard>
                                             ))}
-                                        </Space>
-                                    </Radio.Group>
+                                        </CheckCard.Group>
+                                    </div>
 
                                     <Divider orientation="left" className="!mt-6">Số lượng khách từng phòng</Divider>
                                     <ProFormGroup>
-                                        {rooms.map((room: any) => {
-                                            const details = guestDetails[room.id] || { adults: 1, children: 0, childrenAges: [] };
-                                            return (
-                                                <Card key={room.id} size="small" style={{ marginBottom: 12, background: '#fafafa' }} bordered={false}>
-                                                    <Text strong>Phòng {room.name}</Text>
-                                                    <Row gutter={16} style={{ marginTop: 8 }}>
-                                                        <Col>
-                                                            <ProFormDigit
-                                                                label="Người lớn"
-                                                                fieldProps={{
-                                                                    min: 1,
-                                                                    max: roomTypeData?.max_adults || 2,
-                                                                    value: details.adults,
-                                                                    onChange: val => handleGuestDetailChange(room.id, 'adults', val || 1),
-                                                                }}
-                                                                width="small"
-                                                            />
-                                                        </Col>
-                                                        <Col>
-                                                            <ProFormDigit
-                                                                label="Trẻ em"
-                                                                fieldProps={{
-                                                                    min: 0,
-                                                                    max: roomTypeData?.max_children || 4,
-                                                                    value: details.children,
-                                                                    onChange: val => handleGuestDetailChange(room.id, 'children', val || 0),
-                                                                }}
-                                                                width="small"
-                                                            />
-                                                        </Col>
-                                                    </Row>
-                                                    {details.children > 0 && (
-                                                        <div style={{ marginTop: 8 }}>
-                                                            <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>Tuổi của trẻ em:</Text>
-                                                            <Space wrap>
-                                                                {[...Array(details.children)].map((_, idx) => (
-                                                                    <ProFormDigit
-                                                                        key={idx}
-                                                                        label={`Trẻ ${idx + 1}`}
-                                                                        fieldProps={{
-                                                                            min: 0,
-                                                                            max: 17,
-                                                                            value: details.childrenAges[idx] || 0,
-                                                                            onChange: val => handleGuestDetailChange(room.id, 'childrenAges', val || 0, idx),
-                                                                            style: { width: 80 }
-                                                                        }}
-                                                                        width="small"
-                                                                        labelProps={{ style: { fontSize: 12 } }}
-                                                                    />
-                                                                ))}
-                                                            </Space>
-                                                        </div>
-                                                    )}
-                                                </Card>
-                                            );
-                                        })}
+                                        <Flex gap={16} wrap="wrap">
+                                            {rooms.map((room: any) => {
+                                                const details = guestDetails[room.id] || { adults: 1, children: 0, childrenAges: [] };
+                                                const maxPeople = 6;
+                                                return (
+                                                    <Badge.Ribbon color="cyan" text={`Phòng ${room.name}`}> {/* Ribbon wraps Card for correct display */}
+                                                        <Card key={room.id} size="small" style={{ minWidth: 430, marginBottom: 12, background: '#fff', boxShadow: '0 1px 4px #e0e7ff', borderRadius: 12 }} bordered={false}>
+                                                            <Flex gap={8} align="center" style={{ marginTop: 8 }}>
+                                                                <ProFormDigit
+                                                                    label="Người lớn"
+                                                                    fieldProps={{
+                                                                        min: 1,
+                                                                        max: Math.min(roomTypeData?.max_adults || 2, maxPeople),
+                                                                        value: details.adults,
+                                                                        onChange: val => handleGuestDetailChange(room.id, 'adults', val || 1),
+                                                                    }}
+                                                                    width="xs"
+                                                                    labelProps={{ style: { fontSize: 13 } }}
+                                                                />
+                                                                <ProFormDigit
+                                                                    label="Trẻ em"
+                                                                    fieldProps={{
+                                                                        min: 0,
+                                                                        max: Math.min(roomTypeData?.max_children || 4, maxPeople - details.adults),
+                                                                        value: details.children,
+                                                                        onChange: val => handleGuestDetailChange(room.id, 'children', val || 0),
+                                                                    }}
+                                                                    width="xs"
+                                                                    labelProps={{ style: { fontSize: 13 } }}
+                                                                />
+                                                            </Flex>
+                                                            {details.children > 0 && (
+                                                                <Flex gap={8} align="center" style={{ marginTop: 8, flexWrap: 'wrap' }}>
+                                                                    <Text type="secondary" style={{ fontSize: 12, marginRight: 4 }}>Tuổi trẻ em:</Text>
+                                                                    {[...Array(details.children)].map((_, idx) => (
+                                                                        <div key={idx} className="flex items-center gap-1">
+                                                                            <span className="text-xs text-gray-500">{idx + 1}:</span>
+                                                                            <Select
+                                                                                value={details.childrenAges[idx] || 8}
+                                                                                style={{ width: 60 }}
+                                                                                size="small"
+                                                                                onChange={age => handleGuestDetailChange(room.id, 'childrenAges', age, idx)}
+                                                                                options={Array.from({ length: 9 }, (_, ageIndex) => ({
+                                                                                    label: ageIndex + 4,
+                                                                                    value: ageIndex + 4
+                                                                                }))}
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </Flex>
+                                                            )}
+                                                        </Card>
+                                                    </Badge.Ribbon>
+                                                );
+                                            })}
+                                        </Flex>
                                     </ProFormGroup>
 
                                     {selectedPackageDetails && (
@@ -608,13 +589,11 @@ const RoomManagementDashboard: React.FC = () => {
 
                 <Card>
                     {viewMode === 'grid' ? (
-                        <RoomGridView
+                        <RoomCheckCardList
                             rooms={filteredRoomsToDisplay}
                             loading={isLoading}
-                            multiSelectMode={true}
                             selectedRooms={selectedRoomIds}
                             onRoomSelect={handleRoomSelect}
-                            onBulkRoomSelect={handleBulkRoomSelect}
                             onViewDetails={handleViewDetails}
                         />
                     ) : (
