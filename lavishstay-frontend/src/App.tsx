@@ -154,6 +154,7 @@ const App: React.FC = React.memo(() => {
 
             {/* Legacy routes for backward compatibility */}            {/* Reception Routes with nested routing */}
             <Route path="/reception" element={<ReceptionLayout />}>
+
               <Route index element={<ReceptionDashboard />} />
               <Route path="dashboard" element={<ReceptionDashboard />} />
               <Route path="room-management-list" element={<RoomManagementDashboard />} />
@@ -162,8 +163,8 @@ const App: React.FC = React.memo(() => {
               <Route path="payment-booking" element={<PaymentBookingReception />} />
               <Route path="room-management/today" element={<RoomManagementDashboard />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
-
-            </Route>            {/* Other routes */}
+            </Route>     
+                   {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />
