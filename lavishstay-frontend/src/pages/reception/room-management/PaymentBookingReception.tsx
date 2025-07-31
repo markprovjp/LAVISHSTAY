@@ -30,9 +30,36 @@ const PaymentBookingReception: React.FC = () => {
     const { message } = App.useApp();
     const createBookingMutation = useCreateBooking(); // Use the new unified hook
 
-    const { bookingDetails: initialBookingDetails } = (location.state || {}) as { bookingDetails?: CreateMultiRoomBookingRequest };
+    // Persist bookingDetails for reload safety
+    const getInitialBookingDetails = () => {
+        const fromState = (location.state || {}) as { bookingDetails?: CreateMultiRoomBookingRequest };
+        if (fromState.bookingDetails) {
+            // Save to localStorage for reload
+            window.localStorage.setItem('lavishstay_bookingDetails', JSON.stringify(fromState.bookingDetails));
+            return fromState.bookingDetails;
+        }
+        // Try to get from localStorage
+        const fromStorage = window.localStorage.getItem('lavishstay_bookingDetails');
+        if (fromStorage) {
+            try {
+                return JSON.parse(fromStorage);
+            } catch {
+                return undefined;
+            }
+        }
+        return undefined;
+    };
 
-    const [bookingDetails] = useState(initialBookingDetails);
+    const [bookingDetails] = useState(getInitialBookingDetails());
+    console.log("Received state in PaymentBookingReception:", location.state);
+
+    // Nếu không có bookingDetails, tự động chuyển về màn xác nhận
+    useEffect(() => {
+        if (!bookingDetails) {
+            message.error('Không có thông tin đặt phòng, vui lòng xác nhận lại.');
+            navigate('/reception/room-management-list');
+        }
+    }, [bookingDetails, message, navigate]);
     const [bookingCode, setBookingCode] = useState<string | null>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr');
 
@@ -72,11 +99,19 @@ const PaymentBookingReception: React.FC = () => {
         bookingCreationCalled.current = true;
         message.loading({ content: 'Đang tạo đặt phòng...', key: 'booking' });
 
+        // Sửa payment_method cho hotel
+        const fixedPaymentMethod = paymentMethod === 'at_hotel' ? 'pay_at_hotel' : paymentMethod;
+        // Ensure rooms array includes room_type_id for backend
+        const rooms = (bookingDetails.roomsWithGuests || bookingDetails.rooms || []).map((room: any) => ({
+            ...room,
+            room_type_id: room.room_type_id || room.room_type?.id || room.room_type_id // fallback for all possible sources
+        }));
         const payload = {
             ...bookingDetails,
-            rooms: bookingDetails.roomsWithGuests || bookingDetails.rooms || [],
-            payment_method: paymentMethod,
+            rooms,
+            payment_method: fixedPaymentMethod,
         };
+        console.log('Booking payload gửi lên backend:', payload);
 
         try {
             const result = await createBookingMutation.mutateAsync(payload);
@@ -85,10 +120,12 @@ const PaymentBookingReception: React.FC = () => {
 
             if (paymentMethod === 'at_hotel') {
                 message.success({ content: `Đặt phòng thành công! Mã: ${newBookingCode}`, key: 'booking', duration: 4 });
+                // Chỉ xác nhận booking khi tại khách sạn
                 navigate('/reception/payment-success', { state: { bookingCode: newBookingCode, bookingDetails: summary } });
-            } else { // For vietqr
+            } else {
+                // VietQR: chỉ tạo booking tạm thời, KHÔNG xác nhận tự động
                 message.info({ content: `Đã tạo booking tạm thời: ${newBookingCode}. Vui lòng thanh toán.`, key: 'booking', duration: 5 });
-                // The user can now proceed with QR payment check
+                // Không tự động xác nhận booking, chỉ chờ xác nhận qua QR
             }
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Tạo đặt phòng thất bại.';
@@ -140,11 +177,12 @@ const PaymentBookingReception: React.FC = () => {
     }, [bookingCode, summary, stopCheck, navigateToSuccess, message]);
 
     useEffect(() => {
-        // If VietQR is selected and we don't have a booking code yet, create the booking.
+        // Nếu VietQR được chọn và chưa có bookingCode, chỉ tạo booking tạm thời, KHÔNG xác nhận tự động
         if (selectedPaymentMethod === 'vietqr' && !bookingCode && !bookingCreationCalled.current) {
             handleCreateBooking('vietqr');
         }
-    }, [selectedPaymentMethod, bookingCode]); // Removed handleCreateBooking from deps
+        // Nếu reload, bookingDetails sẽ được lấy từ localStorage
+    }, [selectedPaymentMethod, bookingCode]);
 
     if (!summary || !bookingDetails) {
         return (
@@ -177,9 +215,14 @@ const PaymentBookingReception: React.FC = () => {
                             <Card title="1. Thông tin người đại diện">
                                 {bookingDetails.representative_info.mode === 'all' ? (
                                     <Descriptions column={2} bordered size="small">
-                                        <Descriptions.Item label="Họ tên" span={2}>{bookingDetails.representative_info.details.fullName}</Descriptions.Item>
+                                        <Descriptions.Item label="Họ tên" >{bookingDetails.representative_info.details.fullName}</Descriptions.Item>
+                                        <Descriptions.Item label="CMND/CCCD">{bookingDetails.representative_info.details.idCard}</Descriptions.Item>
                                         <Descriptions.Item label="Email">{bookingDetails.representative_info.details.email}</Descriptions.Item>
                                         <Descriptions.Item label="Điện thoại">{bookingDetails.representative_info.details.phoneNumber}</Descriptions.Item>
+                                        {/* ghi chú */}
+                                        <Descriptions.Item label="Ghi chú" span={2}>
+                                            {bookingDetails.representative_info.details.notes || 'Không có ghi chú'}
+                                        </Descriptions.Item>
                                     </Descriptions>
                                 ) : (
                                     <Alert message="Thông tin người đại diện cho từng phòng đã được lưu." type="info" showIcon />
@@ -233,11 +276,11 @@ const PaymentBookingReception: React.FC = () => {
                             {selectedPaymentMethod === 'at_hotel' && (
                                 <Card title="3. Hoàn tất">
                                     <Alert message="Khách hàng sẽ thanh toán tại quầy lễ tân. Nhấn 'Hoàn tất' để xác nhận đặt phòng." type="info" showIcon />
-                                    <Button 
-                                        type="primary" 
-                                        icon={<CheckCircleOutlined />} 
-                                        loading={isSubmitting} 
-                                        onClick={() => handleCreateBooking('at_hotel')} 
+                                    <Button
+                                        type="primary"
+                                        icon={<CheckCircleOutlined />}
+                                        loading={isSubmitting}
+                                        onClick={() => handleCreateBooking('at_hotel')}
                                         style={{ marginTop: 16 }}
                                     >
                                         Hoàn tất

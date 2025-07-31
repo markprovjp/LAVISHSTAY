@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import dayjs from 'dayjs';
-import { formatCurrency } from '../../../utils/helpers';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     App, Button, Card, Col, Divider, Form, Input, Layout,
     Modal, Radio, Row, Space, Table, Tag, Typography, Alert
 } from 'antd';
 import { CreditCard, Edit3, UserPlus, Clipboard, Home, Users, Calendar } from 'lucide-react';
+import dayjs from 'dayjs';
+import { formatCurrency } from '../../../utils/helpers';
 import { CreateMultiRoomBookingRequest, RepresentativeInfo } from '../../../types/booking';
 
 const { Title, Text, Paragraph } = Typography;
@@ -52,22 +52,17 @@ interface BookingData {
 interface LocationState {
     selectedRooms?: Room[];
     bookingData?: BookingData;
-    // Add the new, simpler fields for direct data passing
-    guestDetails?: { adults: number; children: number; childrenAges: string[] }[];
-    adults?: number;
-    children?: number;
-    checkInDate?: string;
-    checkOutDate?: string;
 }
 type RepresentativeMode = 'all' | 'individual';
 
-const ConfirmRepresentativePayment = () => {
+const ConfirmRepresentativePayment: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { message } = App.useApp();
     const [repForm] = Form.useForm();
 
-    const { selectedRooms = [], bookingData, guestDetails, adults, children, checkInDate, checkOutDate } = (location.state || {}) as LocationState;
+    const { selectedRooms = [], bookingData } = (location.state || {}) as LocationState;
+    console.log("Received state in ConfirmRepresentativePayment:", location.state);
 
     const [representativeMode, setRepresentativeMode] = useState<RepresentativeMode>('all');
     const [representatives, setRepresentatives] = useState<{ [key: string]: RepresentativeInfo }>({});
@@ -75,55 +70,109 @@ const ConfirmRepresentativePayment = () => {
     const [currentEditingRoomId, setCurrentEditingRoomId] = useState<string | 'all' | null>(null);
 
     const summary = useMemo(() => {
-        if (!selectedRooms.length || !checkInDate || !checkOutDate || !guestDetails) {
-             console.error("Dữ liệu không hợp lệ được chuyển đến trang xác nhận:", location.state);
-            return null;
+        // KIỂM TRA AN TOÀN TOÀN DIỆN:
+        // Đảm bảo tất cả dữ liệu cần thiết đều tồn tại và có cấu trúc đúng.
+        if (
+            !bookingData ||
+            !selectedRooms || !selectedRooms.length ||
+            !Array.isArray(bookingData.guestRooms) ||
+            selectedRooms.length !== bookingData.guestRooms.length || // Số phòng phải khớp
+            !bookingData.availableRoomsData ||
+            !Array.isArray(bookingData.availableRoomsData.data)
+        ) {
+            console.error("Dữ liệu không hợp lệ hoặc không đồng bộ được chuyển đến trang xác nhận:", { selectedRooms, bookingData });
+            return null; // Ngăn chặn render và kích hoạt giao diện báo lỗi
         }
 
+        const { checkInDate, checkOutDate, selectedPackages, availableRoomsData, guestRooms } = bookingData;
         const nights = dayjs(checkOutDate).diff(dayjs(checkInDate), 'day');
-        let totalRoomPrice = selectedRooms.reduce((acc, room) => acc + (room.price || 0), 0) * nights;
+        const surchargeRules = availableRoomsData.summary?.children_surcharge_rules || [];
 
-        // This is a fallback, real price should come from bookingData if available
-        if (bookingData?.selectedPackages && bookingData?.availableRoomsData) {
-             let calculatedPrice = 0;
-             const groupedByRoomType = selectedRooms.reduce((acc: any, room: any) => {
-                const typeId = room.room_type.id.toString();
-                if (!acc[typeId]) { acc[typeId] = { rooms: [] }; }
-                acc[typeId].rooms.push(room);
-                return acc;
-            }, {});
+        const roomsWithGuests = selectedRooms.map((room, index) => ({
+            ...room,
+            guestConfig: guestRooms[index] // Bây giờ truy cập này đã an toàn
+        }));
 
-            Object.entries(groupedByRoomType).forEach(([roomTypeId, group]: [string, any]) => {
-                const roomTypeData = bookingData.availableRoomsData.data.find((rt: any) => rt.room_type_id.toString() === roomTypeId);
-                const packageId = bookingData.selectedPackages[roomTypeId];
-                if (roomTypeData && packageId) {
-                    const pkg = roomTypeData.package_options.find((p: any) => p.package_id === packageId);
-                    if (pkg) {
-                        calculatedPrice += pkg.price_per_room_per_night * group.rooms.length * nights;
-                    }
+        const groupedRooms = roomsWithGuests.reduce((acc, room) => {
+            const typeId = room.room_type.id.toString();
+            if (!acc[typeId]) {
+                acc[typeId] = { roomTypeName: room.room_type.name, rooms: [], packageInfo: null, subtotal: 0 };
+            }
+            acc[typeId].rooms.push(room);
+            return acc;
+        }, {} as Record<string, any>);
+
+        let totalRoomPrice = 0;
+        const priceDetails: { label: string; amount: number; type: 'room' | 'surcharge' }[] = [];
+
+        Object.keys(groupedRooms).forEach(typeId => {
+            const group = groupedRooms[typeId];
+            const roomTypeData = availableRoomsData.data.find(rt => rt.room_type_id.toString() === typeId);
+            const packageId = selectedPackages[typeId];
+
+            if (roomTypeData && packageId) {
+                const pkg = roomTypeData.package_options.find(p => p.package_id === packageId);
+                if (pkg) {
+                    const subtotal = pkg.price_per_room_per_night * group.rooms.length * nights;
+                    group.packageInfo = pkg;
+                    group.subtotal = subtotal;
+                    totalRoomPrice += subtotal;
+                    priceDetails.push({
+                        label: `${group.roomTypeName} (${group.rooms.length} phòng x ${nights} đêm)`,
+                        amount: subtotal,
+                        type: 'room',
+                    });
+                }
+            }
+        });
+
+        // --- CHILDREN SURCHARGE LOGIC ---
+        let totalChildrenSurcharge = 0;
+        const allChildren = guestRooms.flatMap(g => g.children);
+        if (allChildren.length > 0 && surchargeRules.length > 0) {
+            allChildren.forEach((child, index) => {
+                // Find the correct rule for this child's age
+                const rule = surchargeRules.find(r => child.age >= r.min_age && child.age <= r.max_age);
+                if (rule && !rule.is_free && rule.surcharge_amount_vnd) {
+                    const surchargePerNight = rule.surcharge_amount_vnd;
+                    const surchargeTotal = surchargePerNight * nights;
+                    totalChildrenSurcharge += surchargeTotal;
+                    priceDetails.push({
+                        label: `Phụ phí trẻ em ${index + 1} (${child.age} tuổi) x ${nights} đêm`,
+                        amount: surchargeTotal,
+                        type: 'surcharge',
+                    });
+                } else if (rule && rule.is_free) {
+                    priceDetails.push({
+                        label: `Trẻ em ${index + 1} (${child.age} tuổi) miễn phí`,
+                        amount: 0,
+                        type: 'surcharge',
+                    });
                 }
             });
-            totalRoomPrice = calculatedPrice;
         }
+
+        const totalPrice = totalRoomPrice + totalChildrenSurcharge;
+        const totalAdults = guestRooms.reduce((sum, room) => sum + room.adults, 0);
+        const totalChildren = guestRooms.reduce((sum, room) => sum + room.children.length, 0);
 
         return {
             checkInDate: dayjs(checkInDate),
             checkOutDate: dayjs(checkOutDate),
             nights,
-            totalPrice: totalRoomPrice,
-            totalAdults: adults,
-            totalChildren: children,
-            roomsWithGuests: selectedRooms.map((room, index) => ({
-                ...room,
-                guestConfig: guestDetails[index]
-            }))
+            totalPrice,
+            priceDetails,
+            groupedRooms,
+            totalAdults,
+            totalChildren,
+            roomsWithGuests,
         };
-    }, [location.state]);
+    }, [bookingData, selectedRooms]);
 
-    if (!summary) {
+    if (!summary || !bookingData) {
         return (
             <Content className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-                <Alert message="Lỗi dữ liệu" description="Không tìm thấy thông tin đặt phòng. Vui lòng quay lại và thử lại." type="error" showIcon action={<Button type="primary" onClick={() => navigate('/reception/room-management')}>Quay lại</Button>} />
+                <Alert message="Lỗi dữ liệu" description="Không tìm thấy thông tin. Vui lòng quay lại." type="error" showIcon action={<Button type="primary" onClick={() => navigate('/reception/room-management-list')}>Quay lại</Button>} />
             </Content>
         );
     }
@@ -144,35 +193,65 @@ const ConfirmRepresentativePayment = () => {
     };
 
     const handleProceedToBooking = () => {
-        // This is where the actual API call would happen.
-        // Since bookingService doesn't exist, we'll simulate it.
-        console.log("Proceeding to booking with payload:", {
+        const isDataReady = representativeMode === 'all' ? !!representatives.all : summary.roomsWithGuests.every(room => !!representatives[room.id]);
+        if (!isDataReady) {
+            message.warning('Vui lòng nhập đủ thông tin người đại diện.');
+            return;
+        }
+
+        const finalPayload: CreateMultiRoomBookingRequest = {
             booking_details: {
                 check_in_date: summary.checkInDate.format('YYYY-MM-DD'),
                 check_out_date: summary.checkOutDate.format('YYYY-MM-DD'),
                 adults: summary.totalAdults,
-                children: summary.totalChildren,
+                children: bookingData.guestRooms.flatMap(g => g.children),
                 total_price: summary.totalPrice,
+                notes: representativeMode === 'all' ? representatives.all?.notes : undefined,
             },
             rooms: summary.roomsWithGuests.map(room => ({
                 room_id: room.id,
+                package_id: bookingData.selectedPackages[room.room_type.id.toString()],
+                room_type_id: room.room_type.id, // Ensure room_type_id is present
                 adults: room.guestConfig.adults,
                 children: room.guestConfig.children,
-                children_age: room.guestConfig.childrenAges,
             })),
             representative_info: {
                 mode: representativeMode,
                 details: representativeMode === 'all' ? representatives.all : representatives,
             },
-        });
-        message.success('Chức năng đang được phát triển. Dữ liệu đã được ghi lại trong console.');
-        // navigate('/reception/payment-booking', { state: { bookingDetails: finalPayload } });
+            payment_method: 'pay_at_hotel',
+        };
+
+        console.log("Navigating to PaymentBookingReception with state:", { bookingDetails: finalPayload });
+        navigate('/reception/payment-booking', { state: { bookingDetails: finalPayload } });
     };
 
     const columns = [
         { title: 'Phòng', dataIndex: 'name', key: 'name', render: (name: string) => <Text strong>{name}</Text> },
         { title: 'Loại phòng', dataIndex: ['room_type', 'name'], key: 'roomType' },
-        { title: 'Khách', dataIndex: 'guestConfig', key: 'guests', render: (gc: any) => `${gc.adults} NL, ${gc.children} TE` },
+        {
+            title: 'Gói dịch vụ', key: 'package', render: (_: any, room: any) => {
+                // Find package info for this room
+                const typeId = room.room_type.id.toString();
+                const packageId = bookingData.selectedPackages[typeId];
+                const roomTypeData = bookingData.availableRoomsData.data.find(rt => rt.room_type_id.toString() === typeId);
+                const pkg = roomTypeData?.package_options.find(p => p.package_id === packageId);
+                return pkg ? <Tag color="blue">{pkg.package_name}</Tag> : <Tag color="default">Không rõ</Tag>;
+            }
+        },
+        {
+            title: 'Khách', dataIndex: 'guestConfig', key: 'guests', render: (gc: GuestRoom) => {
+                const childrenAges = gc.children.map((c: { age: number }, idx: number) => `${c.age} tuổi`).join(', ');
+                return (
+                    <span>
+                        <span style={{ fontWeight: 500 }}>{gc.adults} NL</span>
+                        {gc.children.length > 0 && (
+                            <span>, {gc.children.length} TE ({childrenAges})</span>
+                        )}
+                    </span>
+                );
+            }
+        },
         ...(representativeMode === 'individual' ? [{
             title: 'Người đại diện', key: 'representative',
             render: (_: any, room: any) => representatives[room.id]
@@ -182,7 +261,7 @@ const ConfirmRepresentativePayment = () => {
     ];
 
     return (
-        <Content className="p-8">
+        <Content className="">
             <Title level={2} className="mb-6">Xác nhận thông tin & Thanh toán</Title>
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={16}>
@@ -201,7 +280,7 @@ const ConfirmRepresentativePayment = () => {
                                 </div>
                             )}
                         </Card>
-                        <Card title="Chi tiết các phòng đã chọn">
+                        <Card title="Chi tiết đặt phòng">
                             <Table columns={columns} dataSource={summary.roomsWithGuests} rowKey="id" pagination={false} bordered size="small" />
                         </Card>
                     </Space>
@@ -209,11 +288,19 @@ const ConfirmRepresentativePayment = () => {
                 <Col xs={24} lg={8}>
                     <Card title="Tóm tắt chi phí" className="sticky top-6">
                         <Space direction="vertical" className="w-full" size="middle">
-                            <div className="flex justify-between"><Text><Calendar /> Nhận phòng:</Text><Text strong>{summary.checkInDate.format('DD/MM/YYYY')}</Text></div>
-                            <div className="flex justify-between"><Text><Calendar /> Trả phòng:</Text><Text strong>{summary.checkOutDate.format('DD/MM/YYYY')}</Text></div>
+                            <div className="flex justify-between"><Text><Calendar /> Ngày nhận phòng:</Text><Text strong>{summary.checkInDate.format('DD/MM/YYYY')}</Text></div>
+                            <div className="flex justify-between"><Text><Calendar /> Ngày trả phòng:</Text><Text strong>{summary.checkOutDate.format('DD/MM/YYYY')}</Text></div>
                             <div className="flex justify-between"><Text><Home /> Số đêm:</Text><Text strong>{summary.nights}</Text></div>
-                            <div className="flex justify-between"><Text><Users /> Khách:</Text><Text strong>{summary.totalAdults} NL, {summary.totalChildren} TE</Text></div>
-                            <Divider className="my-1" />
+                            <div className="flex justify-between"><Text><Users /> Số khách:</Text><Text strong>{summary.totalAdults} NL, {summary.totalChildren} TE</Text></div>
+                            <Divider className="my-0" />
+                            <Title level={5}>Chi tiết giá</Title>
+                            {summary.priceDetails.map((item, index) => (
+                                <div key={index} className="flex justify-between">
+                                    <Text type={item.type === 'surcharge' ? 'secondary' : undefined}>{item.label}:</Text>
+                                    <Text type={item.type === 'surcharge' ? 'secondary' : undefined}>{formatCurrency(item.amount)}</Text>
+                                </div>
+                            ))}
+                            <Divider className="my-0" />
                             <div className="flex justify-between items-center">
                                 <Title level={4} className="!mb-0">Tổng cộng:</Title>
                                 <Title level={4} className="!mb-0 text-blue-600">{formatCurrency(summary.totalPrice)}</Title>
@@ -232,7 +319,7 @@ const ConfirmRepresentativePayment = () => {
                         <Col span={12}><Form.Item label="Số Điện Thoại" name='phoneNumber' rules={[{ required: true }]}><Input placeholder="Số điện thoại" size="large" /></Form.Item></Col>
                         <Col span={12}><Form.Item label="Email" name='email' rules={[{ required: true, type: 'email' }]}><Input placeholder="Địa chỉ email" size="large" /></Form.Item></Col>
                         <Col span={12}><Form.Item label="ID Card / Passport" name='idCard' rules={[{ required: true }]}><Input placeholder="Số CMND/CCCD" size="large" /></Form.Item></Col>
-                        <Col span={24}><Form.Item label="Ghi chú" name='notes'><Input.TextArea rows={3} placeholder="Thêm ghi chú..." /></Form.Item></Col>
+                        <Col span={24}><Form.Item label="Ghi chú" name='notes'><Input.TextArea rows={3} placeholder="Thêm ghi chú cho phòng này..." /></Form.Item></Col>
                     </Row>
                 </Form>
             </Modal>

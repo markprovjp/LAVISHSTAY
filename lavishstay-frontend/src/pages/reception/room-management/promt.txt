@@ -1,81 +1,38 @@
-Nguyên nhân phổ biến:
-Render lại toàn bộ grid/phòng khi state thay đổi (ví dụ: chọn phòng, xem chi tiết).
-Không tối ưu memoization, không dùng virtualization.
-Component RoomCard/RoomGridView không memo hóa, không tách nhỏ, không dùng PureComponent.
-Checkbox dùng Antd mặc định, không tối ưu cho số lượng lớn.
-API trả về quá nhiều dữ liệu, không phân trang/lazy load.
-Giải pháp tối ưu hóa hiệu năng
-1. Dùng Virtual List/Grid cho phòng
-Ant Design Pro có ProList và Ant Design có List hỗ trợ virtualization.
-Hoặc dùng react-window cho grid lớn.
+Dự án quản lý phòng khách sạn sử dụng React, Ant Design, Ant Design Pro, umi-request.  
+Yêu cầu tối ưu hiệu năng và UI/UX cho màn hình Room Management Dashboard.
 
-Ví dụ dùng ProList:
+Các vấn đề cần giải quyết:
+- Số lượng phòng lớn, thao tác chọn phòng, xem chi tiết, filter, v.v. phải phản hồi nhanh, không lag.
+- Grid view phòng phải phân loại theo tầng, mỗi phòng là một card, có action chọn phòng (checkbox), xem chi tiết, và các action khác nếu cần.
+- Checkbox chọn phòng phải dùng ProFormCheckbox hoặc CheckCard của Ant Design Pro, không dùng Checkbox mặc định của Antd.
+- Khi loading, hiển thị Skeleton Card hoặc ProSkeleton.
+- Nếu API trả về quá nhiều phòng, phải phân trang hoặc lazy load theo tầng/phân loại.
+- Chỉ lấy dữ liệu cần thiết từ API, chi tiết phòng chỉ lấy khi click.
+- State lưu phòng phải tối ưu, chỉ lưu selectedRooms dưới dạng Set hoặc Map, không lưu toàn bộ phòng nếu không cần thiết.
+- Các component RoomCard, RoomGridView phải dùng memo và callback tối ưu (useCallback), props không thay đổi không cần thiết.
+- UI phải đẹp, hiện đại, tận dụng tối đa sức mạnh của Ant Design Pro.
 
-import { ProList } from '@ant-design/pro-components';
+Yêu cầu code:
+- RoomGridView dùng CheckCard.Group, action area gom các chức năng (chọn phòng, xem chi tiết) vào CheckCard.
+- Khi loading, dùng ProSkeleton hoặc Skeleton Card.
+- Phân loại phòng theo tầng, mỗi tầng là một nhóm CheckCard.
+- Tối ưu callback, memo hóa component.
+- Nếu có thể, dùng ProList hoặc react-window cho grid lớn.
 
-<ProList
-  dataSource={filteredRoomsToDisplay}
-  rowKey="id"
-  pagination={{
-    pageSize: 20,
-  }}
-  renderItem={(item) => (
-    <ProList.Item
-      title={item.name}
-      subTitle={item.room_type?.name}
-      actions={[
-        <ProFormCheckbox
-          checked={selectedRooms.has(item.id)}
-          onChange={e => handleRoomSelect(item.id, e.target.checked)}
-        >
-          Chọn
-        </ProFormCheckbox>,
-        <Button icon={<EyeOutlined />} onClick={() => onViewDetails(item.id)}>Chi tiết</Button>,
-      ]}
-      extra={<Tag color="blue">{item.status}</Tag>}
-    />
-  )}
-/>
-2. Memo hóa RoomCard, RoomGridView
-Đã dùng memo, nhưng nên dùng thêm useCallback cho các hàm truyền xuống.
-Đảm bảo props không thay đổi không cần thiết.
-3. Chuyển Checkbox sang ProFormCheckbox
-Thay Checkbox của Antd bằng ProFormCheckbox của Ant Design Pro, tối ưu cho form/grid lớn.
+Đầu ra mong muốn:
+- Code component RoomGridView tối ưu hiệu năng, UI đẹp, action rõ ràng, dễ mở rộng.
+- Hướng dẫn tích hợp vào RoomManagementDashboard.
+- Đảm bảo mọi thao tác (chọn phòng, xem chi tiết, filter) đều mượt, không lag.
 
-Ví dụ:import { ProFormCheckbox } from '@ant-design/pro-components';
-
-<ProFormCheckbox
-  checked={isSelected}
-  onChange={e => onRoomSelect(room.id, e.target.checked)}
-  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
->
-  Chọn
-</ProFormCheckbox>
-2. Memo hóa RoomCard, RoomGridView
-Đã dùng memo, nhưng nên dùng thêm useCallback cho các hàm truyền xuống.
-Đảm bảo props không thay đổi không cần thiết.
-3. Chuyển Checkbox sang ProFormCheckbox
-Thay Checkbox của Antd bằng ProFormCheckbox của Ant Design Pro, tối ưu cho form/grid lớn.import { ProFormCheckbox } from '@ant-design/pro-components';
-
-<ProFormCheckbox
-  checked={isSelected}
-  onChange={e => onRoomSelect(room.id, e.target.checked)}
-  style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
->
-  Chọn
-</ProFormCheckbox>
-4. Phân trang/Lazy load phòng
-Nếu API trả về quá nhiều phòng, hãy phân trang hoặc lazy load theo tầng/phân loại.
-
-5. Tối ưu API
-Nếu dùng umi-request, hãy kiểm tra API có trả về dữ liệu dư thừa không.
-Chỉ lấy các trường cần thiết cho grid, chi tiết phòng chỉ lấy khi click.
-6. Tối ưu state
-Tránh lưu toàn bộ phòng vào state nếu không cần thiết.
-Chỉ lưu selectedRooms dưới dạng Set hoặc Map.
-Tóm tắt giải pháp
-Dùng ProList hoặc react-window cho grid lớn.
-Chuyển Checkbox sang ProFormCheckbox.
-Memo hóa các component và callback.
-Phân trang/lazy load nếu phòng quá nhiều.
-Tối ưu API, chỉ lấy dữ liệu cần thiết.
+Công nghệ đang dùng:
+{
+  "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@ant-design/pro-components": "^2.8.10",
+    "@google/generative-ai": "^0.24.1",
+    "antd": "^5.26.6",
+    "react-icons": "^5.5.0",
+    "umi-request": "^1.4.0"
+  }
+  
+}

@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Lazy load các component lớn
-export const LazyRoomGridView = lazy(() => import('../components/room-management/RoomGridView'));
+// export const LazyRoomGridView = lazy(() => import('../components/room-management/RoomGridView'));
 export const LazyRoomTimelineView = lazy(() => import('../components/room-management/RoomTimelineView'));
 export const LazyConfirmRepresentativePayment = lazy(() => import('../pages/reception/room-management/ConfirmRepresentativePayment'));
 export const LazyBookingManagement = lazy(() => import('../pages/reception/booking-management/BookingManagement'));
