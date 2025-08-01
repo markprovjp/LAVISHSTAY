@@ -41,6 +41,7 @@ fi
 
 # Stash nếu đang staged nhưng chưa commit → để tránh lỗi pull --rebase
 echo "📦 Stash tạm thời các thay đổi để pull an toàn..."
+
 stash_result=$(git stash push -u -m "Auto stash before rebase" 2>&1)
 
 if [[ $? -ne 0 ]]; then
