@@ -173,7 +173,7 @@ class RoomController extends Controller
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'floor_id' => 'required|exists:floors,floor_id',
                 'bed_type_fixed' => 'required|exists:bed_types,id',
-                'status' => 'required|in:available,occupied,maintenance,cleaning',
+                'status' => 'required|in:available,out_of_service',
                 'description' => 'nullable|string',
                 'last_cleaned' => 'nullable|date',
             ];
@@ -371,7 +371,7 @@ class RoomController extends Controller
                     'image' => 'nullable|url',
                     'floor_id' => 'required|exists:floors,floor_id',
                     'bed_type_fixed' => 'required|exists:bed_types,id',
-                    'status' => 'required|in:available,occupied,maintenance,cleaning',
+                    'status' => 'required|in:available,out_of_service',
                     'description' => 'nullable|string',
                     'last_cleaned' => 'nullable|date',
                 ];
@@ -473,7 +473,7 @@ class RoomController extends Controller
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'floor_id' => 'required|exists:floors,floor_id',        
                 'bed_type_fixed' => 'required|exists:bed_types,id',
-                'status' => 'required|in:available,occupied,maintenance,cleaning',
+                'status' => 'required|in:available,out_of_service',
                 'description' => 'nullable|string',
                 'last_cleaned' => 'nullable|date',
             ];
