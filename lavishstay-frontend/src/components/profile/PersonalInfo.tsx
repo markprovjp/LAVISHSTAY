@@ -31,7 +31,9 @@ import {
     ClockCircleOutlined,
     ContactsOutlined
 } from '@ant-design/icons';
-import { profileService, type UserProfile } from '../../services/profileService';
+import { type UserProfile } from '../../services/profileService';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -40,25 +42,15 @@ const PersonalInfo: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const [userData, setUserData] = useState<UserProfile | null>(null);
-
+    const userData = useSelector((state: RootState) => state.auth.user) as UserProfile | null;
     useEffect(() => {
-        const loadUserProfile = async () => {
-            try {
-                const profile = await profileService.getUserProfile();
-                setUserData(profile);
-                form.setFieldsValue({
-                    ...profile,
-                    dateOfBirth: profile.dateOfBirth ? dayjs(profile.dateOfBirth) : null
-                });
-            } catch (error) {
-                console.error('Error loading user profile:', error);
-                message.error('Không thể tải thông tin người dùng');
-            }
-        };
-
-        loadUserProfile();
-    }, [form]);
+        if (userData) {
+            form.setFieldsValue({
+                ...userData,
+                dateOfBirth: userData.dateOfBirth ? dayjs(userData.dateOfBirth) : null
+            });
+        }
+    }, [form, userData]);
 
     const handleEdit = () => {
         setIsEditing(true);
@@ -84,7 +76,6 @@ const PersonalInfo: React.FC = () => {
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            setUserData({ ...userData!, ...updatedData });
             setIsEditing(false);
             message.success('Cập nhật thông tin thành công!');
         } catch (error) {
@@ -235,11 +226,6 @@ const PersonalInfo: React.FC = () => {
                                 color: '#262626',
                                 fontWeight: 500
                             }}>
-                                <ContactsOutlined style={{
-                                    marginRight: '8px',
-                                    color: '#1890ff',
-                                    fontSize: '20px'
-                                }} />
                                 {userData.name}
                             </Title>
                         </div>
@@ -259,7 +245,7 @@ const PersonalInfo: React.FC = () => {
                                     fontWeight: 600,
                                     marginBottom: '4px'
                                 }}>
-                                    {userData.totalBookings}
+                                    {userData.totalBookings ? userData.totalBookings : 0}
                                 </div>
                                 <div style={{
                                     fontSize: '12px',
@@ -282,7 +268,7 @@ const PersonalInfo: React.FC = () => {
                                     fontWeight: 600,
                                     marginBottom: '4px'
                                 }}>
-                                    {userData.avgRating.toFixed(1)}
+                                    {typeof userData.avgRating === 'number' ? userData.avgRating.toFixed(1) : '0.0'}
                                 </div>
                                 <div style={{
                                     fontSize: '12px',

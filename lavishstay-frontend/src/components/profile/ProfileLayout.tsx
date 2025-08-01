@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Layout, Menu, Avatar, Typography, Spin, Divider } from 'antd';
+import React, { useCallback, useMemo } from 'react';
+import { Layout, Menu, Avatar, Typography, Divider } from 'antd';
 import {
     UserOutlined,
     BookOutlined,
@@ -12,7 +12,8 @@ import {
     KeyOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { profileService, type UserProfile } from '../../services/profileService';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -20,21 +21,7 @@ const { Title, Text } = Typography;
 const ProfileLayout: React.FC = React.memo(() => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const loadUserProfile = async () => {
-            try {
-                const profile = await profileService.getUserProfile();
-                setUserProfile(profile);
-            } catch (error) {
-                console.error('Error loading user profile:', error);
-            } finally {
-                setLoading(false);
-            }
-        }; loadUserProfile();
-    }, []);
+    const userProfile = useSelector((state: RootState) => state.auth.user);
 
     const handleMenuClick = useCallback((path: string) => {
         navigate(path);
@@ -47,10 +34,10 @@ const ProfileLayout: React.FC = React.memo(() => {
     }, [navigate]);    // Memoize menu items to prevent re-renders
     const menuItems = useMemo(() => [
         {
-            key: '/profile',
+            key: '/profile/personal-info',
             icon: <UserOutlined />,
             label: 'Thông tin cá nhân',
-            onClick: () => handleMenuClick('/profile'),
+            onClick: () => handleMenuClick('/profile/personal-info'),
         },
         {
             key: '/profile/bookings',
@@ -104,7 +91,7 @@ const ProfileLayout: React.FC = React.memo(() => {
         danger: true,
     }], [handleLogout]);
 
-    if (loading) {
+    if (!userProfile) {
         return (
             <div style={{
                 display: 'flex',
@@ -112,13 +99,16 @@ const ProfileLayout: React.FC = React.memo(() => {
                 alignItems: 'center',
                 height: '200px'
             }}>
-                <Spin size="large" />
+                <Avatar size={64} icon={<UserOutlined />} />
+                <div style={{ marginLeft: 16 }}>
+                    <Typography.Text type="secondary">Không có thông tin người dùng</Typography.Text>
+                </div>
             </div>
         );
-    } return (
-        <div className="container mx-auto px-4 py-8">
+    }
+    return (
+        <div className=" mx-auto  py-8">
             <Layout style={{
-                background: 'white',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)',

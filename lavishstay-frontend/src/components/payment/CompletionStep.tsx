@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Typography, Button, Result, Descriptions, List, Row, Col, Divider, Spin, Alert } from 'antd';
+import { Card, Typography, Button, Result, Descriptions, List, Row, Col, Divider, Spin, Alert, notification, Modal, Form, Input } from 'antd';
 import { CheckCircleOutlined, HomeOutlined, RedoOutlined, WarningOutlined } from '@ant-design/icons';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
+import authService from '../../services/authService';
+import axiosInstance from '../../config/axios';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -36,12 +38,115 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
     const [loading, setLoading] = useState(true);
     const [missingData, setMissingData] = useState<string[]>([]);
     const [backendBookingData, setBackendBookingData] = useState<any>(null);
+    const [api, contextHolder] = notification.useNotification();
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-    // Get data from Redux as fallback
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const dispatch = useDispatch();
     const bookingState = useSelector((state: RootState) => state.booking);
     const searchState = useSelector((state: RootState) => state.search);
 
-    // Try to fetch booking details from backend if missing data
+    // Nếu bạn có action fetchUserBookings và setUser, import ở trên:
+    // import { fetchUserBookings } from '../../store/bookingSlice';
+    // import { setUser } from '../../store/authSlice';
+
+    // Use fallback data from Redux or backend
+    const finalCustomerInfo = customerInfo ||
+        (backendBookingData?.booking ? {
+            fullName: backendBookingData.booking.guest_name,
+            email: backendBookingData.booking.guest_email,
+            phone: backendBookingData.booking.guest_phone
+        } : null);
+
+    // Check if user is logged in using authService
+    const isLoggedIn = authService.isAuthenticated();
+
+    // Show notification and modal after booking success
+    useEffect(() => {
+        if (!loading && !missingData.length) {
+            if (isLoggedIn) {
+                api.success({
+                    message: 'Đặt phòng thành công!',
+                    description: 'Đơn phòng đã được lưu vào tài khoản của bạn.',
+                    duration: 4,
+                });
+            } else {
+                api.success({
+                    message: 'Đặt phòng thành công!',
+                    description: 'Cảm ơn bạn đã đặt phòng tại LavishStay. Vui lòng kiểm tra email hoặc lưu lại mã đặt phòng.',
+                    duration: 4,
+                });
+                setShowPasswordModal(true);
+            }
+        }
+    }, [loading, missingData.length, api, isLoggedIn]);
+    // Handle password submit for guest (with password confirmation)
+    const handlePasswordFinish = async (values: { password: string; password_confirmation: string }) => {
+        setPasswordError(null);
+        if (values.password !== values.password_confirmation) {
+            setPasswordError('Mật khẩu nhập lại không khớp!');
+            return;
+        }
+        try {
+            // 1. Đăng ký tài khoản
+            const registerData = {
+                name: finalCustomerInfo?.fullName,
+                email: finalCustomerInfo?.email,
+                phone: finalCustomerInfo?.phone,
+                password: values.password,
+                password_confirmation: values.password_confirmation
+            };
+            const registerRes = await authService.register(registerData);
+            const { user, token } = registerRes;
+
+            // 2. Đăng nhập (token đã lưu bởi service)
+            // 3. Gán booking vào tài khoản
+            await axiosInstance.post('/booking/assign', {
+                bookingCode,
+                userId: user.id
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setShowPasswordModal(false);
+            // Tự động fetch lại danh sách booking cho user
+            if (dispatch && typeof dispatch === 'function') {
+                try {
+                    // Nếu bạn có action fetchUserBookings
+                    // @ts-ignore
+                    dispatch(fetchUserBookings());
+                } catch (e) { /* ignore */ }
+                try {
+                    // Nếu bạn có action setUser
+                    // @ts-ignore
+                    dispatch(setUser(user));
+                } catch (e) { /* ignore */ }
+            }
+            api.success({
+                message: 'Tài khoản đã được tạo!',
+                description: 'Bạn đã đăng nhập và đơn phòng đã được gán vào tài khoản.',
+                duration: 4,
+            });
+        } catch (err: any) {
+            let errorMsg = 'Vui lòng thử lại hoặc liên hệ hỗ trợ.';
+            if (err?.response?.data) {
+                const data = err.response.data;
+                if (data?.errors?.password) {
+                    setPasswordError(Array.isArray(data.errors.password) ? data.errors.password.join(' ') : data.errors.password);
+                    return;
+                }
+                if (data?.message) errorMsg = data.message;
+                if (data?.errors) {
+                    errorMsg += '<br />' + Object.values(data.errors).map((v: any) => Array.isArray(v) ? v.join(', ') : v).join('<br />');
+                }
+            }
+            api.error({
+                message: 'Có lỗi xảy ra!',
+                description: <span dangerouslySetInnerHTML={{ __html: errorMsg }} />,
+                duration: 7,
+            });
+        }
+    };
     useEffect(() => {
         const fetchBookingDetails = async () => {
             if (bookingCode && (!customerInfo || !selectedRoomsSummary)) {
@@ -65,13 +170,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
         fetchBookingDetails();
     }, [bookingCode, customerInfo, selectedRoomsSummary]);
 
-    // Use fallback data from Redux or backend
-    const finalCustomerInfo = customerInfo ||
-        (backendBookingData?.booking ? {
-            fullName: backendBookingData.booking.guest_name,
-            email: backendBookingData.booking.guest_email,
-            phone: backendBookingData.booking.guest_phone
-        } : null);
+    // ...existing code...
 
     const finalSelectedRoomsSummary = selectedRoomsSummary ||
         (backendBookingData?.rooms?.map((room: any) => ({
@@ -213,138 +312,170 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
 
     // Main success view with complete data
     return (
-        <div className="bg-gray-100 min-h-screen p-4 sm:p-8">
-            <div className="max-w-4xl mx-auto">
-                <Result
-                    icon={<CheckCircleOutlined className="text-green-500" />}
-                    status="success"
-                    title={getSuccessMessage()}
-                    subTitle={getDescription()}
-                    extra={[
-                        <Button type="primary" key="home" icon={<HomeOutlined />} onClick={onNewBooking}>
-                            Về trang chủ
-                        </Button>,
-                        <Button key="bookings" icon={<RedoOutlined />} onClick={onViewBookings}>
-                            Xem đặt phòng của tôi
-                        </Button>,
-                    ]}
-                />
-
-                <Card bordered={false} className="shadow-lg rounded-lg mt-8">
-                    <Title level={3} className="text-center mb-6">Chi tiết đơn đặt phòng</Title>
-
-                    {/* Customer and Booking Info */}
-                    <Row gutter={[16, 16]} justify="space-between">
-                        <Col xs={24} md={12}>
-                            <Descriptions title="Thông tin khách hàng" bordered column={1} size="small">
-                                <Descriptions.Item label="Họ và tên">{finalCustomerInfo?.fullName || 'Chưa có thông tin'}</Descriptions.Item>
-                                <Descriptions.Item label="Email">{finalCustomerInfo?.email || 'Chưa có thông tin'}</Descriptions.Item>
-                                <Descriptions.Item label="Số điện thoại">{finalCustomerInfo?.phone || 'Chưa có thông tin'}</Descriptions.Item>
-                            </Descriptions>
-                        </Col>
-                        <Col xs={24} md={12}>
-                            <Descriptions title="Thông tin chung" bordered column={1} size="small">
-                                <Descriptions.Item label="Mã đặt phòng"><Text strong copyable>{bookingCode}</Text></Descriptions.Item>
-                                <Descriptions.Item label="Ngày nhận phòng">{getCheckInDate()}</Descriptions.Item>
-                                <Descriptions.Item label="Ngày trả phòng">{getCheckOutDate()}</Descriptions.Item>
-                                <Descriptions.Item label="Phương thức thanh toán">
-                                    {selectedPaymentMethod === 'pay_at_hotel' ? 'Thanh toán tại khách sạn' : 'Đã thanh toán'}
-                                </Descriptions.Item>
-                            </Descriptions>
-                        </Col>
-                    </Row>
-
-                    <Divider />
-
-                    {/* Room Details */}
-                    <Title level={4} className="mt-6 mb-4">Chi tiết các phòng đã đặt</Title>
-
-                    {finalSelectedRoomsSummary && finalSelectedRoomsSummary.length > 0 ? (
-                        <List
-                            grid={{ gutter: 16, xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 }}
-                            dataSource={finalSelectedRoomsSummary}
-                            renderItem={(roomSummary: any, index: number) => (
-                                <List.Item>
-                                    <Card type="inner" title={`Phòng ${index + 1}: ${roomSummary.room?.name || roomSummary.name || 'Phòng không xác định'}`}>
-                                        <Row gutter={16}>
-                                            <Col span={12}>
-                                                {roomSummary.room?.image_url || roomSummary.image_url ? (
-                                                    <img
-                                                        src={roomSummary.room?.image_url || roomSummary.image_url}
-                                                        alt={roomSummary.room?.name || roomSummary.name}
-                                                        className="w-full h-auto rounded-md"
-                                                        style={{ maxHeight: '200px', objectFit: 'cover' }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center">
-                                                        Không có hình ảnh
-                                                    </div>
-                                                )}
-                                            </Col>
-                                            <Col span={12}>
-                                                <Descriptions column={1} size="small">
-                                                    <Descriptions.Item label="Khách đứng tên">{finalCustomerInfo?.fullName || 'Chưa có thông tin'}</Descriptions.Item>
-                                                    <Descriptions.Item label="Gói dịch vụ">{roomSummary.option?.name || roomSummary.packageType || 'Standard'}</Descriptions.Item>
-                                                    <Descriptions.Item label="Số đêm">{finalNights}</Descriptions.Item>
-                                                    <Descriptions.Item label="Giá mỗi đêm">
-                                                        {formatVND(roomSummary.pricePerNight || roomSummary.price || 0)}
-                                                    </Descriptions.Item>
-                                                </Descriptions>
-                                            </Col>
-                                        </Row>
-                                    </Card>
-                                </List.Item>
-                            )}
-                        />
-                    ) : (
-                        <Card type="inner">
-                            <Text type="secondary">Thông tin phòng đã đặt không có sẵn</Text>
-                        </Card>
+        <>
+            {contextHolder}
+            <Modal
+                title="Nhập mật khẩu để tạo tài khoản quản lý đơn phòng"
+                open={showPasswordModal}
+                onCancel={() => setShowPasswordModal(false)}
+                footer={null}
+            >
+                <Form onFinish={handlePasswordFinish} layout="vertical">
+                    <Form.Item
+                        name="password"
+                        label="Mật khẩu"
+                        rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+                    >
+                        <Input.Password autoFocus />
+                    </Form.Item>
+                    <Form.Item
+                        name="password_confirmation"
+                        label="Nhập lại mật khẩu"
+                        rules={[{ required: true, message: 'Vui lòng nhập lại mật khẩu!' }]}
+                    >
+                        <Input.Password />
+                    </Form.Item>
+                    {passwordError && (
+                        <div style={{ color: 'red', marginBottom: 12 }}>{passwordError}</div>
                     )}
+                    <Button type="primary" htmlType="submit" block>
+                        Tạo tài khoản & Đăng nhập
+                    </Button>
+                </Form>
+            </Modal>
+            <div className="bg-gray-100 min-h-screen p-4 sm:p-8">
+                <div className="max-w-4xl mx-auto">
+                    <Result
+                        icon={<CheckCircleOutlined className="text-green-500" />}
+                        status="success"
+                        title={getSuccessMessage()}
+                        subTitle={getDescription()}
+                        extra={[
+                            <Button type="primary" key="home" icon={<HomeOutlined />} onClick={onNewBooking}>
+                                Về trang chủ
+                            </Button>,
+                            <Button key="bookings" icon={<RedoOutlined />} onClick={onViewBookings}>
+                                Xem đặt phòng của tôi
+                            </Button>,
+                        ]}
+                    />
 
-                    <Divider />
+                    <Card bordered={false} className="shadow-lg rounded-lg mt-8">
+                        <Title level={3} className="text-center mb-6">Chi tiết đơn đặt phòng</Title>
 
-                    {/* Payment Summary */}
-                    <Title level={4} className="mt-6 mb-4">Tổng kết chi phí</Title>
-                    <Row justify="end">
-                        <Col xs={24} sm={16} md={12}>
-                            {finalTotals && typeof finalTotals.finalTotal === 'number' ? (
-                                <Descriptions bordered column={1} size="small">
-                                    <Descriptions.Item label={`Tiền phòng (${finalNights} đêm)`}>
-                                        {formatVND(finalTotals.roomsTotal || finalTotals.finalTotal)}
-                                    </Descriptions.Item>
-                                    {finalTotals.serviceFee && (
-                                        <Descriptions.Item label="Phí dịch vụ">{formatVND(finalTotals.serviceFee)}</Descriptions.Item>
-                                    )}
-                                    {finalTotals.taxAmount && (
-                                        <Descriptions.Item label="Thuế VAT">{formatVND(finalTotals.taxAmount)}</Descriptions.Item>
-                                    )}
-                                    <Descriptions.Item label="Tổng cộng">
-                                        <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
-                                            {formatVND(finalTotals.finalTotal)}
-                                        </Title>
+                        {/* Customer and Booking Info */}
+                        <Row gutter={[16, 16]} justify="space-between">
+                            <Col xs={24} md={12}>
+                                <Descriptions title="Thông tin khách hàng" bordered column={1} size="small">
+                                    <Descriptions.Item label="Họ và tên">{finalCustomerInfo?.fullName || 'Chưa có thông tin'}</Descriptions.Item>
+                                    <Descriptions.Item label="Email">{finalCustomerInfo?.email || 'Chưa có thông tin'}</Descriptions.Item>
+                                    <Descriptions.Item label="Số điện thoại">{finalCustomerInfo?.phone || 'Chưa có thông tin'}</Descriptions.Item>
+                                </Descriptions>
+                            </Col>
+                            <Col xs={24} md={12}>
+                                <Descriptions title="Thông tin chung" bordered column={1} size="small">
+                                    <Descriptions.Item label="Mã đặt phòng"><Text strong copyable>{bookingCode}</Text></Descriptions.Item>
+                                    <Descriptions.Item label="Ngày nhận phòng">{getCheckInDate()}</Descriptions.Item>
+                                    <Descriptions.Item label="Ngày trả phòng">{getCheckOutDate()}</Descriptions.Item>
+                                    <Descriptions.Item label="Phương thức thanh toán">
+                                        {selectedPaymentMethod === 'pay_at_hotel' ? 'Thanh toán tại khách sạn' : 'Đã thanh toán'}
                                     </Descriptions.Item>
                                 </Descriptions>
-                            ) : (
-                                <Card type="inner">
-                                    <Text type="secondary">Thông tin thanh toán không có sẵn</Text>
-                                </Card>
-                            )}
-                        </Col>
-                    </Row>
+                            </Col>
+                        </Row>
 
-                    <Paragraph className="text-center mt-8 text-gray-500">
-                        {finalCustomerInfo?.email ? (
-                            <>Một email xác nhận đã được gửi đến {finalCustomerInfo.email}. Vui lòng kiểm tra hộp thư của bạn.</>
+                        <Divider />
+
+                        {/* Room Details */}
+                        <Title level={4} className="mt-6 mb-4">Chi tiết các phòng đã đặt</Title>
+
+                        {finalSelectedRoomsSummary && finalSelectedRoomsSummary.length > 0 ? (
+                            <List
+                                grid={{ gutter: 16, xs: 1, sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 }}
+                                dataSource={finalSelectedRoomsSummary}
+                                renderItem={(roomSummary: any, index: number) => (
+                                    <List.Item>
+                                        <Card type="inner" title={`Phòng ${index + 1}: ${roomSummary.room?.name || roomSummary.name || 'Phòng không xác định'}`}>
+                                            <Row gutter={16}>
+                                                <Col span={12}>
+                                                    {roomSummary.room?.image_url || roomSummary.image_url ? (
+                                                        <img
+                                                            src={roomSummary.room?.image_url || roomSummary.image_url}
+                                                            alt={roomSummary.room?.name || roomSummary.name}
+                                                            className="w-full h-auto rounded-md"
+                                                            style={{ maxHeight: '200px', objectFit: 'cover' }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center">
+                                                            Không có hình ảnh
+                                                        </div>
+                                                    )}
+                                                </Col>
+                                                <Col span={12}>
+                                                    <Descriptions column={1} size="small">
+                                                        <Descriptions.Item label="Khách đứng tên">{finalCustomerInfo?.fullName || 'Chưa có thông tin'}</Descriptions.Item>
+                                                        <Descriptions.Item label="Gói dịch vụ">{roomSummary.option?.name || roomSummary.packageType || 'Standard'}</Descriptions.Item>
+                                                        <Descriptions.Item label="Số đêm">{finalNights}</Descriptions.Item>
+                                                        <Descriptions.Item label="Giá mỗi đêm">
+                                                            {formatVND(roomSummary.pricePerNight || roomSummary.price || 0)}
+                                                        </Descriptions.Item>
+                                                    </Descriptions>
+                                                </Col>
+                                            </Row>
+                                        </Card>
+                                    </List.Item>
+                                )}
+                            />
                         ) : (
-                            <>Vui lòng lưu lại mã đặt phòng: <Text strong>{bookingCode}</Text></>
+                            <Card type="inner">
+                                <Text type="secondary">Thông tin phòng đã đặt không có sẵn</Text>
+                            </Card>
                         )}
-                        <br />
-                        Nếu có bất kỳ câu hỏi nào, xin vui lòng liên hệ với chúng tôi.
-                    </Paragraph>
-                </Card>
+
+                        <Divider />
+
+                        {/* Payment Summary */}
+                        <Title level={4} className="mt-6 mb-4">Tổng kết chi phí</Title>
+                        <Row justify="end">
+                            <Col xs={24} sm={16} md={12}>
+                                {finalTotals && typeof finalTotals.finalTotal === 'number' ? (
+                                    <Descriptions bordered column={1} size="small">
+                                        <Descriptions.Item label={`Tiền phòng (${finalNights} đêm)`}>
+                                            {formatVND(finalTotals.roomsTotal || finalTotals.finalTotal)}
+                                        </Descriptions.Item>
+                                        {finalTotals.serviceFee && (
+                                            <Descriptions.Item label="Phí dịch vụ">{formatVND(finalTotals.serviceFee)}</Descriptions.Item>
+                                        )}
+                                        {finalTotals.taxAmount && (
+                                            <Descriptions.Item label="Thuế VAT">{formatVND(finalTotals.taxAmount)}</Descriptions.Item>
+                                        )}
+                                        <Descriptions.Item label="Tổng cộng">
+                                            <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
+                                                {formatVND(finalTotals.finalTotal)}
+                                            </Title>
+                                        </Descriptions.Item>
+                                    </Descriptions>
+                                ) : (
+                                    <Card type="inner">
+                                        <Text type="secondary">Thông tin thanh toán không có sẵn</Text>
+                                    </Card>
+                                )}
+                            </Col>
+                        </Row>
+
+                        <Paragraph className="text-center mt-8 text-gray-500">
+                            {finalCustomerInfo?.email ? (
+                                <>Một email xác nhận đã được gửi đến {finalCustomerInfo.email}. Vui lòng kiểm tra hộp thư của bạn.</>
+                            ) : (
+                                <>Vui lòng lưu lại mã đặt phòng: <Text strong>{bookingCode}</Text></>
+                            )}
+                            <br />
+                            Nếu có bất kỳ câu hỏi nào, xin vui lòng liên hệ với chúng tôi.
+                        </Paragraph>
+                    </Card>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
