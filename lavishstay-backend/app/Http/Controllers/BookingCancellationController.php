@@ -130,7 +130,7 @@ public function cancelBooking(Request $request, $bookingId)
 
     // Get policy name safely
     $policyName = $cancellationPolicy->name ?? 'Chính sách mặc định';
-
+    $pilicyId   = $cancellationPolicy->policy_id ?? null;
     // Check if cancellation is free
     if ($timeDiff >= ($cancellationPolicy->free_cancellation_days ?? PHP_INT_MAX)) {
         // Free cancellation
@@ -144,6 +144,7 @@ public function cancelBooking(Request $request, $bookingId)
             'reason' => "Bạn hủy đặt phòng vào ngày {$cancelTime->format('Y-m-d')}, cách ngày nhận phòng ({$booking->check_in_date->format('Y-m-d')} 14:00) " . round($timeDiff, 2) . " ngày, thỏa mãn chính sách hủy miễn phí {$policyName} (trước {$cancellationPolicy->free_cancellation_days} ngày).",
             'formula' => 'Không áp dụng',
             'policy' => $policyName,
+            'policy_id' => $pilicyId,
             'penalty' => 0,
             'penalty_type' => 'Không áp dụng',
             'penalty_percentage' => 0,
@@ -185,6 +186,7 @@ public function cancelBooking(Request $request, $bookingId)
             ? ($penaltyType === 'percentage' ? 'Số tiền phạt = Tổng giá * Tỷ lệ phạt' : 'Số tiền phạt = Số tiền cố định')
             : 'Không áp dụng',
         'policy' => $policyName,
+        'policy_id' => $pilicyId,
         'penalty' => $penaltyAmount,
         'penalty_type' => $penaltyAmount > 0 ? $penaltyType : 'Không áp dụng',
         'penalty_percentage' => $penaltyType === 'percentage' ? $penaltyPercentage : 0,
