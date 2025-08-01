@@ -37,7 +37,8 @@ use App\Http\Controllers\NewsController\NewsCategoryController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-
+Route::middleware('auth:sanctum')->get('/user/bookings', [BookingController::class, 'getUserBookings']);
+Route::middleware('auth:sanctum')->post('/booking/assign', [BookingController::class, 'assignBookingToUser']);
 // Route test gửi email
 Route::get('/test-email/{bookingId}', [PaymentController::class, 'testEmail']);
 
