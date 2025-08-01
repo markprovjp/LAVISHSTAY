@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\NewsApiController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
+use App\Http\Controllers\BookingCancellationController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 
 /*
@@ -76,6 +77,17 @@ Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 
 // Thêm route mới cho customer search
 Route::get('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
+
+
+
+
+// Room Requests API
+
+// Yêu cầu hủy
+Route::post('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'cancelBooking']);
+
+
+
 
 
 // Rooms API  
@@ -269,4 +281,4 @@ Route::get('/news/categories', [NewsCategoryController::class, 'index']);
 Route::get('/sitemap', [SitemapController::class, 'index']);
 Route::get('/sitemap-main', [SitemapController::class, 'main']);
 Route::get('/sitemap-categories', [SitemapController::class, 'categories']);
-Route::get('/sitemap-news', [SitemapController::class, 'news']);
+Route::get('/sitemap-news', [SitemapController::class, 'news']);            

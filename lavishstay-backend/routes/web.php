@@ -10,6 +10,7 @@ use App\Http\Controllers\BookingExtensionController;
 use App\Http\Controllers\BookingRescheduleController;
 use App\Http\Controllers\CancellationPolicyController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\BookingCancellationController;
 use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\CheckoutRequestController;
@@ -352,6 +353,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     ////////////////////// YÊU CẦU ĐẶT PHÒNG /////////////////////////////////////////////////////
+
+    // Hủy phòng
+    Route::get('/admin/booking_cancellations', [BookingCancellationController::class, 'index'])->name('admin.booking_cancellations');
 
     // Gia hạn phòng
     Route::get('/admin/booking_extensions', [BookingExtensionController::class, 'index'])->name('admin.booking_extensions');
