@@ -385,6 +385,34 @@ class RoomTypeController extends Controller
         return response()->json(['success' => $updated, 'message' => $updated ? 'Cập nhật thành công' : 'Cập nhật thất bại']);
     }
 
+
+    public function destroyPackage(Request $request, $roomTypeId, $packageId)
+    {
+        try {
+            $package = RoomTypePackage::where('room_type_id', $roomTypeId)
+                                     ->where('package_id', $packageId)
+                                     ->firstOrFail();
+
+            // Xóa các dịch vụ liên kết với gói
+            $package->services()->detach();
+
+            // Xóa gói dịch vụ
+            $package->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Gói dịch vụ đã được xóa thành công!'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy gói dịch vụ hoặc có lỗi xảy ra: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+
    public function managePackageServices($roomTypeId, $packageId)
     {
         $roomType = RoomType::with(['packages.services' => function ($query) use ($packageId) {
