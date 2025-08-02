@@ -21,7 +21,8 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\NewsApiController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
-use App\Http\Controllers\BookingCancellationController;
+use App\Http\Controllers\Api\BookingCancellationController;
+use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 
 /*
@@ -89,7 +90,11 @@ Route::post('/cancel-booking/{bookingId}', [BookingCancellationController::class
 Route::get('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'cancelBooking']);
 
 
+//Yêu cầu gia hạn
+Route::post('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'extendBooking']);
+Route::get('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'extendBooking']);
 
+// Room Requests API
 
 
 // Rooms API  
