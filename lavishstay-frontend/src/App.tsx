@@ -77,8 +77,8 @@ import "./index.css";
 import "./styles/theme-transitions.css";
 import "./styles/global.css";
 import "./styles/performance-optimizations.css";
-import NewsPage from "./pages/NewsPage";
-import NewsDetailPage from "./pages/NewsDetailPage";
+import News from "./pages/News";
+
 
 const { Content } = Layout;
 
@@ -131,8 +131,8 @@ const App: React.FC = React.memo(() => {
             <Route path="/about" element={<About />} />
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
-            <Route path="/tin-tuc" element={<NewsPage />} />
-            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/news/:slug" element={<NewsDetailPage />} />
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/room-types-demo" element={<RoomTypesDemo />} />
             <Route path="/review-booking" element={<ReviewBooking />} />
