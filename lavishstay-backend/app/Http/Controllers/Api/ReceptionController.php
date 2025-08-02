@@ -827,7 +827,7 @@ $bookings = $query->paginate($request->get('per_page', 500));
                     'booking_status' => $booking->booking_status,
                 ];
             }
-            // Log::info('Bookings retrieved successfully', ['data' => $transformedBookings]);
+            Log::info('Bookings retrieved successfully', ['data' => $transformedBookings]);
             return response()->json([
                 'success' => true,
                 'message' => 'Bookings retrieved successfully',
@@ -1396,6 +1396,9 @@ $allChildrenAges = DB::table('booking_room_children')
             return response()->json(['success' => false, 'message' => 'Failed to assign rooms.', 'error' => $e->getMessage()], 500);
         }
     }
+
+
+    
 
        public function createBooking(Request $request): JsonResponse
     {
