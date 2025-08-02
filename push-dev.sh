@@ -41,6 +41,7 @@ fi
 
 # Stash nếu đang staged nhưng chưa commit → để tránh lỗi pull --rebase
 echo "📦 Stash tạm thời các thay đổi để pull an toàn..."
+<<<<<<< Updated upstream
 
 
 
@@ -90,6 +91,26 @@ if [ $? -ne 0 ]; then
 fi
 
 
+=======
+git stash push -u -m "Auto stash before rebase"
+
+# Pull với rebase
+echo "⬇️ Pulling với rebase..."
+git pull --rebase $REMOTE_NAME $REMOTE_BRANCH
+if [ $? -ne 0 ]; then
+    echo "❌ Rebase bị conflict! Hãy xử lý thủ công rồi chạy lại script."
+    git diff --name-only --diff-filter=U
+    exit 1
+fi
+
+# Apply lại stash
+echo "📥 Áp dụng lại thay đổi từ stash..."
+git stash pop
+if [ $? -ne 0 ]; then
+    echo "⚠️ Không có stash để apply hoặc apply lỗi!"
+fi
+
+>>>>>>> Stashed changes
 # Add lại sau khi stash pop
 git add .
 
