@@ -1,6 +1,6 @@
 // src/components/news/NewsCategoryTabs.tsx
 import React, { useState } from 'react';
-import { Tabs, Badge, Button } from 'antd';
+import { Tabs, Badge, Button, Tag } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -101,19 +101,17 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
     const tabItems = categories.map((category) => ({
         key: category.key,
         label: (
-            <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200"
+            <div
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200
+                ${selectedTab === category.key ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-transparent'}
+                hover:bg-blue-50 dark:hover:bg-blue-900/30
+                `}
+                style={{ minWidth: 90, cursor: 'pointer' }}
             >
-                <motion.div
-                    animate={selectedTab === category.key ? { rotate: 360 } : {}}
-                    transition={{ duration: 0.5 }}
-                    className={`text-lg ${selectedTab === category.key ? `text-${category.color}-500` : 'text-gray-500'}`}
-                >
+                <span className={`text-lg ${selectedTab === category.key ? `text-${category.color}-600` : `text-${category.color}-500`}`}>
                     {category.icon}
-                </motion.div>
-                <span className={`font-medium ${selectedTab === category.key ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                </span>
+                <span className={`font-medium ${selectedTab === category.key ? `text-${category.color}-700 dark:text-${category.color}-300` : 'text-gray-700 dark:text-gray-300'}`}>
                     {category.label}
                 </span>
                 <Badge
@@ -121,7 +119,7 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
                     size="small"
                     className={`${selectedTab === category.key ? 'opacity-100' : 'opacity-60'}`}
                 />
-            </motion.div>
+            </div>
         ),
         children: null // Content will be handled by parent component
     }));
@@ -139,7 +137,7 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
                     <motion.div
                         animate={{ rotate: [0, 10, -10, 0] }}
                         transition={{ duration: 2, repeat: Infinity }}
-                        className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                        className="w-2 h-2  rounded-full"
                     />
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                         {t('news.categories.title', 'Chuyên mục')}
@@ -194,7 +192,7 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: 1 }}
                         exit={{ scaleX: 0 }}
-                        className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                        className="absolute bottom-0 left-0 right-0 h-1  rounded-full"
                     />
                 </AnimatePresence>
             </motion.div>
@@ -236,53 +234,27 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
                             ease: "easeInOut"
                         }}
                         className={`w-1 h-1 rounded-full ${i === 1 ? 'bg-blue-400' :
-                                i === 2 ? 'bg-purple-400' : 'bg-pink-400'
+                            i === 2 ? 'bg-purple-400' : 'bg-pink-400'
                             }`}
                     />
                 ))}
             </div>
 
-            <style jsx global>{`
+            <style>{`
         .news-category-tabs .ant-tabs-tab {
-          border-radius: 12px !important;
-          border: 1px solid #e5e7eb !important;
-          background: white !important;
+          background: transparent !important;
+          border: none !important;
           margin-bottom: 8px !important;
-          padding: 8px 16px !important;
-          transition: all 0.3s ease !important;
+          padding: 0 !important;
+          min-width: 90px;
         }
-
-        .news-category-tabs .ant-tabs-tab:hover {
-          border-color: #3b82f6 !important;
-          transform: translateY(-2px) !important;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
-        }
-
         .news-category-tabs .ant-tabs-tab-active {
-          border-color: #3b82f6 !important;
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
-          color: white !important;
-          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3) !important;
+          background: transparent !important;
+          border: none !important;
         }
-
-        .news-category-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-          color: white !important;
-        }
-
-        .dark .news-category-tabs .ant-tabs-tab {
-          background: #374151 !important;
-          border-color: #4b5563 !important;
-          color: #d1d5db !important;
-        }
-
-        .dark .news-category-tabs .ant-tabs-tab:hover {
-          border-color: #60a5fa !important;
-        }
-
         .news-category-tabs .ant-tabs-content-holder {
           display: none;
         }
-
         .news-category-tabs .ant-tabs-ink-bar {
           display: none;
         }

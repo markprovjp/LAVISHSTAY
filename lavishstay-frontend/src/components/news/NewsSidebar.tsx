@@ -1,6 +1,6 @@
 // src/components/news/NewsSidebar.tsx
 import React, { useState, useEffect } from 'react';
-import { Card, List, Typography, Avatar, Tag, Divider, Skeleton, Progress } from 'antd';
+import { Card, List, Typography, Avatar, Tag, Divider, Skeleton, Progress, Statistic } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import {
     CalendarOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import axios from 'axios';
 
 const { Title, Text } = Typography;
 
@@ -49,11 +50,11 @@ const NewsSidebar: React.FC = () => {
     const { t } = useTranslation();
     const [currentTime, setCurrentTime] = useState(dayjs());
 
-    // Update clock every minute
+    // Update clock every second
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(dayjs());
-        }, 60000);
+        }, 1000);
 
         return () => clearInterval(timer);
     }, []);
@@ -115,19 +116,38 @@ const NewsSidebar: React.FC = () => {
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
-    // Mock weather data
+    // Fetch weather data from OpenWeatherMap
     const { data: weather, isLoading: isWeatherLoading } = useQuery({
         queryKey: ['weather'],
         queryFn: async (): Promise<WeatherData> => {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            return {
-                location: 'Hà Nội',
-                temperature: 28,
-                condition: 'Nắng ít mây',
-                humidity: 65,
-                windSpeed: 12,
-                icon: '☀️'
-            };
+            const apiKey = 'fe046278d91d553814da6a861d374570'; // <-- IMPORTANT: Replace with your actual API key
+            const lat = 19.8063; // Latitude for Thanh Hóa
+            const lon = 105.7739; // Longitude for Thanh Hóa
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=vi`;
+
+            try {
+                const response = await axios.get(url);
+                const data = response.data;
+                return {
+                    location: data.name,
+                    temperature: Math.round(data.main.temp),
+                    condition: data.weather[0].description,
+                    humidity: data.main.humidity,
+                    windSpeed: Math.round(data.wind.speed * 3.6), // m/s to km/h
+                    icon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`
+                };
+            } catch (error) {
+                console.error("Failed to fetch weather data:", error);
+                // Return mock data or handle error state
+                return {
+                    location: 'Thanh Hóa',
+                    temperature: 28,
+                    condition: 'Không thể tải dữ liệu',
+                    humidity: 65,
+                    windSpeed: 12,
+                    icon: '' // No icon on error
+                };
+            }
         },
         staleTime: 10 * 60 * 1000, // 10 minutes
     });
@@ -198,11 +218,16 @@ const NewsSidebar: React.FC = () => {
                 <Card className="shadow-sm hover:shadow-md transition-all duration-300">
                     <div className="text-center">
                         <CalendarOutlined className="text-2xl text-blue-500 mb-2" />
-                        <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                            {currentTime.format('HH:mm')}
-                        </div>
+                        <Statistic
+                            value={currentTime.format('HH:mm:ss')}
+                            valueStyle={{ 
+                                fontSize: '2rem', 
+                                fontWeight: 'bold', 
+                                color: '#1a202c' // Use a specific color from your theme if available
+                            }}
+                        />
                         <div className="text-sm text-gray-500">
-                            {currentTime.format('dddd, DD/MM/YYYY')}
+                            {dayjs(currentTime).format('dddd, DD/MM/YYYY')}
                         </div>
                     </div>
                 </Card>
@@ -228,7 +253,9 @@ const NewsSidebar: React.FC = () => {
                                     <EnvironmentOutlined className="text-red-500" />
                                     <Text>{weather.location}</Text>
                                 </div>
-                                <div className="text-2xl">{weather.icon}</div>
+                                <div className="text-2xl">
+                                    {weather.icon && <img src={weather.icon} alt={weather.condition} className="w-12 h-12" />}
+                                </div>
                             </div>
 
                             <div className="text-center">

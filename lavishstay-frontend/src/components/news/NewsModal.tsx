@@ -7,7 +7,6 @@ import {
     Tag,
     Avatar,
     Divider,
-    Comment,
     Form,
     Input,
     Button,
@@ -456,22 +455,26 @@ const NewsModal: React.FC<NewsModalProps> = ({ newsId, open, onClose }) => {
                                     <List
                                         dataSource={newsDetail.comments}
                                         renderItem={(comment) => (
-                                            <Comment
-                                                author={comment.author}
-                                                avatar={<Avatar src={comment.avatar} icon={<UserOutlined />} />}
-                                                content={comment.content}
-                                                datetime={dayjs(comment.createdAt).fromNow()}
-                                                actions={[
-                                                    <Button
-                                                        key="like"
-                                                        type="text"
-                                                        size="small"
-                                                        className="text-gray-500 hover:text-blue-500"
-                                                    >
-                                                        Thích ({comment.likes})
-                                                    </Button>
-                                                ]}
-                                            />
+                                            <List.Item key={comment.id}>
+                                                <div className="flex items-start w-full">
+                                                    <Avatar src={comment.avatar} icon={<UserOutlined />} className="mr-4" />
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between">
+                                                            <Text strong>{comment.author}</Text>
+                                                            <Text type="secondary" className="text-xs">{dayjs(comment.createdAt).fromNow()}</Text>
+                                                        </div>
+                                                        <Paragraph>{comment.content}</Paragraph>
+                                                        <Button
+                                                            key="like"
+                                                            type="text"
+                                                            size="small"
+                                                            className="text-gray-500 hover:text-blue-500 pl-0"
+                                                        >
+                                                            Thích ({comment.likes})
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </List.Item>
                                         )}
                                     />
                                 </motion.div>
