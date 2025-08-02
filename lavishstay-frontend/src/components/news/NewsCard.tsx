@@ -1,6 +1,6 @@
 // src/components/news/NewsCard.tsx
 import React from 'react';
-import { Card, Tag, Avatar, Tooltip } from 'antd';
+import { Card, Tag, Avatar, Tooltip, Space } from 'antd';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -49,34 +49,38 @@ const NewsCard: React.FC<NewsCardProps> = ({
     const { t } = useTranslation();
 
     const cardActions = [
-        <NewsLikeButton
-            key="like"
-            newsId={news.id}
-            isLiked={news.isLiked}
-            likesCount={news.likesCount}
-        />,
-        <NewsShareButton
-            key="share"
-            newsId={news.id}
-            newsTitle={news.title}
-            newsUrl={`/news/${news.id}`}
-        />,
-        <NewsBookmarkButton
-            key="bookmark"
-            newsId={news.id}
-            isBookmarked={news.isBookmarked}
-        />
+        <Space key="actions" size={4} className="flex items-center justify-center w-full">
+            <NewsLikeButton
+                newsId={news.id}
+                isLiked={news.isLiked}
+                initialLikeCount={news.likesCount}
+                size="small"
+                type="text"
+            >
+                <span className="ml-1">Thích</span>
+            </NewsLikeButton>
+            <NewsShareButton
+                newsId={news.id}
+                title={news.title}
+                url={`/news/${news.id}`}
+                size="small"
+                type="text"
+            >
+                <span className="ml-1">Chia sẻ</span>
+            </NewsShareButton>
+            <NewsBookmarkButton
+                newsId={news.id}
+                isBookmarked={news.isBookmarked}
+                size="small"
+                type="text"
+            >
+                <span className="ml-1">Lưu</span>
+            </NewsBookmarkButton>
+        </Space>
     ];
 
     return (
-        <motion.div
-            whileHover={{
-                y: -8,
-                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
-            }}
-            whileTap={{ scale: 0.98 }}
-            className="h-full"
-        >
+        <div className="h-full">
             <Card
                 hoverable
                 className={`h-full group cursor-pointer border-gray-200 dark:border-gray-700 dark:bg-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden ${compact ? 'news-card-compact' : 'news-card-full'
@@ -94,7 +98,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                         />
 
                         {/* Image Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                         {/* Category Badge */}
                         <div className="absolute top-3 left-3">
@@ -183,22 +187,23 @@ const NewsCard: React.FC<NewsCardProps> = ({
                             }`}
                     >
                         {/* Author & Time */}
-                        <div className="flex items-center space-x-3 text-gray-500 dark:text-gray-400">
-                            <Tooltip title={news.author.name}>
-                                <div className="flex items-center space-x-2">
-                                    <Avatar
-                                        size={compact ? 'small' : 'default'}
-                                        src={news.author.avatar}
-                                        icon={<UserOutlined />}
-                                        className="border border-gray-200 dark:border-gray-600"
-                                    />
-                                    <span className="truncate max-w-20">{news.author.name}</span>
-                                </div>
-                            </Tooltip>
-
-                            <div className="flex items-center space-x-1">
-                                <ClockCircleOutlined className="text-xs" />
-                                <span>{dayjs(news.publishedAt).fromNow()}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <Avatar
+                                size={compact ? 20 : 24}
+                                src={news.author.avatar}
+                                icon={<UserOutlined />}
+                                className="border border-gray-200 dark:border-gray-600 flex-shrink-0"
+                            />
+                            <div className="flex flex-col min-w-0">
+                                <Tooltip title={news.author.name} placement="topLeft">
+                                    <span className="truncate max-w-[90px] font-medium text-gray-700 dark:text-gray-200 text-xs md:text-sm">
+                                        {news.author.name}
+                                    </span>
+                                </Tooltip>
+                                <span className="flex items-center text-xs text-gray-400 mt-0.5">
+                                    <ClockCircleOutlined className="mr-1" />
+                                    {dayjs(news.publishedAt).fromNow()}
+                                </span>
                             </div>
                         </div>
 
@@ -226,7 +231,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
                 {/* Animated Background Pattern */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500" />
+                    <div className="absolute inset-0 " />
                     <motion.div
                         animate={{
                             backgroundPosition: ['0% 0%', '100% 100%'],
@@ -246,7 +251,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
                 {/* Hover Glow Effect */}
                 <motion.div
-                    className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-0 group-hover:opacity-20 blur transition-opacity duration-300 pointer-events-none"
+                    className="absolute -inset-1  rounded-lg opacity-0 group-hover:opacity-20 blur transition-opacity duration-300 pointer-events-none"
                     animate={{
                         scale: [1, 1.02, 1],
                     }}
@@ -257,7 +262,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                     }}
                 />
             </Card>
-        </motion.div>
+        </div>
     );
 };
 
