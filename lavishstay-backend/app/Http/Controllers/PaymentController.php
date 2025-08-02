@@ -150,21 +150,6 @@ class PaymentController extends Controller
             $userId = $request->input('user_id');
         }
 
-        // $booking = Booking::create([
-        //     'booking_code' => '', // Will be updated after creation
-        //     'guest_name' => $request->input('customer_name'),
-        //     'guest_email' => $request->input('customer_email'),
-        //     'guest_phone' => $request->input('customer_phone'),
-        //     'check_in_date' => $checkInDate,
-        //     'check_out_date' => $checkOutDate,
-        //     'guest_count' => $request->input('total_guests'),
-        //     'total_price_vnd' => $request->input('total_price'),
-        //     'status' => 'pending', // Vẫn pending cho đến khi thanh toán
-        //     'notes' => $request->input('notes'),
-        //     'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
-        //     'user_id' => $userId,
-        //     'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
-        // ]);
 
         // Generate booking code
         $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');
