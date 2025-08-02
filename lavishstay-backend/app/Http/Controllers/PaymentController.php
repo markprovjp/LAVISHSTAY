@@ -84,6 +84,37 @@ class PaymentController extends Controller
             }
         }
 
+        Log::info('Booking notes:', ['notes' => $request->input('notes')]);
+        // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
+        $userId = null;
+        // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
+        if ($request->user()) {
+            $userId = $request->user()->id;
+            Log::info('User is authenticated, user_id set from request->user()', ['user_id' => $userId]);
+        } elseif ($request->has('user_id')) {
+            $userId = $request->input('user_id');
+            Log::info('User_id received from request input', ['user_id' => $userId]);
+        } else {
+            Log::info('No user_id found, booking will be guest booking');
+        }
+
+        $booking = Booking::create([
+            'booking_code' => '', // Will be updated after creation
+            'guest_name' => $request->input('customer_name'),
+            'guest_email' => $request->input('customer_email'),
+            'guest_phone' => $request->input('customer_phone'),
+            'check_in_date' => $checkInDate,
+            'check_out_date' => $checkOutDate,
+            'guest_count' => $request->input('total_guests'),
+            'total_price_vnd' => $request->input('total_price'),
+            'status' => 'pending', // Vẫn pending cho đến khi thanh toán
+            'notes' => $request->input('notes'),
+            'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
+            'user_id' => $userId,
+            'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
+        ]);
+        Log::info('Booking created, user_id in booking:', ['user_id' => $booking->user_id, 'booking_id' => $booking->booking_id]);
+
         // 2. Kiểm tra availability
         foreach ($requestedRoomTypes as $roomTypeId => $details) {
             $requestedCount = $details['count'];
@@ -111,22 +142,14 @@ class PaymentController extends Controller
         Log::info('Booking notes:', ['notes' => $request->input('notes')]);
         
         // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
-        $booking = Booking::create([
-            'booking_code' => '', // Will be updated after creation
-            'guest_name' => $request->input('customer_name'),
-            'guest_email' => $request->input('customer_email'),
-            'guest_phone' => $request->input('customer_phone'),
-            'check_in_date' => $checkInDate,
-            'check_out_date' => $checkOutDate,
-            'guest_count' => $request->input('total_guests'),
-            'total_price_vnd' => $request->input('total_price'),
-            'status' => 'pending', // Vẫn pending cho đến khi thanh toán
-            'notes' => $request->input('notes'),
-            'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
-            'user_id' => null,
-            'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
+        $userId = null;
+        // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
+        if ($request->user()) {
+            $userId = $request->user()->id;
+        } elseif ($request->has('user_id')) {
+            $userId = $request->input('user_id');
+        }
 
-        ]);
 
         // Generate booking code
         $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');
