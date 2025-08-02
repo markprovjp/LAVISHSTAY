@@ -262,7 +262,7 @@ class BookingExtensionController extends Controller
                     'extension_days' => $extensionDays,
                     'extension_fee_vnd' => $extensionFee,
                     'status' => 'Approved',
-                    'processed_by' => auth()->id(),
+                    'processed_by' => Auth::id(),
                 ]);
             });
 
