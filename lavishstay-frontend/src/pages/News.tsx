@@ -10,7 +10,6 @@ import NewsHighlights from '../components/news/NewsHighlights';
 import NewsCategoryTabs from '../components/news/NewsCategoryTabs';
 import NewsList from '../components/news/NewsList';
 import NewsSidebar from '../components/news/NewsSidebar';
-import NewsFooter from '../components/news/NewsFooter';
 import NewsModal from '../components/news/NewsModal';
 
 const { Content } = Layout;
@@ -29,7 +28,7 @@ const NewsPage: React.FC = () => {
                 <meta property="og:type" content="website" />
             </Helmet>
 
-            <Layout className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <Layout className="">
                 <NewsHeader />
 
                 <Content className="pt-16">
@@ -77,7 +76,7 @@ const NewsPage: React.FC = () => {
                     </motion.div>
                 </Content>
 
-                <NewsFooter />
+                {/* <NewsFooter /> */}
                 <NewsModal />
             </Layout>
         </>

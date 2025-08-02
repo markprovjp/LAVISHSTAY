@@ -87,6 +87,7 @@ Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAva
 // Room Requests API
 
 // Yêu cầu hủy
+
 Route::post('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'cancelBooking']);
 Route::get('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'getBookingCancellationInfo']);
 

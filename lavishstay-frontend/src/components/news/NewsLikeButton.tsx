@@ -22,7 +22,27 @@ const useLikeStore = create<LikeStore>()(
             likes: new Map<string, number>(),
             userLikes: new Set<string>(),
             toggleLike: (newsId: string, initialCount = 0) => {
-                const { likes, userLikes } = get();
+                let { likes, userLikes } = get();
+                // Ensure correct type for likes
+                if (!(likes instanceof Map)) {
+                    if (Array.isArray(likes)) {
+                        likes = new Map(likes);
+                    } else if (likes && typeof likes === 'object') {
+                        likes = new Map(Object.entries(likes));
+                    } else {
+                        likes = new Map();
+                    }
+                }
+                // Ensure correct type for userLikes
+                if (!(userLikes instanceof Set)) {
+                    if (Array.isArray(userLikes)) {
+                        userLikes = new Set(userLikes);
+                    } else if (userLikes && typeof userLikes === 'object') {
+                        userLikes = new Set(Object.values(userLikes));
+                    } else {
+                        userLikes = new Set();
+                    }
+                }
                 const newLikes = new Map(likes);
                 const newUserLikes = new Set(userLikes);
 
@@ -45,10 +65,30 @@ const useLikeStore = create<LikeStore>()(
                 set({ likes: newLikes, userLikes: newUserLikes });
             },
             isLiked: (newsId: string) => {
-                return get().userLikes.has(newsId);
+                let { userLikes } = get();
+                if (!(userLikes instanceof Set)) {
+                    if (Array.isArray(userLikes)) {
+                        userLikes = new Set(userLikes);
+                    } else if (userLikes && typeof userLikes === 'object') {
+                        userLikes = new Set(Object.values(userLikes));
+                    } else {
+                        userLikes = new Set();
+                    }
+                }
+                return userLikes.has(newsId);
             },
             getLikeCount: (newsId: string) => {
-                return get().likes.get(newsId) || 0;
+                let { likes } = get();
+                if (!(likes instanceof Map)) {
+                    if (Array.isArray(likes)) {
+                        likes = new Map(likes);
+                    } else if (likes && typeof likes === 'object') {
+                        likes = new Map(Object.entries(likes));
+                    } else {
+                        likes = new Map();
+                    }
+                }
+                return likes.get(newsId) || 0;
             },
         }),
         {
@@ -61,10 +101,7 @@ const useLikeStore = create<LikeStore>()(
                 const parsed = JSON.parse(str);
                 return {
                     likes: new Map(parsed.likes),
-                    userLikes: new Set(parsed.userLikes),
-                    toggleLike: get().toggleLike,
-                    isLiked: get().isLiked,
-                    getLikeCount: get().getLikeCount,
+                    userLikes: new Set(parsed.userLikes)
                 };
             },
         }
