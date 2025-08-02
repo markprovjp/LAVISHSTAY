@@ -237,7 +237,7 @@ const Payment: React.FC = () => {
 
                     const roomPayload = {
                         room_id: roomSummary.room.id,
-                                                                                               room_type_id: roomSummary.room.room_type_id || roomSummary.room.id,
+                        room_type_id: roomSummary.room.room_type_id || roomSummary.room.id,
                         room_price: roomPrice, // Total price for the entire stay
                         guest_name: roomGuestName,
                         guest_email: roomGuestEmail,
@@ -299,13 +299,13 @@ const Payment: React.FC = () => {
                         option_name: roomSummary.option.name,
                         option_price: optionPricePerNight,
                         // Add missing fields for consistency
-                        policies: (roomSummary.option as any)?.policies || 
-                                 (roomSummary as any)?.policies || 
-                                 {
-                                     cancellation: { description: 'Chính sách hủy phòng sẽ được áp dụng theo quy định' },
-                                     deposit: { description: 'Chính sách thanh toán theo quy định' },
-                                     check_out: { description: 'Chính sách trả phòng theo quy định' }
-                                 },
+                        policies: (roomSummary.option as any)?.policies ||
+                            (roomSummary as any)?.policies ||
+                        {
+                            cancellation: { description: 'Chính sách hủy phòng sẽ được áp dụng theo quy định' },
+                            deposit: { description: 'Chính sách thanh toán theo quy định' },
+                            check_out: { description: 'Chính sách trả phòng theo quy định' }
+                        },
                         package_id: (roomSummary.option as any)?.packageId || null,
                         meal_type: (roomSummary.option as any)?.mealType || null,
                         bed_type: (roomSummary.option as any)?.bedType || null,
@@ -314,6 +314,22 @@ const Payment: React.FC = () => {
             }
 
             const totalGuests = roomsPayload.reduce((acc, room) => acc + room.adults + room.children, 0);
+
+            let userId = null;
+            try {
+                const userStr = localStorage.getItem('authUser');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    userId = user?.id || null;
+                    console.log('DEBUG user từ localStorage:', user);
+                } else {
+                    console.log('DEBUG không tìm thấy authUser trong localStorage');
+                }
+            } catch (e) {
+                console.log('DEBUG lỗi khi parse authUser:', e);
+                userId = null;
+            }
+            console.log('DEBUG userId gửi booking:', userId);
 
             const bookingPayload = {
                 customer_name: values.fullName,
@@ -335,11 +351,12 @@ const Payment: React.FC = () => {
                     discountAmount: totals.discountAmount,
                     finalTotal: totals.finalTotal,
                     nights: nights,
-                }
+                },
+                user_id: userId
             };
 
             console.log('Submitting booking to backend:', JSON.stringify(bookingPayload, null, 2));
-console.log('roomsPayload:', roomsPayload);
+            console.log('roomsPayload:', roomsPayload);
             // Use retry mechanism for better reliability
             const result = await createBookingWithRetry(bookingPayload);
 
