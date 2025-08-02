@@ -87,12 +87,12 @@ Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAva
 
 // Yêu cầu hủy
 Route::post('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'cancelBooking']);
-Route::get('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'cancelBooking']);
+Route::get('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'getBookingCancellationInfo']);
 
 
 //Yêu cầu gia hạn
 Route::post('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'extendBooking']);
-Route::get('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'extendBooking']);
+Route::get('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'getExtendBookingInfo']);
 
 // Room Requests API
 
