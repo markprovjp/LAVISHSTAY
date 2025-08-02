@@ -128,7 +128,7 @@ console.log("Avatar:", user?.avatar);
       icon: null,
     },
     {
-      key: "/tin-tuc",
+      key: "/news",
       label: "Tin tức",
       icon: null,
     },
