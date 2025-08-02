@@ -19,9 +19,18 @@ const useBookmarkStore = create<BookmarkStore>()(
         (set, get) => ({
             bookmarks: new Set<string>(),
             toggleBookmark: (newsId: string) => {
-                const { bookmarks } = get();
+                let { bookmarks } = get();
+                // Ensure correct type
+                if (!(bookmarks instanceof Set)) {
+                    if (Array.isArray(bookmarks)) {
+                        bookmarks = new Set(bookmarks);
+                    } else if (bookmarks && typeof bookmarks === 'object') {
+                        bookmarks = new Set(Object.values(bookmarks));
+                    } else {
+                        bookmarks = new Set();
+                    }
+                }
                 const newBookmarks = new Set(bookmarks);
-
                 if (newBookmarks.has(newsId)) {
                     newBookmarks.delete(newsId);
                     message.success('Đã bỏ lưu tin tức');
@@ -29,11 +38,20 @@ const useBookmarkStore = create<BookmarkStore>()(
                     newBookmarks.add(newsId);
                     message.success('Đã lưu tin tức');
                 }
-
                 set({ bookmarks: newBookmarks });
             },
             isBookmarked: (newsId: string) => {
-                return get().bookmarks.has(newsId);
+                let { bookmarks } = get();
+                if (!(bookmarks instanceof Set)) {
+                    if (Array.isArray(bookmarks)) {
+                        bookmarks = new Set(bookmarks);
+                    } else if (bookmarks && typeof bookmarks === 'object') {
+                        bookmarks = new Set(Object.values(bookmarks));
+                    } else {
+                        bookmarks = new Set();
+                    }
+                }
+                return bookmarks.has(newsId);
             },
         }),
         {
@@ -95,8 +113,8 @@ const NewsBookmarkButton: React.FC<NewsBookmarkButtonProps> = ({
                             transition={{ duration: 0.5 }}
                         >
                             {isBookmarked ?
-                                <BookmarkFilled className="text-yellow-500" /> :
-                                <BookmarkOutlined className="text-gray-500 hover:text-yellow-500" />
+                                <BookFilled className="text-yellow-500" /> :
+                                <BookOutlined className="text-gray-500 hover:text-yellow-500" />
                             }
                         </motion.div>
                     }

@@ -292,7 +292,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                             <Button type="primary" key="home" icon={<HomeOutlined />} onClick={onNewBooking}>
                                 Về trang chủ
                             </Button>,
-                            <Button key="bookings" icon={<RedoOutlined />} onClick={onViewBookings}>
+                            <Button key="bookings" icon={<RedoOutlined />} onClick={() => window.location.href = '/profile/bookings'}>
                                 Xem đặt phòng của tôi
                             </Button>,
                         ]}
@@ -366,7 +366,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                             <Button type="primary" key="home" icon={<HomeOutlined />} onClick={onNewBooking}>
                                 Về trang chủ
                             </Button>,
-                            <Button key="bookings" icon={<RedoOutlined />} onClick={onViewBookings}>
+                            <Button key="bookings" icon={<RedoOutlined />} onClick={() => window.location.href = '/profile/bookings'}>
                                 Xem đặt phòng của tôi
                             </Button>,
                         ]}
