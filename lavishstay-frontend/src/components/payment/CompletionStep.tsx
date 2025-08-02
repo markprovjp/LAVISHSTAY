@@ -96,10 +96,21 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                 password: values.password,
                 password_confirmation: values.password_confirmation
             };
+            console.log('[Đăng ký] Dữ liệu gửi lên:', registerData);
             const registerRes = await authService.register(registerData);
-            const { user, token } = registerRes;
+            console.log('[Đăng ký] Kết quả trả về:', registerRes);
 
-            // 2. Đăng nhập (token đã lưu bởi service)
+            // 2. Đăng nhập tự động bằng email và password vừa nhập
+            const loginRes = await authService.login({
+                email: registerData.email,
+                password: registerData.password
+            });
+            console.log('[Đăng nhập] Kết quả trả về:', loginRes);
+            const { user, token } = loginRes;
+
+            // Lưu user vào localStorage để đồng bộ Redux state
+            localStorage.setItem('authUser', JSON.stringify(user));
+
             // 3. Gán booking vào tài khoản
             await axiosInstance.post('/booking/assign', {
                 bookingCode,
@@ -128,6 +139,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                 duration: 4,
             });
         } catch (err: any) {
+            console.error('[Đăng ký] Lỗi trả về:', err?.response?.data || err);
             let errorMsg = 'Vui lòng thử lại hoặc liên hệ hỗ trợ.';
             if (err?.response?.data) {
                 const data = err.response.data;

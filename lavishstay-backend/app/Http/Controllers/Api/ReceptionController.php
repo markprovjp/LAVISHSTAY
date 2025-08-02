@@ -1397,6 +1397,9 @@ $allChildrenAges = DB::table('booking_room_children')
         }
     }
 
+
+    
+
        public function createBooking(Request $request): JsonResponse
     {
         Log::info('Reception: Create Booking V3 Request Received:', $request->all());
