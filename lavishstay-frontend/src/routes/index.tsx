@@ -16,12 +16,11 @@ import About from "../pages/About";
 import SearchResults from "../pages/SearchResults";
 import RoomDetailsPage from "../pages/RoomTypesDetailsPage";
 import RoomTypesDemo from "../pages/RoomTypesDemo";
+import RoomDetailDemo from "../components/demo/RoomDetailDemo";
 // import Login from "../pages/Login";
 // import Register from "../pages/Register";
 import Dashboard from "../pages/dashboard/Dashboard";
-import Profile from "../pages/dashboard/Profile";
-import Bookings from "../pages/dashboard/Bookings";
-import HotelScheduleManagement from "../pages/reception/HotelScheduleManagement/HotelScheduleManagement";
+
 
 import NotFound from "../pages/NotFound";
 
@@ -34,7 +33,9 @@ const AppRoutes: React.FC = () => {
           <Route path="/about" element={<About />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/rooms/:id" element={<RoomDetailsPage />} />
+          <Route path="/room-types/:slug" element={<RoomDetailsPage />} />
           <Route path="/room-types-demo" element={<RoomTypesDemo />} />
+          <Route path="/room-detail-demo" element={<RoomDetailDemo />} />
         </Route>
       </Route>
       {/* Các tuyến đường Auth - Chỉ dành cho người dùng không xác định nha */}

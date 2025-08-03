@@ -66,6 +66,7 @@ const Footer: React.FC = () => {
   return (
     <ConfigProvider theme={{ token }}>
       <AntFooter
+        id="main-footer"
         style={{
           background: token.colorBgBase,
           borderTop: `1px solid ${token.colorBorderSecondary}`,
