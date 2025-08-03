@@ -277,7 +277,7 @@ class BookingTransferController extends Controller
                         'status' => $transferPolicy->requires_guest_confirmation ? 'Pending' : 'Approved',
                         'price_difference_vnd' => $totalPriceDifference / count($newRooms), // Divide equally for simplicity
                         'payment_id' => $paymentId,
-                        'processed_by' => auth()->id(),
+                        'processed_by' => Auth::id(),
                         'reason' => $validated['reason'] ?? 'Chuyển phòng theo yêu cầu khách',
                         'created_at' => Carbon::now(),
                     ]);
@@ -285,7 +285,7 @@ class BookingTransferController extends Controller
 
                 // Create audit log
                 DB::table('audit_logs')->insert([
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                     'action' => 'Room Transfer',
                     'table_name' => 'booking',
                     'record_id' => $booking->booking_id,
