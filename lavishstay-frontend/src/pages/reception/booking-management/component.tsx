@@ -434,7 +434,6 @@ const BookingManagement: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </Col>
-
                                             {/* Price & Actions */}
                                             <Col xs={24} sm={6} md={6}>
                                                 <div style={{
