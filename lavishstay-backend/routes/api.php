@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\BookingCancellationController;
 use App\Http\Controllers\Api\BookingExtensionController;
+use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 
@@ -99,6 +100,11 @@ Route::get('/bookings/{bookingId}/extend', [BookingExtensionController::class, '
 // Yêu cầu chuyển phòng
 Route::post('/bookings/{bookingId}/transfer', [BookingTransferController::class, 'transferBooking']);
 Route::get('/bookings/{bookingId}/transfer', [BookingTransferController::class, 'getTransferBookingInfo']);
+
+
+//Yêu cầu rời lịch
+Route::post('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'rescheduleBooking']);
+Route::get('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'getRescheduleBookingInfo']);
 
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
