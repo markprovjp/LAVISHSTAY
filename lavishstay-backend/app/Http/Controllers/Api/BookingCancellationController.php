@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\FacadesLog;
+
 
 class BookingCancellationController extends Controller
 {
@@ -29,7 +29,10 @@ class BookingCancellationController extends Controller
 
         // Check booking status
         if ($booking->status === 'Cancelled' || $booking->status === 'Cancelled With Penalty') {
-            return response()->json(['error' => 'Đặt phòng đã được hủy trước đó'], 400);
+            return response()->json([
+                'message' => 'Đặt phòng đã được hủy trước đó',
+                'booking_status' => $booking->status
+            ], 200);
         }
         if ($booking->status !== 'Confirmed') {
             return response()->json(['error' => 'Chỉ có thể hủy đặt phòng ở trạng thái Đã thanh toán (Confirmed), trạng thái hiện tại: ' . $booking->status], 400);
