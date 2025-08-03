@@ -19,15 +19,16 @@ class BookingTransferController extends Controller
     public function transferBooking(Request $request, $bookingId)
     {
         try {
-            Log::info('=== BookingController@transferRoom START ===');
+            Log::info('=== BookingController@transferBooking START ===');
             Log::info('Request URL: ' . $request->fullUrl());
             Log::info('Request data: ', $request->all());
             Log::info('Query parameters: ', $request->query());
 
             // Validate input
             $validated = $request->validate([
-                'new_room_id' => 'required|integer',
-                'new_option_id' => 'required|integer', // new_option_id là package_id từ room_type_package
+                'new_room_ids' => 'required|array',
+                'new_room_ids.*' => 'integer',
+                'new_option_id' => 'required|integer',
                 'reason' => 'nullable|string|max:500',
             ]);
 
@@ -59,21 +60,6 @@ class BookingTransferController extends Controller
                 return response()->json(['error' => 'Chỉ có thể chuyển phòng ở trạng thái Đang lưu trú (Operational)'], 400);
             }
 
-            // Kiểm tra hoặc tạo room_option nếu booking.option_id là NULL
-            if (!$booking->option_id) {
-                Log::warning('Booking has no option_id, creating new room_option', ['booking_id' => $bookingId]);
-                $newRoomOption = RoomOption::create([
-                    'room_id' => $booking->room_id,
-                    'package_id' => 1, // Giá trị mặc định
-                    'bed_type' => 1,
-                    'deposit_policy_id' => 10,
-                    'cancellation_policy_id' => 10,
-                    'check_out_policy_id' => 4,
-                ]);
-                $booking->option_id = $newRoomOption->option_id;
-                $booking->save();
-            }
-
             // Find room_option
             $roomOption = RoomOption::where('option_id', $booking->option_id)->first();
             if (!$roomOption) {
@@ -81,7 +67,7 @@ class BookingTransferController extends Controller
                 return response()->json(['error' => 'Không tìm thấy tùy chọn phòng cho đặt phòng này'], 404);
             }
 
-            // Find new room
+            // Find new rooms
             $roomTable = DB::select("SHOW TABLES LIKE 'room'") ? 'room' : (DB::select("SHOW TABLES LIKE 'rooms'") ? 'rooms' : null);
             if (!$roomTable) {
                 Log::error('No room table found');
@@ -89,31 +75,41 @@ class BookingTransferController extends Controller
             }
             $roomIdColumn = $roomTable === 'room' ? 'room_id' : 'id';
 
-            $newRoom = DB::table($roomTable)->where($roomIdColumn, $validated['new_room_id'])->first();
-            if (!$newRoom) {
-                Log::error('New room not found', ['new_room_id' => $validated['new_room_id']]);
-                return response()->json(['error' => 'Phòng mới không tồn tại'], 404);
+            $newRooms = DB::table($roomTable)->whereIn($roomIdColumn, $validated['new_room_ids'])->get();
+            if ($newRooms->count() !== count($validated['new_room_ids'])) {
+                Log::error('One or more new rooms not found', ['new_room_ids' => $validated['new_room_ids']]);
+                return response()->json(['error' => 'Một hoặc nhiều phòng mới không tồn tại'], 404);
             }
 
             // Find new package
             $newPackage = DB::table('room_type_package')
                 ->where('package_id', $validated['new_option_id'])
-                ->where('room_type_id', $newRoom->room_type_id)
                 ->first();
             if (!$newPackage) {
                 Log::error('New package not found', ['new_option_id' => $validated['new_option_id']]);
-                return response()->json(['error' => 'Gói phòng mới không tồn tại hoặc không phù hợp với loại phòng'], 404);
+                return response()->json(['error' => 'Gói phòng mới không tồn tại'], 404);
+            }
+
+            // Check if package is compatible with all new rooms
+            foreach ($newRooms as $newRoom) {
+                if ($newPackage->room_type_id !== $newRoom->room_type_id) {
+                    Log::error('Package not compatible with room type', [
+                        'package_id' => $validated['new_option_id'],
+                        'room_type_id' => $newRoom->room_type_id,
+                    ]);
+                    return response()->json(['error' => "Gói phòng không phù hợp với loại phòng của phòng {$newRoom->$roomIdColumn}"], 400);
+                }
             }
 
             // Check room availability
             $checkInDate = Carbon::parse($booking->check_in_date)->startOfDay();
             $checkOutDate = Carbon::parse($booking->check_out_date)->startOfDay();
 
-            $isRoomAvailable = DB::table($roomTable . ' as r')
+            $unavailableRooms = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->where('r.' . $roomIdColumn, $validated['new_room_id'])
+                ->whereIn('r.' . $roomIdColumn, $validated['new_room_ids'])
                 ->where('r.status', 'available')
-                ->whereNotIn('r.' . $roomIdColumn, function ($subQuery) use ($checkInDate, $checkOutDate) {
+                ->whereIn('r.' . $roomIdColumn, function ($subQuery) use ($checkInDate, $checkOutDate) {
                     $subQuery->select('br.room_id')
                         ->from('booking_rooms as br')
                         ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
@@ -122,25 +118,39 @@ class BookingTransferController extends Controller
                         ->where('br.check_out_date', '>', $checkInDate)
                         ->whereNotNull('br.room_id');
                 })
-                ->exists();
+                ->pluck('r.' . $roomIdColumn)
+                ->toArray();
 
-            if (!$isRoomAvailable) {
-                Log::warning('Room not available for transfer', [
-                    'new_room_id' => $validated['new_room_id'],
-                    'new_option_id' => $validated['new_option_id'],
+            if (!empty($unavailableRooms)) {
+                Log::warning('One or more rooms not available for transfer', [
+                    'unavailable_room_ids' => $unavailableRooms,
                     'check_in_date' => $checkInDate->format('Y-m-d'),
                     'check_out_date' => $checkOutDate->format('Y-m-d'),
                 ]);
-                return response()->json(['error' => 'Phòng không khả dụng cho thời gian yêu cầu'], 400);
+                return response()->json(['error' => 'Các phòng sau không khả dụng: ' . implode(', ', $unavailableRooms)], 400);
+            }
+
+            // Find current rooms for the booking
+            $currentRooms = DB::table('booking_rooms')
+                ->where('booking_id', $booking->booking_id)
+                ->pluck('room_id')
+                ->toArray();
+            if (count($currentRooms) !== count($validated['new_room_ids'])) {
+                Log::error('Number of new rooms does not match current rooms', [
+                    'current_rooms' => count($currentRooms),
+                    'new_rooms' => count($validated['new_room_ids']),
+                ]);
+                return response()->json(['error' => 'Số lượng phòng mới phải khớp với số lượng phòng hiện tại'], 400);
             }
 
             // Find transfer policy
             $isHoliday = DB::table('holidays')->where('start_date', Carbon::today()->format('Y-m-d'))->exists();
             $isWeekend = in_array(Carbon::today()->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY]);
             $timeDiff = Carbon::today()->diffInDays($checkInDate, false);
+            $isPackageChanged = $roomOption->package_id !== $validated['new_option_id'];
 
             $transferPolicyQuery = RoomTransferPolicy::where('is_active', true)
-                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $newRoom) {
+                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $newRooms, $isPackageChanged) {
                     $query->where(function ($q) use ($isHoliday) {
                         $q->where('applies_to_holiday', $isHoliday)->orWhere('applies_to_holiday', 0);
                     })
@@ -151,133 +161,158 @@ class BookingTransferController extends Controller
                         $q->where('min_days_before_check_in', '<=', $timeDiff)
                           ->orWhereNull('min_days_before_check_in');
                     })
-                    ->where(function ($q) use ($newRoom) {
-                        $q->where('room_type_id', $newRoom->room_type_id)
+                    ->where(function ($q) use ($newRooms) {
+                        $q->whereIn('room_type_id', $newRooms->pluck('room_type_id')->unique()->toArray())
                           ->orWhereNull('room_type_id');
+                    })
+                    ->where(function ($q) use ($isPackageChanged) {
+                        if ($isPackageChanged) {
+                            $q->where('applies_to_package_change', 1);
+                        } else {
+                            $q->where('applies_to_package_change', 0)->orWhereNull('applies_to_package_change');
+                        }
                     });
                 })
                 ->orderByRaw('room_type_id DESC, min_days_before_check_in DESC');
 
             $transferPolicy = $transferPolicyQuery->first();
             if (!$transferPolicy) {
-                $transferPolicy = RoomTransferPolicy::where('is_active', true)
-                    ->where('name', 'Chuyển phòng cùng loại miễn phí')
-                    ->first();
-                if (!$transferPolicy) {
-                    Log::error('No transfer policy found', [
-                        'is_holiday' => $isHoliday,
-                        'is_weekend' => $isWeekend,
-                        'time_diff' => $timeDiff,
-                        'new_room_type_id' => $newRoom->room_type_id,
-                    ]);
-                    return response()->json([
-                        'error' => 'Không tìm thấy chính sách chuyển phòng phù hợp'
-                    ], 404);
-                }
+                Log::error('No transfer policy found', [
+                    'is_holiday' => $isHoliday,
+                    'is_weekend' => $isWeekend,
+                    'time_diff' => $timeDiff,
+                    'new_room_type_ids' => $newRooms->pluck('room_type_id')->unique()->toArray(),
+                    'is_package_changed' => $isPackageChanged,
+                ]);
+                return response()->json(['error' => 'Không tìm thấy chính sách chuyển phòng phù hợp'], 404);
             }
 
             // Calculate price difference
             $stayDays = $checkOutDate->diffInDays($checkInDate, true);
             $currentPrice = $booking->total_price_vnd;
 
-            $newRoomType = DB::table('room_types')->where('room_type_id', $newRoom->room_type_id)->first();
-            if (!$newRoomType) {
-                Log::error('New room type not found', ['room_type_id' => $newRoom->room_type_id]);
-                return response()->json(['error' => 'Loại phòng mới không tồn tại'], 404);
-            }
-            $newPrice = ($newRoomType->base_price + $newPackage->price_modifier_vnd) * $stayDays;
-            $priceDifference = $newPrice - $currentPrice;
+            $newPrice = 0;
+            $roomInfos = [];
+            $pricePerNightMap = []; // Store price_per_night for each room
+            foreach ($newRooms as $newRoom) {
+                $newRoomType = DB::table('room_types')->where('room_type_id', $newRoom->room_type_id)->first();
+                if (!$newRoomType) {
+                    Log::error('New room type not found', ['room_type_id' => $newRoom->room_type_id]);
+                    return response()->json(['error' => "Loại phòng mới không tồn tại cho phòng {$newRoom->$roomIdColumn}"], 404);
+                }
+                $roomPricePerNight = $newRoomType->base_price + $newPackage->price_modifier_vnd;
+                $roomPrice = $roomPricePerNight * $stayDays;
+                $newPrice += $roomPrice;
+                $pricePerNightMap[$newRoom->$roomIdColumn] = $roomPricePerNight;
 
+                $roomInfos[] = [
+                    'room_id' => $newRoom->$roomIdColumn,
+                    'room_name' => $newRoom->name ?? 'Không xác định',
+                    'room_type' => $newRoomType->name ?? 'Không xác định',
+                    'room_type_id' => $newRoomType->room_type_id ?? 'Không xác định',
+                    'room_description' => $newRoom->description ?? 'Không có mô tả',
+                    'package_name' => $newPackage->name ?? 'Không xác định',
+                    'package_id' => $newPackage->package_id ?? 'Không xác định',
+                    'package_description' => $newPackage->description ?? 'Không xác định',
+                ];
+            }
+
+            $priceDifference = $newPrice - $currentPrice;
             $transferFee = $transferPolicy->transfer_fee_vnd ?? 0;
             if ($transferPolicy->transfer_fee_percentage > 0) {
                 $transferFee += ($newPrice * $transferPolicy->transfer_fee_percentage / 100);
             }
             $totalPriceDifference = $priceDifference + $transferFee;
 
-            // Create payment if there is a price difference
+            // Update booking and room_option within a transaction
             $paymentId = null;
-            if ($totalPriceDifference != 0) {
-                $payment = Payment::create([
-                    'booking_id' => $booking->booking_id,
-                    'amount_vnd' => abs($totalPriceDifference),
-                    'payment_type' => $totalPriceDifference > 0 ? 'additional' : 'refund',
-                    'status' => 'pending',
-                    'created_at' => Carbon::now(),
-                ]);
-                $paymentId = $payment->payment_id;
-            }
+            DB::transaction(function () use ($booking, $roomOption, $validated, $newRooms, $newPackage, $transferPolicy, $totalPriceDifference, $pricePerNightMap, &$paymentId, $roomIdColumn, $currentRooms, $checkInDate, $checkOutDate, $stayDays) {
+                // Create payment if there is a price difference
+                if ($totalPriceDifference != 0) {
+                    $payment = Payment::create([
+                        'booking_id' => $booking->booking_id,
+                        'amount_vnd' => abs($totalPriceDifference),
+                        'payment_type' => $totalPriceDifference > 0 ? 'additional' : 'refund',
+                        'status' => 'pending',
+                        'created_at' => Carbon::now(),
+                    ]);
+                    $paymentId = $payment->payment_id;
+                }
 
-            // Update booking and room_option
-            DB::transaction(function () use ($booking, $transferPolicy, $validated, $totalPriceDifference, $paymentId, $newRoom, $newPackage, $roomOption) {
                 // Update room_option
-                $roomOption->room_id = $validated['new_room_id'];
-                $roomOption->package_id = $validated['new_option_id']; // Gán package_id từ request
+                $roomOption->package_id = $validated['new_option_id'];
                 $roomOption->save();
 
                 // Update booking
-                $booking->room_id = $validated['new_room_id'];
-                $booking->room_type_id = $newRoom->room_type_id;
                 $booking->total_price_vnd += $totalPriceDifference;
                 $booking->save();
 
                 // Update booking_rooms
                 DB::table('booking_rooms')
                     ->where('booking_id', $booking->booking_id)
-                    ->update([
-                        'room_id' => $validated['new_room_id'],
+                    ->delete();
+
+                foreach ($validated['new_room_ids'] as $index => $newRoomId) {
+                    $totalPrice = ($pricePerNightMap[$newRoomId] ?? 0) * $stayDays;
+                    DB::table('booking_rooms')->insert([
+                        'booking_id' => $booking->booking_id,
+                        'room_id' => $newRoomId,
                         'check_in_date' => $booking->check_in_date,
                         'check_out_date' => $booking->check_out_date,
-                        'option_id' => $booking->option_id,
+                        'option_id' => $roomOption->option_id,
+                        'price_per_night' => $pricePerNightMap[$newRoomId] ?? 0,
+                        'nights' => $stayDays,
+                        'total_price' => $totalPrice, // Add total_price
                     ]);
+                }
 
                 // Create transfer request
-                RoomTransfer::create([
-                    'booking_id' => $booking->booking_id,
-                    'old_room_id' => $booking->room_id,
-                    'new_room_id' => $validated['new_room_id'],
-                    'new_option_id' => $roomOption->option_id, // Sử dụng option_id từ room_option
-                    'transfer_policy_id' => $transferPolicy->policy_id,
-                    'status' => $transferPolicy->requires_guest_confirmation ? 'Pending' : 'Approved',
-                    'price_difference_vnd' => $totalPriceDifference,
-                    'payment_id' => $paymentId,
-                    'processed_by' => Auth::id(),
-                    'reason' => $validated['reason'] ?? 'Chuyển phòng theo yêu cầu khách',
-                    'created_at' => Carbon::now(),
-                ]);
+                foreach ($newRooms as $index => $newRoom) {
+                    RoomTransfer::create([
+                        'booking_id' => $booking->booking_id,
+                        'old_room_id' => $currentRooms[$index] ?? null,
+                        'new_room_id' => $newRoom->$roomIdColumn,
+                        'new_option_id' => $roomOption->option_id,
+                        'transfer_policy_id' => $transferPolicy->policy_id,
+                        'status' => $transferPolicy->requires_guest_confirmation ? 'Pending' : 'Approved',
+                        'price_difference_vnd' => $totalPriceDifference / count($newRooms), // Divide equally for simplicity
+                        'payment_id' => $paymentId,
+                        'processed_by' => auth()->id(),
+                        'reason' => $validated['reason'] ?? 'Chuyển phòng theo yêu cầu khách',
+                        'created_at' => Carbon::now(),
+                    ]);
+                }
 
                 // Create audit log
                 DB::table('audit_logs')->insert([
-                    'user_id' => Auth::id(),
+                    'user_id' => auth()->id(),
                     'action' => 'Room Transfer',
                     'table_name' => 'booking',
                     'record_id' => $booking->booking_id,
-                    'description' => "Transferred from room {$booking->room_id} to room {$validated['new_room_id']}",
+                    'description' => "Transferred from rooms " . implode(', ', $currentRooms) . " to rooms " . implode(', ', $validated['new_room_ids']),
                     'created_at' => Carbon::now(),
                 ]);
-
-                
             });
 
             // Prepare response data
-            $newRoomType = DB::table('room_types')->where('room_type_id', $newRoom->room_type_id)->first();
             $bookingInfo = [
                 'booking_code' => $booking->booking_code,
-                'room_name' => $newRoom->name ?? 'Không xác định',
                 'check_in_date' => Carbon::parse($booking->check_in_date)->toDateTimeString(),
                 'check_out_date' => Carbon::parse($booking->check_out_date)->toDateTimeString(),
                 'total_price' => $booking->total_price_vnd,
             ];
 
-            $roomInfo = [
-                'room_name' => $newRoom->name ?? 'Không xác định',
-                'room_type' => $newRoomType->name ?? 'Không xác định',
-                'room_description' => $newRoom->description ?? 'Không có mô tả',
-                'package_name' => $newPackage->package_name ?? 'Không xác định',
+            $hotel = null;
+            if (property_exists($newRooms->first(), 'hotel_id') && $newRooms->first()->hotel_id) {
+                $hotel = DB::table('hotel')->where('hotel_id', $newRooms->first()->hotel_id)->first();
+            }
+            $hotelInfo = [
+                'hotel_name' => $hotel ? ($hotel->name ?? 'Không xác định') : 'Không xác định',
+                'hotel_address' => $hotel ? ($hotel->address ?? 'Không xác định') : 'Không xác định',
+                'hotel_phone' => $hotel ? ($hotel->phone ?? 'Không xác định') : 'Không xác định',
             ];
 
-            
-
-            Log::info('=== BookingController@transferRoom SUCCESS ===');
+            Log::info('=== BookingController@transferBooking SUCCESS ===');
 
             return response()->json([
                 'success' => true,
@@ -295,8 +330,8 @@ class BookingTransferController extends Controller
                 'transfer_percentage' => $transferPolicy->transfer_fee_percentage,
                 'transfer_fixed_amount' => $transferPolicy->transfer_fee_vnd,
                 'booking_info' => $bookingInfo,
-                'room_info' => $roomInfo,
-                
+                'room_info' => $roomInfos,
+                'hotel_info' => $hotelInfo,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -307,7 +342,7 @@ class BookingTransferController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('=== ERROR in transferRoom ===');
+            Log::error('=== ERROR in transferBooking ===');
             Log::error('Error message: ' . $e->getMessage());
             Log::error('File: ' . $e->getFile());
             Log::error('Line: ' . $e->getLine());
@@ -333,8 +368,9 @@ class BookingTransferController extends Controller
 
             // Validate input
             $validated = $request->validate([
-                'new_room_id' => 'required|integer',
-                'new_option_id' => 'required|integer', // new_option_id là package_id từ room_type_package
+                'new_room_ids' => 'required|array', // Chấp nhận mảng new_room_ids
+                'new_room_ids.*' => 'integer', // Mỗi phần tử là số nguyên
+                'new_option_id' => 'required|integer', // new_option_id là package_id
                 'reason' => 'nullable|string|max:500',
             ]);
 
@@ -373,7 +409,7 @@ class BookingTransferController extends Controller
                 return response()->json(['error' => 'Không tìm thấy tùy chọn phòng cho đặt phòng này'], 404);
             }
 
-            // Find new room
+            // Find new rooms
             $roomTable = DB::select("SHOW TABLES LIKE 'room'") ? 'room' : (DB::select("SHOW TABLES LIKE 'rooms'") ? 'rooms' : null);
             if (!$roomTable) {
                 Log::error('No room table found');
@@ -381,31 +417,41 @@ class BookingTransferController extends Controller
             }
             $roomIdColumn = $roomTable === 'room' ? 'room_id' : 'id';
 
-            $newRoom = DB::table($roomTable)->where($roomIdColumn, $validated['new_room_id'])->first();
-            if (!$newRoom) {
-                Log::error('New room not found', ['new_room_id' => $validated['new_room_id']]);
-                return response()->json(['error' => 'Phòng mới không tồn tại'], 404);
+            $newRooms = DB::table($roomTable)->whereIn($roomIdColumn, $validated['new_room_ids'])->get();
+            if ($newRooms->count() !== count($validated['new_room_ids'])) {
+                Log::error('One or more new rooms not found', ['new_room_ids' => $validated['new_room_ids']]);
+                return response()->json(['error' => 'Một hoặc nhiều phòng mới không tồn tại'], 404);
             }
 
             // Find new package
             $newPackage = DB::table('room_type_package')
                 ->where('package_id', $validated['new_option_id'])
-                ->where('room_type_id', $newRoom->room_type_id)
                 ->first();
             if (!$newPackage) {
                 Log::error('New package not found', ['new_option_id' => $validated['new_option_id']]);
-                return response()->json(['error' => 'Gói phòng mới không tồn tại hoặc không phù hợp với loại phòng'], 404);
+                return response()->json(['error' => 'Gói phòng mới không tồn tại'], 404);
+            }
+
+            // Check if package is compatible with all new rooms
+            foreach ($newRooms as $newRoom) {
+                if ($newPackage->room_type_id !== $newRoom->room_type_id) {
+                    Log::error('Package not compatible with room type', [
+                        'package_id' => $validated['new_option_id'],
+                        'room_type_id' => $newRoom->room_type_id,
+                    ]);
+                    return response()->json(['error' => "Gói phòng không phù hợp với loại phòng của phòng {$newRoom->$roomIdColumn}"], 400);
+                }
             }
 
             // Check room availability
             $checkInDate = Carbon::parse($booking->check_in_date)->startOfDay();
             $checkOutDate = Carbon::parse($booking->check_out_date)->startOfDay();
 
-            $isRoomAvailable = DB::table($roomTable . ' as r')
+            $unavailableRooms = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->where('r.' . $roomIdColumn, $validated['new_room_id'])
+                ->whereIn('r.' . $roomIdColumn, $validated['new_room_ids'])
                 ->where('r.status', 'available')
-                ->whereNotIn('r.' . $roomIdColumn, function ($subQuery) use ($checkInDate, $checkOutDate) {
+                ->whereIn('r.' . $roomIdColumn, function ($subQuery) use ($checkInDate, $checkOutDate) {
                     $subQuery->select('br.room_id')
                         ->from('booking_rooms as br')
                         ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
@@ -414,25 +460,39 @@ class BookingTransferController extends Controller
                         ->where('br.check_out_date', '>', $checkInDate)
                         ->whereNotNull('br.room_id');
                 })
-                ->exists();
+                ->pluck('r.' . $roomIdColumn)
+                ->toArray();
 
-            if (!$isRoomAvailable) {
-                Log::warning('Room not available for transfer', [
-                    'new_room_id' => $validated['new_room_id'],
-                    'new_option_id' => $validated['new_option_id'],
+            if (!empty($unavailableRooms)) {
+                Log::warning('One or more rooms not available for transfer', [
+                    'unavailable_room_ids' => $unavailableRooms,
                     'check_in_date' => $checkInDate->format('Y-m-d'),
                     'check_out_date' => $checkOutDate->format('Y-m-d'),
                 ]);
-                return response()->json(['error' => 'Phòng không khả dụng cho thời gian yêu cầu'], 400);
+                return response()->json(['error' => 'Các phòng sau không khả dụng: ' . implode(', ', $unavailableRooms)], 400);
+            }
+
+            // Find current rooms for the booking
+            $currentRooms = DB::table('booking_rooms')
+                ->where('booking_id', $booking->booking_id)
+                ->pluck('room_id')
+                ->toArray();
+            if (count($currentRooms) !== count($validated['new_room_ids'])) {
+                Log::error('Number of new rooms does not match current rooms', [
+                    'current_rooms' => count($currentRooms),
+                    'new_rooms' => count($validated['new_room_ids']),
+                ]);
+                return response()->json(['error' => 'Số lượng phòng mới phải khớp với số lượng phòng hiện tại'], 400);
             }
 
             // Find transfer policy
             $isHoliday = DB::table('holidays')->where('start_date', Carbon::today()->format('Y-m-d'))->exists();
             $isWeekend = in_array(Carbon::today()->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY]);
             $timeDiff = Carbon::today()->diffInDays($checkInDate, false);
+            $isPackageChanged = $roomOption->package_id !== $validated['new_option_id'];
 
             $transferPolicyQuery = RoomTransferPolicy::where('is_active', true)
-                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $newRoom) {
+                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $newRooms, $isPackageChanged) {
                     $query->where(function ($q) use ($isHoliday) {
                         $q->where('applies_to_holiday', $isHoliday)->orWhere('applies_to_holiday', 0);
                     })
@@ -443,43 +503,60 @@ class BookingTransferController extends Controller
                         $q->where('min_days_before_check_in', '<=', $timeDiff)
                           ->orWhereNull('min_days_before_check_in');
                     })
-                    ->where(function ($q) use ($newRoom) {
-                        $q->where('room_type_id', $newRoom->room_type_id)
+                    ->where(function ($q) use ($newRooms) {
+                        $q->whereIn('room_type_id', $newRooms->pluck('room_type_id')->unique()->toArray())
                           ->orWhereNull('room_type_id');
+                    })
+                    ->where(function ($q) use ($isPackageChanged) {
+                        if ($isPackageChanged) {
+                            $q->where('applies_to_package_change', 1);
+                        } else {
+                            $q->where('applies_to_package_change', 0)->orWhereNull('applies_to_package_change');
+                        }
                     });
                 })
                 ->orderByRaw('room_type_id DESC, min_days_before_check_in DESC');
 
             $transferPolicy = $transferPolicyQuery->first();
             if (!$transferPolicy) {
-                $transferPolicy = RoomTransferPolicy::where('is_active', true)
-                    ->where('name', 'Chuyển phòng cùng loại miễn phí')
-                    ->first();
-                if (!$transferPolicy) {
-                    Log::error('No transfer policy found', [
-                        'is_holiday' => $isHoliday,
-                        'is_weekend' => $isWeekend,
-                        'time_diff' => $timeDiff,
-                        'new_room_type_id' => $newRoom->room_type_id,
-                    ]);
-                    return response()->json([
-                        'error' => 'Không tìm thấy chính sách chuyển phòng phù hợp'
-                    ], 404);
-                }
+                Log::error('No transfer policy found', [
+                    'is_holiday' => $isHoliday,
+                    'is_weekend' => $isWeekend,
+                    'time_diff' => $timeDiff,
+                    'new_room_type_ids' => $newRooms->pluck('room_type_id')->unique()->toArray(),
+                    'is_package_changed' => $isPackageChanged,
+                ]);
+                return response()->json(['error' => 'Không tìm thấy chính sách chuyển phòng phù hợp'], 404);
             }
 
             // Calculate price difference
             $stayDays = $checkOutDate->diffInDays($checkInDate, true);
             $currentPrice = $booking->total_price_vnd;
 
-            $newRoomType = DB::table('room_types')->where('room_type_id', $newRoom->room_type_id)->first();
-            if (!$newRoomType) {
-                Log::error('New room type not found', ['room_type_id' => $newRoom->room_type_id]);
-                return response()->json(['error' => 'Loại phòng mới không tồn tại'], 404);
-            }
-            $newPrice = ($newRoomType->base_price + $newPackage->price_modifier_vnd) * $stayDays;
-            $priceDifference = $newPrice - $currentPrice;
+            $newPrice = 0;
+            $roomInfos = [];
+            foreach ($newRooms as $newRoom) {
+                $newRoomType = DB::table('room_types')->where('room_type_id', $newRoom->room_type_id)->first();
+                if (!$newRoomType) {
+                    Log::error('New room type not found', ['room_type_id' => $newRoom->room_type_id]);
+                    return response()->json(['error' => "Loại phòng mới không tồn tại cho phòng {$newRoom->$roomIdColumn}"], 404);
+                }
+                $roomPrice = ($newRoomType->base_price + $newPackage->price_modifier_vnd) * $stayDays;
+                $newPrice += $roomPrice;
 
+                $roomInfos[] = [
+                    'room_id' => $newRoom->$roomIdColumn,
+                    'room_name' => $newRoom->name ?? 'Không xác định',
+                    'room_type' => $newRoomType->name ?? 'Không xác định',
+                    'room_type_id' => $newRoomType->room_type_id ?? 'Không xác định',
+                    'room_description' => $newRoom->description ?? 'Không có mô tả',
+                    'package_name' => $newPackage->name ?? 'Không xác định',
+                    'package_id' => $newPackage->package_id ?? 'Không xác định',
+                    'package_description' => $newPackage->description ?? 'Không xác định',
+                ];
+            }
+
+            $priceDifference = $newPrice - $currentPrice;
             $transferFee = $transferPolicy->transfer_fee_vnd ?? 0;
             if ($transferPolicy->transfer_fee_percentage > 0) {
                 $transferFee += ($newPrice * $transferPolicy->transfer_fee_percentage / 100);
@@ -489,28 +566,16 @@ class BookingTransferController extends Controller
             // Prepare response data
             $bookingInfo = [
                 'booking_code' => $booking->booking_code,
-                'room_name' => $newRoom->name ?? 'Không xác định',
                 'check_in_date' => Carbon::parse($booking->check_in_date)->toDateTimeString(),
                 'check_out_date' => Carbon::parse($booking->check_out_date)->toDateTimeString(),
                 'total_price' => $booking->total_price_vnd + $totalPriceDifference,
             ];
 
-            $roomInfo = [
-                'room_name' => $newRoom->name ?? 'Không xác định',
-                'room_type' => $newRoomType->name ?? 'Không xác định',
-                'room_description' => $newRoom->description ?? 'Không có mô tả',
-                'package_name' => $newPackage->package_name ?? 'Không xác định',
-            ];
-
             $hotel = null;
-            if (property_exists($newRoom, 'hotel_id') && $newRoom->hotel_id) {
-                $hotel = DB::table('hotel')->where('hotel_id', $newRoom->hotel_id)->first();
+            if (property_exists($newRooms->first(), 'hotel_id') && $newRooms->first()->hotel_id) {
+                $hotel = DB::table('hotel')->where('hotel_id', $newRooms->first()->hotel_id)->first();
             }
-            $hotelInfo = [
-                'hotel_name' => $hotel ? ($hotel->name ?? 'Không xác định') : 'Không xác định',
-                'hotel_address' => $hotel ? ($hotel->address ?? 'Không xác định') : 'Không xác định',
-                'hotel_phone' => $hotel ? ($hotel->phone ?? 'Không xác định') : 'Không xác định',
-            ];
+            
 
             Log::info('=== BookingController@previewTransferBooking SUCCESS ===');
 
@@ -530,8 +595,7 @@ class BookingTransferController extends Controller
                 'transfer_percentage' => $transferPolicy->transfer_fee_percentage,
                 'transfer_fixed_amount' => $transferPolicy->transfer_fee_vnd,
                 'booking_info' => $bookingInfo,
-                'room_info' => $roomInfo,
-                'hotel_info' => $hotelInfo,
+                'room_info' => $roomInfos,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
