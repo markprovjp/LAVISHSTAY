@@ -187,12 +187,19 @@ const BookingManagement: React.FC = () => {
         setIsDetailModalVisible(true);
     }, []);
 
+<<<<<<< Updated upstream
     // Hàm bấm nút Huỷ phòng: chỉ lấy chính sách huỷ, ẩn modal chi tiết nếu đang mở
+=======
+    // Hàm bấm nút Huỷ phòng: lấy chính sách huỷ
+>>>>>>> Stashed changes
     const handleShowCancelPolicy = useCallback(async (booking: Booking) => {
         setCancelLoading(true);
         setCancelPolicy(null);
         setCancelBookingId(booking.booking_id);
+<<<<<<< Updated upstream
         setIsDetailModalVisible(false); // Ẩn modal chi tiết nếu đang mở
+=======
+>>>>>>> Stashed changes
         try {
             const policy = await bookingService.getCancelPolicy(booking.booking_id);
             setCancelPolicy(policy);
@@ -206,7 +213,11 @@ const BookingManagement: React.FC = () => {
         }
     }, []);
 
+<<<<<<< Updated upstream
     // Hàm xác nhận huỷ thật (chỉ gọi khi bấm xác nhận trong modal chính sách)
+=======
+    // Hàm xác nhận huỷ thật
+>>>>>>> Stashed changes
     const handleConfirmCancel = useCallback(async () => {
         if (!cancelBookingId) return;
         setCancelConfirming(true);
@@ -382,8 +393,11 @@ const BookingManagement: React.FC = () => {
                                                 footer={null}
                                                 width={500}
                                                 destroyOnClose
+<<<<<<< Updated upstream
                                                 maskClosable={false}
                                                 maskStyle={{ background: 'rgba(0,0,0,0.08)' }}
+=======
+>>>>>>> Stashed changes
                                             >
                                                 {cancelPolicy && (
                                                     <div>
