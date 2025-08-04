@@ -21,6 +21,22 @@ export interface GetUserBookingsResponse {
     bookings: Booking[];
 }
 
+
+// Kiểu dữ liệu trả về từ API chính sách huỷ
+export interface CancelPolicyResponse {
+    message: string;
+    reason: string;
+    formula: string;
+    policy: string;
+    penalty: number;
+    penalty_type: string;
+    penalty_percentage: string;
+    penalty_fixed_amount: number;
+    booking_info: any;
+    room_info: any;
+    hotel_info: any;
+}
+
 const bookingService = {
     // Lấy danh sách booking của user hiện tại
     getUserBookings: async (): Promise<Booking[]> => {
@@ -34,6 +50,34 @@ const bookingService = {
         } catch (error: any) {
             if (error.response?.data?.message) {
                 throw new Error(error.response.data.message);
+            }
+            throw error;
+        }
+    },
+
+
+    // Lấy chính sách huỷ phòng (dùng GET endpoint riêng, không huỷ thật)
+    getCancelPolicy: async (bookingId: number | string): Promise<CancelPolicyResponse> => {
+        try {
+            const response = await axiosInstance.get(`/cancel-booking/${bookingId}`);
+
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                throw error.response.data;
+            }
+            throw error;
+        }
+    },
+
+    // Xác nhận huỷ thật (POST lại endpoint này, có thể truyền thêm param nếu backend yêu cầu)
+    confirmCancelBooking: async (bookingId: number | string): Promise<CancelPolicyResponse> => {
+        try {
+            const response = await axiosInstance.post(`/cancel-booking/${bookingId}`, { confirm: true });
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                throw error.response.data;
             }
             throw error;
         }

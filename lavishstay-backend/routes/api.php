@@ -21,6 +21,10 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\NewsApiController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
+use App\Http\Controllers\Api\BookingCancellationController;
+use App\Http\Controllers\Api\BookingExtensionController;
+use App\Http\Controllers\Api\BookingRescheduleController;
+use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 
 /*
@@ -78,6 +82,30 @@ Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 
 Route::get('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 
+
+
+
+// Room Requests API
+
+// Yêu cầu hủy
+
+
+Route::post('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'cancelBooking']);
+Route::get('/cancel-booking/{bookingId}', [BookingCancellationController::class, 'getBookingCancellationInfo']);
+
+
+//Yêu cầu gia hạn
+Route::post('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'extendBooking']);
+Route::get('/bookings/{bookingId}/extend', [BookingExtensionController::class, 'getExtendBookingInfo']);
+
+// Yêu cầu chuyển phòng
+Route::post('/bookings/{bookingId}/transfer', [BookingTransferController::class, 'transferBooking']);
+Route::get('/bookings/{bookingId}/transfer', [BookingTransferController::class, 'getTransferBookingInfo']);
+
+
+//Yêu cầu rời lịch
+Route::post('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'rescheduleBooking']);
+Route::get('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'getRescheduleBookingInfo']);
 
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
@@ -270,4 +298,4 @@ Route::get('/news/categories', [NewsCategoryController::class, 'index']);
 Route::get('/sitemap', [SitemapController::class, 'index']);
 Route::get('/sitemap-main', [SitemapController::class, 'main']);
 Route::get('/sitemap-categories', [SitemapController::class, 'categories']);
-Route::get('/sitemap-news', [SitemapController::class, 'news']);
+Route::get('/sitemap-news', [SitemapController::class, 'news']);            

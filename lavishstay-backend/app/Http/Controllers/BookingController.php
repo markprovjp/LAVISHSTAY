@@ -35,8 +35,26 @@ class BookingController extends Controller {
                 'message' => 'Booking đã được gán user.'
             ], 400);
         }
-        \DB::table('booking')->where('booking_code', $request->bookingCode);
-       
+
+        // Kiểm tra email của user và booking phải trùng nhau
+        $user = \DB::table('users')->where('id', $request->userId)->first();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy user.'
+            ], 404);
+        }
+        if (strtolower(trim($user->email)) !== strtolower(trim($booking->guest_email))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email của tài khoản không khớp với email đặt phòng.'
+            ], 400);
+        }
+
+        // Gán user_id cho booking
+        \DB::table('booking')->where('booking_code', $request->bookingCode)
+            ->update(['user_id' => $request->userId]);
+
         return response()->json([
             'success' => true,
             'message' => 'Đã gán booking vào tài khoản thành công.'
