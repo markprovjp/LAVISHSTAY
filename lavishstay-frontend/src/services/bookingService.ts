@@ -55,10 +55,12 @@ const bookingService = {
         }
     },
 
+
     // Lấy chính sách huỷ phòng (dùng GET endpoint riêng, không huỷ thật)
     getCancelPolicy: async (bookingId: number | string): Promise<CancelPolicyResponse> => {
         try {
             const response = await axiosInstance.get(`/cancel-booking/${bookingId}`);
+
             return response.data;
         } catch (error: any) {
             if (error.response?.data) {
