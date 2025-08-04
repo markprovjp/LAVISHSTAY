@@ -21,6 +21,7 @@ import RoomTypesDemo from "../pages/RoomTypesDemo";
 import Dashboard from "../pages/dashboard/Dashboard";
 import Profile from "../pages/dashboard/Profile";
 import Bookings from "../pages/dashboard/Bookings";
+import HotelScheduleManagement from "../pages/reception/HotelScheduleManagement/HotelScheduleManagement";
 
 import NotFound from "../pages/NotFound";
 
@@ -48,6 +49,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/bookings" element={<Bookings />} />
+          <Route path="/reception/schedule" element={<HotelScheduleManagement />} />
         </Route>
       </Route>
 

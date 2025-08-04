@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\NewsApiController;
+use App\Http\Controllers\Api\NewsController;
+use App\Http\Controllers\Api\SitemapController;
+use App\Http\Controllers\NewsController\NewsCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,7 +37,8 @@ use App\Http\Controllers\Api\ChatController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-
+Route::middleware('auth:sanctum')->get('/user/bookings', [BookingController::class, 'getUserBookings']);
+Route::middleware('auth:sanctum')->post('/booking/assign', [BookingController::class, 'assignBookingToUser']);
 // Route test gửi email
 Route::get('/test-email/{bookingId}', [PaymentController::class, 'testEmail']);
 
@@ -159,8 +164,8 @@ Route::prefix('payment')->group(function () {
     Route::post('/check-cpay', [PaymentController::class, 'checkCPayPayment']);
     
     // Debug route for CPay (development only)
-    Route::get('/debug-cpay', [PaymentController::class, 'debugCPayAPI']);
 });
+Route::post('/test-cpay-payment', [PaymentController::class, 'testCPayPayment']);
 
 // Pricing API Routes - Enhanced
 Route::prefix('pricing')->group(function () {
@@ -196,6 +201,7 @@ Route::prefix('reception')->group(function () {
     Route::post('/bookings/assign-multiple-rooms', [ReceptionController::class, 'assignMultipleRoomsToBooking']);
     Route::post('/bookings', [ReceptionController::class, 'createReceptionBooking']);
     Route::post('/bookings/create', [ReceptionController::class, 'createBooking']);
+    Route::post('/bookings/confirm', [ReceptionController::class, 'confirmBooking']);
     Route::put('/bookings/{bookingId}/status', [ReceptionController::class, 'updateBookingStatus']);
     Route::put('/bookings/{bookingId}/cancel', [ReceptionController::class, 'cancelBooking']);
     Route::post('/bookings/transfer', [ReceptionController::class, 'transferBooking']);
@@ -250,3 +256,18 @@ Route::prefix('chat')->name('chat.')->group(function () {
     // MODIFIED: Logs the user question and the AI response
     Route::post('/log', [ChatController::class, 'logConversation'])->name('log');
 });
+
+Route::get('/test-complete/{bookingCode}', [PaymentController::class, 'testCompleteBooking']);
+
+
+
+// News API
+Route::get('/news/categories', [NewsApiController::class, 'getCategories']);
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
+Route::get('/news/categories', [NewsCategoryController::class, 'index']);
+// php artisan make:observer NewsObserver --model=News
+Route::get('/sitemap', [SitemapController::class, 'index']);
+Route::get('/sitemap-main', [SitemapController::class, 'main']);
+Route::get('/sitemap-categories', [SitemapController::class, 'categories']);
+Route::get('/sitemap-news', [SitemapController::class, 'news']);

@@ -1,6 +1,7 @@
 // src/utils/api.ts
 import axios from 'axios';
 import { BookingQuotePayload } from '../hooks/useReception'; // Import the type
+import { CreateMultiRoomBookingRequest } from '../types/booking';
 
 // Create a base axios instance
 const api = axios.create({
@@ -249,7 +250,18 @@ export const receptionAPI = {
   },
 
   createBooking: async (data: any) => {
-    const response = await api.post('/reception/bookings', data);
+    const response = await api.post('/reception/bookings/create', data);
+    return response.data;
+  },
+  createBookingReception: async (data: any) => {
+    const response = await api.post('/reception/bookings/createBookingReception', data);
+    return response.data;
+  },
+
+ 
+ 
+  confirmBooking: async (data: any) => {
+    const response = await api.post('/reception/bookings/confirm', data);
     return response.data;
   },
 
@@ -361,7 +373,42 @@ export const paymentAPI = {
   getPaymentStatus: async (bookingId: string) => {
     const response = await api.get(`/payment/status/${bookingId}`);
     return response.data;
-  }
+  },
+  checkCPayPayment: async (bookingCode: string, amount: number) => {
+    return api.post('/payment/check-cpay', { booking_code: bookingCode, amount: amount });
+  },
+};
+
+export const processEarlyCheckOut = async (values: any) => {
+  // Implement your early check-out logic here
+  // For example, you can make an API call to your backend to process the early check-out
+  console.log('Processing early check-out for booking ID:', values.bookingId);
+  // Replace this with your actual API call
+  return Promise.resolve();
+};
+
+export const fetchRoomAvailability = async (dates: any) => {
+  console.log('Checking room availability for dates:', dates);
+  // Mocked response: always available
+  return Promise.resolve(true);
+};
+
+export const updateBooking = async (values: any) => {
+  console.log('Updating booking with values:', values);
+  // Mocked response: successful update
+  return Promise.resolve({ success: true });
+};
+
+export const fetchRooms = async () => {
+  console.log('Fetching rooms');
+  // Mocked response: return a list of rooms
+  return Promise.resolve([
+    { id: 1, number: '101', type: 'Standard', status: 'Available' },
+    { id: 2, number: '102', type: 'Deluxe', status: 'Occupied' },
+    { id: 3, number: '201', type: 'Suite', status: 'Available' },
+  ]);
 };
 
 export default api;
+
+

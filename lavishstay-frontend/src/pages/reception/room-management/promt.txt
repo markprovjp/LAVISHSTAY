@@ -1,137 +1,38 @@
-Design a room management dashboard interface for a hotel management system using the following tech stack:
+Dự án quản lý phòng khách sạn sử dụng React, Ant Design, Ant Design Pro, umi-request.  
+Yêu cầu tối ưu hiệu năng và UI/UX cho màn hình Room Management Dashboard.
 
-Framework & Routing: React 18 with React Router v7
+Các vấn đề cần giải quyết:
+- Số lượng phòng lớn, thao tác chọn phòng, xem chi tiết, filter, v.v. phải phản hồi nhanh, không lag.
+- Grid view phòng phải phân loại theo tầng, mỗi phòng là một card, có action chọn phòng (checkbox), xem chi tiết, và các action khác nếu cần.
+- Checkbox chọn phòng phải dùng ProFormCheckbox hoặc CheckCard của Ant Design Pro, không dùng Checkbox mặc định của Antd.
+- Khi loading, hiển thị Skeleton Card hoặc ProSkeleton.
+- Nếu API trả về quá nhiều phòng, phải phân trang hoặc lazy load theo tầng/phân loại.
+- Chỉ lấy dữ liệu cần thiết từ API, chi tiết phòng chỉ lấy khi click.
+- State lưu phòng phải tối ưu, chỉ lưu selectedRooms dưới dạng Set hoặc Map, không lưu toàn bộ phòng nếu không cần thiết.
+- Các component RoomCard, RoomGridView phải dùng memo và callback tối ưu (useCallback), props không thay đổi không cần thiết.
+- UI phải đẹp, hiện đại, tận dụng tối đa sức mạnh của Ant Design Pro.
 
-State Management: Redux Toolkit (auth, theme, search), Zustand (cart, simple state)
+Yêu cầu code:
+- RoomGridView dùng CheckCard.Group, action area gom các chức năng (chọn phòng, xem chi tiết) vào CheckCard.
+- Khi loading, dùng ProSkeleton hoặc Skeleton Card.
+- Phân loại phòng theo tầng, mỗi tầng là một nhóm CheckCard.
+- Tối ưu callback, memo hóa component.
+- Nếu có thể, dùng ProList hoặc react-window cho grid lớn.
 
-UI Framework: Ant Design v5.25.4
+Đầu ra mong muốn:
+- Code component RoomGridView tối ưu hiệu năng, UI đẹp, action rõ ràng, dễ mở rộng.
+- Hướng dẫn tích hợp vào RoomManagementDashboard.
+- Đảm bảo mọi thao tác (chọn phòng, xem chi tiết, filter) đều mượt, không lag.
 
-Styling: Tailwind CSS + Styled Components
-
-Build Tool: Vite
-
-Data Fetching: Axios + React Query (TanStack Query)
-
-Form Handling: Ant Design Forms
-
-Date Handling: Day.js
-
-Internationalization: i18next
-
-🧱 Structure Overview
-1. Page Layout (Header Fixed)
-
-Top section contains filters:
-
-Customer Name (text input)
-
-Date Picker (Ant Design)
-
-Room Number (input)
-
-Room Type (select)
-
-Room Status (select)
-
-Reset Button
-
-Search Button
-
-Toggle View Options: Display by Date, Room Type, or Floor
-
-A "Filter" button for advanced options
-
-2. Main Content Area (Split by Components)
-
-Based on selected view option, show:
-
-➤ A. Room Grid View (Daily Snapshot)
-Display each room as a color-coded card block
-
-Color indicates room status:
-
-ts
-Sao chép
-Chỉnh sửa
-statusColorMap = {
-  occupied: 'bg-red-500',
-  empty: 'bg-green-500',
-  cleaning: 'bg-orange-400',
-  maintenance: 'bg-gray-400',
-  no_show: 'bg-pink-400',
-}
-Each block shows:
-
-Room number and short code (e.g., "201 - ST")
-
-Guest name (if applicable)
-
-Number of guests
-
-Stay dates
-
-Optional icon representing status
-
-Group by floor (e.g., “Tầng 2”, “Tầng 3”)
-
-Tailwind layout should support 4–5 columns per row with spacing
-
-➤ B. FullCalendar View (By Room Type or Floor Timeline)
-Use @fullcalendar/react with @fullcalendar/resource-timeline plugin
-
-Y-axis: List of rooms grouped by room type (e.g., Superior Twin, Deluxe Room)
-
-X-axis: Timeline from 2022-11-01 to 2022-11-18
-
-Scrollable both horizontally and vertically
-
-FullCalendar Data Format:
-ts
-Sao chép
-Chỉnh sửa
-resources: [
-  { id: '201', title: '201', group: 'Superior Twin' },
-  { id: '301', title: '301', group: 'Deluxe Room' },
-],
-events: [
-  {
-    id: '1',
-    resourceId: '201',
-    title: 'Nguyễn Văn A',
-    start: '2022-11-01',
-    end: '2022-11-03',
-    backgroundColor: '#1890ff' // currently staying
-  },
-  {
-    id: '2',
-    resourceId: '203',
-    title: 'Yến Th...',
-    start: '2022-11-02',
-    end: '2022-11-02',
-    backgroundColor: '#ff4d4f' // no show
+Công nghệ đang dùng:
+{
+  "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@ant-design/pro-components": "^2.8.10",
+    "@google/generative-ai": "^0.24.1",
+    "antd": "^5.26.6",
+    "react-icons": "^5.5.0",
+    "umi-request": "^1.4.0"
   }
-]
-Requirements:
-Grouped by room type (Superior Twin, Deluxe Room…)
-
-Each row = 1 room, each column = 1 day
-
-Color-coded event blocks showing guest info
-
-Show total number of occupied and available rooms per day below the chart
-
-Responsive and clean layout with Tailwind
-
-Use Ant Design Modal or Tooltip for showing more room/guest details on hover or click
-
-💡 Split everything into React components:
-
-<FilterBar />
-
-<RoomGridView /> for daily status grid
-
-<RoomTimelineView /> for FullCalendar
-
-Use Zustand or Redux for view mode toggle state
-
-All room and booking data fetched via React Query from backend
+  
+}

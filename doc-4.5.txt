@@ -1,0 +1,206 @@
+ 4.5. Thiết kế sơ đồ Use Case chi tiết
+
+  4.5.1. Sơ đồ Use Case "Quản lý phòng"
+
+   * Actor: Quản trị viên
+   * Mô tả: Quản trị viên có thể quản lý thông tin về phòng, loại phòng, tiện ích, hình ảnh và loại giường.
+   * Use Cases:
+       * CRUD phòng:
+           * Mô tả: Quản trị viên có thể thêm, xem, sửa, xóa thông tin phòng.
+           * Luồng chính:
+               1. Quản trị viên chọn chức năng quản lý phòng.
+               2. Hệ thống hiển thị danh sách các phòng.
+               3. Quản trị viên có thể thêm phòng mới, sửa thông tin phòng hoặc xóa phòng.
+               4. Hệ thống cập nhật thông tin và hiển thị lại danh sách.
+       * CRUD loại phòng:
+           * Mô tả: Quản trị viên có thể quản lý các loại phòng.
+           * Luồng chính: Tương tự như CRUD phòng.
+       * CRUD tiện ích:
+           * Mô tả: Quản trị viên có thể quản lý các tiện ích của phòng.
+           * Luồng chính: Tương tự như CRUD phòng.
+       * CRUD hình ảnh phòng:
+           * Mô tả: Quản trị viên có thể quản lý hình ảnh của phòng.
+           * Luồng chính: Tương tự như CRUD phòng.
+       * CRUD loại giường:
+           * Mô tả: Quản trị viên có thể quản lý các loại giường.
+           * Luồng chính: Tương tự như CRUD phòng.
+
+  4.5.2. Sơ đồ Use Case "Quản lý đặt phòng"
+
+   * Actors: Khách hàng, Quản trị viên
+   * Mô tả: Khách hàng có thể tìm kiếm, đặt phòng và quản lý các đặt phòng của mình. Quản trị viên có thể xem và quản lý tất cả các đặt phòng.
+   * Use Cases:
+       * Tìm kiếm phòng trống:
+           * Actor: Khách hàng
+           * Mô tả: Khách hàng tìm kiếm phòng trống theo ngày nhận và trả phòng.
+           * Luồng chính:
+               1. Khách hàng nhập ngày nhận và trả phòng.
+               2. Hệ thống hiển thị danh sách các phòng trống.
+       * Xem chi tiết phòng:
+           * Actor: Khách hàng
+           * Mô tả: Khách hàng xem thông tin chi tiết về một phòng.
+           * Luồng chính:
+               1. Khách hàng chọn một phòng từ danh sách.
+               2. Hệ thống hiển thị thông tin chi tiết của phòng đó.
+       * Đặt phòng:
+           * Actor: Khách hàng
+           * Mô tả: Khách hàng thực hiện đặt phòng.
+           * Luồng chính:
+               1. Khách hàng chọn phòng và nhấn nút "Đặt phòng".
+               2. Hệ thống yêu cầu khách hàng nhập thông tin cá nhân và thanh toán.
+               3. Khách hàng nhập thông tin và xác nhận.
+               4. Hệ thống xử lý thanh toán và tạo đặt phòng.
+               5. Hệ thống gửi email xác nhận cho khách hàng.
+       * Xem danh sách đặt phòng:
+           * Actor: Quản trị viên
+           * Mô tả: Quản trị viên xem danh sách tất cả các đặt phòng.
+           * Luồng chính:
+               1. Quản trị viên chọn chức năng quản lý đặt phòng.
+               2. Hệ thống hiển thị danh sách các đặt phòng.
+       * Hủy đặt phòng:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Khách hàng hoặc quản trị viên hủy một đặt phòng.
+           * Luồng chính:
+               1. Người dùng chọn một đặt phòng và nhấn nút "Hủy".
+               2. Hệ thống xác nhận yêu cầu hủy.
+               3. Hệ thống hủy đặt phòng và cập nhật trạng thái.
+       * Gia hạn đặt phòng:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Khách hàng hoặc quản trị viên gia hạn một đặt phòng.
+           * Luồng chính:
+               1. Người dùng chọn một đặt phòng và yêu cầu gia hạn.
+               2. Hệ thống kiểm tra phòng trống và tính toán chi phí.
+               3. Người dùng xác nhận và thanh toán (nếu có).
+               4. Hệ thống cập nhật thông tin đặt phòng.
+       * Thay đổi phòng:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Khách hàng hoặc quản trị viên thay đổi phòng cho một đặt phòng.
+           * Luồng chính:
+               1. Người dùng chọn một đặt phòng và yêu cầu thay đổi phòng.
+               2. Hệ thống hiển thị danh sách các phòng trống có sẵn.
+               3. Người dùng chọn phòng mới.
+               4. Hệ thống cập nhật thông tin đặt phòng.
+
+  4.5.3. Sơ đồ Use Case "Quản lý người dùng"
+
+   * Actors: Khách hàng, Quản trị viên
+   * Mô tả: Khách hàng có thể đăng ký, đăng nhập, đăng xuất và quản lý thông tin cá nhân. Quản trị viên có thể quản lý tất cả người dùng.
+   * Use Cases:
+       * Đăng ký:
+           * Actor: Khách hàng
+           * Mô tả: Khách hàng đăng ký tài khoản mới.
+           * Luồng chính:
+               1. Khách hàng chọn chức năng "Đăng ký".
+               2. Hệ thống yêu cầu nhập thông tin cá nhân.
+               3. Khách hàng nhập thông tin và xác nhận.
+               4. Hệ thống tạo tài khoản mới.
+       * Đăng nhập:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Người dùng đăng nhập vào hệ thống.
+           * Luồng chính:
+               1. Người dùng nhập email và mật khẩu.
+               2. Hệ thống xác thực thông tin.
+               3. Nếu thành công, hệ thống chuyển hướng đến trang chính.
+       * Đăng xuất:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Người dùng đăng xuất khỏi hệ thống.
+           * Luồng chính:
+               1. Người dùng chọn chức năng "Đăng xuất".
+               2. Hệ thống xóa phiên đăng nhập và chuyển hướng đến trang chủ.
+       * Xem thông tin cá nhân:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Người dùng xem thông tin cá nhân của mình.
+           * Luồng chính:
+               1. Người dùng chọn chức năng "Thông tin cá nhân".
+               2. Hệ thống hiển thị thông tin cá nhân của người dùng.
+       * Cập nhật thông tin cá nhân:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Người dùng cập nhật thông tin cá nhân của mình.
+           * Luồng chính:
+               1. Người dùng chọn chức năng "Cập nhật thông tin".
+               2. Hệ thống hiển thị form cập nhật.
+               3. Người dùng nhập thông tin mới và xác nhận.
+               4. Hệ thống cập nhật thông tin.
+       * Quên mật khẩu:
+           * Actor: Khách hàng
+           * Mô tả: Khách hàng yêu cầu đặt lại mật khẩu.
+           * Luồng chính:
+               1. Khách hàng chọn chức năng "Quên mật khẩu".
+               2. Hệ thống yêu cầu nhập email.
+               3. Hệ thống gửi email hướng dẫn đặt lại mật khẩu.
+       * CRUD người dùng:
+           * Actor: Quản trị viên
+           * Mô tả: Quản trị viên quản lý tài khoản người dùng.
+           * Luồng chính: Tương tự như CRUD phòng.
+
+  4.5.4. Sơ đồ Use Case "Quản lý tiện ích"
+
+   * Actor: Quản trị viên
+   * Mô tả: Quản trị viên quản lý các tiện ích có sẵn trong khách sạn.
+   * Use Cases:
+       * CRUD tiện ích:
+           * Mô tả: Quản trị viên có thể thêm, xem, sửa, xóa thông tin tiện ích.
+           * Luồng chính:
+               1. Quản trị viên chọn chức năng quản lý tiện ích.
+               2. Hệ thống hiển thị danh sách các tiện ích.
+               3. Quản trị viên có thể thêm tiện ích mới, sửa thông tin hoặc xóa tiện ích.
+               4. Hệ thống cập nhật thông tin và hiển thị lại danh sách.
+
+  4.5.5. Sơ đồ Use Case "Quản lý đánh giá"
+
+   * Actors: Khách hàng, Quản trị viên
+   * Mô tả: Khách hàng có thể thêm đánh giá cho các phòng đã đặt. Quản trị viên có thể xem và xóa các đánh giá.
+   * Use Cases:
+       * Thêm đánh giá:
+           * Actor: Khách hàng
+           * Mô tả: Khách hàng thêm đánh giá cho một phòng.
+           * Luồng chính:
+               1. Khách hàng chọn một đặt phòng đã hoàn thành.
+               2. Hệ thống hiển thị form thêm đánh giá.
+               3. Khách hàng nhập nội dung đánh giá và xếp hạng.
+               4. Hệ thống lưu đánh giá.
+       * Xem đánh giá:
+           * Actors: Khách hàng, Quản trị viên
+           * Mô tả: Người dùng xem các đánh giá của một phòng.
+           * Luồng chính:
+               1. Người dùng chọn một phòng.
+               2. Hệ thống hiển thị danh sách các đánh giá của phòng đó.
+       * Xóa đánh giá:
+           * Actor: Quản trị viên
+           * Mô tả: Quản trị viên xóa một đánh giá.
+           * Luồng chính:
+               1. Quản trị viên chọn một đánh giá.
+               2. Hệ thống yêu cầu xác nhận xóa.
+               3. Hệ thống xóa đánh giá.
+
+  4.5.6. Sơ đồ Use Case tổng quan toàn hệ thống
+
+  Dưới đây là sơ đồ Use Case tổng quan, thể hiện các actor chính và các nhóm use case chính của hệ thống.
+
+    1 left to right direction
+    2 actor "Khách hàng" as Guest
+    3 actor "Quản trị viên" as Admin
+    4
+    5 rectangle "Hệ thống quản lý đặt phòng khách sạn" {
+    6   usecase "Quản lý phòng" as UC_Room
+    7   usecase "Quản lý đặt phòng" as UC_Booking
+    8   usecase "Quản lý người dùng" as UC_User
+    9   usecase "Quản lý tiện ích" as UC_Amenity
+   10   usecase "Quản lý đánh giá" as UC_Review
+   11
+   12   Guest -- UC_Booking
+   13   Guest -- UC_Review
+   14   Guest -- UC_User
+   15
+   16   Admin -- UC_Room
+   17   Admin -- UC_Booking
+   18   Admin -- UC_User
+   19   Admin -- UC_Amenity
+   20   Admin -- UC_Review
+   21 }
+
+  Ghi chú:
+
+   * CRUD: Create, Read, Update, Delete.
+   * Sơ đồ trên là một biểu diễn tổng quan. Mỗi Use Case có thể được chi tiết hóa hơn nữa với các luồng phụ và các trường hợp ngoại lệ.
+   * Các Use Case có thể được nhóm lại thành các package để dễ quản lý hơn (ví dụ: package "Quản lý phòng", package "Quản lý đặt phòng").

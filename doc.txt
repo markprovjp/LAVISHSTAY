@@ -1,0 +1,85 @@
+CHƯƠNG 4: PHÂN TÍCH THIẾT KẾ
+“Các chức năng của hệ thống đã được liệt kê tại mục 2.1. Trong chương 4 này, chúng tôi sẽ đi sâu vào phân tích từng chức năng dưới góc nhìn thiết kế hệ thống, bao gồm sơ đồ luồng xử lý, giao diện, và mô hình cơ sở dữ liệu.”
+// đã xong 
+ 4.1 Mô hình tổng thể hệ thống
+ 4.2 Công nghệ sử dụng
+   	4.2.1 Ngôn ngữ lập trình
+   	4.2.2 Framework, thư viện
+   	4.2.3 Cơ sở dữ liệu và công cụ quản trị
+   	4.2.4 Công cụ hỗ trợ phát triển
+ 4.3 Yêu cầu phần cứng và phần mềm
+  // đã xong
+  
+  
+4.4 Thiết kế sơ đồ ERD
+
+
+ 4.5 Thiết kế sơ đồ Use Case chi tiết
+      4.5.1 Danh sách tác nhân (Actors)
+          	 4.5.1.1 Khách hàng (Client)
+     	    4.5.1.2 Nhân viên lễ tân
+        	 4.5.1.3 Quản lý khách sạn
+       	  4.5.1.4 Quản trị hệ thống (Admin kỹ thuật)
+ 4.5.2 Use Case dành cho khách hàng
+      	4.5.2.1 Tìm kiếm phòng theo ngày
+      	4.5.2.2 Xem thông tin gói phòng
+ 4.5.2.3 Đặt phòng và nhập thông tin khách
+      	4.5.2.4 Thanh toán đặt cọc
+ 4.5.2.5 Theo dõi và hủy đơn đặt phòng
+ 4.5.2.6 Gửi đánh giá sau khi lưu trú
+4.5.3 Use Case dành cho lễ tân
+  4.5.3.1 Đặt phòng trực tiếp tại quầy
+  4.5.3.2 Check-in / Check-out
+  4.5.3.3 Quản lý thông tin khách lưu trú
+  4.5.3.4 Xử lý thanh toán bổ sung
+  4.5.3.5 Thêm ghi chú và sự cố phòng
+4.5.4 Use Case dành cho quản lý khách sạn
+  4.5.4.1 Quản lý loại phòng, giá, phụ thu
+  4.5.4.2 Cấu hình chính sách đặt cọc, hủy phòng
+  4.5.4.3 Quản lý nhân sự lễ tân
+  4.5.4.4 Xem báo cáo doanh thu, công suất phòng
+  4.5.4.5 Phê duyệt hoặc điều chỉnh đơn đặc biệt
+4.5.5 Use Case dành cho quản trị hệ thống
+  4.5.5.1 Phân quyền người dùng
+  4.5.5.2 Backup / Restore dữ liệu
+  4.5.5.3 Cấu hình hệ thống, SMTP, API
+  4.5.5.4 Theo dõi logs hệ thống và bảo trì
+4.5.6 Sơ đồ Use Case tổng quan toàn hệ thống
+  → Mô tả sơ đồ hình vẽ thể hiện tương tác giữa các tác nhân và nhóm chức năng chính.
+ 
+ 
+4.6 Thiết kế sơ đồ hoạt động
+ 4.6.1 Khái niệm và vai trò sơ đồ hoạt động
+ 4.6.2 Sơ đồ hoạt động chức năng đặt phòng
+ 4.6.3 Sơ đồ hoạt động chức năng hủy đặt phòng
+ 4.6.4 Sơ đồ hoạt động chức năng check-in / check-out
+ 4.6.5 Sơ đồ hoạt động chức năng áp dụng chính sách giá
+ 4.6.6 Nhận xét và đánh giá sơ đồ hoạt động (Đang còn, chưa liệt kê)
+4.7 Thiết kế giao diện người dùng
+ 4.7.1 Giao diện dành cho khách hàng (Client)
+       4.7.1.1 Giao diện trang chủ, tìm kiếm phòng
+  	 4.7.1.2 Giao diện chi tiết gói phòng
+       4.7.1.3 Giao diện đặt phòng và thanh toán
+       4.7.1.4 Giao diện quản lý đơn đặt phòng
+  	 4.7.1.5 Giao diện đánh giá & phản hồi
+    	   (Đang còn, chưa liệt kê)
+4.7.2 Giao diện dành cho nhân viên và quản lý (Admin Panel)
+  4.7.2.1 Giao diện đăng nhập / phân quyền
+  4.7.2.2 Giao diện dashboard tổng quan
+  4.7.2.3 Giao diện quản lý đặt phòng tại quầy
+  4.7.2.4 Giao diện quản lý phòng, loại phòng, giá, phụ thu
+  4.7.2.5 Giao diện thống kê, báo cáo
+  4.7.2.6 Giao diện quản lý chính sách, người dùng, cấu hình hệ thống
+              	(Đang còn, chưa liệt kê)
+4.8 Thiết kế cơ sở dữ liệu
+ 4.8.1 Danh sách bảng dữ liệu
+ 4.8.2 Mô tả chi tiết các bảng chính
+ 4.8.3 Mối quan hệ giữa các bảng (sơ đồ ERD)
+4.8.4 Thiết kế lược đồ bảng (Table Schema)
+(trình bày tất cả các bảng như: users, bookings,…….)
+ 4.8.5 Ràng buộc toàn vẹn dữ liệu
+ 4.8.6 Chuẩn hóa dữ liệu (Data Normalization)
+ 4.8.7 Nhận xét về thiết kế cơ sở dữ liệu
+
+
+

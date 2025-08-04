@@ -697,4 +697,3 @@ console.log('roomsPayload:', roomsPayload);
 };
 
 export default Payment;
-

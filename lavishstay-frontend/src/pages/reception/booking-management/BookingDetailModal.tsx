@@ -29,11 +29,19 @@ import {
     Descriptions,
     Collapse
 } from 'antd';
-import { HomeOutlined, EditOutlined, SaveOutlined, CloseOutlined, MoreOutlined, UserOutlined, PhoneOutlined, MailOutlined, DollarOutlined, TeamOutlined, CreditCardOutlined, SwapOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, ExclamationCircleOutlined , CalendarOutlined } from '@ant-design/icons';
+import { HomeOutlined, EditOutlined, SaveOutlined, CloseOutlined, MoreOutlined, UserOutlined, PhoneOutlined, MailOutlined, DollarOutlined, TeamOutlined, CreditCardOutlined, SwapOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, ExclamationCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { BedDouble, CalendarDays, UserRound, Pencil, DoorOpen, LogOut, XCircle, Ban, ArrowRightLeft } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import RoomSelectionModal from './RoomSelectionModal';
+import {
+    ChangeRoomTab,
+    ExtendStayTab,
+    RescheduleTab,
+    BookedDetailsTab,
+    LateCheckOutTab,
+    EarlyCheckOutTab
+} from './components';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -198,12 +206,12 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
         checkOutDate: '',
         requiredRooms: 1,
     });
-const handleOpenRoomSelectModal = (bookingRoomId: number) => {
-    setRoomSelectionModal({
-        visible: true,
-        bookingRoomId,
-    });
-};
+    const handleOpenRoomSelectModal = (bookingRoomId: number) => {
+        setRoomSelectionModal({
+            visible: true,
+            bookingRoomId,
+        });
+    };
     const fetchBookingDetails = async () => {
         if (!bookingId) return;
         setLoading(true);
@@ -403,7 +411,7 @@ const handleOpenRoomSelectModal = (bookingRoomId: number) => {
                         <span style={{ fontSize: '12px', fontWeight: 500, color: '#1890ff' }}>
                             {Number(record.adults || 0)}
                         </span>
-            
+
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                         <span style={{ fontSize: '12px', color: '#8c8c8c' }}>Trẻ em:</span>
@@ -813,7 +821,7 @@ const handleOpenRoomSelectModal = (bookingRoomId: number) => {
                         </Card>
 
                         <Tabs defaultActiveKey="rooms">
-                                             <TabPane tab={
+                            <TabPane tab={
                                 <span>
                                     <HomeOutlined style={{ marginRight: 8 }} />
                                     Chi tiết phòng ({Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0})
@@ -1027,98 +1035,107 @@ const handleOpenRoomSelectModal = (bookingRoomId: number) => {
                                     )}
                                 </Card>
                             </TabPane>
-                        <TabPane tab={
-                            <span>
-                                <CreditCardOutlined style={{ marginRight: 8 }} />
-                                Thanh toán
-                            </span>
-                        } key="payment">
-                            <Card
-                                style={{
-                                    borderRadius: '12px',
-                                    boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)',
-                                    border: '1px solid #f0f0f0'
-                                }}
-                                bodyStyle={{ padding: '20px' }}
-                            >
-                                {bookingDetail.payment ? (
-                                    <Row gutter={[24, 24]}>
-                                        <Col span={12}>
-                                            <Statistic
-                                                title="Số tiền thanh toán"
-                                                value={bookingDetail.payment.amount_vnd}
-                                                formatter={(value) => `${new Intl.NumberFormat('vi-VN').format(Number(value))} ₫`}
-                                                valueStyle={{ color: '#f50', fontSize: '24px', fontWeight: 600 }}
-                                            />
-                                        </Col>
-                                        <Col span={12}>
-                                            <div style={{ marginBottom: 16 }}>
-                                                <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                    Trạng thái:
-                                                </Text>
-                                                <span style={{ marginLeft: 8 }}>
-                                                    <StatusBadge status={bookingDetail.payment.status} type="payment" />
-                                                </span>
-                                            </div>
-                                            <div style={{ marginBottom: 16 }}>
-                                                <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                    Hình thức:
-                                                </Text>
-                                                <span style={{ marginLeft: 8, fontSize: '14px' }}>
-                                                    {bookingDetail.payment.payment_type || 'Chưa xác định'}
-                                                </span>
-                                            </div>
-                                            {bookingDetail.payment.transaction_id && (
+                            <TabPane tab={
+                                <span>
+                                    <CreditCardOutlined style={{ marginRight: 8 }} />
+                                    Thanh toán
+                                </span>
+                            } key="payment">
+                                <Card
+                                    style={{
+                                        borderRadius: '12px',
+                                        boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.04)',
+                                        border: '1px solid #f0f0f0'
+                                    }}
+                                    bodyStyle={{ padding: '20px' }}
+                                >
+                                    {bookingDetail.payment ? (
+                                        <Row gutter={[24, 24]}>
+                                            <Col span={12}>
+                                                <Statistic
+                                                    title="Số tiền thanh toán"
+                                                    value={bookingDetail.payment.amount_vnd}
+                                                    formatter={(value) => `${new Intl.NumberFormat('vi-VN').format(Number(value))} ₫`}
+                                                    valueStyle={{ color: '#f50', fontSize: '24px', fontWeight: 600 }}
+                                                />
+                                            </Col>
+                                            <Col span={12}>
                                                 <div style={{ marginBottom: 16 }}>
                                                     <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                        Mã giao dịch:
+                                                        Trạng thái:
                                                     </Text>
-                                                    <span style={{ marginLeft: 8, fontSize: '14px', fontFamily: 'monospace' }}>
-                                                        {bookingDetail.payment.transaction_id}
+                                                    <span style={{ marginLeft: 8 }}>
+                                                        <StatusBadge status={bookingDetail.payment.status} type="payment" />
                                                     </span>
                                                 </div>
-                                            )}
-                                            <div>
-                                                <Text strong style={{ fontSize: '14px', color: '#262626' }}>
-                                                    Thời gian thanh toán:
-                                                </Text>
-                                                <span style={{ marginLeft: 8, fontSize: '14px' }}>
-                                                    {dayjs(bookingDetail.payment.created_at).format('DD/MM/YYYY HH:mm')}
-                                                </span>
-                                            </div>
-                                        </Col>
-                                    </Row>
-                                ) : (
+                                                <div style={{ marginBottom: 16 }}>
+                                                    <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                                                        Hình thức:
+                                                    </Text>
+                                                    <span style={{ marginLeft: 8, fontSize: '14px' }}>
+                                                        {bookingDetail.payment.payment_type || 'Chưa xác định'}
+                                                    </span>
+                                                </div>
+                                                {bookingDetail.payment.transaction_id && (
+                                                    <div style={{ marginBottom: 16 }}>
+                                                        <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                                                            Mã giao dịch:
+                                                        </Text>
+                                                        <span style={{ marginLeft: 8, fontSize: '14px', fontFamily: 'monospace' }}>
+                                                            {bookingDetail.payment.transaction_id}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                                                        Thời gian thanh toán:
+                                                    </Text>
+                                                    <span style={{ marginLeft: 8, fontSize: '14px' }}>
+                                                        {dayjs(bookingDetail.payment.created_at).format('DD/MM/YYYY HH:mm')}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <Text type="secondary">Chưa có thông tin thanh toán</Text>
+                                        </div>
+                                    )}
+                                </Card>
+                            </TabPane>
+                            <TabPane tab="Hóa đơn" key="invoice">
+                                <Card>
                                     <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                        <Text type="secondary">Chưa có thông tin thanh toán</Text>
+                                        <Text type="secondary">Tính năng hóa đơn sẽ được phát triển trong phiên bản tiếp theo</Text>
                                     </div>
-                                )}
-                            </Card>
-                        </TabPane>
-                        <TabPane tab="Hóa đơn" key="invoice">
-                            <Card>
-                                <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                    <Text type="secondary">Tính năng hóa đơn sẽ được phát triển trong phiên bản tiếp theo</Text>
-                                </div>
-                            </Card>
-                        </TabPane>
-                    </Tabs>
-                    <RoomSelectionModal
-    visible={roomSelectionModal.visible}
-    onClose={() => setRoomSelectionModal({ visible: false, bookingRoomId: null })}
-    bookingId={bookingDetail?.id || null}
-    bookingRoomId={roomSelectionModal.bookingRoomId}
-    onAssignmentSuccess={() => {
-        setRoomSelectionModal({ visible: false, bookingRoomId: null });
-        fetchBookingDetails();
-    }}
-/>
-                </>
-            )}
-        </Spin>
-    </Modal>
-    
-);
+                                </Card>
+                            </TabPane>
+                            <TabPane tab="Gia hạn" key="extend">
+                                <ExtendStayTab />
+                            </TabPane>
+                            <TabPane tab="Dời lịch" key="reschedule">
+                                <RescheduleTab />
+                            </TabPane>
+                            <TabPane tab="Chuyển phòng" key="changeroom">
+                                <ChangeRoomTab />
+                            </TabPane>
+                        </Tabs>
+                        <RoomSelectionModal
+                            visible={roomSelectionModal.visible}
+                            onClose={() => setRoomSelectionModal({ visible: false, bookingRoomId: null })}
+                            bookingId={bookingDetail?.id || null}
+                            bookingRoomId={roomSelectionModal.bookingRoomId}
+                            onAssignmentSuccess={() => {
+                                setRoomSelectionModal({ visible: false, bookingRoomId: null });
+                                fetchBookingDetails();
+                            }}
+                        />
+                    </>
+                )}
+            </Spin>
+        </Modal>
+
+    );
 };
 
 export default BookingDetailModal;
