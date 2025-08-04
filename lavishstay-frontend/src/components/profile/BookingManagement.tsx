@@ -187,12 +187,14 @@ const BookingManagement: React.FC = () => {
         setIsDetailModalVisible(true);
     }, []);
 
-    // Hàm bấm nút Huỷ phòng: chỉ lấy chính sách huỷ, ẩn modal chi tiết nếu đang mở
+
     const handleShowCancelPolicy = useCallback(async (booking: Booking) => {
         setCancelLoading(true);
         setCancelPolicy(null);
         setCancelBookingId(booking.booking_id);
+
         setIsDetailModalVisible(false); // Ẩn modal chi tiết nếu đang mở
+
         try {
             const policy = await bookingService.getCancelPolicy(booking.booking_id);
             setCancelPolicy(policy);
@@ -206,7 +208,7 @@ const BookingManagement: React.FC = () => {
         }
     }, []);
 
-    // Hàm xác nhận huỷ thật (chỉ gọi khi bấm xác nhận trong modal chính sách)
+
     const handleConfirmCancel = useCallback(async () => {
         if (!cancelBookingId) return;
         setCancelConfirming(true);
@@ -382,8 +384,10 @@ const BookingManagement: React.FC = () => {
                                                 footer={null}
                                                 width={500}
                                                 destroyOnClose
+
                                                 maskClosable={false}
                                                 maskStyle={{ background: 'rgba(0,0,0,0.08)' }}
+
                                             >
                                                 {cancelPolicy && (
                                                     <div>
