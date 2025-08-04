@@ -28,7 +28,8 @@ class BookingRescheduleController extends Controller
                 $validated = $request->validate([
                 'new_check_in_date' => 'required|date|after_or_equal:today',
                 'new_check_out_date' => 'required|date|after:new_check_in_date',
-                'new_room_id' => 'nullable|integer',
+                'new_room_id' => 'nullable|array',
+                'new_room_id.*' => 'integer',
                 'reason' => 'nullable|string|max:500',
                 ]);
 
@@ -72,8 +73,24 @@ class BookingRescheduleController extends Controller
                 $newCheckOutDate = Carbon::parse($validated['new_check_out_date'])->startOfDay();
                 $stayDays = $newCheckOutDate->diffInDays($newCheckInDate, true);
 
-                // Determine room to check
-                $targetRoomId = $validated['new_room_id'] ?? $booking->room_id;
+                // Get current rooms from booking_rooms
+                $currentRooms = DB::table('booking_rooms')
+                ->where('booking_id', $booking->booking_id)
+                ->pluck('room_id')
+                ->toArray();
+                $currentRoomCount = count($currentRooms);
+
+                // Determine rooms to check
+                $newRoomIds = $validated['new_room_id'] ?? $currentRooms;
+                if (count($newRoomIds) !== $currentRoomCount) {
+                Log::error('Number of new rooms does not match current rooms', [
+                        'current_room_count' => $currentRoomCount,
+                        'new_room_count' => count($newRoomIds),
+                ]);
+                return response()->json(['error' => 'Số lượng phòng mới phải bằng số lượng phòng hiện tại'], 400);
+                }
+
+                // Find room table
                 $roomTable = DB::select("SHOW TABLES LIKE 'room'") ? 'room' : (DB::select("SHOW TABLES LIKE 'rooms'") ? 'rooms' : null);
                 if (!$roomTable) {
                 Log::error('No room table found');
@@ -81,17 +98,39 @@ class BookingRescheduleController extends Controller
                 }
                 $roomIdColumn = $roomTable === 'room' ? 'room_id' : 'id';
 
-                // Find target room
-                $targetRoom = DB::table($roomTable)->where($roomIdColumn, $targetRoomId)->first();
-                if (!$targetRoom) {
-                Log::error('Target room not found', ['room_id' => $targetRoomId]);
-                return response()->json(['error' => 'Phòng đích không tồn tại'], 404);
+                // Find package
+                $package = DB::table('room_type_package')
+                ->where('package_id', $roomOption->package_id)
+                ->first();
+                if (!$package) {
+                Log::error('Package not found', ['package_id' => $roomOption->package_id]);
+                return response()->json(['error' => 'Gói phòng không tồn tại'], 404);
+                }
+
+                // Find target rooms and validate room type
+                $targetRooms = DB::table($roomTable)
+                ->whereIn($roomIdColumn, $newRoomIds)
+                ->get();
+                if ($targetRooms->count() !== count($newRoomIds)) {
+                Log::error('Some target rooms not found', ['new_room_ids' => $newRoomIds]);
+                return response()->json(['error' => 'Một hoặc nhiều phòng đích không tồn tại'], 404);
+                }
+
+                foreach ($targetRooms as $room) {
+                if ($room->room_type_id !== $package->room_type_id) {
+                        Log::error('Room not compatible with package', [
+                        'room_id' => $room->$roomIdColumn,
+                        'room_type_id' => $room->room_type_id,
+                        'package_room_type_id' => $package->room_type_id,
+                        ]);
+                        return response()->json(['error' => 'Phòng mới không phù hợp với gói phòng hiện tại'], 400);
+                }
                 }
 
                 // Check room availability
                 $unavailableRooms = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->where('r.' . $roomIdColumn, $targetRoomId)
+                ->whereIn('r.' . $roomIdColumn, $newRoomIds)
                 ->where('r.status', 'available')
                 ->whereIn('r.' . $roomIdColumn, function ($subQuery) use ($newCheckInDate, $newCheckOutDate) {
                         $subQuery->select('br.room_id')
@@ -107,8 +146,8 @@ class BookingRescheduleController extends Controller
 
                 $suggestedRooms = [];
                 if (!empty($unavailableRooms)) {
-                Log::warning('Target room not available', [
-                        'room_id' => $targetRoomId,
+                Log::warning('Some target rooms not available', [
+                        'unavailable_room_ids' => $unavailableRooms,
                         'new_check_in_date' => $newCheckInDate->format('Y-m-d'),
                         'new_check_out_date' => $newCheckOutDate->format('Y-m-d'),
                 ]);
@@ -116,7 +155,7 @@ class BookingRescheduleController extends Controller
                 // Suggest similar rooms
                 $suggestedRooms = DB::table($roomTable . ' as r')
                         ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                        ->where('r.room_type_id', $targetRoom->room_type_id)
+                        ->where('r.room_type_id', $package->room_type_id)
                         ->where('r.status', 'available')
                         ->whereNotIn('r.' . $roomIdColumn, function ($subQuery) use ($newCheckInDate, $newCheckOutDate) {
                         $subQuery->select('br.room_id')
@@ -128,32 +167,22 @@ class BookingRescheduleController extends Controller
                                 ->whereNotNull('br.room_id');
                         })
                         ->select('r.' . $roomIdColumn . ' as room_id', 'r.name', 'rt.name as room_type_name')
+                        ->limit($currentRoomCount)
                         ->get()
                         ->toArray();
 
-                if (empty($suggestedRooms)) {
+                if (count($suggestedRooms) < $currentRoomCount) {
                         return response()->json([
-                        'error' => 'Phòng hiện tại không khả dụng và không có phòng tương tự nào trống',
-                        'suggested_rooms' => []
+                        'error' => 'Không đủ phòng tương tự khả dụng cho yêu cầu rời lịch',
+                        'suggested_rooms' => $suggestedRooms
                         ], 400);
                 }
 
                 return response()->json([
-                        'error' => 'Phòng hiện tại không khả dụng',
+                        'error' => 'Một hoặc nhiều phòng hiện tại không khả dụng',
                         'suggested_rooms' => $suggestedRooms
                 ], 400);
                 }
-
-                // Find package
-                $package = DB::table('room_type_package')
-                ->where('package_id', $roomOption->package_id)
-                ->first();
-                if (!$package) {
-                Log::error('Package not found', ['package_id' => $roomOption->package_id]);
-                return response()->json(['error' => 'Gói phòng không tồn tại'], 404);
-                }
-
-                
 
                 // Find reschedule policy
                 $isHoliday = DB::table('holidays')->where('start_date', Carbon::today()->format('Y-m-d'))->exists();
@@ -161,7 +190,7 @@ class BookingRescheduleController extends Controller
                 $timeDiff = Carbon::today()->diffInDays($newCheckInDate, false);
 
                 $reschedulePolicyQuery = ReschedulePolicy::where('is_active', true)
-                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $targetRoom) {
+                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $package) {
                         $query->where(function ($q) use ($isHoliday) {
                         $q->where('applies_to_holiday', $isHoliday)->orWhere('applies_to_holiday', 0);
                         })
@@ -172,8 +201,8 @@ class BookingRescheduleController extends Controller
                         $q->where('min_days_before_checkin', '<=', $timeDiff)
                         ->orWhereNull('min_days_before_checkin');
                         })
-                        ->where(function ($q) use ($targetRoom) {
-                        $q->where('room_type_id', $targetRoom->room_type_id)
+                        ->where(function ($q) use ($package) {
+                        $q->where('room_type_id', $package->room_type_id)
                         ->orWhereNull('room_type_id');
                         });
                 })
@@ -185,21 +214,21 @@ class BookingRescheduleController extends Controller
                         'is_holiday' => $isHoliday,
                         'is_weekend' => $isWeekend,
                         'time_diff' => $timeDiff,
-                        'room_type_id' => $targetRoom->room_type_id,
+                        'room_type_id' => $package->room_type_id,
                 ]);
                 return response()->json(['error' => 'Không tìm thấy chính sách rời lịch phù hợp'], 404);
                 }
 
                 // Calculate price difference
                 $currentPrice = $booking->total_price_vnd;
-                $roomType = DB::table('room_types')->where('room_type_id', $targetRoom->room_type_id)->first();
+                $roomType = DB::table('room_types')->where('room_type_id', $package->room_type_id)->first();
                 if (!$roomType) {
-                Log::error('Room type not found', ['room_type_id' => $targetRoom->room_type_id]);
+                Log::error('Room type not found', ['room_type_id' => $package->room_type_id]);
                 return response()->json(['error' => 'Loại phòng không tồn tại'], 404);
                 }
 
                 $roomPricePerNight = $roomType->base_price + $package->price_modifier_vnd;
-                $newPrice = $roomPricePerNight * $stayDays;
+                $newPrice = $roomPricePerNight * $stayDays * $currentRoomCount;
                 $priceDifference = $newPrice - $currentPrice;
 
                 // Calculate reschedule fee
@@ -210,20 +239,22 @@ class BookingRescheduleController extends Controller
                 $totalPriceDifference = $priceDifference + $rescheduleFee;
 
                 // Prepare room info for response
-                $roomInfo = [
-                'room_id' => $targetRoom->$roomIdColumn,
-                'room_name' => $targetRoom->name ?? 'Không xác định',
-                'room_type' => $roomType->name ?? 'Không xác định',
-                'room_type_id' => $roomType->room_type_id ?? 'Không xác định',
-                'room_description' => $targetRoom->description ?? 'Không có mô tả',
-                'package_name' => $package->name ?? 'Không xác định',
-                'package_id' => $package->package_id ?? 'Không xác định',
-                'package_description' => $package->description ?? 'Không có mô tả',
+                $roomInfo = $targetRooms->map(function ($room) use ($roomType, $package, $roomIdColumn) {
+                return [
+                        'room_id' => $room->$roomIdColumn,
+                        'room_name' => $room->name ?? 'Không xác định',
+                        'room_type' => $roomType->name ?? 'Không xác định',
+                        'room_type_id' => $roomType->room_type_id ?? 'Không xác định',
+                        'room_description' => $room->description ?? 'Không có mô tả',
+                        'package_name' => $package->name ?? 'Không xác định',
+                        'package_id' => $package->package_id ?? 'Không xác định',
+                        'package_description' => $package->description ?? 'Không có mô tả',
                 ];
+                })->toArray();
 
                 // Update booking and create reschedule request within a transaction
                 $paymentId = null;
-                DB::transaction(function () use ($booking, $validated, $targetRoom, $roomOption, $reschedulePolicy, $totalPriceDifference, $roomPricePerNight, $stayDays, $newCheckInDate, $newCheckOutDate, $roomIdColumn, &$paymentId) {
+                DB::transaction(function () use ($booking, $validated, $newRoomIds, $roomOption, $reschedulePolicy, $totalPriceDifference, $roomPricePerNight, $stayDays, $newCheckInDate, $newCheckOutDate, $roomIdColumn, &$paymentId, $currentRoomCount) {
                 // Create payment if there is a price difference
                 if ($totalPriceDifference != 0) {
                         $payment = Payment::create([
@@ -241,7 +272,7 @@ class BookingRescheduleController extends Controller
                         'booking_id' => $booking->booking_id,
                         'new_check_in_date' => $newCheckInDate,
                         'new_check_out_date' => $newCheckOutDate,
-                        'new_room_id' => $targetRoom->$roomIdColumn,
+                        'new_room_id' => count($newRoomIds) === 1 ? $newRoomIds[0] : json_encode($newRoomIds), // Store as integer if single room
                         'new_option_id' => $roomOption->option_id,
                         'reschedule_policy_id' => $reschedulePolicy->policy_id,
                         'price_difference_vnd' => $totalPriceDifference,
@@ -256,7 +287,6 @@ class BookingRescheduleController extends Controller
                 // Update booking
                 $booking->check_in_date = $newCheckInDate;
                 $booking->check_out_date = $newCheckOutDate;
-                $booking->room_id = $targetRoom->$roomIdColumn;
                 $booking->total_price_vnd += $totalPriceDifference;
                 $booking->save();
 
@@ -265,18 +295,23 @@ class BookingRescheduleController extends Controller
                         ->where('booking_id', $booking->booking_id)
                         ->delete();
 
-                DB::table('booking_rooms')->insert([
+                $bookingRoomsData = [];
+                foreach ($newRoomIds as $roomId) {
+                        $bookingRoomsData[] = [
                         'booking_id' => $booking->booking_id,
-                        'room_id' => $targetRoom->$roomIdColumn,
+                        'room_id' => $roomId,
                         'check_in_date' => $newCheckInDate,
                         'check_out_date' => $newCheckOutDate,
                         'option_id' => $roomOption->option_id,
                         'price_per_night' => $roomPricePerNight,
                         'nights' => $stayDays,
                         'total_price' => $roomPricePerNight * $stayDays,
-                ]);
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                        ];
+                }
+                DB::table('booking_rooms')->insert($bookingRoomsData);
 
-                
 
                 // Create audit log
                 DB::table('audit_logs')->insert([
@@ -296,8 +331,6 @@ class BookingRescheduleController extends Controller
                 'check_out_date' => $newCheckOutDate->toDateTimeString(),
                 'total_price' => $booking->total_price_vnd,
                 ];
-
-                
 
                 Log::info('=== BookingController@rescheduleBooking SUCCESS ===');
 
@@ -356,7 +389,8 @@ class BookingRescheduleController extends Controller
                 $validated = $request->validate([
                 'new_check_in_date' => 'required|date|after_or_equal:today',
                 'new_check_out_date' => 'required|date|after:new_check_in_date',
-                'new_room_id' => 'nullable|integer',
+                'new_room_id' => 'nullable|array',
+                'new_room_id.*' => 'integer',
                 ]);
 
                 // Validate booking ID
@@ -399,8 +433,24 @@ class BookingRescheduleController extends Controller
                 $newCheckOutDate = Carbon::parse($validated['new_check_out_date'])->startOfDay();
                 $stayDays = $newCheckOutDate->diffInDays($newCheckInDate, true);
 
-                // Determine room to check
-                $targetRoomId = $validated['new_room_id'] ?? $booking->room_id;
+                // Get current rooms from booking_rooms
+                $currentRooms = DB::table('booking_rooms')
+                ->where('booking_id', $booking->booking_id)
+                ->pluck('room_id')
+                ->toArray();
+                $currentRoomCount = count($currentRooms);
+
+                // Determine rooms to check
+                $newRoomIds = $validated['new_room_id'] ?? $currentRooms;
+                if (count($newRoomIds) !== $currentRoomCount) {
+                Log::error('Number of new rooms does not match current rooms', [
+                        'current_room_count' => $currentRoomCount,
+                        'new_room_count' => count($newRoomIds),
+                ]);
+                return response()->json(['error' => 'Số lượng phòng mới phải bằng số lượng phòng hiện tại'], 400);
+                }
+
+                // Find room table
                 $roomTable = DB::select("SHOW TABLES LIKE 'room'") ? 'room' : (DB::select("SHOW TABLES LIKE 'rooms'") ? 'rooms' : null);
                 if (!$roomTable) {
                 Log::error('No room table found');
@@ -408,17 +458,39 @@ class BookingRescheduleController extends Controller
                 }
                 $roomIdColumn = $roomTable === 'room' ? 'room_id' : 'id';
 
-                // Find target room
-                $targetRoom = DB::table($roomTable)->where($roomIdColumn, $targetRoomId)->first();
-                if (!$targetRoom) {
-                Log::error('Target room not found', ['room_id' => $targetRoomId]);
-                return response()->json(['error' => 'Phòng đích không tồn tại'], 404);
+                // Find package
+                $package = DB::table('room_type_package')
+                ->where('package_id', $roomOption->package_id)
+                ->first();
+                if (!$package) {
+                Log::error('Package not found', ['package_id' => $roomOption->package_id]);
+                return response()->json(['error' => 'Gói phòng không tồn tại'], 404);
+                }
+
+                // Find target rooms and validate room type
+                $targetRooms = DB::table($roomTable)
+                ->whereIn($roomIdColumn, $newRoomIds)
+                ->get();
+                if ($targetRooms->count() !== count($newRoomIds)) {
+                Log::error('Some target rooms not found', ['new_room_ids' => $newRoomIds]);
+                return response()->json(['error' => 'Một hoặc nhiều phòng đích không tồn tại'], 404);
+                }
+
+                foreach ($targetRooms as $room) {
+                if ($room->room_type_id !== $package->room_type_id) {
+                        Log::error('Room not compatible with package', [
+                        'room_id' => $room->$roomIdColumn,
+                        'room_type_id' => $room->room_type_id,
+                        'package_room_type_id' => $package->room_type_id,
+                        ]);
+                        return response()->json(['error' => 'Phòng mới không phù hợp với gói phòng hiện tại'], 400);
+                }
                 }
 
                 // Check room availability
                 $unavailableRooms = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->where('r.' . $roomIdColumn, $targetRoomId)
+                ->whereIn('r.' . $roomIdColumn, $newRoomIds)
                 ->where('r.status', 'available')
                 ->whereIn('r.' . $roomIdColumn, function ($subQuery) use ($newCheckInDate, $newCheckOutDate) {
                         $subQuery->select('br.room_id')
@@ -434,8 +506,8 @@ class BookingRescheduleController extends Controller
 
                 $suggestedRooms = [];
                 if (!empty($unavailableRooms)) {
-                Log::warning('Target room not available', [
-                        'room_id' => $targetRoomId,
+                Log::warning('Some target rooms not available', [
+                        'unavailable_room_ids' => $unavailableRooms,
                         'new_check_in_date' => $newCheckInDate->format('Y-m-d'),
                         'new_check_out_date' => $newCheckOutDate->format('Y-m-d'),
                 ]);
@@ -443,7 +515,7 @@ class BookingRescheduleController extends Controller
                 // Suggest similar rooms
                 $suggestedRooms = DB::table($roomTable . ' as r')
                         ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                        ->where('r.room_type_id', $targetRoom->room_type_id)
+                        ->where('r.room_type_id', $package->room_type_id)
                         ->where('r.status', 'available')
                         ->whereNotIn('r.' . $roomIdColumn, function ($subQuery) use ($newCheckInDate, $newCheckOutDate) {
                         $subQuery->select('br.room_id')
@@ -455,32 +527,22 @@ class BookingRescheduleController extends Controller
                                 ->whereNotNull('br.room_id');
                         })
                         ->select('r.' . $roomIdColumn . ' as room_id', 'r.name', 'rt.name as room_type_name')
+                        ->limit($currentRoomCount)
                         ->get()
                         ->toArray();
 
-                if (empty($suggestedRooms)) {
+                if (count($suggestedRooms) < $currentRoomCount) {
                         return response()->json([
-                        'error' => 'Phòng hiện tại không khả dụng và không có phòng tương tự nào trống',
-                        'suggested_rooms' => []
+                        'error' => 'Không đủ phòng tương tự khả dụng cho yêu cầu rời lịch',
+                        'suggested_rooms' => $suggestedRooms
                         ], 400);
                 }
 
                 return response()->json([
-                        'error' => 'Phòng hiện tại không khả dụng',
+                        'error' => 'Một hoặc nhiều phòng hiện tại không khả dụng',
                         'suggested_rooms' => $suggestedRooms
                 ], 400);
                 }
-
-                // Find package
-                $package = DB::table('room_type_package')
-                ->where('package_id', $roomOption->package_id)
-                ->first();
-                if (!$package) {
-                Log::error('Package not found', ['package_id' => $roomOption->package_id]);
-                return response()->json(['error' => 'Gói phòng không tồn tại'], 404);
-                }
-
-                
 
                 // Find reschedule policy
                 $isHoliday = DB::table('holidays')->where('start_date', Carbon::today()->format('Y-m-d'))->exists();
@@ -488,7 +550,7 @@ class BookingRescheduleController extends Controller
                 $timeDiff = Carbon::today()->diffInDays($newCheckInDate, false);
 
                 $reschedulePolicyQuery = ReschedulePolicy::where('is_active', true)
-                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $targetRoom) {
+                ->where(function ($query) use ($isHoliday, $isWeekend, $timeDiff, $package) {
                         $query->where(function ($q) use ($isHoliday) {
                         $q->where('applies_to_holiday', $isHoliday)->orWhere('applies_to_holiday', 0);
                         })
@@ -499,8 +561,8 @@ class BookingRescheduleController extends Controller
                         $q->where('min_days_before_checkin', '<=', $timeDiff)
                         ->orWhereNull('min_days_before_checkin');
                         })
-                        ->where(function ($q) use ($targetRoom) {
-                        $q->where('room_type_id', $targetRoom->room_type_id)
+                        ->where(function ($q) use ($package) {
+                        $q->where('room_type_id', $package->room_type_id)
                         ->orWhereNull('room_type_id');
                         });
                 })
@@ -512,21 +574,21 @@ class BookingRescheduleController extends Controller
                         'is_holiday' => $isHoliday,
                         'is_weekend' => $isWeekend,
                         'time_diff' => $timeDiff,
-                        'room_type_id' => $targetRoom->room_type_id,
+                        'room_type_id' => $package->room_type_id,
                 ]);
                 return response()->json(['error' => 'Không tìm thấy chính sách rời lịch phù hợp'], 404);
                 }
 
                 // Calculate price difference
                 $currentPrice = $booking->total_price_vnd;
-                $roomType = DB::table('room_types')->where('room_type_id', $targetRoom->room_type_id)->first();
+                $roomType = DB::table('room_types')->where('room_type_id', $package->room_type_id)->first();
                 if (!$roomType) {
-                Log::error('Room type not found', ['room_type_id' => $targetRoom->room_type_id]);
+                Log::error('Room type not found', ['room_type_id' => $package->room_type_id]);
                 return response()->json(['error' => 'Loại phòng không tồn tại'], 404);
                 }
 
                 $roomPricePerNight = $roomType->base_price + $package->price_modifier_vnd;
-                $newPrice = $roomPricePerNight * $stayDays;
+                $newPrice = $roomPricePerNight * $stayDays * $currentRoomCount;
                 $priceDifference = $newPrice - $currentPrice;
 
                 // Calculate reschedule fee
@@ -537,16 +599,18 @@ class BookingRescheduleController extends Controller
                 $totalPriceDifference = $priceDifference + $rescheduleFee;
 
                 // Prepare room info for response
-                $roomInfo = [
-                'room_id' => $targetRoom->$roomIdColumn,
-                'room_name' => $targetRoom->name ?? 'Không xác định',
-                'room_type' => $roomType->name ?? 'Không xác định',
-                'room_type_id' => $roomType->room_type_id ?? 'Không xác định',
-                'room_description' => $targetRoom->description ?? 'Không có mô tả',
-                'package_name' => $package->name ?? 'Không xác định',
-                'package_id' => $package->package_id ?? 'Không xác định',
-                'package_description' => $package->description ?? 'Không có mô tả',
+                $roomInfo = $targetRooms->map(function ($room) use ($roomType, $package, $roomIdColumn) {
+                return [
+                        'room_id' => $room->$roomIdColumn,
+                        'room_name' => $room->name ?? 'Không xác định',
+                        'room_type' => $roomType->name ?? 'Không xác định',
+                        'room_type_id' => $roomType->room_type_id ?? 'Không xác định',
+                        'room_description' => $room->description ?? 'Không có mô tả',
+                        'package_name' => $package->name ?? 'Không xác định',
+                        'package_id' => $package->package_id ?? 'Không xác định',
+                        'package_description' => $package->description ?? 'Không có mô tả',
                 ];
+                })->toArray();
 
                 // Prepare booking info for response
                 $bookingInfo = [
@@ -556,7 +620,6 @@ class BookingRescheduleController extends Controller
                 'total_price' => $booking->total_price_vnd + $totalPriceDifference,
                 ];
 
-                
 
                 Log::info('=== BookingController@getRescheduleBookingInfo SUCCESS ===');
 
