@@ -67,6 +67,7 @@ export interface BookingFilters {
     created_date_range?: [Date, Date];
 }
 
+// For single room booking from reception
 export interface CreateBookingRequest {
     guest_name: string;
     guest_email: string;
@@ -80,6 +81,35 @@ export interface CreateBookingRequest {
     special_requests?: string;
     extra_services?: { service_id: number; quantity: number }[];
 }
+
+// For multi-room booking from the new dashboard flow
+export interface RepresentativeInfo {
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+    idCard: string;
+}
+
+export interface CreateMultiRoomBookingRequest {
+    booking_details: {
+        check_in_date: string;
+        check_out_date: string;
+        adults: number;
+        children: { age: number }[];
+        total_price: number;
+        status: string;
+    };
+    rooms: {
+        room_id: string;
+        package_id: number;
+    }[];
+    representative_info: {
+        mode: 'all' | 'individual';
+        details: RepresentativeInfo | Record<string, RepresentativeInfo>;
+    };
+    payment_method: string;
+}
+
 
 export interface BookingStatistics {
     total_bookings: number;

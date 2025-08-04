@@ -1,0 +1,43 @@
+body {
+    font-size: 25px !important;      /* Desktop */
+    line-height: 1.5;
+    font-family: 'Arial', sans-serif;
+    padding: 20px;
+    color: #222;
+    word-break: break-word;
+    background-color: #fff;
+}
+
+/* Khi lớp dark được thêm vào */
+:where(.dark) body {
+    background-color: #1f2937 !important;  /* Nền tối */
+    color: #e5e7eb !important;  /* Màu chữ sáng */
+}
+
+:where(.dark) .cke_editable {
+    background-color: #1f2937 !important;  /* Nền tối */
+    color: #e5e7eb !important;  /* Màu chữ sáng */
+}
+
+
+/* Tự giảm font trên màn hình nhỏ */
+@media (max-width: 1024px) {
+    body {
+        font-size: 24px !important;  /* Tablet */
+        padding: 18px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 20px !important;  /* Mobile */
+        padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 18px !important;
+        padding: 12px;
+    }
+}

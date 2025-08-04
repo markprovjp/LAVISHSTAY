@@ -98,7 +98,7 @@ const HeroBanner: React.FC<HeroBannerProps> = React.memo(({
   }), []);
 
   return (
-    <div className=" my-10 ">
+    <div className=" my-20 ">
       <div
         className="container mx-auto flex flex-col md:flex-row items-center"
 

@@ -127,6 +127,11 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       label: "Lễ tân",
       icon: null,
     },
+    {
+      key: "/tin-tuc",
+      label: "Tin tức",
+      icon: null,
+    },
 
   ];
 
@@ -148,13 +153,13 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
         <Link to="/profile">{t("user.profile")}</Link>
       </Menu.Item>
       <Menu.Item key="bookings" icon={<BookOutlined />}>
-        <Link to="/bookings">{t("user.bookings")}</Link>
+        <Link to="/profile/bookings">{t("user.bookings")}</Link>
       </Menu.Item>
       <Menu.Item key="wishlist" icon={<HeartOutlined />}>
-        <Link to="/wishlist">{t("user.wishlist")}</Link>
+        <Link to="/profile/wishlist">{t("user.wishlist")}</Link>
       </Menu.Item>
       <Menu.Item key="settings" icon={<SettingOutlined />}>
-        <Link to="/settings">{t("user.settings")}</Link>
+        <Link to="/profile/settings">{t("user.settings")}</Link>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="logout" icon={<LogoutOutlined />}>
@@ -478,16 +483,16 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
                 </Menu.Item>
                 <Menu.Item key="bookings" icon={<BookOutlined />}>
                   <Link
-                    to="/bookings"
+                    to="/profile/bookings"
                     onClick={() => setMobileMenuOpen(false)}
                     style={{ color: token.colorTextBase }}
                   >
-                    Đặt phòng của tôi
+                    Lịch sử đặt phòng
                   </Link>
                 </Menu.Item>
                 <Menu.Item key="wishlist" icon={<HeartOutlined />}>
                   <Link
-                    to="/wishlist"
+                    to="/profile/wishlist"
                     onClick={() => setMobileMenuOpen(false)}
                     style={{ color: token.colorTextBase }}
                   >
