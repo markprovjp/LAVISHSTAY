@@ -77,8 +77,8 @@ import "./index.css";
 import "./styles/theme-transitions.css";
 import "./styles/global.css";
 import "./styles/performance-optimizations.css";
-import NewsPage from "./pages/NewsPage";
-import NewsDetailPage from "./pages/NewsDetailPage";
+import News from "./pages/News";
+
 
 const { Content } = Layout;
 
@@ -121,9 +121,9 @@ const App: React.FC = React.memo(() => {
         <Breadcrumb />
         <Content
           style={{
-  
+
             background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
-           
+
           }}
         >
           <Routes>            {/* Main Pages */}
@@ -131,8 +131,8 @@ const App: React.FC = React.memo(() => {
             <Route path="/about" element={<About />} />
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
-            <Route path="/tin-tuc" element={<NewsPage />} />
-            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+            <Route path="/news" element={<News />} />
+
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/room-types-demo" element={<RoomTypesDemo />} />
             <Route path="/review-booking" element={<ReviewBooking />} />
@@ -163,8 +163,8 @@ const App: React.FC = React.memo(() => {
               <Route path="payment-booking" element={<PaymentBookingReception />} />
               <Route path="room-management/today" element={<RoomManagementDashboard />} />
               <Route path="payment-success" element={<PaymentSuccess />} />
-            </Route>     
-                   {/* Other routes */}
+            </Route>
+            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />

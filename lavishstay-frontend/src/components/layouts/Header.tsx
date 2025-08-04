@@ -105,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
+console.log("Avatar:", user?.avatar);
   // Phong cách tiêu đề động dựa trên cuộn và prop trong suốt
   const headerStyle = {
     position: "fixed",
@@ -128,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       icon: null,
     },
     {
-      key: "/tin-tuc",
+      key: "/news",
       label: "Tin tức",
       icon: null,
     },

@@ -40,7 +40,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { RoomOption } from '../../mirage/roomoption';
-import bookingService, { Booking as ApiBooking } from '../../services/bookingService';
+import bookingService, { Booking as ApiBooking, CancelPolicyResponse } from '../../services/bookingService';
 import { getAmenityIcon, getCategoryColor } from '../../constants/Icons';
 import { Carousel } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
@@ -85,6 +85,11 @@ const BookingManagement: React.FC = () => {
     const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(false);
+    // State cho modal chính sách huỷ
+    const [cancelPolicy, setCancelPolicy] = useState<CancelPolicyResponse | null>(null);
+    const [cancelLoading, setCancelLoading] = useState(false);
+    const [cancelBookingId, setCancelBookingId] = useState<number | string | null>(null);
+    const [cancelConfirming, setCancelConfirming] = useState(false);
 
     useEffect(() => {
         setLoading(true);
@@ -182,19 +187,50 @@ const BookingManagement: React.FC = () => {
         setIsDetailModalVisible(true);
     }, []);
 
-    const handleCancelBooking = useCallback((bookingId: number) => {
-        Modal.confirm({
-            title: 'Xác nhận hủy đặt phòng',
-            content: 'Bạn có chắc chắn muốn hủy đặt phòng này? Hành động này không thể hoàn tác.',
-            okText: 'Hủy đặt phòng',
-            cancelText: 'Không',
-            okType: 'danger',
-            onOk() {
-                // TODO: Gọi API hủy booking
-                console.log('Cancel booking:', bookingId);
-            }
-        });
+
+    const handleShowCancelPolicy = useCallback(async (booking: Booking) => {
+        setCancelLoading(true);
+        setCancelPolicy(null);
+        setCancelBookingId(booking.booking_id);
+
+        setIsDetailModalVisible(false); // Ẩn modal chi tiết nếu đang mở
+
+        try {
+            const policy = await bookingService.getCancelPolicy(booking.booking_id);
+            setCancelPolicy(policy);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Không thể lấy chính sách huỷ',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setCancelLoading(false);
+        }
     }, []);
+
+
+    const handleConfirmCancel = useCallback(async () => {
+        if (!cancelBookingId) return;
+        setCancelConfirming(true);
+        try {
+            await bookingService.confirmCancelBooking(cancelBookingId);
+            Modal.success({
+                title: 'Huỷ đặt phòng thành công',
+                content: 'Đặt phòng đã được huỷ. Vui lòng kiểm tra lại danh sách đặt phòng.',
+            });
+            // Reload lại danh sách booking
+            setBookings(prev => prev.filter(b => b.booking_id !== cancelBookingId));
+            setCancelPolicy(null);
+            setCancelBookingId(null);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Huỷ đặt phòng thất bại',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setCancelConfirming(false);
+        }
+    }, [cancelBookingId]);
 
     return (
         <div style={{ padding: 0, minHeight: '100vh' }}>
@@ -326,8 +362,53 @@ const BookingManagement: React.FC = () => {
                                                     </div>
                                                     <Tag color={getStatusColor(booking.status)} icon={getStatusIcon(booking.status)} style={{ fontSize: 13, padding: '4px 12px', borderRadius: 4, border: 'none', fontWeight: 500 }}>{getStatusText(booking.status)}</Tag>
                                                     <Text style={{ fontSize: 13, color: '#888', padding: '4px 8px', borderRadius: 4, display: 'inline-block', marginTop: 8 }}>Mã: {booking.booking_code}</Text>
+                                                    {/* Nút Huỷ phòng: chỉ hiển thị khi booking.status là Confirmed và chưa check-in */}
+                                                    {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_in_date).isAfter(dayjs()) && (
+                                                        <Button
+                                                            danger
+                                                            size="small"
+                                                            loading={cancelLoading && cancelBookingId === booking.booking_id}
+                                                            style={{ marginTop: 8, borderRadius: 4, fontWeight: 500 }}
+                                                            onClick={e => { e.stopPropagation(); handleShowCancelPolicy(booking); }}
+                                                        >
+                                                            Huỷ phòng
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </Col>
+                                            {/* Modal xác nhận chính sách huỷ */}
+                                            <Modal
+                                                open={!!cancelPolicy}
+                                                onCancel={() => { setCancelPolicy(null); setCancelBookingId(null); }}
+                                                title={<div style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}><SafetyOutlined style={{ color: '#faad14', marginRight: 8 }} />Xác nhận huỷ phòng</div>}
+                                                footer={null}
+                                                width={500}
+                                                destroyOnClose
+
+                                                maskClosable={false}
+                                                maskStyle={{ background: 'rgba(0,0,0,0.08)' }}
+
+                                            >
+                                                {cancelPolicy && (
+                                                    <div>
+                                                        <div style={{ marginBottom: 12, color: '#faad14', fontWeight: 500 }}>{cancelPolicy.message}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Chính sách:</b> {cancelPolicy.policy}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Lý do:</b> {cancelPolicy.reason}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Công thức:</b> {cancelPolicy.formula}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Tiền phạt:</b> <span style={{ color: '#d4380d', fontWeight: 600 }}>{Number(cancelPolicy.penalty).toLocaleString('vi-VN')}₫</span></div>
+                                                        <div style={{ marginBottom: 8 }}><b>Tổng giá trị booking:</b> {Number(cancelPolicy.booking_info?.total_price || 0).toLocaleString('vi-VN')}₫</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Mã booking:</b> {cancelPolicy.booking_info?.booking_code}</div>
+                                                        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                                            <Button onClick={() => { setCancelPolicy(null); setCancelBookingId(null); }}>
+                                                                Quay lại
+                                                            </Button>
+                                                            <Button type="primary" danger loading={cancelConfirming} onClick={handleConfirmCancel}>
+                                                                Xác nhận huỷ
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Modal>
                                         </Row>
                                     </Card>
                                 </Col>
