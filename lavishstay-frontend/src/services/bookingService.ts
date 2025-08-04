@@ -55,17 +55,12 @@ const bookingService = {
         }
     },
 
-<<<<<<< Updated upstream
+
     // Lấy chính sách huỷ phòng (dùng GET endpoint riêng, không huỷ thật)
     getCancelPolicy: async (bookingId: number | string): Promise<CancelPolicyResponse> => {
         try {
             const response = await axiosInstance.get(`/cancel-booking/${bookingId}`);
-=======
-    // Lấy chính sách huỷ phòng (GET hoặc POST đều được, tuỳ backend, ở đây dùng POST như mô tả)
-    getCancelPolicy: async (bookingId: number | string): Promise<CancelPolicyResponse> => {
-        try {
-            const response = await axiosInstance.post(`/cancel-booking/${bookingId}`);
->>>>>>> Stashed changes
+
             return response.data;
         } catch (error: any) {
             if (error.response?.data) {
