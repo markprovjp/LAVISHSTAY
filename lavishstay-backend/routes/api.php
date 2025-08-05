@@ -82,7 +82,7 @@ Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 
 Route::get('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 
-
+Route::get('/room-type-packages/by-room-type/{room_type_id}', [App\Http\Controllers\RoomTypePackageController::class, 'getPackagesByRoomType']);
 
 
 // Room Requests API
@@ -127,9 +127,13 @@ Route::get('/reviews/room-type/{id}', [ReviewController::class, 'apiRoomTypeDeta
 
 
 
+// Route to get room options/packages by room_id or room_type_id
+Route::get('/room-options', [RoomOptionController::class, 'getRoomOptions']);
 Route::apiResource('room-options', RoomOptionController::class);
 Route::post('bookings', [BookingController::class, 'store']);
 Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);
+Route::post('bookings/{id}/check-in', [BookingController::class, 'checkIn']);
+Route::post('bookings/{id}/check-out', [BookingController::class, 'checkOut']);
 
 // Payment Management Routes
 Route::prefix('payment')->group(function () {
