@@ -128,7 +128,75 @@ class BookingController extends Controller {
 
         return view('admin.bookings.index', compact('bookings', 'statistics'));
     }
+ /**
+     * Check-in booking: chuyển trạng thái sang Operational
+     */
+    public function checkIn(Request $request, $id)
+    {
+        $booking = \DB::table('booking')->where('booking_id', $id)->first();
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking không tồn tại'
+            ], 404);
+        }
+        if ($booking->status !== 'Confirmed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể check-in booking đã thanh toán (Confirmed)'
+            ], 400);
+        }
+        try {
+            \DB::table('booking')->where('booking_id', $id)->update([
+                'status' => 'Operational',
+                'updated_at' => now()
+            ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-in thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi check-in: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
+    /**
+     * Check-out booking: chuyển trạng thái sang Completed
+     */
+    public function checkOut(Request $request, $id)
+    {
+        $booking = \DB::table('booking')->where('booking_id', $id)->first();
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking không tồn tại'
+            ], 404);
+        }
+        if ($booking->status !== 'Operational') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể check-out booking đang hoạt động (Operational)'
+            ], 400);
+        }
+        try {
+            \DB::table('booking')->where('booking_id', $id)->update([
+                'status' => 'Completed',
+                'updated_at' => now()
+            ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-out thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi check-out: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     // Route: GET /api/user/bookings
     public function getUserBookings(Request $request)
     {
