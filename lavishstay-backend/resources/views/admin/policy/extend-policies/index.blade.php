@@ -6,14 +6,14 @@
 
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chính sách check-out</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý các chính sách check-out cho đặt phòng</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chính sách gia hạn</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý các chính sách gia hạn cho đặt phòng</p>
             </div>
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                 <!-- Add policy button -->
-                <a href="{{ route('admin.checkout-policies.create') }}"
+                <a href="{{ route('admin.extend-policies.create') }}"
                     class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
                         <path
@@ -26,7 +26,7 @@
 
         <!-- Filters -->
         <div class="py-5">
-            <form method="GET" action="{{ route('admin.checkout-policies') }}" class="flex flex-wrap gap-4">
+            <form method="GET" action="{{ route('admin.extend-policies') }}" class="flex flex-wrap gap-4">
                 <!-- Search -->
                 <div class="flex-1 min-w-64">
                     <input type="text" name="search" value="{{ request('search') }}"
@@ -46,13 +46,13 @@
                 <!-- Sort -->
                 <div>
                     <select name="sort_by" class=" border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                        <option value="priority" {{ request('sort_by') === 'priority' ? 'selected' : '' }}>Mức độ ưu tiên</option>
-                        <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Ngày tạo</option>
+                        <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Ngày tạo
+                        </option>
                         <option value="name" {{ request('sort_by') === 'name' ? 'selected' : '' }}>Tên</option>
-                        <option value="standard_check_out_time"
-                            {{ request('sort_by') === 'standard_check_out_time' ? 'selected' : '' }}>Giờ check-out tiêu chuẩn</option>
-                        <option value="late_check_out_fee_vnd"
-                            {{ request('sort_by') === 'late_check_out_fee_vnd' ? 'selected' : '' }}>Phí check-out muộn</option>
+                        <option value="max_extension_days"
+                            {{ request('sort_by') === 'max_extension_days' ? 'selected' : '' }}>Số ngày gia hạn tối đa</option>
+                        <option value="extension_fee_vnd"
+                            {{ request('sort_by') === 'extension_fee_vnd' ? 'selected' : '' }}>Phí gia hạn</option>
                     </select>
                 </div>
 
@@ -77,7 +77,7 @@
 
                 <!-- Clear Filters -->
                 @if (request()->hasAny(['search', 'status', 'sort_by']))
-                    <a href="{{ route('admin.checkout-policies') }}"
+                    <a href="{{ route('admin.extend-policies') }}"
                         class="btn bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
                         Xóa bộ lọc
                     </a>
@@ -114,10 +114,10 @@
                         <tr>
                             <th class="px-6 py-4 text-left">ID</th>
                             <th class="px-6 py-4 text-left">Tên chính sách</th>
-                            <th class="px-6 py-4 text-left">Giờ check-out tiêu chuẩn</th>
-                            <th class="px-6 py-4 text-left">Phí check-out muộn</th>
-                            <th class="px-6 py-4 text-left">Mức độ ưu tiên</th>
-                            <th class="px-6 py-4 text-left">Điều kiện</th>
+                            <th class="px-6 py-4 text-left">Số ngày gia hạn tối đa</th>
+                            <th class="px-6 py-4 text-left">Phí gia hạn</th>
+                            <th class="px-6 py-4 text-left">Phần trăm gia hạn</th>
+                            <th class="px-6 py-4 text-left">Ngày tối thiểu trước checkout</th>
                             <th class="px-6 py-4 text-left">Trạng thái</th>
                             <th class="px-6 py-4 text-left">Ngày tạo</th>
                             <th class="px-6 py-4 text-center">Thao tác</th>
@@ -141,20 +141,16 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ $policy->standard_check_out_time ? \Carbon\Carbon::parse($policy->standard_check_out_time)->format('H:i') : '-' }}
+                                    {{ $policy->max_extension_days ?? '-' }} ngày
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ $policy->late_check_out_fee_vnd ? number_format($policy->late_check_out_fee_vnd, 0, ',', '.') . ' VND' : '-' }}
+                                    {{ $policy->extension_fee_vnd ? number_format($policy->extension_fee_vnd, 0, ',', '.') . ' VND' : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $policy->priority > 5 ? 'bg-red-100 text-red-800' : ($policy->priority > 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
-                                        {{ $policy->priority }}
-                                    </span>
+                                    {{ $policy->extension_percentage ? $policy->extension_percentage . '%' : '-' }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                    <div class="max-w-xs">
-                                        {{ $policy->conditions ? Str::limit($policy->conditions, 50) : '-' }}
-                                    </div>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    {{ $policy->min_days_before_checkout ?? '-' }} ngày
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <button onclick="toggleStatus({{ $policy->policy_id }})"
@@ -185,7 +181,7 @@
                                             <div class="py-1 z-500" role="menu">
 
                                                 <!-- Edit -->
-                                                <a href="{{ route('admin.checkout-policies.edit', $policy->policy_id) }}"
+                                                <a href="{{ route('admin.extend-policies.edit', $policy->policy_id) }}"
                                                     class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                     role="menuitem">
                                                     Edit Policy
@@ -239,51 +235,74 @@
                                                             {{ $policy->description }}</div>
                                                     </div>
                                                 @endif
-                                                <div>
-                                                    <span
-                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Giờ check-out tiêu chuẩn:</span>
-                                                    <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                        {{ $policy->standard_check_out_time ? \Carbon\Carbon::parse($policy->standard_check_out_time)->format('H:i') : 'Chưa thiết lập' }}</div>
-                                                </div>
-                                                <div>
-                                                    <span
-                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Mức độ ưu tiên:</span>
-                                                    <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                        {{ $policy->priority }}</div>
-                                                </div>
                                             </div>
                                         </div>
 
-                                        <!-- Check-out Information -->
+                                        <!-- Extension Information -->
                                         <div>
-                                            <h4 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Thông tin check-out
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Thông tin gia hạn
                                             </h4>
                                             <div class="space-y-2">
-                                                @if ($policy->late_check_out_fee_vnd)
+                                                @if ($policy->max_extension_days)
                                                     <div>
                                                         <span
-                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Phí check-out muộn:</span>
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Số ngày gia hạn tối đa:</span>
                                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                            {{ number_format($policy->late_check_out_fee_vnd, 0, ',', '.') }}
+                                                            {{ $policy->max_extension_days }} ngày</div>
+                                                    </div>
+                                                @endif
+                                                @if ($policy->extension_fee_vnd)
+                                                    <div>
+                                                        <span
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Phí gia hạn:</span>
+                                                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                                                            {{ number_format($policy->extension_fee_vnd, 0, ',', '.') }}
                                                             VND</div>
                                                     </div>
                                                 @endif
-                                                @if ($policy->conditions)
+                                                @if ($policy->extension_percentage)
                                                     <div>
                                                         <span
-                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Điều kiện áp dụng:</span>
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Phần trăm gia hạn:</span>
                                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                            {{ $policy->conditions }}</div>
+                                                            {{ $policy->extension_percentage }}%</div>
                                                     </div>
                                                 @endif
-                                                @if ($policy->action)
+                                                @if ($policy->min_days_before_checkout)
                                                     <div>
                                                         <span
-                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Hành động:</span>
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Ngày tối thiểu trước checkout:</span>
                                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                            {{ $policy->action }}</div>
+                                                            {{ $policy->min_days_before_checkout }} ngày</div>
                                                     </div>
                                                 @endif
+                                            </div>
+                                        </div>
+
+                                        <!-- Application Rules -->
+                                        <div>
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Quy tắc áp dụng</h4>
+                                            <div class="space-y-2">
+                                                <div>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Áp dụng cho ngày lễ:</span>
+                                                    <div class="flex flex-wrap gap-1 mt-1">
+                                                        <span
+                                                            class="inline-flex items-center font-normal py-1 px-2 rounded-full text-xs {{ $policy->applies_to_holiday ? 'bg-green-100 dark:bg-green-400/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-400/30 text-red-600 dark:text-red-400' }}">
+                                                            {{ $policy->applies_to_holiday ? 'Có' : 'Không' }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Áp dụng cho cuối tuần:</span>
+                                                    <div class="flex flex-wrap gap-1 mt-1">
+                                                        <span
+                                                            class="inline-flex items-center font-normal py-1 px-2 rounded-full text-xs {{ $policy->applies_to_weekend ? 'bg-green-100 dark:bg-green-400/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-400/30 text-red-600 dark:text-red-400' }}">
+                                                            {{ $policy->applies_to_weekend ? 'Có' : 'Không' }}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -334,7 +353,7 @@
                         @empty
                             <tr>
                                 <td colspan="9" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                    Chưa có chính sách check-out nào được tạo.
+                                    Chưa có chính sách gia hạn nào được tạo.
                                 </td>
                             </tr>
                         @endforelse
@@ -344,15 +363,15 @@
 
             <!-- Pagination -->
             <div class="mt-4">
-                {{ $policies->links() }}
+                {{-- {{ $policies->links() }} --}}
             </div>
         </div>
     </div>
 
     <script>
         // Animation khi hiển thị
-        document.getElementById('notification')?.classList.add('translate-y-0', 'opacity-100');
-        document.getElementById('notification')?.classList.remove('-translate-y-full', 'opacity-0');
+        document.getElementById('notification').classList.add('translate-y-0', 'opacity-100');
+        document.getElementById('notification').classList.remove('-translate-y-full', 'opacity-0');
 
         // Tự động ẩn sau 5 giây
         setTimeout(() => {
@@ -361,14 +380,18 @@
 
         function closeNotification() {
             const notification = document.getElementById('notification');
-            if (notification) {
-                notification.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }
+            notification.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
         }
-
+    </script>
+    <script>
+        // Toggle Policy details
+        function showPolicyDetails(policyId) {
+            const detailsRow = document.getElementById(`details-${policyId}`);
+            detailsRow.classList.toggle('hidden');
+        }
         // Toggle dropdown menu
         function toggleDropdown(policyId) {
             const dropdown = document.getElementById(`dropdown-menu-${policyId}`);
@@ -418,11 +441,10 @@
                 });
             }
         });
-
         // Toggle status function
         function toggleStatus(policyId) {
             if (confirm('Bạn có chắc chắn muốn thay đổi trạng thái của chính sách này?')) {
-                fetch(`/admin/checkout-policies/${policyId}/toggle-status`, {
+                fetch(`/admin/extend-policies/${policyId}/toggle-status`, {
                         method: 'PATCH',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -449,7 +471,7 @@
             if (confirm('Bạn có chắc chắn muốn xóa chính sách này? Hành động này không thể hoàn tác.')) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/admin/checkout-policies/${policyId}`;
+                form.action = `/admin/extend-policies/${policyId}`;
 
                 const methodInput = document.createElement('input');
                 methodInput.type = 'hidden';

@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\NewsApiController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\BookingCancellationController;
+use App\Http\Controllers\Api\BookingCheckinController;
 use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
@@ -106,6 +107,21 @@ Route::get('/bookings/{bookingId}/transfer', [BookingTransferController::class, 
 //Yêu cầu rời lịch
 Route::post('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'rescheduleBooking']);
 Route::get('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'getRescheduleBookingInfo']);
+
+
+
+
+// API Routes cho Check-in///////////////////////////////////////////////////
+Route::prefix('checkin')->group(function () {
+    Route::get('/today', [BookingCheckinController::class, 'getTodayCheckins'])->name('api.checkin.today');
+    Route::get('/booking/{bookingId}/info', [BookingCheckinController::class, 'getCheckinInfo'])->name('api.checkin.info');
+    Route::post('/booking/{bookingId}/process', [BookingCheckinController::class, 'processCheckin'])->name('api.checkin.process');
+});
+
+
+
+
+
 
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);

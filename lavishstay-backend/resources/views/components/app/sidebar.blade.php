@@ -610,6 +610,30 @@
                                     </a>
                                 </li>
                                 <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.deposit-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.extend-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Gia hạn</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.deposit-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.transfer-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Chuyển phòng</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.deposit-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.reschedule-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Rời lịch</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.checkout-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.checkin-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Checkin</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.checkout-policies*')) {{ 'text-violet-500!' }} @endif"
                                         href="{{ route('admin.checkout-policies') }}">
                                         <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Checkout</span>

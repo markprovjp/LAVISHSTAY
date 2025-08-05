@@ -31,6 +31,7 @@ use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DepositPolicyController;
 use App\Http\Controllers\DynamicPricingController;
 use App\Http\Controllers\EventFestivalManagementController;
+use App\Http\Controllers\ExtensionPolicyController;
 use App\Http\Controllers\FlexiblePricingController;
 use App\Http\Controllers\RoomTransferController;
 use App\Http\Controllers\TranslationController;
@@ -44,7 +45,9 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NewsController\NewsController;
 use App\Http\Controllers\NewsController\MediaController;
+use App\Http\Controllers\ReschedulePolicyController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\RoomTransferPolicyController;
 
 Route::redirect('/', 'login');
 Route::get('/home', [DashboardController::class, 'index'])->name('home');
@@ -393,6 +396,41 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    //Chính sách gia hạn////////////////////
+    Route::get('/admin/extend-policies', [ExtensionPolicyController::class, 'index'])->name('admin.extend-policies');
+    Route::get('/admin/extend-policies/create', [ExtensionPolicyController::class, 'create'])->name('admin.extend-policies.create');
+    Route::post('/admin/extend-policies', [ExtensionPolicyController::class, 'store'])->name('admin.extend-policies.store');
+    Route::get('/admin/extend-policies/{extendPolicy}', [ExtensionPolicyController::class, 'show'])->name('admin.extend-policies.show');
+    Route::get('/admin/extend-policies/{extendPolicy}/edit', [ExtensionPolicyController::class, 'edit'])->name('admin.extend-policies.edit');
+    Route::put('/admin/extend-policies/{extendPolicy}', [ExtensionPolicyController::class, 'update'])->name('admin.extend-policies.update');
+    Route::delete('/admin/extend-policies/{extendPolicy}', [ExtensionPolicyController::class, 'destroy'])->name('admin.extend-policies.destroy');
+    Route::patch('/admin/extend-policies/{extendPolicy}/toggle-status', [ExtensionPolicyController::class, 'toggleStatus'])->name('admin.extend-policies.toggle-status');
+
+
+    //Chính sách chuyển phòng////////////////////
+    Route::get('/admin/transfer-policies', [RoomTransferPolicyController::class, 'index'])->name('admin.transfer-policies');
+    Route::get('/admin/transfer-policies/create', [RoomTransferPolicyController::class, 'create'])->name('admin.transfer-policies.create');
+    Route::post('/admin/transfer-policies', [RoomTransferPolicyController::class, 'store'])->name('admin.transfer-policies.store');
+    Route::get('/admin/transfer-policies/{transferPolicy}', [RoomTransferPolicyController::class, 'show'])->name('admin.transfer-policies.show');
+    Route::get('/admin/transfer-policies/{transferPolicy}/edit', [RoomTransferPolicyController::class, 'edit'])->name('admin.transfer-policies.edit');
+    Route::put('/admin/transfer-policies/{transferPolicy}', [RoomTransferPolicyController::class, 'update'])->name('admin.transfer-policies.update');
+    Route::delete('/admin/transfer-policies/{transferPolicy}', [RoomTransferPolicyController::class, 'destroy'])->name('admin.transfer-policies.destroy');
+    Route::patch('/admin/transfer-policies/{transferPolicy}/toggle-status', [RoomTransferPolicyController::class, 'toggleStatus'])->name('admin.transfer-policies.toggle-status');
+
+
+
+    //Chính sách rời lịch////////////////////
+    Route::get('/admin/reschedule-policies', [ReschedulePolicyController::class, 'index'])->name('admin.reschedule-policies');
+    Route::get('/admin/reschedule-policies/create', [ReschedulePolicyController::class, 'create'])->name('admin.reschedule-policies.create');
+    Route::post('/admin/reschedule-policies', [ReschedulePolicyController::class, 'store'])->name('admin.reschedule-policies.store');
+    Route::get('/admin/reschedule-policies/{reschedulePolicy}', [ReschedulePolicyController::class, 'show'])->name('admin.reschedule-policies.show');
+    Route::get('/admin/reschedule-policies/{reschedulePolicy}/edit', [ReschedulePolicyController::class, 'edit'])->name('admin.reschedule-policies.edit');
+    Route::put('/admin/reschedule-policies/{reschedulePolicy}', [ReschedulePolicyController::class, 'update'])->name('admin.reschedule-policies.update');
+    Route::delete('/admin/reschedule-policies/{reschedulePolicy}', [ReschedulePolicyController::class, 'destroy'])->name('admin.reschedule-policies.destroy');
+    Route::patch('/admin/reschedule-policies/{reschedulePolicy}/toggle-status', [ReschedulePolicyController::class, 'toggleStatus'])->name('admin.reschedule-policies.toggle-status');
+
+
+
     // Chính sách đặt cọc///////////////////////////////////////////////////
     Route::get('/admin/deposit-policies', [DepositPolicyController::class, 'index'])->name('admin.deposit-policies');
     Route::get('/admin/deposit-policies/create', [DepositPolicyController::class, 'create'])->name('admin.deposit-policies.create');
@@ -406,8 +444,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     // Chính sách checkin ///////////////////////////////////////////////////
-    Route::get('/admin/checkout-policies', [CheckinPolicyController::class, 'index'])->name('admin.checkin-policies');
-
+    Route::get('/admin/checkin-policies', [CheckinPolicyController::class, 'index'])->name('admin.checkin-policies');
+    Route::get('/admin/checkin-policies/create', [CheckinPolicyController::class, 'create'])->name('admin.checkin-policies.create');
+    Route::post('/admin/checkin-policies', [CheckinPolicyController::class, 'store'])->name('admin.checkin-policies.store');
+    Route::get('/admin/checkin-policies/{id}', [CheckinPolicyController::class, 'show'])->name('admin.checkin-policies.show');
+    Route::get('/admin/checkin-policies/{id}/edit', [CheckinPolicyController::class, 'edit'])->name('admin.checkin-policies.edit');
+    Route::put('/admin/checkin-policies/{id}', [CheckinPolicyController::class, 'update'])->name('admin.checkin-policies.update');
+    Route::delete('/admin/checkin-policies/{id}', [CheckinPolicyController::class, 'destroy'])->name('admin.checkin-policies.destroy');
+    Route::patch('/admin/checkin-policies/{id}/toggle-status', [CheckinPolicyController::class, 'toggleStatus'])->name('admin.checkin-policies.toggle-status');
 
     // Chính sách checkout ///////////////////////////////////////////////////
     Route::get('/admin/checkout-policies', [CheckoutPolicyController::class, 'index'])->name('admin.checkout-policies');
