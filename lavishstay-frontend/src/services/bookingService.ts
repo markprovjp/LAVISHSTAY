@@ -38,6 +38,55 @@ export interface CancelPolicyResponse {
 }
 
 const bookingService = {
+    // Lấy chính sách rời lịch (dời lịch, preview, dùng GET, không rời lịch thật)
+    getReschedulePolicy: async (
+        bookingId: number | string,
+        newCheckInDate: string,
+        newCheckOutDate: string,
+        newRoomId: number,
+        reason?: string
+    ): Promise<any> => {
+        try {
+            const response = await axiosInstance.get(`/bookings/${bookingId}/reschedule`, {
+                params: {
+                    new_check_in_date: newCheckInDate,
+                    new_check_out_date: newCheckOutDate,
+                    new_room_id: newRoomId,
+                    reason: reason || ''
+                }
+            });
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                throw error.response.data;
+            }
+            throw error;
+        }
+    },
+
+    // Xác nhận rời lịch thật (POST endpoint này)
+    confirmRescheduleBooking: async (
+        bookingId: number | string,
+        newCheckInDate: string,
+        newCheckOutDate: string,
+        newRoomId: number,
+        reason?: string
+    ): Promise<any> => {
+        try {
+            const response = await axiosInstance.post(`/bookings/${bookingId}/reschedule`, {
+                new_check_in_date: newCheckInDate,
+                new_check_out_date: newCheckOutDate,
+                new_room_id: newRoomId,
+                reason: reason || ''
+            });
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                throw error.response.data;
+            }
+            throw error;
+        }
+    },
     // Lấy danh sách booking của user hiện tại
     getUserBookings: async (): Promise<Booking[]> => {
         try {
@@ -50,6 +99,36 @@ const bookingService = {
         } catch (error: any) {
             if (error.response?.data?.message) {
                 throw new Error(error.response.data.message);
+            }
+            throw error;
+        }
+    },
+
+    // Lấy chính sách gia hạn phòng (dùng GET endpoint riêng, không gia hạn thật)
+    getExtendPolicy: async (bookingId: number | string, newCheckOutDate: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.get(`/bookings/${bookingId}/extend`, {
+                params: { new_check_out_date: newCheckOutDate }
+            });
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                throw error.response.data;
+            }
+            throw error;
+        }
+    },
+
+    // Xác nhận gia hạn thật (POST endpoint này, truyền new_check_out_date)
+    confirmExtendBooking: async (bookingId: number | string, newCheckOutDate: string): Promise<any> => {
+        try {
+            const response = await axiosInstance.post(`/bookings/${bookingId}/extend`, {
+                new_check_out_date: newCheckOutDate
+            });
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                throw error.response.data;
             }
             throw error;
         }

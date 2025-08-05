@@ -16,7 +16,8 @@ import {
     Dropdown,
     Menu,
     Flex,
-    Progress
+    Progress,
+    message
 } from 'antd';
 import { ProTable, type ProColumns } from '@ant-design/pro-components';
 import {
@@ -40,11 +41,8 @@ import {
     QuestionCircleOutlined,
     SmileOutlined
 } from '@ant-design/icons';
-import {
-    useGetBookings,
-    useGetBookingStatistics,
-    useCancelBooking,
-} from '../../../hooks/useReception';
+import { useGetBookings, useGetBookingStatistics, useCancelBooking } from '../../../hooks/useReception';
+import { receptionAPI } from '../../../utils/api';
 import {
     Booking,
     BookingFilters
@@ -330,24 +328,49 @@ const BookingManagement: React.FC = () => {
             fixed: 'right',
             align: 'center',
             render: (_, record) => {
-                const menu = (
-                    <Menu onClick={({ key }) => {
-                        if (key === 'view') {
-                            setSelectedBooking(record as any);
-                            setIsDetailModalVisible(true);
-                        } else if (key === 'assign') {
-                            setRoomSelectionBookingId(record.booking_id);
-                            setIsRoomSelectionModalVisible(true);
-                        } else if (key === 'cancel') {
-                            handleCancelBooking(record.booking_id);
+                const handleMenuClick = async ({ key }: { key: string }) => {
+                    if (key === 'view') {
+                        setSelectedBooking(record as any);
+                        setIsDetailModalVisible(true);
+                    } else if (key === 'assign') {
+                        setRoomSelectionBookingId(record.booking_id);
+                        setIsRoomSelectionModalVisible(true);
+                    } else if (key === 'cancel') {
+                        handleCancelBooking(record.booking_id);
+                    } else if (key === 'checkin') {
+                        // Gọi API check-in qua axios
+                        try {
+                            await receptionAPI.checkIn({ booking_id: record.booking_id, room_id: record.room_id || 0 });
+                            message.success('Check-in thành công!');
+                            refetch();
+                        } catch (e) {
+                            message.error('Check-in thất bại!');
                         }
-                    }}>
+                    } else if (key === 'checkout') {
+                        // Gọi API check-out qua axios
+                        try {
+                            await receptionAPI.checkOut({ booking_id: record.booking_id, room_id: record.room_id || 0 });
+                            message.success('Check-out thành công!');
+                            refetch();
+                        } catch (e) {
+                            message.error('Check-out thất bại!');
+                        }
+                    }
+                };
+                const menu = (
+                    <Menu onClick={handleMenuClick}>
                         <Menu.Item key="view" icon={<EyeOutlined />}>Xem Chi Tiết</Menu.Item>
                         {(!record.room_names || record.room_names.includes('null')) && (
                             <Menu.Item key="assign" icon={<HomeOutlined />}>Gán Phòng</Menu.Item>
                         )}
                         {(record.status.toLowerCase() === 'pending' || record.status.toLowerCase() === 'confirmed') && (
                             <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>Hủy Đặt Phòng</Menu.Item>
+                        )}
+                        {(record.status.toLowerCase() === 'confirmed' || record.status.toLowerCase() === 'operational') && (
+                            <Menu.Item key="checkin" icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}>Check-in</Menu.Item>
+                        )}
+                        {(record.status.toLowerCase() === 'operational') && (
+                            <Menu.Item key="checkout" icon={<CheckCircleOutlined style={{ color: '#1890ff' }} />}>Check-out</Menu.Item>
                         )}
                     </Menu>
                 );
