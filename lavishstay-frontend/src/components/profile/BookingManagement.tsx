@@ -17,7 +17,10 @@ import {
     Empty,
     Input,
     DatePicker,
-    Skeleton
+    Skeleton,
+    Select,
+    Form,
+    message
 } from 'antd';
 import {
     CalendarOutlined,
@@ -84,6 +87,11 @@ interface Booking {
 }
 
 const BookingManagement: React.FC = () => {
+    // State cho modal rời lịch mới (phải đặt trong function component)
+    const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
+    const [rescheduleBooking, setRescheduleBooking] = useState<any>(null);
+    const [rescheduleRooms, setRescheduleRooms] = useState<any[]>([]);
+    const [rescheduleForm] = Form.useForm();
     // State cho rời lịch (bổ sung nếu thiếu)
     const [reschedulePolicy, setReschedulePolicy] = useState<any | null>(null);
     const [rescheduleLoading, setRescheduleLoading] = useState(false);
@@ -130,6 +138,8 @@ const BookingManagement: React.FC = () => {
         }
     }, [extendBookingId]);
 
+    // State cho toàn bộ phòng
+    const [allRooms, setAllRooms] = useState<any[]>([]);
     useEffect(() => {
         setLoading(true);
         bookingService.getUserBookings()
@@ -137,15 +147,19 @@ const BookingManagement: React.FC = () => {
                 // Lọc trùng booking_code, chỉ lấy booking đầu tiên cho mỗi booking_code
                 const uniqueBookings: Booking[] = [];
                 const seenCodes = new Set();
-                for (const b of data) {
+                for (const b of data.bookings) {
                     if (!seenCodes.has(b.booking_code)) {
                         uniqueBookings.push(b);
                         seenCodes.add(b.booking_code);
                     }
                 }
                 setBookings(uniqueBookings);
+                setAllRooms(data.all_rooms || []);
             })
-            .catch(() => setBookings([]))
+            .catch(() => {
+                setBookings([]);
+                setAllRooms([]);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -345,7 +359,7 @@ const BookingManagement: React.FC = () => {
                 bookingId,
                 checkIn.format('YYYY-MM-DD'),
                 checkOut.format('YYYY-MM-DD'),
-                roomId,
+                [roomId],
                 reason
             );
             setReschedulePolicy(policy);
@@ -378,7 +392,7 @@ const BookingManagement: React.FC = () => {
                 booking.booking_id,
                 dayjs(booking.check_in_date).format('YYYY-MM-DD'),
                 dayjs(booking.check_out_date).format('YYYY-MM-DD'),
-                roomId,
+                [roomId],
                 ''
             );
             setReschedulePolicy(policy);
@@ -401,7 +415,7 @@ const BookingManagement: React.FC = () => {
                 rescheduleBookingId,
                 rescheduleCheckIn.format('YYYY-MM-DD'),
                 rescheduleCheckOut.format('YYYY-MM-DD'),
-                0,
+                [],
                 rescheduleReason
             );
             Modal.success({
@@ -601,96 +615,188 @@ const BookingManagement: React.FC = () => {
                                                                     <Button
                                                                         type="default"
                                                                         size="small"
-                                                                        loading={rescheduleLoading && rescheduleBookingId === booking.booking_id}
                                                                         style={{ borderRadius: 4, fontWeight: 500, color: '#722ed1', borderColor: '#b37feb' }}
                                                                         icon={<ClockCircleOutlined style={{ color: '#722ed1' }} />}
-                                                                        onClick={e => { e.stopPropagation(); handleShowReschedulePolicy(booking); }}
-                                                                        disabled={!(booking.room_id || booking.room?.room_id)}
-                                                                        title={!(booking.room_id || booking.room?.room_id) ? 'Không xác định được phòng để rời lịch' : ''}
+                                                                        onClick={e => {
+                                                                            e.stopPropagation();
+                                                                            // Xác định số lượng phòng đã đặt trong booking này
+                                                                            // Nếu booking chỉ có 1 phòng (room_id), chỉ cho chọn 1 phòng mới
+                                                                            const bookedRoomIds = booking.room_id ? [booking.room_id] : [];
+                                                                            // Lấy danh sách phòng mới (loại bỏ các phòng đã đặt, nếu cần)
+                                                                            const rooms = allRooms.filter(r => !bookedRoomIds.includes(r.room_id)).map(r => ({ room_id: r.room_id, room_name: r.name }));
+                                                                            if (rooms.length < bookedRoomIds.length) {
+                                                                                message.error('Không đủ phòng để dời lịch!');
+                                                                                return;
+                                                                            }
+                                                                            setRescheduleRooms(rooms);
+                                                                            setRescheduleModalVisible(true);
+                                                                            setRescheduleBooking(booking);
+                                                                            setReschedulePolicy(null);
+                                                                            // Reset form, nhưng chỉ chọn sẵn đúng số lượng phòng đã đặt
+                                                                            rescheduleForm && rescheduleForm.setFieldsValue({
+                                                                                new_check_in_date: dayjs(booking.check_in_date),
+                                                                                new_check_out_date: dayjs(booking.check_out_date),
+                                                                                new_room_id: [], // Không chọn sẵn phòng nào
+                                                                                reason: ''
+                                                                            });
+                                                                        }}
                                                                     >
                                                                         Rời lịch
                                                                     </Button>
                                                                 )}
                                                             </Space>
-                                                            {/* Modal xác nhận chính sách rời lịch */}
+                                                            {/* Modal nhập thông tin rời lịch và xem chính sách */}
                                                             <Modal
-                                                                open={!!reschedulePolicy}
-                                                                onCancel={() => { setReschedulePolicy(null); setRescheduleBookingId(null); setRescheduleCheckIn(null); setRescheduleCheckOut(null); setRescheduleReason(''); }}
-                                                                title={<div style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}><ClockCircleOutlined style={{ color: '#722ed1', marginRight: 8 }} />Xác nhận rời lịch</div>}
+                                                                open={rescheduleModalVisible}
+                                                                onCancel={() => { setRescheduleModalVisible(false); setReschedulePolicy(null); }}
+                                                                title={<div style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}><ClockCircleOutlined style={{ color: '#722ed1', marginRight: 8 }} />Dời lịch đặt phòng</div>}
                                                                 footer={null}
-                                                                width={500}
+                                                                width={600}
                                                                 destroyOnClose
                                                                 maskClosable={false}
-                                                                maskStyle={{ background: 'rgba(0,0,0,0.08)' }}
                                                             >
+                                                                {rescheduleBooking && (
+                                                                    <Form
+                                                                        form={rescheduleForm}
+                                                                        layout="vertical"
+                                                                        initialValues={{
+                                                                            new_check_in_date: dayjs(rescheduleBooking.check_in_date),
+                                                                            new_check_out_date: dayjs(rescheduleBooking.check_out_date),
+                                                                            new_room_id: rescheduleRooms.map(r => r.room_id),
+                                                                            reason: ''
+                                                                        }}
+                                                                    >
+                                                                        <Form.Item label="Ngày check-in mới" name="new_check_in_date" rules={[{ required: true, message: 'Chọn ngày check-in mới' }]}>
+                                                                            <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+                                                                        </Form.Item>
+                                                                        <Form.Item label="Ngày check-out mới" name="new_check_out_date" rules={[{ required: true, message: 'Chọn ngày check-out mới' }]}>
+                                                                            <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+                                                                        </Form.Item>
+                                                                        <Form.Item label="Chọn phòng mới" name="new_room_id" rules={[{ required: true, message: 'Chọn phòng mới' }]}>
+                                                                            <Select mode="multiple" placeholder="Chọn phòng" style={{ width: '100%' }}>
+                                                                                {rescheduleRooms.map(room => (
+                                                                                    <Select.Option key={room.room_id} value={room.room_id}>{room.room_name}</Select.Option>
+                                                                                ))}
+                                                                            </Select>
+                                                                        </Form.Item>
+                                                                        <Form.Item label="Lý do dời lịch" name="reason" rules={[{ required: true, message: 'Nhập lý do' }]}>
+                                                                            <Input.TextArea rows={2} placeholder="Nhập lý do dời lịch" />
+                                                                        </Form.Item>
+                                                                        <Form.Item>
+                                                                            <Button
+                                                                                type="primary"
+                                                                                loading={rescheduleLoading}
+                                                                                onClick={async () => {
+                                                                                    try {
+                                                                                        const values = await rescheduleForm.validateFields();
+                                                                                        setRescheduleLoading(true);
+                                                                                        // Validate new_room_id là mảng số hợp lệ
+                                                                                        const validRoomIds = Array.isArray(values.new_room_id) ? values.new_room_id.filter((id: any) => typeof id === 'number' && id) : [];
+                                                                                        if (!validRoomIds.length) {
+                                                                                            message.error('Vui lòng chọn phòng mới hợp lệ!');
+                                                                                            return;
+                                                                                        }
+                                                                                        const policy = await bookingService.getReschedulePolicy(
+                                                                                            rescheduleBooking.booking_id,
+                                                                                            dayjs(values.new_check_in_date).format('YYYY-MM-DD'),
+                                                                                            dayjs(values.new_check_out_date).format('YYYY-MM-DD'),
+                                                                                            validRoomIds,
+                                                                                            values.reason
+                                                                                        );
+                                                                                        // Kiểm tra phòng không khả dụng
+                                                                                        if (policy.unavailable_room_ids && Array.isArray(policy.unavailable_room_ids) && policy.unavailable_room_ids.length > 0) {
+                                                                                            const unavailableNames = rescheduleRooms.filter(r => policy.unavailable_room_ids.includes(r.room_id)).map(r => r.room_name).join(', ');
+                                                                                            message.error(`Phòng sau không còn trống: ${unavailableNames}`);
+                                                                                            setReschedulePolicy(null);
+                                                                                            return;
+                                                                                        }
+                                                                                        setReschedulePolicy(policy);
+                                                                                    } catch (err: any) {
+                                                                                        if (err?.message) message.error(err.message);
+                                                                                    } finally {
+                                                                                        setRescheduleLoading(false);
+                                                                                    }
+                                                                                }}
+                                                                                style={{ marginRight: 8 }}
+                                                                            >
+                                                                                Xem chính sách
+                                                                            </Button>
+                                                                            <Button
+                                                                                type="primary"
+                                                                                danger
+                                                                                loading={rescheduleConfirming}
+                                                                                onClick={async () => {
+                                                                                    try {
+                                                                                        const values = await rescheduleForm.validateFields();
+                                                                                        setRescheduleConfirming(true);
+                                                                                        // Validate new_room_id là mảng số hợp lệ
+                                                                                        const validRoomIds = Array.isArray(values.new_room_id) ? values.new_room_id.filter((id: any) => typeof id === 'number' && id) : [];
+                                                                                        if (!validRoomIds.length) {
+                                                                                            message.error('Vui lòng chọn phòng mới hợp lệ!');
+                                                                                            return;
+                                                                                        }
+                                                                                        await bookingService.confirmRescheduleBooking(
+                                                                                            rescheduleBooking.booking_id,
+                                                                                            dayjs(values.new_check_in_date).format('YYYY-MM-DD'),
+                                                                                            dayjs(values.new_check_out_date).format('YYYY-MM-DD'),
+                                                                                            validRoomIds,
+                                                                                            values.reason
+                                                                                        );
+                                                                                        Modal.success({
+                                                                                            title: 'Dời lịch thành công',
+                                                                                            content: 'Đặt phòng đã được dời lịch. Vui lòng kiểm tra lại danh sách đặt phòng.',
+                                                                                        });
+                                                                                        setRescheduleModalVisible(false);
+                                                                                        setReschedulePolicy(null);
+                                                                                        setRescheduleBooking(null);
+                                                                                        setBookings(prev => prev.map(b => b.booking_id === rescheduleBooking.booking_id ? { ...b, check_in_date: dayjs(values.new_check_in_date).format('YYYY-MM-DD'), check_out_date: dayjs(values.new_check_out_date).format('YYYY-MM-DD') } : b));
+                                                                                    } catch (err: any) {
+                                                                                        Modal.error({
+                                                                                            title: 'Dời lịch thất bại',
+                                                                                            content: err?.message || 'Đã có lỗi xảy ra',
+                                                                                        });
+                                                                                    } finally {
+                                                                                        setRescheduleConfirming(false);
+                                                                                    }
+                                                                                }}
+                                                                                style={{ marginRight: 8 }}
+                                                                            >
+                                                                                Xác nhận dời lịch
+                                                                            </Button>
+                                                                            <Button onClick={() => setRescheduleModalVisible(false)}>Đóng</Button>
+                                                                        </Form.Item>
+                                                                    </Form>
+                                                                )}
+                                                                {/* Hiển thị chính sách nếu có */}
                                                                 {reschedulePolicy && (
-                                                                    <div>
-                                                                        <div style={{ marginBottom: 12, color: '#722ed1', fontWeight: 500 }}>{reschedulePolicy.message}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Lý do:</b> {reschedulePolicy.reason}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Công thức:</b> {reschedulePolicy.formula}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Chính sách:</b> {reschedulePolicy.policy} (ID: {reschedulePolicy.policy_id})</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Phí rời lịch:</b> <span style={{ color: '#722ed1', fontWeight: 600 }}>{Number(reschedulePolicy.reschedule_fee || 0).toLocaleString('vi-VN')}₫</span></div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Loại phí:</b> {reschedulePolicy.fee_type}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Tỷ lệ phần trăm:</b> {reschedulePolicy.reschedule_percentage}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Phí cố định:</b> {Number(reschedulePolicy.reschedule_fixed_amount || 0).toLocaleString('vi-VN')}₫</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Chênh lệch giá:</b> {Number(reschedulePolicy.price_difference || 0).toLocaleString('vi-VN')}₫</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Tổng chênh lệch sau rời lịch:</b> {Number(reschedulePolicy.total_price_difference || 0).toLocaleString('vi-VN')}₫</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Tổng giá trị booking sau rời lịch:</b> {Number(reschedulePolicy.booking_info?.total_price || 0).toLocaleString('vi-VN')}₫</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Mã booking:</b> {reschedulePolicy.booking_info?.booking_code}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Phòng:</b> {reschedulePolicy.room_info?.room_name}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Check-in mới:</b> {reschedulePolicy.booking_info?.check_in_date}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Check-out mới:</b> {reschedulePolicy.booking_info?.check_out_date}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Loại phòng:</b> {reschedulePolicy.room_info?.room_type}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Mô tả phòng:</b> {reschedulePolicy.room_info?.room_description}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Gói phòng:</b> {reschedulePolicy.room_info?.package_name}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Khách sạn:</b> {reschedulePolicy.room_info?.hotel_name || reschedulePolicy.hotel_info?.hotel_name}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Địa chỉ KS:</b> {reschedulePolicy.hotel_info?.hotel_address}</div>
-                                                                        <div style={{ marginBottom: 8 }}><b>Điện thoại KS:</b> {reschedulePolicy.hotel_info?.hotel_phone}</div>
-                                                                        <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-                                                                            <b>Chọn ngày check-in mới:</b>
-                                                                            <DatePicker
-                                                                                value={rescheduleCheckIn}
-                                                                                onChange={setRescheduleCheckIn}
-                                                                                style={{ marginLeft: 8 }}
-                                                                                format="YYYY-MM-DD"
-                                                                                disabledDate={current => {
-                                                                                    if (!current) return false;
-                                                                                    // Không cho chọn ngày trước hôm nay
-                                                                                    return current.isBefore(dayjs(), 'day');
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                        <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-                                                                            <b>Chọn ngày check-out mới:</b>
-                                                                            <DatePicker
-                                                                                value={rescheduleCheckOut}
-                                                                                onChange={setRescheduleCheckOut}
-                                                                                style={{ marginLeft: 8 }}
-                                                                                format="YYYY-MM-DD"
-                                                                                disabledDate={current => {
-                                                                                    if (!current || !rescheduleCheckIn) return false;
-                                                                                    // Không cho chọn ngày trước check-in mới
-                                                                                    return current.isSame(rescheduleCheckIn, 'day') || current.isBefore(rescheduleCheckIn, 'day');
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                        <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
-                                                                            <b>Lý do rời lịch:</b>
-                                                                            <Input
-                                                                                value={rescheduleReason}
-                                                                                onChange={e => setRescheduleReason(e.target.value)}
-                                                                                placeholder="Nhập lý do rời lịch"
-                                                                                style={{ marginLeft: 8 }}
-                                                                            />
-                                                                        </div>
-                                                                        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                                                                            <Button onClick={() => { setReschedulePolicy(null); setRescheduleBookingId(null); setRescheduleCheckIn(null); setRescheduleCheckOut(null); setRescheduleReason(''); }}>
-                                                                                Quay lại
-                                                                            </Button>
-                                                                            <Button type="primary" style={{ background: '#722ed1', borderColor: '#722ed1' }} loading={rescheduleConfirming} onClick={handleConfirmReschedule}>
-                                                                                Xác nhận rời lịch
-                                                                            </Button>
-                                                                        </div>
+                                                                    <div style={{ marginTop: 24, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 8, padding: 16 }}>
+                                                                        <Title level={5} style={{ color: '#389e0d', marginBottom: 8 }}>Chính sách dời lịch</Title>
+                                                                        <div><b>Thông báo:</b> {reschedulePolicy.message}</div>
+                                                                        <div><b>Công thức:</b> {reschedulePolicy.formula}</div>
+                                                                        <div><b>Chính sách:</b> {reschedulePolicy.policy} (ID: {reschedulePolicy.policy_id})</div>
+                                                                        <div><b>Phí dời lịch:</b> <span style={{ color: '#fa541c', fontWeight: 600 }}>{Number(reschedulePolicy.reschedule_fee || 0).toLocaleString('vi-VN')}₫</span></div>
+                                                                        <div><b>Chênh lệch giá:</b> {Number(reschedulePolicy.price_difference || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <div><b>Tổng chênh lệch:</b> {Number(reschedulePolicy.total_price_difference || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <div><b>Loại phí:</b> {reschedulePolicy.fee_type}</div>
+                                                                        <div><b>Tỷ lệ phần trăm:</b> {reschedulePolicy.reschedule_percentage}</div>
+                                                                        <div><b>Phí cố định:</b> {Number(reschedulePolicy.reschedule_fixed_amount || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <Divider />
+                                                                        <div><b>Booking:</b> {reschedulePolicy.booking_info?.booking_code}</div>
+                                                                        <div><b>Check-in:</b> {reschedulePolicy.booking_info?.check_in_date}</div>
+                                                                        <div><b>Check-out:</b> {reschedulePolicy.booking_info?.check_out_date}</div>
+                                                                        <div><b>Tổng giá trị booking:</b> {Number(reschedulePolicy.booking_info?.total_price || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <Divider />
+                                                                        <div><b>Phòng mới:</b></div>
+                                                                        {Array.isArray(reschedulePolicy.room_info) && reschedulePolicy.room_info.length > 0 ? (
+                                                                            <ul style={{ paddingLeft: 20 }}>
+                                                                                {reschedulePolicy.room_info.map((room: any, idx: number) => (
+                                                                                    <li key={idx}>
+                                                                                        <b>{room.room_name}</b> - {room.room_type} (Gói: {room.package_name})<br />
+                                                                                        <span style={{ color: '#888' }}>{room.room_description}</span>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        ) : <div>Không có thông tin phòng mới</div>}
                                                                     </div>
                                                                 )}
                                                             </Modal>
