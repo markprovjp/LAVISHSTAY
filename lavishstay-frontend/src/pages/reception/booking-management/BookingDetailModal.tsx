@@ -1117,7 +1117,11 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 <RescheduleTab />
                             </TabPane>
                             <TabPane tab="Chuyển phòng" key="changeroom">
-                                <ChangeRoomTab />
+                                <ChangeRoomTab
+                                    bookingId={bookingDetail?.id || bookingDetail?.booking_id || null}
+                                    bookingRooms={bookingDetail?.booking_rooms || []}
+                                    onUpdate={fetchBookingDetails}
+                                />
                             </TabPane>
                         </Tabs>
                         <RoomSelectionModal

@@ -62,7 +62,7 @@ class RoomOption extends Model
 
     public function promotions()
     {
-        return $this->hasMany(RoomOptionPromotion::class, 'option_id');
+        // return $this->hasMany(RoomOptionPromotion::class, 'option_id'); // Tạm thời comment để tránh lỗi khi model chưa tồn tại
     }
 
     public function meal()

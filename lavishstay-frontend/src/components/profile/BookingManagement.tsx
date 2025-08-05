@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
     Card,
@@ -8,7 +10,6 @@ import {
     Button,
     Space,
     Tabs,
-    Rate,
     Divider,
     Modal,
     Timeline,
@@ -25,8 +26,6 @@ import {
     PhoneOutlined,
     CreditCardOutlined,
     EyeOutlined,
-    DeleteOutlined,
-    StarOutlined,
     CheckCircleOutlined,
     ExclamationCircleOutlined,
     CloseCircleOutlined,
@@ -36,15 +35,15 @@ import {
     GiftOutlined,
     SafetyOutlined,
     MailOutlined,
-    IdcardOutlined
+    IdcardOutlined,
+    CopyOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { RoomOption } from '../../mirage/roomoption';
-import bookingService, { Booking as ApiBooking, CancelPolicyResponse } from '../../services/bookingService';
+import bookingService from '../../services/bookingService';
 import { getAmenityIcon, getCategoryColor } from '../../constants/Icons';
 import { Carousel } from 'antd';
-import ProDescriptions from '@ant-design/pro-descriptions';
-const { Title, Text, Paragraph } = Typography;
+
+const { Title, Text } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
 
@@ -74,10 +73,25 @@ interface Booking {
     representative_phone?: string;
     representative_email?: string;
     representative_id_card?: string;
+    room_type_amenities?: Array<{
+        name: string;
+        icon: string;
+        category: string;
+        is_highlighted: number;
+    }>;
+    room_id?: number; // Thêm room_id lấy từ backend
+    room?: { room_id?: number; room_name?: string; room_type?: string; }; // fallback nếu backend trả về object
 }
 
-
 const BookingManagement: React.FC = () => {
+    // State cho rời lịch (bổ sung nếu thiếu)
+    const [reschedulePolicy, setReschedulePolicy] = useState<any | null>(null);
+    const [rescheduleLoading, setRescheduleLoading] = useState(false);
+    const [rescheduleBookingId, setRescheduleBookingId] = useState<number | string | null>(null);
+    const [rescheduleConfirming, setRescheduleConfirming] = useState(false);
+    const [rescheduleCheckIn, setRescheduleCheckIn] = useState<dayjs.Dayjs | null>(null);
+    const [rescheduleCheckOut, setRescheduleCheckOut] = useState<dayjs.Dayjs | null>(null);
+    const [rescheduleReason, setRescheduleReason] = useState<string>('');
     const [activeTab, setActiveTab] = useState('all');
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
@@ -86,10 +100,35 @@ const BookingManagement: React.FC = () => {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(false);
     // State cho modal chính sách huỷ
-    const [cancelPolicy, setCancelPolicy] = useState<CancelPolicyResponse | null>(null);
+    const [cancelPolicy, setCancelPolicy] = useState<any | null>(null);
     const [cancelLoading, setCancelLoading] = useState(false);
     const [cancelBookingId, setCancelBookingId] = useState<number | string | null>(null);
     const [cancelConfirming, setCancelConfirming] = useState(false);
+
+    // State cho gia hạn
+    const [extendPolicy, setExtendPolicy] = useState<any | null>(null);
+    const [extendLoading, setExtendLoading] = useState(false);
+    const [extendBookingId, setExtendBookingId] = useState<number | string | null>(null);
+    const [extendConfirming, setExtendConfirming] = useState(false);
+    const [extendDate, setExtendDate] = useState<dayjs.Dayjs | null>(null);
+
+    // Handler for changing extend date and fetching new policy
+    const handleExtendDateChange = useCallback(async (date: dayjs.Dayjs | null) => {
+        setExtendDate(date);
+        if (!date || !extendBookingId) return;
+        setExtendLoading(true);
+        try {
+            const policy = await bookingService.getExtendPolicy(extendBookingId, date.format('YYYY-MM-DD'));
+            setExtendPolicy(policy);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Không thể lấy chính sách gia hạn',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setExtendLoading(false);
+        }
+    }, [extendBookingId]);
 
     useEffect(() => {
         setLoading(true);
@@ -208,6 +247,53 @@ const BookingManagement: React.FC = () => {
         }
     }, []);
 
+    // Gia hạn: lấy chính sách
+    const handleShowExtendPolicy = useCallback(async (booking: Booking) => {
+        setExtendLoading(true);
+        setExtendPolicy(null);
+        setExtendBookingId(booking.booking_id);
+        setExtendDate(dayjs(booking.check_out_date).add(1, 'day'));
+        setIsDetailModalVisible(false);
+        try {
+            // Mặc định đề xuất ngày trả phòng mới +1 ngày
+            const newDate = dayjs(booking.check_out_date).add(1, 'day');
+            const policy = await bookingService.getExtendPolicy(booking.booking_id, newDate.format('YYYY-MM-DD'));
+            setExtendPolicy(policy);
+            setExtendDate(newDate);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Không thể lấy chính sách gia hạn',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setExtendLoading(false);
+        }
+    }, []);
+
+    // Xác nhận gia hạn
+    const handleConfirmExtend = useCallback(async () => {
+        if (!extendBookingId || !extendDate) return;
+        setExtendConfirming(true);
+        try {
+            await bookingService.confirmExtendBooking(extendBookingId, extendDate.format('YYYY-MM-DD'));
+            Modal.success({
+                title: 'Gia hạn thành công',
+                content: 'Đặt phòng đã được gia hạn. Vui lòng kiểm tra lại danh sách đặt phòng.',
+            });
+            // Reload lại danh sách booking
+            setBookings(prev => prev.map(b => b.booking_id === extendBookingId ? { ...b, check_out_date: extendDate.format('YYYY-MM-DD') } : b));
+            setExtendPolicy(null);
+            setExtendBookingId(null);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Gia hạn thất bại',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setExtendConfirming(false);
+        }
+    }, [extendBookingId, extendDate]);
+
 
     const handleConfirmCancel = useCallback(async () => {
         if (!cancelBookingId) return;
@@ -232,6 +318,108 @@ const BookingManagement: React.FC = () => {
         }
     }, [cancelBookingId]);
 
+    // Khi đổi ngày hoặc lý do rời lịch
+    useEffect(() => {
+        if (rescheduleBookingId && rescheduleCheckIn && rescheduleCheckOut) {
+            fetchReschedulePolicy(rescheduleBookingId, rescheduleCheckIn, rescheduleCheckOut, rescheduleReason);
+        }
+        // eslint-disable-next-line
+    }, [rescheduleBookingId, rescheduleCheckIn, rescheduleCheckOut, rescheduleReason]);
+
+    // Handler: Lấy chính sách rời lịch
+    const fetchReschedulePolicy = useCallback(async (
+        bookingId: number | string,
+        checkIn: dayjs.Dayjs,
+        checkOut: dayjs.Dayjs,
+        reason: string
+    ) => {
+        setRescheduleLoading(true);
+        try {
+            // Lấy booking hiện tại để lấy room_id
+            const booking = bookings.find(b => b.booking_id === bookingId);
+            const roomId = booking?.room_id || booking?.room?.room_id || null;
+            if (!roomId) {
+                throw new Error('Không xác định được phòng hiện tại để rời lịch');
+            }
+            const policy = await bookingService.getReschedulePolicy(
+                bookingId,
+                checkIn.format('YYYY-MM-DD'),
+                checkOut.format('YYYY-MM-DD'),
+                roomId,
+                reason
+            );
+            setReschedulePolicy(policy);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Không thể lấy chính sách rời lịch',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+            setReschedulePolicy(null);
+        } finally {
+            setRescheduleLoading(false);
+        }
+    }, [bookings]);
+
+    // Handler: Hiển thị modal rời lịch
+    const handleShowReschedulePolicy = useCallback(async (booking: Booking) => {
+        setRescheduleLoading(true);
+        setReschedulePolicy(null);
+        setRescheduleBookingId(booking.booking_id);
+        setRescheduleCheckIn(dayjs(booking.check_in_date));
+        setRescheduleCheckOut(dayjs(booking.check_out_date));
+        setRescheduleReason('');
+        setIsDetailModalVisible(false);
+        try {
+            const roomId = booking.room_id || booking?.room?.room_id || null;
+            if (!roomId) {
+                throw new Error('Không xác định được phòng hiện tại để rời lịch');
+            }
+            const policy = await bookingService.getReschedulePolicy(
+                booking.booking_id,
+                dayjs(booking.check_in_date).format('YYYY-MM-DD'),
+                dayjs(booking.check_out_date).format('YYYY-MM-DD'),
+                roomId,
+                ''
+            );
+            setReschedulePolicy(policy);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Không thể lấy chính sách rời lịch',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setRescheduleLoading(false);
+        }
+    }, []);
+
+    // Xác nhận rời lịch
+    const handleConfirmReschedule = useCallback(async () => {
+        if (!rescheduleBookingId || !rescheduleCheckIn || !rescheduleCheckOut) return;
+        setRescheduleConfirming(true);
+        try {
+            await bookingService.confirmRescheduleBooking(
+                rescheduleBookingId,
+                rescheduleCheckIn.format('YYYY-MM-DD'),
+                rescheduleCheckOut.format('YYYY-MM-DD'),
+                0,
+                rescheduleReason
+            );
+            Modal.success({
+                title: 'Rời lịch thành công',
+                content: 'Đặt phòng đã được rời lịch. Vui lòng kiểm tra lại danh sách đặt phòng.',
+            });
+            setBookings(prev => prev.map(b => b.booking_id === rescheduleBookingId ? { ...b, check_in_date: rescheduleCheckIn.format('YYYY-MM-DD'), check_out_date: rescheduleCheckOut.format('YYYY-MM-DD') } : b));
+            setReschedulePolicy(null);
+            setRescheduleBookingId(null);
+        } catch (err: any) {
+            Modal.error({
+                title: 'Rời lịch thất bại',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setRescheduleConfirming(false);
+        }
+    }, [rescheduleBookingId, rescheduleCheckIn, rescheduleCheckOut, rescheduleReason]);
     return (
         <div style={{ padding: 0, minHeight: '100vh' }}>
             {/* Header */}
@@ -309,7 +497,6 @@ const BookingManagement: React.FC = () => {
                                             marginBottom: '8px'
                                         }}
                                         hoverable
-                                        onClick={() => showBookingDetail(booking)}
                                     >
                                         <Row gutter={[16, 16]} align="middle" style={{ minHeight: 140 }}>
                                             {/* Hotel Image */}
@@ -361,21 +548,158 @@ const BookingManagement: React.FC = () => {
                                                         <Title level={3} style={{ margin: '4px 0 8px 0', color: '#222', fontSize: 20, fontWeight: 700 }}>{Number(booking.total_price_vnd).toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })}</Title>
                                                     </div>
                                                     <Tag color={getStatusColor(booking.status)} icon={getStatusIcon(booking.status)} style={{ fontSize: 13, padding: '4px 12px', borderRadius: 4, border: 'none', fontWeight: 500 }}>{getStatusText(booking.status)}</Tag>
+                                                    <div style={{ marginTop: 8 }}>
+                                                        <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                                                            <Space size={8}>
+                                                                <Button
+                                                                    icon={<EyeOutlined />}
+                                                                    size="small"
+                                                                    style={{ borderRadius: 4, fontWeight: 500 }}
+                                                                    onClick={e => { e.stopPropagation(); showBookingDetail(booking); }}
+                                                                >
+                                                                    Xem chi tiết
+                                                                </Button>
+                                                                <Button
+                                                                    icon={<CopyOutlined />}
+                                                                    size="small"
+                                                                    style={{ borderRadius: 4, fontWeight: 500 }}
+                                                                    onClick={e => {
+                                                                        e.stopPropagation();
+                                                                        navigator.clipboard.writeText(booking.booking_code);
+                                                                    }}
+                                                                >
+                                                                    Sao chép mã
+                                                                </Button>
+                                                            </Space>
+                                                            <Space size={8}>
+                                                                {/* Nút Huỷ phòng: chỉ hiển thị khi booking.status là Confirmed và chưa check-in */}
+                                                                {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_in_date).isAfter(dayjs()) && (
+                                                                    <Button
+                                                                        danger
+                                                                        size="small"
+                                                                        loading={cancelLoading && cancelBookingId === booking.booking_id}
+                                                                        style={{ borderRadius: 4, fontWeight: 500 }}
+                                                                        onClick={e => { e.stopPropagation(); handleShowCancelPolicy(booking); }}
+                                                                    >
+                                                                        Huỷ phòng
+                                                                    </Button>
+                                                                )}
+                                                                {/* Nút Gia hạn: chỉ hiển thị khi booking.status là Confirmed và chưa check-out */}
+                                                                {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_out_date).isAfter(dayjs()) && (
+                                                                    <Button
+                                                                        type="primary"
+                                                                        size="small"
+                                                                        loading={extendLoading && extendBookingId === booking.booking_id}
+                                                                        style={{ borderRadius: 4, fontWeight: 500 }}
+                                                                        onClick={e => { e.stopPropagation(); handleShowExtendPolicy(booking); }}
+                                                                    >
+                                                                        Gia hạn
+                                                                    </Button>
+                                                                )}
+                                                                {/* Nút Rời lịch: chỉ hiển thị khi booking.status là Confirmed và chưa check-in */}
+                                                                {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_in_date).isAfter(dayjs()) && (
+                                                                    <Button
+                                                                        type="default"
+                                                                        size="small"
+                                                                        loading={rescheduleLoading && rescheduleBookingId === booking.booking_id}
+                                                                        style={{ borderRadius: 4, fontWeight: 500, color: '#722ed1', borderColor: '#b37feb' }}
+                                                                        icon={<ClockCircleOutlined style={{ color: '#722ed1' }} />}
+                                                                        onClick={e => { e.stopPropagation(); handleShowReschedulePolicy(booking); }}
+                                                                        disabled={!(booking.room_id || booking.room?.room_id)}
+                                                                        title={!(booking.room_id || booking.room?.room_id) ? 'Không xác định được phòng để rời lịch' : ''}
+                                                                    >
+                                                                        Rời lịch
+                                                                    </Button>
+                                                                )}
+                                                            </Space>
+                                                            {/* Modal xác nhận chính sách rời lịch */}
+                                                            <Modal
+                                                                open={!!reschedulePolicy}
+                                                                onCancel={() => { setReschedulePolicy(null); setRescheduleBookingId(null); setRescheduleCheckIn(null); setRescheduleCheckOut(null); setRescheduleReason(''); }}
+                                                                title={<div style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}><ClockCircleOutlined style={{ color: '#722ed1', marginRight: 8 }} />Xác nhận rời lịch</div>}
+                                                                footer={null}
+                                                                width={500}
+                                                                destroyOnClose
+                                                                maskClosable={false}
+                                                                maskStyle={{ background: 'rgba(0,0,0,0.08)' }}
+                                                            >
+                                                                {reschedulePolicy && (
+                                                                    <div>
+                                                                        <div style={{ marginBottom: 12, color: '#722ed1', fontWeight: 500 }}>{reschedulePolicy.message}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Lý do:</b> {reschedulePolicy.reason}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Công thức:</b> {reschedulePolicy.formula}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Chính sách:</b> {reschedulePolicy.policy} (ID: {reschedulePolicy.policy_id})</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Phí rời lịch:</b> <span style={{ color: '#722ed1', fontWeight: 600 }}>{Number(reschedulePolicy.reschedule_fee || 0).toLocaleString('vi-VN')}₫</span></div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Loại phí:</b> {reschedulePolicy.fee_type}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Tỷ lệ phần trăm:</b> {reschedulePolicy.reschedule_percentage}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Phí cố định:</b> {Number(reschedulePolicy.reschedule_fixed_amount || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Chênh lệch giá:</b> {Number(reschedulePolicy.price_difference || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Tổng chênh lệch sau rời lịch:</b> {Number(reschedulePolicy.total_price_difference || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Tổng giá trị booking sau rời lịch:</b> {Number(reschedulePolicy.booking_info?.total_price || 0).toLocaleString('vi-VN')}₫</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Mã booking:</b> {reschedulePolicy.booking_info?.booking_code}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Phòng:</b> {reschedulePolicy.room_info?.room_name}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Check-in mới:</b> {reschedulePolicy.booking_info?.check_in_date}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Check-out mới:</b> {reschedulePolicy.booking_info?.check_out_date}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Loại phòng:</b> {reschedulePolicy.room_info?.room_type}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Mô tả phòng:</b> {reschedulePolicy.room_info?.room_description}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Gói phòng:</b> {reschedulePolicy.room_info?.package_name}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Khách sạn:</b> {reschedulePolicy.room_info?.hotel_name || reschedulePolicy.hotel_info?.hotel_name}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Địa chỉ KS:</b> {reschedulePolicy.hotel_info?.hotel_address}</div>
+                                                                        <div style={{ marginBottom: 8 }}><b>Điện thoại KS:</b> {reschedulePolicy.hotel_info?.hotel_phone}</div>
+                                                                        <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                                            <b>Chọn ngày check-in mới:</b>
+                                                                            <DatePicker
+                                                                                value={rescheduleCheckIn}
+                                                                                onChange={setRescheduleCheckIn}
+                                                                                style={{ marginLeft: 8 }}
+                                                                                format="YYYY-MM-DD"
+                                                                                disabledDate={current => {
+                                                                                    if (!current) return false;
+                                                                                    // Không cho chọn ngày trước hôm nay
+                                                                                    return current.isBefore(dayjs(), 'day');
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                        <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                                            <b>Chọn ngày check-out mới:</b>
+                                                                            <DatePicker
+                                                                                value={rescheduleCheckOut}
+                                                                                onChange={setRescheduleCheckOut}
+                                                                                style={{ marginLeft: 8 }}
+                                                                                format="YYYY-MM-DD"
+                                                                                disabledDate={current => {
+                                                                                    if (!current || !rescheduleCheckIn) return false;
+                                                                                    // Không cho chọn ngày trước check-in mới
+                                                                                    return current.isSame(rescheduleCheckIn, 'day') || current.isBefore(rescheduleCheckIn, 'day');
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                        <div style={{ marginBottom: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                                            <b>Lý do rời lịch:</b>
+                                                                            <Input
+                                                                                value={rescheduleReason}
+                                                                                onChange={e => setRescheduleReason(e.target.value)}
+                                                                                placeholder="Nhập lý do rời lịch"
+                                                                                style={{ marginLeft: 8 }}
+                                                                            />
+                                                                        </div>
+                                                                        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                                                            <Button onClick={() => { setReschedulePolicy(null); setRescheduleBookingId(null); setRescheduleCheckIn(null); setRescheduleCheckOut(null); setRescheduleReason(''); }}>
+                                                                                Quay lại
+                                                                            </Button>
+                                                                            <Button type="primary" style={{ background: '#722ed1', borderColor: '#722ed1' }} loading={rescheduleConfirming} onClick={handleConfirmReschedule}>
+                                                                                Xác nhận rời lịch
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </Modal>
+                                                        </Space>
+                                                    </div>
                                                     <Text style={{ fontSize: 13, color: '#888', padding: '4px 8px', borderRadius: 4, display: 'inline-block', marginTop: 8 }}>Mã: {booking.booking_code}</Text>
-                                                    {/* Nút Huỷ phòng: chỉ hiển thị khi booking.status là Confirmed và chưa check-in */}
-                                                    {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_in_date).isAfter(dayjs()) && (
-                                                        <Button
-                                                            danger
-                                                            size="small"
-                                                            loading={cancelLoading && cancelBookingId === booking.booking_id}
-                                                            style={{ marginTop: 8, borderRadius: 4, fontWeight: 500 }}
-                                                            onClick={e => { e.stopPropagation(); handleShowCancelPolicy(booking); }}
-                                                        >
-                                                            Huỷ phòng
-                                                        </Button>
-                                                    )}
                                                 </div>
                                             </Col>
+
                                             {/* Modal xác nhận chính sách huỷ */}
                                             <Modal
                                                 open={!!cancelPolicy}
@@ -404,6 +728,64 @@ const BookingManagement: React.FC = () => {
                                                             </Button>
                                                             <Button type="primary" danger loading={cancelConfirming} onClick={handleConfirmCancel}>
                                                                 Xác nhận huỷ
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </Modal>
+
+                                            {/* Modal xác nhận chính sách gia hạn */}
+                                            <Modal
+                                                open={!!extendPolicy}
+                                                onCancel={() => { setExtendPolicy(null); setExtendBookingId(null); setExtendDate(null); }}
+                                                title={<div style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}><SafetyOutlined style={{ color: '#1890ff', marginRight: 8 }} />Xác nhận gia hạn phòng</div>}
+                                                footer={null}
+                                                width={500}
+                                                destroyOnClose
+                                                maskClosable={false}
+                                                maskStyle={{ background: 'rgba(0,0,0,0.08)' }}
+                                            >
+                                                {extendPolicy && (
+                                                    <div>
+                                                        <div style={{ marginBottom: 12, color: '#1890ff', fontWeight: 500 }}>{extendPolicy.message}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Lý do:</b> {extendPolicy.reason}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Công thức:</b> {extendPolicy.formula}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Chính sách:</b> {extendPolicy.policy} (ID: {extendPolicy.policy_id})</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Phí gia hạn:</b> <span style={{ color: '#1890ff', fontWeight: 600 }}>{Number(extendPolicy.extension_fee || 0).toLocaleString('vi-VN')}₫</span></div>
+                                                        <div style={{ marginBottom: 8 }}><b>Số ngày gia hạn:</b> {extendPolicy.extension_days}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Loại phí:</b> {extendPolicy.fee_type}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Tỷ lệ phần trăm:</b> {extendPolicy.extension_percentage}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Phí cố định mỗi ngày:</b> {Number(extendPolicy.extension_fixed_amount || 0).toLocaleString('vi-VN')}₫</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Tổng giá trị booking sau gia hạn:</b> {Number(extendPolicy.booking_info?.total_price || 0).toLocaleString('vi-VN')}₫</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Mã booking:</b> {extendPolicy.booking_info?.booking_code}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Phòng:</b> {extendPolicy.booking_info?.room_name || extendPolicy.room_info?.room_name}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Check-in:</b> {extendPolicy.booking_info?.check_in_date}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Check-out mới:</b> {extendPolicy.booking_info?.check_out_date}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Loại phòng:</b> {extendPolicy.room_info?.room_type}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Mô tả phòng:</b> {extendPolicy.room_info?.room_description}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Khách sạn:</b> {extendPolicy.hotel_info?.hotel_name}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Địa chỉ KS:</b> {extendPolicy.hotel_info?.hotel_address}</div>
+                                                        <div style={{ marginBottom: 8 }}><b>Điện thoại KS:</b> {extendPolicy.hotel_info?.hotel_phone}</div>
+                                                        <div style={{ marginBottom: 8 }}>
+                                                            <b>Chọn ngày trả phòng mới:</b>
+                                                            <DatePicker
+                                                                value={extendDate}
+                                                                onChange={handleExtendDateChange}
+                                                                style={{ marginLeft: 8 }}
+                                                                disabledDate={current => {
+                                                                    if (!current) return false;
+                                                                    const minDate = dayjs(extendPolicy.booking_info?.check_out_date);
+                                                                    return current.isSame(minDate, 'day') || current.isBefore(minDate, 'day');
+                                                                }}
+                                                                format="YYYY-MM-DD"
+                                                            />
+                                                        </div>
+                                                        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                                            <Button onClick={() => { setExtendPolicy(null); setExtendBookingId(null); setExtendDate(null); }}>
+                                                                Quay lại
+                                                            </Button>
+                                                            <Button type="primary" loading={extendConfirming} onClick={handleConfirmExtend}>
+                                                                Xác nhận gia hạn
                                                             </Button>
                                                         </div>
                                                     </div>

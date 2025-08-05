@@ -1,3 +1,4 @@
+import qs from 'qs';
 // src/utils/api.ts
 import axios from 'axios';
 import { BookingQuotePayload } from '../hooks/useReception'; // Import the type
@@ -188,9 +189,9 @@ export const roomsAPI = {
     return response.data;
   },
 
-  // Get room options/packages (kept for compatibility)
-  getRoomOptions: async (roomId: string | number) => {
-    const response = await api.get(`/room-options?room_id=${roomId}`);
+  // Get room options/packages (support both room_id and room_type_id as query param)
+  getRoomOptions: async (params: { room_id?: string | number; room_type_id?: string | number }) => {
+    const response = await api.get('/room-options', { params });
     return response.data;
   },
 
@@ -227,6 +228,11 @@ export const dashboardAPI = {
 };
 // Reception Management API
 export const receptionAPI = {
+  // Lấy danh sách gói phòng (package) theo room_type_id
+  getPackagesByRoomType: async (room_type_id: number) => {
+    const response = await api.get(`/room-type-packages/by-room-type/${room_type_id}`);
+    return response.data;
+  },
   // Legacy booking methods (keep for compatibility)
   createLegacyBooking: async (data: any) => api.post('/reception/book', data),
   getBookingDetail: async (bookingId: string) => api.get(`/reception/booking/${bookingId}`),
@@ -258,8 +264,8 @@ export const receptionAPI = {
     return response.data;
   },
 
- 
- 
+
+
   confirmBooking: async (data: any) => {
     const response = await api.post('/reception/bookings/confirm', data);
     return response.data;
@@ -274,10 +280,10 @@ export const receptionAPI = {
     const response = await api.put(`/reception/bookings/${bookingId}/cancel`);
     return response.data;
   },
- assignRoomToBooking: async (params: { booking_room_id: number; room_id: number }) => {
-   const response = await api.post('/reception/bookings/assign-room', params);
-   return response.data;
- },
+  assignRoomToBooking: async (params: { booking_room_id: number; room_id: number }) => {
+    const response = await api.post('/reception/bookings/assign-room', params);
+    return response.data;
+  },
   assignMultipleRooms: async (assignments: { booking_room_id: number; room_id: number }[]) => {
     const response = await api.post('/reception/bookings/assign-multiple-rooms', { assignments });
     return response.data;
@@ -315,13 +321,58 @@ export const receptionAPI = {
     return response.data;
   },
 
-  transferBooking: async (params: {
-    booking_id: number;
-    old_room_id: number;
-    new_room_id: number;
-    reason?: string;
-  }) => {
-    const response = await api.post('/reception/bookings/transfer', params);
+
+
+
+  /**
+   * Chuyển phòng cho booking (hỗ trợ truyền option_id/new_option_id)
+   * @param params
+   *   - booking_id: number (bắt buộc)
+   *   - old_room_id: number (bắt buộc)
+   *   - new_room_id: number (bắt buộc)
+   *   - option_id: number (tùy chọn, gói phòng cũ)
+   *   - new_option_id: number (tùy chọn, gói phòng mới)
+   *   - reason: string (tùy chọn)
+   */
+  transferBooking: async (
+    bookingId: number,
+    params: {
+      new_room_ids: number[];
+      new_option_id: number;
+      reason?: string;
+    }
+  ) => {
+    // Gửi đúng 3 trường backend yêu cầu, đúng URL
+    const payload: any = {
+      new_room_ids: Array.isArray(params.new_room_ids) ? params.new_room_ids.map(Number) : [],
+      new_option_id: Number(params.new_option_id),
+    };
+    if (params.reason) payload.reason = params.reason;
+    const response = await api.post(`/bookings/${bookingId}/transfer`, payload);
+    return response.data;
+  },
+
+  // Expose getRoomOptions for room option/package selection in ChangeRoomTab
+  getRoomOptions: async (roomId: string | number) => {
+    const response = await api.get(`/room-options?room_id=${roomId}`);
+    return response.data;
+  },
+
+  /**
+   * Preview transfer fee/policy for booking room change
+   * @param bookingId
+   * @param new_room_id
+   * @param new_option_id
+   * @param reason
+   */
+  previewTransferBooking: async (bookingId: number, new_room_ids: number[], new_option_id: number, reason?: string) => {
+    // Đảm bảo truyền đúng kiểu số nguyên cho BE và serialize đúng chuẩn Laravel
+    const params: any = { new_room_ids: new_room_ids.map(Number), new_option_id: Number(new_option_id) };
+    if (reason) params.reason = reason;
+    const response = await api.get(`/bookings/${bookingId}/transfer`, {
+      params,
+      paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'indices' })
+    });
     return response.data;
   },
 
