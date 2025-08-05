@@ -5,13 +5,13 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa chính sách check-out</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật thông tin chính sách check-out: {{ $policy->name }}</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chỉnh sửa chính sách check-in</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật thông tin chính sách check-in: {{ $policy->name }}</p>
             </div>
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <a href="{{ route('admin.checkout-policies') }}"
+                <a href="{{ route('admin.checkin-policies') }}"
                     class="btn bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
                         <path d="M6.6 13.4L5.2 12l4-4-4-4 1.4-1.4L12 8z"/>
@@ -24,7 +24,7 @@
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
             <div class="px-6 py-8">
-                <form action="{{ route('admin.checkout-policies.update', $policy->policy_id) }}" method="POST" class="space-y-6">
+                <form action="{{ route('admin.checkin-policies.update', $policy->policy_id) }}" method="POST" class="space-y-6">
                     @csrf
                     @method('PUT')
 
@@ -40,7 +40,7 @@
                                 </label>
                                 <input type="text" name="name" id="name" value="{{ old('name', $policy->name) }}" required
                                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('name') border-red-500 @enderror"
-                                    placeholder="Nhập tên chính sách check-out" maxlength="100">
+                                    placeholder="Nhập tên chính sách check-in" maxlength="100">
                                 @error('name')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
@@ -53,21 +53,21 @@
                                 </label>
                                 <textarea name="description" id="description" rows="3"
                                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('description') border-red-500 @enderror"
-                                    placeholder="Nhập mô tả cho chính sách check-out">{{ old('description', $policy->description) }}</textarea>
+                                    placeholder="Nhập mô tả cho chính sách check-in">{{ old('description', $policy->description) }}</textarea>
                                 @error('description')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            <!-- Standard Check-out Time -->
+                            <!-- Standard Check-in Time -->
                             <div>
-                                <label for="standard_check_out_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Giờ check-out tiêu chuẩn
+                                <label for="standard_check_in_time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Giờ check-in tiêu chuẩn
                                 </label>
-                                <input type="time" name="standard_check_out_time" id="standard_check_out_time" 
-                                    value="{{ old('standard_check_out_time', $policy->standard_check_out_time ? \Carbon\Carbon::parse($policy->standard_check_out_time)->format('H:i') : '') }}"
-                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('standard_check_out_time') border-red-500 @enderror">
-                                @error('standard_check_out_time')
+                                <input type="time" name="standard_check_in_time" id="standard_check_in_time" 
+                                    value="{{ old('standard_check_in_time', $policy->standard_check_in_time ? \Carbon\Carbon::parse($policy->standard_check_in_time)->format('H:i') : '') }}"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('standard_check_in_time') border-red-500 @enderror">
+                                @error('standard_check_in_time')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -79,15 +79,15 @@
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Cài đặt chính sách</h3>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Late Check-out Fee -->
+                            <!-- Early Check-in Fee -->
                             <div>
-                                <label for="late_check_out_fee_vnd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Phí check-out muộn (VND)
+                                <label for="early_check_in_fee_vnd" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Phí check-in sớm (VND)
                                 </label>
-                                <input type="number" name="late_check_out_fee_vnd" id="late_check_out_fee_vnd" value="{{ old('late_check_out_fee_vnd', $policy->late_check_out_fee_vnd) }}" min="0"
-                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('late_check_out_fee_vnd') border-red-500 @enderror"
-                                    placeholder="Nhập phí check-out muộn">
-                                @error('late_check_out_fee_vnd')
+                                <input type="number" name="early_check_in_fee_vnd" id="early_check_in_fee_vnd" value="{{ old('early_check_in_fee_vnd', $policy->early_check_in_fee_vnd) }}" min="0"
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('early_check_in_fee_vnd') border-red-500 @enderror"
+                                    placeholder="Nhập phí check-in sớm">
+                                @error('early_check_in_fee_vnd')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -120,7 +120,7 @@
                                 </label>
                                 <textarea name="conditions" id="conditions" rows="4"
                                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('conditions') border-red-500 @enderror"
-                                    placeholder="Ví dụ: Áp dụng cho check-out sau 12:00, chỉ áp dụng cho phòng VIP, yêu cầu thanh toán phí...">{{ old('conditions', $policy->conditions) }}</textarea>
+                                    placeholder="Ví dụ: Áp dụng cho check-in trước 14:00, chỉ áp dụng cho phòng VIP, yêu cầu thanh toán trước...">{{ old('conditions', $policy->conditions) }}</textarea>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Mô tả các điều kiện để áp dụng chính sách này (thời gian, loại phòng, thanh toán, v.v.)</p>
                                 @error('conditions')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -134,7 +134,7 @@
                                 </label>
                                 <textarea name="action" id="action" rows="4"
                                     class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('action') border-red-500 @enderror"
-                                    placeholder="Ví dụ: Cho phép check-out và thu phí, từ chối check-out, yêu cầu xác nhận từ quản lý...">{{ old('action', $policy->action) }}</textarea>
+                                    placeholder="Ví dụ: Cho phép check-in và thu phí, từ chối check-in, yêu cầu xác nhận từ quản lý...">{{ old('action', $policy->action) }}</textarea>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Mô tả hành động sẽ được thực hiện khi chính sách này được áp dụng</p>
                                 @error('action')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -161,7 +161,7 @@
 
                     <!-- Form Actions -->
                     <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <a href="{{ route('admin.checkout-policies') }}"
+                        <a href="{{ route('admin.checkin-policies') }}"
                             class="btn bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-800 dark:text-gray-300">
                             Hủy
                         </a>
