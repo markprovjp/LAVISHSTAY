@@ -26,12 +26,16 @@ class BookingRescheduleController extends Controller
 
                 // Validate input
                 $validated = $request->validate([
-                'new_check_in_date' => 'required|date|after_or_equal:today',
-                'new_check_out_date' => 'required|date|after:new_check_in_date',
-                'new_room_id' => 'nullable|array',
-                'new_room_id.*' => 'integer',
-                'reason' => 'nullable|string|max:500',
+                    'new_check_in_date' => 'required|date|after_or_equal:today',
+                    'new_check_out_date' => 'required|date|after:new_check_in_date',
+                    'new_room_id' => 'nullable|array',
+                //     'new_room_id.*' => 'string|integer', // Cho phép chuỗi hoặc số
+                    'reason' => 'nullable|string|max:500',
                 ]);
+                // Ép kiểu new_room_id về int nếu có
+                if (isset($validated['new_room_id']) && is_array($validated['new_room_id'])) {
+                    $validated['new_room_id'] = array_map('intval', $validated['new_room_id']);
+                }
 
                 // Validate booking ID
                 if (!is_numeric($bookingId)) {
@@ -252,76 +256,77 @@ class BookingRescheduleController extends Controller
                 ];
                 })->toArray();
 
-                // Update booking and create reschedule request within a transaction
+                // Update booking and create reschedule requests within a transaction
                 $paymentId = null;
                 DB::transaction(function () use ($booking, $validated, $newRoomIds, $roomOption, $reschedulePolicy, $totalPriceDifference, $roomPricePerNight, $stayDays, $newCheckInDate, $newCheckOutDate, $roomIdColumn, &$paymentId, $currentRoomCount) {
-                // Create payment if there is a price difference
-                if ($totalPriceDifference != 0) {
+                    // Create payment if there is a price difference
+                    if ($totalPriceDifference != 0) {
                         $payment = Payment::create([
-                        'booking_id' => $booking->booking_id,
-                        'amount_vnd' => abs($totalPriceDifference),
-                        'payment_type' => $totalPriceDifference > 0 ? 'additional' : 'refund',
-                        'status' => 'pending',
-                        'created_at' => Carbon::now(),
+                            'booking_id' => $booking->booking_id,
+                            'amount_vnd' => abs($totalPriceDifference),
+                            'payment_type' => $totalPriceDifference > 0 ? 'additional' : 'refund',
+                            'status' => 'pending',
+                            'created_at' => Carbon::now(),
                         ]);
                         $paymentId = $payment->payment_id;
-                }
+                    }
 
-                // Create reschedule request
-                $reschedule = BookingReschedule::create([
-                        'booking_id' => $booking->booking_id,
-                        'new_check_in_date' => $newCheckInDate,
-                        'new_check_out_date' => $newCheckOutDate,
-                        'new_room_id' => count($newRoomIds) === 1 ? $newRoomIds[0] : json_encode($newRoomIds), // Store as integer if single room
-                        'new_option_id' => $roomOption->option_id,
-                        'reschedule_policy_id' => $reschedulePolicy->policy_id,
-                        'price_difference_vnd' => $totalPriceDifference,
-                        'payment_id' => $paymentId,
-                        'status' => 'Approved',
-                        'reason' => $validated['reason'] ?? 'Rời lịch theo yêu cầu khách',
-                        'suggested_rooms' => json_encode([]),
-                        'processed_by' => Auth::id(),
-                        'created_at' => Carbon::now(),
-                ]);
+                    // Create reschedule requests: mỗi phòng 1 bản ghi
+                    foreach ($newRoomIds as $roomId) {
+                        BookingReschedule::create([
+                            'booking_id' => $booking->booking_id,
+                            'new_check_in_date' => $newCheckInDate,
+                            'new_check_out_date' => $newCheckOutDate,
+                            'new_room_id' => $roomId,
+                            'new_option_id' => $roomOption->option_id,
+                            'reschedule_policy_id' => $reschedulePolicy->policy_id,
+                            'price_difference_vnd' => $totalPriceDifference, // tổng chênh lệch chia đều cho các phòng nếu muốn
+                            'payment_id' => $paymentId,
+                            'status' => 'Approved',
+                            'reason' => $validated['reason'] ?? 'Rời lịch theo yêu cầu khách',
+                            'suggested_rooms' => json_encode([]),
+                            'processed_by' => Auth::id(),
+                            'created_at' => Carbon::now(),
+                        ]);
+                    }
 
-                // Update booking
-                $booking->check_in_date = $newCheckInDate;
-                $booking->check_out_date = $newCheckOutDate;
-                $booking->total_price_vnd += $totalPriceDifference;
-                $booking->save();
+                    // Update booking
+                    $booking->check_in_date = $newCheckInDate;
+                    $booking->check_out_date = $newCheckOutDate;
+                    $booking->total_price_vnd += $totalPriceDifference;
+                    $booking->save();
 
-                // Update booking_rooms
-                DB::table('booking_rooms')
+                    // Update booking_rooms
+                    DB::table('booking_rooms')
                         ->where('booking_id', $booking->booking_id)
                         ->delete();
 
-                $bookingRoomsData = [];
-                foreach ($newRoomIds as $roomId) {
+                    $bookingRoomsData = [];
+                    foreach ($newRoomIds as $roomId) {
                         $bookingRoomsData[] = [
-                        'booking_id' => $booking->booking_id,
-                        'room_id' => $roomId,
-                        'check_in_date' => $newCheckInDate,
-                        'check_out_date' => $newCheckOutDate,
-                        'option_id' => $roomOption->option_id,
-                        'price_per_night' => $roomPricePerNight,
-                        'nights' => $stayDays,
-                        'total_price' => $roomPricePerNight * $stayDays,
-                        'created_at' => Carbon::now(),
-                        'updated_at' => Carbon::now(),
+                            'booking_id' => $booking->booking_id,
+                            'room_id' => $roomId,
+                            'check_in_date' => $newCheckInDate,
+                            'check_out_date' => $newCheckOutDate,
+                            'option_id' => $roomOption->option_id,
+                            'price_per_night' => $roomPricePerNight,
+                            'nights' => $stayDays,
+                            'total_price' => $roomPricePerNight * $stayDays,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
                         ];
-                }
-                DB::table('booking_rooms')->insert($bookingRoomsData);
+                    }
+                    DB::table('booking_rooms')->insert($bookingRoomsData);
 
-
-                // Create audit log
-                DB::table('audit_logs')->insert([
+                    // Create audit log
+                    DB::table('audit_logs')->insert([
                         'user_id' => Auth::id(),
                         'action' => 'Reschedule Booking',
                         'table_name' => 'booking',
                         'record_id' => $booking->booking_id,
                         'description' => "Rescheduled booking from {$booking->check_in_date} to {$newCheckInDate->format('Y-m-d')} and {$booking->check_out_date} to {$newCheckOutDate->format('Y-m-d')}",
                         'created_at' => Carbon::now(),
-                ]);
+                    ]);
                 });
 
                 // Prepare response data
@@ -387,11 +392,15 @@ class BookingRescheduleController extends Controller
 
                 // Validate input
                 $validated = $request->validate([
-                'new_check_in_date' => 'required|date|after_or_equal:today',
-                'new_check_out_date' => 'required|date|after:new_check_in_date',
-                'new_room_id' => 'nullable|array',
-                'new_room_id.*' => 'integer',
+                    'new_check_in_date' => 'required|date|after_or_equal:today',
+                    'new_check_out_date' => 'required|date|after:new_check_in_date',
+                    'new_room_id' => 'nullable|array',
+                //     'new_room_id.*' => 'string|integer', // Cho phép chuỗi hoặc số
                 ]);
+                // Ép kiểu new_room_id về int nếu có
+                if (isset($validated['new_room_id']) && is_array($validated['new_room_id'])) {
+                    $validated['new_room_id'] = array_map('intval', $validated['new_room_id']);
+                }
 
                 // Validate booking ID
                 if (!is_numeric($bookingId)) {
