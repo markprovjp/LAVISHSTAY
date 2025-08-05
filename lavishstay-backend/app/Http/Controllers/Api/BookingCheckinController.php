@@ -264,9 +264,6 @@ class BookingCheckinController extends Controller
     /**
      * Process check-in for a booking
      */
-    /**
-     * Process check-in for a booking
-     */
     public function processCheckin(Request $request, $bookingId)
     {
         try {
@@ -343,6 +340,15 @@ class BookingCheckinController extends Controller
                     'early_checkin_info' => $earlyCheckinInfo
                 ], 400);
             }
+
+            // Get room information before processing
+            $roomInfo = $this->getRoomInformation($booking);
+            
+            // Get hotel information
+            $hotelInfo = $this->getHotelInformation($booking);
+            
+            // Get guest information
+            $guestInfo = $this->getGuestInformation($booking);
 
             // Process check-in within transaction
             $checkinResult = null;
@@ -451,20 +457,59 @@ class BookingCheckinController extends Controller
                 ];
             });
 
-            // Prepare response
+            // Re-check all statuses after processing
+            $finalPaymentStatus = $this->checkPaymentStatus($booking);
+            $finalRoomsAssigned = $this->checkRoomsAssigned($booking);
+            $finalDocumentsVerified = $this->checkDocumentsVerification($booking);
+
+            // Prepare comprehensive response
             $responseData = [
-                'booking_id' => $booking->booking_id,
-                'booking_code' => $booking->booking_code,
-                'guest_name' => $booking->guest_name,
-                'status' => $booking->status,
-                'checkin_time' => $actualCheckinTime,
-                'checkin_date' => Carbon::now()->format('Y-m-d'),
-                'total_price_vnd' => $booking->total_price_vnd,
+                'booking_info' => [
+                    'booking_id' => $booking->booking_id,
+                    'booking_code' => $booking->booking_code,
+                    'status' => $booking->status,
+                    'check_in_date' => $booking->check_in_date,
+                    'check_out_date' => $booking->check_out_date,
+                    'total_price_vnd' => $booking->total_price_vnd,
+                    'guest_count' => $booking->guest_count,
+                    'adults' => $booking->adults,
+                    'children' => $booking->children,
+                    'notes' => $booking->notes
+                ],
+                'guest_info' => $guestInfo,
+                'room_info' => $roomInfo,
+                'hotel_info' => $hotelInfo,
+                'checkin_details' => [
+                    'checkin_time' => $actualCheckinTime,
+                    'checkin_date' => Carbon::now()->format('Y-m-d'),
+                    'checkin_datetime' => Carbon::now()->toDateTimeString(),
+                    'processed_by' => Auth::id(),
+                    'checkin_request_id' => $checkinResult['checkin_request_id']
+                ],
+                'payment_status' => $finalPaymentStatus,
+                'rooms_assigned' => $finalRoomsAssigned,
+                'documents_verified' => $finalDocumentsVerified,
                 'early_checkin_info' => $earlyCheckinInfo,
-                'room_ids' => $checkinResult['room_ids'],
-                'checkin_request_id' => $checkinResult['checkin_request_id'],
-                'processed_by' => Auth::id(),
-                'processed_at' => Carbon::now()->toDateTimeString()
+                'conditions_met' => [
+                    'payment_sufficient' => $finalPaymentStatus['is_sufficient'],
+                    'rooms_assigned' => $finalRoomsAssigned['has_rooms'],
+                    'documents_verified' => $finalDocumentsVerified['is_verified'],
+                    'all_conditions_met' => $finalPaymentStatus['is_sufficient'] && 
+                                          $finalRoomsAssigned['has_rooms'] && 
+                                          $finalDocumentsVerified['is_verified']
+                ],
+                'checkin_summary' => [
+                    'can_checkin' => true,
+                    'checkin_completed' => true,
+                    'early_checkin_fee_applied' => $earlyCheckinInfo['has_fee'],
+                    'early_checkin_fee_amount' => $earlyCheckinInfo['fee_amount'] ?? 0,
+                    'warnings' => [],
+                    'next_steps' => [
+                        'Khách đã check-in thành công',
+                        'Có thể in phiếu nhận phòng nếu cần',
+                        'Thông báo cho bộ phận housekeeping'
+                    ]
+                ]
             ];
 
             Log::info('=== BookingCheckinController@processCheckin SUCCESS ===');
@@ -502,12 +547,59 @@ class BookingCheckinController extends Controller
     private function getRoomInformation($booking)
     {
         try {
-            $rooms = DB::table('booking_rooms as br')
-                ->join('room as r', 'br.room_id', '=', 'r.room_id')
-                ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-                ->where('br.booking_id', $booking->booking_id)
-                ->select('r.*', 'rt.name as room_type_name', 'rt.description as room_type_description')
-                ->get();
+            // Try multiple possible table structures
+            $rooms = collect();
+            
+            // First try: booking_rooms table
+            try {
+                $roomsFromBookingRooms = DB::table('booking_rooms as br')
+                    ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                    ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                    ->where('br.booking_id', $booking->booking_id)
+                    ->select('r.*', 'rt.name as room_type_name', 'rt.description as room_type_description')
+                    ->get();
+                
+                if ($roomsFromBookingRooms->count() > 0) {
+                    $rooms = $roomsFromBookingRooms;
+                }
+            } catch (\Exception $e) {
+                Log::warning("booking_rooms table query failed: " . $e->getMessage());
+            }
+            
+            // Second try: booking_room table (singular)
+            if ($rooms->count() === 0) {
+                try {
+                    $roomsFromBookingRoom = DB::table('booking_room as br')
+                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                        ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                        ->where('br.booking_id', $booking->booking_id)
+                        ->select('r.*', 'rt.name as room_type_name', 'rt.description as room_type_description')
+                        ->get();
+                    
+                    if ($roomsFromBookingRoom->count() > 0) {
+                        $rooms = $roomsFromBookingRoom;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("booking_room table query failed: " . $e->getMessage());
+                }
+            }
+            
+            // Third try: direct relationship via booking.room_id
+            if ($rooms->count() === 0 && $booking->room_id) {
+                try {
+                    $roomFromBooking = DB::table('room as r')
+                        ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                        ->where('r.room_id', $booking->room_id)
+                        ->select('r.*', 'rt.name as room_type_name', 'rt.description as room_type_description')
+                        ->get();
+                    
+                    if ($roomFromBooking->count() > 0) {
+                        $rooms = $roomFromBooking;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Direct room query failed: " . $e->getMessage());
+                }
+            }
 
             return [
                 'total_rooms' => $rooms->count(),
@@ -516,8 +608,10 @@ class BookingCheckinController extends Controller
                         'room_id' => $room->room_id,
                         'room_number' => $room->room_number ?? $room->name,
                         'room_type' => $room->room_type_name,
+                        'room_type_id' => $room->room_type_id,
                         'floor' => $room->floor ?? null,
-                        'status' => $room->status
+                        'status' => $room->status,
+                        'description' => $room->description ?? null
                     ];
                 })->toArray()
             ];
@@ -528,6 +622,97 @@ class BookingCheckinController extends Controller
                 'rooms' => []
             ];
         }
+    }
+
+    /**
+     * Get hotel information for a booking
+     */
+    private function getHotelInformation($booking)
+    {
+        try {
+            // Get hotel info from the first room
+            $hotelInfo = null;
+            
+            // Try multiple table structures
+            try {
+                $hotelInfo = DB::table('booking_rooms as br')
+                    ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                    ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                    ->where('br.booking_id', $booking->booking_id)
+                    ->select('h.*')
+                    ->first();
+            } catch (\Exception $e) {
+                Log::warning("booking_rooms hotel query failed: " . $e->getMessage());
+            }
+            
+            if (!$hotelInfo) {
+                try {
+                    $hotelInfo = DB::table('booking_room as br')
+                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                        ->where('br.booking_id', $booking->booking_id)
+                        ->select('h.*')
+                        ->first();
+                } catch (\Exception $e) {
+                    Log::warning("booking_room hotel query failed: " . $e->getMessage());
+                }
+            }
+            
+            if (!$hotelInfo && $booking->room_id) {
+                try {
+                    $hotelInfo = DB::table('room as r')
+                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                        ->where('r.room_id', $booking->room_id)
+                        ->select('h.*')
+                        ->first();
+                } catch (\Exception $e) {
+                    Log::warning("Direct hotel query failed: " . $e->getMessage());
+                }
+            }
+
+            if ($hotelInfo) {
+                return [
+                    'hotel_id' => $hotelInfo->hotel_id,
+                    'hotel_name' => $hotelInfo->name ?? 'Không xác định',
+                    'hotel_address' => $hotelInfo->address ?? 'Không xác định',
+                    'hotel_phone' => $hotelInfo->phone ?? 'Không xác định',
+                    'hotel_email' => $hotelInfo->email ?? null
+                ];
+            }
+
+            return [
+                'hotel_id' => null,
+                'hotel_name' => 'Không xác định',
+                'hotel_address' => 'Không xác định',
+                'hotel_phone' => 'Không xác định',
+                'hotel_email' => null
+            ];
+        } catch (\Exception $e) {
+            Log::error("Error getting hotel information for booking {$booking->booking_id}: " . $e->getMessage());
+            return [
+                'hotel_id' => null,
+                'hotel_name' => 'Không xác định',
+                'hotel_address' => 'Không xác định',
+                'hotel_phone' => 'Không xác định',
+                'hotel_email' => null
+            ];
+        }
+    }
+
+    /**
+     * Get guest information for a booking
+     */
+    private function getGuestInformation($booking)
+    {
+        return [
+            'guest_name' => $booking->guest_name,
+            'guest_email' => $booking->guest_email,
+            'guest_phone' => $booking->guest_phone,
+            'guest_count' => $booking->guest_count,
+            'adults' => $booking->adults,
+            'children' => $booking->children,
+            'children_age' => $booking->children_age
+        ];
     }
 
     /**
@@ -543,12 +728,32 @@ class BookingCheckinController extends Controller
             $totalRequired = $booking->total_price_vnd;
             $remainingAmount = $totalRequired - $totalPaid;
 
+            $payments = Payment::where('booking_id', $booking->booking_id)
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($payment) {
+                    return [
+                        'payment_id' => $payment->payment_id,
+                        'amount_vnd' => $payment->amount_vnd,
+                        'payment_type' => $payment->payment_type,
+                        'status' => $payment->status,
+                        'transaction_id' => $payment->transaction_id,
+                        'created_at' => $payment->created_at
+                    ];
+                });
+
             return [
                 'total_required' => $totalRequired,
                 'total_paid' => $totalPaid,
                 'remaining_amount' => $remainingAmount,
                 'is_sufficient' => $remainingAmount <= 0,
-                'payment_percentage' => $totalRequired > 0 ? ($totalPaid / $totalRequired) * 100 : 100
+                'payment_percentage' => $totalRequired > 0 ? ($totalPaid / $totalRequired) * 100 : 100,
+                'payments' => $payments->toArray(),
+                'payment_summary' => [
+                    'completed_payments' => $payments->where('status', 'completed')->count(),
+                    'pending_payments' => $payments->where('status', 'pending')->count(),
+                    'failed_payments' => $payments->where('status', 'failed')->count()
+                ]
             ];
         } catch (\Exception $e) {
             Log::error("Error checking payment status for booking {$booking->booking_id}: " . $e->getMessage());
@@ -557,7 +762,13 @@ class BookingCheckinController extends Controller
                 'total_paid' => 0,
                 'remaining_amount' => $booking->total_price_vnd,
                 'is_sufficient' => false,
-                'payment_percentage' => 0
+                'payment_percentage' => 0,
+                'payments' => [],
+                'payment_summary' => [
+                    'completed_payments' => 0,
+                    'pending_payments' => 0,
+                    'failed_payments' => 0
+                ]
             ];
         }
     }
@@ -568,22 +779,76 @@ class BookingCheckinController extends Controller
     private function checkRoomsAssigned($booking)
     {
         try {
-            $assignedRooms = DB::table('booking_rooms')
-                ->where('booking_id', $booking->booking_id)
-                ->whereNotNull('room_id')
-                ->count();
+            $assignedRooms = 0;
+            $roomDetails = collect();
+            
+            // Try multiple possible table structures to match getRoomInformation logic
+            
+            // First try: booking_rooms table
+            try {
+                $assignedRooms = DB::table('booking_rooms')
+                    ->where('booking_id', $booking->booking_id)
+                    ->whereNotNull('room_id')
+                    ->count();
+
+                if ($assignedRooms > 0) {
+                    $roomDetails = DB::table('booking_rooms as br')
+                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                        ->where('br.booking_id', $booking->booking_id)
+                        ->select('r.room_id', 'r.name', 'r.room_number', 'r.status')
+                        ->get();
+                }
+            } catch (\Exception $e) {
+                Log::warning("booking_rooms assignment check failed: " . $e->getMessage());
+            }
+            
+            // Second try: booking_room table (singular)
+            if ($assignedRooms === 0) {
+                try {
+                    $assignedRooms = DB::table('booking_room')
+                        ->where('booking_id', $booking->booking_id)
+                        ->whereNotNull('room_id')
+                        ->count();
+
+                    if ($assignedRooms > 0) {
+                        $roomDetails = DB::table('booking_room as br')
+                            ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                            ->where('br.booking_id', $booking->booking_id)
+                            ->select('r.room_id', 'r.name', 'r.room_number', 'r.status')
+                            ->get();
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("booking_room assignment check failed: " . $e->getMessage());
+                }
+            }
+            
+            // Third try: direct relationship via booking.room_id
+            if ($assignedRooms === 0 && $booking->room_id) {
+                try {
+                    $roomDetails = DB::table('room as r')
+                        ->where('r.room_id', $booking->room_id)
+                        ->select('r.room_id', 'r.name', 'r.room_number', 'r.status')
+                        ->get();
+                    
+                    $assignedRooms = $roomDetails->count();
+                } catch (\Exception $e) {
+                    Log::warning("Direct room assignment check failed: " . $e->getMessage());
+                }
+            }
 
             return [
                 'has_rooms' => $assignedRooms > 0,
                 'assigned_rooms_count' => $assignedRooms,
-                'required_rooms_count' => $booking->quantity ?? 1
+                'required_rooms_count' => $booking->quantity ?? 1,
+                'room_details' => $roomDetails->toArray()
             ];
         } catch (\Exception $e) {
             Log::error("Error checking room assignment for booking {$booking->booking_id}: " . $e->getMessage());
             return [
                 'has_rooms' => false,
                 'assigned_rooms_count' => 0,
-                'required_rooms_count' => $booking->quantity ?? 1
+                'required_rooms_count' => $booking->quantity ?? 1,
+                'room_details' => []
             ];
         }
     }
@@ -606,7 +871,12 @@ class BookingCheckinController extends Controller
                     'has_name' => !empty($booking->guest_name),
                     'has_email' => !empty($booking->guest_email),
                     'has_phone' => !empty($booking->guest_phone)
-                ]
+                ],
+                'required_documents' => [
+                    'identity_card' => 'Chứng minh nhân dân/Căn cước công dân',
+                    'passport' => 'Hộ chiếu (đối với khách nước ngoài)'
+                ],
+                'verification_status' => $isVerified ? 'Đã xác nhận' : 'Chưa xác nhận'
             ];
         } catch (\Exception $e) {
             Log::error("Error checking document verification for booking {$booking->booking_id}: " . $e->getMessage());
@@ -616,7 +886,12 @@ class BookingCheckinController extends Controller
                     'has_name' => false,
                     'has_email' => false,
                     'has_phone' => false
-                ]
+                ],
+                'required_documents' => [
+                    'identity_card' => 'Chứng minh nhân dân/Căn cước công dân',
+                    'passport' => 'Hộ chiếu (đối với khách nước ngoài)'
+                ],
+                'verification_status' => 'Chưa xác nhận'
             ];
         }
     }
