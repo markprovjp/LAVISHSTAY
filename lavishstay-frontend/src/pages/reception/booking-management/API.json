@@ -1,0 +1,185 @@
+   {
+            "room_type_id": 1,
+            "room_code": "deluxe",
+            "room_type_name": "Deluxe Room",
+            "description": "Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.",
+            "base_price": "5000.00",
+            "adjusted_price": 6000,
+            "size": 32,
+            "max_guests": 2,
+            "rating": 0,
+            "package_options": [
+                {
+                    "package_id": 1,
+                    "package_name": "Standard Package",
+                    "package_description": "Gói tiêu chuẩn cho Deluxe Room",
+                    "price_modifier_vnd": "5000.00",
+                    "price_per_room_per_night": 11000,
+                    "total_package_price": 11000,
+                    "services": [],
+                    "pricing_breakdown": {
+                        "base_price_per_night": "5000.00",
+                        "adjusted_price_per_night": 6000,
+                        "package_modifier": "5000.00",
+                        "final_price_per_room_per_night": 11000,
+                        "nights": 1,
+                        "currency": "VND"
+                    },
+                    "policies": {
+                        "cancellation": {
+                            "policy_id": 10,
+                            "name": "Hủy miễn phí 7 ngày",
+                            "free_cancellation_days": 7,
+                            "penalty_percentage": "0.00",
+                            "penalty_fixed_amount_vnd": "200000.00",
+                            "description": "Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k",
+                            "applies_to_weekend": 0,
+                            "applies_to_holiday": 0
+                        },
+                        "deposit": {
+                            "policy_id": 10,
+                            "name": "Đặt cọc 20%",
+                            "deposit_percentage": "20.00",
+                            "deposit_fixed_amount_vnd": "0.00",
+                            "description": "Đặt cọc 20% giá trị booking",
+                            "min_days_before_checkin": null,
+                            "applies_to_weekend": 0,
+                            "applies_to_holiday": 0
+                        },
+                        "check_out": {
+                            "policy_id": 4,
+                            "name": "Check-out tiêu chuẩn",
+                            "early_check_out_fee_vnd": "0.00",
+                            "late_check_out_fee_vnd": "500000.00",
+                            "late_check_out_max_hours": 2,
+                            "early_check_out_max_hours": 4,
+                            "standard_check_out_time": "12:00:00",
+                            "description": "Check-out tiêu chuẩn 12:00",
+                            "applies_to_weekend": 0,
+                            "applies_to_holiday": 0
+                        }
+                    }
+                },
+                {
+                    "package_id": 8,
+                    "package_name": "Premium Package",
+                    "package_description": "Gói trung bình của phòng loại 1",
+                    "price_modifier_vnd": "1000000.00",
+                    "price_per_room_per_night": 1006000,
+                    "total_package_price": 1006000,
+                    "services": [],
+                    "pricing_breakdown": {
+                        "base_price_per_night": "5000.00",
+                        "adjusted_price_per_night": 6000,
+                        "package_modifier": "1000000.00",
+                        "final_price_per_room_per_night": 1006000,
+                        "nights": 1,
+                        "currency": "VND"
+                    },
+                    "policies": {
+                        "cancellation": {
+                            "policy_id": 10,
+                            "name": "Hủy miễn phí 7 ngày",
+                            "free_cancellation_days": 7,
+                            "penalty_percentage": "0.00",
+                            "penalty_fixed_amount_vnd": "200000.00",
+                            "description": "Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k",
+                            "applies_to_weekend": 0,
+                            "applies_to_holiday": 0
+                        },
+                        "deposit": {
+                            "policy_id": 10,
+                            "name": "Đặt cọc 20%",
+                            "deposit_percentage": "20.00",
+                            "deposit_fixed_amount_vnd": "0.00",
+                            "description": "Đặt cọc 20% giá trị booking",
+                            "min_days_before_checkin": null,
+                            "applies_to_weekend": 0,
+                            "applies_to_holiday": 0
+                        },
+                        "check_out": {
+                            "policy_id": 4,
+                            "name": "Check-out tiêu chuẩn",
+                            "early_check_out_fee_vnd": "0.00",
+                            "late_check_out_fee_vnd": "500000.00",
+                            "late_check_out_max_hours": 2,
+                            "early_check_out_max_hours": 4,
+                            "standard_check_out_time": "12:00:00",
+                            "description": "Check-out tiêu chuẩn 12:00",
+                            "applies_to_weekend": 0,
+                            "applies_to_holiday": 0
+                        }
+                    }
+                }
+            ],
+            "cheapest_package_price": 11000,
+            "search_criteria": {
+                "check_in_date": "2025-07-30",
+                "check_out_date": "2025-07-31",
+                "nights": 1
+            },
+            "policies": {
+                "cancellation_policy_id": 10,
+                "deposit_policy_id": 10,
+                "check_out_policy_id": 4,
+                "policy_applied_date": "2025-07-30",
+                "policy_snapshot": {
+                    "cancellation": {
+                        "policy_id": 10,
+                        "name": "Hủy miễn phí 7 ngày",
+                        "free_cancellation_days": 7,
+                        "penalty_percentage": "0.00",
+                        "penalty_fixed_amount_vnd": "200000.00",
+                        "description": "Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k",
+                        "priority": 10,
+                        "conditions": null,
+                        "applies_to_weekend": 0,
+                        "applies_to_holiday": 0,
+                        "min_booking_amount": null,
+                        "max_booking_amount": null,
+                        "is_active": true,
+                        "created_at": "2025-07-12T09:51:47.000000Z",
+                        "updated_at": "2025-07-12T09:51:47.000000Z"
+                    },
+                    "deposit": {
+                        "policy_id": 10,
+                        "name": "Đặt cọc 20%",
+                        "deposit_percentage": "20.00",
+                        "deposit_fixed_amount_vnd": "0.00",
+                        "description": "Đặt cọc 20% giá trị booking",
+                        "priority": 0,
+                        "conditions": null,
+                        "applies_to_weekend": 0,
+                        "applies_to_holiday": 0,
+                        "min_days_before_checkin": null,
+                        "min_booking_amount": null,
+                        "is_active": true,
+                        "created_at": "2025-07-12T09:51:47.000000Z",
+                        "updated_at": "2025-07-21T03:41:18.000000Z"
+                    },
+                    "check_out": {
+                        "policy_id": 4,
+                        "name": "Check-out tiêu chuẩn",
+                        "early_check_out_fee_vnd": "0.00",
+                        "late_check_out_fee_vnd": "500000.00",
+                        "late_check_out_max_hours": 2,
+                        "early_check_out_max_hours": 4,
+                        "description": "Check-out tiêu chuẩn 12:00",
+                        "priority": 0,
+                        "conditions": null,
+                        "applies_to_weekend": 0,
+                        "applies_to_holiday": 0,
+                        "standard_check_out_time": "12:00:00",
+                        "is_active": true,
+                        "created_at": "2025-07-12T09:51:47.000000Z",
+                        "updated_at": "2025-07-12T09:51:47.000000Z"
+                    }
+                }
+            },
+            "pricing_summary": {
+                "nights": 1,
+                "base_price_per_night": "5000.00",
+                "adjusted_price_per_night": 6000,
+                "currency": "VND"
+            }
+        },

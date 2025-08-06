@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <!-- Background elements -->
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f3f4f6" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#f9fafb" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="buildingGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="windowGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f0f9ff"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <linearGradient id="roofGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+    <linearGradient id="poolGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="palmGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+    <linearGradient id="sunGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.2"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#gradient1)"/>
+  
+  <!-- Decorative circle elements -->
+  <circle cx="700" cy="100" r="60" fill="url(#gradient2)" opacity="0.5"/>
+  <circle cx="150" cy="500" r="40" fill="url(#gradient2)" opacity="0.3"/>
+  <circle cx="600" cy="400" r="30" fill="url(#gradient2)" opacity="0.2"/>
+
+  <!-- Sun -->
+  <circle cx="650" cy="120" r="35" fill="url(#sunGradient)" filter="url(#shadow)"/>
+  
+  <!-- Luxury Hotel/Resort -->
+  <g transform="translate(250, 220)">
+    <!-- Main building -->
+    <rect x="50" y="100" width="300" height="200" rx="5" fill="url(#buildingGradient)" filter="url(#shadow)"/>
+    
+    <!-- Roof/Top floor -->
+    <rect x="30" y="80" width="340" height="30" rx="3" fill="url(#roofGradient)" filter="url(#shadow)"/>
+    
+    <!-- Windows -->
+    <rect x="80" y="140" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="130" y="140" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="180" y="140" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="230" y="140" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="280" y="140" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    
+    <rect x="80" y="200" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="130" y="200" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="180" y="200" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="230" y="200" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="280" y="200" width="30" height="40" rx="2" fill="url(#windowGradient)" />
+    
+    <!-- Entrance -->
+    <rect x="165" y="260" width="60" height="40" rx="2" fill="url(#windowGradient)" />
+    <rect x="175" y="270" width="40" height="30" rx="2" fill="#4338ca" />
+    
+    <!-- Swimming pool -->
+    <rect x="120" y="330" width="150" height="50" rx="10" fill="url(#poolGradient)" filter="url(#shadow)" />
+    <rect x="130" y="340" width="130" height="30" rx="5" fill="#bae6fd" opacity="0.7" />
+    
+    <!-- Palm trees -->
+    <g transform="translate(50, 310)">
+      <rect x="0" y="0" width="10" height="30" fill="#92400e" />
+      <path d="M-15,-5 C-5,-15 15,-15 25,-5 C15,5 5,5 5,0 C5,5 -5,5 -15,-5 Z" fill="url(#palmGradient)" />
+      <path d="M-10,-15 C0,-25 20,-25 30,-15 C20,-5 10,-5 10,-10 C10,-5 0,-5 -10,-15 Z" fill="url(#palmGradient)" />
+    </g>
+    
+    <g transform="translate(340, 310)">
+      <rect x="0" y="0" width="10" height="30" fill="#92400e" />
+      <path d="M-15,-5 C-5,-15 15,-15 25,-5 C15,5 5,5 5,0 C5,5 -5,5 -15,-5 Z" fill="url(#palmGradient)" />
+      <path d="M-10,-15 C0,-25 20,-25 30,-15 C20,-5 10,-5 10,-10 C10,-5 0,-5 -10,-15 Z" fill="url(#palmGradient)" />
+    </g>
+  </g>
+
+  <!-- LavishStay Text -->
+  <g transform="translate(400, 500)">
+    <text text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#4338ca">
+      LavishStay
+    </text>
+    <text text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6366f1" y="25">
+      Trải nghiệm đẳng cấp, dịch vụ hoàn hảo
+    </text>
+  </g>
+</svg>

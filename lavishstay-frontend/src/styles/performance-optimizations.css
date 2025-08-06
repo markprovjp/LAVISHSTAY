@@ -1,0 +1,162 @@
+/* Performance Optimizations for Swiper and Animations */
+
+/* GPU Acceleration Hints */
+.swiper-container,
+.swiper-wrapper,
+.swiper-slide {
+  will-change: transform;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Optimize SwiftPanda 3D animations */
+.swift-panda-wrapper {
+  will-change: transform;
+  contain: layout style paint;
+  isolation: isolate;
+}
+
+.swift-panda-inner {
+  will-change: transform;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.cardSwift {
+  will-change: transform, box-shadow, border-color;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  /* Remove expensive backdrop-filter for better performance */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Optimize HotelActivities Swiper */
+.activities-swiper {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+.activities-swiper .swiper-slide {
+  will-change: transform;
+  /* Reduce transition complexity */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.activity-card {
+  will-change: transform, box-shadow;
+  /* Simplify hover animations */
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.activity-card:hover {
+  transform: translateY(-4px) !important; /* Reduced from -8px */
+}
+
+/* Optimize pagination and navigation buttons */
+.activities-swiper .swiper-pagination-bullet {
+  will-change: transform, opacity;
+  transition: all 0.2s ease !important; /* Reduced from 0.3s */
+}
+
+.activities-swiper .swiper-button-next,
+.activities-swiper .swiper-button-prev {
+  will-change: transform, background-color, color;
+  transition: all 0.2s ease !important; /* Reduced from 0.3s */
+}
+
+.activities-swiper .swiper-button-next:hover,
+.activities-swiper .swiper-button-prev:hover {
+  transform: scale(1.05) !important; /* Reduced from 1.1 */
+}
+
+/* Profile page specific optimizations */
+.profile-layout {
+  contain: layout style;
+}
+
+.profile-sidebar {
+  will-change: auto;
+  contain: layout style paint;
+}
+
+.profile-content {
+  will-change: auto;
+  contain: layout style;
+}
+
+/* Reduce animation complexity for mobile devices */
+@media (max-width: 768px) {
+  .cardSwift {
+    transition: none !important;
+  }
+  
+  .cardSwift:hover {
+    transform: rotateY(calc((360deg / var(--quantity)) * var(--index)))
+      translateZ(var(--translateZ)) !important; /* Remove scale on mobile */
+  }
+  
+  .activity-card:hover {
+    transform: none !important; /* Disable hover animations on mobile */
+  }
+  
+  /* Pause heavy animations on mobile */
+  .swift-panda-inner {
+    animation-duration: 60s !important; /* Slower animation */
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .swift-panda-inner {
+    animation: none !important;
+  }
+  
+  .cardSwift,
+  .activity-card,
+  .activities-swiper .swiper-slide {
+    transition: none !important;
+  }
+  
+  .activities-swiper .swiper-pagination-bullet,
+  .activities-swiper .swiper-button-next,
+  .activities-swiper .swiper-button-prev {
+    transition: none !important;
+  }
+}
+
+/* Performance improvements for Swiper */
+.swiper-container {
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Optimize transform properties */
+.swiper-slide-active {
+  will-change: transform;
+}
+
+.swiper-slide-next,
+.swiper-slide-prev {
+  will-change: transform;
+}
+
+/* Memory optimization - limit simultaneous animations */
+.animation-container {
+  contain: layout style paint;
+}
+
+/* Critical performance fix for backdrop-filter */
+.backdrop-blur {
+  /* Replace expensive backdrop-filter with simple background */
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.dark .backdrop-blur {
+  background: rgba(30, 41, 59, 0.8) !important;
+}

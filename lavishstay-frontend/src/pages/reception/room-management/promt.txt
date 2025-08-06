@@ -1,0 +1,38 @@
+Dự án quản lý phòng khách sạn sử dụng React, Ant Design, Ant Design Pro, umi-request.  
+Yêu cầu tối ưu hiệu năng và UI/UX cho màn hình Room Management Dashboard.
+
+Các vấn đề cần giải quyết:
+- Số lượng phòng lớn, thao tác chọn phòng, xem chi tiết, filter, v.v. phải phản hồi nhanh, không lag.
+- Grid view phòng phải phân loại theo tầng, mỗi phòng là một card, có action chọn phòng (checkbox), xem chi tiết, và các action khác nếu cần.
+- Checkbox chọn phòng phải dùng ProFormCheckbox hoặc CheckCard của Ant Design Pro, không dùng Checkbox mặc định của Antd.
+- Khi loading, hiển thị Skeleton Card hoặc ProSkeleton.
+- Nếu API trả về quá nhiều phòng, phải phân trang hoặc lazy load theo tầng/phân loại.
+- Chỉ lấy dữ liệu cần thiết từ API, chi tiết phòng chỉ lấy khi click.
+- State lưu phòng phải tối ưu, chỉ lưu selectedRooms dưới dạng Set hoặc Map, không lưu toàn bộ phòng nếu không cần thiết.
+- Các component RoomCard, RoomGridView phải dùng memo và callback tối ưu (useCallback), props không thay đổi không cần thiết.
+- UI phải đẹp, hiện đại, tận dụng tối đa sức mạnh của Ant Design Pro.
+
+Yêu cầu code:
+- RoomGridView dùng CheckCard.Group, action area gom các chức năng (chọn phòng, xem chi tiết) vào CheckCard.
+- Khi loading, dùng ProSkeleton hoặc Skeleton Card.
+- Phân loại phòng theo tầng, mỗi tầng là một nhóm CheckCard.
+- Tối ưu callback, memo hóa component.
+- Nếu có thể, dùng ProList hoặc react-window cho grid lớn.
+
+Đầu ra mong muốn:
+- Code component RoomGridView tối ưu hiệu năng, UI đẹp, action rõ ràng, dễ mở rộng.
+- Hướng dẫn tích hợp vào RoomManagementDashboard.
+- Đảm bảo mọi thao tác (chọn phòng, xem chi tiết, filter) đều mượt, không lag.
+
+Công nghệ đang dùng:
+{
+  "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@ant-design/pro-components": "^2.8.10",
+    "@google/generative-ai": "^0.24.1",
+    "antd": "^5.26.6",
+    "react-icons": "^5.5.0",
+    "umi-request": "^1.4.0"
+  }
+  
+}
