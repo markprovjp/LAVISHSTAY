@@ -353,13 +353,19 @@ class BookingCancellationController extends Controller
             $penaltyType = 'fixed';
         }
 
+        // Nếu có phí phạt, update trạng thái booking thành 'Cancelled With Penalty'
+        if ($penaltyAmount > 0) {
+            $booking->status = 'Cancelled With Penalty';
+            $booking->save();
+        }
+
         return response()->json([
             'message' => $penaltyAmount > 0
-                ? "Đặt phòng có thể được hủy với phí. Số tiền phạt là {$penaltyAmount} VND"
-                : 'Đặt phòng có thể được hủy miễn phí',
+                ? "Đặt phòng đã được hủy với phí. Số tiền phạt là {$penaltyAmount} VND"
+                : 'Đặt phòng đã được hủy miễn phí',
             'reason' => $penaltyAmount > 0
-                ? "Nếu hủy vào ngày {$cancelTime->format('Y-m-d')}, cách ngày nhận phòng ({$booking->check_in_date->format('Y-m-d')} 14:00) " . round($timeDiff, 2) . " ngày, sẽ vi phạm chính sách hủy {$policyName}. Chính sách này yêu cầu hủy trước {$cancellationPolicy->free_cancellation_days} ngày, nếu không sẽ bị phạt " . ($penaltyType === 'percentage' ? "{$penaltyPercentage}% trên tổng giá" : "{$penaltyFixedAmount} VND cố định")
-                : "Nếu hủy vào ngày {$cancelTime->format('Y-m-d')}, cách ngày nhận phòng ({$booking->check_in_date->format('Y-m-d')} 14:00) " . round($timeDiff, 2) . " ngày, sẽ thỏa mãn chính sách hủy miễn phí {$policyName}.",
+                ? "Bạn hủy đặt phòng vào ngày {$cancelTime->format('Y-m-d')}, cách ngày nhận phòng ({$booking->check_in_date->format('Y-m-d')} 14:00) " . round($timeDiff, 2) . " ngày, vi phạm chính sách hủy {$policyName}. Chính sách này yêu cầu hủy trước {$cancellationPolicy->penalty_days} ngày, nếu không sẽ bị phạt " . ($penaltyType === 'percentage' ? "{$penaltyPercentage}% trên tổng giá" : "{$penaltyFixedAmount} VND cố định")
+                : "Bạn hủy đặt phòng vào ngày {$cancelTime->format('Y-m-d')}, cách ngày nhận phòng ({$booking->check_in_date->format('Y-m-d')} 14:00) " . round($timeDiff, 2) . " ngày, thỏa mãn chính sách hủy miễn phí {$policyName}.",
             'formula' => $penaltyAmount > 0
                 ? ($penaltyType === 'percentage' ? 'Số tiền phạt = Tổng giá * Tỷ lệ phạt' : 'Số tiền phạt = Số tiền cố định')
                 : 'Không áp dụng',
