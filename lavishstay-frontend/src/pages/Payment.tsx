@@ -662,7 +662,7 @@ const Payment: React.FC = () => {
     };
 
     return (
-        <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+        <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', marginTop: 64 }}>
             <Content style={{ padding: '24px' }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                     {/* Header */}
@@ -670,7 +670,7 @@ const Payment: React.FC = () => {
                         <Title level={2}>Thanh toán đặt phòng</Title>
 
                         {/* Debug button - Remove in production */}
-                        {process.env.NODE_ENV === 'development' && (
+                        {/* {process.env.NODE_ENV === 'development' && (
                             <div className="mb-4">
                                 <button
                                     onClick={() => {
@@ -683,7 +683,7 @@ const Payment: React.FC = () => {
                                     [DEV] Clear All Data
                                 </button>
                             </div>
-                        )}
+                        )} */}
 
                         {/* Steps */}
                         <Steps

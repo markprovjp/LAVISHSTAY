@@ -742,7 +742,7 @@ class ReceptionController extends Controller
                     'rep.email as representative_email'
                 ])
                 ->groupBy([
-                    'b.booking_id', 'b.booking_code', 'b.guest_name', 'b.guest_email', 'b.guest_phone',
+                    'b.booking_id', 'b.booking_code', 'b.guest_name', 'b.guest_email', 'b.guest_phone','b.guest_count',
                     'b.check_in_date', 'b.check_out_date', 'b.total_price_vnd',
                     'b.status', 'b.notes', 'b.created_at', 'b.updated_at',
                     'p.amount_vnd', 'p.payment_type', 'p.status', 'p.transaction_id',
