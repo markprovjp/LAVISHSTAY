@@ -109,7 +109,7 @@ class CustomerController extends Controller
         // Gán vai trò guest cho user mới
         $user->roles()->attach($role->id);
 
-        return redirect()->route('admin.customers')
+        return redirect()->route('admin.users.customers.index')
             ->with('success', 'Khách hàng đã được tạo thành công!');
     }
 
@@ -175,7 +175,7 @@ class CustomerController extends Controller
         $role = Role::where('name', 'guest')->firstOrFail();
         $user->roles()->sync([$role->id]);
 
-        return redirect()->route('admin.customers')
+        return redirect()->route('admin.users.customers.show', $user->id)
             ->with('success', 'Khách hàng đã được cập nhật thành công!');
     }
 
@@ -244,7 +244,7 @@ class CustomerController extends Controller
         }
 
         if ($user->id === Auth::id()) {
-            return redirect()->route('admin.customers')->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
+            return redirect()->route('admin.users.customers.index')->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
         }
 
         if ($user->profile_photo_path) {
@@ -253,6 +253,6 @@ class CustomerController extends Controller
 
         $user->delete();
 
-        return redirect()->route('admin.customers')->with('success', 'Khách hàng đã được xóa thành công!');
+        return redirect()->route('admin.users.customers.index')->with('success', 'Khách hàng đã được xóa thành công!');
     }
 }

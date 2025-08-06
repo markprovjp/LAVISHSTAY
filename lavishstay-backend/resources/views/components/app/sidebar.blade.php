@@ -288,16 +288,16 @@
                                     x-transition:leave-end="opacity-0 max-h-0">
                                     @if (Auth::user()?->hasPermission('quan_ly_nhan_vien'))
                                         <li class="mb-1 last:mb-0">
-                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.staffs')) {{ 'text-violet-500!' }} @endif"
-                                                href="{{ route('admin.staffs') }}">
+                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.users.staffs.index')) {{ 'text-violet-500!' }} @endif"
+                                                href="{{ route('admin.users.staffs.index') }}">
                                                 <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Nhân viên</span>
                                             </a>
                                         </li>
                                     @endif
                                     @if (Auth::user()?->hasPermission('quan_ly_khach_hang'))
                                         <li class="mb-1 last:mb-0">
-                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.customers')) {{ 'text-violet-500!' }} @endif"
-                                                href="{{ route('admin.customers') }}">
+                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.users.customers.index')) {{ 'text-violet-500!' }} @endif"
+                                                href="{{ route('admin.users.customers.index') }}">
                                                 <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Khách hàng</span>
                                             </a>
                                         </li>
