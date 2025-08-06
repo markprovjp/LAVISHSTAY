@@ -127,29 +127,30 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
 
+   
     Route::middleware(['auth', 'permission:quan_ly_khach_hang'])->group(function () {
-        Route::get('/admin/customers', [CustomerController::class, 'index'])->name('admin.customers');
-        Route::get('/admin/customers/create', [CustomerController::class, 'create'])->name('admin.customers.create');
-        Route::post('/admin/customers/store', [CustomerController::class, 'store'])->name('admin.customers.store');
-        Route::get('/admin/customers/edit/{id}', [CustomerController::class, 'edit'])->name('admin.customers.edit');
-        Route::put('/admin/customers/update/{id}', [CustomerController::class, 'update'])->name('admin.customers.update');
-        Route::get('/admin/customers/show/{id}', [CustomerController::class, 'show'])->name('admin.customers.show');
-        Route::delete('/admin/customers/destroy/{id}', [CustomerController::class, 'destroy'])->name('admin.customers.destroy');
-        // Route::put('/admin/customers/change-password/{id}', [CustomerController::class, 'changePassword'])->name('admin.customers.change-password');
-        Route::put('/admin/customers/reset-password/{id}', [CustomerController::class, 'resetPassword'])->name('admin.customers.reset-password');
+        Route::get('/admin/customers', [CustomerController::class, 'index'])->name('admin.users.customers.index');
+        Route::get('/admin/customers/create', [CustomerController::class, 'create'])->name('admin.users.customers.create');
+        Route::post('/admin/customers/store', [CustomerController::class, 'store'])->name('admin.users.customers.store');
+        Route::get('/admin/customers/edit/{id}', [CustomerController::class, 'edit'])->name('admin.users.customers.edit');
+        Route::put('/admin/customers/update/{id}', [CustomerController::class, 'update'])->name('admin.users.customers.update');
+        Route::get('/admin/customers/show/{id}', [CustomerController::class, 'show'])->name('admin.users.customers.show');
+        Route::delete('/admin/customers/destroy/{id}', [CustomerController::class, 'destroy'])->name('admin.users.customers.destroy');
+        // Route::put('/admin/customers/change-password/{id}', [CustomerController::class, 'changePassword'])->name('admin.users.customers.change-password');
+        Route::put('/admin/customers/reset-password/{id}', [CustomerController::class, 'resetPassword'])->name('admin.users.customers.reset-password');
     });
 
     //Staffs//////////////////////////////////Route::middleware(['auth', 'permission:quan_ly_user'])->group(function () {
     Route::middleware(['auth', 'permission:quan_ly_nhan_vien'])->group(function () {
-        Route::get('/admin/staffs', [StaffController::class, 'index'])->name('admin.staffs'); //xem tất cả nhân viên
-        Route::get('/admin/staffs/create', [StaffController::class, 'create'])->name('admin.staffs.create'); // tạo nhân viên mới
-        Route::post('/admin/staffs/store', [StaffController::class, 'store'])->name('admin.staffs.store'); // lưu nhân viên mới
-        Route::get('/admin/staffs/edit/{id}', [StaffController::class, 'edit'])->name('admin.staffs.edit'); // chỉnh sửa thông tin nhân viên
-        Route::put('/admin/staffs/update/{id}', [StaffController::class, 'update'])->name('admin.staffs.update'); // cập nhật thông tin nhân viên
-        Route::get('/admin/staffs/show/{id}', [StaffController::class, 'show'])->name('admin.staffs.show'); // xem thông tin chi tiết nhân viên
-        Route::delete('/admin/staffs/destroy/{id}', [StaffController::class, 'destroy'])->name('admin.staffs.destroy'); // xóa nhân viên
-        // Route::put('/admin/staffs/change-password/{id}', [StaffController::class, 'changePassword'])->name('admin.staffs.change-password'); // thay đổi mật khẩu nhân viên
-        Route::put('/admin/staffs/reset-password/{id}', [StaffController::class, 'resetPassword'])->name('admin.staffs.reset-password');
+        Route::get('/admin/staffs', [StaffController::class, 'index'])->name('admin.users.staffs.index'); //xem tất cả nhân viên
+        Route::get('/admin/staffs/create', [StaffController::class, 'create'])->name('admin.users.staffs.create'); // tạo nhân viên mới
+        Route::post('/admin/staffs/store', [StaffController::class, 'store'])->name('admin.users.staffs.store'); // lưu nhân viên mới
+        Route::get('/admin/staffs/edit/{id}', [StaffController::class, 'edit'])->name('admin.users.staffs.edit'); // chỉnh sửa thông tin nhân viên
+        Route::put('/admin/staffs/update/{id}', [StaffController::class, 'update'])->name('admin.users.staffs.update'); // cập nhật thông tin nhân viên
+        Route::get('/admin/staffs/show/{id}', [StaffController::class, 'show'])->name('admin.users.staffs.show'); // xem thông tin chi tiết nhân viên
+        Route::delete('/admin/staffs/destroy/{id}', [StaffController::class, 'destroy'])->name('admin.users.staffs.destroy'); // xóa nhân viên
+        // Route::put('/admin/staffs/change-password/{id}', [StaffController::class, 'changePassword'])->name('admin.users.staffs.change-password'); // thay đổi mật khẩu nhân viên
+        Route::put('/admin/staffs/reset-password/{id}', [StaffController::class, 'resetPassword'])->name('admin.users.staffs.reset-password');
     });
 
 

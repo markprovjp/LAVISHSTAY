@@ -59,20 +59,16 @@ class StaffController extends Controller
     {
         // Lấy các vai trò dành cho nhân viên (không bao gồm guest)
         $staffRoles = Role::where('name', '!=', 'guest')->get();
-        return view('admin.staffs.create', compact('staffRoles'));
+        return view('admin.users.staffs.create', compact('staffRoles'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-
-            // Yêu cầu nhập ít nhất 1 trong 2, nếu nhập thì kiểm tra unique
             'email' => 'required_without:phone|nullable|email|max:255|unique:users,email',
             'phone' => 'required_without:email|nullable|string|max:20|unique:users,phone',
-
             'identity_code' => 'required|string|max:50|unique:users,identity_code',
-
             'password' => [
                 'required',
                 'string',
@@ -80,7 +76,6 @@ class StaffController extends Controller
                 'confirmed',
                 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/'
             ],
-
             'address' => 'nullable|string|max:500',
             'role_id' => 'required|exists:roles,id',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -98,10 +93,10 @@ class StaffController extends Controller
         if (empty($validated['email'])) unset($validated['email']);
         if (empty($validated['phone'])) unset($validated['phone']);
 
-        // Kiểm tra vai trò hợp lệ cho staff
+        // Kiểm tra vai trò: không cho phép gán vai trò 'guest'
         $role = Role::findOrFail($request->role_id);
-        if (!in_array($role->name, ['admin', 'manager', 'receptionist'])) {
-            abort(403, 'Vai trò không hợp lệ cho nhân viên.');
+        if ($role->name === 'guest') {
+            abort(403, 'Vai trò "guest" không được phép gán cho nhân viên.');
         }
 
         // Hash mật khẩu
@@ -122,7 +117,7 @@ class StaffController extends Controller
         // Gán role staff
         $user->roles()->attach($role->id);
 
-        return redirect()->route('admin.staffs')->with('success', 'Nhân viên đã được tạo thành công!');
+        return redirect()->route('admin.users.staffs.index')->with('success', 'Nhân viên đã được tạo thành công!');
     }
 
     public function edit($id)
@@ -136,14 +131,15 @@ class StaffController extends Controller
 
         // Lấy tất cả vai trò ngoại trừ guest
         $staffRoles = Role::where('name', '!=', 'guest')->get();
-        return view('admin.staffs.edit', compact('user', 'staffRoles'));
+        return view('admin.users.staffs.edit', compact('user', 'staffRoles'));
     }
     public function update(Request $request, $id)
     {
         $user = User::with('roles')->findOrFail($id);
 
-        if (!$user->hasAnyRole(['admin', 'manager', 'receptionist'])) {
-            abort(403, 'Không thể cập nhật người không phải là nhân viên');
+        // Kiểm tra xem người dùng có phải là nhân viên không (không có vai trò guest)
+        if ($user->hasRole('guest')) {
+            abort(403, 'Không thể cập nhật người có vai trò guest.');
         }
 
         $validated = $request->validate([
@@ -165,10 +161,10 @@ class StaffController extends Controller
             'password.regex' => 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt.',
         ]);
 
-        // Kiểm tra vai trò
+        // Kiểm tra vai trò: không cho phép gán vai trò 'guest'
         $role = Role::findOrFail($validated['role_id']);
-        if (!in_array($role->name, ['admin', 'manager', 'receptionist'])) {
-            abort(403, 'Vai trò không hợp lệ cho nhân viên');
+        if ($role->name === 'guest') {
+            abort(403, 'Vai trò "guest" không được phép gán cho nhân viên.');
         }
 
         // Hash password nếu có nhập
@@ -192,7 +188,7 @@ class StaffController extends Controller
         // Gán lại vai trò
         $user->roles()->sync([$role->id]);
 
-        return redirect()->route('admin.staffs')->with('success', 'Nhân viên đã được cập nhật thành công!');
+        return redirect()->route('admin.users.staffs.show', $user->id)->with('success', 'Nhân viên đã được cập nhật thành công!');
     }
 
 
@@ -227,7 +223,7 @@ class StaffController extends Controller
 
         // Không cho phép xóa chính mình
         if ($user->id === Auth::id()) {
-            return redirect()->route('admin.staffs')->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
+            return redirect()->route('admin.users.staffs.index')->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
         }
 
         // Xóa ảnh đại diện nếu có (sử dụng method của Jetstream)
@@ -237,6 +233,6 @@ class StaffController extends Controller
 
         $user->delete();
 
-        return redirect()->route('admin.staffs')->with('success', 'Người dùng đã được xóa thành công!');
+        return redirect()->route('admin.users.staffs.index')->with('success', 'Người dùng đã được xóa thành công!');
     }
 }

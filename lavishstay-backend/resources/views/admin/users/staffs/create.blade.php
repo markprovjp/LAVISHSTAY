@@ -11,7 +11,7 @@
             </div>
             <div class="flex items-center space-x-3 mb-4">
 
-                <a href="{{ route('admin.staffs') }}">
+                <a href="{{ route('admin.users.staffs.index') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -46,7 +46,7 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl  dark:border-gray-700">
-            <form action="{{ route('admin.staffs.store') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('admin.users.staffs.store') }}" method="POST" enctype="multipart/form-data"
                 class="p-6">
                 @csrf
 

@@ -24,7 +24,7 @@
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <a href="{{ route('admin.staffs.create') }}">
+                <a href="{{ route('admin.users.staffs.create') }}">
                     <button
                         class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -51,7 +51,7 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('admin.staffs') }}"
+        <form method="GET" action="{{ route('admin.users.staffs.index') }}"
             class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
 
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
@@ -107,7 +107,7 @@
                         <i class="fas fa-search mr-2"></i> Tìm kiếm
                     </button>
 
-                    <a href="{{ route('admin.staffs') }}"
+                    <a href="{{ route('admin.users.staffs.index') }}"
                         class="inline-flex justify-center items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-200 text-sm shadow-sm w-full md:w-auto">
                         <i class="fas fa-redo-alt mr-2"></i> Đặt lại
                     </a>
@@ -251,27 +251,14 @@
                                         <div id="dropdown-menu-{{ $user->id }}"
                                             class="hidden menu-button-action absolute right-0 z-50 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none">
                                             <div class="py-1 z-500" role="menu">
-                                                <!-- View Details -->
-                                                {{-- <button
-                                                            onclick="toggleDetails({{ $user->id }}); closeDropdown({{ $user->id }})"
-                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                                            role="menuitem">
-                                                            View Details
-                                                        </button> --}}
+                                                
 
-                                                <a href="{{ route('admin.staffs.show', $user->id) }}"
+                                                <a href="{{ route('admin.users.staffs.show', $user->id) }}"
                                                     class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                     role="menuitem">
                                                     View Details
                                                 </a>
-                                                <!-- Edit -->
-                                                {{-- <a href="{{ route('admin.users.edit', $user->id) }}"
-                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                                            role="menuitem">
-                                                            Edit User
-                                                        </a> --}}
-
-                                                <!-- Divider -->
+                                                          <!-- Divider -->
                                                 <div class="border-t border-gray-100 dark:border-gray-700">
                                                 </div>
 
@@ -419,7 +406,7 @@
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No users found</h3>
                 <p class="text-gray-500 dark:text-gray-400 mb-6">Get started by creating the first user in the
                     system.</p>
-                <a href="{{ route('admin.customers.create') }}"
+                <a href="{{ route('admin.users.staffs.create') }}"
                     class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-violet-600 hover:bg-violet-700 transition-colors duration-200">
                     Add New Staff
                 </a>
