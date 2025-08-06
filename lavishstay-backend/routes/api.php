@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\BookingCancellationController;
 use App\Http\Controllers\Api\BookingCheckinController;
+use App\Http\Controllers\Api\BookingCheckoutController;
 use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
@@ -119,6 +120,16 @@ Route::prefix('checkin')->group(function () {
 });
 
 
+// API Routes cho Check-in///////////////////////////////////////////////////
+// Service management
+Route::get('/services/available', [BookingCheckoutController::class, 'getAvailableServices']);
+Route::post('/bookings/{id}/services', [BookingCheckoutController::class, 'addBookingService']);
+Route::put('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'updateBookingService']);
+Route::delete('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'removeBookingService']);
+
+// Checkout
+Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
+Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
 
 
 
