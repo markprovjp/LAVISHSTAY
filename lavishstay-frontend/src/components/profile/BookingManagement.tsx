@@ -20,7 +20,9 @@ import {
     Skeleton,
     Select,
     Form,
-    message
+    message,
+    Descriptions,
+    Tooltip
 } from 'antd';
 import {
     CalendarOutlined,
@@ -533,21 +535,48 @@ const BookingManagement: React.FC = () => {
                                             {/* Booking Info */}
                                             <Col xs={24} sm={12} md={14}>
                                                 <div>
-                                                    <Title level={4} style={{ margin: 0, color: '#222', fontSize: 17, fontWeight: 600 }}>{booking.room_name || 'Chưa gán phòng'}</Title>
-                                                    <Text style={{ color: '#1890ff', fontWeight: 500, fontSize: 14 }}>{booking.room_type || 'Loại phòng chưa xác định'}</Text>
+                                                    {/* Hiển thị toàn bộ phòng đã book */}
+                                                    {Array.isArray(booking.booking_rooms) && booking.booking_rooms.length > 0 ? (
+                                                        booking.booking_rooms.map((room, idx) => (
+                                                            <div key={room.room_id || idx} style={{ marginBottom: 4 }}>
+                                                                <Title level={4} style={{ margin: 0, color: '#222', fontSize: 17, fontWeight: 600, display: 'inline-block' }}>{room.room_name || 'Chưa gán phòng'}</Title>
+                                                                {room.option_name && <Text style={{ color: '#1890ff', fontWeight: 500, fontSize: 14, marginLeft: 8 }}>{room.option_name}</Text>}
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <Title level={4} style={{ margin: 0, color: '#222', fontSize: 17, fontWeight: 600 }}>{booking.room_name || 'Chưa gán phòng'}</Title>
+                                                    )}
                                                     <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
                                                         <CalendarOutlined style={{ color: '#1890ff', marginRight: 6, fontSize: 15 }} />
                                                         <Text style={{ fontSize: 14 }}>{dayjs(booking.check_in_date).format('DD/MM/YYYY')} - {dayjs(booking.check_out_date).format('DD/MM/YYYY')}</Text>
+                                                        {/* Hiển thị số lượng phòng */}
+                                                        {Array.isArray(booking.booking_rooms) && booking.booking_rooms.length > 1 && (
+                                                            <Text style={{ fontSize: 13, color: '#888', marginLeft: 12 }}>
+                                                                ({booking.booking_rooms.length} phòng)
+                                                            </Text>
+                                                        )}
                                                     </div>
 
                                                     <div style={{ marginTop: 10, padding: 0 }}>
-                                                        <Text style={{ fontSize: 13, color: '#555', fontWeight: 500 }}>Khách & Đại diện:</Text>
-                                                        <div style={{ marginTop: 2, fontSize: 13, color: '#888', lineHeight: 1.7 }}>
-                                                            <span><UserOutlined style={{ marginRight: 4, fontSize: 13 }} />{booking.guest_name || booking.representative_name}</span>
-                                                            {booking.guest_phone && <span style={{ marginLeft: 16 }}><PhoneOutlined style={{ marginRight: 4, fontSize: 13 }} />{booking.guest_phone}</span>}
-                                                            {booking.guest_email && <span style={{ marginLeft: 16 }}><MailOutlined style={{ marginRight: 4, fontSize: 13 }} />{booking.guest_email}</span>}
-                                                            {booking.representative_id_card && <span style={{ marginLeft: 16 }}><IdcardOutlined style={{ marginRight: 4, fontSize: 13 }} />{booking.representative_id_card}</span>}
-                                                        </div>
+                                                        <Descriptions
+                                                            title={<span style={{ fontSize: 13, color: '#555', fontWeight: 500 }}>Khách & Đại diện</span>}
+                                                            size="small"
+                                                            column={1}
+                                                            style={{ background: '#fafafa', borderRadius: 8, padding: 8 }}
+                                                        >
+                                                            <Descriptions.Item label={<span><UserOutlined style={{ marginRight: 4, fontSize: 13 }} />Họ tên</span>}>
+                                                                {booking.guest_name || booking.representative_name || '---'}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label={<span><PhoneOutlined style={{ marginRight: 4, fontSize: 13 }} />SĐT</span>}>
+                                                                {booking.guest_phone || '---'}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label={<span><MailOutlined style={{ marginRight: 4, fontSize: 13 }} />Email</span>}>
+                                                                {booking.guest_email || '---'}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label={<span><IdcardOutlined style={{ marginRight: 4, fontSize: 13 }} />CCCD/CMND</span>}>
+                                                                {booking.representative_id_card || 'xxxxxxx'}
+                                                            </Descriptions.Item>
+                                                        </Descriptions>
                                                     </div>
                                                     <div style={{ marginTop: 8 }}>
                                                         <Text style={{ fontSize: 13, color: '#888' }}>Thanh toán: <b style={{ color: '#222' }}>{getStatusText(booking.payment_status || '')}</b> | Số tiền: <b style={{ color: '#222' }}>{Number(booking.total_price_vnd).toLocaleString('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 })}</b></Text>
@@ -587,31 +616,43 @@ const BookingManagement: React.FC = () => {
                                                             </Space>
                                                             <Space size={8}>
                                                                 {/* Nút Huỷ phòng: chỉ hiển thị khi booking.status là Confirmed và chưa check-in */}
-                                                                {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_in_date).isAfter(dayjs()) && (
+                                                                {/* Nút Huỷ phòng: luôn hiển thị, disable nếu không đủ điều kiện */}
+                                                                <Tooltip title={
+                                                                    booking.status?.toLowerCase() !== 'confirmed' ? 'Chỉ có thể huỷ khi trạng thái là Đã xác nhận' :
+                                                                        !dayjs(booking.check_in_date).isAfter(dayjs()) ? 'Chỉ có thể huỷ trước ngày check-in' : ''
+                                                                }>
                                                                     <Button
                                                                         danger
                                                                         size="small"
                                                                         loading={cancelLoading && cancelBookingId === booking.booking_id}
                                                                         style={{ borderRadius: 4, fontWeight: 500 }}
                                                                         onClick={e => { e.stopPropagation(); handleShowCancelPolicy(booking); }}
+                                                                        disabled={booking.status?.toLowerCase() !== 'confirmed' || !dayjs(booking.check_in_date).isAfter(dayjs())}
                                                                     >
                                                                         Huỷ phòng
                                                                     </Button>
-                                                                )}
-                                                                {/* Nút Gia hạn: chỉ hiển thị khi booking.status là Confirmed và chưa check-out */}
-                                                                {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_out_date).isAfter(dayjs()) && (
+                                                                </Tooltip>
+                                                                {/* Nút Gia hạn: luôn hiển thị, disable nếu không đủ điều kiện */}
+                                                                <Tooltip title={
+                                                                    booking.status?.toLowerCase() !== 'confirmed' ? 'Chỉ có thể gia hạn khi trạng thái là Đã xác nhận' :
+                                                                        !dayjs(booking.check_out_date).isAfter(dayjs()) ? 'Chỉ có thể gia hạn trước ngày check-out' : ''
+                                                                }>
                                                                     <Button
                                                                         type="primary"
                                                                         size="small"
                                                                         loading={extendLoading && extendBookingId === booking.booking_id}
                                                                         style={{ borderRadius: 4, fontWeight: 500 }}
                                                                         onClick={e => { e.stopPropagation(); handleShowExtendPolicy(booking); }}
+                                                                        disabled={booking.status?.toLowerCase() !== 'confirmed' || !dayjs(booking.check_out_date).isAfter(dayjs())}
                                                                     >
                                                                         Gia hạn
                                                                     </Button>
-                                                                )}
-                                                                {/* Nút Rời lịch: chỉ hiển thị khi booking.status là Confirmed và chưa check-in */}
-                                                                {booking.status?.toLowerCase() === 'confirmed' && dayjs(booking.check_in_date).isAfter(dayjs()) && (
+                                                                </Tooltip>
+                                                                {/* Nút Rời lịch: luôn hiển thị, disable nếu không đủ điều kiện */}
+                                                                <Tooltip title={
+                                                                    booking.status?.toLowerCase() !== 'confirmed' ? 'Chỉ có thể dời lịch khi trạng thái là Đã xác nhận' :
+                                                                        !dayjs(booking.check_in_date).isAfter(dayjs()) ? 'Chỉ có thể dời lịch trước ngày check-in' : ''
+                                                                }>
                                                                     <Button
                                                                         type="default"
                                                                         size="small"
@@ -640,10 +681,11 @@ const BookingManagement: React.FC = () => {
                                                                                 reason: ''
                                                                             });
                                                                         }}
+                                                                        disabled={booking.status?.toLowerCase() !== 'confirmed' || !dayjs(booking.check_in_date).isAfter(dayjs())}
                                                                     >
                                                                         Rời lịch
                                                                     </Button>
-                                                                )}
+                                                                </Tooltip>
                                                             </Space>
                                                             {/* Modal nhập thông tin rời lịch và xem chính sách */}
                                                             <Modal

@@ -294,7 +294,7 @@ class BookingController extends Controller {
             }
             $booking->room_type_amenities = $booking->room_type_amenities ? json_decode($booking->room_type_amenities) : [];
             // Gán booking_rooms cho từng booking, mỗi room có thêm room_name
-            $booking->booking_rooms = $bookingRooms[$booking->booking_id] ? $bookingRooms[$booking->booking_id]->values()->toArray() : [];
+            $booking->booking_rooms = isset($bookingRooms[$booking->booking_id]) ? $bookingRooms[$booking->booking_id]->values()->toArray() : [];
         }
 
         // Lấy toàn bộ phòng (room) join với room_types
