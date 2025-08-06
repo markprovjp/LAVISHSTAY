@@ -69,8 +69,47 @@ class Booking extends Model
     }
 
     public function roomType()
-{
-    return $this->belongsTo(RoomType::class, 'room_type_id');
-}
+    {
+        return $this->belongsTo(RoomType::class, 'room_type_id');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'booking_id', 'booking_id');
+    }
+
+    /**
+     * Get the latest invoice for this booking
+     */
+    public function latestInvoice()
+    {
+        return $this->hasOne(Invoice::class, 'booking_id', 'booking_id')->latest('issued_at');
+    }
+
+    /**
+     * Get total amount of additional services
+     */
+    public function getTotalServiceAmountAttribute()
+    {
+        return $this->bookingServices->sum(function ($service) {
+            return $service->quantity * $service->price_vnd;
+        });
+    }
+
+    /**
+     * Get final total amount (room + services)
+     */
+    public function getFinalTotalAmountAttribute()
+    {
+        return $this->total_price_vnd + $this->total_service_amount;
+    }
+
+    /**
+     * Get formatted final total amount
+     */
+    public function getFormattedFinalTotalAmountAttribute()
+    {
+        return number_format($this->final_total_amount, 0, ',', '.') . ' ₫';
+    }
 
 }
