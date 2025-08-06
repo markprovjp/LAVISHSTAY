@@ -394,6 +394,22 @@ export const receptionAPI = {
     return response.data;
   },
 
+  // Check-in API methods
+  getCheckinInfo: async (bookingId: number) => {
+    const response = await api.get(`/checkin/booking/${bookingId}/info`);
+    return response.data;
+  },
+
+  processCheckin: async (bookingId: number, data: any = {}) => {
+    const response = await api.post(`/checkin/booking/${bookingId}/process`, data);
+    return response.data;
+  },
+
+  getTodayCheckins: async () => {
+    const response = await api.get('/checkin/today');
+    return response.data;
+  },
+
   getFloors: async () => {
     const response = await api.get('/reception/floors');
     return response.data;

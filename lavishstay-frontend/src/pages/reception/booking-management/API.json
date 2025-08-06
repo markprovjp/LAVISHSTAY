@@ -1,185 +1,348 @@
-   {
-            "room_type_id": 1,
-            "room_code": "deluxe",
-            "room_type_name": "Deluxe Room",
-            "description": "Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.",
-            "base_price": "5000.00",
-            "adjusted_price": 6000,
-            "size": 32,
-            "max_guests": 2,
-            "rating": 0,
-            "package_options": [
+// GET http://127.0.0.1:8888/api/checkin/booking/159/info
+
+{
+    "success": true,
+    "message": "Lấy thông tin check-in thành công",
+    "data": {
+        "booking_id": 159,
+        "booking_code": "LVS159132746",
+        "guest_name": "PH Nguyễn Anh Đức",
+        "guest_email": "nguyenanhduc2909@gmail.com",
+        "guest_phone": "0822153447",
+        "check_in_date": "2025-07-27T17:00:00.000000Z",
+        "check_out_date": "2025-07-28T17:00:00.000000Z",
+        "status": "Pending",
+        "total_price_vnd": 22000,
+        "guest_count": 6,
+        "adults": null,
+        "children": null,
+        "children_age": null,
+        "notes": null,
+        "room_info": {
+            "total_rooms": 0,
+            "rooms": []
+        },
+        "payment_status": {
+            "total_required": 22000,
+            "total_paid": 0,
+            "remaining_amount": 22000,
+            "is_sufficient": false,
+            "payment_percentage": 0,
+            "payments": [
                 {
-                    "package_id": 1,
-                    "package_name": "Standard Package",
-                    "package_description": "Gói tiêu chuẩn cho Deluxe Room",
-                    "price_modifier_vnd": "5000.00",
-                    "price_per_room_per_night": 11000,
-                    "total_package_price": 11000,
-                    "services": [],
-                    "pricing_breakdown": {
-                        "base_price_per_night": "5000.00",
-                        "adjusted_price_per_night": 6000,
-                        "package_modifier": "5000.00",
-                        "final_price_per_room_per_night": 11000,
-                        "nights": 1,
-                        "currency": "VND"
-                    },
-                    "policies": {
-                        "cancellation": {
-                            "policy_id": 10,
-                            "name": "Hủy miễn phí 7 ngày",
-                            "free_cancellation_days": 7,
-                            "penalty_percentage": "0.00",
-                            "penalty_fixed_amount_vnd": "200000.00",
-                            "description": "Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k",
-                            "applies_to_weekend": 0,
-                            "applies_to_holiday": 0
-                        },
-                        "deposit": {
-                            "policy_id": 10,
-                            "name": "Đặt cọc 20%",
-                            "deposit_percentage": "20.00",
-                            "deposit_fixed_amount_vnd": "0.00",
-                            "description": "Đặt cọc 20% giá trị booking",
-                            "min_days_before_checkin": null,
-                            "applies_to_weekend": 0,
-                            "applies_to_holiday": 0
-                        },
-                        "check_out": {
-                            "policy_id": 4,
-                            "name": "Check-out tiêu chuẩn",
-                            "early_check_out_fee_vnd": "0.00",
-                            "late_check_out_fee_vnd": "500000.00",
-                            "late_check_out_max_hours": 2,
-                            "early_check_out_max_hours": 4,
-                            "standard_check_out_time": "12:00:00",
-                            "description": "Check-out tiêu chuẩn 12:00",
-                            "applies_to_weekend": 0,
-                            "applies_to_holiday": 0
-                        }
-                    }
-                },
-                {
-                    "package_id": 8,
-                    "package_name": "Premium Package",
-                    "package_description": "Gói trung bình của phòng loại 1",
-                    "price_modifier_vnd": "1000000.00",
-                    "price_per_room_per_night": 1006000,
-                    "total_package_price": 1006000,
-                    "services": [],
-                    "pricing_breakdown": {
-                        "base_price_per_night": "5000.00",
-                        "adjusted_price_per_night": 6000,
-                        "package_modifier": "1000000.00",
-                        "final_price_per_room_per_night": 1006000,
-                        "nights": 1,
-                        "currency": "VND"
-                    },
-                    "policies": {
-                        "cancellation": {
-                            "policy_id": 10,
-                            "name": "Hủy miễn phí 7 ngày",
-                            "free_cancellation_days": 7,
-                            "penalty_percentage": "0.00",
-                            "penalty_fixed_amount_vnd": "200000.00",
-                            "description": "Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k",
-                            "applies_to_weekend": 0,
-                            "applies_to_holiday": 0
-                        },
-                        "deposit": {
-                            "policy_id": 10,
-                            "name": "Đặt cọc 20%",
-                            "deposit_percentage": "20.00",
-                            "deposit_fixed_amount_vnd": "0.00",
-                            "description": "Đặt cọc 20% giá trị booking",
-                            "min_days_before_checkin": null,
-                            "applies_to_weekend": 0,
-                            "applies_to_holiday": 0
-                        },
-                        "check_out": {
-                            "policy_id": 4,
-                            "name": "Check-out tiêu chuẩn",
-                            "early_check_out_fee_vnd": "0.00",
-                            "late_check_out_fee_vnd": "500000.00",
-                            "late_check_out_max_hours": 2,
-                            "early_check_out_max_hours": 4,
-                            "standard_check_out_time": "12:00:00",
-                            "description": "Check-out tiêu chuẩn 12:00",
-                            "applies_to_weekend": 0,
-                            "applies_to_holiday": 0
-                        }
-                    }
+                    "payment_id": 106,
+                    "amount_vnd": "22000.00",
+                    "payment_type": "vietqr",
+                    "status": "pending",
+                    "transaction_id": null,
+                    "created_at": "2025-07-28T06:27:46.000000Z"
                 }
             ],
-            "cheapest_package_price": 11000,
-            "search_criteria": {
-                "check_in_date": "2025-07-30",
-                "check_out_date": "2025-07-31",
-                "nights": 1
-            },
-            "policies": {
-                "cancellation_policy_id": 10,
-                "deposit_policy_id": 10,
-                "check_out_policy_id": 4,
-                "policy_applied_date": "2025-07-30",
-                "policy_snapshot": {
-                    "cancellation": {
-                        "policy_id": 10,
-                        "name": "Hủy miễn phí 7 ngày",
-                        "free_cancellation_days": 7,
-                        "penalty_percentage": "0.00",
-                        "penalty_fixed_amount_vnd": "200000.00",
-                        "description": "Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k",
-                        "priority": 10,
-                        "conditions": null,
-                        "applies_to_weekend": 0,
-                        "applies_to_holiday": 0,
-                        "min_booking_amount": null,
-                        "max_booking_amount": null,
-                        "is_active": true,
-                        "created_at": "2025-07-12T09:51:47.000000Z",
-                        "updated_at": "2025-07-12T09:51:47.000000Z"
-                    },
-                    "deposit": {
-                        "policy_id": 10,
-                        "name": "Đặt cọc 20%",
-                        "deposit_percentage": "20.00",
-                        "deposit_fixed_amount_vnd": "0.00",
-                        "description": "Đặt cọc 20% giá trị booking",
-                        "priority": 0,
-                        "conditions": null,
-                        "applies_to_weekend": 0,
-                        "applies_to_holiday": 0,
-                        "min_days_before_checkin": null,
-                        "min_booking_amount": null,
-                        "is_active": true,
-                        "created_at": "2025-07-12T09:51:47.000000Z",
-                        "updated_at": "2025-07-21T03:41:18.000000Z"
-                    },
-                    "check_out": {
-                        "policy_id": 4,
-                        "name": "Check-out tiêu chuẩn",
-                        "early_check_out_fee_vnd": "0.00",
-                        "late_check_out_fee_vnd": "500000.00",
-                        "late_check_out_max_hours": 2,
-                        "early_check_out_max_hours": 4,
-                        "description": "Check-out tiêu chuẩn 12:00",
-                        "priority": 0,
-                        "conditions": null,
-                        "applies_to_weekend": 0,
-                        "applies_to_holiday": 0,
-                        "standard_check_out_time": "12:00:00",
-                        "is_active": true,
-                        "created_at": "2025-07-12T09:51:47.000000Z",
-                        "updated_at": "2025-07-12T09:51:47.000000Z"
-                    }
-                }
-            },
-            "pricing_summary": {
-                "nights": 1,
-                "base_price_per_night": "5000.00",
-                "adjusted_price_per_night": 6000,
-                "currency": "VND"
+            "payment_summary": {
+                "completed_payments": 0,
+                "pending_payments": 1,
+                "failed_payments": 0
             }
         },
+        "rooms_assigned": {
+            "has_rooms": false,
+            "assigned_rooms_count": 0,
+            "required_rooms_count": 1,
+            "room_details": []
+        },
+        "documents_verified": {
+            "is_verified": true,
+            "verification_details": {
+                "has_name": true,
+                "has_email": true,
+                "has_phone": true
+            },
+            "required_documents": {
+                "identity_card": "Chứng minh nhân dân/Căn cước công dân",
+                "passport": "Hộ chiếu (đối với khách nước ngoài)"
+            },
+            "verification_status": "Đã xác nhận"
+        },
+        "early_checkin_info": {
+            "is_early": false,
+            "has_fee": false,
+            "fee_amount": 0,
+            "policy_id": 6,
+            "policy_name": "Early Check-in",
+            "standard_time": "08:00",
+            "actual_time": "12:45",
+            "time_difference_minutes": 0
+        },
+        "applicable_policies": [
+            {
+                "policy_id": 6,
+                "name": "Early Check-in",
+                "description": "Check-in từ 8:00–13:59, phụ phí 50% nếu trước 12:00, miễn phí nếu phòng trống.",
+                "standard_check_in_time": "2025-08-06T01:00:00.000000Z",
+                "early_check_in_fee_vnd": "1000000.00",
+                "priority": 20,
+                "conditions": "{\"time\": \"08:00-13:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true, \"room_availability\": \"optional\"}",
+                "action": "Allow check-in, charge 50% if before 12:00, assign room"
+            },
+            {
+                "policy_id": 7,
+                "name": "Late Check-in",
+                "description": "Check-in sau 23:00, cần đảm bảo booking bằng thẻ tín dụng.",
+                "standard_check_in_time": "2025-08-06T16:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 15,
+                "conditions": "{\"time\": \"23:00-07:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true, \"guaranteed_booking\": true}",
+                "action": "Allow check-in, assign room, concierge support"
+            },
+            {
+                "policy_id": 10,
+                "name": "Special Request Check-in",
+                "description": "Check-in với yêu cầu đặc biệt (tầng cao, view đẹp, giường phụ).",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 12,
+                "conditions": "{\"special_requests\": true, \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true}",
+                "action": "Assign room matching requests, allow check-in"
+            },
+            {
+                "policy_id": 5,
+                "name": "Standard Check-in",
+                "description": "Check-in từ 14:00–23:59, yêu cầu giấy tờ và thanh toán 100%.",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 10,
+                "conditions": "{\"time\": \"14:00-23:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true}",
+                "action": "Allow check-in, assign room, provide welcome drink"
+            },
+            {
+                "policy_id": 9,
+                "name": "Group Check-in",
+                "description": "Check-in cho đoàn (>10 người), thanh toán trước 50%.",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 8,
+                "conditions": "{\"guest_count\": \">10\", \"payment_status\": \">=50%\", \"room_assigned\": true, \"document_verified\": true}",
+                "action": "Assign multiple rooms, process group check-in"
+            },
+            {
+                "policy_id": 15,
+                "name": "Booking Cancellation",
+                "description": "Hủy booking trước check-in, miễn phí nếu trước 48 giờ, phạt 50% trong 48 giờ, 100% trong 24 giờ.",
+                "standard_check_in_time": "2025-08-05T17:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 6,
+                "conditions": "{\"cancellation\": true, \"time_before_check_in\": \"<=48h\", \"payment_status\": \"any\"}",
+                "action": "Apply cancellation fee (0%, 50%, or 100% based on time)"
+            },
+            {
+                "policy_id": 8,
+                "name": "Walk-in Check-in",
+                "description": "Check-in không đặt trước, cần phòng trống và thanh toán 100%.",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 5,
+                "conditions": "{\"no_booking\": true, \"payment_status\": \"100%\", \"room_assigned\": false, \"document_verified\": true, \"room_availability\": true}",
+                "action": "Assign available room, process payment, allow check-in"
+            },
+            {
+                "policy_id": 14,
+                "name": "Room Unavailable Check-in",
+                "description": "Phòng chưa sẵn sàng hoặc hỏng, chuyển sang phòng khác.",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 4,
+                "conditions": "{\"room_assigned\": true, \"room_availability\": false, \"document_verified\": true, \"payment_status\": \">=100%\"}",
+                "action": "Assign alternative room or upgrade, allow check-in"
+            },
+            {
+                "policy_id": 13,
+                "name": "Missing Document Check-in",
+                "description": "Thiếu giấy tờ, yêu cầu xác minh trước khi check-in.",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 3,
+                "conditions": "{\"document_verified\": false, \"payment_status\": \">=100%\", \"room_assigned\": true}",
+                "action": "Reject check-in, request document verification"
+            },
+            {
+                "policy_id": 12,
+                "name": "Invalid Payment Check-in",
+                "description": "Thẻ tín dụng không hợp lệ, yêu cầu phương thức thanh toán khác.",
+                "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 2,
+                "conditions": "{\"payment_status\": \"invalid\", \"room_assigned\": true, \"document_verified\": true}",
+                "action": "Reject check-in, request alternative payment"
+            },
+            {
+                "policy_id": 11,
+                "name": "No-show Policy",
+                "description": "Hủy booking nếu không đến trước 23:59, phạt 100%.",
+                "standard_check_in_time": "2025-08-06T16:59:00.000000Z",
+                "early_check_in_fee_vnd": "0.00",
+                "priority": 1,
+                "conditions": "{\"time\": \">23:59\", \"no_show\": true, \"payment_status\": \"any\"}",
+                "action": "Cancel booking, charge 100% penalty"
+            }
+        ],
+        "ready_for_checkin": false,
+        "warnings": [
+            {
+                "type": "payment",
+                "message": "Chưa thanh toán đủ",
+                "details": "Còn thiếu 22,000 VND"
+            },
+            {
+                "type": "room",
+                "message": "Chưa có phòng được gán",
+                "details": "Cần gán phòng trước khi check-in"
+            }
+        ],
+        "requirements": {
+            "payment_required": true,
+            "room_assignment_required": true,
+            "document_verification_required": true,
+            "early_checkin_fee_may_apply": true,
+            "policies": [
+                {
+                    "policy_id": 6,
+                    "name": "Early Check-in",
+                    "description": "Check-in từ 8:00–13:59, phụ phí 50% nếu trước 12:00, miễn phí nếu phòng trống.",
+                    "standard_check_in_time": "2025-08-06T01:00:00.000000Z",
+                    "early_check_in_fee_vnd": "1000000.00",
+                    "priority": 20,
+                    "conditions": "{\"time\": \"08:00-13:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true, \"room_availability\": \"optional\"}",
+                    "action": "Allow check-in, charge 50% if before 12:00, assign room"
+                },
+                {
+                    "policy_id": 7,
+                    "name": "Late Check-in",
+                    "description": "Check-in sau 23:00, cần đảm bảo booking bằng thẻ tín dụng.",
+                    "standard_check_in_time": "2025-08-06T16:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 15,
+                    "conditions": "{\"time\": \"23:00-07:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true, \"guaranteed_booking\": true}",
+                    "action": "Allow check-in, assign room, concierge support"
+                },
+                {
+                    "policy_id": 10,
+                    "name": "Special Request Check-in",
+                    "description": "Check-in với yêu cầu đặc biệt (tầng cao, view đẹp, giường phụ).",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 12,
+                    "conditions": "{\"special_requests\": true, \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true}",
+                    "action": "Assign room matching requests, allow check-in"
+                },
+                {
+                    "policy_id": 5,
+                    "name": "Standard Check-in",
+                    "description": "Check-in từ 14:00–23:59, yêu cầu giấy tờ và thanh toán 100%.",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 10,
+                    "conditions": "{\"time\": \"14:00-23:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true}",
+                    "action": "Allow check-in, assign room, provide welcome drink"
+                },
+                {
+                    "policy_id": 9,
+                    "name": "Group Check-in",
+                    "description": "Check-in cho đoàn (>10 người), thanh toán trước 50%.",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 8,
+                    "conditions": "{\"guest_count\": \">10\", \"payment_status\": \">=50%\", \"room_assigned\": true, \"document_verified\": true}",
+                    "action": "Assign multiple rooms, process group check-in"
+                },
+                {
+                    "policy_id": 15,
+                    "name": "Booking Cancellation",
+                    "description": "Hủy booking trước check-in, miễn phí nếu trước 48 giờ, phạt 50% trong 48 giờ, 100% trong 24 giờ.",
+                    "standard_check_in_time": "2025-08-05T17:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 6,
+                    "conditions": "{\"cancellation\": true, \"time_before_check_in\": \"<=48h\", \"payment_status\": \"any\"}",
+                    "action": "Apply cancellation fee (0%, 50%, or 100% based on time)"
+                },
+                {
+                    "policy_id": 8,
+                    "name": "Walk-in Check-in",
+                    "description": "Check-in không đặt trước, cần phòng trống và thanh toán 100%.",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 5,
+                    "conditions": "{\"no_booking\": true, \"payment_status\": \"100%\", \"room_assigned\": false, \"document_verified\": true, \"room_availability\": true}",
+                    "action": "Assign available room, process payment, allow check-in"
+                },
+                {
+                    "policy_id": 14,
+                    "name": "Room Unavailable Check-in",
+                    "description": "Phòng chưa sẵn sàng hoặc hỏng, chuyển sang phòng khác.",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 4,
+                    "conditions": "{\"room_assigned\": true, \"room_availability\": false, \"document_verified\": true, \"payment_status\": \">=100%\"}",
+                    "action": "Assign alternative room or upgrade, allow check-in"
+                },
+                {
+                    "policy_id": 13,
+                    "name": "Missing Document Check-in",
+                    "description": "Thiếu giấy tờ, yêu cầu xác minh trước khi check-in.",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 3,
+                    "conditions": "{\"document_verified\": false, \"payment_status\": \">=100%\", \"room_assigned\": true}",
+                    "action": "Reject check-in, request document verification"
+                },
+                {
+                    "policy_id": 12,
+                    "name": "Invalid Payment Check-in",
+                    "description": "Thẻ tín dụng không hợp lệ, yêu cầu phương thức thanh toán khác.",
+                    "standard_check_in_time": "2025-08-06T07:00:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 2,
+                    "conditions": "{\"payment_status\": \"invalid\", \"room_assigned\": true, \"document_verified\": true}",
+                    "action": "Reject check-in, request alternative payment"
+                },
+                {
+                    "policy_id": 11,
+                    "name": "No-show Policy",
+                    "description": "Hủy booking nếu không đến trước 23:59, phạt 100%.",
+                    "standard_check_in_time": "2025-08-06T16:59:00.000000Z",
+                    "early_check_in_fee_vnd": "0.00",
+                    "priority": 1,
+                    "conditions": "{\"time\": \">23:59\", \"no_show\": true, \"payment_status\": \"any\"}",
+                    "action": "Cancel booking, charge 100% penalty"
+                }
+            ]
+        }
+    }
+}
+
+// POST http://127.0.0.1:8888/api/checkin/booking/158/process
+
+{
+    "error": "Chưa thanh toán đủ để check-in",
+    "payment_details": {
+        "total_required": 22000,
+        "total_paid": 0,
+        "remaining_amount": 22000,
+        "is_sufficient": false,
+        "payment_percentage": 0,
+        "payments": [
+            {
+                "payment_id": 105,
+                "amount_vnd": "22000.00",
+                "payment_type": "vietqr",
+                "status": "pending",
+                "transaction_id": null,
+                "created_at": "2025-07-28T05:45:50.000000Z"
+            }
+        ],
+        "payment_summary": {
+            "completed_payments": 0,
+            "pending_payments": 1,
+            "failed_payments": 0
+        }
+    }
+}

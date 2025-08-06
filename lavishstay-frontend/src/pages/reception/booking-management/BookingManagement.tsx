@@ -16,16 +16,13 @@ import {
     Dropdown,
     Menu,
     Flex,
-    Progress,
     message
 } from 'antd';
 import { ProTable, type ProColumns } from '@ant-design/pro-components';
 import {
     EyeOutlined,
     DeleteOutlined,
-    CalendarOutlined,
     ClockCircleOutlined,
-    DollarOutlined,
     UserOutlined,
     MoreOutlined,
     HomeOutlined,
@@ -50,6 +47,7 @@ import {
 import BookingDetailModal from './BookingDetailModal';
 import BookingFilterBar from '../../../components/booking-management/BookingFilterBar';
 import ErrorBoundary from '../../../components/common/ErrorBoundary';
+import CheckinModal from './CheckinModal';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import RoomSelectionModal from './RoomSelectionModal';
@@ -106,6 +104,8 @@ const BookingManagement: React.FC = () => {
     const [isRoomSelectionModalVisible, setIsRoomSelectionModalVisible] = useState(false);
     const [roomSelectionBookingId, setRoomSelectionBookingId] = useState<number | null>(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [isCheckinModalVisible, setIsCheckinModalVisible] = useState(false);
+    const [checkinBookingId, setCheckinBookingId] = useState<number | null>(null);
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -338,14 +338,9 @@ const BookingManagement: React.FC = () => {
                     } else if (key === 'cancel') {
                         handleCancelBooking(record.booking_id);
                     } else if (key === 'checkin') {
-                        // Gọi API check-in qua axios
-                        try {
-                            await receptionAPI.checkIn({ booking_id: record.booking_id, room_id: record.room_id || 0 });
-                            message.success('Check-in thành công!');
-                            refetch();
-                        } catch (e) {
-                            message.error('Check-in thất bại!');
-                        }
+                        // Mở modal check-in với thông tin chi tiết
+                        setCheckinBookingId(record.booking_id);
+                        setIsCheckinModalVisible(true);
                     } else if (key === 'checkout') {
                         // Gọi API check-out qua axios
                         try {
@@ -449,6 +444,18 @@ const BookingManagement: React.FC = () => {
                         onUpdate={refetch}
                     />
                 )}
+                <CheckinModal
+                    visible={isCheckinModalVisible}
+                    bookingId={checkinBookingId}
+                    onClose={() => {
+                        setIsCheckinModalVisible(false);
+                        setCheckinBookingId(null);
+                    }}
+                    onSuccess={() => {
+                        refetch();
+                        message.success('Check-in thành công!');
+                    }}
+                />
             </Content>
         </Layout>
     );
