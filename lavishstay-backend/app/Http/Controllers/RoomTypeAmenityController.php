@@ -105,7 +105,7 @@ class RoomTypeAmenityController extends Controller
     {
         try {
             // Check if the amenity is attached to this room type
-            $pivotRecord = DB::table('room_type_amenities')
+            $pivotRecord = DB::table('room_type_amenity')
                 ->where('room_type_id', $roomType->room_type_id)
                 ->where('amenity_id', $amenity->amenity_id)
                 ->first();
@@ -121,7 +121,7 @@ class RoomTypeAmenityController extends Controller
             $newHighlight = !$currentHighlight;
 
             // Update the pivot record
-            DB::table('room_type_amenities')
+            DB::table('room_type_amenity')
                 ->where('room_type_id', $roomType->room_type_id)
                 ->where('amenity_id', $amenity->amenity_id)
                 ->update([
@@ -154,7 +154,7 @@ class RoomTypeAmenityController extends Controller
             $isHighlighted = $request->is_highlighted;
             
             // Update all amenities for this room type
-            $updated = DB::table('room_type_amenities')
+            $updated = DB::table('room_type_amenity')
                 ->where('room_type_id', $roomType->room_type_id)
                 ->update([
                     'is_highlighted' => $isHighlighted,

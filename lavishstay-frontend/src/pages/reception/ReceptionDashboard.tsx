@@ -1,19 +1,24 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Typography, Statistic, Space, Progress, Timeline, Table, Tag, Avatar, Divider, ProgressProps } from 'antd';
-import { Area, Column, Pie, Line } from '@ant-design/plots';
-import {
-  HomeOutlined,
-  BookOutlined,
-  TeamOutlined,
-  CalendarOutlined,
-  DollarOutlined,
-  ClockCircleOutlined,
-  PieChartOutlined,
-  CheckCircleOutlined,
-  WarningOutlined,
-  InfoCircleOutlined
-} from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Card, Row, Col, Statistic, Typography, Avatar, Progress, Timeline, List, Table, Divider, Spin, Alert, Space, Tag } from 'antd';
+import type { ProgressProps } from 'antd';
+import { UserOutlined, DollarCircleOutlined, ShoppingCartOutlined, TeamOutlined, BellOutlined, BookOutlined, PieChartOutlined, InfoCircleOutlined, DollarOutlined, CheckCircleOutlined, CalendarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Line, Column, Pie, Area } from '@ant-design/charts';
+// import { useDashboardData } from '../../hooks/useReceptionChart';
+
+// import {  Column, Pie, Line } from '@ant-design/plots';
+// import {
+//   HomeOutlined,
+//   BookOutlined,
+//   TeamOutlined,
+//   CalendarOutlined,
+//   DollarOutlined,
+//   ClockCircleOutlined,
+//   PieChartOutlined,
+//   CheckCircleOutlined,
+//   WarningOutlined,
+//   InfoCircleOutlined
+// } from '@ant-design/icons';
 import axiosInstance from '../../config/axios';
 const { Title, Text } = Typography;
 
@@ -25,64 +30,44 @@ const ReceptionDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
   const [roomStatus, setRoomStatus] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [topServices, setTopServices] = useState<any[]>([]);
+  const [topTrends, setTopTrends] = useState<any>({});
 
   useEffect(() => {
-    // Gọi API lấy số liệu tổng quan, lịch trình, thông báo, doanh thu, trạng thái phòng
+    // Gọi API lấy số liệu từ ChartReceptionController
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Ví dụ endpoint, cần chỉnh lại cho đúng backend
-        const [statsRes, scheduleRes, notificationsRes, revenueRes, roomStatusRes] = await Promise.all([
-          axiosInstance.get('/reception/overview'),
-          axiosInstance.get('/reception/schedule'),
-          axiosInstance.get('/reception/notifications'),
-          axiosInstance.get('/reception/revenue-trend'),
-          axiosInstance.get('/reception/room-status'),
+        // Sử dụng các endpoint mới từ ChartReceptionController
+        const [statsRes, scheduleRes, notificationsRes, revenueRes, activityRes, topServicesRes, categoryRes] = await Promise.all([
+          axiosInstance.get('/reception/chart/dashboard-stats'),
+          axiosInstance.get('/reception/chart/today-schedule'),
+          axiosInstance.get('/reception/chart/notifications'),
+          axiosInstance.get('/reception/chart/revenue-by-month'),
+          axiosInstance.get('/reception/chart/activity-rate'),
+          axiosInstance.get('/reception/chart/top-booked-services'),
+          axiosInstance.get('/reception/chart/revenue-by-category'),
         ]);
-        setStats(statsRes.data);
-        setSchedule(scheduleRes.data);
-        setNotifications(notificationsRes.data);
-        setRevenueTrend(revenueRes.data);
-        setRoomStatus(roomStatusRes.data);
+
+        if (statsRes.data.success) setStats(statsRes.data.data);
+        if (scheduleRes.data.success) setSchedule(scheduleRes.data.data.timeline || []);
+        if (notificationsRes.data.success) setNotifications(notificationsRes.data.data || []);
+        if (revenueRes.data.success) setRevenueTrend(revenueRes.data.data || []);
+        if (activityRes.data.success) setRoomStatus(activityRes.data.data?.room_stats ? Object.entries(activityRes.data.data.room_stats).map(([status, count]) => ({ status, count })) : []);
+        if (categoryRes.data.success) setCategoryData(categoryRes.data.data || []);
+        if (topServicesRes.data.success) {
+          setTopServices(topServicesRes.data.data || []);
+          setTopTrends(topServicesRes.data.trends || {});
+        }
       } catch (err) {
-        // fallback nếu lỗi
-        setStats({
-          totalRooms: 120,
-          occupiedRooms: 85,
-          checkInsToday: 15,
-          checkOutsToday: 12,
-          revenue: 2500000,
-          pendingBookings: 8,
-          activityRate: 78,
-        });
-        setSchedule([
-          { type: 'checkin', name: 'Nguyễn Văn A', time: '09:00' },
-          { type: 'checkout', name: 'Trần Thị B', time: '11:00' },
-          { type: 'booking', name: 'Lê Văn C', time: '14:00' },
-        ]);
-        setNotifications([
-          { type: 'urgent', message: 'Phòng 205 cần bảo trì' },
-          { type: 'vip', message: 'Khách VIP check-in 15:00' },
-          { type: 'info', message: 'Họp nhân viên 17:00' },
-        ]);
-        setRevenueTrend([
-          { month: '1', value: 200 },
-          { month: '2', value: 800 },
-          { month: '3', value: 600 },
-          { month: '4', value: 900 },
-          { month: '5', value: 1200 },
-          { month: '6', value: 800 },
-          { month: '7', value: 400 },
-          { month: '8', value: 350 },
-          { month: '9', value: 900 },
-          { month: '10', value: 850 },
-          { month: '11', value: 600 },
-          { month: '12', value: 700 },
-        ]);
-        setRoomStatus([
-          { status: 'available', count: 35 },
-          { status: 'occupied', count: 85 },
-        ]);
+        console.error('Error fetching dashboard data:', err);
+        // Nếu lỗi, set về giá trị rỗng/thấp nhất
+        setStats({});
+        setSchedule([]);
+        setNotifications([]);
+        setRevenueTrend([]);
+        setRoomStatus([]);
       }
       setLoading(false);
     };
@@ -100,15 +85,15 @@ const ReceptionDashboard: React.FC = () => {
     },
     { title: 'Số lượng', dataIndex: 'count', key: 'count' },
   ];
-const twoColors: ProgressProps['strokeColor'] = {
-  '0%': '#108ee9',
-  '100%': '#87d068',
-};
+  const twoColors: ProgressProps['strokeColor'] = {
+    '0%': '#108ee9',
+    '100%': '#87d068',
+  };
   // Timeline cho lịch trình hôm nay
   const scheduleTimeline = (
     <Timeline
       mode="alternate"
-      items={schedule.map((item, idx) => {
+      items={schedule.map((item) => {
         let color = 'blue';
         let dot = null;
         let label = '';
@@ -210,10 +195,10 @@ const twoColors: ProgressProps['strokeColor'] = {
           <Col xs={24} sm={12} lg={6}>
             <Card style={{ borderRadius: 20, boxShadow: '0 4px 16px #b37feb22', height: '100%' }} bodyStyle={{ padding: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-                <Avatar size={40} style={{ background: '#b37feb22',color: '#b37feb' }} icon={<TeamOutlined />} />
+                <Avatar size={40} style={{ background: '#b37feb22', color: '#b37feb' }} icon={<TeamOutlined />} />
                 <Text strong style={{ fontSize: 20 }}>Lượt truy cập</Text>
               </div>
-              <Text style={{ fontSize: 36, fontWeight: 700,  }}>{stats.visits || '8,846'}</Text>
+              <Text style={{ fontSize: 36, fontWeight: 700, }}>{stats.visits || '8,846'}</Text>
               <div style={{ width: '100%', margin: '12px 0' }}>
                 <Area
                   data={(stats.visitsTrend || [1200, 1400, 1100, 1600, 1300, 1700, 1500]).map((v: number, idx: number) => ({ x: idx + 1, y: v }))}
@@ -290,51 +275,32 @@ const twoColors: ProgressProps['strokeColor'] = {
         <Row gutter={[32, 32]} style={{ marginBottom: 32 }}>
           <Col xs={24} lg={12}>
             <Card title={<span style={{ fontWeight: 600, fontSize: 18 }}>Doanh thu theo tháng</span>} style={{ borderRadius: 20, boxShadow: '0 2px 8px #1890ff22', height: '100%' }} bodyStyle={{ padding: 28 }}>
-              {/* Line + Column chart demo style from Ant Design Pro */}
-              {(() => {
-                // Mock data for dashboard context
-                const data = [
-                  { date: '1', price: 200 },
-                  { date: '2', price: 800 },
-                  { date: '3', price: 600 },
-                  { date: '4', price: 900 },
-                  { date: '5', price: 1200 },
-                  { date: '6', price: 800 },
-                  { date: '7', price: 400 },
-                  { date: '8', price: 350 },
-                  { date: '9', price: 900 },
-                  { date: '10', price: 850 },
-                  { date: '11', price: 600 },
-                  { date: '12', price: 700 },
-                ];
-                const lineConfig = {
-                  data,
-                  xField: 'date',
-                  yField: 'price',
-                  height: 120,
-                  color: '#1890ff',
-                  point: { size: 4, shape: 'circle' },
-                  tooltip: { showMarkers: true },
-                  legend: false,
-                  autoFit: true,
-                };
-                const columnConfig = {
-                  data,
-                  xField: 'date',
-                  yField: 'price',
-                  height: 120,
-                  color: '#9254de',
-                  legend: false,
-                  autoFit: true,
-                  tooltip: { showMarkers: true },
-                };
-                return (
-                  <div>
-                    <Line {...lineConfig} />
-                    <Column {...columnConfig} />
-                  </div>
-                );
-              })()}
+              {/* Line + Column chart using real API data */}
+              {revenueTrend.length > 0 && (
+                <>
+                  <Line
+                    data={revenueTrend}
+                    xField="date"
+                    yField="price"
+                    height={120}
+                    color="#1890ff"
+                    point={{ size: 4, shape: 'circle' }}
+                    tooltip={{ showMarkers: true }}
+                    legend={false}
+                    autoFit={true}
+                  />
+                  <Column
+                    data={revenueTrend}
+                    xField="date"
+                    yField="price"
+                    height={120}
+                    color="#9254de"
+                    legend={false}
+                    autoFit={true}
+                    tooltip={{ showMarkers: true }}
+                  />
+                </>
+              )}
             </Card>
           </Col>
           <Col xs={24} lg={12}>
@@ -349,37 +315,21 @@ const twoColors: ProgressProps['strokeColor'] = {
               </div>
               <div style={{ padding: '0 28px 28px 28px' }}>
                 <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Doanh thu</div>
-                {/* Pie chart demo style from Ant Design Pro */}
-                {(() => {
-                  const pieData = [
-                    { type: 'Gia dụng', value: 4544 },
-                    { type: 'Thực phẩm', value: 3321 },
-                    { type: 'Dịch vụ', value: 2341 },
-                    { type: 'Cá nhân', value: 3113 },
-                    { type: 'Khác', value: 1231 },
-                    { type: 'Mẹ & Bé', value: 1231 },
-                  ];
-                  const pieConfig = {
-                    data: pieData,
-                    angleField: 'value',
-                    colorField: 'type',
-                    radius: 0.8,
-                    legend: { position: 'right' },
-                    label: {
-                      text: 'value',
-                      position: 'outside',
-                      style: {
-                        fontSize: 14,
-                        fill: '#333',
-                      },
-                    },
-                    tooltip: { showMarkers: true },
-                    color: ["#1890ff", "#36cfc9", "#9254de", "#faad14", "#73d13d", "#ff85c0"],
-                    height: 260,
-                    autoFit: true,
-                  };
-                  return <Pie {...pieConfig} />;
-                })()}
+                {/* Pie chart using real API data */}
+                {categoryData.length > 0 && (
+                  <Pie
+                    data={categoryData}
+                    angleField="value"
+                    colorField="type"
+                    radius={0.8}
+                    legend={{ position: 'right' }}
+                    label={{ text: 'value', position: 'outside', style: { fontSize: 14, fill: '#333' } }}
+                    tooltip={{ showMarkers: true }}
+                    color={["#1890ff", "#36cfc9", "#9254de", "#faad14", "#73d13d", "#ff85c0"]}
+                    height={260}
+                    autoFit={true}
+                  />
+                )}
               </div>
             </Card>
           </Col>
@@ -443,13 +393,7 @@ const twoColors: ProgressProps['strokeColor'] = {
                     )
                   },
                 ]}
-                dataSource={[
-                  { rank: 1, keyword: 'Tìm kiếm-0', users: 479, rate: '27% ▼' },
-                  { rank: 2, keyword: 'Tìm kiếm-1', users: 110, rate: '47% ▲' },
-                  { rank: 3, keyword: 'Tìm kiếm-2', users: 520, rate: '53% ▲' },
-                  { rank: 4, keyword: 'Tìm kiếm-3', users: 974, rate: '86% ▲' },
-                  { rank: 5, keyword: 'Tìm kiếm-4', users: 109, rate: '99% ▼' },
-                ]}
+                dataSource={topServices}
                 pagination={{ pageSize: 5, showSizeChanger: false, showQuickJumper: true }}
                 size="middle"
                 rowKey="rank"

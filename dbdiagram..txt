@@ -1,0 +1,1504 @@
+// Database: building_fpl
+
+Table addresses {
+  id bigint [ primary key, increment]
+  id_người_dùng bigint [ not null, ref: > users.id]
+  tên varchar(255) [not null]
+  điện_thoại varchar(255) [not null]
+  khu_vực varchar(255) [not null]
+  địa_chỉ text [not null]
+  thành_phố varchar(255) [not null]
+  tỉnh varchar(255) [not null]
+  quốc_gia varchar(255) [not null]
+  địa_danh varchar(255) [null]
+  mã_bưu_điện varchar(255) [not null]
+  loại varchar(255) [not null, default: 'home']
+  mặc_định tinyint [not null, default: 0]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table approvals {
+  id int [primary key, increment]
+  id_đặt_phòng int [null, ref: > bookings.id_đặt_phòng]
+  id_người_phê_duyệt int [null]
+  id_dòng_phê_duyệt int [null, ref: > approval_line.id]
+  trạng_thái enum('approved', 'rejected') [null]
+  bình_luận text [null]
+  ngày_phê_duyệt datetime [null]
+}
+
+Table approval_line {
+  id int [primary key, increment]
+  tên varchar(100) [not null]
+  cấp_độ int [not null]
+  vị_trí varchar(50) [not null]
+  mô_tả varchar(255) [null]
+}
+
+Table bookings {
+  id_đặt_phòng int [primary key, increment]
+  người_đăng_ký int [null]
+  id_phòng int [null, ref: > rooms.id]
+  id_khu_vực int [null, ref: > fields.id]
+  thời_gian_bắt_đầu datetime [not null]
+  thời_gian_kết_thúc datetime [not null]
+  lý_do varchar(100) [null]
+  trạng_thái enum('sended', 'in_progress', 'approved', 'rejected', 'cancel') [default: 'sended']
+  ngày_tạo datetime [default: 'CURRENT_TIMESTAMP']
+}
+
+Table brands {
+  id bigint [ primary key, increment]
+  tên varchar(255) [not null]
+  định_danh varchar(255) [not null, unique]
+  hình_ảnh varchar(255) [null]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table buildings {
+  id int [primary key, increment]
+  tên varchar(50) [not null]
+}
+
+Table cache {
+  khóa varchar(255) [primary key]
+  giá_trị mediumtext [not null]
+  thời_hạn int [not null]
+}
+
+Table cache_locks {
+  khóa varchar(255) [primary key]
+  chủ_sở_hữu varchar(255) [not null]
+  thời_hạn int [not null]
+}
+
+Table categories {
+  id bigint [ primary key, increment]
+  tên varchar(255) [not null]
+  định_danh varchar(255) [not null, unique]
+  hình_ảnh varchar(255) [null]
+  id_danh_mục_cha varchar(255) [null]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table contacts {
+  id bigint [ primary key, increment]
+  tên varchar(255) [not null]
+  email varchar(255) [not null]
+  điện_thoại varchar(255) [not null]
+  bình_luận text [not null]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table coupons {
+  id bigint [ primary key, increment]
+  mã varchar(255) [not null, unique]
+  loại enum('fixed', 'percent') [not null]
+  giá_trị decimal(8,2) [not null]
+  giá_trị_giỏ_hàng decimal(8,2) [not null]
+  ngày_hết_hạn date [not null]
+  ngày_tạo timestamp [default: 'CURRENT_TIMESTAMP']
+  ngày_cập_nhật timestamp [default: 'CURRENT_TIMESTAMP', note: 'on update CURRENT_TIMESTAMP']
+}
+
+Table equipment {
+  id int [primary key, increment]
+  tên varchar(100) [not null]
+  số_lượng int [null]
+  id_phòng int [null, ref: > rooms.id]
+  id_khu_vực int [null, ref: > fields.id]
+  trạng_thái enum('working', 'broken') [default: 'working']
+}
+
+Table failed_jobs {
+  id bigint [ primary key, increment]
+  uuid varchar(255) [not null, unique]
+  kết_nối text [not null]
+  hàng_đợi text [not null]
+  dữ_liệu longtext [not null]
+  lỗi longtext [not null]
+  thời_gian_thất_bại timestamp [not null, default: 'CURRENT_TIMESTAMP']
+}
+
+Table fields {
+  id int [primary key, increment]
+  tên_khu_vực varchar(10) [not null]
+  id_tòa_nhà int [null, ref: > buildings.id]
+  trạng_thái enum('available', 'unavailable') [default: 'available']
+  mô_tả text [null]
+}
+
+Table jobs {
+  id bigint [ primary key, increment]
+  hàng_đợi varchar(255) [not null]
+  dữ_liệu longtext [not null]
+  số_lần_thử tinyint [ not null]
+  thời_gian_dự_định int [ null]
+  thời_gian_có_sẵn int [ not null]
+  ngày_tạo int [ not null]
+}
+
+Table job_batches {
+  id varchar(255) [primary key]
+  tên varchar(255) [not null]
+  tổng_công_việc int [not null]
+  công_việc_chưa_hoàn_thành int [not null]
+  công_việc_thất_bại int [not null]
+  id_công_việc_thất_bại longtext [not null]
+  tùy_chọn mediumtext [null]
+  thời_gian_hủy int [null]
+  ngày_tạo int [not null]
+  thời_gian_hoàn_thành int [null]
+}
+
+Table migrations {
+  id int [ primary key, increment]
+  di_chuyển varchar(255) [not null]
+  lô int [not null]
+}
+
+Table month_names {
+  id bigint [ primary key, increment]
+  tên varchar(255) [not null]
+}
+
+Table orders {
+  id bigint [ primary key, increment]
+  id_người_dùng bigint [ not null, ref: > users.id]
+  tổng_phụ decimal(10,2) [not null]
+  giảm_giá decimal(8,2) [not null, default: 0.00]
+  thuế decimal(8,2) [not null]
+  tổng_cộng decimal(8,2) [not null]
+  tên varchar(255) [not null]
+  điện_thoại varchar(255) [not null]
+  khu_vực varchar(255) [not null]
+  địa_chỉ text [not null]
+  thành_phố varchar(255) [not null]
+  tỉnh varchar(255) [not null]
+  quốc_gia varchar(255) [not null]
+  địa_danh varchar(255) [null]
+  mã_bưu_điện varchar(255) [not null]
+  loại varchar(255) [not null, default: 'home']
+  trạng_thái enum('ordered', 'delivered', 'canceled') [not null, default: 'ordered']
+  giao_hàng_khác tinyint [not null, default: 0]
+  ngày_giao date [null]
+  ngày_hủy date [null]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table order_items {
+  id bigint [ primary key, increment]
+  id_sản_phẩm bigint [ not null, ref: > products.id]
+  id_đơn_hàng bigint [ not null, ref: > orders.id]
+  giá decimal(8,2) [not null]
+  số_lượng int [not null]
+  tùy_chọn longtext [null]
+  trạng_thái_trả_hàng tinyint [not null, default: 0]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table password_reset_tokens {
+  email varchar(255) [primary key]
+  mã varchar(255) [not null]
+  ngày_tạo timestamp [null]
+}
+
+Table products {
+  id bigint [ primary key, increment]
+  tên varchar(255) [not null]
+  định_danh varchar(255) [not null, unique]
+  mô_tả_ngắn varchar(255) [null]
+  mô_tả text [not null]
+  giá_thường decimal(8,2) [not null]
+  giá_khuyến_mãi decimal(8,2) [null]
+  mã_sku varchar(255) [not null]
+  trạng_thái_kho enum('instock', 'outofstock') [not null]
+  nổi_bật tinyint [not null, default: 0]
+  số_lượng int [ not null, default: 10]
+  hình_ảnh varchar(255) [null]
+  hình_ảnh_đa_dạng text [null]
+  id_danh_mục bigint [ null, ref: > categories.id]
+  id_thương_hiệu bigint [ null, ref: > brands.id]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table rooms {
+  id int [primary key, increment]
+  tên_phòng varchar(10) [not null]
+  id_tòa_nhà int [null, ref: > buildings.id]
+  trạng_thái enum('available', 'unavailable') [default: 'available']
+  mô_tả text [null]
+}
+
+Table schedules {
+  id_lịch int [primary key, increment]
+  id_phòng int [null, ref: > rooms.id]
+  id_ca int [not null]
+  giảng_viên varchar(100) [not null]
+  ngày_cụ_thể date [not null]
+  người_tạo int [null]
+  ngày_tạo datetime [default: 'CURRENT_TIMESTAMP']
+}
+
+Table sessions {
+  id varchar(255) [primary key]
+  id_người_dùng bigint [ null, ref: > users.id]
+  địa_chỉ_ip varchar(45) [null]
+  tác_nhân_người_dùng text [null]
+  dữ_liệu longtext [not null]
+  hoạt_động_cuối int [not null]
+}
+
+Table shift_times {
+  id int [primary key, increment]
+  tên_ca varchar(100) [not null]
+  thời_gian_bắt_đầu time [not null]
+  thời_gian_kết_thúc time [not null]
+}
+
+Table slides {
+  id bigint [ primary key, increment]
+  khẩu_hiệu varchar(255) [not null]
+  tiêu_đề varchar(255) [not null]
+  tiêu_đề_phụ varchar(255) [not null]
+  liên_kết varchar(255) [not null]
+  hình_ảnh varchar(255) [not null]
+  trạng_thái varchar(255) [not null]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table transactions {
+  id bigint [ primary key, increment]
+  id_người_dùng bigint [ not null, ref: > users.id]
+  id_đơn_hàng bigint [ not null, ref: > orders.id]
+  phương_thức enum('cod', 'card', 'paypal') [not null]
+  trạng_thái enum('pending', 'approved', 'declined', 'refunded') [not null, default: 'pending']
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+
+Table users {
+  id bigint [ primary key, increment]
+  tên varchar(255) [not null]
+  email varchar(255) [not null, unique]
+  điện_thoại varchar(255) [not null, unique]
+  vai_trò enum('admin', 'security', 'scheduler', 'user') [not null]
+  email_đã_xác_minh timestamp [null]
+  mật_khẩu varchar(255) [not null]
+  hình_ảnh varchar(255) [not null]
+  loại_người_dùng varchar(255) [not null, default: 'USR', note: 'ADM cho admin, USR cho người dùng hoặc khách hàng']
+  mã_nhớ varchar(100) [null]
+  ngày_tạo timestamp [null]
+  ngày_cập_nhật timestamp [null]
+}
+Enum "booking_status_enum" {
+  "Pending"
+  "Confirmed"
+  "Operational"
+  "Completed"
+  "Cancelled"
+  "Cancelled With Penalty"
+  "Unsuccessful"
+}
+
+Enum "booking_booking_source_enum" {
+  "website"
+  "phone"
+  "walk_in"
+  "agent"
+  "online_travel_agency"
+}
+
+Enum "booking_extensions_status_enum" {
+  "pending"
+  "approved"
+  "rejected"
+}
+
+Enum "booking_reschedules_status_enum" {
+  "Pending"
+  "Approved"
+  "Rejected"
+  "Cancelled"
+}
+
+Enum "cancellation_requests_status_enum" {
+  "Pending"
+  "Approved"
+  "Rejected"
+  "Processed"
+  "Refunded"
+}
+
+Enum "cancellation_requests_refund_status_enum" {
+  "NotApplicable"
+  "Pending"
+  "Completed"
+  "Failed"
+}
+
+Enum "check_out_requests_status_enum" {
+  "pending"
+  "approved"
+  "rejected"
+}
+
+Enum "conversations_status_enum" {
+  "open"
+  "active"
+  "closed"
+  "pending"
+}
+
+Enum "extension_requests_status_enum" {
+  "Pending"
+  "Approved"
+  "Rejected"
+}
+
+Enum "flexible_pricing_rules_rule_type_enum" {
+  "weekend"
+  "event"
+  "holiday"
+  "season"
+}
+
+Enum "floors_floor_type_enum" {
+  "ground"
+  "residential"
+  "service"
+  "special"
+  "penthouse"
+}
+
+Enum "guests_gender_enum" {
+  "male"
+  "female"
+  "other"
+}
+
+Enum "messages_sender_type_enum" {
+  "user"
+  "staff"
+  "bot"
+  "guest"
+}
+
+Enum "messages_message_type_enum" {
+  "text"
+  "image"
+  "file"
+  "system"
+}
+
+Enum "notifications_type_enum" {
+  "cancellation"
+  "extension"
+  "reschedule"
+  "transfer"
+  "check_out"
+}
+
+Enum "notifications_status_enum" {
+  "pending"
+  "sent"
+  "failed"
+}
+
+Enum "payment_payment_type_enum" {
+  "deposit"
+  "full"
+  "qr_code"
+  "at_hotel"
+  "vietqr"
+  "refund"
+  "additional"
+}
+
+Enum "payment_status_enum" {
+  "pending"
+  "completed"
+  "failed"
+  "refunded"
+}
+
+Enum "policy_applications_policy_type_enum" {
+  "cancellation"
+  "deposit"
+  "check_out"
+}
+
+Enum "reviews_travel_type_enum" {
+  "business"
+  "couple"
+  "solo"
+  "family_young"
+  "group"
+}
+
+Enum "reviews_status_enum" {
+  "pending"
+  "approved"
+  "rejected"
+}
+
+Enum "room_status_enum" {
+  "available"
+  "out_of_service"
+}
+
+Enum "room_transfers_status_enum" {
+  "Pending"
+  "Approved"
+  "Rejected"
+}
+
+Enum "users_role_enum" {
+  "guest"
+  "receptionist"
+  "manager"
+  "admin"
+}
+
+Enum "weekend_days_day_of_week_enum" {
+  "Monday"
+  "Tuesday"
+  "Wednesday"
+  "Thursday"
+  "Friday"
+  "Saturday"
+  "Sunday"
+}
+
+Table "amenities" {
+  "amenity_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "icon" varchar(50) [default: NULL]
+  "icon_lib" varchar(50) [default: NULL]
+  "category" varchar(50) [default: NULL]
+  "description" text
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "audit_logs" {
+  "log_id" int [pk, not null]
+  "user_id" bigint [default: NULL]
+  "action" varchar(100) [not null]
+  "table_name" varchar(50) [not null]
+  "record_id" int [not null]
+  "description" text
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "bed_types" {
+  "id" int [pk, not null, note: 'Khóa chính']
+  "type_name" varchar(100) [not null, note: 'Tên loại giường']
+  "description" text [note: 'Mô tả loại giường']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái hoạt động']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Danh sách các loại giường'
+}
+
+Table "booking" {
+  "booking_id" int [pk, not null, note: 'Khóa chính, mã đặt phòng']
+  "booking_code" varchar(55) [not null]
+  "user_id" bigint [default: NULL, note: 'Khóa ngoại, mã người dùng (nếu có)']
+  "option_id" varchar(50) [default: NULL, note: 'Khóa ngoại, mã tùy chọn phòng']
+  "check_in_date" date [not null, note: 'Ngày nhận phòng']
+  "check_out_date" date [not null, note: 'Ngày trả phòng']
+  "total_price_vnd" decimal(15,2) [not null, note: 'Tổng giá (VND)']
+  "guest_count" int [default: NULL, note: 'Số khách']
+  "status" booking_status_enum [default: NULL, note: 'Trạng thái đặt phòng']
+  "booking_source" booking_booking_source_enum [default: NULL, note: 'Nguồn đặt']
+  "notes" text
+  "quantity" int [default: NULL]
+  "payment_policy" varchar(255) [default: NULL]
+  "room_type_id" int [default: NULL]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian cập nhật']
+  "guest_name" varchar(100) [default: NULL, note: 'Tên khách']
+  "guest_email" varchar(255) [default: NULL, note: 'Email khách']
+  "guest_phone" varchar(20) [default: NULL, note: 'Số điện thoại khách']
+  "room_id" int [default: NULL]
+  "children" int [default: NULL]
+  "children_age" json [default: NULL]
+  Note: 'Lưu thông tin đặt phòng'
+}
+
+Table "booking_extensions" {
+  "extension_id" int [pk, not null]
+  "booking_id" int [not null]
+  "new_check_out_date" date [not null]
+  "additional_fee_vnd" decimal(15,2) [default: '0.00']
+  "status" booking_extensions_status_enum [not null, default: 'pending']
+  "reason" text
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "booking_reschedules" {
+  "reschedule_id" int [pk, not null]
+  "booking_id" int [not null]
+  "new_check_in_date" date [default: NULL]
+  "new_check_out_date" date [default: NULL]
+  "new_room_id" int [default: NULL]
+  "new_option_id" varchar(50) [default: NULL]
+  "reschedule_policy_id" int [default: NULL]
+  "price_difference_vnd" decimal(15,2) [default: NULL]
+  "payment_id" int [default: NULL]
+  "status" booking_reschedules_status_enum [default: 'Pending']
+  "reason" text
+  "suggested_rooms" json [default: NULL]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "processed_by" bigint [default: NULL]
+}
+
+Table "booking_rooms" {
+  "id" int [pk, not null]
+  "booking_id" int [not null]
+  "booking_code" varchar(55) [default: NULL]
+  "room_id" int [default: NULL]
+  "option_id" varchar(50) [default: NULL]
+  "option_name" varchar(100) [default: NULL]
+  "option_price" decimal(15,2) [default: NULL]
+  "representative_id" int [default: NULL]
+  "adults" int [default: NULL]
+  "children" int [default: NULL]
+  "children_age" json [default: NULL]
+  "price_per_night" bigint [not null]
+  "nights" int [not null]
+  "total_price" bigint [not null]
+  "check_in_date" date [default: NULL]
+  "check_out_date" date [default: NULL]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "booking_room_children" {
+  "id" bigint [pk, not null]
+  "booking_room_id" int [not null]
+  "age" int [not null]
+  "child_index" int [not null, default: '0']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "cancellation_policies" {
+  "policy_id" int [pk, not null]
+  "name" varchar(100) [default: NULL]
+  "free_cancellation_days" int [default: NULL, note: 'Số ngày trước check-in được hủy miễn phí']
+  "penalty_days" int [default: NULL, note: 'số ngày hủy sau khi đặt phòng sẽ bị phạt.']
+  "penalty_percentage" decimal(5,2) [default: NULL, note: 'Phạt hủy (%)']
+  "penalty_fixed_amount_vnd" decimal(15,2) [default: NULL, note: 'Phạt hủy cố định (VND)']
+  "description" text
+  "priority" int [not null, default: '0']
+  "conditions" json [default: NULL]
+  "applies_to_weekend" tinyint(1) [not null, default: '0']
+  "applies_to_holiday" tinyint(1) [not null, default: '0']
+  "min_booking_amount" decimal(15,2) [default: NULL]
+  "max_booking_amount" decimal(15,2) [default: NULL]
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "cancellation_requests" {
+  "request_id" int [pk, not null, note: 'Khóa chính, mã yêu cầu hủy']
+  "booking_id" int [not null, note: 'Khóa ngoại, mã đặt phòng']
+  "cancellation_policy_id" int [default: NULL, note: 'Khóa ngoại, mã chính sách hủy áp dụng']
+  "status" cancellation_requests_status_enum [not null, default: 'Pending', note: 'Trạng thái yêu cầu hủy']
+  "request_date" timestamp [not null, default: `CURRENT_TIMESTAMP`, note: 'Thời gian yêu cầu hủy']
+  "reason" text [note: 'Lý do hủy do khách hàng cung cấp']
+  "cancellation_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí hủy (VND), nếu có']
+  "refund_amount_vnd" decimal(15,2) [default: NULL, note: 'Số tiền hoàn lại (VND), nếu có']
+  "refund_status" cancellation_requests_refund_status_enum [default: 'NotApplicable', note: 'Trạng thái hoàn tiền']
+  "refund_transaction_id" varchar(100) [default: NULL, note: 'Mã giao dịch hoàn tiền (nếu có)']
+  "processed_at" timestamp [default: NULL, note: 'Thời gian xử lý yêu cầu']
+  "processed_by" bigint [default: NULL, note: 'Khóa ngoại, ID nhân viên xử lý (nếu có)']
+  "notes" text [note: 'Ghi chú bổ sung từ hệ thống hoặc nhân viên']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian cập nhật']
+  Note: 'Lưu trữ các yêu cầu hủy phòng'
+}
+
+Table "check_in_policies" {
+  "policy_id" int [pk, not null, note: 'Khóa chính, mã chính sách nhận phòng']
+  "name" varchar(100) [not null, note: 'Tên chính sách']
+  "description" text [note: 'Mô tả chính sách']
+  "standard_check_in_time" time [not null, note: 'Thời gian nhận phòng tiêu chuẩn']
+  "early_check_in_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí nhận phòng sớm (VND)']
+  "early_check_in_max_hours" int [default: NULL, note: 'Số giờ tối đa cho phép nhận phòng sớm']
+  "late_check_in_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí nhận phòng muộn (VND)']
+  "late_check_in_max_hours" int [default: NULL, note: 'Số giờ tối đa cho phép nhận phòng muộn']
+  "applies_to_holiday" tinyint(1) [default: '0', note: 'Áp dụng cho ngày lễ (1: Có, 0: Không)']
+  "applies_to_weekend" tinyint(1) [default: '0', note: 'Áp dụng cho cuối tuần (1: Có, 0: Không)']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái hoạt động']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian cập nhật']
+  Note: 'Danh sách chính sách nhận phòng'
+}
+
+Table "check_out_policies" {
+  "policy_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "early_check_out_fee_vnd" decimal(15,2) [default: NULL]
+  "late_check_out_fee_vnd" decimal(15,2) [default: NULL]
+  "late_check_out_max_hours" int [default: NULL, note: 'Số giờ tối đa trả phòng muộn']
+  "early_check_out_max_hours" int [default: NULL]
+  "description" text
+  "priority" int [not null, default: '0']
+  "conditions" json [default: NULL]
+  "applies_to_weekend" tinyint(1) [not null, default: '0']
+  "applies_to_holiday" tinyint(1) [not null, default: '0']
+  "standard_check_out_time" time [not null, default: '12:00:00']
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "check_out_requests" {
+  "request_id" int [pk, not null]
+  "booking_id" int [not null]
+  "type" varchar(255) [default: NULL]
+  "requested_check_out_time" datetime [not null]
+  "fee_vnd" decimal(15,2) [default: '0.00']
+  "status" check_out_requests_status_enum [not null, default: 'pending']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "children_surcharges" {
+  "id" bigint [pk, not null]
+  "min_age" tinyint [not null]
+  "max_age" tinyint [not null]
+  "is_free" tinyint(1) [not null, default: '0']
+  "count_as_adult" tinyint(1) [not null, default: '0']
+  "requires_extra_bed" tinyint(1) [not null, default: '0']
+  "surcharge_amount_vnd" int [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "booking_id" int [default: NULL]
+}
+
+Table "conversations" {
+  "id" bigint [pk, not null]
+  "user_id" bigint [default: NULL, note: 'Người dùng khởi tạo cuộc trò chuyện']
+  "client_token" varchar(255) [default: NULL, note: 'Mã định danh của người không đăng nhập']
+  "is_bot_only" tinyint(1) [not null, default: '1', note: 'Chỉ là chat với bot']
+  "handover_to_user_id" bigint [default: NULL, note: 'Chuyển tiếp cho nhân viên nếu cần']
+  "status" conversations_status_enum [not null, default: 'open', note: 'Trạng thái hội thoại']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "currency" {
+  "currency_code" varchar(3) [pk, not null, note: 'Khóa chính, mã tiền tệ (VND, USD, v.v.)']
+  "name" varchar(50) [not null, note: 'Tên tiền tệ']
+  "exchange_rate" decimal(10,4) [default: NULL, note: 'Tỷ giá so với VND']
+  "symbol" varchar(10) [default: NULL, note: 'Ký hiệu tiền tệ (₫, $, v.v.)']
+  "format" varchar(50) [default: NULL, note: 'Định dạng (ví dụ: {amount} ₫)']
+  Note: 'Lưu thông tin tiền tệ và tỷ giá'
+}
+
+Table "datafeeds" {
+  "id" bigint [pk, not null]
+  "label" varchar(255) [default: NULL]
+  "data" float [default: NULL]
+  "dataset_name" tinyint [default: NULL]
+  "data_type" tinyint [not null, default: '1']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "deposit_policies" {
+  "policy_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "deposit_percentage" decimal(5,2) [default: NULL]
+  "deposit_fixed_amount_vnd" decimal(15,2) [default: NULL]
+  "description" text
+  "priority" int [not null, default: '0']
+  "conditions" json [default: NULL]
+  "applies_to_weekend" tinyint(1) [not null, default: '0']
+  "applies_to_holiday" tinyint(1) [not null, default: '0']
+  "min_days_before_checkin" int [default: NULL]
+  "min_booking_amount" decimal(15,2) [default: NULL]
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "dynamic_pricing_rules" {
+  "rule_id" int [pk, not null]
+  "room_type_id" int [default: NULL]
+  "occupancy_threshold" decimal(5,2) [not null, note: 'Ngưỡng tỷ lệ lấp đầy (%)']
+  "price_adjustment" decimal(5,2) [not null, note: 'Tỷ lệ điều chỉnh giá (%)']
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "priority" int [not null, default: '5', note: 'Mức độ ưu tiên (1 là cao nhất)']
+  "is_exclusive" tinyint(1) [default: '0', note: 'Quy tắc độc quyền khi bật flag']
+}
+
+Table "events" {
+  "event_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "start_date" date [not null]
+  "end_date" date [not null]
+  "description" text
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "extension_policies" {
+  "policy_id" int [pk, not null, note: 'Khóa chính, mã chính sách gia hạn']
+  "name" varchar(100) [not null, note: 'Tên chính sách']
+  "description" text [note: 'Mô tả chính sách gia hạn']
+  "max_extension_days" int [default: NULL, note: 'Số ngày tối đa được phép gia hạn, NULL nếu không giới hạn']
+  "extension_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí gia hạn cố định (VND)']
+  "extension_percentage" decimal(5,2) [default: '0.00', note: 'Phí gia hạn theo phần trăm giá phòng']
+  "min_days_before_checkout" int [default: NULL, note: 'Số ngày tối thiểu trước ngày trả phòng để gia hạn']
+  "applies_to_holiday" tinyint(1) [default: '0', note: 'Áp dụng cho ngày lễ']
+  "applies_to_weekend" tinyint(1) [default: '0', note: 'Áp dụng cho cuối tuần']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái hoạt động']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Danh sách chính sách gia hạn đặt phòng'
+}
+
+Table "extension_requests" {
+  "request_id" int [pk, not null, note: 'Khóa chính, mã yêu cầu gia hạn']
+  "booking_id" int [not null, note: 'Khóa ngoại, mã đặt phòng']
+  "extension_policy_id" int [default: NULL, note: 'Khóa ngoại, mã chính sách gia hạn']
+  "new_check_out_date" date [not null, note: 'Ngày trả phòng mới']
+  "extension_days" int [not null, note: 'Số ngày gia hạn']
+  "extension_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí gia hạn (VND)']
+  "status" extension_requests_status_enum [default: 'Pending', note: 'Trạng thái yêu cầu']
+  "processed_by" bigint [default: NULL, note: 'Khóa ngoại, mã người xử lý']
+  "notes" text [note: 'Ghi chú yêu cầu']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Lưu trữ yêu cầu gia hạn đặt phòng'
+}
+
+
+Table "faqs" {
+  "faq_id" int [pk, not null]
+  "question_en" text [not null, note: 'Câu hỏi (tiếng Anh)']
+  "question_vi" text [not null, note: 'Câu hỏi (tiếng Việt)']
+  "answer_en" text [not null, note: 'Câu trả lời (tiếng Anh)']
+  "answer_vi" text [not null, note: 'Câu trả lời (tiếng Việt)']
+  "sort_order" int [default: '0', note: 'Thứ tự sắp xếp câu hỏi']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái hoạt động (0: không, 1: có)']
+  "priority" int [default: NULL]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian tạo câu hỏi']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian cập nhật câu hỏi']
+  Note: 'Bảng lưu trữ câu hỏi thường gặp và câu trả lời'
+}
+
+Table "flexible_pricing_rules" {
+  "rule_id" int [pk, not null]
+  "room_type_id" int [default: NULL, note: 'Khóa ngoại, mã loại phòng (NULL: áp dụng cho tất cả loại phòng)']
+  "rule_type" flexible_pricing_rules_rule_type_enum [not null, note: 'Loại quy tắc: cuối tuần, sự kiện, ngày lễ, mùa']
+  "days_of_week" json [default: NULL, note: 'Danh sách ngày cuối tuần áp dụng (JSON, dùng cho rule_type=weekend)']
+  "event_id" int [default: NULL, note: 'Khóa ngoại, mã sự kiện (dùng cho rule_type=event)']
+  "holiday_id" int [default: NULL, note: 'Khóa ngoại, mã ngày lễ (dùng cho rule_type=holiday)']
+  "season_name" varchar(50) [default: NULL, note: 'Tên mùa (dùng cho rule_type=season)']
+  "start_date" date [default: NULL, note: 'Ngày bắt đầu áp dụng (dùng cho rule_type=season hoặc giới hạn thời gian)']
+  "end_date" date [default: NULL, note: 'Ngày kết thúc áp dụng (dùng cho rule_type=season hoặc giới hạn thời gian)']
+  "price_adjustment" decimal(5,2) [not null, note: 'Tỷ lệ điều chỉnh giá (%, dương để tăng, âm để giảm)']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái kích hoạt']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "priority" int [not null, default: '5', note: 'Mức độ ưu tiên (1 là cao nhất)']
+  "is_exclusive" tinyint(1) [default: '0', note: 'Quy tắc độc quyền khi bật flag']
+  Note: 'Quy tắc giá linh động cho cuối tuần, sự kiện, ngày lễ, mùa'
+}
+
+Table "floors" {
+  "floor_id" int [pk, not null, note: 'Khóa chính, mã tầng']
+  "floor_number" int [not null, note: 'Số tầng (1-34)']
+  "floor_name" varchar(100) [default: NULL, note: 'Tên tầng (Tầng trệt, Tầng 1, etc.)']
+  "floor_type" floors_floor_type_enum [default: 'residential', note: 'Loại tầng']
+  "description" text [note: 'Mô tả tầng và tiện ích đặc biệt']
+  "facilities" text [note: 'Các tiện ích có trên tầng này']
+  "is_active" tinyint(1) [default: '1', note: 'Tầng có hoạt động không']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian cập nhật cuối']
+  Note: 'Bảng quản lý các tầng của khách sạn'
+}
+
+Table "guests" {
+  "guest_id" bigint [pk, not null]
+  "user_id" bigint [not null]
+  "gender" guests_gender_enum [default: NULL]
+  "dob" date [default: NULL, note: 'Ngày sinh']
+  "nationality" varchar(100) [default: NULL, note: 'Quốc tịch']
+  "passport_number" varchar(50) [default: NULL, note: 'Số hộ chiếu / CMND']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "holidays" {
+  "holiday_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "start_date" date [not null]
+  "end_date" date [default: NULL]
+  "description" text
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "hotel" {
+  "hotel_id" int [pk, not null, note: 'Khóa chính, mã khách sạn']
+  "name" varchar(100) [not null, note: 'Tên khách sạn']
+  "address" varchar(255) [default: NULL, note: 'Địa chỉ khách sạn']
+  "description" text [note: 'Mô tả khách sạn']
+  Note: 'Lưu thông tin khách sạn'
+}
+
+Table "hotel_rating" {
+  "hotel_id" int [pk, not null, note: 'Khóa chính, mã khách sạn']
+  "overall_rating" decimal(3,1) [not null, note: 'Điểm đánh giá tổng thể']
+  "total_reviews" int [not null, note: 'Tổng số lượt đánh giá']
+  "rating_text" varchar(100) [default: NULL, note: 'Mô tả đánh giá']
+  "location" varchar(100) [default: NULL, note: 'Vị trí khách sạn']
+  "cleanliness" decimal(3,1) [default: NULL, note: 'Đánh giá sự sạch sẽ']
+  "location_rating" decimal(3,1) [default: NULL, note: 'Đánh giá vị trí']
+  "facilities" decimal(3,1) [default: NULL, note: 'Đánh giá cơ sở vật chất']
+  "service" decimal(3,1) [default: NULL, note: 'Đánh giá dịch vụ']
+  "value_for_money" decimal(3,1) [default: NULL, note: 'Đánh giá giá trị đồng tiền']
+  Note: 'Lưu đánh giá tổng quan khách sạn'
+}
+
+Table "language" {
+  "language_code" varchar(10) [pk, not null, note: 'Khóa chính, mã ngôn ngữ (vi, en, v.v.)']
+  "name" varchar(50) [not null, note: 'Tên ngôn ngữ (Vietnamese, English, v.v.)']
+  Note: 'Lưu danh sách ngôn ngữ hỗ trợ'
+}
+
+Table "meal_types" {
+  "id" int [pk, not null, note: 'Khóa chính']
+  "type_name" varchar(100) [not null, note: 'Tên loại bữa ăn']
+  "description" text [note: 'Mô tả bữa ăn']
+  "base_price_vnd" decimal(15,2) [default: '0.00', note: 'Giá cơ bản (VND)']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái hoạt động']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Danh sách các loại bữa ăn'
+}
+
+Table "media_files" {
+  "id" bigint [pk, not null, note: 'Khóa chính của file ảnh/media']
+  "filename" varchar(255) [not null, note: 'Tên file gốc (ví dụ: khachsan1.jpg)']
+  "filepath" varchar(255) [not null, note: 'Đường dẫn file (ví dụ: /storage/media/khachsan1.jpg)']
+  "alt_text" varchar(255) [default: NULL, note: 'Thuộc tính ALT – giúp SEO hình ảnh']
+  "title" varchar(255) [default: NULL, note: 'Tiêu đề ảnh hiển thị khi hover']
+  "type" varchar(50) [default: NULL, note: 'Loại file (ví dụ: image/jpeg, image/webp...)']
+  "size" int [default: NULL, note: 'Dung lượng file tính bằng byte']
+  "used_in" varchar(100) [default: NULL, note: 'Ngữ cảnh sử dụng (ví dụ: news, banner, home)']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời điểm upload']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời điểm cập nhật']
+  Note: 'Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh'
+}
+
+Table "messages" {
+  "id" bigint [pk, not null]
+  "conversation_id" bigint [not null]
+  "sender_type" messages_sender_type_enum [not null]
+  "sender_id" bigint [default: NULL, note: 'user_id nếu là người dùng, staff_id nếu là nhân viên, null nếu là bot']
+  "message" text [not null, note: 'Nội dung tin nhắn']
+  "is_from_bot" tinyint(1) [not null, default: '0']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "is_read" tinyint [default: '0']
+  "message_type" messages_message_type_enum [default: NULL]
+  "metadata" text
+}
+
+
+Table "news" {
+  "id" bigint [pk, not null, note: 'Khóa chính, định danh bài viết']
+  "slug" varchar(255) [not null, note: 'Slug URL thân thiện SEO – không dấu, không trùng']
+  "content" longtext [note: 'Nội dung đầy đủ bài viết (có thể chứa HTML, ảnh...)']
+  "thumbnail_id" bigint [default: NULL, note: 'ID ảnh đại diện – liên kết đến bảng media_files']
+  "author_id" bigint [default: NULL, note: 'ID người tạo bài viết – liên kết bảng users']
+  "meta_title" varchar(255) [default: NULL, note: 'Thẻ <title> tùy chỉnh cho SEO (nếu không để trống thì dùng thay title)']
+  "meta_description" text [note: 'Mô tả bài viết hiển thị trong kết quả tìm kiếm Google']
+  "meta_keywords" varchar(255) [default: NULL, note: 'Từ khóa SEO cách nhau bằng dấu phẩy (,)']
+  "canonical_url" varchar(255) [default: NULL, note: 'URL chuẩn để tránh trùng lặp nội dung']
+  "schema_json" json [default: NULL, note: 'Dữ liệu Schema.org ở dạng JSON-LD để Google hiểu nội dung']
+  "views" int [default: '0', note: 'Số lượt xem bài viết']
+  "status" tinyint [default: '1', note: '1: Hiển thị, 0: Ẩn bài viết']
+  "published_at" datetime [default: NULL, note: 'Ngày giờ bài viết được xuất bản']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời điểm tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời điểm cập nhật']
+  "category_id" bigint [default: NULL]
+  Note: 'Bảng lưu bài viết tin tức chuẩn SEO cho website khách sạn có phân quyền người viết'
+}
+
+Table "news_categories" {
+  "id" bigint [pk, not null, note: 'Khóa chính chuyên mục']
+  "name" varchar(255) [not null, note: 'Tên chuyên mục (ví dụ: Ưu đãi, Tin tức, Hướng dẫn...)']
+  "slug" varchar(255) [not null, note: 'Slug URL của chuyên mục (không dấu)']
+  "description" text [note: 'Mô tả ngắn giúp định nghĩa mục đích chuyên mục']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời điểm tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời điểm cập nhật']
+  Note: 'Danh mục tin tức phân loại nội dung'
+}
+
+Table "notifications" {
+  "notification_id" int [pk, not null]
+  "booking_id" int [default: NULL]
+  "user_id" bigint [default: NULL]
+  "type" notifications_type_enum [not null]
+  "message" text [not null]
+  "status" notifications_status_enum [not null, default: 'pending']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "payment" {
+  "payment_id" int [pk, not null, note: 'Khóa chính, mã thanh toán']
+  "booking_id" int [default: NULL, note: 'Khóa ngoại, mã đặt phòng']
+  "amount_vnd" decimal(15,2) [not null, note: 'Số tiền thanh toán (VND)']
+  "payment_type" payment_payment_type_enum [not null, note: 'Loại thanh toán']
+  "status" payment_status_enum [not null, note: 'Trạng thái thanh toán']
+  "transaction_id" varchar(100) [default: NULL, note: 'Mã giao dịch (từ cổng thanh toán)']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian tạo']
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`, note: 'Thời gian cập nhật']
+  Note: 'Lưu thông tin thanh toán'
+}
+
+Table "permissions" {
+  "id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "description" text
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  "parent_id" int [default: NULL]
+}
+
+Table "permission_role" {
+  "permission_id" int [not null]
+  "role_id" int [not null]
+
+  Indexes {
+    (permission_id, role_id) [pk]
+  }
+}
+
+Table "personal_access_tokens" {
+  "id" bigint [pk, not null]
+  "tokenable_type" varchar(255) [not null]
+  "tokenable_id" bigint [not null]
+  "name" varchar(255) [not null]
+  "token" varchar(64) [not null]
+  "abilities" text
+  "last_used_at" timestamp [default: NULL]
+  "expires_at" timestamp [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "policy_applications" {
+  "id" int [pk, not null, note: 'ID auto increment']
+  "room_type_id" int [default: NULL, note: 'NULL = áp dụng toàn bộ loại phòng; khác NULL = áp dụng cho 1 loại phòng cụ thể']
+  "policy_type" policy_applications_policy_type_enum [not null, note: 'Loại chính sách: hủy, đặt cọc, trả phòng']
+  "policy_id" int [not null, note: 'ID chính sách cụ thể trong bảng tương ứng (cancellation_policies, deposit_policies, check_out_policies)']
+  "applies_to_holiday" tinyint(1) [default: '0', note: 'Áp dụng nếu là ngày lễ (theo holiday_events)?']
+  "min_occupancy_percent" tinyint [default: NULL, note: 'Áp dụng nếu tỉ lệ lấp đầy >= giá trị này (%)']
+  "max_occupancy_percent" tinyint [default: NULL, note: 'Áp dụng nếu tỉ lệ lấp đầy <= giá trị này (%)']
+  "min_days_before_checkin" int [default: NULL, note: 'Áp dụng nếu số ngày hủy >= giá trị này (chỉ dành cho cancellation)']
+  "date_from" date [default: NULL, note: 'Ngày bắt đầu hiệu lực (nếu áp dụng theo ngày cụ thể)']
+  "date_to" date [default: NULL, note: 'Ngày kết thúc hiệu lực']
+  "priority" tinyint [default: '1', note: 'Ưu tiên khi có nhiều bản ghi cùng khớp điều kiện']
+  "is_active" tinyint(1) [default: '1', note: 'Có đang được bật không?']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Ánh xạ chính sách theo điều kiện áp dụng như loại phòng, ngày lễ, occupancy, ngày cụ thể'
+}
+
+Table "pricing_config" {
+  "config_id" int [pk, not null]
+  "max_price_increase_percentage" decimal(5,2) [default: '40.00', note: 'Giới hạn tăng giá tối đa (%)']
+  "max_absolute_price_vnd" decimal(15,2) [default: '3000000.00', note: 'Giới hạn giá trần tuyệt đối (VND)']
+  "use_exclusive_rule" tinyint(1) [default: '0', note: 'Bật chế độ chỉ lấy quy tắc ưu tiên cao nhất']
+  "exclusive_rule_type" varchar(50) [default: NULL, note: 'Loại quy tắc độc quyền (event, holiday, season, weekend, occupancy)']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "representatives" {
+  "id" int [pk, not null]
+  "booking_id" int [not null]
+  "booking_code" varchar(55) [default: NULL]
+  "room_id" int [default: NULL]
+  "full_name" varchar(100) [not null]
+  "phone_number" varchar(20) [default: NULL]
+  "email" varchar(100) [default: NULL]
+  "id_card" varchar(50) [default: NULL]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "user_id" bigint [default: NULL]
+}
+
+Table "reschedule_policies" {
+  "policy_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "description" text
+  "room_type_id" int [default: NULL]
+  "min_days_before_checkin" int [default: NULL, note: 'Số ngày tối thiểu trước check-in để được phép rời lịch']
+  "reschedule_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí rời lịch cố định (nếu có)']
+  "reschedule_fee_percentage" decimal(5,2) [default: '0.00', note: 'Phí rời lịch theo phần trăm giá booking']
+  "applies_to_holiday" tinyint(1) [default: '0', note: 'Áp dụng cho ngày lễ']
+  "applies_to_weekend" tinyint(1) [default: '0', note: 'Áp dụng cho cuối tuần']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái hoạt động']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "reviews" {
+  "review_id" int [pk, not null, note: 'Mã đánh giá']
+  "booking_id" int [not null, note: 'Liên kết đến booking']
+  "rating" decimal(2,1) [not null, note: 'Điểm đánh giá (0.0 – 5.0)']
+  "title" varchar(255) [not null]
+  "comment" text [not null]
+  "review_date" date [not null]
+  "helpful" int [default: '0']
+  "not_helpful" int [default: '0']
+  "travel_type" reviews_travel_type_enum [not null]
+  "admin_reply_content" text
+  "admin_reply_date" date [default: NULL]
+  "admin_name" varchar(100) [default: NULL]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "score_cleanliness" decimal(2,1) [default: NULL, note: 'Độ sạch sẽ']
+  "score_location" decimal(2,1) [default: NULL, note: 'Vị trí']
+  "score_facilities" decimal(2,1) [default: NULL, note: 'Cơ sở vật chất']
+  "score_service" decimal(2,1) [default: NULL, note: 'Dịch vụ']
+  "score_value" decimal(2,1) [default: NULL, note: 'Đáng giá tiền']
+  "status" reviews_status_enum [not null, default: 'pending']
+  Note: 'Đánh giá gắn với booking'
+}
+
+Table "roles" {
+  "id" int [pk, not null]
+  "name" varchar(50) [not null]
+  "description" text
+  "created_at" timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+Table "role_user" {
+  "user_id" bigint [not null]
+  "role_id" int [not null]
+
+  Indexes {
+    (user_id, role_id) [pk]
+  }
+}
+
+Table "room" {
+  "room_id" int [pk, not null, note: 'Khóa chính, mã phòng']
+  "room_type_id" int [not null, note: 'Khóa ngoại, mã loại phòng']
+  "name" varchar(100) [not null, note: 'Tên phòng']
+  "image" varchar(255) [default: NULL, note: 'Đường dẫn ảnh chính']
+  "floor_id" int [default: NULL, note: 'Tầng của phòng']
+  "bed_type_fixed" int [default: NULL, note: 'Loại giường mặc định']
+  "status" room_status_enum [default: NULL]
+  "description" text [note: 'Mô tả chi tiết phòng']
+  "last_cleaned" datetime [default: NULL]
+  "created_at" datetime [default: `CURRENT_TIMESTAMP`]
+  "updated_at" datetime [default: `CURRENT_TIMESTAMP`]
+  Note: 'Lưu thông tin phòng'
+}
+
+Table "room_bed_types" {
+  "room_id" int [pk, not null, note: 'Khóa chính']
+  "bed_type_id" int [not null, note: 'Khóa ngoại, mã loại giường']
+  "quantity" int [default: '1', note: 'Số lượng giường loại này']
+  "is_default" tinyint(1) [default: '0', note: 'Có phải tùy chọn mặc định']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Bảng trung gian: Phòng - Loại giường'
+}
+
+Table "room_meal_types" {
+  "room_id" int [pk, not null, note: 'Khóa chính, khóa ngoại']
+  "is_default" tinyint(1) [default: '0']
+  "meal_type_id" int [not null, note: 'Khóa ngoại, mã loại bữa ăn']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Bảng trung gian: Phòng - Loại bữa ăn'
+}
+
+Table "room_occupancy" {
+  "occupancy_id" int [pk, not null]
+  "room_type_id" int [not null]
+  "date" date [not null]
+  "total_rooms" int [not null, note: 'Tổng số phòng của loại phòng']
+  "booked_rooms" int [not null, note: 'Số phòng đã được đặt']
+  "occupancy_rate" decimal(5,2) [note: 'Tỷ lệ lấp đầy (%)']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "room_option" {
+  "option_id" varchar(50) [pk, not null, note: 'Khóa chính, mã tùy chọn']
+  "room_id" int [default: NULL, note: 'Khóa ngoại, mã phòng']
+  "name" varchar(100) [not null, note: 'Tên tùy chọn']
+  "price_per_night_vnd" decimal(15,2) [not null, note: 'Giá mỗi đêm (VND)']
+  "max_guests" int [not null, note: 'Số khách tối đa']
+  "min_guests" int [not null, note: 'Số khách tối thiểu']
+  "urgency_message" varchar(255) [default: NULL, note: 'Thông báo khan hiếm']
+  "most_popular" tinyint(1) [default: '0', note: 'Tùy chọn phổ biến nhất']
+  "recommended" tinyint(1) [default: '0', note: 'Tùy chọn được đề xuất']
+  "meal_type" int [default: NULL, note: 'Khóa ngoại, mã bữa ăn']
+  "bed_type" int [default: NULL, note: 'Khóa ngoại, mã tùy chọn giường']
+  "recommendation_score" decimal(5,2) [default: NULL]
+  "deposit_policy_id" int [default: NULL]
+  "check_out_policy_id" int [default: NULL]
+  "policy_applied_reason" text
+  "policy_applied_date" date [default: NULL]
+  "policy_snapshot_json" json [default: NULL]
+  "cancellation_policy_id" int [default: NULL]
+  "package_id" int [default: NULL]
+  "adjusted_price" decimal(15,2) [default: NULL, note: 'Giá sau khi áp dụng các quy tắc']
+  "created_at" date [default: NULL]
+  "updated_at" date [default: NULL]
+  Note: 'Lưu tùy chọn giá và dịch vụ của phòng'
+}
+
+Table "room_option_promotion" {
+  "promotion_id" int [pk, not null, note: 'Khóa chính, mã khuyến mãi']
+  "option_id" varchar(50) [default: NULL, note: 'Khóa ngoại, mã tùy chọn']
+  "type" varchar(50) [not null, note: 'Loại khuyến mãi (hot, limited)']
+  "message" varchar(255) [not null, note: 'Thông điệp khuyến mãi']
+  "discount" decimal(5,2) [default: NULL, note: 'Mức giảm giá (%)']
+  Note: 'Lưu khuyến mãi của tùy chọn phòng'
+}
+
+Table "room_price_history" {
+  "price_history_id" int [pk, not null]
+  "room_type_id" int [not null]
+  "date" date [not null]
+  "base_price" decimal(15,2) [not null, note: 'Giá cơ bản']
+  "adjusted_price" decimal(15,2) [not null, note: 'Giá sau điều chỉnh']
+  "applied_rules" json [default: NULL, note: 'Danh sách quy tắc áp dụng (ID và loại quy tắc)']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "room_transfers" {
+  "transfer_id" int [pk, not null]
+  "booking_id" int [not null]
+  "old_room_id" int [not null]
+  "new_room_id" int [not null]
+  "new_option_id" varchar(50) [default: NULL, note: 'Mã gói phòng mới']
+  "transfer_policy_id" int [default: NULL, note: 'Mã chính sách chuyển phòng']
+  "status" room_transfers_status_enum [default: 'Pending', note: 'Trạng thái yêu cầu']
+  "price_difference_vnd" decimal(15,2) [default: NULL, note: 'Chênh lệch giá (dương: bù tiền, âm: hoàn tiền)']
+  "payment_id" int [default: NULL, note: 'Mã hóa đơn liên quan (nếu có bù tiền)']
+  "processed_by" bigint [default: NULL, note: 'Mã nhân viên xử lý']
+  "reason" text [note: 'Lý do chuyển phòng']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "room_transfer_policies" {
+  "policy_id" int [pk, not null]
+  "name" varchar(100) [not null, note: 'Tên chính sách']
+  "description" text [note: 'Mô tả chính sách']
+  "transfer_fee_vnd" decimal(15,2) [default: '0.00', note: 'Phí chuyển phòng cố định (VND)']
+  "transfer_fee_percentage" decimal(5,2) [default: '0.00', note: 'Phí chuyển phòng theo phần trăm giá phòng mới']
+  "min_days_before_check_in" int [default: NULL, note: 'Số ngày tối thiểu trước check-in để áp dụng chuyển phòng']
+  "applies_to_holiday" tinyint(1) [default: '0', note: 'Áp dụng cho ngày lễ']
+  "applies_to_weekend" tinyint(1) [default: '0', note: 'Áp dụng cho cuối tuần']
+  "requires_guest_confirmation" tinyint(1) [default: '1', note: 'Yêu cầu xác nhận từ khách']
+  "room_type_id" int [default: NULL, note: 'Loại phòng áp dụng (NULL nếu áp dụng tất cả)']
+  "is_active" tinyint(1) [default: '1', note: 'Trạng thái kích hoạt']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "deleted_at" date [default: NULL]
+  "applies_to_package_change" tinyint(1) [default: '0']
+  Note: 'Chính sách chuyển phòng'
+}
+
+Table "room_types" {
+  "room_type_id" int [pk, not null]
+  "room_code" varchar(50) [not null]
+  "name" varchar(100) [not null]
+  "description" text
+  "total_room" int [not null]
+  "base_price" decimal(10,2) [not null]
+  "room_area" int [not null]
+  "view" varchar(50) [default: NULL]
+  "rating" int [default: '0']
+  "max_guests" int [default: '0']
+  "is_active" tinyint [default: '1']
+}
+
+Table "room_type_amenity" {
+  "room_type_id" int [not null]
+  "amenity_id" int [not null]
+  "is_highlighted" tinyint(1) [default: '0']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+
+  Indexes {
+    (room_type_id, amenity_id) [pk]
+  }
+}
+
+Table "room_type_image" {
+  "image_id" int [pk, not null, note: 'Khóa chính, mã ảnh']
+  "room_type_id" int [default: NULL, note: 'Khóa ngoại, mã phòng']
+  "alt_text" text
+  "image_path" varchar(255) [default: NULL, note: 'Đường dẫn ảnh thư mục gốc']
+  "image_url" varchar(255) [default: NULL, note: 'Đường dẫn ảnh API']
+  "is_main" tinyint(1) [default: '0', note: 'Ảnh chính']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  Note: 'Lưu danh sách ảnh của phòng'
+}
+
+Table "room_type_package" {
+  "package_id" int [pk, not null]
+  "room_type_id" int [not null]
+  "name" varchar(50) [not null]
+  "price_modifier_vnd" decimal(15,2) [default: '0.00']
+  "include_all_services" tinyint(1) [default: '0']
+  "description" text
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "room_type_package_services" {
+  "id" int [pk, not null]
+  "package_id" int [not null]
+  "service_id" int [not null]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "room_type_service" {
+  "id" int [pk, not null]
+  "room_type_id" int [not null]
+  "service_id" int [not null]
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table "services" {
+  "service_id" int [pk, not null]
+  "name" varchar(100) [not null]
+  "description" text
+  "price_vnd" decimal(15,2) [not null, default: '0.00']
+  "unit" varchar(50) [default: NULL, note: 'Ví dụ: lần, ngày, giờ, kg']
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+
+
+Table "table_translation" {
+  "id" bigint [pk, not null]
+  "table_name" varchar(255) [not null]
+  "display_name" varchar(255) [default: NULL]
+  "is_active" tinyint(1) [not null, default: '1']
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "translation" {
+  "translation_id" int [pk, not null, note: 'Khóa chính, mã bản dịch']
+  "table_name" varchar(50) [not null, note: 'Tên bảng (room, hotel, v.v.)']
+  "column_name" varchar(50) [not null, note: 'Tên cột (name, description, v.v.)']
+  "record_id" int [not null, note: 'Mã bản ghi']
+  "language_code" varchar(10) [not null, note: 'Mã ngôn ngữ (vi, en, v.v.)']
+  "value" text [not null, note: 'Giá trị bản dịch']
+  Note: 'Lưu bản dịch cho các trường văn bản'
+}
+
+
+Table "weekend_days" {
+  "id" int [pk, not null]
+  "day_of_week" weekend_days_day_of_week_enum [not null]
+  "is_active" tinyint(1) [default: '1']
+  "created_at" timestamp [default: `CURRENT_TIMESTAMP`]
+  "updated_at" timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Ref "audit_logs_ibfk_1":"users"."id" < "audit_logs"."user_id" [delete: set null]
+
+Ref "booking_ibfk_1":"room_option"."option_id" < "booking"."option_id" [delete: restrict]
+
+Ref "booking_ibfk_2":"room_types"."room_type_id" < "booking"."room_type_id" [update: restrict, delete: restrict]
+
+Ref "fk_booking_room":"room"."room_id" < "booking"."room_id" [delete: set null]
+
+Ref "booking_extensions_ibfk_1":"booking"."booking_id" < "booking_extensions"."booking_id" [delete: cascade]
+
+Ref "booking_reschedules_ibfk_1":"booking"."booking_id" < "booking_reschedules"."booking_id" [delete: cascade]
+
+Ref "booking_reschedules_ibfk_2":"room"."room_id" < "booking_reschedules"."new_room_id" [delete: set null]
+
+Ref "booking_reschedules_ibfk_3":"room_option"."option_id" < "booking_reschedules"."new_option_id" [delete: set null]
+
+Ref "booking_reschedules_ibfk_4":"reschedule_policies"."policy_id" < "booking_reschedules"."reschedule_policy_id" [delete: set null]
+
+Ref "booking_reschedules_ibfk_5":"payment"."payment_id" < "booking_reschedules"."payment_id" [delete: set null]
+
+Ref "booking_reschedules_ibfk_6":"users"."id" < "booking_reschedules"."processed_by" [delete: set null]
+
+Ref "booking_rooms_ibfk_1":"booking"."booking_id" < "booking_rooms"."booking_id"
+
+Ref "booking_rooms_ibfk_2":"room"."room_id" < "booking_rooms"."room_id"
+
+Ref "booking_rooms_ibfk_3":"representatives"."id" < "booking_rooms"."representative_id"
+
+Ref "booking_rooms_option_id_foreign":"room_option"."option_id" < "booking_rooms"."option_id" [delete: set null]
+
+Ref "cancellation_requests_ibfk_1":"booking"."booking_id" < "cancellation_requests"."booking_id" [delete: cascade]
+
+Ref "cancellation_requests_ibfk_2":"cancellation_policies"."policy_id" < "cancellation_requests"."cancellation_policy_id" [delete: set null]
+
+Ref "cancellation_requests_ibfk_3":"users"."id" < "cancellation_requests"."processed_by" [delete: set null]
+
+Ref "check_out_requests_ibfk_1":"booking"."booking_id" < "check_out_requests"."booking_id" [delete: cascade]
+
+Ref "conversations_handover_to_user_id_foreign":"users"."id" < "conversations"."handover_to_user_id" [delete: set null]
+
+Ref "conversations_user_id_foreign":"users"."id" < "conversations"."user_id" [delete: cascade]
+
+Ref "dynamic_pricing_rules_ibfk_1":"room_types"."room_type_id" < "dynamic_pricing_rules"."room_type_id" [delete: set null]
+
+Ref "extension_requests_ibfk_1":"booking"."booking_id" < "extension_requests"."booking_id" [delete: cascade]
+
+Ref "extension_requests_ibfk_2":"extension_policies"."policy_id" < "extension_requests"."extension_policy_id" [delete: set null]
+
+Ref "extension_requests_ibfk_3":"users"."id" < "extension_requests"."processed_by" [delete: set null]
+
+Ref "flexible_pricing_rules_ibfk_1":"room_types"."room_type_id" < "flexible_pricing_rules"."room_type_id" [delete: set null]
+
+Ref "flexible_pricing_rules_ibfk_2":"events"."event_id" < "flexible_pricing_rules"."event_id" [delete: set null]
+
+Ref "flexible_pricing_rules_ibfk_3":"holidays"."holiday_id" < "flexible_pricing_rules"."holiday_id" [delete: set null]
+
+Ref "fk_guests_user":"users"."id" < "guests"."user_id" [delete: cascade]
+
+Ref "hotel_rating_ibfk_1":"hotel"."hotel_id" < "hotel_rating"."hotel_id" [delete: cascade]
+
+Ref "messages_conversation_id_foreign":"conversations"."id" < "messages"."conversation_id" [delete: cascade]
+
+Ref "fk_news_author":"users"."id" < "news"."author_id" [delete: set null]
+
+Ref "fk_news_thumbnail":"media_files"."id" < "news"."thumbnail_id" [delete: set null]
+
+Ref "news_ibfk_1":"news_categories"."id" < "news"."category_id" [update: restrict, delete: restrict]
+
+Ref "notifications_ibfk_1":"booking"."booking_id" < "notifications"."booking_id" [delete: set null]
+
+Ref "notifications_ibfk_2":"users"."id" < "notifications"."user_id" [delete: set null]
+
+Ref "payment_ibfk_1":"booking"."booking_id" < "payment"."booking_id" [delete: cascade]
+
+Ref "permission_role_ibfk_1":"permissions"."id" < "permission_role"."permission_id" [delete: cascade]
+
+Ref "permission_role_ibfk_2":"roles"."id" < "permission_role"."role_id" [delete: cascade]
+
+Ref "fk_representative_user":"users"."id" < "representatives"."user_id"
+
+Ref "representatives_ibfk_1":"booking"."booking_id" < "representatives"."booking_id"
+
+Ref "representatives_ibfk_2":"room"."room_id" < "representatives"."room_id"
+
+Ref "reschedule_policies_ibfk_1":"room_types"."room_type_id" < "reschedule_policies"."room_type_id" [delete: set null]
+
+Ref "fk_reviews_booking":"booking"."booking_id" < "reviews"."booking_id" [delete: cascade]
+
+Ref "role_user_ibfk_1":"users"."id" < "role_user"."user_id" [delete: cascade]
+
+Ref "role_user_ibfk_2":"roles"."id" < "role_user"."role_id" [delete: cascade]
+
+Ref "room_ibfk_2":"room_types"."room_type_id" < "room"."room_type_id" [update: restrict, delete: restrict]
+
+Ref "room_ibfk_3":"bed_types"."id" < "room"."bed_type_fixed" [update: restrict, delete: restrict]
+
+Ref "room_ibfk_4":"floors"."floor_number" < "room"."floor_id" [update: restrict, delete: restrict]
+
+Ref "fk_room_bed_type":"bed_types"."id" < "room_bed_types"."bed_type_id" [delete: cascade]
+
+Ref "room_bed_types_ibfk_1":"room"."room_id" < "room_bed_types"."room_id" [update: restrict, delete: restrict]
+
+Ref "fk_room_meal_type":"meal_types"."id" < "room_meal_types"."meal_type_id" [delete: cascade]
+
+Ref "room_meal_types_ibfk_1":"room"."room_id" < "room_meal_types"."room_id" [update: restrict, delete: restrict]
+
+Ref "room_occupancy_ibfk_1":"room_types"."room_type_id" < "room_occupancy"."room_type_id" [delete: cascade]
+
+Ref "fk_room_option_cancellation_policy":"cancellation_policies"."policy_id" < "room_option"."cancellation_policy_id" [delete: set null]
+
+Ref "fk_room_option_deposit_policy":"deposit_policies"."policy_id" < "room_option"."deposit_policy_id" [delete: set null]
+
+Ref "room_option_ibfk_1":"room"."room_id" < "room_option"."room_id" [delete: cascade]
+
+Ref "room_option_ibfk_2":"bed_types"."id" < "room_option"."bed_type" [update: restrict, delete: restrict]
+
+Ref "room_option_ibfk_3":"meal_types"."id" < "room_option"."meal_type" [update: restrict, delete: restrict]
+
+Ref "room_option_ibfk_4":"room_type_package"."package_id" < "room_option"."package_id" [delete: set null]
+
+Ref "room_option_ibfk_5":"check_out_policies"."policy_id" < "room_option"."check_out_policy_id" [update: restrict, delete: restrict]
+
+Ref "room_option_promotion_ibfk_1":"room_option"."option_id" < "room_option_promotion"."option_id" [delete: cascade]
+
+Ref "room_price_history_ibfk_1":"room_types"."room_type_id" < "room_price_history"."room_type_id" [delete: cascade]
+
+Ref "room_transfers_ibfk_1":"booking"."booking_id" < "room_transfers"."booking_id" [delete: cascade]
+
+Ref "room_transfers_ibfk_2":"room"."room_id" < "room_transfers"."old_room_id" [delete: restrict]
+
+Ref "room_transfers_ibfk_3":"room"."room_id" < "room_transfers"."new_room_id" [delete: restrict]
+
+Ref "room_transfers_ibfk_4":"room_option"."option_id" < "room_transfers"."new_option_id" [delete: set null]
+
+Ref "room_transfers_ibfk_5":"room_transfer_policies"."policy_id" < "room_transfers"."transfer_policy_id" [delete: set null]
+
+Ref "room_transfers_ibfk_6":"payment"."payment_id" < "room_transfers"."payment_id" [delete: set null]
+
+Ref "room_transfers_ibfk_7":"users"."id" < "room_transfers"."processed_by" [delete: set null]
+
+Ref "room_transfer_policies_ibfk_1":"room_types"."room_type_id" < "room_transfer_policies"."room_type_id" [delete: set null]
+
+Ref "room_type_amenity_ibfk_1":"room_types"."room_type_id" < "room_type_amenity"."room_type_id" [update: restrict, delete: restrict]
+
+Ref "room_type_amenity_ibfk_2":"amenities"."amenity_id" < "room_type_amenity"."amenity_id" [update: restrict, delete: restrict]
+
+Ref "room_type_package_ibfk_1":"room_types"."room_type_id" < "room_type_package"."room_type_id" [delete: cascade]
+
+Ref "room_type_package_services_ibfk_1":"room_type_package"."package_id" < "room_type_package_services"."package_id"
+
+Ref "room_type_package_services_ibfk_2":"services"."service_id" < "room_type_package_services"."service_id"
+
+Ref "room_type_service_ibfk_1":"room_types"."room_type_id" < "room_type_service"."room_type_id" [delete: cascade]
+
+Ref "room_type_service_ibfk_2":"services"."service_id" < "room_type_service"."service_id" [delete: cascade]
+
+Ref "translation_ibfk_1":"language"."language_code" < "translation"."language_code" [delete: cascade]

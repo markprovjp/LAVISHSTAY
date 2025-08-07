@@ -10,7 +10,7 @@
                     {{ $user->name }}</p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-                <a href="{{ route('admin.customers.show', $user->id) }}">
+                <a href="{{ route('admin.users.customers.show', $user->id) }}">
                     <button
                         class="btn cursor-pointer bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
                         <i class="fas fa-arrow-left fa-xs mr-2"></i>
@@ -43,7 +43,7 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl dark:border-gray-700">
-            <form action="{{ route('admin.customers.update', $user->id) }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('admin.users.customers.update', $user->id) }}" method="POST" enctype="multipart/form-data"
                 class="p-6">
                 @csrf
                 @method('PUT')
