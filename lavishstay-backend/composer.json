@@ -13,7 +13,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.4",
-        "phpoffice/phpspreadsheet": "^4.4"
+        "phpoffice/phpspreadsheet": "^4.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

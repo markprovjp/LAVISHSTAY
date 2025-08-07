@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReceptionController;
+use App\Http\Controllers\Api\ChartReceptionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TranslationController;
@@ -270,6 +271,17 @@ Route::prefix('reception')->group(function () {
     // Filters
     Route::get('/floors', [ReceptionController::class, 'getFloors']);
     Route::get('/room-types', [ReceptionController::class, 'getRoomTypes']);
+    
+    // Chart & Dashboard APIs
+    Route::prefix('chart')->group(function () {
+        Route::get('/revenue-by-month', [ChartReceptionController::class, 'getRevenueByMonth']);
+        Route::get('/revenue-by-category', [ChartReceptionController::class, 'getRevenueByCategory']);
+        Route::get('/activity-rate', [ChartReceptionController::class, 'getActivityRate']);
+        Route::get('/today-schedule', [ChartReceptionController::class, 'getTodaySchedule']);
+        Route::get('/notifications', [ChartReceptionController::class, 'getNotifications']);
+        Route::get('/top-booked-services', [ChartReceptionController::class, 'getTopBookedServices']);
+        Route::get('/dashboard-stats', [ChartReceptionController::class, 'getDashboardStats']);
+    });
     
     // Legacy booking routes (keep for compatibility)
     Route::post('/book', [\App\Http\Controllers\Api\ReceptionBookController::class, 'create']);
