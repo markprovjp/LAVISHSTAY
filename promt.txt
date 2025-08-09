@@ -1,0 +1,174 @@
+## BOILERPLATE HACKATHON: ỨNG DỤNG AI CHO SINH VIÊN
+
+### 1. Bối cảnh & Mục tiêu Chính
+**Nhiệm vụ:** Xây dựng một bộ code nền tảng (boilerplate) hoàn chỉnh cho một cuộc thi hackathon.
+
+**Mục tiêu cao nhất:** Tối ưu hóa cho tốc độ. Đội thi phải có thể bắt đầu code logic cho tính năng AI và giao diện chính ngay lập tức mà không tốn một giây nào cho việc cài đặt, cấu hình hay xây dựng các chức năng cơ bản như xác thực.
+
+**Công nghệ chỉ định:**
+- **Frontend:** Next.js (App Router), TypeScript, Ant Design (AntD)
+- **Backend:** Laravel
+- **Database:** MySQL
+
+### 2. Yêu Cầu Chi Tiết Frontend (Next.js)
+
+**Khởi tạo & Cấu trúc:**
+- Khởi tạo dự án Next.js bằng `create-next-app` với TypeScript, ESLint, và Prettier được cấu hình sẵn
+- Tuân thủ cấu trúc thư mục rõ ràng: `src/app`, `src/components`, `src/lib`, `src/styles`
+
+**Giao diện & Layout (Sẵn sàng sử dụng):**
+- Tích hợp Ant Design và đảm bảo hoạt động trơn tru. Không cần tùy chỉnh theme
+- Xây dựng một `AppLayout` dùng chung cho các trang cần đăng nhập, bao gồm 3 thành phần cốt lõi:
+  - **Header:** Placeholder cho logo, hiển thị tên người dùng và nút "Đăng xuất"
+  - **Sidebar:** Menu điều hướng với các mục mẫu: "Trang chủ", "Tính năng AI", "Hồ sơ"
+  - **Vùng Nội dung:** Khu vực chính để render nội dung của từng trang
+
+**Client API (Cấu hình sẵn):**
+- Tạo file `src/lib/api.ts` để cấu hình một instance của axios
+- Instance này phải tự động đọc URL của backend từ file `.env.local`
+- **Quan trọng:** Cấu hình interceptor để tự động đính kèm token xác thực (Bearer Token) vào header của mọi request gửi đến backend sau khi đăng nhập thành công
+
+**Luồng Xác thực (Hoàn thiện 100%):**
+Đây là phần quan trọng nhất. Xây dựng đầy đủ các trang và logic sau:
+- Tạo trang `/login` và `/register` với các form chức năng
+- Triển khai logic gọi API để thực hiện đăng nhập, đăng ký với backend
+- Sau khi đăng nhập, lưu token vào cookie và quản lý trạng thái người dùng (ví dụ: dùng React Context)
+- Sử dụng `middleware.ts` để bảo vệ tất cả các route trong ứng dụng (trừ `/login` và `/register`). Người dùng chưa đăng nhập phải bị tự động chuyển hướng về trang `/login`
+- Triển khai chức năng đăng xuất để xóa token và chuyển hướng người dùng
+
+### 3. Yêu Cầu Chi Tiết Backend (Laravel)
+
+**Khởi tạo & Cấu hình:**
+- Khởi tạo một dự án Laravel phiên bản mới nhất
+- Cấu hình file `.env` để kết nối tới database MySQL
+- Cấu hình CORS (`config/cors.php`) để chấp nhận mọi request từ frontend (ví dụ: http://localhost:3000)
+
+**API Xác thực (Sẵn sàng với Laravel Sanctum):**
+Triển khai đầy đủ các API endpoint sau đây trong `routes/api.php`:
+- `POST /api/register`: Đăng ký người dùng mới
+- `POST /api/login`: Xác thực thông tin, nếu thành công trả về một plain-text token
+- `POST /api/logout`: Thu hồi token của người dùng (yêu cầu middleware `auth:sanctum`)
+- `GET /api/user`: Lấy thông tin của người dùng đang đăng nhập (yêu cầu middleware `auth:sanctum`)
+
+**Cơ sở dữ liệu:**
+- Tạo sẵn file migration cho bảng `users` với các trường cơ bản: name, email, password
+- Tạo một file Seeder để tạo ra một tài khoản mẫu (ví dụ: user@test.com, password) để đội thi có thể đăng nhập và kiểm tra ngay lập tức sau khi chạy `php artisan migrate --seed`
+
+**Placeholder cho Tính năng AI:**
+- Tạo một `AiController.php` mẫu
+- Tạo một route mẫu `POST /api/ai/process` trỏ đến một hàm trong controller đó
+- Trong hàm xử lý, chỉ cần trả về một JSON mẫu. Ví dụ: `return response()->json(['result' => 'Đây là kết quả AI mẫu']);`
+- Mục đích là để đội thi có sẵn một endpoint để gọi và chỉ cần tập trung vào việc viết logic AI bên trong hàm này
+
+### 4. Tiêu chí nghiệm thu (Checklist "Done")
+Sản phẩm cuối cùng được coi là hoàn thành chỉ khi đáp ứng **TẤT CẢ** các điều kiện sau:
+
+✅ **Khởi động 2 lệnh:** Sau khi clone repo và chạy `npm run dev` (FE) và `php artisan serve` (BE), ứng dụng phải hoạt động mà không gặp lỗi
+
+✅ **Đăng ký & Đăng nhập:** Người dùng có thể tạo tài khoản mới và đăng nhập thành công ngay lập tức
+
+✅ **Bảo vệ Route:** Cố gắng truy cập vào trang dashboard (ví dụ `/`) sẽ tự động chuyển hướng về `/login` nếu chưa đăng nhập
+
+✅ **Giao diện sẵn có:** Ngay sau khi đăng nhập, người dùng thấy ngay một layout hoàn chỉnh (header, sidebar, content)
+
+✅ **Kết nối sẵn sàng:** Frontend đã gọi được API backend (đã cấu hình CORS, biến môi trường). Nút "Đăng xuất" hoạt động
+
+✅ **Placeholder AI rõ ràng:** Đội thi biết chính xác Controller và route nào để bắt đầu tích hợp logic AI của họ
+
+---
+
+2. Yêu Cầu Chi Tiết Frontend (Next.js)
+Khởi tạo & Cấu trúc:
+Hãy khởi tạo dự án Next.js bằng create-next-app với TypeScript, ESLint, và Prettier được cấu hình sẵn.
+Tuân thủ cấu trúc thư mục rõ ràng: src/app, src/components, src/lib, src/styles.
+Giao diện & Layout (Sẵn sàng sử dụng):
+Hãy tích hợp Ant Design và đảm bảo nó hoạt động trơn tru. Không cần tùy chỉnh theme.
+Hãy xây dựng một AppLayout dùng chung cho các trang cần đăng nhập, bao gồm 3 thành phần cốt lõi:
+Header: Placeholder cho logo, hiển thị tên người dùng và nút "Đăng xuất".
+Sidebar: Menu điều hướng với các mục mẫu: "Trang chủ", "Tính năng AI", "Hồ sơ".
+Vùng Nội dung: Khu vực chính để render nội dung của từng trang.
+Client API (Cấu hình sẵn):
+Hãy tạo file src/lib/api.ts để cấu hình một instance của axios.
+Instance này phải tự động đọc URL của backend từ file .env.local.
+Quan trọng: Cấu hình một interceptor để tự động đính kèm token xác thực (Bearer Token) vào header của mọi request gửi đến backend sau khi đăng nhập thành công.
+Luồng Xác thực (Hoàn thiện 100%):
+Đây là phần quan trọng nhất. Hãy xây dựng đầy đủ các trang và logic sau:
+Tạo trang /login và /register với các form chức năng.
+Triển khai logic gọi API để thực hiện đăng nhập, đăng ký với backend.
+Sau khi đăng nhập, hãy lưu token vào cookie và quản lý trạng thái người dùng (ví dụ: dùng React Context).
+Sử dụng middleware.ts để bảo vệ tất cả các route trong ứng dụng (trừ /login và /register). Người dùng chưa đăng nhập phải bị tự động chuyển hướng về trang /login.
+Triển khai chức năng đăng xuất để xóa token và chuyển hướng người dùng.
+
+3. Yêu Cầu Chi Tiết Backend (Laravel)
+Khởi tạo & Cấu hình:
+Hãy khởi tạo một dự án Laravel phiên bản mới nhất.
+Cấu hình file .env để kết nối tới database MySQL.
+Cấu hình CORS (config/cors.php) để chấp nhận mọi request từ frontend (ví dụ: http://localhost:3000).
+API Xác thực (Sẵn sàng với Laravel Sanctum):
+Hãy triển khai đầy đủ các API endpoint sau đây trong routes/api.php:
+POST /api/register: Đăng ký người dùng mới.
+POST /api/login: Xác thực thông tin, nếu thành công trả về một plain-text token.
+POST /api/logout: Thu hồi token của người dùng (yêu cầu middleware auth:sanctum).
+GET /api/user: Lấy thông tin của người dùng đang đăng nhập (yêu cầu middleware auth:sanctum).
+Cơ sở dữ liệu:
+Hãy tạo sẵn file migration cho bảng users với các trường cơ bản: name, email, password.
+Hãy tạo một file Seeder để tạo ra một tài khoản mẫu (ví dụ: user@test.com, password) để đội thi có thể đăng nhập và kiểm tra ngay lập tức sau khi chạy php artisan migrate --seed.
+Placeholder cho Tính năng AI:
+Hãy tạo một AiController.php mẫu.
+Tạo một route mẫu POST /api/ai/process trỏ đến một hàm trong controller đó.
+Trong hàm xử lý, chỉ cần trả về một JSON mẫu. Ví dụ: return response()->json(['result' => 'Đây là kết quả AI mẫu']);. Mục đích là để đội thi có sẵn một endpoint để gọi và chỉ cần tập trung vào việc viết logic AI bên trong hàm này.
+
+4. Tiêu chí nghiệm thu (Checklist "Done")
+Sản phẩm cuối cùng được coi là hoàn thành chỉ khi đáp ứng tất cả các điều kiện sau:
+✅ Khởi động 2 lệnh: Sau khi clone repo và chạy npm run dev (FE) và php artisan serve (BE), ứng dụng phải hoạt động mà không gặp lỗi.
+✅ Đăng ký & Đăng nhập: Người dùng có thể tạo tài khoản mới và đăng nhập thành công ngay lập tức.
+✅ Bảo vệ Route: Cố gắng truy cập vào trang dashboard (ví dụ /) sẽ tự động chuyển hướng về /login nếu chưa đăng nhập.
+✅ Giao diện sẵn có: Ngay sau khi đăng nhập, người dùng thấy ngay một layout hoàn chỉnh (header, sidebar, content).
+✅ Kết nối sẵn sàng: Frontend đã gọi được API backend (đã cấu hình CORS, biến môi trường). Nút "Đăng xuất" hoạt động.
+✅ Placeholder AI rõ ràng: Đội thi biết chính xác Controller và route nào để bắt đầu tích hợp logic AI của họ.
+
+ĐỀ BÀI DỰ ÁN: XÂY DỰNG ỨNG DỤNG HỖ TRỢ SINH VIÊN "STUDENT HUB AI"
+1. Bối cảnh dự án
+Trong kỷ nguyên số, sinh viên phải đối mặt với vô số thông tin, áp lực học tập và các công việc cần quản lý. Một ứng dụng thông minh, tích hợp nhiều tiện ích trên một nền tảng duy nhất có thể giúp sinh viên tối ưu hóa thời gian, nâng cao hiệu quả học tập và cân bằng cuộc sống. Dự án "Student Hub AI" ra đời với mục tiêu trở thành người bạn đồng hành không thể thiếu của mỗi sinh viên.
+2. Mô tả dự án
+Xây dựng một ứng dụng web toàn diện cho sinh viên sử dụng công nghệ hiện đại, với giao diện chuyên nghiệp và tích hợp một tính năng AI đột phá, mang lại giá trị thực tiễn cao.
+3. Yêu cầu về công nghệ
+Frontend:
+Next.js: Framework chính để xây dựng ứng dụng React server-side rendering (SSR) hoặc static site generation (SSG), đảm bảo hiệu năng cao và tốt cho SEO.[1]
+Ant Design (antd): Sử dụng bộ thư viện component UI phong phú và chuyên nghiệp để xây dựng các giao diện chức năng chính như form, bảng biểu, modal...[2][3]
+HeroUI: Kết hợp các component hiện đại, đẹp mắt từ HeroUI để tạo điểm nhấn cho trang chủ, các landing page và các thành phần cần sự sáng tạo, thu hút.[4]
+Backend:
+Laravel: Xây dựng hệ thống RESTful API mạnh mẽ, an toàn và có khả năng mở rộng để xử lý mọi logic nghiệp vụ phía máy chủ.[5][6][7]
+API & Giao tiếp:
+Axios: Thư viện chính được sử dụng ở phía Frontend (Next.js) để thực hiện các yêu cầu HTTP đến Backend Laravel một cách tiện lợi và dễ dàng.[8][9][10]
+Database:
+MySQL: Hệ quản trị cơ sở dữ liệu quan hệ để lưu trữ toàn bộ dữ liệu của ứng dụng (thông tin người dùng, ghi chú, lịch học, dữ liệu AI...).[11]
+phpMyAdmin: Công cụ quản lý cơ sở dữ liệu MySQL qua giao diện web, giúp thao tác dữ liệu trực quan và nhanh chóng.[12][13][14]
+4. Chức năng ứng dụng
+Ứng dụng cần có các chức năng cốt lõi sau, và phải được thiết kế với giao diện thân thiện, dễ sử dụng:
+Quản lý người dùng: Đăng ký, đăng nhập, quản lý thông tin cá nhân.
+Module tiện ích (Chọn ít nhất 2):
+Quản lý thời gian biểu: Giao diện lịch để thêm, sửa, xóa các môn học, lịch thi, sự kiện cá nhân.
+Quản lý ghi chú: Tạo các ghi chú văn bản, có thể phân loại theo môn học hoặc chủ đề.
+Theo dõi tiến độ học tập: Cho phép người dùng nhập điểm số các môn học và hiển thị biểu đồ tiến trình.
+TÍNH NĂNG AI (BẮT BUỘC - Chọn 1 để phát triển):
+Lựa chọn 1: Chatbot tư vấn học tập thông minh:
+Mô tả: Xây dựng một chatbot có khả năng trả lời các câu hỏi thường gặp của sinh viên về quy chế, thông tin môn học, gợi ý lộ trình học tập dựa trên chuyên ngành.[15][16] Chatbot cần có sẵn 24/7 để hỗ trợ sinh viên bất cứ lúc nào.[17]
+Sáng tạo: Chatbot có thể cá nhân hóa câu trả lời dựa trên lịch sử học tập hoặc các môn học người dùng đã đăng ký.[18]
+5. Tiêu chí chấm điểm
+Dự án sẽ được đánh giá dựa trên các tiêu chí sau:
+Coding (30%):
+Code hoàn thiện, sạch sẽ, có cấu trúc rõ ràng và dễ bảo trì.
+Tích hợp thành công và mượt mà tất cả các công nghệ đã yêu cầu.
+Hoàn thành đầy đủ các chức năng đã đăng ký.
+Tích hợp AI (30%):
+Tính năng AI hoạt động chính xác và hữu ích trong thực tế.
+Ý tưởng triển khai AI độc đáo, sáng tạo, tạo ra sự khác biệt so với các ứng dụng thông thường.
+Mức độ tích hợp sâu của AI vào luồng hoạt động của ứng dụng.
+UI/UX (25%):
+Giao diện chuyên nghiệp, thẩm mỹ, có sự kết hợp hài hòa giữa Ant Design và HeroUI.
+Trải nghiệm người dùng mượt mà, logic và thân thiện, đặc biệt phù hợp với đối tượng sinh viên.
+Ứng dụng phải có tính tương thích (responsive) tốt trên các thiết bị khác nhau (desktop, tablet, mobile).
+Tính hiệu quả và giá trị (15%):
+Ứng dụng chứng minh được giá trị thực tiễn, giúp sinh viên giải quyết một vấn đề cụ thể (học tập, quản lý thời gian, giảm căng thẳng).
+Mức độ nổi bật của ứng dụng trong việc mang lại giá trị giải trí hoặc học tập so với các sản phẩm tương tự.
