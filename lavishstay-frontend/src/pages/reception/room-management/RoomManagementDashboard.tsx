@@ -16,7 +16,7 @@ import { RoomFilters } from '../../../types/room';
 import { ProFormDigit, ProFormGroup } from '@ant-design/pro-components';
 
 import FilterBar from '../../../components/room-management/FilterBar';
-import RoomCheckCardList from '../../../components/room-management/RoomCheckCardList';
+import RoomCardGrid from '../../../components/room-management/RoomCardGrid';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
 import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms, useGetRoomDetails } from '../../../hooks/useReception';
 import { statusOptions } from '../../../constants/roomStatus';
@@ -589,12 +589,24 @@ const RoomManagementDashboard: React.FC = () => {
 
                 <Card>
                     {viewMode === 'grid' ? (
-                        <RoomCheckCardList
+                        <RoomCardGrid
                             rooms={filteredRoomsToDisplay}
                             loading={isLoading}
+                            mode={viewMode === 'select' ? 'select' : 'view'}
                             selectedRooms={selectedRoomIds}
                             onRoomSelect={handleRoomSelect}
+                            onFloorSelect={(floorId, roomIds, selected) => {
+                                setSelectedRoomIds(prev => {
+                                    const newSet = new Set(prev);
+                                    roomIds.forEach(id => {
+                                        if (selected) newSet.add(id);
+                                        else newSet.delete(id);
+                                    });
+                                    return newSet;
+                                });
+                            }}
                             onViewDetails={handleViewDetails}
+                            onModeChange={() => { }}
                         />
                     ) : (
                         <RoomTimelineView

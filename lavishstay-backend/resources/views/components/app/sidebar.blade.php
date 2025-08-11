@@ -52,6 +52,7 @@
         <!-- Links -->
         <div class="space-y-8">
             {{-- Cấu hình hệ thống --}}
+            @if (Auth::user()?->hasPermission('bang_dieu_khien') || Auth::user()?->hasPermission('cai_dat') || Auth::user()?->hasPermission('gia_phong') || Auth::user()?->hasPermission('danh_gia') || Auth::user()?->hasPermission('xac_thuc'))
             <div>
                 <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
                     <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
@@ -60,6 +61,7 @@
                 </h3>
                 <ul class="mt-3">
                     <!-- Dashboard -->
+                @if (Auth::user()?->hasPermission('bang_dieu_khien'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['dashboard'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(1), ['dashboard']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['dashboard'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -108,8 +110,10 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
 
                     <!-- Settings -->
+                    @if (Auth::user()?->hasPermission('cai_dat'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['settings'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(1), ['settings']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['settings'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -157,8 +161,11 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
+
 					
                     {{-- Room Pricing --}}
+                @if (Auth::user()?->hasPermission('gia_phong'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['pricing'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['pricing'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="{{ route('admin.pricing.index') }}">
@@ -171,8 +178,10 @@
                             </div>
                         </a>
                     </li>
+                @endif
 
 					<!-- Authentication -->
+                    @if (Auth::user()?->hasPermission('xac_thuc'))
                     <li class="pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0" x-data="{ open: false }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition"
                             :class="open ? '' : 'hover:text-gray-900 dark:hover:text-white'" href="#0"
@@ -237,13 +246,18 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
 					
 
                 </ul>
             </div>
+            @endif
+
+            {{-- Booking Management --}}
 
 
             {{-- User Management && Client --}}
+            @if (Auth::user()?->hasPermission('quan_ly_nhan_vien') || Auth::user()?->hasPermission('quan_ly_khach_hang') || Auth::user()?->hasPermission('ho_tro_khach_hang') || Auth::user()?->hasPermission('danh_gia') || Auth::user()?->hasPermission('cau_hoi_thuong_gap'))
             <div>
                 <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
                     <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
@@ -288,16 +302,16 @@
                                     x-transition:leave-end="opacity-0 max-h-0">
                                     @if (Auth::user()?->hasPermission('quan_ly_nhan_vien'))
                                         <li class="mb-1 last:mb-0">
-                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.staffs')) {{ 'text-violet-500!' }} @endif"
-                                                href="{{ route('admin.staffs') }}">
+                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.users.staffs.index')) {{ 'text-violet-500!' }} @endif"
+                                                href="{{ route('admin.users.staffs.index') }}">
                                                 <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Nhân viên</span>
                                             </a>
                                         </li>
                                     @endif
                                     @if (Auth::user()?->hasPermission('quan_ly_khach_hang'))
                                         <li class="mb-1 last:mb-0">
-                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.customers')) {{ 'text-violet-500!' }} @endif"
-                                                href="{{ route('admin.customers') }}">
+                                            <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (Route::is('admin.users.customers.index')) {{ 'text-violet-500!' }} @endif"
+                                                href="{{ route('admin.users.customers.index') }}">
                                                 <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Khách hàng</span>
                                             </a>
                                         </li>
@@ -308,6 +322,7 @@
                     @endif
 					
 					{{-- Chat support --}}
+                    @if (Auth::user()?->hasPermission('ho_tro_khach_hang'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['chat-support'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['chat-support'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="{{ route('admin.chat-support') }}">
@@ -321,8 +336,12 @@
                             </div>
                         </a>
                     </li>
+                    @endif
+
+                    {{-- Booking --}}
 					
 					{{-- Reviews --}}
+                    @if (Auth::user()?->hasPermission('danh_gia'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['reviews'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['reviews'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="{{ route('admin.reviews') }}">
@@ -334,8 +353,11 @@
                             </div>
                         </a>
                     </li>
+                    @endif
+
 					
 					{{-- FAQs --}}
+            @if (Auth::user()?->hasPermission('cau_hoi_thuong_gap'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['faqs'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['faqs'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="{{ route('admin.faqs') }}">
@@ -350,11 +372,17 @@
                             </div>
                         </a>
                     </li>
+            @endif
 
                 </ul>
             </div>
+            @endif
+			
+			
+
 
             {{-- Quản lý phòng && Đặt phòng --}}
+            @if (Auth::user()?->hasPermission('bookings') || Auth::user()?->hasPermission('sua_doi_phong') || Auth::user()?->hasPermission('quan_ly_phong') || Auth::user()?->hasPermission('chinh_sach'))
             <div>
                 <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
                     <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
@@ -363,6 +391,7 @@
                 </h3>
                 <ul class="mt-3">
                     {{-- Bookings --}}
+                    @if (Auth::user()?->hasPermission('bookings'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.bookings*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ request()->routeIs('admin.bookings*') ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!request()->routeIs('admin.bookings*')) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -413,8 +442,10 @@
                             </ul>
                         </div>
                     </li>
-					
+                    @endif
+				
 					{{-- Room Modification --}}
+                    @if (Auth::user()?->hasPermission('sua_doi_phong'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.booking_extensions*') ||
                             request()->routeIs('admin.booking_reschedules*') ||
                             request()->routeIs('admin.booking_cancellations*') ||
@@ -498,8 +529,11 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
+
 					
 					{{-- Room Management --}}
+                    @if (Auth::user()?->hasPermission('quan_ly_phong'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['room-types', 'rooms']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -552,8 +586,10 @@
                             </ul>
                         </div>
                     </li>
-					
+                    @endif
+
 					{{-- Policy --}}
+                    @if (Auth::user()?->hasPermission('chinh_sach'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (request()->routeIs('admin.cancellation-policies*') ||
                             request()->routeIs('admin.deposit-policies*') || request()->routeIs('admin.children-surcharge*') ||
                             request()->routeIs('admin.checkout-policies*')) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
@@ -610,6 +646,30 @@
                                     </a>
                                 </li>
                                 <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.deposit-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.extend-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Gia hạn</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.deposit-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.transfer-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Chuyển phòng</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.deposit-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.reschedule-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Rời lịch</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
+                                    <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.checkout-policies*')) {{ 'text-violet-500!' }} @endif"
+                                        href="{{ route('admin.checkin-policies') }}">
+                                        <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Checkin</span>
+                                    </a>
+                                </li>
+                                <li class="mb-1 last:mb-0">
                                     <a class="block text-gray-500/90 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200 truncate @if (request()->routeIs('admin.checkout-policies*')) {{ 'text-violet-500!' }} @endif"
                                         href="{{ route('admin.checkout-policies') }}">
                                         <span class="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Checkout</span>
@@ -624,11 +684,14 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
 					
                 </ul>
             </div>
+            @endif
 
             {{-- Dịch vụ && Nội dung --}}
+            @if (Auth::user()?->hasPermission('dich_vu') || Auth::user()?->hasPermission('quan_ly_tin_tuc') || Auth::user()?->hasPermission('da_quoc_gia'))
             <div>
                 <h3 class="flex items-center text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
                     <span class="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6" aria-hidden="true">•••</span>
@@ -637,6 +700,7 @@
                 </h3>
                 <ul class="mt-3">
                     {{-- Services --}}
+                    @if (Auth::user()?->hasPermission('dich_vu'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (Request::segment(2) === 'services') {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ Request::segment(2) === 'services' ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (Request::segment(2) !== 'services') {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -697,8 +761,10 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
 
                     {{-- News --}}
+                    @if (Auth::user()?->hasPermission('quan_ly_tin_tuc'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['news'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['news']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['news'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -754,8 +820,10 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
 
                     <!-- Multinational -->
+                    @if (Auth::user()?->hasPermission('da_quoc_gia'))
                     <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['multinational'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['multinational']) ? 1 : 0 }} }">
                         <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['multinational'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
@@ -810,9 +878,10 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
                 </ul>
             </div>
-            
+            @endif
         </div>
 
         <!-- Expand / collapse button -->

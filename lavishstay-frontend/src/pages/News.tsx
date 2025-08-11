@@ -77,7 +77,7 @@ const NewsPage: React.FC = () => {
                 </Content>
 
                 {/* <NewsFooter /> */}
-                <NewsModal />
+                {/* <NewsModal /> */}
             </Layout>
         </>
     );

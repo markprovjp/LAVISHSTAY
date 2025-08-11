@@ -112,6 +112,7 @@ class PaymentController extends Controller
             'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
             'user_id' => $userId,
             'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
+            'option_id' => null, // Sẽ cập nhật sau khi có booking_code
         ]);
         Log::info('Booking created, user_id in booking:', ['user_id' => $booking->user_id, 'booking_id' => $booking->booking_id]);
 
@@ -155,16 +156,21 @@ class PaymentController extends Controller
         $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');
         $booking->booking_code = $bookingCode;
         $booking->save();
+        Log::info('Booking updated with booking_code:', ['booking_code' => $bookingCode, 'booking_id' => $booking->booking_id]);
+
+        // Generate option_id for later use (do NOT set in booking yet)
+        $optionId = 'BOOK-' . $bookingCode;
 
         // 4. Lưu thông tin rooms vào session/cache để xử lý sau khi thanh toán thành công
-        // Thay vì tạo ngay tất cả records, chúng ta lưu data để xử lý sau
+        // Sinh option_id duy nhất cho booking
         $roomsData = [
             'rooms' => $request->input('rooms'),
             'customer_id_card' => $request->input('customer_id_card', ''),
             'payment_method' => $request->input('payment_method'),
-            'nights' => $nights
+            'nights' => $nights,
+            'option_id' => $optionId // Lưu option_id để dùng sau khi thanh toán
         ];
-        
+        Log::info('Rooms data cached with option_id:', ['option_id' => $optionId, 'booking_code' => $bookingCode]);
         // Lưu vào cache với key là booking_code để xử lý sau
         cache()->put("booking_rooms_data_{$bookingCode}", $roomsData, now()->addHours(24));
 
@@ -1292,7 +1298,7 @@ class PaymentController extends Controller
             Log::info("🔧 DEBUG: Testing CPay API", [
                 'booking_code' => $bookingCode,
                 'amount' => $expectedAmount,
-                'app_env' => env('APP_ENV'),
+                'app_env' => env('APP_ENV'), 
                 'cpay_auto_confirm' => env('CPAY_AUTO_CONFIRM'),
                 'cpay_url' => env('CPAY_GOOGLE_SCRIPT_URL')
             ]);
@@ -1367,47 +1373,139 @@ class PaymentController extends Controller
                 'updated_at' => now(),
             ]);
 
+            // Tạo 1 room_option duy nhất cho booking (dùng dữ liệu từ phòng đầu tiên)
+            $optionId = 'BOOK-' . $bookingCode;
+            $firstRoom = $rooms[0];
+            $cancellationPolicyId = $firstRoom['policies']['cancellation']['policy_id'] ?? null;
+            $depositPolicyId = $firstRoom['policies']['deposit']['policy_id'] ?? null;
+            $checkOutPolicyId = $firstRoom['policies']['check_out']['policy_id'] ?? null;
+            
+            // Validate foreign key references - set to null if they don't exist
+            $mealType = $firstRoom['meal_type'] ?? null;
+            $bedType = $firstRoom['bed_type'] ?? null;
+            $packageId = $firstRoom['package_id'] ?? null;
+            
+            // Validate that foreign key IDs actually exist in their respective tables
+            if ($mealType && !DB::table('meal_types')->where('id', $mealType)->exists()) {
+                Log::warning("Invalid meal_type ID: {$mealType}, setting to null");
+                $mealType = null;
+            }
+            
+            if ($bedType && !DB::table('bed_types')->where('id', $bedType)->exists()) {
+                Log::warning("Invalid bed_type ID: {$bedType}, setting to null");
+                $bedType = null;
+            }
+            
+            if ($packageId && !DB::table('room_type_package')->where('package_id', $packageId)->exists()) {
+                Log::warning("Invalid package_id: {$packageId}, setting to null");
+                $packageId = null;
+            }
+            
+            if ($depositPolicyId && !DB::table('deposit_policies')->where('policy_id', $depositPolicyId)->exists()) {
+                Log::warning("Invalid deposit_policy_id: {$depositPolicyId}, setting to null");
+                $depositPolicyId = null;
+            }
+            
+            if ($cancellationPolicyId && !DB::table('cancellation_policies')->where('policy_id', $cancellationPolicyId)->exists()) {
+                Log::warning("Invalid cancellation_policy_id: {$cancellationPolicyId}, setting to null");
+                $cancellationPolicyId = null;
+            }
+            
+            if ($checkOutPolicyId && !DB::table('check_out_policies')->where('policy_id', $checkOutPolicyId)->exists()) {
+                Log::warning("Invalid check_out_policy_id: {$checkOutPolicyId}, setting to null");
+                $checkOutPolicyId = null;
+            }
+            
+            $roomOptionData = [
+                'option_id' => $optionId,
+                'room_id' => NULL,
+                'name' => $firstRoom['option_name'] ?? ('Gói đặt phòng ' . $bookingCode),
+                'price_per_night_vnd' => $this->extractPrice($firstRoom['option_price'] ?? $firstRoom['room_price'] ?? 0),
+                'max_guests' => ($firstRoom['adults'] ?? 1) + ($firstRoom['children'] ?? 0),
+                'min_guests' => $firstRoom['adults'] ?? 1,
+                'urgency_message' => $firstRoom['urgency_message'] ?? null,
+                'most_popular' => $firstRoom['most_popular'] ?? 0,
+                'recommended' => $firstRoom['recommended'] ?? 0,
+                'meal_type' => $mealType,
+                'bed_type' => $bedType,
+                'recommendation_score' => $firstRoom['recommendation_score'] ?? null,
+                'deposit_policy_id' => $depositPolicyId,
+                'cancellation_policy_id' => $cancellationPolicyId,
+                'check_out_policy_id' => $checkOutPolicyId,
+                'package_id' => $packageId,
+                'policy_applied_reason' => 'Áp dụng sau khi thanh toán thành công',
+                'policy_applied_date' => $checkInDate,
+                'policy_snapshot_json' => json_encode($firstRoom['policies'] ?? []),
+                'adjusted_price' => $this->extractPrice($firstRoom['option_price'] ?? $firstRoom['room_price'] ?? 0),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            Log::info("[completeBookingAfterPayment] Insert room_option duy nhất cho booking:", [
+                'booking_code' => $bookingCode,
+                'option_id' => $roomOptionData['option_id'],
+                'meal_type' => $roomOptionData['meal_type'],
+                'bed_type' => $roomOptionData['bed_type'],
+                'package_id' => $roomOptionData['package_id'],
+                'deposit_policy_id' => $roomOptionData['deposit_policy_id'],
+                'cancellation_policy_id' => $roomOptionData['cancellation_policy_id'],
+                'check_out_policy_id' => $roomOptionData['check_out_policy_id'],
+            ]);
+            $roomOptionInserted = false;
+            $finalOptionId = null;
+            
+            try {
+                DB::table('room_option')->insert($roomOptionData);
+                $roomOptionInserted = true;
+                $finalOptionId = $optionId;
+                Log::info("[completeBookingAfterPayment] ĐÃ INSERT room_option thành công:", [
+                    'option_id' => $optionId,
+                    'package_id' => $roomOptionData['package_id'],
+                    'deposit_policy_id' => $roomOptionData['deposit_policy_id'],
+                    'cancellation_policy_id' => $roomOptionData['cancellation_policy_id'],
+                    'check_out_policy_id' => $roomOptionData['check_out_policy_id'],
+                ]);
+            } catch (\Exception $e) {
+                Log::error("[completeBookingAfterPayment] LỖI khi insert room_option:", [
+                    'option_id' => $optionId,
+                    'package_id' => $roomOptionData['package_id'],
+                    'deposit_policy_id' => $roomOptionData['deposit_policy_id'],
+                    'cancellation_policy_id' => $roomOptionData['cancellation_policy_id'],
+                    'check_out_policy_id' => $roomOptionData['check_out_policy_id'],
+                    'error' => $e->getMessage(),
+                    'sql_state' => $e->getCode()
+                ]);
+                // Nếu insert room_option thất bại, sử dụng NULL cho option_id
+                $finalOptionId = null;
+            }
+
+            // Cập nhật option_id vào bảng booking SAU KHI đã insert room_option thành công
+            if ($roomOptionInserted) {
+                try {
+                    $booking->option_id = $optionId;
+                    $booking->save();
+                    Log::info("[completeBookingAfterPayment] ĐÃ UPDATE booking.option_id thành công", [
+                        'booking_id' => $booking->booking_id,
+                        'option_id' => $optionId
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("[completeBookingAfterPayment] LỖI khi update booking.option_id:", [
+                        'booking_id' => $booking->booking_id,
+                        'option_id' => $optionId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
             // Xử lý từng phòng
             foreach ($rooms as $roomIndex => $roomData) {
-                Log::info("Completing room {$roomIndex} for booking {$bookingCode}:", $roomData);
+                Log::info("[completeBookingAfterPayment] Room {$roomIndex} data for booking {$bookingCode}:", $roomData);
 
+                // Không insert room_option trong từng phòng nữa
                 $room = Room::find($roomData['room_id']);
                 if (!$room) {
-                    Log::error("Invalid room ID provided: " . $roomData['room_id']);
+                    Log::error("[completeBookingAfterPayment] Invalid room ID provided: " . $roomData['room_id']);
                     continue; // Skip invalid room instead of throwing exception
                 }
-
-                // Tạo option_id unique
-                $optionId = 'BOOK-' . $bookingCode . '-R' . $roomData['room_id'] . '-' . ($roomIndex + 1);
-
-                // Extract policies safely
-                $cancellationPolicyId = $roomData['policies']['cancellation']['policy_id'] ?? null;
-                $depositPolicyId = $roomData['policies']['deposit']['policy_id'] ?? null;
-                $checkOutPolicyId = $roomData['policies']['check_out']['policy_id'] ?? null;
-
-                // Tạo room_option
-                DB::table('room_option')->insert([
-                    'option_id' => $optionId,
-                    'room_id' => NULL,
-                    'name' => $roomData['option_name'] ?? ('Gói đặt phòng ' . $bookingCode),
-                    'price_per_night_vnd' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
-                    'max_guests' => ($roomData['adults'] ?? 1) + ($roomData['children'] ?? 0),
-                    'min_guests' => $roomData['adults'] ?? 1,
-                    'urgency_message' => $roomData['urgency_message'] ?? null,
-                    'most_popular' => $roomData['most_popular'] ?? 0,
-                    'recommended' => $roomData['recommended'] ?? 0,
-                    'meal_type' => $roomData['meal_type'] ?? null,
-                    'bed_type' => $roomData['bed_type'] ?? null,
-                    'recommendation_score' => $roomData['recommendation_score'] ?? null,
-                    'deposit_policy_id' => $depositPolicyId,
-                    'cancellation_policy_id' => $cancellationPolicyId,
-                    'check_out_policy_id' => $checkOutPolicyId,
-                    'package_id' => $roomData['package_id'] ?? null,
-                    'policy_applied_reason' => 'Áp dụng sau khi thanh toán thành công',
-                    'policy_applied_date' => $checkInDate,
-                    'policy_snapshot_json' => json_encode($roomData['policies'] ?? []),
-                    'adjusted_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
-                ]);
 
                 // Xử lý representative cho room này
                 $representativeId = $mainRepresentativeId;
@@ -1427,12 +1525,14 @@ class PaymentController extends Controller
                     ]);
                 }
 
-                // Tạo booking_room record
-                $bookingRoomId = DB::table('booking_rooms')->insertGetId([
+                // Tạo booking_room record, sử dụng finalOptionId (có thể là NULL nếu room_option insert thất bại)
+                Log::info("[completeBookingAfterPayment] Creating booking_room with finalOptionId: " . ($finalOptionId ?? 'NULL'));
+                
+                $bookingRoomData = [
                     'booking_id' => $booking->booking_id,
                     'booking_code' => $bookingCode,
                     'room_id' => NULL,
-                    'option_id' => $optionId,
+                    'option_id' => $finalOptionId, // Sử dụng finalOptionId thay vì optionId
                     'option_name' => $roomData['option_name'] ?? 'Custom Package',
                     'option_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
                     'representative_id' => $representativeId,
@@ -1446,7 +1546,22 @@ class PaymentController extends Controller
                     'check_out_date' => $checkOutDate,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ];
+                
+                try {
+                    $bookingRoomId = DB::table('booking_rooms')->insertGetId($bookingRoomData);
+                    Log::info("[completeBookingAfterPayment] Successfully created booking_room:", [
+                        'booking_room_id' => $bookingRoomId,
+                        'option_id' => $finalOptionId
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("[completeBookingAfterPayment] Error creating booking_room:", [
+                        'error' => $e->getMessage(),
+                        'booking_room_data' => $bookingRoomData,
+                        'sql_state' => $e->getCode()
+                    ]);
+                    throw $e; // Re-throw để không tiếp tục xử lý room này
+                }
 
                 // Tạo booking_room_children records nếu có
                 if (isset($roomData['children_age']) && is_array($roomData['children_age']) && !empty($roomData['children_age'])) {
