@@ -14,9 +14,13 @@ class News extends Model
 
     protected $fillable = [
         'slug',
+        'title',
+        'summary',
         'content',
+        'tags',
         'thumbnail_id',
         'author_id',
+        'category_id',
         'meta_title',
         'meta_description',
         'meta_keywords',
@@ -25,7 +29,6 @@ class News extends Model
         'views',
         'status',
         'published_at',
-        'category_id',
     ];
 
     /**
@@ -39,6 +42,8 @@ class News extends Model
      * Hoặc sử dụng casts (tùy phiên bản Laravel)
      */
     protected $casts = [
+        'tags' => 'array',
+        'schema_json' => 'array',
         'published_at' => 'datetime',
         'status' => 'boolean',
         'views' => 'integer',
@@ -76,7 +81,67 @@ class News extends Model
         return $this->belongsTo(User::class, 'author_id');
     }
 
-    
+    /**
+     * Quan hệ với bảng NewsComment
+     */
+    public function comments()
+    {
+        return $this->hasMany(NewsComment::class);
+    }
+
+    /**
+     * Quan hệ với bảng NewsUserAction
+     */
+    public function userActions()
+    {
+        return $this->hasMany(NewsUserAction::class);
+    }
+
+    // Scopes
+    public function scopePublished($query)
+    {
+        return $query->where('status', 1)
+                    ->where('published_at', '<=', now());
+    }
+
+    public function scopeByCategory($query, $categoryId)
+    {
+        return $query->where('category_id', $categoryId);
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', '%' . $search . '%')
+              ->orWhere('content', 'like', '%' . $search . '%')
+              ->orWhere('meta_title', 'like', '%' . $search . '%');
+        });
+    }
+
+    // Helper methods
+    public function getLikesCount()
+    {
+        return $this->userActions()->where('is_liked', 1)->count();
+    }
+
+    public function getBookmarksCount()
+    {
+        return $this->userActions()->where('is_bookmarked', 1)->count();
+    }
+
+    public function getAverageRating()
+    {
+        return $this->userActions()->whereNotNull('rating')->avg('rating');
+    }
+
+    public function getUserAction($userId = null)
+    {
+        if (!$userId) {
+            return null;
+        }
+        
+        return $this->userActions()->where('user_id', $userId)->first();
+    }
 
     /**
      * Lấy URL ảnh đại diện
