@@ -225,7 +225,7 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="space-y-6 xl:col-span-2">
 
                 <!-- Statistics -->
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
