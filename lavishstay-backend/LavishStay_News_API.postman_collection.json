@@ -1,0 +1,310 @@
+{
+  "info": {
+    "name": "LavishStay News API",
+    "description": "Complete API collection for testing the news module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8888/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "News Articles",
+      "item": [
+        {
+          "name": "List News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news?per_page=10&search_title=hotel",
+              "host": ["{{base_url}}"],
+              "path": ["news"],
+              "query": [
+                {"key": "per_page", "value": "10"},
+                {"key": "search_title", "value": "hotel"},
+                {"key": "category_id", "value": "1", "disabled": true},
+                {"key": "status", "value": "1", "disabled": true}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news/kham-pha-khong-gian-sang-trong-tai-lavishstay-resort",
+              "host": ["{{base_url}}"],
+              "path": ["news", "kham-pha-khong-gian-sang-trong-tai-lavishstay-resort"]
+            }
+          }
+        },
+        {
+          "name": "Create News",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test News Article\",\n  \"slug\": \"test-news-article\",\n  \"summary\": \"This is a test summary\",\n  \"content\": \"<p>This is the full content of the test article.</p>\",\n  \"tags\": [\"test\", \"sample\"],\n  \"category_id\": 1,\n  \"meta_title\": \"Test News Article - LavishStay\",\n  \"meta_description\": \"Test article description for SEO\",\n  \"status\": 1,\n  \"published_at\": \"2024-12-01 10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/news",
+              "host": ["{{base_url}}"],
+              "path": ["news"]
+            }
+          }
+        },
+        {
+          "name": "Get Popular News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news/popular?limit=5&period=month",
+              "host": ["{{base_url}}"],
+              "path": ["news", "popular"],
+              "query": [
+                {"key": "limit", "value": "5"},
+                {"key": "period", "value": "month"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "News Categories",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-categories?with_news_count=true",
+              "host": ["{{base_url}}"],
+              "path": ["news-categories"],
+              "query": [
+                {"key": "with_news_count", "value": "true"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Category\",\n  \"slug\": \"test-category\",\n  \"description\": \"This is a test category\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/news-categories",
+              "host": ["{{base_url}}"],
+              "path": ["news-categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-categories/1/news?per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["news-categories", "1", "news"],
+              "query": [
+                {"key": "per_page", "value": "10"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "List Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news/1/comments?per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["news", "1", "comments"],
+              "query": [
+                {"key": "per_page", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is a test comment\",\n  \"parent_id\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/news/1/comments",
+              "host": ["{{base_url}}"],
+              "path": ["news", "1", "comments"]
+            }
+          }
+        },
+        {
+          "name": "Create Reply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is a reply to the comment\",\n  \"parent_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/news/1/comments",
+              "host": ["{{base_url}}"],
+              "path": ["news", "1", "comments"]
+            }
+          }
+        },
+        {
+          "name": "Like Comment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news/1/comments/1/like?action=like",
+              "host": ["{{base_url}}"],
+              "path": ["news", "1", "comments", "1", "like"],
+              "query": [
+                {"key": "action", "value": "like"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Actions",
+      "item": [
+        {
+          "name": "Get User Actions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-actions/1",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "1"]
+            }
+          }
+        },
+        {
+          "name": "Like News",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-actions/1/like",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "1", "like"]
+            }
+          }
+        },
+        {
+          "name": "Bookmark News",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-actions/1/bookmark",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "1", "bookmark"]
+            }
+          }
+        },
+        {
+          "name": "Rate News",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/news-actions/1/rate",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "1", "rate"]
+            }
+          }
+        },
+        {
+          "name": "Get Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-actions/1/stats",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "1", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Liked News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-actions/user/liked?per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "user", "liked"],
+              "query": [
+                {"key": "per_page", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Bookmarked News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/news-actions/user/bookmarked?per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["news-actions", "user", "bookmarked"],
+              "query": [
+                {"key": "per_page", "value": "10"}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

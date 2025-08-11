@@ -28,8 +28,8 @@ use App\Http\Controllers\Api\BookingCheckoutController;
 use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
+use App\Http\Controllers\Api\NewsCommentController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -332,8 +332,57 @@ Route::get('/test-complete/{bookingCode}', [PaymentController::class, 'testCompl
 
 
 
-// News API
-Route::get('/news/categories', [NewsApiController::class, 'getCategories']);
+// News API Routes
+Route::prefix('news')->name('news.')->group(function () {
+    // Public routes
+    Route::get('/', [NewsController::class, 'index'])->name('index');
+    Route::get('/popular', [NewsController::class, 'getPopular'])->name('popular');
+    Route::get('/search-by-tags', [NewsController::class, 'searchByTags'])->name('search-tags');
+    Route::get('/{slug}', [NewsController::class, 'show'])->name('show');
+    Route::get('/{slug}/related', [NewsController::class, 'getRelated'])->name('related');
+    
+    // Admin routes (with authentication if needed)
+    Route::post('/', [NewsController::class, 'store'])->name('store');
+    Route::put('/{id}', [NewsController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsController::class, 'destroy'])->name('destroy');
+});
+
+// News Categories API Routes  
+Route::prefix('news-categories')->name('news-categories.')->group(function () {
+    Route::get('/', [NewsCategoryController::class, 'index'])->name('index');
+    Route::post('/', [NewsCategoryController::class, 'store'])->name('store');
+    Route::get('/{id}', [NewsCategoryController::class, 'show'])->name('show');
+    Route::put('/{id}', [NewsCategoryController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsCategoryController::class, 'destroy'])->name('destroy');
+    Route::get('/{id}/news', [NewsCategoryController::class, 'getNews'])->name('news');
+});
+
+// News Comments API Routes
+Route::prefix('news/{newsId}/comments')->name('news.comments.')->group(function () {
+    Route::get('/', [NewsCommentController::class, 'index'])->name('index');
+    Route::post('/', [NewsCommentController::class, 'store'])->name('store');
+    Route::get('/{id}', [NewsCommentController::class, 'show'])->name('show');
+    Route::put('/{id}', [NewsCommentController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsCommentController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/like', [NewsCommentController::class, 'toggleLike'])->name('like');
+    Route::get('/{id}/replies', [NewsCommentController::class, 'getReplies'])->name('replies');
+});
+
+// News User Actions API Routes
+Route::prefix('news-actions')->name('news.actions.')->group(function () {
+    Route::get('/{newsId}', [NewsUserActionController::class, 'show'])->name('show');
+    Route::post('/{newsId}/like', [NewsUserActionController::class, 'toggleLike'])->name('like');
+    Route::post('/{newsId}/bookmark', [NewsUserActionController::class, 'toggleBookmark'])->name('bookmark');
+    Route::post('/{newsId}/rate', [NewsUserActionController::class, 'rate'])->name('rate');
+    Route::delete('/{newsId}/rate', [NewsUserActionController::class, 'removeRating'])->name('remove-rate');
+    Route::get('/{newsId}/stats', [NewsUserActionController::class, 'getStats'])->name('stats');
+    
+    // User's personal lists
+    Route::get('/user/liked', [NewsUserActionController::class, 'getLikedNews'])->name('user.liked');
+    Route::get('/user/bookmarked', [NewsUserActionController::class, 'getBookmarkedNews'])->name('user.bookmarked');
+});
+
+// Legacy routes (keep for compatibility)
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
 Route::get('/news/categories', [NewsCategoryController::class, 'index']);
