@@ -755,17 +755,6 @@
                                 </svg>
                                 Xem danh sách phòng
                             </button>
-                            <button onclick="duplicateRoomType({{ $roomType->room_type_id }})"
-                                class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
-                                    width="24" height="24">
-                                    <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"></path>
-                                    <path
-                                        d="M3 5a2 2 0 012-2 3 3 0 003 3h6a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11.586l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L11.586 11H15z">
-                                    </path>
-                                </svg>
-                                Sao chép loại phòng
-                            </button>
                         </div>
                     </div>
                 </div>
