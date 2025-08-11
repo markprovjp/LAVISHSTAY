@@ -45,42 +45,42 @@ const ProfileLayout: React.FC = React.memo(() => {
             label: 'Lịch sử đặt phòng',
             onClick: () => handleMenuClick('/profile/bookings'),
         },
-        {
-            key: '/profile/wishlist',
-            icon: <HeartOutlined />,
-            label: 'Danh sách yêu thích',
-            onClick: () => handleMenuClick('/profile/wishlist'),
-        },
-        {
-            type: 'divider' as const,
-        },
-        {
-            key: '/profile/change-password',
-            icon: <KeyOutlined />,
-            label: 'Đổi mật khẩu',
-            onClick: () => handleMenuClick('/profile/change-password'),
-        },
-        {
-            key: '/profile/forgot-password',
-            icon: <LockOutlined />,
-            label: 'Quên mật khẩu',
-            onClick: () => handleMenuClick('/profile/forgot-password'),
-        },
-        {
-            type: 'divider' as const,
-        },
-        {
-            key: '/profile/notifications',
-            icon: <BellOutlined />,
-            label: 'Thông báo',
-            onClick: () => handleMenuClick('/profile/notifications'),
-        },
-        {
-            key: '/profile/settings',
-            icon: <SettingOutlined />,
-            label: 'Cài đặt',
-            onClick: () => handleMenuClick('/profile/settings'),
-        },
+        // {
+        //     key: '/profile/wishlist',
+        //     icon: <HeartOutlined />,
+        //     label: 'Danh sách yêu thích',
+        //     onClick: () => handleMenuClick('/profile/wishlist'),
+        // },
+        // {
+        //     type: 'divider' as const,
+        // },
+        // {
+        //     key: '/profile/change-password',
+        //     icon: <KeyOutlined />,
+        //     label: 'Đổi mật khẩu',
+        //     onClick: () => handleMenuClick('/profile/change-password'),
+        // },
+        // {
+        //     key: '/profile/forgot-password',
+        //     icon: <LockOutlined />,
+        //     label: 'Quên mật khẩu',
+        //     onClick: () => handleMenuClick('/profile/forgot-password'),
+        // },
+        // {
+        //     type: 'divider' as const,
+        // },
+        // {
+        //     key: '/profile/notifications',
+        //     icon: <BellOutlined />,
+        //     label: 'Thông báo',
+        //     onClick: () => handleMenuClick('/profile/notifications'),
+        // },
+        // {
+        //     key: '/profile/settings',
+        //     icon: <SettingOutlined />,
+        //     label: 'Cài đặt',
+        //     onClick: () => handleMenuClick('/profile/settings'),
+        // },
     ], [handleMenuClick]);
 
     const logoutMenuItem = useMemo(() => [{

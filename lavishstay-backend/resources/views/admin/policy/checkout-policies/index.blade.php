@@ -6,8 +6,8 @@
 
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chính sách trả phòng</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý các chính sách trả phòng cho đặt phòng</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Chính sách check-out</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý các chính sách check-out cho đặt phòng</p>
             </div>
 
             <!-- Right: Actions -->
@@ -46,13 +46,13 @@
                 <!-- Sort -->
                 <div>
                     <select name="sort_by" class=" border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                        <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Ngày tạo
-                        </option>
+                        <option value="priority" {{ request('sort_by') === 'priority' ? 'selected' : '' }}>Mức độ ưu tiên</option>
+                        <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Ngày tạo</option>
                         <option value="name" {{ request('sort_by') === 'name' ? 'selected' : '' }}>Tên</option>
-                        <option value="early_check_out_fee_vnd"
-                            {{ request('sort_by') === 'early_check_out_fee_vnd' ? 'selected' : '' }}>Phí trả sớm</option>
+                        <option value="standard_check_out_time"
+                            {{ request('sort_by') === 'standard_check_out_time' ? 'selected' : '' }}>Giờ check-out tiêu chuẩn</option>
                         <option value="late_check_out_fee_vnd"
-                            {{ request('sort_by') === 'late_check_out_fee_vnd' ? 'selected' : '' }}>Phí trả muộn</option>
+                            {{ request('sort_by') === 'late_check_out_fee_vnd' ? 'selected' : '' }}>Phí check-out muộn</option>
                     </select>
                 </div>
 
@@ -84,6 +84,7 @@
                 @endif
             </form>
         </div>
+
         @if (session('success'))
         <div id="notification" class="transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md">
             <div class="flex items-center justify-center w-8 h-8 text-green-500">
@@ -102,6 +103,7 @@
             </button>
         </div>
         @endif
+
         <!-- Table -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl relative">
             <div class="">
@@ -112,10 +114,10 @@
                         <tr>
                             <th class="px-6 py-4 text-left">ID</th>
                             <th class="px-6 py-4 text-left">Tên chính sách</th>
-                            <th class="px-6 py-4 text-left">Phí trả sớm</th>
-                            <th class="px-6 py-4 text-left">Phí trả muộn</th>
-                            <th class="px-6 py-4 text-left">Giờ tối đa sớm</th>
-                            <th class="px-6 py-4 text-left">Giờ tối đa muộn</th>
+                            <th class="px-6 py-4 text-left">Giờ check-out tiêu chuẩn</th>
+                            <th class="px-6 py-4 text-left">Phí check-out muộn</th>
+                            <th class="px-6 py-4 text-left">Mức độ ưu tiên</th>
+                            <th class="px-6 py-4 text-left">Điều kiện</th>
                             <th class="px-6 py-4 text-left">Trạng thái</th>
                             <th class="px-6 py-4 text-left">Ngày tạo</th>
                             <th class="px-6 py-4 text-center">Thao tác</th>
@@ -139,16 +141,20 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ $policy->early_check_out_fee_vnd ? number_format($policy->early_check_out_fee_vnd, 0, ',', '.') . ' VND' : '-' }}
+                                    {{ $policy->standard_check_out_time ? \Carbon\Carbon::parse($policy->standard_check_out_time)->format('H:i') : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                     {{ $policy->late_check_out_fee_vnd ? number_format($policy->late_check_out_fee_vnd, 0, ',', '.') . ' VND' : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ $policy->early_check_out_max_hours ?? '-' }}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $policy->priority > 5 ? 'bg-red-100 text-red-800' : ($policy->priority > 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
+                                        {{ $policy->priority }}
+                                    </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                    {{ $policy->late_check_out_max_hours ?? '-' }}
+                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                    <div class="max-w-xs">
+                                        {{ $policy->conditions ? Str::limit($policy->conditions, 50) : '-' }}
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <button onclick="toggleStatus({{ $policy->policy_id }})"
@@ -211,7 +217,7 @@
 
                             <!-- Hidden row for policy details -->
                             <tr id="details-{{ $policy->policy_id }}" class="hidden bg-gray-50 dark:bg-gray-900/50">
-                                <td colspan="8" class="px-6 py-4">
+                                <td colspan="9" class="px-6 py-4">
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <!-- Policy Information -->
                                         <div>
@@ -233,41 +239,49 @@
                                                             {{ $policy->description }}</div>
                                                     </div>
                                                 @endif
+                                                <div>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Giờ check-out tiêu chuẩn:</span>
+                                                    <div class="text-sm text-gray-900 dark:text-gray-100">
+                                                        {{ $policy->standard_check_out_time ? \Carbon\Carbon::parse($policy->standard_check_out_time)->format('H:i') : 'Chưa thiết lập' }}</div>
+                                                </div>
+                                                <div>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Mức độ ưu tiên:</span>
+                                                    <div class="text-sm text-gray-900 dark:text-gray-100">
+                                                        {{ $policy->priority }}</div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <!-- Fee Information -->
+                                        <!-- Check-out Information -->
                                         <div>
-                                            <h4 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Thông tin phí
+                                            <h4 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Thông tin check-out
                                             </h4>
                                             <div class="space-y-2">
-                                                @if ($policy->early_check_out_fee_vnd)
-                                                    <div>
-                                                        <span
-                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Phí
-                                                            trả sớm:</span>
-                                                        <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                            {{ number_format($policy->early_check_out_fee_vnd, 0, ',', '.') }}
-                                                            VND</div>
-                                                    </div>
-                                                @endif
                                                 @if ($policy->late_check_out_fee_vnd)
                                                     <div>
                                                         <span
-                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Phí
-                                                            trả muộn:</span>
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Phí check-out muộn:</span>
                                                         <div class="text-sm text-gray-900 dark:text-gray-100">
                                                             {{ number_format($policy->late_check_out_fee_vnd, 0, ',', '.') }}
                                                             VND</div>
                                                     </div>
                                                 @endif
-                                                @if ($policy->late_check_out_max_hours)
+                                                @if ($policy->conditions)
                                                     <div>
                                                         <span
-                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Giờ
-                                                            tối đa muộn:</span>
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Điều kiện áp dụng:</span>
                                                         <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                            {{ $policy->late_check_out_max_hours }}</div>
+                                                            {{ $policy->conditions }}</div>
+                                                    </div>
+                                                @endif
+                                                @if ($policy->action)
+                                                    <div>
+                                                        <span
+                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Hành động:</span>
+                                                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                                                            {{ $policy->action }}</div>
                                                     </div>
                                                 @endif
                                             </div>
@@ -319,8 +333,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                                    Chưa có chính sách trả phòng nào được tạo.
+                                <td colspan="9" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                    Chưa có chính sách check-out nào được tạo.
                                 </td>
                             </tr>
                         @endforelse
@@ -330,14 +344,15 @@
 
             <!-- Pagination -->
             <div class="mt-4">
-                {{-- {{ $policies->links() }} --}}
+                {{ $policies->links() }}
             </div>
         </div>
     </div>
+
     <script>
         // Animation khi hiển thị
-        document.getElementById('notification').classList.add('translate-y-0', 'opacity-100');
-        document.getElementById('notification').classList.remove('-translate-y-full', 'opacity-0');
+        document.getElementById('notification')?.classList.add('translate-y-0', 'opacity-100');
+        document.getElementById('notification')?.classList.remove('-translate-y-full', 'opacity-0');
 
         // Tự động ẩn sau 5 giây
         setTimeout(() => {
@@ -346,18 +361,14 @@
 
         function closeNotification() {
             const notification = document.getElementById('notification');
-            notification.classList.add('opacity-0', 'scale-95');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
+            if (notification) {
+                notification.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }
         }
-    </script>
-    <script>
-        // Toggle Policy details
-        function showPolicyDetails(policyId) {
-            const detailsRow = document.getElementById(`details-${policyId}`);
-            detailsRow.classList.toggle('hidden');
-        }
+
         // Toggle dropdown menu
         function toggleDropdown(policyId) {
             const dropdown = document.getElementById(`dropdown-menu-${policyId}`);
@@ -407,6 +418,7 @@
                 });
             }
         });
+
         // Toggle status function
         function toggleStatus(policyId) {
             if (confirm('Bạn có chắc chắn muốn thay đổi trạng thái của chính sách này?')) {

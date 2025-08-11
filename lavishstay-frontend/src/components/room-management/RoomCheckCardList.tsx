@@ -17,6 +17,9 @@ import {
 import { statusOptions } from '../../constants/roomStatus';
 import dayjs from 'dayjs';
 
+// Import the new RoomCardGrid component
+import RoomCardGrid, { type RoomInfo } from './RoomCardGrid';
+
 const { Text, Title } = Typography;
 
 const RoomCheckCardList = ({ rooms, loading, selectedRooms, onRoomSelect, onViewDetails }) => {

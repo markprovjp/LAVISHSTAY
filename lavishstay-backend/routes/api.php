@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReceptionController;
+use App\Http\Controllers\Api\ChartReceptionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TranslationController;
@@ -22,11 +23,13 @@ use App\Http\Controllers\Api\NewsApiController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\BookingCancellationController;
+use App\Http\Controllers\Api\BookingCheckinController;
+use App\Http\Controllers\Api\BookingCheckoutController;
 use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
+use App\Http\Controllers\Api\NewsCommentController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -82,7 +85,7 @@ Route::get('/rooms/debug-images-amenities', [RoomAvailabilityController::class, 
 Route::get('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 Route::post('/room-packages/search', [RoomAvailabilityController::class, 'getAvailablePackages']);
 
-
+Route::get('/room-type-packages/by-room-type/{room_type_id}', [App\Http\Controllers\RoomTypePackageController::class, 'getPackagesByRoomType']);
 
 
 // Room Requests API
@@ -107,6 +110,31 @@ Route::get('/bookings/{bookingId}/transfer', [BookingTransferController::class, 
 Route::post('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'rescheduleBooking']);
 Route::get('/bookings/{bookingId}/reschedule', [BookingRescheduleController::class, 'getRescheduleBookingInfo']);
 
+
+
+
+// API Routes cho Check-in///////////////////////////////////////////////////
+Route::prefix('checkin')->group(function () {
+    Route::get('/today', [BookingCheckinController::class, 'getTodayCheckins'])->name('api.checkin.today');
+    Route::get('/booking/{bookingId}/info', [BookingCheckinController::class, 'getCheckinInfo'])->name('api.checkin.info');
+    Route::post('/booking/{bookingId}/process', [BookingCheckinController::class, 'processCheckin'])->name('api.checkin.process');
+});
+
+
+// API Routes cho Check-in///////////////////////////////////////////////////
+// Service management
+Route::get('/services/available', [BookingCheckoutController::class, 'getAvailableServices']);
+Route::post('/bookings/{id}/services', [BookingCheckoutController::class, 'addBookingService']);
+Route::put('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'updateBookingService']);
+Route::delete('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'removeBookingService']);
+
+// Checkout
+Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
+Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
+
+
+
+
 // Rooms API  
 Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
 
@@ -127,9 +155,13 @@ Route::get('/reviews/room-type/{id}', [ReviewController::class, 'apiRoomTypeDeta
 
 
 
+// Route to get room options/packages by room_id or room_type_id
+Route::get('/room-options', [RoomOptionController::class, 'getRoomOptions']);
 Route::apiResource('room-options', RoomOptionController::class);
 Route::post('bookings', [BookingController::class, 'store']);
 Route::put('bookings/{id}/cancel', [BookingController::class, 'cancel']);
+Route::post('bookings/{id}/check-in', [BookingController::class, 'checkIn']);
+Route::post('bookings/{id}/check-out', [BookingController::class, 'checkOut']);
 
 // Payment Management Routes
 Route::prefix('payment')->group(function () {
@@ -240,6 +272,17 @@ Route::prefix('reception')->group(function () {
     Route::get('/floors', [ReceptionController::class, 'getFloors']);
     Route::get('/room-types', [ReceptionController::class, 'getRoomTypes']);
     
+    // Chart & Dashboard APIs
+    Route::prefix('chart')->group(function () {
+        Route::get('/revenue-by-month', [ChartReceptionController::class, 'getRevenueByMonth']);
+        Route::get('/revenue-by-category', [ChartReceptionController::class, 'getRevenueByCategory']);
+        Route::get('/activity-rate', [ChartReceptionController::class, 'getActivityRate']);
+        Route::get('/today-schedule', [ChartReceptionController::class, 'getTodaySchedule']);
+        Route::get('/notifications', [ChartReceptionController::class, 'getNotifications']);
+        Route::get('/top-booked-services', [ChartReceptionController::class, 'getTopBookedServices']);
+        Route::get('/dashboard-stats', [ChartReceptionController::class, 'getDashboardStats']);
+    });
+    
     // Legacy booking routes (keep for compatibility)
     Route::post('/book', [\App\Http\Controllers\Api\ReceptionBookController::class, 'create']);
     Route::get('/booking/{booking_id}', [\App\Http\Controllers\Api\ReceptionBookController::class, 'detail']);
@@ -289,8 +332,57 @@ Route::get('/test-complete/{bookingCode}', [PaymentController::class, 'testCompl
 
 
 
-// News API
-Route::get('/news/categories', [NewsApiController::class, 'getCategories']);
+// News API Routes
+Route::prefix('news')->name('news.')->group(function () {
+    // Public routes
+    Route::get('/', [NewsController::class, 'index'])->name('index');
+    Route::get('/popular', [NewsController::class, 'getPopular'])->name('popular');
+    Route::get('/search-by-tags', [NewsController::class, 'searchByTags'])->name('search-tags');
+    Route::get('/{slug}', [NewsController::class, 'show'])->name('show');
+    Route::get('/{slug}/related', [NewsController::class, 'getRelated'])->name('related');
+    
+    // Admin routes (with authentication if needed)
+    Route::post('/', [NewsController::class, 'store'])->name('store');
+    Route::put('/{id}', [NewsController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsController::class, 'destroy'])->name('destroy');
+});
+
+// News Categories API Routes  
+Route::prefix('news-categories')->name('news-categories.')->group(function () {
+    Route::get('/', [NewsCategoryController::class, 'index'])->name('index');
+    Route::post('/', [NewsCategoryController::class, 'store'])->name('store');
+    Route::get('/{id}', [NewsCategoryController::class, 'show'])->name('show');
+    Route::put('/{id}', [NewsCategoryController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsCategoryController::class, 'destroy'])->name('destroy');
+    Route::get('/{id}/news', [NewsCategoryController::class, 'getNews'])->name('news');
+});
+
+// News Comments API Routes
+Route::prefix('news/{newsId}/comments')->name('news.comments.')->group(function () {
+    Route::get('/', [NewsCommentController::class, 'index'])->name('index');
+    Route::post('/', [NewsCommentController::class, 'store'])->name('store');
+    Route::get('/{id}', [NewsCommentController::class, 'show'])->name('show');
+    Route::put('/{id}', [NewsCommentController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsCommentController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/like', [NewsCommentController::class, 'toggleLike'])->name('like');
+    Route::get('/{id}/replies', [NewsCommentController::class, 'getReplies'])->name('replies');
+});
+
+// News User Actions API Routes
+Route::prefix('news-actions')->name('news.actions.')->group(function () {
+    Route::get('/{newsId}', [NewsUserActionController::class, 'show'])->name('show');
+    Route::post('/{newsId}/like', [NewsUserActionController::class, 'toggleLike'])->name('like');
+    Route::post('/{newsId}/bookmark', [NewsUserActionController::class, 'toggleBookmark'])->name('bookmark');
+    Route::post('/{newsId}/rate', [NewsUserActionController::class, 'rate'])->name('rate');
+    Route::delete('/{newsId}/rate', [NewsUserActionController::class, 'removeRating'])->name('remove-rate');
+    Route::get('/{newsId}/stats', [NewsUserActionController::class, 'getStats'])->name('stats');
+    
+    // User's personal lists
+    Route::get('/user/liked', [NewsUserActionController::class, 'getLikedNews'])->name('user.liked');
+    Route::get('/user/bookmarked', [NewsUserActionController::class, 'getBookmarkedNews'])->name('user.bookmarked');
+});
+
+// Legacy routes (keep for compatibility)
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
 Route::get('/news/categories', [NewsCategoryController::class, 'index']);

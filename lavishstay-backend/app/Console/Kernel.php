@@ -11,6 +11,7 @@ class Kernel extends ConsoleKernel
         Commands\SyncOccupancyData::class,
         Commands\ClearPricingCache::class,
         Commands\CleanupPendingBookings::class,
+        Commands\AutoBookingCleanup::class,
     ];
 
     protected function schedule(Schedule $schedule)
@@ -29,6 +30,8 @@ class Kernel extends ConsoleKernel
                  ->everyFiveMinutes()
                  ->withoutOverlapping();
         $schedule->command('room-occupancy:daily-update')->daily();
+        // Auto cleanup booking: xoá pending quá 15 phút, chuyển completed khi qua ngày checkout
+        $schedule->command('booking:auto-cleanup')->everyMinute();
     }
 
     protected function commands()

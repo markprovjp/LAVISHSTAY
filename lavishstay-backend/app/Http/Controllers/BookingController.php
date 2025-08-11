@@ -128,7 +128,75 @@ class BookingController extends Controller {
 
         return view('admin.bookings.index', compact('bookings', 'statistics'));
     }
+ /**
+     * Check-in booking: chuyển trạng thái sang Operational
+     */
+    public function checkIn(Request $request, $id)
+    {
+        $booking = \DB::table('booking')->where('booking_id', $id)->first();
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking không tồn tại'
+            ], 404);
+        }
+        if ($booking->status !== 'Confirmed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể check-in booking đã thanh toán (Confirmed)'
+            ], 400);
+        }
+        try {
+            \DB::table('booking')->where('booking_id', $id)->update([
+                'status' => 'Operational',
+                'updated_at' => now()
+            ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-in thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi check-in: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
+    /**
+     * Check-out booking: chuyển trạng thái sang Completed
+     */
+    public function checkOut(Request $request, $id)
+    {
+        $booking = \DB::table('booking')->where('booking_id', $id)->first();
+        if (!$booking) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking không tồn tại'
+            ], 404);
+        }
+        if ($booking->status !== 'Operational') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể check-out booking đang hoạt động (Operational)'
+            ], 400);
+        }
+        try {
+            \DB::table('booking')->where('booking_id', $id)->update([
+                'status' => 'Completed',
+                'updated_at' => now()
+            ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-out thành công'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi check-out: ' . $e->getMessage()
+            ], 500);
+        }
+    }
     // Route: GET /api/user/bookings
     public function getUserBookings(Request $request)
     {
@@ -159,7 +227,6 @@ class BookingController extends Controller {
                 'b.guest_name',
                 'b.guest_email',
                 'b.guest_phone',
-                // Always get room_type name, fallback to booking.room_type_id
                 DB::raw('COALESCE(rt.name, rt2.name) as room_type'),
                 'r.name as room_name',
                 'r.image as room_image',
@@ -182,14 +249,12 @@ class BookingController extends Controller {
                 'p.status as payment_status',
                 'p.payment_type',
                 'p.transaction_id',
-                // Subquery: all images for room_type as JSON array (fix: use COALESCE to support bookings chưa gán room)
                 DB::raw('(SELECT JSON_ARRAYAGG(JSON_OBJECT(
                     "image_id", rti.image_id,
                     "image_path", rti.image_path,
                     "alt_text", rti.alt_text,
                     "is_main", rti.is_main
                 )) FROM room_type_image rti WHERE rti.room_type_id = COALESCE(rt.room_type_id, b.room_type_id)) as room_type_images'),
-                // Subquery: all amenities for room_type as JSON array
                 DB::raw('(SELECT JSON_ARRAYAGG(JSON_OBJECT(
                     "amenity_id", a.amenity_id,
                     "name", a.name,
@@ -205,13 +270,22 @@ class BookingController extends Controller {
             ->orderBy('b.created_at', 'desc')
             ->get();
 
-        // Parse images JSON for each booking and prepend backend URL to image_path
+        // Lấy booking_rooms cho từng booking_id
+        $bookingIds = $bookings->pluck('booking_id')->unique()->toArray();
+        // Join booking_rooms with room to get room name
+        $bookingRoomsRaw = DB::table('booking_rooms as br')
+            ->leftJoin('room as r', 'br.room_id', '=', 'r.room_id')
+            ->select('br.*', 'r.name as room_name')
+            ->whereIn('br.booking_id', $bookingIds)
+            ->get();
+        $bookingRooms = $bookingRoomsRaw->groupBy('booking_id');
+
+        // Parse images JSON cho từng booking và prepend backend URL cho image_path
         foreach ($bookings as $booking) {
             $booking->room_type_images = $booking->room_type_images ? json_decode($booking->room_type_images) : [];
             if (is_array($booking->room_type_images)) {
                 foreach ($booking->room_type_images as $img) {
                     if (!empty($img->image_path)) {
-                        // Only prepend if not already absolute
                         if (!preg_match('/^https?:\/\//', $img->image_path)) {
                             $img->image_path = 'http://localhost:8888/' . ltrim($img->image_path, '/');
                         }
@@ -219,12 +293,32 @@ class BookingController extends Controller {
                 }
             }
             $booking->room_type_amenities = $booking->room_type_amenities ? json_decode($booking->room_type_amenities) : [];
+            // Gán booking_rooms cho từng booking, mỗi room có thêm room_name
+            $booking->booking_rooms = isset($bookingRooms[$booking->booking_id]) ? $bookingRooms[$booking->booking_id]->values()->toArray() : [];
         }
+
+        // Lấy toàn bộ phòng (room) join với room_types
+        $allRooms = DB::table('room as r')
+            ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+            ->select([
+                'r.room_id',
+                'r.name',
+                'r.room_type_id',
+                'rt.name as room_type_name',
+                'r.status',
+                'r.image',
+                'r.floor_id',
+                'r.description',
+                'r.bed_type_fixed',
+                'r.created_at',
+                'r.updated_at'
+            ])->get();
 
         Log::info("User bookings fetched " . json_encode($bookings) . " for user ID: " . $userId);
         return response()->json([
             'success' => true,
-            'bookings' => $bookings
+            'bookings' => $bookings,
+            'all_rooms' => $allRooms
         ]);
     }
 
