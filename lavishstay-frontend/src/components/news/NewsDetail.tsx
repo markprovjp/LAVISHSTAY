@@ -13,25 +13,36 @@ import {
     Row,
     Col,
     Breadcrumb,
-    BackTop
+    BackTop,
+    Rate,
+    Image,
+    message
 } from 'antd';
 import {
     ArrowLeftOutlined,
     EyeOutlined,
-    LikeOutlined,
-    BookOutlined,
-    ShareAltOutlined,
     CalendarOutlined,
     UserOutlined,
-    StarOutlined
+    StarOutlined,
+    MessageOutlined
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useNewsDetail, useToggleLike, useToggleBookmark, useRateNews } from '../../hooks/useNews';
+import { useNewsDetail, useRateNews } from '../../hooks/useNews';
 import CommentList from './CommentList';
 import CommentForm from './CommentForm';
-import { formatTimeAgo } from '../../utils/timeHelpers';
+import NewsLikeButton from './NewsLikeButton';
+import NewsBookmarkButton from './NewsBookmarkButton';
+import NewsShareButton from './NewsShareButton';
+import { normalizeNewsDetailResponse } from '../../utils/normalizeNewsData';
+import { Helmet } from 'react-helmet-async';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/vi';
+
+dayjs.extend(relativeTime);
+dayjs.locale('vi');
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -41,53 +52,55 @@ const NewsDetail: React.FC = () => {
     const navigate = useNavigate();
 
     const [showComments, setShowComments] = useState(true);
+    const [currentRating, setCurrentRating] = useState<number>(0);
 
-    // API queries
+    // API queries với chuẩn hóa dữ liệu
     const {
-        data: news,
+        data: newsRaw,
         isLoading,
         error,
         refetch
     } = useNewsDetail(slug!);
 
-    const toggleLikeMutation = useToggleLike();
-    const toggleBookmarkMutation = useToggleBookmark();
+    // Chuẩn hóa dữ liệu API thành format an toàn
+    const normalizedResponse = normalizeNewsDetailResponse(newsRaw);
+    const news = normalizedResponse.data;
+
+    // DEBUG: Log để kiểm tra data
+    console.log('NewsDetail Debug:', {
+        newsRaw: newsRaw,
+        normalizedResponse: normalizedResponse,
+        news: news,
+        formattedTags: news?.formattedTags,
+        isFormattedTagsArray: Array.isArray(news?.formattedTags)
+    });
+
+    // Mutations để tương tác với news (chỉ dùng rate)
     const rateNewsMutation = useRateNews();
 
-    // Handle actions
-    const handleLike = () => {
-        if (news) {
-            toggleLikeMutation.mutate(news.data.id);
+    // Cập nhật rating khi có dữ liệu
+    React.useEffect(() => {
+        if (news?.user_rating) {
+            setCurrentRating(news.user_rating);
         }
-    };
+    }, [news?.user_rating]);
 
-    const handleBookmark = () => {
-        if (news) {
-            toggleBookmarkMutation.mutate(news.data.id);
-        }
-    };
-
+    // Xử lý đánh giá
     const handleRate = (rating: number) => {
-        if (news) {
-            rateNewsMutation.mutate({ newsId: news.data.id, rating });
-        }
-    };
-
-    const handleShare = async () => {
-        if (news && navigator.share) {
-            try {
-                await navigator.share({
-                    title: news.data.title,
-                    text: news.data.summary,
-                    url: window.location.href
-                });
-            } catch (error) {
-                // Fallback to copy to clipboard
-                navigator.clipboard.writeText(window.location.href);
-            }
-        } else {
-            // Fallback to copy to clipboard
-            navigator.clipboard.writeText(window.location.href);
+        if (news && news.id > 0) {
+            setCurrentRating(rating);
+            rateNewsMutation.mutate(
+                { newsId: news.id, rating },
+                {
+                    onSuccess: () => {
+                        message.success('Đánh giá thành công!');
+                    },
+                    onError: () => {
+                        setCurrentRating(news.user_rating || 0);
+                        message.error('Không thể đánh giá bài viết');
+                    }
+                }
+            );
         }
     };
 
@@ -98,16 +111,16 @@ const NewsDetail: React.FC = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center py-20">
+            <div className="flex justify-center items-center min-h-screen">
                 <Spin size="large" tip={t('news.loading', 'Đang tải tin tức...')} />
             </div>
         );
     }
 
     // Error state
-    if (error || !news) {
+    if (error || !news || news.id === 0) {
         return (
-            <div className="py-8">
+            <div className="max-w-4xl mx-auto p-4">
                 <Alert
                     message={t('news.error.notFound', 'Không tìm thấy bài viết')}
                     description={t('news.error.notFoundDesc', 'Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.')}
@@ -129,196 +142,345 @@ const NewsDetail: React.FC = () => {
     }
 
     return (
-        <div className="news-detail max-w-4xl mx-auto p-4">
-            <BackTop />
+        <>
+            {/* SEO Meta Tags */}
+            <Helmet>
+                <title>{news.title} - LavishStay</title>
+                <meta name="description" content={news.summary} />
+                <meta name="keywords" content={news.formattedTags.join(', ')} />
+                <meta property="og:title" content={news.title} />
+                <meta property="og:description" content={news.summary} />
+                <meta property="og:image" content={news.imageUrl} />
+                <meta property="og:type" content="article" />
+                <meta property="og:url" content={window.location.href} />
+                <meta property="article:published_time" content={news.published_at} />
+                <meta property="article:author" content={news.authorName} />
+                <meta property="article:section" content={news.categoryName} />
+                {Array.isArray(news.formattedTags) && news.formattedTags.map((tag, index) => (
+                    <meta key={index} property="article:tag" content={tag} />
+                ))}
+            </Helmet>
 
-            {/* Breadcrumb */}
-            <Breadcrumb className="mb-4">
-                <Breadcrumb.Item>
-                    <Button type="link" onClick={handleBack} icon={<ArrowLeftOutlined />}>
-                        {t('news.title', 'Tin tức')}
-                    </Button>
-                </Breadcrumb.Item>
-                <Breadcrumb.Item>{news.data.category?.name}</Breadcrumb.Item>
-                <Breadcrumb.Item className="font-medium">{news.data.title}</Breadcrumb.Item>
-            </Breadcrumb>
+            <div className="news-detail max-w-6xl mx-auto px-4 py-6">
+                <BackTop />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                <Card className="shadow-lg">
-                    {/* Header */}
-                    <div className="mb-6">
-                        <Title level={1} className="mb-4 text-2xl md:text-3xl">
-                            {news.data.title}
-                        </Title>
+                {/* Breadcrumb Navigation */}
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <Breadcrumb className="mb-6">
+                        <Breadcrumb.Item>
+                            <Button
+                                type="link"
+                                onClick={handleBack}
+                                icon={<ArrowLeftOutlined />}
+                                className="p-0 h-auto"
+                            >
+                                {t('news.title', 'Tin tức')}
+                            </Button>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item>
+                            <Text type="secondary">{news.categoryName}</Text>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item className="font-medium">
+                            <Text>{news.title}</Text>
+                        </Breadcrumb.Item>
+                    </Breadcrumb>
+                </motion.div>
 
-                        <Text className="text-lg text-gray-600 block mb-4">
-                            {news.data.summary}
-                        </Text>
+                {/* Main Article */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+                >
+                    {/* Article Content - 2/3 */}
+                    <div className="lg:col-span-2">
+                        <Card className="shadow-lg border-0">
+                            {/* Article Header */}
+                            <div className="mb-8">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                >
+                                    <Title level={1} className="mb-4 !text-2xl md:!text-3xl lg:!text-4xl font-bold leading-tight">
+                                        {news.title}
+                                    </Title>
+                                </motion.div>
 
-                        {/* Meta information */}
-                        <Row gutter={[16, 8]} className="mb-4">
-                            <Col xs={24} sm={12}>
-                                <Space>
-                                    <Avatar
-                                        src={news.data.author?.avatar_url}
-                                        icon={<UserOutlined />}
-                                        size="small"
-                                    />
-                                    <Text>{news.data.author?.name || t('news.author.anonymous', 'Ẩn danh')}</Text>
-                                </Space>
-                            </Col>
-                            <Col xs={24} sm={12}>
-                                <Space>
-                                    <CalendarOutlined />
-                                    <Text>{formatTimeAgo(news.data.published_at)}</Text>
-                                </Space>
-                            </Col>
-                            <Col xs={24} sm={12}>
-                                <Space>
-                                    <EyeOutlined />
-                                    <Text>{news.data.views?.toLocaleString() || 0} lượt xem</Text>
-                                </Space>
-                            </Col>
-                            {news.data.rating && (
-                                <Col xs={24} sm={12}>
-                                    <Space>
-                                        <StarOutlined />
-                                        <Text>{news.data.rating.toFixed(1)}/5.0</Text>
-                                    </Space>
-                                </Col>
-                            )}
-                        </Row>
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                >
+                                    <Paragraph className="text-lg text-gray-600 mb-6 leading-relaxed">
+                                        {news.summary}
+                                    </Paragraph>
+                                </motion.div>
 
-                        {/* Tags */}
-                        {news.data.tags && news.data.tags.length > 0 && (
-                            <div className="mb-4">
-                                <Space wrap>
-                                    {news.data.tags.map((tag: any) => (
-                                        <Tag key={tag.id} color="blue">
-                                            {tag.name}
-                                        </Tag>
-                                    ))}
-                                </Space>
+                                {/* Article Meta */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                >
+                                    <Row gutter={[16, 12]} className="mb-6">
+                                        <Col xs={24} sm={12} md={8}>
+                                            <Space size="small" className="text-gray-600">
+                                                <Avatar
+                                                    src={news.authorAvatar}
+                                                    icon={<UserOutlined />}
+                                                    size="small"
+                                                />
+                                                <Text>{news.authorName || 'Admin'}</Text>
+                                            </Space>
+                                        </Col>
+                                        <Col xs={24} sm={12} md={8}>
+                                            <Space size="small" className="text-gray-600">
+                                                <CalendarOutlined />
+                                                <Text>{dayjs(news.published_at).format('DD/MM/YYYY HH:mm')}</Text>
+                                            </Space>
+                                        </Col>
+                                        <Col xs={24} sm={12} md={8}>
+                                            <Space size="small" className="text-gray-600">
+                                                <EyeOutlined />
+                                                <Text>{news.views?.toLocaleString() || 0} lượt xem</Text>
+                                            </Space>
+                                        </Col>
+                                        {news.rating && (
+                                            <Col xs={24} sm={12} md={8}>
+                                                <Space size="small" className="text-gray-600">
+                                                    <StarOutlined />
+                                                    <Text>{news.rating.toFixed(1)}/5.0</Text>
+                                                </Space>
+                                            </Col>
+                                        )}
+                                    </Row>
+
+                                    {/* Tags */}
+                                    {news.formattedTags && Array.isArray(news.formattedTags) && news.formattedTags.length > 0 && (
+                                        <div className="mb-6">
+                                            <Space wrap size="small">
+                                                {news.formattedTags.map((tag: string, index: number) => (
+                                                    <Tag
+                                                        key={index}
+                                                        color="blue"
+                                                        className="rounded-full px-3 py-1"
+                                                    >
+                                                        {tag}
+                                                    </Tag>
+                                                ))}
+                                            </Space>
+                                        </div>
+                                    )}
+                                </motion.div>
                             </div>
-                        )}
-                    </div>
 
-                    {/* Featured Image */}
-                    {news.data.featured_image && (
-                        <div className="mb-6">
-                            <img
-                                src={news.data.featured_image}
-                                alt={news.data.title}
-                                className="w-full h-64 md:h-80 object-cover rounded-lg"
-                            />
-                        </div>
-                    )}
+                            {/* Featured Image */}
+                            {news.imageUrl && news.imageUrl !== '/images/default-news.jpg' && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.4, duration: 0.5 }}
+                                    className="mb-8"
+                                >
+                                    <Image
+                                        src={news.imageUrl}
+                                        alt={news.title}
+                                        className="w-full rounded-xl object-cover"
+                                        style={{ maxHeight: '500px' }}
+                                        preview={{
+                                            mask: (
+                                                <div className="flex items-center justify-center">
+                                                    <EyeOutlined /> Xem ảnh lớn
+                                                </div>
+                                            )
+                                        }}
+                                    />
+                                </motion.div>
+                            )}
 
-                    {/* Content */}
-                    <div className="news-content mb-8">
-                        <div
-                            className="prose prose-lg max-w-none"
-                            dangerouslySetInnerHTML={{ __html: news.data.content }}
-                        />
-                    </div>
-
-                    <Divider />
-
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <Space size="middle">
-                            <Button
-                                type={news.data.is_liked ? 'primary' : 'default'}
-                                icon={<LikeOutlined />}
-                                onClick={handleLike}
-                                loading={toggleLikeMutation.isPending}
+                            {/* Article Content */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                                className="news-content mb-8"
                             >
-                                {news.data.likes_count || 0}
-                            </Button>
-
-                            <Button
-                                type={news.data.is_bookmarked ? 'primary' : 'default'}
-                                icon={<BookOutlined />}
-                                onClick={handleBookmark}
-                                loading={toggleBookmarkMutation.isPending}
-                            >
-                                {t('news.bookmark', 'Lưu')}
-                            </Button>
-
-                            <Button
-                                icon={<ShareAltOutlined />}
-                                onClick={handleShare}
-                            >
-                                {t('news.share', 'Chia sẻ')}
-                            </Button>
-                        </Space>
-
-                        {/* Rating */}
-                        <Space>
-                            <Text>{t('news.rate', 'Đánh giá:')} </Text>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Button
-                                    key={star}
-                                    type="text"
-                                    icon={<StarOutlined />}
-                                    size="small"
-                                    className={`${news.user_rating && star <= news.user_rating
-                                            ? 'text-yellow-500'
-                                            : 'text-gray-300'
-                                        } hover:text-yellow-500`}
-                                    onClick={() => handleRate(star)}
-                                    loading={rateNewsMutation.isPending}
+                                <div
+                                    className="prose prose-lg max-w-none
+                                    prose-headings:text-gray-900 prose-headings:font-bold
+                                    prose-p:text-gray-700 prose-p:leading-relaxed
+                                    prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                                    prose-img:rounded-lg prose-img:shadow-md
+                                    prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-2 prose-blockquote:px-4
+                                    "
+                                    dangerouslySetInnerHTML={{ __html: news.content }}
                                 />
-                            ))}
-                        </Space>
-                    </div>
-                </Card>
-
-                {/* Comments Section */}
-                <Card className="mt-6 shadow-lg">
-                    <div className="flex justify-between items-center mb-6">
-                        <Title level={3}>
-                            {t('news.comments.title', 'Bình luận')} ({news.data.comments_count || 0})
-                        </Title>
-                        <Button
-                            type="link"
-                            onClick={() => setShowComments(!showComments)}
-                        >
-                            {showComments
-                                ? t('news.comments.hide', 'Ẩn bình luận')
-                                : t('news.comments.show', 'Hiện bình luận')
-                            }
-                        </Button>
-                    </div>
-
-                    {showComments && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {/* Comment Form */}
-                            <CommentForm
-                                newsId={news.data.id}
-                                onCommentAdded={() => refetch()}
-                            />
+                            </motion.div>
 
                             <Divider />
 
-                            {/* Comment List */}
-                            <CommentList
-                                newsId={news.data.id}
-                                onCommentUpdated={() => refetch()}
-                            />
+                            {/* Action Buttons */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.6 }}
+                                className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8"
+                            >
+                                <Space size="large" wrap>
+                                    <NewsLikeButton
+                                        newsId={news.id.toString()}
+                                        isLiked={news.is_liked}
+                                        initialLikeCount={news.likes_count}
+                                        size="large"
+                                        showCount
+                                    />
+
+                                    <NewsBookmarkButton
+                                        newsId={news.id.toString()}
+                                        isBookmarked={news.is_bookmarked}
+                                        size="large"
+                                    />
+
+                                    <NewsShareButton
+                                        newsId={news.id.toString()}
+                                        title={news.title}
+                                        url={window.location.href}
+                                        size="large"
+                                    />
+                                </Space>
+
+                                {/* Rating */}
+                                <div className="flex items-center gap-3">
+                                    <Text className="font-medium text-gray-700">Đánh giá:</Text>
+                                    <Rate
+                                        value={currentRating}
+                                        onChange={handleRate}
+                                        disabled={rateNewsMutation.isPending}
+                                        className="text-lg"
+                                    />
+                                    {news.rating && (
+                                        <Text type="secondary" className="ml-2">
+                                            ({news.rating.toFixed(1)})
+                                        </Text>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </Card>
+
+                        {/* Comments Section */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7 }}
+                        >
+                            <Card className="mt-8 shadow-lg border-0">
+                                <div className="flex justify-between items-center mb-6">
+                                    <Title level={3} className="flex items-center gap-2 !mb-0">
+                                        <MessageOutlined />
+                                        {t('news.comments.title', 'Bình luận')} ({news.comments_count || 0})
+                                    </Title>
+                                    <Button
+                                        type="link"
+                                        onClick={() => setShowComments(!showComments)}
+                                        className="text-blue-600"
+                                    >
+                                        {showComments
+                                            ? t('news.comments.hide', 'Ẩn bình luận')
+                                            : t('news.comments.show', 'Hiện bình luận')
+                                        }
+                                    </Button>
+                                </div>
+
+                                {showComments && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        {/* Comment Form */}
+                                        <div className="mb-6">
+                                            <CommentForm
+                                                newsId={news.id}
+                                                onCommentAdded={() => refetch()}
+                                            />
+                                        </div>
+
+                                        <Divider />
+
+                                        {/* Comment List */}
+                                        <CommentList
+                                            newsId={news.id}
+                                            onCommentUpdated={() => refetch()}
+                                        />
+                                    </motion.div>
+                                )}
+                            </Card>
                         </motion.div>
-                    )}
-                </Card>
-            </motion.div>
-        </div>
+                    </div>
+
+                    {/* Sidebar - 1/3 */}
+                    <div className="lg:col-span-1">
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.8 }}
+                            className="sticky top-6"
+                        >
+                            {/* Article Info Card */}
+                            <Card className="mb-6 shadow-lg border-0">
+                                <Title level={4} className="!mb-4">Thông tin bài viết</Title>
+                                <Space direction="vertical" size="middle" className="w-full">
+                                    <div>
+                                        <Text strong>Danh mục:</Text>
+                                        <br />
+                                        <Tag color="blue" className="mt-1">{news.categoryName}</Tag>
+                                    </div>
+                                    <div>
+                                        <Text strong>Ngày xuất bản:</Text>
+                                        <br />
+                                        <Text type="secondary">{dayjs(news.published_at).format('DD/MM/YYYY')}</Text>
+                                    </div>
+                                    <div>
+                                        <Text strong>Lượt xem:</Text>
+                                        <br />
+                                        <Text type="secondary">{news.views?.toLocaleString() || 0}</Text>
+                                    </div>
+                                    <div>
+                                        <Text strong>Lượt thích:</Text>
+                                        <br />
+                                        <Text type="secondary">{news.likes_count}</Text>
+                                    </div>
+                                </Space>
+                            </Card>
+
+                            {/* Author Card */}
+                            <Card className="shadow-lg border-0">
+                                <Title level={4} className="!mb-4">Tác giả</Title>
+                                <div className="text-center">
+                                    <Avatar
+                                        size={80}
+                                        src={news.authorAvatar}
+                                        icon={<UserOutlined />}
+                                        className="mb-3"
+                                    />
+                                    <br />
+                                    <Text strong className="text-lg">{news.authorName}</Text>
+                                    <br />
+                                    <Text type="secondary">Tác giả</Text>
+                                </div>
+                            </Card>
+                        </motion.div>
+                    </div>
+                </motion.div>
+            </div>
+        </>
     );
 };
 

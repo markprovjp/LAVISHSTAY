@@ -1,3 +1,5 @@
+import { useNewsList } from '../hooks/useNews';
+
 // src/pages/News.tsx
 import React, { Suspense } from 'react';
 import { Layout, Spin } from 'antd';
@@ -10,12 +12,26 @@ import NewsHighlights from '../components/news/NewsHighlights';
 import NewsCategoryTabs from '../components/news/NewsCategoryTabs';
 import NewsList from '../components/news/NewsList';
 import NewsSidebar from '../components/news/NewsSidebar';
-import NewsModal from '../components/news/NewsModal';
+// import NewsModal from '../components/news/NewsModal';
 
 const { Content } = Layout;
 
+
 const NewsPage: React.FC = () => {
+
     const { t } = useTranslation();
+    // Lấy toàn bộ response của API news list để debug
+    const { data: newsListResponse, isLoading, error } = useNewsList({ per_page: 10 });
+
+    // Hiển thị debug JSON ở đầu trang
+    // const debugBlock = (
+    //     <div style={{ background: '#f6f8fa', color: '#333', fontSize: 13, padding: 16, marginBottom: 24, borderRadius: 8, border: '1px solid #eee', wordBreak: 'break-all' }}>
+    //         <b>DEBUG API Response:</b>
+    //         <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+    //             {isLoading ? 'Đang tải...' : error ? String(error) : JSON.stringify(newsListResponse, null, 2)}
+    //         </pre>
+    //     </div>
+    // );
 
     return (
         <>
@@ -27,6 +43,9 @@ const NewsPage: React.FC = () => {
                 <meta property="og:description" content={t('news.pageDescription', 'Cập nhật tin tức mới nhất về khách sạn, du lịch và các ưu đãi hấp dẫn từ LavishStay')} />
                 <meta property="og:type" content="website" />
             </Helmet>
+
+            {/* DEBUG BLOCK */}
+            {/* {debugBlock} */}
 
             <Layout className="">
                 <NewsHeader />

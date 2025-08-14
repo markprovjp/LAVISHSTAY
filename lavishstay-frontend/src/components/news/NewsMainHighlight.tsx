@@ -1,11 +1,12 @@
 // src/components/news/NewsMainHighlight.tsx
 import React from 'react';
-import { Card, Tag, Badge, Avatar } from 'antd';
+import { Card, Tag, Badge, Avatar, Spin, Empty, Alert } from 'antd';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import { useTranslation } from 'react-i18next';
 import { ClockCircleOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
+import { useFeaturedNews } from '../../hooks/useNews';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
@@ -13,78 +14,67 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
+import { normalizeNewsResponse } from '../../utils/normalizeNewsData';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
-interface NewsItem {
-    id: string;
-    title: string;
-    summary: string;
-    imageUrl: string;
-    category: string;
-    publishedAt: Date;
-    author: {
-        name: string;
-        avatar?: string;
-    };
-    views: number;
-    isHighlight: boolean;
-    tags: string[];
-}
-
 interface NewsMainHighlightProps {
-    news?: NewsItem[];
-    onNewsClick?: (news: NewsItem) => void;
+    onNewsClick?: (slug: string) => void;
 }
 
 const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
-    news,
     onNewsClick
 }) => {
     const { t } = useTranslation();
 
-    // Mock data nếu không có props
-    const mockNews: NewsItem[] = [
-        {
-            id: '1',
-            title: 'LavishStay khai trương khách sạn 5 sao mới tại trung tâm thành phố',
-            summary: 'Với thiết kế hiện đại và dịch vụ đẳng cấp quốc tế, LavishStay hứa hẹn mang đến trải nghiệm nghỉ dưỡng tuyệt vời cho du khách.',
-            imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop',
-            category: 'Khách sạn',
-            publishedAt: new Date('2024-01-15'),
-            author: { name: 'Nguyễn Văn A', avatar: '' },
-            views: 15420,
-            isHighlight: true,
-            tags: ['khách sạn', 'khai trương', '5 sao']
-        },
-        {
-            id: '2',
-            title: 'Ưu đãi đặc biệt mùa hè 2024 - Giảm đến 50% cho kỳ nghỉ tuyệt vời',
-            summary: 'Chương trình ưu đãi hấp dẫn dành cho các gia đình và cặp đôi trong mùa hè này với nhiều gói dịch vụ đa dạng.',
-            imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
-            category: 'Ưu đãi',
-            publishedAt: new Date('2024-01-14'),
-            author: { name: 'Trần Thị B', avatar: '' },
-            views: 8965,
-            isHighlight: true,
-            tags: ['ưu đãi', 'mùa hè', 'giảm giá']
-        },
-        {
-            id: '3',
-            title: 'Trải nghiệm ẩm thực đỉnh cao tại nhà hàng LavishDine',
-            summary: 'Thực đơn mới với hơn 100 món ăn từ khắp nơi trên thế giới, được chế biến bởi đội ngũ đầu bếp chuyên nghiệp.',
-            imageUrl: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop',
-            category: 'Ẩm thực',
-            publishedAt: new Date('2024-01-13'),
-            author: { name: 'Lê Văn C', avatar: '' },
-            views: 6543,
-            isHighlight: true,
-            tags: ['ẩm thực', 'nhà hàng', 'thực đơn mới']
-        }
-    ];
+    // Lấy tin nổi bật từ API
+    const { data: featuredNewsResponse, isLoading, error } = useFeaturedNews({
+        per_page: 5,
+        is_featured: 1
+    });
 
-    const newsData = news || mockNews;
+    // Log toàn bộ response từ backend để debug
+    React.useEffect(() => {
+        console.log('Featured News Response:', featuredNewsResponse);
+    }, [featuredNewsResponse]);
+
+    // Handle loading state
+    if (isLoading) {
+        return (
+            <div className="w-full h-[500px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    // Handle error state
+    if (error) {
+        return (
+            <Alert
+                message={t('news.error.loadFailed', 'Không thể tải tin nổi bật')}
+                description={t('news.error.tryAgain', 'Vui lòng thử lại sau')}
+                type="error"
+                showIcon
+                className="mb-4"
+            />
+        );
+    }
+
+    // Handle empty state
+    if (!featuredNewsResponse?.data || featuredNewsResponse.data.length === 0) {
+        return (
+            <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={t('news.empty.noFeatured', 'Chưa có tin tức nổi bật')}
+                className="py-12"
+            />
+        );
+    }
+
+    // Normalize the response data to prevent iteration/spreading errors
+    const normalizedResponse = normalizeNewsResponse(featuredNewsResponse);
+    const featuredNews = normalizedResponse.data;
 
     return (
         <motion.div
@@ -127,128 +117,86 @@ const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
                 fadeEffect={{ crossFade: true }}
                 className="news-highlight-swiper h-[500px] md:h-[600px] rounded-2xl overflow-hidden"
             >
-                {newsData.map((item, index) => (
-                    <SwiperSlide key={item.id}>
+                {featuredNews.map((newsItem) => (
+                    <SwiperSlide key={newsItem.id}>
                         <motion.div
-                            initial={{ scale: 1.1 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.8 }}
-                            className="relative h-full cursor-pointer group"
-                            onClick={() => onNewsClick?.(item)}
+                            whileHover={{ scale: 1.02 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                            className="relative h-full cursor-pointer"
+                            onClick={() => onNewsClick?.(newsItem.slug)}
                         >
-                            {/* Background Image */}
-                            <div
-                                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                                style={{ backgroundImage: `url(${item.imageUrl})` }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            </div>
+                            <Card
+                                className="h-full border-0 shadow-2xl overflow-hidden bg-gradient-to-b from-transparent to-black/50"
+                                cover={
+                                    <div className="relative h-full">
+                                        <img
+                                            src={newsItem.featured_image || 'https://via.placeholder.com/800x600'}
+                                            alt={newsItem.title}
+                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                            {/* Content Overlay */}
-                            <div className="relative h-full flex flex-col justify-end p-6 md:p-8 text-white">
-                                {/* Category & Tags */}
-                                <div className="mb-4 flex flex-wrap gap-2">
-                                    <Tag
-                                        color="blue"
-                                        className="px-3 py-1 text-sm font-medium rounded-full"
-                                    >
-                                        {item.category}
-                                    </Tag>
-                                    {item.tags.map((tag) => (
-                                        <Tag
-                                            key={tag}
-                                            className="px-2 py-1 text-xs bg-white/20 text-white border-white/30 rounded-full"
-                                        >
-                                            #{tag}
-                                        </Tag>
-                                    ))}
-                                </div>
-
-                                {/* Title */}
-                                <motion.h3
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 + 0.3 }}
-                                    className="text-2xl md:text-4xl font-bold mb-4 leading-tight group-hover:text-blue-300 transition-colors"
-                                >
-                                    {item.title}
-                                </motion.h3>
-
-                                {/* Summary */}
-                                <motion.p
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 + 0.4 }}
-                                    className="text-gray-200 text-lg mb-6 line-clamp-3 leading-relaxed"
-                                >
-                                    {item.summary}
-                                </motion.p>
-
-                                {/* Meta Info */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 + 0.5 }}
-                                    className="flex items-center justify-between"
-                                >
-                                    <div className="flex items-center space-x-4">
-                                        <div className="flex items-center space-x-2">
-                                            <Avatar
-                                                size="small"
-                                                src={item.author.avatar}
-                                                icon={<UserOutlined />}
-                                                className="border-2 border-white/30"
-                                            />
-                                            <span className="text-sm text-gray-200">{item.author.name}</span>
+                                        {/* Category Badge */}
+                                        <div className="absolute top-4 left-4">
+                                            <Tag
+                                                className="px-3 py-1 bg-red-500 text-white border-red-500 rounded-full font-medium"
+                                            >
+                                                {newsItem.category?.name || 'Tin tức'}
+                                            </Tag>
                                         </div>
 
-                                        <div className="flex items-center space-x-1 text-gray-300">
-                                            <ClockCircleOutlined className="text-xs" />
-                                            <span className="text-sm">{dayjs(item.publishedAt).fromNow()}</span>
+                                        {/* Content overlay */}
+                                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
+                                            <h3 className="text-xl md:text-3xl font-bold mb-3 leading-tight line-clamp-2">
+                                                {newsItem.title}
+                                            </h3>
+
+                                            <p className="text-gray-200 text-sm md:text-base mb-4 line-clamp-2">
+                                                {newsItem.summary}
+                                            </p>
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-4 text-xs md:text-sm">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Avatar
+                                                            size="small"
+                                                            icon={<UserOutlined />}
+                                                            src={newsItem.authorAvatar}
+                                                        />
+                                                        <span>{newsItem.authorName}</span>
+                                                    </div>
+
+                                                    <div className="flex items-center space-x-1">
+                                                        <ClockCircleOutlined />
+                                                        <span>{dayjs(newsItem.published_at).fromNow()}</span>
+                                                    </div>
+
+                                                    <div className="flex items-center space-x-1">
+                                                        <EyeOutlined />
+                                                        <span>{newsItem.views.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Tags */}
+                                            <div className="flex flex-wrap gap-2 mt-4">
+                                                {newsItem.formattedTags?.slice(0, 3).map((tag, index) => (
+                                                    <Tag
+                                                        key={index}
+                                                        className="text-xs px-2 py-1 bg-white/20 border-white/30 text-white backdrop-blur-sm"
+                                                    >
+                                                        #{tag}
+                                                    </Tag>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div className="flex items-center space-x-1 text-gray-300">
-                                        <EyeOutlined />
-                                        <span className="text-sm">{item.views.toLocaleString()}</span>
-                                    </div>
-                                </motion.div>
-                            </div>
-
-                            {/* Hover Effect */}
-                            <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/10 transition-all duration-300" />
+                                }
+                            />
                         </motion.div>
                     </SwiperSlide>
                 ))}
             </Swiper>
-
-            {/* Animated decorations */}
-            <motion.div
-                animate={{
-                    y: [0, -10, 0],
-                    rotate: [0, 5, -5, 0]
-                }}
-                transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                }}
-                className="absolute -top-4 -right-4 w-8 h-8 bg-yellow-400 rounded-full opacity-80 z-10"
-            />
-
-            <motion.div
-                animate={{
-                    y: [0, 10, 0],
-                    rotate: [0, -5, 5, 0]
-                }}
-                transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1
-                }}
-                className="absolute -bottom-4 -left-4 w-6 h-6 bg-pink-400 rounded-full opacity-60 z-10"
-            />
         </motion.div>
     );
 };
