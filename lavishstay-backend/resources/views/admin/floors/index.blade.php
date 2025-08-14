@@ -6,8 +6,8 @@
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Floors Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all floors and their configurations</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý Tầng</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý tất cả các tầng và cấu hình của chúng</p>
             </div>
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
                 <a href="{{ route('admin.floors.create') }}">
