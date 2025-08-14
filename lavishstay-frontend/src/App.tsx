@@ -35,6 +35,7 @@ import ReviewBooking from "./pages/ReviewBooking";
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
+import NewsDetailPage from "./pages/NewsDetailPage";
 
 import ConfirmRepresentativePayment from "./pages/reception/room-management/ConfirmRepresentativePayment";
 import PaymentBookingReception from "./pages/reception/room-management/PaymentBookingReception";
@@ -132,7 +133,7 @@ const App: React.FC = React.memo(() => {
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/news" element={<News />} />
-
+            <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* Thêm dòng này */}
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/room-types-demo" element={<RoomTypesDemo />} />
             <Route path="/review-booking" element={<ReviewBooking />} />
