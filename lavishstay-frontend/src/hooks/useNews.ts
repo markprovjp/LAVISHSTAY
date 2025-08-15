@@ -14,6 +14,50 @@ export const useNewsList = (params: ApiParams = {}) => {
     });
 };
 
+// Featured news (tin nổi bật banner)
+export const useFeaturedNews = (params: ApiParams = {}) => {
+    // Đảm bảo is_featured là number
+    const fixedParams = { ...params, is_featured: params.is_featured === true ? 1 : params.is_featured === false ? 0 : params.is_featured };
+    return useQuery({
+        queryKey: ['featuredNews', fixedParams],
+        queryFn: () => newsApi.getFeaturedNews(fixedParams),
+        staleTime: 10 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
+};
+
+// Trending news (tin thịnh hành)
+export const useTrendingNews = (params: ApiParams = {}) => {
+    return useQuery({
+        queryKey: ['trendingNews', params],
+        queryFn: () => newsApi.getTrendingNews(params),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
+    });
+};
+
+// News by category
+export const useNewsByCategory = (categoryId: number, params: ApiParams = {}) => {
+    return useQuery({
+        queryKey: ['newsByCategory', categoryId, params],
+        queryFn: () => newsApi.getNewsByCategory(categoryId, params),
+        enabled: !!categoryId,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
+};
+
+// Related news
+export const useRelatedNews = (newsId: number, limit = 5) => {
+    return useQuery({
+        queryKey: ['relatedNews', newsId, limit],
+        queryFn: () => newsApi.getRelatedNews(newsId, limit),
+        enabled: !!newsId,
+        staleTime: 15 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
+};
+
 // News detail
 export const useNewsDetail = (slug: string) => {
     return useQuery({

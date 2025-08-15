@@ -13,7 +13,7 @@ export interface ApiParams {
     published_from?: string;
     published_to?: string;
     author_id?: number;
-    is_featured?: number;
+    is_featured?: boolean;
     status?: 'published' | 'draft' | 'archived';
 }
 

@@ -1,78 +1,44 @@
 // src/components/news/NewsList.tsx
 import React, { useState } from 'react';
-import { Row, Col, Spin, Empty, Button, Select, Input, Space, Alert } from 'antd';
+import { Row, Col, Spin, Empty, Button, Alert } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { FilterOutlined, SortAscendingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNewsList } from '../../hooks/useNews';
 import { ApiParams } from '../../services/newsApi';
 import NewsItem from './NewsItem';
-import NewsCategoryFilter from './NewsCategoryFilter';
 import NewsPagination from './NewsPagination';
 import { useNavigate } from 'react-router-dom';
-
-const { Search } = Input;
-const { Option } = Select;
+import { normalizeNewsResponse } from '../../utils/normalizeNewsData';
 
 interface NewsListProps {
-  category?: number;
-  searchQuery?: string;
   className?: string;
 }
 
 const NewsList: React.FC<NewsListProps> = ({
-  category,
-  searchQuery,
   className = '',
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  
-  // State for filters and pagination
+
+  // Chỉ truyền per_page và page, không filter gì hết
   const [params, setParams] = useState<ApiParams>({
     per_page: 9,
-    category_id: category,
-    search_title: searchQuery,
-    sort_by: 'published_at',
-    sort_order: 'desc',
-    page: 1,
+    page: 1
   });
 
+  // DEBUG: log params truyền vào API
+  console.log('NewsList - params:', params);
   // API query
-  const { 
-    data: newsResponse, 
-    isLoading, 
-    error, 
-    refetch 
+  const {
+    data: newsResponse,
+    isLoading,
+    error,
+    refetch
   } = useNewsList(params);
 
   // Handle filter changes
-  const handleCategoryChange = (categoryId: number | undefined) => {
-    setParams(prev => ({
-      ...prev,
-      category_id: categoryId,
-      page: 1, // Reset to first page
-    }));
-  };
 
-  const handleSearch = (value: string) => {
-    setParams(prev => ({
-      ...prev,
-      search_title: value || undefined,
-      page: 1, // Reset to first page
-    }));
-  };
-
-  const handleSortChange = (value: string) => {
-    const [sortBy, sortOrder] = value.split('_');
-    setParams(prev => ({
-      ...prev,
-      sort_by: sortBy as 'published_at' | 'views' | 'created_at',
-      sort_order: sortOrder as 'asc' | 'desc',
-      page: 1, // Reset to first page
-    }));
-  };
-
+  // Chỉ cho phép đổi page, không filter/search/sort gì hết
   const handlePageChange = (page: number, pageSize?: number) => {
     setParams(prev => ({
       ...prev,
@@ -117,95 +83,23 @@ const NewsList: React.FC<NewsListProps> = ({
     );
   }
 
-  const newsData = newsResponse?.data || [];
+
+  // Normalize and filter data: chỉ nhận object hợp lệ, tránh lỗi spread/iteration
+  const normalizedResponse = normalizeNewsResponse(newsResponse);
+  const newsData = normalizedResponse.data;
+
+  // DEBUG: log dữ liệu nhận được từ API
+  console.log('NewsList - normalizedResponse:', normalizedResponse);
+
   const pagination = {
-    current: newsResponse?.current_page || 1,
-    total: newsResponse?.total || 0,
-    pageSize: newsResponse?.per_page || 9,
+    current: normalizedResponse.pagination?.current_page || 1,
+    total: normalizedResponse.pagination?.total || 0,
+    pageSize: normalizedResponse.pagination?.per_page || 9,
   };
 
   return (
     <div className={`news-list ${className}`}>
-      {/* Filters */}
-      <div className="mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-3 flex-1">
-            {/* Search */}
-            <Search
-              placeholder={t('news.search.placeholder', 'Tìm kiếm tin tức...')}
-              allowClear
-              onSearch={handleSearch}
-              defaultValue={params.search_title}
-              className="max-w-xs"
-              enterButton
-            />
-            
-            {/* Category Filter */}
-            <NewsCategoryFilter
-              value={params.category_id}
-              onChange={handleCategoryChange}
-              placeholder={t('news.filter.category', 'Tất cả chuyên mục')}
-            />
-          </div>
-
-          <Space>
-            {/* Sort */}
-            <Select
-              value={`${params.sort_by}_${params.sort_order}`}
-              onChange={handleSortChange}
-              style={{ width: 180 }}
-              suffixIcon={<SortAscendingOutlined />}
-            >
-              <Option value="published_at_desc">{t('news.sort.newest', 'Mới nhất')}</Option>
-              <Option value="published_at_asc">{t('news.sort.oldest', 'Cũ nhất')}</Option>
-              <Option value="views_desc">{t('news.sort.mostViewed', 'Xem nhiều nhất')}</Option>
-              <Option value="created_at_desc">{t('news.sort.latest', 'Vừa tạo')}</Option>
-            </Select>
-            
-            {/* Refresh */}
-            <Button 
-              icon={<ReloadOutlined />} 
-              onClick={handleRefresh}
-              loading={isLoading}
-              title={t('common.refresh', 'Làm mới')}
-            />
-            
-            {/* Filter indicator */}
-            {(params.category_id || params.search_title) && (
-              <Button 
-                icon={<FilterOutlined />} 
-                type="primary" 
-                ghost
-                size="small"
-                onClick={() => setParams(prev => ({ 
-                  ...prev, 
-                  category_id: undefined, 
-                  search_title: undefined, 
-                  page: 1 
-                }))}
-              >
-                {t('news.filter.clear', 'Xóa bộ lọc')}
-              </Button>
-            )}
-          </Space>
-        </div>
-      </div>
-
-      {/* Results count */}
-      {newsData.length > 0 && (
-        <div className="mb-4">
-          <p className="text-gray-600 text-sm">
-            {t('news.results.count', 'Tìm thấy {{total}} bài viết', { 
-              total: pagination.total.toLocaleString() 
-            })}
-            {params.search_title && (
-              <span> {t('news.results.for', 'cho')} "<strong>{params.search_title}</strong>"</span>
-            )}
-          </p>
-        </div>
-      )}
-
-      {/* News Grid */}
+      {/* News Grid - không filter, không search, không sort, chỉ hiển thị data trả về */}
       <AnimatePresence mode="wait">
         {newsData.length === 0 ? (
           <motion.div
@@ -216,11 +110,7 @@ const NewsList: React.FC<NewsListProps> = ({
             className="py-12"
           >
             <Empty
-              description={
-                params.search_title || params.category_id
-                  ? t('news.empty.filtered', 'Không tìm thấy tin tức phù hợp với bộ lọc')
-                  : t('news.empty.default', 'Chưa có tin tức nào')
-              }
+              description={t('news.empty.default', 'Chưa có tin tức nào')}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           </motion.div>
@@ -233,10 +123,10 @@ const NewsList: React.FC<NewsListProps> = ({
           >
             <Row gutter={[24, 24]}>
               {newsData.map((news, index) => (
-                <Col 
-                  key={news.id} 
-                  xs={24} 
-                  sm={12} 
+                <Col
+                  key={news.id}
+                  xs={24}
+                  sm={12}
                   lg={8}
                   xl={8}
                 >
@@ -248,7 +138,7 @@ const NewsList: React.FC<NewsListProps> = ({
                     <NewsItem
                       news={news}
                       onClick={handleNewsClick}
-                      showCategory={!params.category_id}
+                      showCategory={true}
                       showAuthor={true}
                       showViews={true}
                       showTags={true}

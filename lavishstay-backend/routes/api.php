@@ -29,7 +29,7 @@ use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\Api\NewsCommentController;
-use App\Http\Controllers\NewsController\NewsCategoryController;
+use App\Http\Controllers\Api\NewsAPICategoryController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -337,6 +337,8 @@ Route::prefix('news')->name('news.')->group(function () {
     // Public routes
     Route::get('/', [NewsController::class, 'index'])->name('index');
     Route::get('/popular', [NewsController::class, 'getPopular'])->name('popular');
+    Route::get('/featured', [NewsController::class, 'getFeatured'])->name('featured');
+    Route::get('/trending', [NewsController::class, 'getTrending'])->name('trending');
     Route::get('/search-by-tags', [NewsController::class, 'searchByTags'])->name('search-tags');
     Route::get('/{slug}', [NewsController::class, 'show'])->name('show');
     Route::get('/{slug}/related', [NewsController::class, 'getRelated'])->name('related');
@@ -349,12 +351,12 @@ Route::prefix('news')->name('news.')->group(function () {
 
 // News Categories API Routes  
 Route::prefix('news-categories')->name('news-categories.')->group(function () {
-    Route::get('/', [NewsCategoryController::class, 'index'])->name('index');
-    Route::post('/', [NewsCategoryController::class, 'store'])->name('store');
-    Route::get('/{id}', [NewsCategoryController::class, 'show'])->name('show');
-    Route::put('/{id}', [NewsCategoryController::class, 'update'])->name('update');
-    Route::delete('/{id}', [NewsCategoryController::class, 'destroy'])->name('destroy');
-    Route::get('/{id}/news', [NewsCategoryController::class, 'getNews'])->name('news');
+    Route::get('/', [NewsAPICategoryController::class, 'index'])->name('index');
+    Route::post('/', [NewsAPICategoryController::class, 'store'])->name('store');
+    Route::get('/{id}', [NewsAPICategoryController::class, 'show'])->name('show');
+    Route::put('/{id}', [NewsAPICategoryController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsAPICategoryController::class, 'destroy'])->name('destroy');
+    Route::get('/{id}/news', [NewsAPICategoryController::class, 'getNews'])->name('news');
 });
 
 // News Comments API Routes
