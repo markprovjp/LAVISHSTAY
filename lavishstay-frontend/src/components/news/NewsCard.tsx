@@ -14,29 +14,12 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import NewsBookmarkButton from './NewsBookmarkButton';
 import NewsLikeButton from './NewsLikeButton';
 import NewsShareButton from './NewsShareButton';
+import { NormalizedNewsItem } from '../../utils/normalizeNewsData';
 
 dayjs.extend(relativeTime);
 
-interface NewsItem {
-    id: string;
-    title: string;
-    summary: string;
-    imageUrl: string;
-    category: string;
-    publishedAt: Date;
-    author: {
-        name: string;
-        avatar?: string;
-    };
-    views: number;
-    tags: string[];
-    isBookmarked: boolean;
-    isLiked: boolean;
-    likesCount: number;
-}
-
 interface NewsCardProps {
-    news: NewsItem;
+    news: NormalizedNewsItem;
     onClick?: () => void;
     compact?: boolean;
 }
@@ -51,31 +34,25 @@ const NewsCard: React.FC<NewsCardProps> = ({
     const cardActions = [
         <Space key="actions" size={4} className="flex items-center justify-center w-full">
             <NewsLikeButton
-                newsId={news.id}
-                isLiked={news.isLiked}
-                initialLikeCount={news.likesCount}
+                newsId={news.id.toString()}
+                isLiked={news.is_liked}
+                initialLikeCount={news.likes_count}
                 size="small"
                 type="text"
-            >
-                <span className="ml-1">Thích</span>
-            </NewsLikeButton>
+            />
             <NewsShareButton
-                newsId={news.id}
+                newsId={news.id.toString()}
                 title={news.title}
-                url={`/news/${news.id}`}
+                url={`/news/${news.slug}`}
                 size="small"
                 type="text"
-            >
-                <span className="ml-1">Chia sẻ</span>
-            </NewsShareButton>
+            />
             <NewsBookmarkButton
-                newsId={news.id}
-                isBookmarked={news.isBookmarked}
+                newsId={news.id.toString()}
+                isBookmarked={news.is_bookmarked}
                 size="small"
                 type="text"
-            >
-                <span className="ml-1">Lưu</span>
-            </NewsBookmarkButton>
+            />
         </Space>
     ];
 
@@ -111,7 +88,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
                                     color="blue"
                                     className="px-3 py-1 text-xs font-medium rounded-full bg-blue-500/90 text-white border-none backdrop-blur-sm"
                                 >
-                                    {news.category}
+                                    {news.categoryName}
                                 </Tag>
                             </motion.div>
                         </div>
@@ -168,9 +145,9 @@ const NewsCard: React.FC<NewsCardProps> = ({
                         transition={{ duration: 0.3, delay: 0.2 }}
                         className="flex flex-wrap gap-1"
                     >
-                        {news.tags.slice(0, compact ? 2 : 3).map((tag) => (
+                        {news.formattedTags && news.formattedTags.slice(0, compact ? 2 : 3).map((tag, index) => (
                             <Tag
-                                key={tag}
+                                key={index}
                                 className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-none rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
                             >
                                 #{tag}
@@ -190,19 +167,19 @@ const NewsCard: React.FC<NewsCardProps> = ({
                         <div className="flex items-center gap-2 min-w-0">
                             <Avatar
                                 size={compact ? 20 : 24}
-                                src={news.author.avatar}
+                                src={news.authorAvatar}
                                 icon={<UserOutlined />}
                                 className="border border-gray-200 dark:border-gray-600 flex-shrink-0"
                             />
                             <div className="flex flex-col min-w-0">
-                                <Tooltip title={news.author.name} placement="topLeft">
+                                <Tooltip title={news.authorName} placement="topLeft">
                                     <span className="truncate max-w-[90px] font-medium text-gray-700 dark:text-gray-200 text-xs md:text-sm">
-                                        {news.author.name}
+                                        {news.authorName}
                                     </span>
                                 </Tooltip>
                                 <span className="flex items-center text-xs text-gray-400 mt-0.5">
                                     <ClockCircleOutlined className="mr-1" />
-                                    {dayjs(news.publishedAt).fromNow()}
+                                    {dayjs(news.publishedDate).fromNow()}
                                 </span>
                             </div>
                         </div>

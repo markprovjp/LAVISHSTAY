@@ -29,6 +29,7 @@ class News extends Model
         'views',
         'status',
         'published_at',
+        'is_featured', // Thêm cột is_featured
     ];
 
     /**

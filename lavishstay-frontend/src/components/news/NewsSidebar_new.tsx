@@ -81,7 +81,7 @@ const NewsSidebar: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
             >
-                <Card 
+                <Card
                     className="text-center bg-gradient-to-br from-blue-500 to-purple-600 text-white border-0"
                     bodyStyle={{ padding: '20px' }}
                 >
@@ -103,7 +103,7 @@ const NewsSidebar: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
                             <CloudOutlined className="text-blue-500" />
@@ -146,7 +146,7 @@ const NewsSidebar: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
                             <FireOutlined className="text-red-500" />
@@ -169,7 +169,7 @@ const NewsSidebar: React.FC = () => {
                             ))}
                         </div>
                     ) : !trendingResponse?.data || trendingResponse.data.length === 0 ? (
-                        <Empty 
+                        <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description={t('news.empty.noTrending', 'Chưa có tin thịnh hành')}
                             className="py-4"
@@ -198,7 +198,7 @@ const NewsSidebar: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="mt-1">
-                                                <Tag 
+                                                <Tag
                                                     className="text-xs px-2 py-0"
                                                     color="blue"
                                                 >
@@ -220,7 +220,7 @@ const NewsSidebar: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
                             <TrophyOutlined className="text-yellow-500" />
@@ -231,7 +231,7 @@ const NewsSidebar: React.FC = () => {
                     bodyStyle={{ padding: '16px' }}
                 >
                     {topCategories.length === 0 ? (
-                        <Empty 
+                        <Empty
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description={t('news.empty.noCategories', 'Chưa có danh mục')}
                             className="py-4"
@@ -279,7 +279,7 @@ const NewsSidebar: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
                             <CalendarOutlined className="text-green-500" />
