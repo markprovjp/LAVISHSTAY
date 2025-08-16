@@ -1,3 +1,4 @@
+
 // src/components/news/CommentList.tsx
 import React from 'react';
 import { List, Avatar, Button, Space, Empty, Spin, message } from 'antd';
@@ -32,7 +33,12 @@ const CommentList: React.FC<CommentListProps> = ({
 
     // Handle comment like
     const handleLikeComment = (commentId: number) => {
-        toggleCommentLikeMutation.mutate(commentId, {
+        if (!newsId) {
+            message.error(t('news.comments.error.no_news_id', 'Không tìm thấy bài viết'));
+            return;
+        }
+
+        toggleCommentLikeMutation.mutate({ newsId, commentId }, {
             onSuccess: () => {
                 onCommentUpdated?.();
             },
@@ -99,7 +105,7 @@ const CommentList: React.FC<CommentListProps> = ({
                                         onClick={() => handleLikeComment(comment.id)}
                                         loading={toggleCommentLikeMutation.isPending}
                                     >
-                                        {comment.likes_count || 0}
+                                        {(comment as any).likes ?? comment.likes_count ?? 0}
                                     </Button>
                                 </Space>,
                                 <Space key="time">
@@ -163,7 +169,7 @@ const CommentList: React.FC<CommentListProps> = ({
                                                             onClick={() => handleLikeComment(reply.id)}
                                                             loading={toggleCommentLikeMutation.isPending}
                                                         >
-                                                            {reply.likes_count || 0}
+                                                            {(reply as any).likes ?? reply.likes_count ?? 0}
                                                         </Button>
                                                     </div>
                                                 </div>

@@ -126,27 +126,27 @@ export const newsApi = {
         return res.data;
     },
 
-    // Like bài viết
+    // Like bài viết (use backend "news-actions" prefix)
     async toggleLike(newsId: number): Promise<{ is_liked: boolean; likes_count: number }> {
-        const res = await ApiService.post<{ data: { is_liked: boolean; likes_count: number } }>(`news/${newsId}/toggle-like`, {});
+        const res = await ApiService.post<{ data: { is_liked: boolean; likes_count: number } }>(`news-actions/${newsId}/like`, {});
         return res.data;
     },
 
-    // Bookmark bài viết
+    // Bookmark bài viết (use backend "news-actions" prefix)
     async toggleBookmark(newsId: number): Promise<{ is_bookmarked: boolean }> {
-        const res = await ApiService.post<{ data: { is_bookmarked: boolean } }>(`news/${newsId}/toggle-bookmark`, {});
+        const res = await ApiService.post<{ data: { is_bookmarked: boolean } }>(`news-actions/${newsId}/bookmark`, {});
         return res.data;
     },
 
-    // Đánh giá bài viết
+    // Đánh giá bài viết (use backend "news-actions" prefix)
     async rateNews(newsId: number, rating: number): Promise<{ rating: number; user_rating: number }> {
-        const res = await ApiService.post<{ data: { rating: number; user_rating: number } }>(`news/${newsId}/rate`, { rating });
+        const res = await ApiService.post<{ data: { rating: number; user_rating: number } }>(`news-actions/${newsId}/rate`, { rating });
         return res.data;
     },
 
-    // Like bình luận
-    async toggleCommentLike(commentId: number): Promise<{ is_liked: boolean; likes_count: number }> {
-        const res = await ApiService.post<{ data: { is_liked: boolean; likes_count: number } }>(`news-comments/${commentId}/toggle-like`, {});
+    // Like bình luận (nested under news)
+    async toggleCommentLike(newsId: number, commentId: number): Promise<{ is_liked: boolean; likes_count: number }> {
+        const res = await ApiService.post<{ data: { is_liked: boolean; likes_count: number } }>(`news/${newsId}/comments/${commentId}/like`, {});
         return res.data;
     },
 
