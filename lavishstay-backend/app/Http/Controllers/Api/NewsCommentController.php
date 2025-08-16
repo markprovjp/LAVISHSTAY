@@ -196,33 +196,38 @@ class NewsCommentController extends Controller
     /**
      * Like/Unlike a comment
      */
-    public function toggleLike(Request $request, $id)
+    public function toggleLike(Request $request, $newsId, $id)
     {
         $comment = NewsComment::find($id);
-        
-        if (!$comment) {
+
+        if (!$comment || $comment->news_id != $newsId) {
             return response()->json([
                 'success' => false,
                 'message' => 'Comment not found'
             ], 404);
         }
 
-        // For simplicity, just increment/decrement likes count
-        // In a real app, you'd track individual user likes
+        // For simplicity keep existing behavior: if query param 'action' provided use it,
+        // otherwise default to 'like' (increment). Real toggle by user not implemented here.
         $action = $request->query('action', 'like'); // 'like' or 'unlike'
-        
+
         if ($action === 'like') {
             $comment->increment('likes');
+            $isLiked = true;
             $message = 'Comment liked successfully';
         } else {
             $comment->decrement('likes');
+            $isLiked = false;
             $message = 'Comment unliked successfully';
         }
 
         return response()->json([
             'success' => true,
             'message' => $message,
-            'likes_count' => $comment->likes
+            'data' => [
+                'is_liked' => $isLiked,
+                'likes_count' => $comment->likes
+            ]
         ]);
     }
 
