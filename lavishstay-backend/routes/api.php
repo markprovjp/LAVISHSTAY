@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\Api\NewsCommentController;
 use App\Http\Controllers\Api\NewsAPICategoryController;
 use App\Http\Controllers\Api\NewsUserActionController;
+use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 
 /*
@@ -124,7 +125,7 @@ Route::prefix('checkin')->group(function () {
 });
 
 
-// API Routes cho Check-in///////////////////////////////////////////////////
+// API Routes cho Check-out///////////////////////////////////////////////////
 // Service management
 Route::get('/services/available', [BookingCheckoutController::class, 'getAvailableServices']);
 Route::post('/bookings/{id}/services', [BookingCheckoutController::class, 'addBookingService']);
@@ -134,6 +135,7 @@ Route::delete('/bookings/{id}/services/{serviceId}', [BookingCheckoutController:
 // Checkout
 Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
 Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
+Route::post('/bookings/{id}/checkout/compensation ', [BookingCheckoutController::class, 'createCompensationRequest']);
 
 
 
@@ -396,3 +398,35 @@ Route::get('/sitemap', [SitemapController::class, 'index']);
 Route::get('/sitemap-main', [SitemapController::class, 'main']);
 Route::get('/sitemap-categories', [SitemapController::class, 'categories']);
 Route::get('/sitemap-news', [SitemapController::class, 'news']);            
+
+
+
+
+
+
+
+
+
+// Payment Settings API Routes (Public - no auth required for reading settings)
+Route::prefix('payment-settings')->name('api.payment-settings.')->group(function () {
+    // Get all payment settings
+    Route::get('/', [PaymentSettingsController::class, 'index'])->name('index');
+    
+    // Get specific payment method settings
+    Route::get('/{method}', [PaymentSettingsController::class, 'getByMethod'])
+        ->where('method', 'vietqr|cpay|vnpay|pay_at_hotel|general')
+        ->name('method');
+    
+    // Test VietQR connection (public for frontend testing)
+    Route::post('/test-vietqr', [PaymentSettingsController::class, 'testVietQR'])->name('test-vietqr');
+});
+
+// Payment Processing API Routes (existing)
+Route::prefix('payment')->name('api.payment.')->group(function () {
+    Route::post('/generate-vietqr', [PaymentController::class, 'generateVietQR'])->name('generate-vietqr');
+    Route::post('/check-payment', [PaymentController::class, 'checkPayment'])->name('check-payment');
+    Route::get('/methods', [PaymentController::class, 'getPaymentMethods'])->name('methods');
+    Route::get('/config', [PaymentController::class, 'getPaymentConfig'])->name('config');
+    Route::post('/vnpay', [PaymentController::class, 'processVNPay'])->name('vnpay');
+    Route::post('/pay-at-hotel', [PaymentController::class, 'processPayAtHotel'])->name('pay-at-hotel');
+});

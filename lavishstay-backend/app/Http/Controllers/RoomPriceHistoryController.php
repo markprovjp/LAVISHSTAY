@@ -28,10 +28,12 @@ class RoomPriceHistoryController extends Controller
     public function getData(Request $request)
     {
         try {
-            $query = RoomPriceHistory::with(['roomType'])
+            // Use JOIN to get room_type_name alias; avoid redundant eager loading for list
+            $query = RoomPriceHistory::query()
                 ->select('room_price_history.*')
                 ->leftJoin('room_types', 'room_price_history.room_type_id', '=', 'room_types.room_type_id')
-                ->selectRaw('room_types.name as room_type_name');
+                ->selectRaw('room_types.name as room_type_name')
+                ->selectRaw('room_price_history.date as applied_date'); // alias for frontend
 
             // Apply filters
             if ($request->filled('room_type_id')) {
@@ -46,25 +48,19 @@ class RoomPriceHistoryController extends Controller
                 $query->where('room_price_history.date', '<=', $request->end_date);
             }
 
+            // Price range: support both legacy codes (under_1m...) and "min-max" format (e.g., "500000-1000000", "5000000-")
             if ($request->filled('price_range')) {
-                switch ($request->price_range) {
-                    case 'under_1m':
-                        $query->where('room_price_history.adjusted_price', '<', 1000000);
-                        break;
-                    case '1m_5m':
-                        $query->whereBetween('room_price_history.adjusted_price', [1000000, 5000000]);
-                        break;
-                    case '5m_10m':
-                        $query->whereBetween('room_price_history.adjusted_price', [5000000, 10000000]);
-                        break;
-                    case 'over_10m':
-                        $query->where('room_price_history.adjusted_price', '>', 10000000);
-                        break;
-                }
+                $this->applyPriceRangeFilter($query, $request->price_range, 'room_price_history.adjusted_price');
             }
 
+            // Rule type filter: check any element's "type" inside applied_rules array
             if ($request->filled('rule_type')) {
-                $query->whereJsonContains('room_price_history.applied_rules', [['type' => $request->rule_type]]);
+                // JSON_EXTRACT(... '$[*].type') returns an array of types; we check if contains the value
+                // Using JSON_CONTAINS requires the second argument as a JSON string, hence json_encode
+                $query->whereRaw(
+                    "JSON_CONTAINS(JSON_EXTRACT(room_price_history.applied_rules, '$[*].type'), ?)",
+                    [json_encode($request->rule_type)]
+                );
             }
 
             $data = $query->orderBy('room_price_history.date', 'desc')
@@ -132,10 +128,10 @@ class RoomPriceHistoryController extends Controller
             while ($currentDate <= $endDate) {
                 $dateStr = $currentDate->format('Y-m-d');
                 $labels[] = $currentDate->format('d/m');
-                
+
                 $dayData = $data->firstWhere('date', $dateStr);
                 $prices[] = $dayData ? (float)$dayData->avg_price : null;
-                
+
                 $currentDate->addDay();
             }
 
@@ -155,12 +151,17 @@ class RoomPriceHistoryController extends Controller
     public function show($id)
     {
         try {
-            $history = RoomPriceHistory::with(['roomType'])
-                ->findOrFail($id);
+            // Ensure model primary key matches (e.g. protected $primaryKey = 'history_id' in the model)
+            $history = RoomPriceHistory::with(['roomType'])->findOrFail($id);
+
+            // Enrich payload for frontend expectations
+            $payload = $history->toArray();
+            $payload['room_type_name'] = optional($history->roomType)->name;
+            $payload['applied_date'] = $history->date ? Carbon::parse($history->date)->toDateString() : null;
 
             return response()->json([
                 'success' => true,
-                'data' => $history
+                'data' => $payload
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -176,7 +177,7 @@ class RoomPriceHistoryController extends Controller
     public function export(Request $request)
     {
         try {
-            $query = RoomPriceHistory::with(['roomType']);
+            $query = RoomPriceHistory::query();
 
             // Apply same filters as getData method
             if ($request->filled('room_type_id')) {
@@ -192,24 +193,14 @@ class RoomPriceHistoryController extends Controller
             }
 
             if ($request->filled('price_range')) {
-                switch ($request->price_range) {
-                    case 'under_1m':
-                        $query->where('adjusted_price', '<', 1000000);
-                        break;
-                    case '1m_5m':
-                        $query->whereBetween('adjusted_price', [1000000, 5000000]);
-                        break;
-                    case '5m_10m':
-                        $query->whereBetween('adjusted_price', [5000000, 10000000]);
-                        break;
-                    case 'over_10m':
-                        $query->where('adjusted_price', '>', 10000000);
-                        break;
-                }
+                $this->applyPriceRangeFilter($query, $request->price_range, 'adjusted_price');
             }
 
             if ($request->filled('rule_type')) {
-                $query->whereJsonContains('applied_rules', [['type' => $request->rule_type]]);
+                $query->whereRaw(
+                    "JSON_CONTAINS(JSON_EXTRACT(applied_rules, '$[*].type'), ?)",
+                    [json_encode($request->rule_type)]
+                );
             }
 
             $data = $query->orderBy('date', 'desc')->get();
@@ -232,8 +223,7 @@ class RoomPriceHistoryController extends Controller
     public function exportSingle($id)
     {
         try {
-            $history = RoomPriceHistory::with(['roomType'])
-                ->findOrFail($id);
+            $history = RoomPriceHistory::with(['roomType'])->findOrFail($id);
 
             $filename = 'room_price_history_' . $id . '_' . Carbon::now()->format('Y_m_d_H_i_s') . '.xlsx';
 
@@ -262,6 +252,7 @@ class RoomPriceHistoryController extends Controller
             return response()->json(['error' => 'Failed to load room types'], 500);
         }
     }
+
     /**
      * Calculate average price increase percentage
      */
@@ -289,16 +280,17 @@ class RoomPriceHistoryController extends Controller
     private function getMostCommonRule()
     {
         try {
-            // This is a simplified version - you might need to adjust based on your JSON structure
+            // Count across all rule elements using JSON_TABLE (MySQL 8+)
             $result = DB::select("
-                SELECT 
-                    JSON_UNQUOTE(JSON_EXTRACT(applied_rules, '$[0].type')) as rule_type,
-                    COUNT(*) as count
-                FROM room_price_history 
-                WHERE applied_rules IS NOT NULL 
-                    AND JSON_LENGTH(applied_rules) > 0
-                GROUP BY rule_type 
-                ORDER BY count DESC 
+                SELECT jt.rule_type, COUNT(*) as cnt
+                FROM room_price_history rph
+                JOIN JSON_TABLE(rph.applied_rules, '$[*]' COLUMNS (
+                    rule_type VARCHAR(64) PATH '$.type'
+                )) jt
+                WHERE rph.applied_rules IS NOT NULL 
+                  AND JSON_LENGTH(rph.applied_rules) > 0
+                GROUP BY jt.rule_type
+                ORDER BY cnt DESC
                 LIMIT 1
             ");
 
@@ -326,7 +318,7 @@ class RoomPriceHistoryController extends Controller
     public function getTrends(Request $request)
     {
         try {
-            $period = $request->get('period', 7); // Default 7 days
+            $period = (int) $request->get('period', 7); // Default 7 days
             $roomTypeId = $request->get('room_type_id');
 
             $endDate = Carbon::now();
@@ -447,7 +439,6 @@ class RoomPriceHistoryController extends Controller
             $endDate = Carbon::now();
             $startDate = Carbon::now()->subDays($period);
 
-            // Get rule effectiveness data
             $effectiveness = DB::select("
                 SELECT 
                     JSON_UNQUOTE(JSON_EXTRACT(rule_data.value, '$.type')) as rule_type,
@@ -494,7 +485,7 @@ class RoomPriceHistoryController extends Controller
         try {
             $period = $request->get('period', 30);
             $roomTypeId = $request->get('room_type_id');
-            
+
             $endDate = Carbon::now();
             $startDate = Carbon::now()->subDays($period);
 
@@ -561,7 +552,7 @@ class RoomPriceHistoryController extends Controller
             }
 
             $cutoffDate = Carbon::now()->subDays($request->days_to_keep);
-            
+
             $deletedCount = RoomPriceHistory::where('created_at', '<', $cutoffDate)->delete();
 
             return response()->json([
@@ -577,6 +568,47 @@ class RoomPriceHistoryController extends Controller
             ], 500);
         }
     }
-}
 
-    
+    /**
+     * Apply price range filter supporting both legacy codes and "min-max" format
+     */
+    private function applyPriceRangeFilter($query, string $rawRange, string $column = 'adjusted_price'): void
+    {
+        $range = trim($rawRange);
+
+        // Support legacy codes
+        if (in_array($range, ['under_1m', '1m_5m', '5m_10m', 'over_10m'], true)) {
+            switch ($range) {
+                case 'under_1m':
+                    $query->where($column, '<', 1000000);
+                    return;
+                case '1m_5m':
+                    $query->whereBetween($column, [1000000, 5000000]);
+                    return;
+                case '5m_10m':
+                    $query->whereBetween($column, [5000000, 10000000]);
+                    return;
+                case 'over_10m':
+                    $query->where($column, '>', 10000000);
+                    return;
+            }
+        }
+
+        // Support "min-max" format like "0-500000", "500000-1000000", "5000000-"
+        // - If only "min-" present => >= min
+        // - If only "-max" present => <= max (không dùng nhưng hỗ trợ nếu có)
+        // - If "min-max" => between [min, max]
+        if (preg_match('/^\s*(\d+)?\s*-\s*(\d+)?\s*$/', $range, $m)) {
+            $min = isset($m[1]) && $m[1] !== '' ? (int)$m[1] : null;
+            $max = isset($m[2]) && $m[2] !== '' ? (int)$m[2] : null;
+
+            if (!is_null($min) && !is_null($max)) {
+                $query->whereBetween($column, [$min, $max]);
+            } elseif (!is_null($min)) {
+                $query->where($column, '>=', $min);
+            } elseif (!is_null($max)) {
+                $query->where($column, '<=', $max);
+            }
+        }
+    }
+}

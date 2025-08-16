@@ -15,8 +15,7 @@
                 <button id="filterBtn"
                     class="btn cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 text-gray-500 dark:text-gray-400">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
-                        <path
-                            d="M9 15H7a1 1 0 010-2h2a1 1 0 010 2zM11 11H5a1 1 0 010-2h6a1 1 0 010 2zM13 7H3a1 1 0 010-2h10a1 1 0 010 2zM15 3H1a1 1 0 010-2h14a1 1 0 010 2z" />
+                        <path d="M9 15H7a1 1 0 010-2h2a1 1 0 010 2zM11 11H5a1 1 0 010-2h6a1 1 0 010 2zM13 7H3a1 1 0 010-2h10a1 1 0 010 2zM15 3H1a1 1 0 010-2h14a1 1 0 010 2z" />
                     </svg>
                     <span class="max-xs:sr-only">Lọc</span>
                 </button>
@@ -69,8 +68,8 @@
         </div>
 
         <!-- Price Trend Chart -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Xu hướng giá phòng</h3>
                 <div class="flex space-x-2">
                     <select id="chartRoomType" class="form-select text-sm">
@@ -83,8 +82,23 @@
                     </select>
                 </div>
             </div>
-            <div id="priceChart" class="h-64">
+            <div class="relative h-80">
                 <canvas id="priceChartCanvas"></canvas>
+                <div id="chartLoading" class="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg hidden">
+                    <div class="text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Đang tải biểu đồ...</p>
+                    </div>
+                </div>
+                <div id="chartError" class="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg hidden">
+                    <div class="text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Không thể tải biểu đồ</p>
+                        <button onclick="updatePriceChart()" class="mt-2 text-sm text-indigo-600 hover:text-indigo-500">Thử lại</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -151,10 +165,8 @@
 
                     <!-- Empty state -->
                     <div id="emptyState" class="text-center py-8 hidden">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Chưa có dữ liệu</h3>
                         <p class="mt-1 text-sm text-gray-500">Lịch sử giá phòng sẽ được hiển thị khi có thay đổi giá.</p>
@@ -165,8 +177,7 @@
                         <div class="overflow-x-auto">
                             <table class="table-auto w-full">
                                 <thead>
-                                    <tr
-                                        class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20">
+                                    <tr class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20">
                                         <th class="p-2 whitespace-nowrap">
                                             <div class="font-semibold text-left">ID</div>
                                         </th>
@@ -196,11 +207,10 @@
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody id="tableBody"
-                                    class="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
+                                <tbody id="tableBody" class="text-sm divide-y divide-gray-100 dark:divide-gray-700/60">
                                     <!-- Dynamic content -->
                                 </tbody>
-                                                        </table>
+                            </table>
                         </div>
 
                         <!-- Pagination -->
@@ -223,8 +233,7 @@
                         <button onclick="closePriceHistoryModal()"
                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
@@ -243,8 +252,7 @@
             class="fixed top-4 right-4 transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md z-50">
             <div class="flex items-center justify-center w-8 h-8 text-green-500">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
             <div class="ml-3 mr-8">
@@ -253,20 +261,22 @@
             </div>
             <button onclick="closeNotification()" class="absolute right-2 top-2 text-green-600 hover:text-green-800">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
     @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js v3 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
     <script>
         // Global variables
         let currentPage = 1;
         let currentFilters = {};
         let isLoading = false;
         let priceChart = null;
+        let chartUpdateTimeout = null;
 
         // DOM elements
         const elements = {
@@ -285,11 +295,58 @@
             statisticsContainer: document.getElementById('statisticsContainer'),
             chartRoomType: document.getElementById('chartRoomType'),
             chartPeriod: document.getElementById('chartPeriod'),
-            priceChartCanvas: document.getElementById('priceChartCanvas')
+            priceChartCanvas: document.getElementById('priceChartCanvas'),
+            chartLoading: document.getElementById('chartLoading'),
+            chartError: document.getElementById('chartError')
         };
+
+        // Utility functions
+        function formatCurrency(amount) {
+            if (!amount && amount !== 0) return '0₫';
+            return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                return new Date(dateString).toLocaleDateString('vi-VN');
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                return new Date(dateString).toLocaleString('vi-VN');
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function showChartLoading() {
+            elements.chartLoading?.classList.remove('hidden');
+            elements.chartError?.classList.add('hidden');
+        }
+
+        function hideChartLoading() {
+            elements.chartLoading?.classList.add('hidden');
+        }
+
+        function showChartError() {
+            elements.chartLoading?.classList.add('hidden');
+            elements.chartError?.classList.remove('hidden');
+        }
+
+        function hideChartError() {
+            elements.chartError?.classList.add('hidden');
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing Price History Page...');
+            
+            // Initialize components
             loadStatistics();
             loadRoomTypes();
             loadData();
@@ -302,34 +359,51 @@
                     closeNotification();
                 }, 5000);
             }
+
+            console.log('✅ Price History Page initialized');
         });
 
         // Bind events
         function bindEvents() {
             // Filter toggle
-            elements.filterBtn.addEventListener('click', toggleFilters);
+            elements.filterBtn?.addEventListener('click', toggleFilters);
 
             // Export
-            elements.exportBtn.addEventListener('click', exportData);
+            elements.exportBtn?.addEventListener('click', exportData);
 
             // Refresh
-            elements.refreshBtn.addEventListener('click', () => {
+            elements.refreshBtn?.addEventListener('click', () => {
+                console.log('🔄 Refreshing data...');
                 loadData();
                 loadStatistics();
                 updatePriceChart();
             });
 
             // Filters
-            elements.applyFiltersBtn.addEventListener('click', applyFilters);
-            elements.clearFiltersBtn.addEventListener('click', clearFilters);
+            elements.applyFiltersBtn?.addEventListener('click', applyFilters);
+            elements.clearFiltersBtn?.addEventListener('click', clearFilters);
 
-            // Chart controls
-            elements.chartRoomType.addEventListener('change', updatePriceChart);
-            elements.chartPeriod.addEventListener('change', updatePriceChart);
+            // Chart controls with debounce
+            elements.chartRoomType?.addEventListener('change', () => {
+                clearTimeout(chartUpdateTimeout);
+                chartUpdateTimeout = setTimeout(updatePriceChart, 300);
+            });
+            
+            elements.chartPeriod?.addEventListener('change', () => {
+                clearTimeout(chartUpdateTimeout);
+                chartUpdateTimeout = setTimeout(updatePriceChart, 300);
+            });
 
             // Close modal on outside click
-            elements.priceHistoryModal.addEventListener('click', function(e) {
+            elements.priceHistoryModal?.addEventListener('click', function(e) {
                 if (e.target === elements.priceHistoryModal) {
+                    closePriceHistoryModal();
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
                     closePriceHistoryModal();
                 }
             });
@@ -338,45 +412,73 @@
         // Load statistics
         async function loadStatistics() {
             try {
-                const response = await fetch('{{ route('admin.pricing.history.statistics') }}');
-                const data = await response.json();
-
-                if (response.ok) {
-                    updateStatistics(data);
-                } else {
-                    console.error('Failed to load statistics:', data);
+                console.log('📊 Loading statistics...');
+                const response = await fetch('{{ route('admin.pricing.history.statistics') }}', {
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                
+                const data = await response.json();
+                console.log('✅ Statistics loaded:', data);
+                updateStatistics(data);
             } catch (error) {
-                console.error('Error loading statistics:', error);
+                console.error('❌ Error loading statistics:', error);
+                // Show default stats on error
+                updateStatistics({ total_records: 0, average_price: 0, average_increase: 0, most_common_rule: 'N/A' });
             }
         }
 
-        // Load room types
+        // Load room types - FIX: Use correct route
         async function loadRoomTypes() {
             try {
-                const response = await fetch('{{ route("admin.weekend-price.room-types") }}');
+                console.log('🏠 Loading room types...');
+                // Try the pricing history route first, fallback to weekend-price route
+                let response;
+                try {
+                    response = await fetch('{{ route('admin.pricing.history.room-types') }}', {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                } catch (e) {
+                    console.log('⚠️ Fallback to weekend-price route');
+                    response = await fetch('{{ route("admin.weekend-price.room-types") }}', {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const roomTypes = await response.json();
+                console.log('✅ Room types loaded:', roomTypes);
                 
                 // Update filter dropdown
                 const filterSelect = document.getElementById('filterRoomType');
-                filterSelect.innerHTML = '<option value="">Tất cả</option>';
+                if (filterSelect) {
+                    filterSelect.innerHTML = '<option value="">Tất cả</option>';
+                    roomTypes.forEach(roomType => {
+                        const option = document.createElement('option');
+                        option.value = roomType.room_type_id;
+                        option.textContent = roomType.name;
+                        filterSelect.appendChild(option);
+                    });
+                }
                 
                 // Update chart dropdown
-                elements.chartRoomType.innerHTML = '<option value="">Tất cả loại phòng</option>';
-                
-                roomTypes.forEach(roomType => {
-                    const filterOption = document.createElement('option');
-                    filterOption.value = roomType.room_type_id;
-                    filterOption.textContent = roomType.name;
-                    filterSelect.appendChild(filterOption);
-
-                    const chartOption = document.createElement('option');
-                    chartOption.value = roomType.room_type_id;
-                    chartOption.textContent = roomType.name;
-                    elements.chartRoomType.appendChild(chartOption);
-                });
+                if (elements.chartRoomType) {
+                    elements.chartRoomType.innerHTML = '<option value="">Tất cả loại phòng</option>';
+                    roomTypes.forEach(roomType => {
+                        const option = document.createElement('option');
+                        option.value = roomType.room_type_id;
+                        option.textContent = roomType.name;
+                        elements.chartRoomType.appendChild(option);
+                    });
+                }
             } catch (error) {
-                console.error('Error loading room types:', error);
+                console.error('❌ Error loading room types:', error);
             }
         }
 
@@ -453,7 +555,7 @@
 
         // Toggle filters
         function toggleFilters() {
-            elements.filtersContainer.classList.toggle('hidden');
+            elements.filtersContainer?.classList.toggle('hidden');
         }
 
         // Load data
@@ -464,23 +566,29 @@
             showLoading();
 
             try {
+                console.log(`📋 Loading data for page ${page}...`);
                 const params = new URLSearchParams({
                     page: page,
                     ...currentFilters
                 });
 
-                const response = await fetch(`{{ route('admin.pricing.history.data') }}?${params}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentPage = page;
-                    displayData(data);
-                } else {
-                    showError('Không thể tải dữ liệu: ' + (data.message || 'Lỗi không xác định'));
+                const response = await fetch(`{{ route('admin.pricing.history.data') }}?${params}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                
+                const data = await response.json();
+                console.log('✅ Data loaded:', data);
+                
+                currentPage = page;
+                displayData(data);
             } catch (error) {
-                console.error('Error loading data:', error);
-                showError('Có lỗi xảy ra khi tải dữ liệu');
+                console.error('❌ Error loading data:', error);
+                showError('Có lỗi xảy ra khi tải dữ liệu: ' + error.message);
+                showEmptyState();
             } finally {
                 isLoading = false;
             }
@@ -497,18 +605,25 @@
 
             // Generate table rows
             const rows = data.data.map(history => {
-                const priceChange = history.adjusted_price - history.base_price;
-                const priceChangePercent = ((priceChange / history.base_price) * 100).toFixed(2);
+                const priceChange = (history.adjusted_price || 0) - (history.base_price || 0);
+                const priceChangePercent = history.base_price > 0 ? ((priceChange / history.base_price) * 100).toFixed(2) : 0;
                 const priceChangeClass = priceChange >= 0 ? 'text-green-600' : 'text-red-600';
-                                const appliedRules = JSON.parse(history.applied_rules || '[]');
+                
+                let appliedRules = [];
+                try {
+                    appliedRules = JSON.parse(history.applied_rules || '[]');
+                } catch (e) {
+                    console.warn('Invalid applied_rules JSON:', history.applied_rules);
+                }
+                
                 const rulesDisplay = appliedRules.length > 0 
-                    ? appliedRules.map(rule => `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1 mb-1">${rule.type}</span>`).join('')
+                    ? appliedRules.map(rule => `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1 mb-1">${rule.type || 'Unknown'}</span>`).join('')
                     : '<span class="text-gray-500">Không có</span>';
 
                 return `
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                         <td class="p-2 whitespace-nowrap">
-                            <div class="font-medium text-gray-900 dark:text-gray-100">${history.history_id}</div>
+                            <div class="font-medium text-gray-900 dark:text-gray-100">${history.history_id || history.id || '-'}</div>
                         </td>
                         <td class="p-2 whitespace-nowrap">
                             <div class="text-sm text-gray-900 dark:text-gray-100">${history.room_type_name || 'N/A'}</div>
@@ -517,7 +632,7 @@
                             <div class="text-sm text-gray-900 dark:text-gray-100">${history.option_name || 'N/A'}</div>
                         </td>
                         <td class="p-2 whitespace-nowrap">
-                            <div class="text-sm text-gray-900 dark:text-gray-100">${formatDate(history.applied_date)}</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">${formatDate(history.applied_date || history.date)}</div>
                         </td>
                         <td class="p-2 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${formatCurrency(history.base_price)}</div>
@@ -538,22 +653,19 @@
                             <div class="relative inline-block text-left">
                                 <button type="button"
                                     class="button-action inline-flex items-center justify-center w-8 h-8 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors duration-200"
-                                    onclick="toggleDropdown(${history.history_id})"
-                                    id="dropdown-button-${history.history_id}">
-                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
-                                        </path>
+                                    onclick="toggleDropdown('${history.history_id || history.id}')"
+                                    id="dropdown-button-${history.history_id || history.id}">
+                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                                     </svg>
                                 </button>
 
                                 <!-- Dropdown Menu -->
-                                <div id="dropdown-menu-${history.history_id}"
+                                <div id="dropdown-menu-${history.history_id || history.id}"
                                     class="hidden menu-button-action absolute right-0 z-50 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none">
                                     <div class="py-1" role="menu">
                                         <!-- View Details -->
-                                        <button onclick="viewPriceHistoryDetails(${history.history_id}); closeDropdown(${history.history_id})"
+                                        <button onclick="viewPriceHistoryDetails('${history.history_id || history.id}'); closeDropdown('${history.history_id || history.id}')"
                                             class="flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                             role="menuitem">
                                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -564,7 +676,7 @@
                                         </button>
 
                                         <!-- Export Single -->
-                                        <button onclick="exportSingleHistory(${history.history_id}); closeDropdown(${history.history_id})"
+                                        <button onclick="exportSingleHistory('${history.history_id || history.id}'); closeDropdown('${history.history_id || history.id}')"
                                             class="flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                             role="menuitem">
                                             <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -588,7 +700,7 @@
 
         // Update pagination
         function updatePagination(data) {
-            if (data.last_page <= 1) {
+            if (!data.last_page || data.last_page <= 1) {
                 elements.paginationContainer.innerHTML = '';
                 return;
             }
@@ -598,8 +710,8 @@
             // Info
             paginationHtml += `
                 <div class="text-sm text-gray-700 dark:text-gray-300">
-                    Hiển thị <span class="font-medium">${data.from}</span> đến <span class="font-medium">${data.to}</span> 
-                    trong tổng số <span class="font-medium">${data.total}</span> kết quả
+                    Hiển thị <span class="font-medium">${data.from || 0}</span> đến <span class="font-medium">${data.to || 0}</span> 
+                    trong tổng số <span class="font-medium">${data.total || 0}</span> kết quả
                 </div>
             `;
 
@@ -648,31 +760,31 @@
 
         // Show/hide states
         function showLoading() {
-            elements.loadingState.classList.remove('hidden');
-            elements.emptyState.classList.add('hidden');
-            elements.tableContent.classList.add('hidden');
+            elements.loadingState?.classList.remove('hidden');
+            elements.emptyState?.classList.add('hidden');
+            elements.tableContent?.classList.add('hidden');
         }
 
         function showEmptyState() {
-            elements.loadingState.classList.add('hidden');
-            elements.emptyState.classList.remove('hidden');
-            elements.tableContent.classList.add('hidden');
+            elements.loadingState?.classList.add('hidden');
+            elements.emptyState?.classList.remove('hidden');
+            elements.tableContent?.classList.add('hidden');
         }
 
         function showTableContent() {
-            elements.loadingState.classList.add('hidden');
-            elements.emptyState.classList.add('hidden');
-            elements.tableContent.classList.remove('hidden');
+            elements.loadingState?.classList.add('hidden');
+            elements.emptyState?.classList.add('hidden');
+            elements.tableContent?.classList.remove('hidden');
         }
 
         // Apply filters
         function applyFilters() {
             currentFilters = {
-                room_type_id: document.getElementById('filterRoomType').value,
-                start_date: document.getElementById('filterStartDate').value,
-                end_date: document.getElementById('filterEndDate').value,
-                price_range: document.getElementById('filterPriceRange').value,
-                rule_type: document.getElementById('filterRuleType').value
+                room_type_id: document.getElementById('filterRoomType')?.value || '',
+                start_date: document.getElementById('filterStartDate')?.value || '',
+                end_date: document.getElementById('filterEndDate')?.value || '',
+                price_range: document.getElementById('filterPriceRange')?.value || '',
+                rule_type: document.getElementById('filterRuleType')?.value || ''
             };
 
             // Remove empty filters
@@ -682,6 +794,7 @@
                 }
             });
 
+            console.log('🔍 Applying filters:', currentFilters);
             loadData(1);
         }
 
@@ -693,77 +806,156 @@
             document.getElementById('filterPriceRange').value = '';
             document.getElementById('filterRuleType').value = '';
             currentFilters = {};
+            console.log('🧹 Filters cleared');
             loadData(1);
         }
 
-        // Initialize price chart
+        // Initialize price chart - FIXED for Chart.js v3
         function initializePriceChart() {
-            const ctx = elements.priceChartCanvas.getContext('2d');
-            priceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Giá trung bình',
-                        data: [],
-                        borderColor: 'rgb(99, 102, 241)',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        tension: 0.1,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
+            if (!elements.priceChartCanvas) {
+                console.error('❌ Chart canvas not found');
+                return;
+            }
+
+            console.log('📈 Initializing price chart...');
+            
+            try {
+                const ctx = elements.priceChartCanvas.getContext('2d');
+                
+                priceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Giá trung bình (VNĐ)',
+                            data: [],
+                            borderColor: 'rgb(99, 102, 241)',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4, // Chart.js v3 syntax
+                            pointBackgroundColor: 'rgb(99, 102, 241)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { // Chart.js v3 syntax
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgb(99, 102, 241)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Giá: ' + formatCurrency(context.parsed.y);
+                                    }
                                 }
                             }
+                        },
+                        scales: { // Chart.js v3 syntax
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('vi-VN', {
+                                            notation: 'compact',
+                                            compactDisplay: 'short'
+                                        }).format(value) + '₫';
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
                         }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
                     }
-                }
-            });
-
-            updatePriceChart();
-        }
-
-        // Update price chart
-        async function updatePriceChart() {
-            try {
-                const params = new URLSearchParams({
-                    room_type_id: elements.chartRoomType.value,
-                    period: elements.chartPeriod.value
                 });
 
-                const response = await fetch(`{{ route('admin.pricing.history.chart') }}?${params}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    priceChart.data.labels = data.labels;
-                    priceChart.data.datasets[0].data = data.data;
-                    priceChart.update();
-                }
+                console.log('✅ Price chart initialized');
+                updatePriceChart();
             } catch (error) {
-                console.error('Error updating chart:', error);
+                console.error('❌ Error initializing chart:', error);
+                showChartError();
             }
         }
 
-        // Toggle dropdown menu
-        function toggleDropdown(id) {
+        // Update price chart - FIXED with better error handling
+        async function updatePriceChart() {
+            if (!priceChart) {
+                console.warn('⚠️ Chart not initialized, skipping update');
+                return;
+            }
+
+            showChartLoading();
+            hideChartError();
+
+            try {
+                console.log('📈 Updating price chart...');
+                
+                const params = new URLSearchParams({
+                    room_type_id: elements.chartRoomType?.value || '',
+                    period: elements.chartPeriod?.value || '30'
+                });
+
+                const response = await fetch(`{{ route('admin.pricing.history.chart') }}?${params}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Chart data received:', data);
+
+                // Validate data structure
+                if (!data || (!Array.isArray(data.labels) && !Array.isArray(data.data))) {
+                    throw new Error('Invalid chart data structure');
+                }
+
+                // Update chart data
+                priceChart.data.labels = data.labels || [];
+                priceChart.data.datasets[0].data = (data.data || []).map(value => value === null ? null : Number(value));
+                
+                priceChart.update();
+                hideChartLoading();
+                
+                console.log('✅ Chart updated successfully');
+            } catch (error) {
+                console.error('❌ Error updating chart:', error);
+                hideChartLoading();
+                showChartError();
+                
+                // Clear chart data on error
+                if (priceChart) {
+                    priceChart.data.labels = [];
+                    priceChart.data.datasets[0].data = [];
+                    priceChart.update();
+                }
+            }
+        }
+
+        // Dropdown functions
+        window.toggleDropdown = function(id) {
             const dropdown = document.getElementById(`dropdown-menu-${id}`);
             const allDropdowns = document.querySelectorAll('[id^="dropdown-menu-"]');
 
@@ -775,14 +967,13 @@
             });
 
             // Toggle current dropdown
-            dropdown.classList.toggle('hidden');
-        }
+            dropdown?.classList.toggle('hidden');
+        };
 
-        // Close dropdown
-        function closeDropdown(id) {
+        window.closeDropdown = function(id) {
             const dropdown = document.getElementById(`dropdown-menu-${id}`);
-            dropdown.classList.add('hidden');
-        }
+            dropdown?.classList.add('hidden');
+        };
 
         // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
@@ -811,254 +1002,248 @@
                 });
             }
         });
+
         // View price history details
-        async function viewPriceHistoryDetails(id) {
+        window.viewPriceHistoryDetails = async function(id) {
             try {
-                const response = await fetch(`{{ route('admin.pricing.history.show', ':id') }}`.replace(':id', id));
+                console.log(`👁️ Loading details for history ID: ${id}`);
+                
+                const response = await fetch(`{{ route('admin.pricing.history.show', ':id') }}`.replace(':id', id), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const result = await response.json();
 
-                if (response.ok && result.success) {
-                    const history = result.data;
-                    const appliedRules = JSON.parse(history.applied_rules || '[]');
-                    
-                    const priceChange = history.adjusted_price - history.base_price;
-                    const priceChangePercent = ((priceChange / history.base_price) * 100).toFixed(2);
-                    const priceChangeClass = priceChange >= 0 ? 'text-green-600' : 'text-red-600';
+                if (!result.success) {
+                    throw new Error(result.message || 'Failed to load details');
+                }
 
-                    const detailsHtml = `
-                        <div class="space-y-6">
-                            <!-- Basic Information -->
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Thông tin cơ bản</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ID Lịch sử</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${history.history_id}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loại phòng</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${history.room_type_name || 'N/A'}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tùy chọn phòng</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${history.option_name || 'N/A'}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày áp dụng</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${formatDate(history.applied_date)}</div>
-                                    </div>
+                const history = result.data;
+                let appliedRules = [];
+                
+                try {
+                    appliedRules = JSON.parse(history.applied_rules || '[]');
+                } catch (e) {
+                    console.warn('Invalid applied_rules JSON:', history.applied_rules);
+                }
+                
+                const priceChange = (history.adjusted_price || 0) - (history.base_price || 0);
+                const priceChangePercent = history.base_price > 0 ? ((priceChange / history.base_price) * 100).toFixed(2) : 0;
+                const priceChangeClass = priceChange >= 0 ? 'text-green-600' : 'text-red-600';
+
+                const detailsHtml = `
+                    <div class="space-y-6">
+                        <!-- Basic Information -->
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Thông tin cơ bản</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ID Lịch sử</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${history.history_id || history.id || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Loại phòng</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${history.room_type_name || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tùy chọn phòng</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${history.option_name || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày áp dụng</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${formatDate(history.applied_date || history.date)}</div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Price Information -->
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Thông tin giá</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Giá gốc</label>
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatCurrency(history.base_price)}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Giá điều chỉnh</label>
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatCurrency(history.adjusted_price)}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Thay đổi</label>
-                                        <div class="text-lg font-semibold ${priceChangeClass}">
-                                            ${priceChange >= 0 ? '+' : ''}${formatCurrency(priceChange)}
-                                            <div class="text-sm">(${priceChangePercent >= 0 ? '+' : ''}${priceChangePercent}%)</div>
-                                        </div>
-                                    </div>
+                        <!-- Price Information -->
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Thông tin giá</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Giá gốc</label>
+                                    <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatCurrency(history.base_price)}</div>
                                 </div>
-                            </div>
-
-                            <!-- Applied Rules -->
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Quy tắc đã áp dụng</h4>
-                                ${appliedRules.length > 0 ? `
-                                    <div class="space-y-3">
-                                        ${appliedRules.map(rule => `
-                                            <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
-                                                <div class="flex items-center space-x-3">
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                        ${rule.type}
-                                                    </span>
-                                                    <div>
-                                                        <div class="font-medium text-gray-900 dark:text-gray-100">${rule.name || 'N/A'}</div>
-                                                        <div class="text-sm text-gray-500 dark:text-gray-400">ID: ${rule.rule_id}</div>
-                                                    </div>
-                                                </div>
-                                                <div class="text-right">
-                                                    <div class="font-medium ${rule.adjustment >= 0 ? 'text-green-600' : 'text-red-600'}">
-                                                        ${rule.adjustment >= 0 ? '+' : ''}${rule.adjustment}%
-                                                    </div>
-                                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                        Ưu tiên: ${rule.priority || 'N/A'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : `
-                                    <div class="text-center py-4">
-                                        <div class="text-gray-500 dark:text-gray-400">Không có quy tắc nào được áp dụng</div>
-                                    </div>
-                                `}
-                            </div>
-
-                            <!-- Additional Information -->
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Thông tin bổ sung</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tỷ lệ lấp đầy</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${history.occupancy_rate || 0}%</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cơ chế tính giá</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${history.pricing_mechanism || 'Cộng dồn'}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày tạo</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${formatDateTime(history.created_at)}</div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú</label>
-                                        <div class="text-sm text-gray-900 dark:text-gray-100">${history.notes || 'Không có'}</div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Giá điều chỉnh</label>
+                                    <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">${formatCurrency(history.adjusted_price)}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Thay đổi</label>
+                                    <div class="text-lg font-semibold ${priceChangeClass}">
+                                        ${priceChange >= 0 ? '+' : ''}${formatCurrency(priceChange)}
+                                        <div class="text-sm">(${priceChangePercent >= 0 ? '+' : ''}${priceChangePercent}%)</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    `;
 
-                    document.getElementById('priceHistoryContent').innerHTML = detailsHtml;
-                    elements.priceHistoryModal.classList.remove('hidden');
-                } else {
-                    showError('Không thể tải chi tiết: ' + (result.message || 'Lỗi không xác định'));
-                }
+                        <!-- Applied Rules -->
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Quy tắc đã áp dụng</h4>
+                            ${appliedRules.length > 0 ? `
+                                <div class="space-y-3">
+                                    ${appliedRules.map(rule => `
+                                        <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-600 rounded-lg">
+                                            <div class="flex items-center space-x-3">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    ${rule.type || 'Unknown'}
+                                                </span>
+                                                <div>
+                                                    <div class="font-medium text-gray-900 dark:text-gray-100">${rule.name || 'N/A'}</div>
+                                                    <div class="text-sm text-gray-500 dark:text-gray-400">ID: ${rule.rule_id || 'N/A'}</div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-medium ${(rule.adjustment || 0) >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                                    ${(rule.adjustment || 0) >= 0 ? '+' : ''}${rule.adjustment || 0}%
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    Ưu tiên: ${rule.priority || 'N/A'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div class="text-center py-4">
+                                    <div class="text-gray-500 dark:text-gray-400">Không có quy tắc nào được áp dụng</div>
+                                </div>
+                            `}
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Thông tin bổ sung</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tỷ lệ lấp đầy</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${history.occupancy_rate || 0}%</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cơ chế tính giá</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${history.pricing_mechanism || 'Cộng dồn'}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ngày tạo</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${formatDateTime(history.created_at)}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ghi chú</label>
+                                    <div class="text-sm text-gray-900 dark:text-gray-100">${history.notes || 'Không có'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('priceHistoryContent').innerHTML = detailsHtml;
+                elements.priceHistoryModal?.classList.remove('hidden');
+                
+                console.log('✅ Details modal opened');
             } catch (error) {
-                console.error('Error loading price history details:', error);
-                showError('Có lỗi xảy ra khi tải chi tiết');
+                console.error('❌ Error loading price history details:', error);
+                showError('Không thể tải chi tiết: ' + error.message);
             }
-        }
+        };
 
         // Close price history modal
         function closePriceHistoryModal() {
-            elements.priceHistoryModal.classList.add('hidden');
+            elements.priceHistoryModal?.classList.add('hidden');
         }
 
-        // Export single history
-        async function exportSingleHistory(id) {
+        // Export functions
+        window.exportSingleHistory = async function(id) {
             try {
+                console.log(`📤 Exporting single history: ${id}`);
                 window.open(`{{ route('admin.pricing.history.export-single', ':id') }}`.replace(':id', id), '_blank');
             } catch (error) {
-                console.error('Error exporting single history:', error);
+                console.error('❌ Error exporting single history:', error);
                 showError('Có lỗi xảy ra khi xuất báo cáo');
             }
-        }
+        };
 
-        // Export data
-        async function exportData() {
+        function exportData() {
             try {
+                console.log('📤 Exporting all data with filters:', currentFilters);
                 const params = new URLSearchParams(currentFilters);
                 window.open(`{{ route('admin.pricing.history.export') }}?${params}`, '_blank');
             } catch (error) {
-                console.error('Error exporting data:', error);
+                console.error('❌ Error exporting data:', error);
                 showError('Có lỗi xảy ra khi xuất dữ liệu');
             }
         }
 
-        // Utility functions
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(amount);
+        // Notification functions
+        function showSuccess(message) {
+            showNotification(message, 'success');
         }
 
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            return new Date(dateString).toLocaleDateString('vi-VN');
+        function showError(message) {
+            showNotification(message, 'error');
         }
 
-        function formatDateTime(dateString) {
-            if (!dateString) return 'N/A';
-            return new Date(dateString).toLocaleString('vi-VN');
+        function showNotification(message, type = 'success') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.dynamic-notification');
+            existingNotifications.forEach(notification => notification.remove());
+
+            const isSuccess = type === 'success';
+            const bgColor = isSuccess ? 'from-green-50 to-green-100' : 'from-red-50 to-red-100';
+            const borderColor = isSuccess ? 'border-green-500' : 'border-red-500';
+            const textColor = isSuccess ? 'text-green-600' : 'text-red-600';
+            const iconColor = isSuccess ? 'text-green-500' : 'text-red-500';
+            const title = isSuccess ? 'Thành công!' : 'Lỗi!';
+            const icon = isSuccess 
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r ${bgColor} border-l-4 ${borderColor} shadow-md z-50`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-center w-8 h-8 ${iconColor}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${icon}
+                    </svg>
+                </div>
+                <div class="ml-3 mr-8">
+                    <h3 class="font-semibold ${textColor.replace('600', '700')}">${title}</h3>
+                    <div class="text-sm ${textColor}">${message}</div>
+                </div>
+                <button onclick="this.parentElement.remove()" class="absolute right-2 top-2 ${textColor} hover:${textColor.replace('600', '800')}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Auto close after appropriate time
+            const autoCloseTime = isSuccess ? 3000 : 5000;
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, autoCloseTime);
         }
 
         // Show success notification
         function showSuccess(message) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.dynamic-notification');
-            existingNotifications.forEach(notification => notification.remove());
-
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md z-50';
-            notification.innerHTML = `
-                <div class="flex items-center justify-center w-8 h-8 text-green-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 mr-8">
-                    <h3 class="font-semibold text-green-700">Thành công!</h3>
-                    <div class="text-sm text-green-600">${message}</div>
-                </div>
-                <button onclick="this.parentElement.remove()" class="absolute right-2 top-2 text-green-600 hover:text-green-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Auto close after 3 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 3000);
+            showNotification(message, 'success');
         }
 
         // Show error notification
         function showError(message) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.dynamic-notification');
-            existingNotifications.forEach(notification => notification.remove());
-
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 shadow-md z-50';
-            notification.innerHTML = `
-                <div class="flex items-center justify-center w-8 h-8 text-red-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 mr-8">
-                    <h3 class="font-semibold text-red-700">Lỗi!</h3>
-                    <div class="text-sm text-red-600">${message}</div>
-                </div>
-                <button onclick="this.parentElement.remove()" class="absolute right-2 top-2 text-red-600 hover:text-red-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Auto close after 5 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 5000);
+            showNotification(message, 'error');
         }
 
-                // Close static notification (from session)
+        // Close static notification (from session)
         function closeNotification() {
             const notification = document.getElementById('notification');
             if (notification) {
@@ -1069,19 +1254,175 @@
             }
         }
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePriceHistoryModal();
+        // Initialize price chart - FIXED for Chart.js v3
+        function initializePriceChart() {
+            if (!elements.priceChartCanvas) {
+                console.error('Chart canvas not found');
+                return;
             }
+
+            console.log('Initializing price chart...');
+            
+            try {
+                const ctx = elements.priceChartCanvas.getContext('2d');
+                
+                priceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Giá trung bình (VNĐ)',
+                            data: [],
+                            borderColor: 'rgb(99, 102, 241)',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4, // Chart.js v3 syntax
+                            pointBackgroundColor: 'rgb(99, 102, 241)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { // Chart.js v3 syntax
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgb(99, 102, 241)',
+                                borderWidth: 1,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Giá: ' + formatCurrency(context.parsed.y);
+                                    }
+                                }
+                            }
+                        },
+                        scales: { // Chart.js v3 syntax
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('vi-VN', {
+                                            notation: 'compact',
+                                            compactDisplay: 'short'
+                                        }).format(value) + '₫';
+                                    }
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        }
+                    }
+                });
+
+                console.log('Price chart initialized successfully');
+                updatePriceChart();
+            } catch (error) {
+                console.error('Error initializing chart:', error);
+                showError('Không thể khởi tạo biểu đồ');
+            }
+        }
+
+        // Update price chart - FIXED with better error handling
+        async function updatePriceChart() {
+            if (!priceChart) {
+                console.warn('Chart not initialized, skipping update');
+                return;
+            }
+
+            try {
+                console.log('Updating price chart...');
+                
+                const params = new URLSearchParams({
+                    room_type_id: elements.chartRoomType?.value || '',
+                    period: elements.chartPeriod?.value || '30'
+                });
+
+                const response = await fetch(`{{ route('admin.pricing.history.chart') }}?${params}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Chart data received:', data);
+
+                // Validate data structure
+                if (!data || !Array.isArray(data.labels) || !Array.isArray(data.data)) {
+                    throw new Error('Invalid chart data structure');
+                }
+
+                // Update chart data
+                priceChart.data.labels = data.labels;
+                priceChart.data.datasets[0].data = data.data.map(value => value === null ? null : Number(value));
+                
+                priceChart.update();
+                
+                console.log('Chart updated successfully');
+            } catch (error) {
+                console.error('Error updating chart:', error);
+                
+                // Clear chart data on error
+                if (priceChart) {
+                    priceChart.data.labels = [];
+                    priceChart.data.datasets[0].data = [];
+                    priceChart.update();
+                }
+                
+                showError('Không thể cập nhật biểu đồ: ' + error.message);
+            }
+        }
+
+        // Fixed formatCurrency function
+        function formatCurrency(amount) {
+            if (!amount && amount !== 0) return '0₫';
+            return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
+        }
+
+        // Dark mode chart updates
+        function updateChartsForTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            if (priceChart && Chart.defaults) {
+                Chart.defaults.color = isDark ? '#9CA3AF' : '#6B7280';
+                priceChart.update();
+            }
+        }
+
+        // Listen for theme changes
+        const themeObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    updateChartsForTheme();
+                }
+            });
         });
 
-        // Auto refresh data every 5 minutes
-        setInterval(() => {
-            loadData(currentPage);
-            loadStatistics();
-            updatePriceChart();
-        }, 300000); // 5 minutes
+        themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
 
         // Handle window resize for chart
         window.addEventListener('resize', function() {
@@ -1089,6 +1430,321 @@
                 priceChart.resize();
             }
         });
+
+        // Auto refresh data every 5 minutes
+        setInterval(() => {
+            if (!document.hidden) { // Only refresh if page is visible
+                loadData(currentPage);
+                loadStatistics();
+                updatePriceChart();
+            }
+        }, 300000); // 5 minutes
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Page became visible, refresh data
+                loadData(currentPage);
+                loadStatistics();
+                updatePriceChart();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape key - close modals
+            if (e.key === 'Escape') {
+                closePriceHistoryModal();
+                
+                // Close all dropdowns
+                const dropdowns = document.querySelectorAll('[id^="dropdown-menu-"]');
+                dropdowns.forEach(dropdown => {
+                    dropdown.classList.add('hidden');
+                });
+            }
+            
+            // Ctrl/Cmd + R - refresh data
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                loadData(currentPage);
+                loadStatistics();
+                updatePriceChart();
+                showSuccess('Dữ liệu đã được làm mới');
+            }
+            
+            // Ctrl/Cmd + F - focus on filters
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                if (elements.filtersContainer.classList.contains('hidden')) {
+                    toggleFilters();
+                }
+                document.getElementById('filterRoomType')?.focus();
+            }
+        });
+
+        // Add loading states to buttons
+        function setButtonLoading(button, loading = true) {
+            if (!button) return;
+            
+            if (loading) {
+                button.disabled = true;
+                button.classList.add('btn-loading');
+                button.setAttribute('data-original-text', button.textContent);
+                button.textContent = 'Đang xử lý...';
+            } else {
+                button.disabled = false;
+                button.classList.remove('btn-loading');
+                const originalText = button.getAttribute('data-original-text');
+                if (originalText) {
+                    button.textContent = originalText;
+                    button.removeAttribute('data-original-text');
+                }
+            }
+        }
+
+        // Enhanced error handling for fetch requests
+        async function fetchWithErrorHandling(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Accept': 'application/json' },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    throw new Error('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.');
+                }
+                throw error;
+            }
+        }
+
+        // Add retry mechanism for failed requests
+        async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+            let lastError;
+            
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    return await fetchWithErrorHandling(url, options);
+                } catch (error) {
+                    lastError = error;
+                    if (i < maxRetries - 1) {
+                        // Wait before retry (exponential backoff)
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                    }
+                }
+            }
+            
+            throw lastError;
+        }
+
+        // Performance monitoring
+        function measurePerformance(name, fn) {
+            return async function(...args) {
+                const start = performance.now();
+                try {
+                    const result = await fn.apply(this, args);
+                    const end = performance.now();
+                    console.log(`${name} took ${(end - start).toFixed(2)}ms`);
+                    return result;
+                } catch (error) {
+                    const end = performance.now();
+                    console.error(`${name} failed after ${(end - start).toFixed(2)}ms:`, error);
+                    throw error;
+                }
+            };
+        }
+
+        // Wrap performance-critical functions
+        loadData = measurePerformance('loadData', loadData);
+        loadStatistics = measurePerformance('loadStatistics', loadStatistics);
+        updatePriceChart = measurePerformance('updatePriceChart', updatePriceChart);
+
+        // Add accessibility improvements
+        function enhanceAccessibility() {
+            // Add ARIA labels to interactive elements
+            const buttons = document.querySelectorAll('button:not([aria-label])');
+            buttons.forEach(button => {
+                const text = button.textContent.trim() || button.getAttribute('title') || 'Button';
+                button.setAttribute('aria-label', text);
+            });
+
+            // Add keyboard navigation for dropdowns
+            document.addEventListener('keydown', function(e) {
+                const activeDropdown = document.querySelector('[id^="dropdown-menu-"]:not(.hidden)');
+                if (!activeDropdown) return;
+
+                const menuItems = activeDropdown.querySelectorAll('[role="menuitem"]');
+                const currentIndex = Array.from(menuItems).findIndex(item => item === document.activeElement);
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        const nextIndex = currentIndex < menuItems.length - 1 ? currentIndex + 1 : 0;
+                        menuItems[nextIndex]?.focus();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        const prevIndex = currentIndex > 0 ? currentIndex - 1 : menuItems.length - 1;
+                        menuItems[prevIndex]?.focus();
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        document.activeElement?.click();
+                        break;
+                }
+            });
+        }
+
+        // Initialize accessibility enhancements
+        document.addEventListener('DOMContentLoaded', enhanceAccessibility);
+
+        // Add data validation
+        function validateFormData(data) {
+            const errors = [];
+
+            if (data.start_date && data.end_date) {
+                const startDate = new Date(data.start_date);
+                const endDate = new Date(data.end_date);
+                
+                if (startDate > endDate) {
+                    errors.push('Ngày bắt đầu không thể sau ngày kết thúc');
+                }
+                
+                const maxRange = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
+                if (endDate - startDate > maxRange) {
+                    errors.push('Khoảng thời gian không thể vượt quá 1 năm');
+                }
+            }
+
+            return errors;
+        }
+
+        // Enhanced applyFilters with validation
+        const originalApplyFilters = applyFilters;
+        applyFilters = function() {
+            const formData = {
+                room_type_id: document.getElementById('filterRoomType')?.value || '',
+                start_date: document.getElementById('filterStartDate')?.value || '',
+                end_date: document.getElementById('filterEndDate')?.value || '',
+                price_range: document.getElementById('filterPriceRange')?.value || '',
+                rule_type: document.getElementById('filterRuleType')?.value || ''
+            };
+
+            const errors = validateFormData(formData);
+            if (errors.length > 0) {
+                showError('Lỗi validation: ' + errors.join(', '));
+                return;
+            }
+
+            originalApplyFilters();
+        };
+
+        // Add export progress tracking
+        async function trackExportProgress(exportFunction, filename) {
+            const progressNotification = document.createElement('div');
+            progressNotification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500 shadow-md z-50';
+            progressNotification.innerHTML = `
+                <div class="flex items-center justify-center w-8 h-8 text-blue-500">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                </div>
+                <div class="ml-3">
+                    <h3 class="font-semibold text-blue-700">Đang xuất dữ liệu...</h3>
+                    <div class="text-sm text-blue-600">Vui lòng đợi trong giây lát</div>
+                </div>
+            `;
+
+            document.body.appendChild(progressNotification);
+
+            try {
+                await exportFunction();
+                progressNotification.remove();
+                showSuccess(`Đã xuất thành công: ${filename}`);
+            } catch (error) {
+                progressNotification.remove();
+                showError('Lỗi khi xuất dữ liệu: ' + error.message);
+            }
+        }
+
+        // Enhanced export functions
+        const originalExportData = exportData;
+        exportData = function() {
+            return trackExportProgress(originalExportData, 'Lịch sử giá phòng');
+        };
+
+        const originalExportSingleHistory = exportSingleHistory;
+        exportSingleHistory = function(id) {
+            return trackExportProgress(() => originalExportSingleHistory(id), `Lịch sử #${id}`);
+        };
+
+        // Add connection status monitoring
+        function monitorConnection() {
+            let isOnline = navigator.onLine;
+
+            function updateConnectionStatus() {
+                const newStatus = navigator.onLine;
+                if (newStatus !== isOnline) {
+                    isOnline = newStatus;
+                    if (isOnline) {
+                        showSuccess('Kết nối mạng đã được khôi phục');
+                        // Refresh data when connection is restored
+                        loadData(currentPage);
+                        loadStatistics();
+                        updatePriceChart();
+                    } else {
+                        showError('Mất kết nối mạng. Một số tính năng có thể không hoạt động.');
+                    }
+                }
+            }
+
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+        }
+
+        // Initialize connection monitoring
+        monitorConnection();
+
+        // Add data caching for better performance
+        const cache = new Map();
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        function getCacheKey(url, params) {
+            return url + '?' + new URLSearchParams(params).toString();
+        }
+
+        
+        function getCachedData(key) {
+            const cached = cache.get(key);
+            if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+                return cached.data;
+            }
+            return null;
+        }
+
+        function setCachedData(key, data) {
+            cache.set(key, {
+                data: data,
+                timestamp: Date.now()
+            });
+        }
+
+        // Clear old cache entries periodically
+        setInterval(() => {
+            const now = Date.now();
+            for (const [key, value] of cache.entries()) {
+                if (now - value.timestamp > CACHE_DURATION) {
+                    cache.delete(key);
+                }
+            }
+        }, CACHE_DURATION);
+
+        console.log('✅ Price History page fully initialized with all enhancements');
     </script>
 
     <style>
@@ -1179,6 +1835,33 @@
             position: relative;
         }
 
+        /* Button loading state */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* Table responsive */
         @media (max-width: 768px) {
             .table-auto {
@@ -1205,31 +1888,6 @@
             color: #dc2626;
         }
 
-        /* Rule type badges */
-        .rule-badge {
-            @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium;
-        }
-
-        .rule-badge.weekend {
-            @apply bg-blue-100 text-blue-800;
-        }
-
-        .rule-badge.event {
-            @apply bg-green-100 text-green-800;
-        }
-
-        .rule-badge.holiday {
-            @apply bg-purple-100 text-purple-800;
-        }
-
-        .rule-badge.season {
-            @apply bg-orange-100 text-orange-800;
-        }
-
-        .rule-badge.dynamic {
-            @apply bg-yellow-100 text-yellow-800;
-        }
-
         /* Statistics cards hover effect */
         .statistics-card {
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -1252,20 +1910,6 @@
 
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        /* Chart loading state */
-        .chart-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 256px;
-            background-color: #f9fafb;
-            border-radius: 0.5rem;
-        }
-
-        .dark .chart-loading {
-            background-color: #374151;
         }
 
         /* Filter panel animation */
@@ -1300,33 +1944,6 @@
             opacity: 1;
         }
 
-        /* Button loading state */
-        .btn-loading {
-            position: relative;
-            color: transparent;
-        }
-
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
         /* Dark mode improvements */
         .dark .bg-gradient-to-r.from-green-50.to-green-100 {
             background: linear-gradient(to right, #064e3b, #065f46);
@@ -1334,6 +1951,10 @@
 
         .dark .bg-gradient-to-r.from-red-50.to-red-100 {
             background: linear-gradient(to right, #7f1d1d, #991b1b);
+        }
+
+        .dark .bg-gradient-to-r.from-blue-50.to-blue-100 {
+            background: linear-gradient(to right, #1e3a8a, #1e40af);
         }
 
         /* Print styles */
@@ -1347,10 +1968,54 @@
                 max-width: none !important;
             }
         }
+
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus indicators */
+        button:focus,
+        select:focus,
+        input:focus {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .bg-gray-50 {
+                background-color: #ffffff;
+            }
+            
+            .text-gray-500 {
+                color: #000000;
+            }
+            
+            .border-gray-300 {
+                border-color: #000000;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .animate-pulse,
+            .animate-spin,
+            .transition-all,
+            .transition-colors,
+            .transition-transform {
+                animation: none;
+                transition: none;
+            }
+        }
     </style>
 
 </x-app-layout>
-
-
-        
-
