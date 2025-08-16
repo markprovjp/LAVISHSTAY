@@ -30,6 +30,9 @@ use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\Api\NewsCommentController;
 use App\Http\Controllers\Api\NewsAPICategoryController;
+use App\Http\Controllers\Api\NewsUserActionController;
+use App\Http\Controllers\NewsController\NewsCategoryController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
