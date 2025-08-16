@@ -78,6 +78,13 @@ class Booking extends Model
         return $this->hasMany(Invoice::class, 'booking_id', 'booking_id');
     }
 
+      /**
+     * Relationship with booking services (additional services during stay)
+     */
+    public function bookingServices()
+    {
+        return $this->hasMany(BookingService::class, 'booking_id', 'booking_id');
+    }
     /**
      * Get the latest invoice for this booking
      */
@@ -110,6 +117,14 @@ class Booking extends Model
     public function getFormattedFinalTotalAmountAttribute()
     {
         return number_format($this->final_total_amount, 0, ',', '.') . ' ₫';
+    }
+
+    /**
+     * Relationship with compensation requests
+     */
+    public function compensationRequests()
+    {
+        return $this->hasMany(CompensationRequest::class, 'booking_id', 'booking_id');
     }
 
 }

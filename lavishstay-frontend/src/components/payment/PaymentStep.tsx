@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Radio, Space, Row, Col, Alert, Button, Divider, Descriptions, Typography, Image } from 'antd';
 import { QrcodeOutlined, BankOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { PaymentCheck } from './PaymentCheck';
 import { PaymentTransaction } from '../../services/paymentService';
+import { usePaymentSettings } from '../../hooks/usePaymentSetting';
 
 const { Text } = Typography;
 
@@ -37,6 +38,21 @@ const formatVND = (amount: number) => {
     }).format(amount);
 };
 
+// Bank name mapping
+const getBankName = (bankId: string): string => {
+    const bankNames: { [key: string]: string } = {
+        'VCB': 'Vietcombank',
+        'TCB': 'Techcombank',
+        'MBBank': 'MB Bank',
+        'VTB': 'Vietinbank',
+        'BIDV': 'BIDV',
+        'ACB': 'ACB',
+        'TPB': 'TPBank',
+        'STB': 'Sacombank'
+    };
+    return bankNames[bankId] || bankId;
+};
+
 const PaymentStep: React.FC<PaymentStepProps> = ({
     selectedPaymentMethod,
     onPaymentMethodChange,
@@ -50,6 +66,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     generateVietQRUrl
 }) => {
     const [showPaymentCheck, setShowPaymentCheck] = useState(false);
+
+    // Get payment settings from hook
+    const { settings, loading: settingsLoading, error: settingsError } = usePaymentSettings();
 
     const handleConfirmPayment = () => {
         if (selectedPaymentMethod === 'vietqr') {
@@ -68,25 +87,66 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     const handleCancelCheck = () => {
         setShowPaymentCheck(false);
     };
-    const paymentMethods: PaymentMethod[] = [
-        {
+
+    const paymentMethods: PaymentMethod[] = [];
+    if (settings?.vietqr?.enabled) {
+        paymentMethods.push({
             id: 'vietqr',
             name: 'VietQR',
             description: 'Quét mã QR để thanh toán nhanh chóng',
             icon: <QrcodeOutlined style={{ fontSize: '20px', color: '#1890ff' }} />,
             badge: 'Khuyến nghị'
-        },
-        {
+        });
+    }
+    if (settings?.vnpay?.enabled) {
+        paymentMethods.push({
+            id: 'vnpay',
+            name: 'VNPay',
+            description: 'Thanh toán qua cổng VNPay bằng thẻ ATM hoặc Internet Banking',
+            icon: <CreditCardOutlined style={{ fontSize: '20px', color: '#f5222d' }} />
+        });
+    }
+    if (settings?.pay_at_hotel?.enabled) {
+        paymentMethods.push({
             id: 'pay_at_hotel',
             name: 'Thanh toán tại khách sạn',
             description: 'Thanh toán trực tiếp tại quầy lễ tân khi nhận phòng',
             icon: <BankOutlined style={{ fontSize: '20px', color: '#52c41a' }} />
-        }
-    ];
+        });
+    }
 
     const generatePaymentContent = () => {
         return `LAVISHSTAY_${bookingCode}`;
     };
+
+    // Show loading state while settings are being fetched
+    if (settingsLoading) {
+        return (
+            <Card className="w-full max-w-6xl mx-auto">
+                <div className="flex justify-center items-center py-8">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <Text>Đang tải cấu hình thanh toán...</Text>
+                    </div>
+                </div>
+            </Card>
+        );
+    }
+
+    // Show error state if settings failed to load
+    if (settingsError) {
+        return (
+            <Card className="w-full max-w-6xl mx-auto">
+                <Alert
+                    message="Lỗi tải cấu hình thanh toán"
+                    description={settingsError}
+                    type="error"
+                    showIcon
+                    className="mb-4"
+                />
+            </Card>
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -169,19 +229,19 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                         <Text className="text-gray-600">Ngân hàng:</Text>
-                                        <Text strong>MB Bank</Text>
+                                        <Text strong>{getBankName(settings?.vietqr?.bank_id || 'MBBank')}</Text>
                                     </div>
 
                                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                         <Text className="text-gray-600">Số tài khoản:</Text>
                                         <Text strong className="bg-blue-50 px-2 py-1 rounded text-blue-700 font-mono">
-                                            0335920306
+                                            {settings?.vietqr?.account_no || '0335920306'}
                                         </Text>
                                     </div>
 
                                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                                         <Text className="text-gray-600">Chủ tài khoản:</Text>
-                                        <Text strong>NGUYEN VAN QUYEN</Text>
+                                        <Text strong>{settings?.vietqr?.account_name || 'NGUYEN VAN QUYEN'}</Text>
                                     </div>
 
                                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -204,7 +264,8 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                                             {bookingCode}
                                         </Text>
                                     </div>
-                                </div>                                <Alert
+                                </div>                                
+                                <Alert
                                     message={`Thời gian còn lại: ${formatTime(countdown)}`}
                                     description="Vui lòng hoàn tất thanh toán trong thời gian quy định"
                                     type="warning"

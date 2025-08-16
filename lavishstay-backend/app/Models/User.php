@@ -56,6 +56,10 @@ class User extends Authenticatable
             : null;
     }
 
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class, 'user_id');
+    }
     /**
      * Quan hệ: user thuộc nhiều role
      */
