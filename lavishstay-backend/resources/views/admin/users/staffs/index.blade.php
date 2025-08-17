@@ -31,7 +31,7 @@
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add Staff</span>
+                        <span class="max-xs:sr-only cursor-pointer">Thêm Nhân Viên</span>
                     </button>
                 </a>
             </div>
@@ -256,7 +256,7 @@
                                                 <a href="{{ route('admin.users.staffs.show', $user->id) }}"
                                                     class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                     role="menuitem">
-                                                    View Details
+                                                    Xem Chi Tiết
                                                 </a>
                                                           <!-- Divider -->
                                                 <div class="border-t border-gray-100 dark:border-gray-700">
@@ -274,7 +274,7 @@
                                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                         </path>
                                                     </svg>
-                                                    Delete Staff
+                                                    Xoá Nhân Viên
                                                 </button>
                                             </div>
                                         </div>

@@ -19,8 +19,8 @@
 
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Cancellation Policies Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all cancellation policies and their configurations</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản Lý Chính Sách Hủy Bỏ</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý tất cả các chính Sách hủy bỏ và cấu hình của chúng</p>
             </div>
 
             <!-- Right: Actions -->
@@ -33,7 +33,7 @@
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add Policy</span>
+                        <span class="max-xs:sr-only">Thêm Chính Sách</span>
                     </button>
                 </a>
             </div>
@@ -162,14 +162,14 @@
                                                                 onclick="toggleDetails({{ $policy->policy_id }}); closeDropdown({{ $policy->policy_id }})"
                                                                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                                 role="menuitem">
-                                                                View Details
+                                                                Xem Chi Tiết
                                                             </button>
 
                                                             <!-- Edit -->
                                                             <a href="{{ route('admin.cancellation-policies.edit', $policy->policy_id) }}"
                                                                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                                 role="menuitem">
-                                                                Edit Policy
+                                                                Sửa Chính Sách
                                                             </a>
 
                                                             <!-- Divider -->
@@ -188,7 +188,7 @@
                                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                                     </path>
                                                                 </svg>
-                                                                Delete Policy
+                                                                Xoá Chính Sách
                                                             </button>
                                                         </div>
                                                     </div>
@@ -206,11 +206,11 @@
                                                         <div>
                                                             <h4
                                                                 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                Policy Information</h4>
+                                                                Thông tin chính sách</h4>
                                                             <div class="space-y-2">
                                                                 <div>
                                                                     <span
-                                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Name:</span>
+                                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Tên:</span>
                                                                     <p
                                                                         class="text-sm  text-green-600 dark:text-green-400 ">
                                                                         {{ $policy->name }}
@@ -233,12 +233,12 @@
                                                         <div>
                                                             <h4
                                                                 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                Cancellation Rules</h4>
+                                                                Quy định hủy bỏ</h4>
                                                             <div class="space-y-2">
                                                                 @if ($policy->free_cancellation_days)
                                                                     <div>
                                                                         <span
-                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Free Cancellation:</span>
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Hủy miễn phí:</span>
                                                                         <div class="flex flex-wrap gap-1 mt-1">
                                                                             <span
                                                                                 class="inline-flex items-center font-normal py-1 px-2 rounded-full text-xs bg-blue-100 dark:bg-blue-400/30 text-blue-600 dark:text-blue-400">
@@ -250,7 +250,7 @@
                                                                 @if ($policy->penalty_percentage)
                                                                     <div>
                                                                         <span
-                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Penalty Percentage:</span>
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Tỷ lệ phạt:</span>
                                                                         <div class="flex flex-wrap gap-1 mt-1">
                                                                              <span
                                                                                 class="inline-flex items-center font-normal py-1 px-2 rounded-full text-xs bg-orange-100 dark:bg-orange-400/30 text-orange-600 dark:text-orange-400">
@@ -262,7 +262,7 @@
                                                                 @if ($policy->penalty_fixed_amount_vnd)
                                                                     <div>
                                                                         <span
-                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Fixed Penalty:</span>
+                                                                            class="text-xs font-medium text-gray-500 dark:text-gray-400">Hình phạt cố định:</span>
                                                                         <div class="flex flex-wrap gap-1 mt-1">
                                                                              <span
                                                                                 class="inline-flex items-center font-normal py-1 px-2 rounded-full text-xs bg-red-100 dark:bg-red-400/30 text-red-600 dark:text-red-400">
@@ -281,11 +281,11 @@
                                                         <div>
                                                             <h4
                                                                 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                Status Information</h4>
+                                                                Thông tin trạng thái</h4>
                                                             <div class="space-y-2">
                                                                 <div>
                                                                     <span
-                                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Current Status:</span>
+                                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Tình trạng hiện tại:</span>
                                                                     <div class="flex flex-wrap gap-1 mt-1">
                                                                         <span
                                                                             class="inline-flex items-center font-normal py-1 px-2 rounded-full text-xs {{ $policy->is_active ? 'bg-green-100 dark:bg-green-400/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-400/30 text-red-600 dark:text-red-400' }}">
@@ -300,13 +300,13 @@
                                                         <div>
                                                             <h4
                                                                 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                Timestamps</h4>
+                                                                Dấu Thời Gian</h4>
                                                             <div
                                                                 class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                                                                <div>Created:
+                                                                <div>Ngày Tạo:
                                                                     {{ $policy->created_at->format('M d, Y H:i') }}
                                                                 </div>
-                                                                <div>Updated:
+                                                                <div>Ngày Sửa:
                                                                     {{ $policy->updated_at->format('M d, Y H:i') }}
                                                                 </div>
                                                             </div>
