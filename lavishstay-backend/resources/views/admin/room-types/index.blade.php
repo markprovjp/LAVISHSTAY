@@ -17,8 +17,9 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Room Types Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all room types and their configurations</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý loại phòng</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý tất cả các loại phòng và cấu hình của chúng
+                </p>
             </div>
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
@@ -30,7 +31,7 @@
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add Room Type</span>
+                        <span class="max-xs:sr-only cursor-pointer">Thêm Loại Phòng</span>
                     </button>
                 </a>
             </div>
@@ -83,23 +84,23 @@
                                         </th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Room Code
+                                            MÃ PHÒNG
                                         </th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Name
+                                            TÊN PHÒNG
                                         </th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Total Room
+                                            TỔNG CỘNG PHÒNG
                                         </th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Description
+                                            SỰ MIÊU TẢ
                                         </th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Hành động
+                                            HÀNH ĐỘNG
                                         </th>
                                     </tr>
                                 </thead>
@@ -150,7 +151,7 @@
                                                                 onclick="toggleDetails({{ $roomType->room_type_id }}); closeDropdown({{ $roomType->room_type_id }})"
                                                                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                                 role="menuitem">
-                                                                View Details
+                                                                Xem Chi Tiết
                                                             </button>
 
                                                             <!-- Photos and Amenities -->
@@ -164,7 +165,7 @@
                                                             <a href="{{ route('admin.room-types.edit', $roomType->room_type_id) }}"
                                                                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                                 role="menuitem">
-                                                                Edit Room Type
+                                                                Sửa Loại Phòng
                                                             </a>
 
                                                             <!-- Divider -->
@@ -184,7 +185,7 @@
                                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                                     </path>
                                                                 </svg>
-                                                                Delete Room Type
+                                                                Xoá Loại Phòng
                                                             </button>
                                                         </div>
                                                     </div>
