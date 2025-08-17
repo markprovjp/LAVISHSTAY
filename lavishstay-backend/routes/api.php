@@ -109,23 +109,6 @@ Route::prefix('checkin')->group(function () {
 });
 
 
-<<<<<<< Updated upstream
-// API Routes cho Check-out///////////////////////////////////////////////////
-// Service management
-Route::get('/services/available', [BookingCheckoutController::class, 'getAvailableServices']);
-Route::post('/bookings/{id}/services', [BookingCheckoutController::class, 'addBookingService']);
-Route::put('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'updateBookingService']);
-Route::delete('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'removeBookingService']);
-
-// Checkout
-Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
-Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
-Route::post('/bookings/{id}/checkout/compensation ', [BookingCheckoutController::class, 'createCompensationRequest']);
-=======
-// NOTE: service & checkout routes moved into Reception Management section below
->>>>>>> Stashed changes
-
-
 
 
 // Rooms API  
