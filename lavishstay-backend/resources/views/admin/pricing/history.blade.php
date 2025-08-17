@@ -721,7 +721,7 @@
             // Previous button
             if (data.current_page > 1) {
                 paginationHtml += `
-                    <button onclick="loadData(${data.current_page - 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <button onclick="loadData(${data.current_page - 1})" class="px-3 py-2 text-sm font-medium cursor-pointer text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                         Trước
                     </button>
                 `;
@@ -738,7 +738,7 @@
                     'px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50';
 
                 paginationHtml += `
-                    <button onclick="loadData(${i})" class="${buttonClass}">
+                    <button onclick="loadData(${i})" class=" cursor-pointer ${buttonClass}">
                         ${i}
                     </button>
                 `;
@@ -747,7 +747,7 @@
             // Next button
             if (data.current_page < data.last_page) {
                 paginationHtml += `
-                    <button onclick="loadData(${data.current_page + 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <button onclick="loadData(${data.current_page + 1})" class="px-3 py-2 cursor-pointer text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                         Sau
                     </button>
                 `;
