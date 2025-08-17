@@ -1,78 +1,109 @@
+http://127.0.0.1:8888/api/reception/services/available
 {
     "success": true,
+    "message": "Lấy danh sách dịch vụ thành công",
     "data": {
-        "id": 8,
-        "slug": "bai-viet-mau-so-8",
-        "title": "Bài viết mẫu số 8",
-        "summary": "Đây là bài viết mẫu số 8 để test dữ liệu.",
-        "content": "<p>Nội dung chi tiết của bài viết mẫu số 8.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>",
-        "tags": [
-            "sample",
-            "test",
-            "demo"
-        ],
-        "thumbnail_id": 7,
-        "author_id": 2,
-        "category_id": 3,
-        "meta_title": "Bài viết mẫu số 8",
-        "meta_description": "Mô tả bài viết mẫu số 8",
-        "meta_keywords": "sample, test, demo",
-        "canonical_url": "/news/bai-viet-mau-so-8",
-        "schema_json": [],
-        "views": 481,
-        "status": true,
-        "published_at": "2025-08-08T09:37:45.000000Z",
-        "created_at": "2025-08-11T09:37:45.000000Z",
-        "updated_at": "2025-08-13T06:20:50.000000Z",
-        "is_featured": 0,
-        "thumbnail": {
-            "id": 7,
-            "filename": "restaurant-dining.jpg",
-            "filepath": "http://localhost:8888/storage/room-types/1/1.jpg",
-            "alt_text": "Nhà hàng với không gian ấm cúng và món ăn tinh tế",
-            "title": "Nhà Hàng LavishStay",
-            "type": "image/jpeg",
-            "size": 1654321,
-            "used_in": "news",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-12T04:28:15.000000Z"
-        },
-        "category": {
-            "id": 3,
-            "name": "Ưu Đãi & Khuyến Mãi",
-            "slug": "uu-dai-khuyen-mai",
-            "description": "Thông tin về các chương trình ưu đãi, khuyến mãi đặc biệt",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-11T09:37:45.000000Z"
-        },
-        "author": {
-            "id": 2,
-            "name": "Nguyễn Anh Đức",
-            "email": "nguyenandhduc2909@gmail.com",
-            "google_id": null,
-            "avatar": null,
-            "email_verified_at": null,
-            "phone": "08221534422",
-            "address": "Thanh Hóa",
-            "identity_code": null,
-            "role": "guest",
-            "two_factor_confirmed_at": null,
-            "current_team_id": null,
-            "profile_photo_path": null,
-            "created_at": "2025-06-10T09:47:13.000000Z",
-            "updated_at": "2025-06-10T09:47:13.000000Z",
-            "profile_photo_url": "https://ui-avatars.com/api/?name=N+A+%C4%90&color=7F9CF5&background=EBF4FF"
-        },
-        "user_action": {
-            "is_liked": false,
-            "is_bookmarked": false,
-            "rating": null
-        },
-        "stats": {
-            "likes_count": 3,
-            "bookmarks_count": 1,
-            "comments_count": 7,
-            "average_rating": 0
-        }
+        "total_services": 11,
+        "services": [
+            {
+                "service_id": 1,
+                "name": "Ăn uống tại phòng",
+                "description": "Khách có thể đặt các món ăn, đồ uống từ thực đơn của nhà hàng khách sạn và được nhân viên mang đến tận phòng.",
+                "price_vnd": "50000.00",
+                "unit": "1",
+                "formatted_price": "50.000 ₫",
+                "price_with_unit": "50.000 ₫/1"
+            },
+            {
+                "service_id": 9,
+                "name": "Bữa tối đặc biệt",
+                "description": "Bữa tối lãng mạn hoặc theo chủ đề tại nhà hàng, với menu tùy chỉnh và rượu vang.",
+                "price_vnd": "1000000.00",
+                "unit": "người",
+                "formatted_price": "1.000.000 ₫",
+                "price_with_unit": "1.000.000 ₫/người"
+            },
+            {
+                "service_id": 3,
+                "name": "Dịch vụ giặt ủi",
+                "description": "Giặt khô, giặt ướt và ủi quần áo, hoàn thành trong 24 giờ.",
+                "price_vnd": "50000.00",
+                "unit": "kg",
+                "formatted_price": "50.000 ₫",
+                "price_with_unit": "50.000 ₫/kg"
+            },
+            {
+                "service_id": 8,
+                "name": "Dịch vụ hội nghị và sự kiện",
+                "description": "Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.",
+                "price_vnd": "2000000.00",
+                "unit": "giờ",
+                "formatted_price": "2.000.000 ₫",
+                "price_with_unit": "2.000.000 ₫/giờ"
+            },
+            {
+                "service_id": 11,
+                "name": "Dịch vụ phòng 24/7",
+                "description": "Dịch vụ phục vụ đồ ăn, thức uống tận phòng bất kỳ lúc nào trong ngày.",
+                "price_vnd": "50000.00",
+                "unit": "lần",
+                "formatted_price": "50.000 ₫",
+                "price_with_unit": "50.000 ₫/lần"
+            },
+            {
+                "service_id": 2,
+                "name": "Dịch vụ spa và massage",
+                "description": "Các liệu pháp spa thư giãn, massage toàn thân hoặc chuyên sâu, sử dụng tinh dầu và kỹ thuật chuyên nghiệp.",
+                "price_vnd": "500000.00",
+                "unit": "lần",
+                "formatted_price": "500.000 ₫",
+                "price_with_unit": "500.000 ₫/lần"
+            },
+            {
+                "service_id": 10,
+                "name": "Dịch vụ trông trẻ",
+                "description": "Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.",
+                "price_vnd": "200000.00",
+                "unit": "giờ",
+                "formatted_price": "200.000 ₫",
+                "price_with_unit": "200.000 ₫/giờ"
+            },
+            {
+                "service_id": 4,
+                "name": "Mini bar",
+                "description": "Sử dụng đồ uống, snack và rượu từ mini bar trong phòng, tính phí theo sản phẩm tiêu thụ.",
+                "price_vnd": "100000.00",
+                "unit": "lần",
+                "formatted_price": "100.000 ₫",
+                "price_with_unit": "100.000 ₫/lần"
+            },
+            {
+                "service_id": 7,
+                "name": "Thuê xe hơi hoặc xe máy",
+                "description": "Thuê xe hơi tự lái hoặc có tài xế, hoặc xe máy để khám phá khu vực lân cận.",
+                "price_vnd": "500000.00",
+                "unit": "ngày",
+                "formatted_price": "500.000 ₫",
+                "price_with_unit": "500.000 ₫/ngày"
+            },
+            {
+                "service_id": 6,
+                "name": "Tour du lịch địa phương",
+                "description": "Tổ chức tour tham quan các địa danh nổi tiếng, bao gồm hướng dẫn viên và phương tiện di chuyển.",
+                "price_vnd": "800000.00",
+                "unit": "người",
+                "formatted_price": "800.000 ₫",
+                "price_with_unit": "800.000 ₫/người"
+            },
+            {
+                "service_id": 5,
+                "name": "Xe đưa đón sân bay",
+                "description": "Dịch vụ đưa đón hai chiều từ sân bay đến khách sạn bằng xe riêng.",
+                "price_vnd": "300000.00",
+                "unit": "chuyến",
+                "formatted_price": "300.000 ₫",
+                "price_with_unit": "300.000 ₫/chuyến"
+            }
+        ]
     }
 }

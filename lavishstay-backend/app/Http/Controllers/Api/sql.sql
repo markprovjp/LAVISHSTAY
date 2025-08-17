@@ -1,84 +1,3 @@
--- Bảng news: Lưu bài viết, tags dạng JSON
-CREATE TABLE news (
-  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Khóa chính, mã bài viết',
-  slug VARCHAR(255) NOT NULL UNIQUE COMMENT 'Đường dẫn không dấu, duy nhất cho mỗi bài viết (SEO)',
-  title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề bài viết',
-  summary TEXT COMMENT 'Tóm tắt ngắn nội dung bài viết',
-  content LONGTEXT COMMENT 'Nội dung chi tiết bài viết (HTML)',
-  tags JSON COMMENT 'Danh sách tag (mảng string, phục vụ tìm kiếm, phân loại)',
-  thumbnail_id BIGINT UNSIGNED COMMENT 'ID ảnh đại diện (liên kết media_files)',
-  author_id BIGINT UNSIGNED COMMENT 'ID tác giả (liên kết users)',
-  category_id BIGINT UNSIGNED COMMENT 'ID chuyên mục/danh mục (liên kết news_categories)',
-  meta_title VARCHAR(255) COMMENT 'Tiêu đề SEO (meta title)',
-  meta_description TEXT COMMENT 'Mô tả SEO (meta description)',
-  meta_keywords VARCHAR(255) COMMENT 'Từ khóa SEO (meta keywords)',
-  canonical_url VARCHAR(255) COMMENT 'URL chuẩn SEO (canonical)',
-  schema_json JSON COMMENT 'Dữ liệu cấu trúc SEO (schema.org, dạng JSON)',
-  views INT DEFAULT 0 COMMENT 'Số lượt xem bài viết',
-  status TINYINT DEFAULT 1 COMMENT 'Trạng thái bài viết (1: hiển thị, 0: ẩn, nháp...)',
-  published_at DATETIME COMMENT 'Thời điểm xuất bản',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật',
-  FOREIGN KEY (thumbnail_id) REFERENCES media_files(id),
-  FOREIGN KEY (author_id) REFERENCES users(id),
-  FOREIGN KEY (category_id) REFERENCES news_categories(id)
-);
-
--- Bảng news_categories: Danh mục
-CREATE TABLE `news_categories` (
-  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính chuyên mục',
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên chuyên mục (ví dụ: Ưu đãi, Tin tức, Hướng dẫn...)',
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Slug URL của chuyên mục (không dấu)',
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả ngắn giúp định nghĩa mục đích chuyên mục',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục tin tức phân loại nội dung';
-
-
--- Bảng user actions: like, bookmark, rating
-CREATE TABLE news_user_actions (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    news_id BIGINT UNSIGNED NOT NULL,
-    user_id BIGINT UNSIGNED NOT NULL,
-    is_liked TINYINT DEFAULT 0,
-    is_bookmarked TINYINT DEFAULT 0,
-    rating FLOAT DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY (news_id, user_id),
-    FOREIGN KEY (news_id) REFERENCES news(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
--- Bảng bình luận
-CREATE TABLE news_comments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    news_id BIGINT UNSIGNED NOT NULL,
-    user_id BIGINT UNSIGNED NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    likes INT DEFAULT 0,
-    parent_id BIGINT UNSIGNED DEFAULT NULL,
-    FOREIGN KEY (news_id) REFERENCES news(id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (parent_id) REFERENCES news_comments(id)
-);
-
-CREATE TABLE `media_files` (
-  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính của file ảnh/media',
-  `filename` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên file gốc (ví dụ: khachsan1.jpg)',
-  `filepath` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Đường dẫn file (ví dụ: /storage/media/khachsan1.jpg)',
-  `alt_text` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Thuộc tính ALT – giúp SEO hình ảnh',
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Tiêu đề ảnh hiển thị khi hover',
-  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Loại file (ví dụ: image/jpeg, image/webp...)',
-  `size` int DEFAULT NULL COMMENT 'Dung lượng file tính bằng byte',
-  `used_in` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Ngữ cảnh sử dụng (ví dụ: news, banner, home)',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm upload',
-    -- Bảng media_files: Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh';
-
-
-
 
 
     -- Bảng news_categories: Danh mục tin tức phân loại nội dung
@@ -372,3 +291,84 @@ CREATE TABLE `amenities` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`amenity_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+-- Bảng news: Lưu bài viết, tags dạng JSON
+CREATE TABLE news (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT 'Khóa chính, mã bài viết',
+  slug VARCHAR(255) NOT NULL UNIQUE COMMENT 'Đường dẫn không dấu, duy nhất cho mỗi bài viết (SEO)',
+  title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề bài viết',
+  summary TEXT COMMENT 'Tóm tắt ngắn nội dung bài viết',
+  content LONGTEXT COMMENT 'Nội dung chi tiết bài viết (HTML)',
+  tags JSON COMMENT 'Danh sách tag (mảng string, phục vụ tìm kiếm, phân loại)',
+  thumbnail_id BIGINT UNSIGNED COMMENT 'ID ảnh đại diện (liên kết media_files)',
+  author_id BIGINT UNSIGNED COMMENT 'ID tác giả (liên kết users)',
+  category_id BIGINT UNSIGNED COMMENT 'ID chuyên mục/danh mục (liên kết news_categories)',
+  meta_title VARCHAR(255) COMMENT 'Tiêu đề SEO (meta title)',
+  meta_description TEXT COMMENT 'Mô tả SEO (meta description)',
+  meta_keywords VARCHAR(255) COMMENT 'Từ khóa SEO (meta keywords)',
+  canonical_url VARCHAR(255) COMMENT 'URL chuẩn SEO (canonical)',
+  schema_json JSON COMMENT 'Dữ liệu cấu trúc SEO (schema.org, dạng JSON)',
+  views INT DEFAULT 0 COMMENT 'Số lượt xem bài viết',
+  status TINYINT DEFAULT 1 COMMENT 'Trạng thái bài viết (1: hiển thị, 0: ẩn, nháp...)',
+  published_at DATETIME COMMENT 'Thời điểm xuất bản',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật',
+  FOREIGN KEY (thumbnail_id) REFERENCES media_files(id),
+  FOREIGN KEY (author_id) REFERENCES users(id),
+  FOREIGN KEY (category_id) REFERENCES news_categories(id)
+);
+
+-- Bảng news_categories: Danh mục
+CREATE TABLE `news_categories` (
+  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính chuyên mục',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên chuyên mục (ví dụ: Ưu đãi, Tin tức, Hướng dẫn...)',
+  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Slug URL của chuyên mục (không dấu)',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả ngắn giúp định nghĩa mục đích chuyên mục',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục tin tức phân loại nội dung';
+
+
+-- Bảng user actions: like, bookmark, rating
+CREATE TABLE news_user_actions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    news_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    is_liked TINYINT DEFAULT 0,
+    is_bookmarked TINYINT DEFAULT 0,
+    rating FLOAT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY (news_id, user_id),
+    FOREIGN KEY (news_id) REFERENCES news(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Bảng bình luận
+CREATE TABLE news_comments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    news_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    likes INT DEFAULT 0,
+    parent_id BIGINT UNSIGNED DEFAULT NULL,
+    FOREIGN KEY (news_id) REFERENCES news(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (parent_id) REFERENCES news_comments(id)
+);
+
+CREATE TABLE `media_files` (
+  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính của file ảnh/media',
+  `filename` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên file gốc (ví dụ: khachsan1.jpg)',
+  `filepath` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Đường dẫn file (ví dụ: /storage/media/khachsan1.jpg)',
+  `alt_text` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Thuộc tính ALT – giúp SEO hình ảnh',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Tiêu đề ảnh hiển thị khi hover',
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Loại file (ví dụ: image/jpeg, image/webp...)',
+  `size` int DEFAULT NULL COMMENT 'Dung lượng file tính bằng byte',
+  `used_in` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Ngữ cảnh sử dụng (ví dụ: news, banner, home)',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm upload',
+    -- Bảng media_files: Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh';
+
+
+

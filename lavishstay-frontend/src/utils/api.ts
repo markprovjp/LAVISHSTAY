@@ -394,6 +394,19 @@ export const receptionAPI = {
     return response.data;
   },
 
+  // Services for reception (available services and booking service management)
+  getAvailableServices: async () => {
+    const response = await api.get('/reception/services/available');
+    return response.data;
+  },
+
+  addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
+    // Backend expects service additions on the booking resource: /bookings/{id}/services
+  // For reception flow the route is namespaced under /reception
+  const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    return response.data;
+  },
+
   // Check-in API methods
   getCheckinInfo: async (bookingId: number) => {
     const response = await api.get(`/checkin/booking/${bookingId}/info`);

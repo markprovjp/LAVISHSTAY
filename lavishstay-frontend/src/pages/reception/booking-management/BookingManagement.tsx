@@ -39,7 +39,6 @@ import {
     SmileOutlined
 } from '@ant-design/icons';
 import { useGetBookings, useGetBookingStatistics, useCancelBooking } from '../../../hooks/useReception';
-import { receptionAPI } from '../../../utils/api';
 import {
     Booking,
     BookingFilters
@@ -51,6 +50,7 @@ import CheckinModal from './CheckinModal';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import RoomSelectionModal from './RoomSelectionModal';
+import ReceptionServicesModal from './ReceptionServicesModal';
 dayjs.locale('vi');
 
 const { Content } = Layout;
@@ -106,6 +106,8 @@ const BookingManagement: React.FC = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [isCheckinModalVisible, setIsCheckinModalVisible] = useState(false);
     const [checkinBookingId, setCheckinBookingId] = useState<number | null>(null);
+    const [isServicesModalVisible, setIsServicesModalVisible] = useState(false);
+    const [servicesBookingId, setServicesBookingId] = useState<number | null>(null);
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -342,14 +344,9 @@ const BookingManagement: React.FC = () => {
                         setCheckinBookingId(record.booking_id);
                         setIsCheckinModalVisible(true);
                     } else if (key === 'checkout') {
-                        // Gọi API check-out qua axios
-                        try {
-                            await receptionAPI.checkOut({ booking_id: record.booking_id, room_id: record.room_id || 0 });
-                            message.success('Check-out thành công!');
-                            refetch();
-                        } catch (e) {
-                            message.error('Check-out thất bại!');
-                        }
+                        // Open services modal first so receptionist can add services before checkout
+                        setServicesBookingId(record.booking_id);
+                        setIsServicesModalVisible(true);
                     }
                 };
                 const menu = (
@@ -454,6 +451,19 @@ const BookingManagement: React.FC = () => {
                     onSuccess={() => {
                         refetch();
                         message.success('Check-in thành công!');
+                    }}
+                />
+                <ReceptionServicesModal
+                    visible={isServicesModalVisible}
+                    bookingId={servicesBookingId}
+                    onClose={() => {
+                        setIsServicesModalVisible(false);
+                        setServicesBookingId(null);
+                    }}
+                    onAdded={() => {
+                        // after services added, refresh data so receptionist can proceed to checkout
+                        refetch();
+                        message.success('Dịch vụ đã được thêm. Vui lòng tiến hành Check-out.');
                     }}
                 />
             </Content>
