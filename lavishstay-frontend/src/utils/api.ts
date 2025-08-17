@@ -402,8 +402,48 @@ export const receptionAPI = {
 
   addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
     // Backend expects service additions on the booking resource: /bookings/{id}/services
-  // For reception flow the route is namespaced under /reception
-  const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    // For reception flow the route is namespaced under /reception
+    const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    return response.data;
+  },
+
+  // Services for reception (available services and booking service management)
+  getAvailableServices: async () => {
+    const response = await api.get('/reception/services/available');
+    return response.data;
+  },
+
+  addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
+    // Backend expects service additions on the booking resource: /bookings/{id}/services
+    const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    return response.data;
+  },
+
+  // Checkout related helpers
+  getCheckoutInfo: async (bookingId: number) => {
+    const response = await api.get(`/reception/bookings/${bookingId}/checkout-info`);
+    // Some backend responses wrap payload in { success, message, data }
+    // Return inner data when available for easier consumption by UI
+    return response.data && response.data.data ? response.data.data : response.data;
+  },
+
+  processCheckout: async (bookingId: number, payload: any = {}) => {
+    const response = await api.post(`/reception/bookings/${bookingId}/checkout`, payload);
+    return response.data;
+  },
+
+  updateBookingService: async (bookingId: number, serviceId: number, data: { quantity?: number }) => {
+    const response = await api.put(`/reception/bookings/${bookingId}/services/${serviceId}`, data);
+    return response.data;
+  },
+
+  removeBookingService: async (bookingId: number, serviceId: number) => {
+    const response = await api.delete(`/reception/bookings/${bookingId}/services/${serviceId}`);
+    return response.data;
+  },
+
+  createCheckoutCompensation: async (bookingId: number, data: { custom_reason: string; requested_amount: number; attachments?: any[]; requested_by: number }) => {
+    const response = await api.post(`/reception/bookings/${bookingId}/checkout/compensation`, data);
     return response.data;
   },
 

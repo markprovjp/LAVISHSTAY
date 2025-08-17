@@ -18,7 +18,7 @@ type Props = {
     bookingId: number | null;
     visible: boolean;
     onClose: () => void;
-    onAdded?: () => void; // called after successfully adding services
+    onAdded?: (checkoutInfo?: any) => void; // called after successfully adding services
 };
 
 const ReceptionServicesModal: React.FC<Props> = ({ bookingId, visible, onClose, onAdded }) => {
@@ -92,7 +92,14 @@ const ReceptionServicesModal: React.FC<Props> = ({ bookingId, visible, onClose, 
             // Payload assumption: { services: [{ service_id, quantity }] }
             await receptionAPI.addBookingServices(bookingId, selectedServices);
             message.success('Thêm dịch vụ thành công');
-            onAdded?.();
+            // Get checkout info and pass it back to parent
+            try {
+                const res = await receptionAPI.getCheckoutInfo(bookingId);
+                onAdded?.(res);
+            } catch (err) {
+                console.warn('Could not fetch checkout info after adding services', err);
+                onAdded?.();
+            }
             onClose();
         } catch (err) {
             console.error('Failed to add services', err);
