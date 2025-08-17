@@ -23,7 +23,121 @@ class ReceptionController extends Controller
     {
         $this->pricingService = $pricingService;
     }
-    
+     /**
+     * Check-in guest
+     */
+    public function checkIn(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'booking_id' => 'required|integer',
+                'room_id' => 'required|integer',
+                'actual_check_in_time' => 'nullable|date_format:Y-m-d H:i:s'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Update booking status
+                DB::table('booking')
+                    ->where('booking_id', $request->booking_id)
+                    ->update([
+                        'status' => 'confirmed',
+                        'updated_at' => Carbon::now()
+                    ]);
+                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Check-in completed successfully',
+                    'data' => [
+                        'booking_id' => $request->booking_id,
+                        'room_id' => $request->room_id,
+                        'check_in_time' => $request->actual_check_in_time ?: Carbon::now()->format('Y-m-d H:i:s')
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error checking in: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing check-in',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check-out guest
+     */
+    public function checkOut(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'booking_id' => 'required|integer',
+                'room_id' => 'required|integer',
+                'actual_check_out_time' => 'nullable|date_format:Y-m-d H:i:s'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Update booking status
+                DB::table('booking')
+                    ->where('booking_id', $request->booking_id)
+                    ->update([
+                        'status' => 'completed',
+                        'updated_at' => Carbon::now()
+                    ]);
+                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Check-out completed successfully',
+                    'data' => [
+                        'booking_id' => $request->booking_id,
+                        'room_id' => $request->room_id,
+                        'check_out_time' => $request->actual_check_out_time ?: Carbon::now()->format('Y-m-d H:i:s')
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error checking out: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing check-out',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
    /**
      * Get all rooms with filters for room management dashboard
      */
@@ -578,120 +692,7 @@ class ReceptionController extends Controller
         }
     }
 
-    /**
-     * Check-in guest
-     */
-    public function checkIn(Request $request): JsonResponse
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'booking_id' => 'required|integer',
-                'room_id' => 'required|integer',
-                'actual_check_in_time' => 'nullable|date_format:Y-m-d H:i:s'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            try {
-                // Update booking status
-                DB::table('booking')
-                    ->where('booking_id', $request->booking_id)
-                    ->update([
-                        'status' => 'confirmed',
-                        'updated_at' => Carbon::now()
-                    ]);
-                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Check-in completed successfully',
-                    'data' => [
-                        'booking_id' => $request->booking_id,
-                        'room_id' => $request->room_id,
-                        'check_in_time' => $request->actual_check_in_time ?: Carbon::now()->format('Y-m-d H:i:s')
-                    ]
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                throw $e;
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error checking in: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error processing check-in',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Check-out guest
-     */
-    public function checkOut(Request $request): JsonResponse
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'booking_id' => 'required|integer',
-                'room_id' => 'required|integer',
-                'actual_check_out_time' => 'nullable|date_format:Y-m-d H:i:s'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            try {
-                // Update booking status
-                DB::table('booking')
-                    ->where('booking_id', $request->booking_id)
-                    ->update([
-                        'status' => 'completed',
-                        'updated_at' => Carbon::now()
-                    ]);
-                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Check-out completed successfully',
-                    'data' => [
-                        'booking_id' => $request->booking_id,
-                        'room_id' => $request->room_id,
-                        'check_out_time' => $request->actual_check_out_time ?: Carbon::now()->format('Y-m-d H:i:s')
-                    ]
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                throw $e;
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error checking out: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error processing check-out',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
+   
 
 
 
