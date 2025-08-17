@@ -273,7 +273,7 @@ class BookingCheckoutController extends Controller
                     'message' => 'Không thể check-out do không đáp ứng các điều kiện bắt buộc',
                     'validation_result' => $validationResult->getDetailedResults(),
                     'blocking_issues' => $validationResult->blockingFailures,
-                    'can_force_checkout' => Auth::user()->hasRole('admin'), // Assuming role check
+                    'can_force_checkout' => (Auth::check() && Auth::user()->hasRole('admin')), // Guard null user
                 ], 400);
             }
 

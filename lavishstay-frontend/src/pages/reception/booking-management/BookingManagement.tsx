@@ -18,6 +18,7 @@ import {
     Flex,
     message
 } from 'antd';
+import CheckoutInfoModal from './CheckoutInfoModal';
 import { ProTable, type ProColumns } from '@ant-design/pro-components';
 import {
     EyeOutlined,
@@ -51,6 +52,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import RoomSelectionModal from './RoomSelectionModal';
 import ReceptionServicesModal from './ReceptionServicesModal';
+import { receptionAPI } from '../../../utils/api';
 dayjs.locale('vi');
 
 const { Content } = Layout;
@@ -108,6 +110,9 @@ const BookingManagement: React.FC = () => {
     const [checkinBookingId, setCheckinBookingId] = useState<number | null>(null);
     const [isServicesModalVisible, setIsServicesModalVisible] = useState(false);
     const [servicesBookingId, setServicesBookingId] = useState<number | null>(null);
+    const [isCheckoutDrawerVisible, setIsCheckoutDrawerVisible] = useState(false);
+    const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
+    const [checkoutInfo, setCheckoutInfo] = useState<any>(null);
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -344,9 +349,17 @@ const BookingManagement: React.FC = () => {
                         setCheckinBookingId(record.booking_id);
                         setIsCheckinModalVisible(true);
                     } else if (key === 'checkout') {
-                        // Open services modal first so receptionist can add services before checkout
-                        setServicesBookingId(record.booking_id);
-                        setIsServicesModalVisible(true);
+                        // Try to fetch checkout info first. If services already selected, show checkout summary.
+                        try {
+                            const info = await receptionAPI.getCheckoutInfo(record.booking_id);
+                            setCheckoutInfo(info);
+                            setCheckoutBookingId(record.booking_id);
+                            setIsCheckoutDrawerVisible(true);
+                        } catch (err) {
+                            // If fetching checkout-info fails (e.g., none selected yet), open services modal
+                            setServicesBookingId(record.booking_id);
+                            setIsServicesModalVisible(true);
+                        }
                     }
                 };
                 const menu = (
@@ -398,6 +411,19 @@ const BookingManagement: React.FC = () => {
                 </Row>
 
                 <BookingFilterBar onSearch={handleSearch} loading={isLoading} />
+
+                <CheckoutInfoModal
+                    visible={isCheckoutDrawerVisible}
+                    bookingId={checkoutBookingId}
+                    initialData={checkoutInfo}
+                    onClose={() => { setIsCheckoutDrawerVisible(false); setCheckoutInfo(null); setCheckoutBookingId(null); }}
+                    onAddServicesRequest={() => {
+                        setIsCheckoutDrawerVisible(false);
+                        setIsServicesModalVisible(true);
+                        setServicesBookingId(checkoutBookingId);
+                    }}
+                    onUpdated={() => { refetch(); }}
+                />
 
                 <Card style={{ borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
                     <ErrorBoundary fallback={<Alert message="Lỗi hiển thị bảng" type="error" showIcon />}>
@@ -460,10 +486,17 @@ const BookingManagement: React.FC = () => {
                         setIsServicesModalVisible(false);
                         setServicesBookingId(null);
                     }}
-                    onAdded={() => {
+                    onAdded={(checkoutInfo?: any) => {
                         // after services added, refresh data so receptionist can proceed to checkout
                         refetch();
-                        message.success('Dịch vụ đã được thêm. Vui lòng tiến hành Check-out.');
+                        message.success('Dịch vụ đã được thêm.');
+                        if (checkoutInfo) {
+                            setCheckoutInfo(checkoutInfo);
+                            setCheckoutBookingId(servicesBookingId);
+                            setIsCheckoutDrawerVisible(true);
+                        } else {
+                            message.info('Vui lòng mở Check-out để xác nhận tổng tiền.');
+                        }
                     }}
                 />
             </Content>

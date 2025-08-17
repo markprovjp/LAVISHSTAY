@@ -1,109 +1,421 @@
-http://127.0.0.1:8888/api/reception/services/available
 {
     "success": true,
-    "message": "Lấy danh sách dịch vụ thành công",
+    "message": "Lấy thông tin check-out thành công",
     "data": {
-        "total_services": 11,
-        "services": [
-            {
-                "service_id": 1,
-                "name": "Ăn uống tại phòng",
-                "description": "Khách có thể đặt các món ăn, đồ uống từ thực đơn của nhà hàng khách sạn và được nhân viên mang đến tận phòng.",
-                "price_vnd": "50000.00",
-                "unit": "1",
-                "formatted_price": "50.000 ₫",
-                "price_with_unit": "50.000 ₫/1"
-            },
-            {
-                "service_id": 9,
-                "name": "Bữa tối đặc biệt",
-                "description": "Bữa tối lãng mạn hoặc theo chủ đề tại nhà hàng, với menu tùy chỉnh và rượu vang.",
-                "price_vnd": "1000000.00",
-                "unit": "người",
-                "formatted_price": "1.000.000 ₫",
-                "price_with_unit": "1.000.000 ₫/người"
-            },
-            {
-                "service_id": 3,
-                "name": "Dịch vụ giặt ủi",
-                "description": "Giặt khô, giặt ướt và ủi quần áo, hoàn thành trong 24 giờ.",
-                "price_vnd": "50000.00",
-                "unit": "kg",
-                "formatted_price": "50.000 ₫",
-                "price_with_unit": "50.000 ₫/kg"
-            },
-            {
-                "service_id": 8,
-                "name": "Dịch vụ hội nghị và sự kiện",
-                "description": "Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.",
-                "price_vnd": "2000000.00",
-                "unit": "giờ",
-                "formatted_price": "2.000.000 ₫",
-                "price_with_unit": "2.000.000 ₫/giờ"
-            },
-            {
-                "service_id": 11,
-                "name": "Dịch vụ phòng 24/7",
-                "description": "Dịch vụ phục vụ đồ ăn, thức uống tận phòng bất kỳ lúc nào trong ngày.",
-                "price_vnd": "50000.00",
-                "unit": "lần",
-                "formatted_price": "50.000 ₫",
-                "price_with_unit": "50.000 ₫/lần"
-            },
-            {
-                "service_id": 2,
-                "name": "Dịch vụ spa và massage",
-                "description": "Các liệu pháp spa thư giãn, massage toàn thân hoặc chuyên sâu, sử dụng tinh dầu và kỹ thuật chuyên nghiệp.",
-                "price_vnd": "500000.00",
-                "unit": "lần",
-                "formatted_price": "500.000 ₫",
-                "price_with_unit": "500.000 ₫/lần"
-            },
-            {
-                "service_id": 10,
-                "name": "Dịch vụ trông trẻ",
-                "description": "Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.",
-                "price_vnd": "200000.00",
-                "unit": "giờ",
-                "formatted_price": "200.000 ₫",
-                "price_with_unit": "200.000 ₫/giờ"
-            },
-            {
-                "service_id": 4,
-                "name": "Mini bar",
-                "description": "Sử dụng đồ uống, snack và rượu từ mini bar trong phòng, tính phí theo sản phẩm tiêu thụ.",
-                "price_vnd": "100000.00",
-                "unit": "lần",
-                "formatted_price": "100.000 ₫",
-                "price_with_unit": "100.000 ₫/lần"
-            },
-            {
-                "service_id": 7,
-                "name": "Thuê xe hơi hoặc xe máy",
-                "description": "Thuê xe hơi tự lái hoặc có tài xế, hoặc xe máy để khám phá khu vực lân cận.",
-                "price_vnd": "500000.00",
-                "unit": "ngày",
-                "formatted_price": "500.000 ₫",
-                "price_with_unit": "500.000 ₫/ngày"
-            },
-            {
-                "service_id": 6,
-                "name": "Tour du lịch địa phương",
-                "description": "Tổ chức tour tham quan các địa danh nổi tiếng, bao gồm hướng dẫn viên và phương tiện di chuyển.",
-                "price_vnd": "800000.00",
-                "unit": "người",
-                "formatted_price": "800.000 ₫",
-                "price_with_unit": "800.000 ₫/người"
-            },
-            {
-                "service_id": 5,
-                "name": "Xe đưa đón sân bay",
-                "description": "Dịch vụ đưa đón hai chiều từ sân bay đến khách sạn bằng xe riêng.",
-                "price_vnd": "300000.00",
-                "unit": "chuyến",
-                "formatted_price": "300.000 ₫",
-                "price_with_unit": "300.000 ₫/chuyến"
+        "booking_info": {
+            "booking_id": 24,
+            "booking_code": "LAVISHYSTAY_931923",
+            "status": "Cleaning",
+            "check_in_date": "2025-08-03T17:00:00.000000Z",
+            "check_out_date": "2025-08-14T17:00:00.000000Z",
+            "original_total_price_vnd": 2900000,
+            "guest_count": 2,
+            "adults": null,
+            "children": 2,
+            "notes": "Check-in completed at 2025-08-05 19:39:26\nCheck-out completed at 2025-08-16 17:05:05"
+        },
+        "guest_info": {
+            "guest_name": "húhu",
+            "guest_email": "quyen@gmai.comđ",
+            "guest_phone": "231443342423",
+            "guest_count": 2,
+            "adults": null,
+            "children": 2,
+            "children_age": "3"
+        },
+        "room_info": {
+            "total_rooms": 1,
+            "rooms": [
+                {
+                    "room_id": 91,
+                    "room_number": "1001",
+                    "room_type": "Premium Corner",
+                    "room_type_id": 2,
+                    "floor": null,
+                    "status": "available",
+                    "description": null
+                }
+            ]
+        },
+        "hotel_info": {
+            "hotel_id": null,
+            "hotel_name": "Không xác định",
+            "hotel_address": "Không xác định",
+            "hotel_phone": "Không xác định",
+            "hotel_email": null
+        },
+        "available_services": {
+            "total_services": 5,
+            "services": [
+                {
+                    "service_id": 8,
+                    "name": "Dịch vụ hội nghị và sự kiện",
+                    "description": "Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.",
+                    "price_vnd": "2000000.00",
+                    "unit": "giờ",
+                    "formatted_price": "2.000.000 ₫",
+                    "price_with_unit": "2.000.000 ₫/giờ"
+                },
+                {
+                    "service_id": 10,
+                    "name": "Dịch vụ trông trẻ",
+                    "description": "Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.",
+                    "price_vnd": "200000.00",
+                    "unit": "giờ",
+                    "formatted_price": "200.000 ₫",
+                    "price_with_unit": "200.000 ₫/giờ"
+                },
+                {
+                    "service_id": 4,
+                    "name": "Mini bar",
+                    "description": "Sử dụng đồ uống, snack và rượu từ mini bar trong phòng, tính phí theo sản phẩm tiêu thụ.",
+                    "price_vnd": "100000.00",
+                    "unit": "lần",
+                    "formatted_price": "100.000 ₫",
+                    "price_with_unit": "100.000 ₫/lần"
+                },
+                {
+                    "service_id": 7,
+                    "name": "Thuê xe hơi hoặc xe máy",
+                    "description": "Thuê xe hơi tự lái hoặc có tài xế, hoặc xe máy để khám phá khu vực lân cận.",
+                    "price_vnd": "500000.00",
+                    "unit": "ngày",
+                    "formatted_price": "500.000 ₫",
+                    "price_with_unit": "500.000 ₫/ngày"
+                },
+                {
+                    "service_id": 6,
+                    "name": "Tour du lịch địa phương",
+                    "description": "Tổ chức tour tham quan các địa danh nổi tiếng, bao gồm hướng dẫn viên và phương tiện di chuyển.",
+                    "price_vnd": "800000.00",
+                    "unit": "người",
+                    "formatted_price": "800.000 ₫",
+                    "price_with_unit": "800.000 ₫/người"
+                }
+            ]
+        },
+        "booking_services": {
+            "total_services": 2,
+            "total_service_amount": 2400000,
+            "services": [
+                {
+                    "id": 1,
+                    "service_id": 10,
+                    "service_name": "Dịch vụ trông trẻ",
+                    "service_description": "Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.",
+                    "quantity": 2,
+                    "unit_price_vnd": "200000.00",
+                    "total_price_vnd": 400000,
+                    "unit": "giờ",
+                    "created_at": "2025-08-11T10:47:20.000000Z"
+                },
+                {
+                    "id": 2,
+                    "service_id": 8,
+                    "service_name": "Dịch vụ hội nghị và sự kiện",
+                    "service_description": "Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.",
+                    "quantity": 1,
+                    "unit_price_vnd": "2000000.00",
+                    "total_price_vnd": 2000000,
+                    "unit": "giờ",
+                    "created_at": "2025-08-11T10:47:20.000000Z"
+                }
+            ]
+        },
+        "amount_calculation": {
+            "room_amount": 2900000,
+            "service_amount": 2400000,
+            "total_amount": 5300000,
+            "breakdown": {
+                "original_booking_amount": 2900000,
+                "additional_services_amount": 2400000,
+                "final_total_amount": 5300000
             }
-        ]
+        },
+        "payment_status": {
+            "total_required": 5300000,
+            "total_paid": "11000000.00",
+            "remaining_amount": -5700000,
+            "is_sufficient": true,
+            "payment_percentage": 207.54716981132074,
+            "payments": [
+                {
+                    "payment_id": 123,
+                    "amount_vnd": "11000000.00",
+                    "payment_type": "vietqr",
+                    "status": "completed",
+                    "transaction_id": "1",
+                    "created_at": "2025-08-05T07:02:22.000000Z"
+                }
+            ],
+            "payment_summary": {
+                "completed_payments": 1,
+                "pending_payments": 0,
+                "failed_payments": 0
+            }
+        },
+        "checkout_validation": {
+            "summary": {
+                "can_checkout": false,
+                "total_rules_checked": 8,
+                "blocking_failures_count": 1,
+                "warnings_count": 0,
+                "passed_count": 7,
+                "validation_status": "BLOCKED"
+            },
+            "blocking_failures": [
+                {
+                    "rule_id": "booking_status",
+                    "passes": false,
+                    "message": "Booking phải ở trạng thái \"Đang lưu trú\" mới có thể check-out",
+                    "priority": 1,
+                    "is_blocking": true
+                }
+            ],
+            "warnings": [],
+            "passed_rules": [
+                {
+                    "rule_id": "payment_sufficient",
+                    "passes": true,
+                    "message": "Chưa thanh toán đủ để có thể check-out",
+                    "priority": 2,
+                    "is_blocking": true
+                },
+                {
+                    "rule_id": "damage_assessment",
+                    "passes": true,
+                    "message": "Có phí phạt hoặc bồi thường hư hỏng. Vui lòng xác nhận với khách hàng.",
+                    "priority": 4,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "checkout_time",
+                    "passes": true,
+                    "message": "Check-out muộn quá giờ quy định (15:00). Có thể phát sinh phí phụ thu.",
+                    "priority": 5,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "early_checkout",
+                    "passes": true,
+                    "message": "Check-out sớm hơn ngày dự kiến. Vui lòng xác nhận với khách hàng.",
+                    "priority": 6,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "outstanding_services",
+                    "passes": true,
+                    "message": "Có dịch vụ bổ sung chưa được xác nhận",
+                    "priority": 7,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "guest_information",
+                    "passes": true,
+                    "message": "Thông tin khách hàng chưa đầy đủ (tên, email, số điện thoại)",
+                    "priority": 8,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "room_availability",
+                    "passes": true,
+                    "message": "Phòng không thể chuyển sang trạng thái dọn dẹp",
+                    "priority": 10,
+                    "is_blocking": false
+                }
+            ],
+            "all_rule_results": {
+                "booking_status": {
+                    "rule_id": "booking_status",
+                    "passes": false,
+                    "message": "Booking phải ở trạng thái \"Đang lưu trú\" mới có thể check-out",
+                    "priority": 1,
+                    "is_blocking": true
+                },
+                "payment_sufficient": {
+                    "rule_id": "payment_sufficient",
+                    "passes": true,
+                    "message": "Chưa thanh toán đủ để có thể check-out",
+                    "priority": 2,
+                    "is_blocking": true
+                },
+                "damage_assessment": {
+                    "rule_id": "damage_assessment",
+                    "passes": true,
+                    "message": "Có phí phạt hoặc bồi thường hư hỏng. Vui lòng xác nhận với khách hàng.",
+                    "priority": 4,
+                    "is_blocking": false
+                },
+                "checkout_time": {
+                    "rule_id": "checkout_time",
+                    "passes": true,
+                    "message": "Check-out muộn quá giờ quy định (15:00). Có thể phát sinh phí phụ thu.",
+                    "priority": 5,
+                    "is_blocking": false
+                },
+                "early_checkout": {
+                    "rule_id": "early_checkout",
+                    "passes": true,
+                    "message": "Check-out sớm hơn ngày dự kiến. Vui lòng xác nhận với khách hàng.",
+                    "priority": 6,
+                    "is_blocking": false
+                },
+                "outstanding_services": {
+                    "rule_id": "outstanding_services",
+                    "passes": true,
+                    "message": "Có dịch vụ bổ sung chưa được xác nhận",
+                    "priority": 7,
+                    "is_blocking": false
+                },
+                "guest_information": {
+                    "rule_id": "guest_information",
+                    "passes": true,
+                    "message": "Thông tin khách hàng chưa đầy đủ (tên, email, số điện thoại)",
+                    "priority": 8,
+                    "is_blocking": false
+                },
+                "room_availability": {
+                    "rule_id": "room_availability",
+                    "passes": true,
+                    "message": "Phòng không thể chuyển sang trạng thái dọn dẹp",
+                    "priority": 10,
+                    "is_blocking": false
+                }
+            }
+        },
+        "checkout_conditions": {
+            "payment_sufficient": true,
+            "ready_for_checkout": false,
+            "has_warnings": false,
+            "has_blocking_issues": true
+        },
+        "compensation_policies": {
+            "total_policies": 7,
+            "policies": [
+                {
+                    "compensation_policy_id": 3,
+                    "name": "Chi trả chỗ nghỉ tạm & di chuyển (Overbook/Out-of-service)",
+                    "description": "Khi khách phải chuyển sang khách sạn khác: khách sạn chi trả chi phí chỗ nghỉ thay thế và chi phí di chuyển hợp lý. Ghi rõ hóa đơn/phiếu chi vào booking_compensations để hoàn trả.",
+                    "condition_type": "overbooking",
+                    "condition_type_label": "Overbooking",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "2000000.00",
+                    "formatted_discount_value": "2.000.000 ₫",
+                    "max_compensation_amount": "2000000.00",
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 4,
+                    "name": "Credit dịch vụ tại chỗ",
+                    "description": "Cấp credit dùng cho F&B hoặc spa trong thời gian lưu trú. Thường dùng cho trường hợp service failure nhỏ.",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "300000.00",
+                    "formatted_discount_value": "300.000 ₫",
+                    "max_compensation_amount": "300000.00",
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 7,
+                    "name": "Giảm 30% trên hóa đơn hiện tại",
+                    "description": "Giảm 30% trên tổng booking hoặc trên đêm bị ảnh hưởng (theo cấu hình).",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "percentage",
+                    "discount_type_label": "Phần trăm",
+                    "discount_value": "30.00",
+                    "formatted_discount_value": "30.00%",
+                    "max_compensation_amount": null,
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 2,
+                    "name": "Giảm 50% - đêm bị ảnh hưởng",
+                    "description": "Áp dụng khi dịch vụ bị gián đoạn (ví dụ mất điện, điều hòa hỏng) cho đêm hiện tại; giảm 50% trên giá đêm bị ảnh hưởng.",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "percentage",
+                    "discount_type_label": "Phần trăm",
+                    "discount_value": "50.00",
+                    "formatted_discount_value": "50.00%",
+                    "max_compensation_amount": null,
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 1,
+                    "name": "Hoàn tiền toàn bộ - phòng không thể sử dụng",
+                    "description": "Áp dụng khi phòng hỏng/không thể sử dụng và không có phòng thay thế. Hoàn tiền 100% cho các đêm chưa sử dụng; nhân viên cần ghi rõ số đêm và nightly_rate trong booking_compensations.",
+                    "condition_type": "room_damage",
+                    "condition_type_label": "Hư hỏng phòng",
+                    "discount_type": "percentage",
+                    "discount_type_label": "Phần trăm",
+                    "discount_value": "100.00",
+                    "formatted_discount_value": "100.00%",
+                    "max_compensation_amount": null,
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 6,
+                    "name": "Nâng hạng phòng miễn phí",
+                    "description": "Nâng hạng phòng (non-monetary). Ghi voucher/note trong booking; xử lý áp dụng thủ công tại check-in/out.",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "0.00",
+                    "formatted_discount_value": "0 ₫",
+                    "max_compensation_amount": "0.00",
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 5,
+                    "name": "Voucher 1 đêm cho lần ở sau",
+                    "description": "Voucher trị giá 1 đêm (giá tham chiếu: 1,000,000 VND) dùng cho lần đặt tiếp theo. Xử lý voucher ngoài luồng thanh toán.",
+                    "condition_type": "other",
+                    "condition_type_label": "Khác",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "1000000.00",
+                    "formatted_discount_value": "1.000.000 ₫",
+                    "max_compensation_amount": "1000000.00",
+                    "applies_to_room_type_id": null
+                }
+            ]
+        },
+        "existing_compensation_requests": {
+            "total_requests": 1,
+            "requests": [
+                {
+                    "request_id": 1,
+                    "policy_name": "Yêu cầu khác",
+                    "custom_reason": "dưdwd",
+                    "status": "approved",
+                    "status_label": "Đã duyệt",
+                    "requested_amount": "100000.00",
+                    "approved_amount": "200000.00",
+                    "formatted_approved_amount": "200.000 ₫",
+                    "requested_by": "Pro Mark",
+                    "approved_by": "Nguyễn Anh Đức",
+                    "approved_at": "2025-08-13T02:24:13.000000Z",
+                    "admin_note": "sqsqs",
+                    "attachments": null,
+                    "created_at": "2025-08-12T07:49:11.000000Z"
+                }
+            ]
+        },
+        "checkout_summary": {
+            "can_checkout": false,
+            "validation_status": "BLOCKED",
+            "total_stay_amount": 5300000,
+            "remaining_payment": -5700000,
+            "checkout_date": "2025-08-17",
+            "checkout_time": "14:51",
+            "blocking_issues_count": 1,
+            "warnings_count": 0,
+            "has_compensation_requests": true
+        }
     }
 }
