@@ -539,13 +539,13 @@
 					
 					{{-- Room Management --}}
                     @if (Auth::user()?->hasPermission('quan_ly_phong'))
-                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
+                    <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif"
                         x-data="{ open: {{ in_array(Request::segment(2), ['room-types', 'rooms', 'floors']) ? 1 : 0 }} }">
-                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                        <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
                             href="#0" @click.prevent="open = !open; sidebarExpanded = true">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
-                                    <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                    <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
                                         xmlns="http://www.w3.org/2000/svg" width="24px" height="24px"
                                         viewBox="0 0 18 18">
                                         <path d="M2 3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3ZM9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V4ZM2 8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8Z" />
@@ -554,7 +554,7 @@
                                 </div>
                                 <!-- Icon -->
                                 <div class="flex shrink-0 ml-2 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 transition-transform duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms'])) {{ 'rotate-180' }} @endif"
+                                    <svg class="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 transition-transform duration-200 @if (in_array(Request::segment(2), ['room-types', 'rooms', 'floors'])) {{ 'rotate-180' }} @endif"
                                         :class="open ? 'rotate-180' : 'rotate-0'" viewBox="0 0 12 12">
                                         <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
                                     </svg>
