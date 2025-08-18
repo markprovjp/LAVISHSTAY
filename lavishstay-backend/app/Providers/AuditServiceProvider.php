@@ -72,9 +72,9 @@ class AuditServiceProvider extends ServiceProvider
                         $modelClass::observe(AuditObserver::class);
                         
                         // Log successful registration in debug mode
-                        if (config('app.debug')) {
-                            logger()->debug("Audit observer registered for model: {$modelClass}");
-                        }
+                        // if (config('app.debug')) {
+                        //     logger()->debug("Audit observer registered for model: {$modelClass}");
+                        // }
                     } catch (\Exception $e) {
                         // Log error but don't break the application
                         logger()->error("Failed to register audit observer for {$modelClass}: " . $e->getMessage());

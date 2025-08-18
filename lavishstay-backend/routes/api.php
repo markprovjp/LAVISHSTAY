@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Api\ChatController;
@@ -48,8 +49,20 @@ use App\Http\Controllers\NewsController\NewsCategoryController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// Broadcasting routes for notifications
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::middleware('auth:sanctum')->get('/user/bookings', [BookingController::class, 'getUserBookings']);
 Route::middleware('auth:sanctum')->post('/booking/assign', [BookingController::class, 'assignBookingToUser']);
+
+// Public booking lookup routes (no auth required, with throttling)
+Route::prefix('public')->middleware(['throttle:20,1'])->group(function () {
+    Route::get('/bookings/search', [\App\Http\Controllers\Api\PublicBookingController::class, 'searchBookings'])
+        ->name('public.bookings.search');
+    Route::get('/bookings/{bookingId}/detail', [\App\Http\Controllers\Api\PublicBookingController::class, 'getBookingDetail'])
+        ->name('public.bookings.detail');
+});
+
 // Route test gửi email
 Route::get('/test-email/{bookingId}', [PaymentController::class, 'testEmail']);
 
@@ -247,6 +260,14 @@ Route::post('/bookings/{id}/checkout/compensation ', [BookingCheckoutController:
     Route::post('/bookings/{id}/services', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'addBookingService']);
     Route::put('/bookings/{id}/services/{serviceId}', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'updateBookingService']);
     Route::delete('/bookings/{id}/services/{serviceId}', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'removeBookingService']);
+
+    // Notifications (with auth middleware)
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+    });
 
 
     

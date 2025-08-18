@@ -150,5 +150,19 @@ class User extends Authenticatable
         return $this->belongsTo(Team::class, 'current_team_id');
     }
 
-    
+    /**
+     * Override notifications table to use user_notifications
+     */
+    public function notifications()
+    {
+        return $this->morphMany(UserNotification::class, 'notifiable')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get unread notifications using user_notifications table
+     */
+    public function unreadNotifications()
+    {
+        return $this->morphMany(UserNotification::class, 'notifiable')->whereNull('read_at');
+    }
 }

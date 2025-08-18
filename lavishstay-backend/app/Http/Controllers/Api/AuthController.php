@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2;
+use Firebase\JWT\JWT;
 
 class AuthController extends Controller
 {
@@ -320,21 +321,10 @@ class AuthController extends Controller
             $accessToken = $tokenResponse['access_token'];
             $idToken = $tokenResponse['id_token'] ?? null;
             
-            // Sử dụng ID token nếu có, nếu không thì dùng access token
-            if ($idToken) {
-                $payload = $client->verifyIdToken($idToken);
-                if ($payload) {
-                    return [
-                        'id' => $payload['sub'],
-                        'email' => $payload['email'],
-                        'name' => $payload['name'],
-                        'picture' => $payload['picture'] ?? null,
-                        'email_verified' => $payload['email_verified'] ?? false
-                    ];
-                }
-            }
+            // Để tránh lỗi clock skew với ID token, chúng ta sẽ dùng access token để lấy thông tin user
+            \Log::info('Using access token instead of ID token to avoid clock skew issues');
             
-            // Fallback to access token
+            // Fallback to access token (more reliable)
             return $this->getGoogleUserInfo($accessToken);
             
         } catch (\Exception $e) {

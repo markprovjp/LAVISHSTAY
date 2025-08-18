@@ -15,10 +15,25 @@ const api = axios.create({
 
 // Add request interceptor to add auth token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
+  // Support multiple token key names (accessToken, token, authToken)
+  const token =
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    null;
+
+  // Debug: show which token is present and what header will be sent
+  try {
+    // eslint-disable-next-line no-console
+    console.log('[api] outgoing auth token (from localStorage):', token);
+  } catch (e) { }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    try {
+      // eslint-disable-next-line no-console
+      console.log('[api] setting Authorization header:', config.headers.Authorization);
+    } catch (e) { }
   }
 
   return config;
@@ -407,17 +422,6 @@ export const receptionAPI = {
     return response.data;
   },
 
-  // Services for reception (available services and booking service management)
-  getAvailableServices: async () => {
-    const response = await api.get('/reception/services/available');
-    return response.data;
-  },
-
-  addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
-    // Backend expects service additions on the booking resource: /bookings/{id}/services
-    const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
-    return response.data;
-  },
 
   // Checkout related helpers
   getCheckoutInfo: async (bookingId: number) => {
