@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Models\Hotel;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\Floor; 
 use App\Models\BedType;
+use Google\Service\HangoutsChat\Resource\Rooms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
