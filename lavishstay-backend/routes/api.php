@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 <?php
 
 use App\Http\Controllers\Api\FAQController;
@@ -409,4 +408,4 @@ Route::prefix('payment')->name('api.payment.')->group(function () {
     Route::post('/vnpay', [PaymentController::class, 'processVNPay'])->name('vnpay');
     Route::post('/pay-at-hotel', [PaymentController::class, 'processPayAtHotel'])->name('pay-at-hotel');
 });
->>>>>>> ce4720be2f1bc40e595d2b7659c034565e7be723
+

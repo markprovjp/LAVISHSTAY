@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 <style>
     /* Enhanced hover effects */
     .sidebar-item {
@@ -925,4 +924,3 @@
 
     </div>
 </div>
->>>>>>> ce4720be2f1bc40e595d2b7659c034565e7be723

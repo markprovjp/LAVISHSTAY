@@ -16,41 +16,24 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class RoomController extends Controller
 {
-<<<<<<< HEAD
-    public function index()
-    {
-        // Lấy tổng số phòng (đếm bản ghi trong bảng rooms)
-        $totalRooms = Room::count();
-=======
     public function index(){
         // Lấy tổng số phòng từ tổng của total_room trong room_types
         $totalRoomsFromTypes = RoomType::sum('total_room');
         
         // Lấy tổng số phòng đang hoạt động (đếm bản ghi trong bảng rooms)
         $totalActiveRooms = Room::count();
->>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
         
         // Lấy tổng số loại phòng
         $totalRoomTypes = RoomType::count();
         
-<<<<<<< HEAD
-        // Lấy số phòng đã được đặt (có booking active) - sửa lỗi ambiguous column
-        $bookedRooms = Room::whereHas('bookings', function($query) {
-=======
         // Lấy số phòng đã được đặt (có booking active)
         $bookedRooms = Room::whereHas('bookings', function ($query) {
->>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             $query->where('booking.status', 'confirmed')
                 ->where('booking.check_in_date', '<=', now())
                 ->where('booking.check_out_date', '>=', now());
         })->count();
         
         // Lấy số phòng trống
-<<<<<<< HEAD
-        $availableRooms = $totalRooms - $bookedRooms;
-
-        // Lấy tất cả các loại phòng với thông tin chi tiết - sửa lỗi ambiguous column
-=======
         $availableRooms = Room::where('status', 'available')
             ->whereDoesntHave('bookings', function ($query) {
                 $query->where('booking.status', 'confirmed')
@@ -59,17 +42,12 @@ class RoomController extends Controller
             })->count();
 
         // Lấy tất cả các loại phòng với thông tin chi tiết 
->>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
         $allrooms = RoomType::with([
             'rooms' => function ($query) {
                 $query->orderBy('room_type_id', 'asc');
             },
             'images' => function ($query) {
-<<<<<<< HEAD
-                $query->where('room_type_image.is_main', true);
-=======
                 $query->where('is_main', true);
->>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             }
         ])
         ->withCount([
@@ -84,22 +62,14 @@ class RoomController extends Controller
 
         return view('admin.rooms.index', compact(
             'allrooms', 
-<<<<<<< HEAD
-            'totalRooms', 
-=======
             'totalRoomsFromTypes', // Thay totalRooms bằng totalRoomsFromTypes
             'totalActiveRooms',    // Thêm totalActiveRooms để hiển thị số phòng đang hoạt động
->>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
             'totalRoomTypes', 
             'bookedRooms', 
             'availableRooms'
         ));
     }
 
-<<<<<<< HEAD
-    
-=======
->>>>>>> f237981f1940ac4c479ab29b040752ad63bfeab7
     public function roomsByType(Request $request, $roomTypeId)
     {
         $roomType = RoomType::where('room_type_id', $roomTypeId)->firstOrFail();

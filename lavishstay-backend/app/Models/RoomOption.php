@@ -1,9 +1,7 @@
-<<<<<<< HEAD
-=======
 <?php
-
 namespace App\Models;
 
+use Google\Service\HangoutsChat\Resource\Rooms;
 use Illuminate\Database\Eloquent\Model;
 
 class RoomOption extends Model
@@ -98,4 +96,4 @@ class RoomOption extends Model
             ->where('table_name', $this->getTable());
     }
 }
->>>>>>> ce4720be2f1bc40e595d2b7659c034565e7be723
+

@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 <?php
 
 namespace App\Models;
@@ -290,4 +288,4 @@ class RoomType extends Model
         return $this->base_price + $standardPackage->price_modifier_vnd;
     }
 }
->>>>>>> ce4720be2f1bc40e595d2b7659c034565e7be723
+

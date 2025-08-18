@@ -1,7 +1,5 @@
-<<<<<<< HEAD
-=======
-<?php
 
+<?php
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ChatSupportController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -752,4 +750,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/cleanup', [AuditController::class, 'cleanup'])->name('cleanup');
     });
 });
->>>>>>> ce4720be2f1bc40e595d2b7659c034565e7be723
+
