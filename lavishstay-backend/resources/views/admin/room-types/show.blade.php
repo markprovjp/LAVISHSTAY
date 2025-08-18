@@ -743,8 +743,7 @@
                         <div class="space-y-3">
                             <button onclick="viewRoomsList({{ $roomType->room_type_id }})"
                                 class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
-                                    width="24" height="24">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20" width="24" height="24">
                                     <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
                                     <path fill-rule="evenodd"
                                         d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110-2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
@@ -793,10 +792,10 @@
                                 @endforeach
 
                                 @if ($roomType->rooms->count() > 3)
-                                    <button onclick="viewRoomsList({{ $roomType->room_type_id }})"
+                                    <a href="{{ route('admin.rooms.by-type', $roomType->room_type_id) }}"
                                         class="w-full text-center py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                                         Xem thêm {{ $roomType->rooms->count() - 3 }} phòng khác
-                                    </button>
+                                    </a>
                                 @endif
                             </div>
                         </div>
@@ -1043,12 +1042,8 @@
             alert(`Chức năng quản lý ảnh cho loại phòng ID: ${roomTypeId} đang được phát triển!`);
         }
 
-        // Thêm function hiển thị loading overlay
+        // Hàm showLoadingOverlay (để đảm bảo hoàn chỉnh)
         function showLoadingOverlay(message = 'Đang tải...') {
-            // Tạo overlay nếu chưa có
-
-
-
             let overlay = document.getElementById('pageLoadingOverlay');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -1062,7 +1057,6 @@
                 `;
                 document.body.appendChild(overlay);
             }
-
             overlay.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -1079,8 +1073,10 @@
 
         // Room Management Functions
         function viewRoomsList(roomTypeId) {
-            // TODO: Navigate to rooms list filtered by room type
-            window.location.href = `/admin/rooms?room_type_id=${roomTypeId}`;
+            showLoadingOverlay('Đang chuyển đến danh sách phòng...');
+            setTimeout(() => {
+                window.location.href = `{{ route('admin.rooms.by-type', ':id') }}`.replace(':id', roomTypeId);
+            }, 500);
         }
 
         function duplicateRoomType(roomTypeId) {
