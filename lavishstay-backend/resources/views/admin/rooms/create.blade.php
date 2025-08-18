@@ -169,7 +169,7 @@
                                     <select name="status"
                                         class="border w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
                                      dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 @error('status') border-red-500 @enderror">
-                                        @foreach (['available' => 'Trống', 'occupied' => 'Đang sử dụng', 'maintenance' => 'Đang bảo trì', 'cleaning' => 'Đang dọn dẹp'] as $value => $label)
+                                        @foreach (['available' => 'Sẵn sàng', 'out_of_service' => 'Ngừng phục vụ'] as $value => $label)
                                             <option value="{{ $value }}"
                                                 {{ old('status', 'available') == $value ? 'selected' : '' }}>
                                                 {{ $label }}

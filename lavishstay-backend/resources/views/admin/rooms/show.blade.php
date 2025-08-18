@@ -58,8 +58,8 @@
                     <span class="ml-2">Chỉnh sửa</span>
                 </a>
 
-                <!-- Delete Button (optional) -->
-                <button onclick="confirmDelete()" class="btn bg-red-500 hover:bg-red-600 text-white">
+                <!-- Delete Button -->
+                <button id="deleteButton" class="btn bg-red-500 hover:bg-red-600 text-white">
                     <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16" width="16" height="16">
                         <path
                             d="M5 7h6v6H5V7zm4-4v1h5v2h-1v7a1 1 0 01-1 1H4a1 1 0 01-1-1V6H2V4h5V3a1 1 0 011-1h2a1 1 0 011 1z" />
@@ -68,6 +68,26 @@
                 </button>
             </div>
         </div>
+
+        <!-- Display Error Message -->
+        @if (session('error'))
+            <div id="notification-error" class="transform transition-all duration-300 ease-out mb-4 flex items-center p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 shadow-md relative">
+                <div class="flex items-center justify-center w-8 h-8 text-red-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 mr-8">
+                    <h3 class="font-semibold text-red-700">Lỗi!</h3>
+                    <div class="text-sm text-red-600">{{ session('error') }}</div>
+                </div>
+                <button onclick="closeNotificationError()" class="absolute right-2 top-2 text-red-600 hover:text-red-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        @endif
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
@@ -95,32 +115,11 @@
                             <!-- Status Badge -->
                             <div class="absolute top-4 right-4">
                                 <span
-                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                        @if ($room->status == 'available') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-                                        @elseif($room->status == 'occupied') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
-                                        @elseif($room->status == 'maintenance') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
-                                        @elseif($room->status == 'cleaning') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
-                                        @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
-                                    @switch($room->status)
-                                        @case('available')
-                                            Trống
-                                        @break
-
-                                        @case('occupied')
-                                            Đang sử dụng
-                                        @break
-
-                                        @case('maintenance')
-                                            Đang bảo trì
-                                        @break
-
-                                        @case('cleaning')
-                                            Đang dọn dẹp
-                                        @break
-
-                                        @default
-                                            {{ $room->status }}
-                                    @endswitch
+                                    class="inline-flex items-center rounded-full text-lg font-medium
+                                    @if ($room->status == 'available') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                    @else($room->status == 'out_of_service') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                    @endif">
+                                    {{ $statusOptions[$room->status] ?? $room->status }}
                                 </span>
                             </div>
                         </div>
@@ -254,7 +253,6 @@
                     </div>
                 </div>
 
-
                 <!-- Sidebar -->
                 <div class="space-y-6">
 
@@ -269,31 +267,10 @@
                                     <span class="text-sm text-gray-600 dark:text-gray-400">Trạng thái</span>
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @if ($room->status == 'available') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-                                    @elseif($room->status == 'occupied') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
-                                    @elseif($room->status == 'maintenance') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
-                                    @elseif($room->status == 'cleaning') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
-                                    @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
-                                        @switch($room->status)
-                                            @case('available')
-                                                Trống
-                                            @break
-
-                                            @case('occupied')
-                                                Đang sử dụng
-                                            @break
-
-                                            @case('maintenance')
-                                                Đang bảo trì
-                                            @break
-
-                                            @case('cleaning')
-                                                Đang dọn dẹp
-                                            @break
-
-                                            @default
-                                                {{ $room->status }}
-                                        @endswitch
+                                        @if ($room->status == 'available') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                        @elseif($room->status == 'out_of_service') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                        @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
+                                        {{ $statusOptions[$room->status] ?? $room->status }}
                                     </span>
                                 </div>
 
@@ -304,7 +281,7 @@
                                             <svg class="w-4 h-4 text-yellow-400 fill-current mr-1" viewBox="0 0 20 20"
                                                 width="24px" height="24px">
                                                 <path
-                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3 .921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                             </svg>
                                             <span
                                                 class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $room->rating }}/5</span>
@@ -335,31 +312,6 @@
                         </div>
                         <div class="p-5">
                             <div class="space-y-3">
-                                <button onclick="showComingSoon('Chỉnh sửa thông tin')"
-                                    class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
-                                        width="24px" height="24px">
-                                        <path
-                                            d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z">
-                                        </path>
-                                    </svg>
-                                    Chỉnh sửa thông tin
-                                </button>
-
-                                <button onclick="showComingSoon('Cập nhật giá')"
-                                    class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                    <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
-                                        width="24px" height="24px">
-                                        <path
-                                            d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z">
-                                        </path>
-                                        <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    Cập nhật giá phòng
-                                </button>
-
                                 <button onclick="showRoomCalendar({{ $room->room_id }})"
                                     class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
                                     <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
@@ -414,38 +366,88 @@
             <!-- Room Calendar Modal -->
             @include('components.room-calendar-modal')
 
-            <!-- Update script -->
+            <!-- JavaScript -->
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <script>
-                function showComingSoon(feature) {
-                    if (feature === 'Xem lịch đặt phòng') {
-                        showRoomCalendar({{ $room->room_id }});
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Cấu hình SweetAlert2
+                    const swalWithBootstrapButtons = Swal.mixin({
+                        customClass: {
+                            confirmButton: "btn btn-success mx-2",
+                            cancelButton: "btn btn-danger mx-2"
+                        },
+                        buttonsStyling: false
+                    });
+
+                    // Animation cho thông báo lỗi
+                    const errorNotification = document.getElementById('notification-error');
+                    if (errorNotification) {
+                        errorNotification.classList.add('translate-y-0', 'opacity-100');
+                        errorNotification.classList.remove('-translate-y-full', 'opacity-0');
+                        setTimeout(() => {
+                            errorNotification.classList.add('opacity-0', 'scale-95');
+                            setTimeout(() => errorNotification.remove(), 300);
+                        }, 5000);
+                    }
+
+                    // Đóng thông báo lỗi thủ công
+                    function closeNotificationError() {
+                        const el = document.getElementById('notification-error');
+                        if (el) {
+                            el.classList.add('opacity-0', 'scale-95');
+                            setTimeout(() => el.remove(), 300);
+                        }
+                    }
+
+                    // Xử lý xóa phòng
+                    const deleteButton = document.getElementById('deleteButton');
+                    if (deleteButton) {
+                        deleteButton.addEventListener('click', function(event) {
+                            event.preventDefault(); // Ngăn hành động mặc định
+                            swalWithBootstrapButtons.fire({
+                                title: "Bạn có chắc chắn?",
+                                text: "Bạn có chắc chắn muốn xóa phòng {{ $room->name }}? Hành động này không thể hoàn tác!",
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Xóa!",
+                                cancelButtonText: "Hủy",
+                                reverseButtons: true
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    const form = document.createElement('form');
+                                    form.method = 'POST';
+                                    form.action = '{{ route('admin.rooms.destroy', $room->room_id) }}';
+
+                                    const csrfToken = document.createElement('input');
+                                    csrfToken.type = 'hidden';
+                                    csrfToken.name = '_token';
+                                    csrfToken.value = '{{ csrf_token() }}';
+
+                                    const methodField = document.createElement('input');
+                                    methodField.type = 'hidden';
+                                    methodField.name = '_method';
+                                    methodField.value = 'DELETE';
+
+                                    form.appendChild(csrfToken);
+                                    form.appendChild(methodField);
+                                    document.body.appendChild(form);
+                                    form.submit();
+                                }
+                            });
+                        });
                     } else {
-                        alert(`Chức năng "${feature}" đang được phát triển và sẽ sớm ra mắt!`);
+                        console.error('Không tìm thấy nút deleteButton');
                     }
-                }
 
-                function confirmDelete() {
-                    if (confirm('Bạn có chắc chắn muốn xóa phòng {{ $room->name }}? Hành động này không thể hoàn tác!')) {
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = '{{ route('admin.rooms.destroy', $room->room_id) }}';
-
-                        const csrfToken = document.createElement('input');
-                        csrfToken.type = 'hidden';
-                        csrfToken.name = '_token';
-                        csrfToken.value = '{{ csrf_token() }}';
-
-                        const methodField = document.createElement('input');
-                        methodField.type = 'hidden';
-                        methodField.name = '_method';
-                        methodField.value = 'DELETE';
-
-                        form.appendChild(csrfToken);
-                        form.appendChild(methodField);
-                        document.body.appendChild(form);
-                        form.submit();
+                    function showComingSoon(feature) {
+                        swalWithBootstrapButtons.fire({
+                            title: 'Chức năng đang phát triển',
+                            text: `Chức năng "${feature}" đang được phát triển và sẽ sớm ra mắt!`,
+                            icon: 'info',
+                            confirmButtonText: 'OK'
+                        });
                     }
-                }
+                });
             </script>
         </div>
 </x-app-layout>
