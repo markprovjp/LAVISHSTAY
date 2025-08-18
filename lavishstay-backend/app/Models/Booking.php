@@ -62,6 +62,14 @@ class Booking extends Model
     {
         return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
     }
+
+    /**
+     * Alias relationship for booking rooms to match controller usage
+     */
+    public function bookingRooms()
+    {
+        return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
+    }
     
     public function representatives()
     {
