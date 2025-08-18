@@ -18,20 +18,20 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Customer Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all customers in the system</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý khách hàng</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý tất cả khách hàng trong hệ thống</p>
             </div>
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <a href="{{ route('admin.customers.create') }}">
+                <a href="{{ route('admin.users.customers.create') }}">
                     <button
                         class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add Customer</span>
+                        <span class="max-xs:sr-only cursor-pointer">Thêm khách hàng</span>
                     </button>
                 </a>
             </div>
@@ -49,9 +49,9 @@
                 {{ session('error') }}
             </div>
         @endif
-       
-        
-        <form action="{{ route('admin.customers') }}" method="GET"
+
+
+        <form action="{{ route('admin.users.customers.index') }}" method="GET"
             class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -92,7 +92,7 @@
                         <i class="fas fa-search mr-2"></i> Tìm kiếm
                     </button>
 
-                    <a href="{{ route('admin.customers') }}"
+                    <a href="{{ route('admin.users.customers.index') }}"
                         class="inline-flex justify-center items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-200 text-sm shadow-sm w-full md:w-auto">
                         <i class="fas fa-redo-alt mr-2"></i> Đặt lại
                     </a>
@@ -113,28 +113,28 @@
                                 <tr class="bg-gray-50 dark:bg-gray-700">
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Avatar</th>
+                                        Ảnh</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Name</th>
+                                        Tên</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Email</th>
+                                        E-Mail</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Phone</th>
+                                        Số Điện Thoại</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        ID card / Passport number</th>
+                                        Số CMND / Hộ chiếu</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Role</th>
+                                        Vai trò</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Join Date</th>
+                                        Ngày Tạo</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Actions</th>
+                                        Hành Động</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -238,26 +238,13 @@
                                         <div id="dropdown-menu-{{ $user->id }}"
                                             class="hidden menu-button-action absolute right-0 z-50 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none">
                                             <div class="py-1 z-500" role="menu">
-                                                <!-- View Details -->
-                                                {{-- <button
-                                                            onclick="toggleDetails({{ $user->id }}); closeDropdown({{ $user->id }})"
-                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                                            role="menuitem">
-                                                            View Details
-                                                        </button> --}}
 
                                                 <!-- Edit -->
-                                                <a href="{{ route('admin.customers.show', $user->id) }}"
+                                                <a href="{{ route('admin.users.customers.show', $user->id) }}"
                                                     class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                     role="menuitem">
-                                                    View Customer
+                                                    Xem Chi Tiết
                                                 </a>
-                                                <!-- Edit -->
-                                                {{-- <a href="{{ route('admin.users.edit', $user->id) }}"
-                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                                            role="menuitem">
-                                                            Edit User
-                                                        </a> --}}
 
                                                 <!-- Divider -->
                                                 <div class="border-t border-gray-100 dark:border-gray-700">
@@ -275,7 +262,7 @@
                                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                         </path>
                                                     </svg>
-                                                    Delete Customer
+                                                    Xoá Khách Hàng
                                                 </button>
                                             </div>
                                         </div>
@@ -407,7 +394,7 @@
                 <p class="text-gray-500 dark:text-gray-400 mb-6">Get started by creating the first customer in
                     the
                     system.</p>
-                <a href="{{ route('admin.customers.create') }}"
+                <a href="{{ route('admin.users.customers.create') }}"
                     class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-violet-600 hover:bg-violet-700 transition-colors duration-200">
                     Add New Customer
                 </a>
@@ -418,60 +405,33 @@
     </div>
 
     <script>
-        // Toggle user details
-        // function toggleDetails(userId) {
-        //     const detailsRow = document.getElementById(`details-${userId}`);
-        //     const isHidden = detailsRow.classList.contains('hidden');
 
-        //     // Close all other details first
-        //     const allDetails = document.querySelectorAll('[id^="details-"]');
-        //     allDetails.forEach(detail => {
-        //         detail.classList.add('hidden');
-        //     });
 
-        //     // Toggle current details
-        //     if (isHidden) {
-        //         detailsRow.classList.remove('hidden');
-        //         // Smooth scroll to the details
-        //         setTimeout(() => {
-        //             detailsRow.scrollIntoView({
-        //                 behavior: 'smooth',
-        //                 block: 'nearest'
-        //             });
-        //         }, 100);
-        //     }
-        // }
 
-        // Toggle dropdown menu
         function toggleDropdown(userId) {
             const dropdown = document.getElementById(`dropdown-menu-${userId}`);
             const allDropdowns = document.querySelectorAll('[id^="dropdown-menu-"]');
 
-            // Close all other dropdowns
             allDropdowns.forEach(menu => {
                 if (menu.id !== `dropdown-menu-${userId}`) {
                     menu.classList.add('hidden');
                 }
             });
 
-            // Toggle current dropdown
             dropdown.classList.toggle('hidden');
         }
 
-        // Close dropdown
         function closeDropdown(userId) {
             const dropdown = document.getElementById(`dropdown-menu-${userId}`);
             dropdown.classList.add('hidden');
         }
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(event) {
             const dropdowns = document.querySelectorAll('[id^="dropdown-menu-"]');
             const buttons = document.querySelectorAll('[id^="dropdown-button-"]');
 
             let clickedInsideDropdown = false;
 
-            // Check if clicked inside any dropdown or button
             dropdowns.forEach(dropdown => {
                 if (dropdown.contains(event.target)) {
                     clickedInsideDropdown = true;
@@ -484,7 +444,6 @@
                 }
             });
 
-            // If clicked outside, close all dropdowns
             if (!clickedInsideDropdown) {
                 dropdowns.forEach(dropdown => {
                     dropdown.classList.add('hidden');
@@ -492,10 +451,8 @@
             }
         });
 
-        // Delete user
         function deleteUser(userId) {
             if (confirm('Are you sure you want to delete this user? This action cannot be undone!')) {
-                // Create and submit form
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = `/admin/customers/destroy/${userId}`;

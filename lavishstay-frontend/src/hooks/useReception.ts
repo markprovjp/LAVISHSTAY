@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { receptionAPI } from '../utils/api';
 import { message } from 'antd';
-import { BookingFilters, CreateBookingRequest } from '../types/booking';
+import { BookingFilters, CreateBookingRequest, CreateMultiRoomBookingRequest } from '../types/booking';
 
 // Interface for the assignment payload
 interface Assignment {
@@ -122,11 +122,14 @@ export const useTransferBooking = () => {
 
     return useMutation({
         mutationFn: (params: {
-            booking_id: number;
-            old_room_id: number;
-            new_room_id: number;
+            new_room_ids: number[];
+            new_option_id: number;
             reason?: string;
-        }) => receptionAPI.transferBooking(params),
+        }) => receptionAPI.transferBooking({
+            new_room_ids: params.new_room_ids.map(Number),
+            new_option_id: Number(params.new_option_id),
+            reason: params.reason,
+        }),
         onSuccess: () => {
             message.success('Chuyển phòng thành công');
             // Invalidate and refetch related queries
@@ -236,22 +239,25 @@ export const useAssignMultipleRooms = () => {
     });
 };
 
-export const useCreateBooking = () => {
-    const queryClient = useQueryClient();
+// export const useCreateBooking = () => {
+//     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: (data: CreateBookingRequest) => receptionAPI.createBooking(data),
-        onSuccess: () => {
-            message.success('Đặt phòng thành công');
-            queryClient.invalidateQueries({ queryKey: ['bookings'] });
-            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
-            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
-        },
-        onError: (error: any) => {
-            message.error(`Lỗi tạo đặt phòng: ${error.response?.data?.message || error.message}`);
-        },
-    });
-};
+//     return useMutation({
+//         mutationFn: (data: CreateBookingRequest) => receptionAPI.createBooking(data),
+//         onSuccess: () => {
+//             message.success('Đặt phòng thành công');
+//             queryClient.invalidateQueries({ queryKey: ['bookings'] });
+//             queryClient.invalidateQueries({ queryKey: ['booking-statistics'] });
+//             queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+//         },
+//         onError: (error: any) => {
+//             message.error(`Lỗi tạo đặt phòng: ${error.response?.data?.message || error.message}`);
+//         },
+//     });
+// };
+
+
+
 
 export const useUpdateBookingStatus = () => {
     const queryClient = useQueryClient();
@@ -296,14 +302,14 @@ interface AvailableRoomsParams {
 }
 
 // Get available rooms for specific dates
-export const useGetAvailableRooms = (params?: AvailableRoomsParams) => {
+export const useGetAvailableRooms = (params?: AvailableRoomsParams, options?: { enabled?: boolean }) => {
     return useQuery({
         queryKey: ['room-availability', params],
         queryFn: () => {
             if (!params?.check_in_date || !params?.check_out_date) {
                 return Promise.resolve({ data: [] });
             }
-            
+
             // Use URLSearchParams to dynamically build the query string
             const searchParams = new URLSearchParams();
             searchParams.append('check_in_date', params.check_in_date);
@@ -316,7 +322,7 @@ export const useGetAvailableRooms = (params?: AvailableRoomsParams) => {
             console.log('API request:', url); // Debug log
             return fetch(url).then(res => res.json());
         },
-        enabled: !!params?.check_in_date && !!params?.check_out_date,
+        enabled: options?.enabled ?? (!!params?.check_in_date && !!params?.check_out_date),
         staleTime: 1 * 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
@@ -333,6 +339,34 @@ export const useCalculateBookingQuote = () => {
         },
         onError: (error: any) => {
             // message.error(`Lỗi tính giá: ${error.response?.data?.message || error.message}`);
+        },
+    });
+};
+
+export const useCreateBooking = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (bookingData: CreateMultiRoomBookingRequest) => receptionAPI.createBooking(bookingData),
+        onSuccess: () => {
+            // Invalidate and refetch relevant queries after a booking is created
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['roomStatistics'] });
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
+        },
+    });
+};
+
+export const useConfirmPaidBooking = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (data: { booking_id: number; transaction_id?: string }) =>
+            receptionAPI.confirmBooking(data.booking_id, data.transaction_id),
+        onSuccess: (data, variables) => {
+            // Invalidate and refetch relevant queries after confirmation
+            queryClient.invalidateQueries({ queryKey: ['bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['booking', variables.booking_id] });
+            queryClient.invalidateQueries({ queryKey: ['roomStatistics'] });
+            queryClient.invalidateQueries({ queryKey: ['rooms'] });
         },
     });
 };

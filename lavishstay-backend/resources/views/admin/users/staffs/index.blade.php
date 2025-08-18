@@ -18,20 +18,20 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Staff Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all staff in the system</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý nhân viên</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý toàn bộ nhân viên trong hệ thống</p>
             </div>
 
             <!-- Right: Actions -->
             <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                <a href="{{ route('admin.staffs.create') }}">
+                <a href="{{ route('admin.users.staffs.create') }}">
                     <button
                         class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add Staff</span>
+                        <span class="max-xs:sr-only cursor-pointer">Thêm Nhân Viên</span>
                     </button>
                 </a>
             </div>
@@ -51,7 +51,7 @@
             </div>
         @endif
 
-        <form method="GET" action="{{ route('admin.staffs') }}"
+        <form method="GET" action="{{ route('admin.users.staffs.index') }}"
             class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
 
             <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
@@ -107,7 +107,7 @@
                         <i class="fas fa-search mr-2"></i> Tìm kiếm
                     </button>
 
-                    <a href="{{ route('admin.staffs') }}"
+                    <a href="{{ route('admin.users.staffs.index') }}"
                         class="inline-flex justify-center items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-200 text-sm shadow-sm w-full md:w-auto">
                         <i class="fas fa-redo-alt mr-2"></i> Đặt lại
                     </a>
@@ -126,28 +126,28 @@
                                 <tr class="bg-gray-50 dark:bg-gray-700">
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Avatar</th>
+                                        Ảnh</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Name</th>
+                                        Tên</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Email</th>
+                                        E-Mail</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Phone</th>
+                                        Số Điện Thoại</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        ID card / Passport number</th>
+                                        Số CMND / Hộ chiếu</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Role</th>
+                                        Vai trò</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Join Date</th>
+                                        Ngày Tạo</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Actions</th>
+                                        Hành Động</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -251,27 +251,14 @@
                                         <div id="dropdown-menu-{{ $user->id }}"
                                             class="hidden menu-button-action absolute right-0 z-50 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none">
                                             <div class="py-1 z-500" role="menu">
-                                                <!-- View Details -->
-                                                {{-- <button
-                                                            onclick="toggleDetails({{ $user->id }}); closeDropdown({{ $user->id }})"
-                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                                            role="menuitem">
-                                                            View Details
-                                                        </button> --}}
+                                                
 
-                                                <a href="{{ route('admin.staffs.show', $user->id) }}"
+                                                <a href="{{ route('admin.users.staffs.show', $user->id) }}"
                                                     class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                     role="menuitem">
-                                                    View Details
+                                                    Xem Chi Tiết
                                                 </a>
-                                                <!-- Edit -->
-                                                {{-- <a href="{{ route('admin.users.edit', $user->id) }}"
-                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                                            role="menuitem">
-                                                            Edit User
-                                                        </a> --}}
-
-                                                <!-- Divider -->
+                                                          <!-- Divider -->
                                                 <div class="border-t border-gray-100 dark:border-gray-700">
                                                 </div>
 
@@ -287,7 +274,7 @@
                                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                         </path>
                                                     </svg>
-                                                    Delete Staff
+                                                    Xoá Nhân Viên
                                                 </button>
                                             </div>
                                         </div>
@@ -419,7 +406,7 @@
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No users found</h3>
                 <p class="text-gray-500 dark:text-gray-400 mb-6">Get started by creating the first user in the
                     system.</p>
-                <a href="{{ route('admin.customers.create') }}"
+                <a href="{{ route('admin.users.staffs.create') }}"
                     class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-violet-600 hover:bg-violet-700 transition-colors duration-200">
                     Add New Staff
                 </a>

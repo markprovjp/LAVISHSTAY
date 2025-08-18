@@ -31,6 +31,13 @@ class RoomTypePackage extends Model
     /**
      * Translations relationship
      */
+
+    public function services()
+{
+    return $this->belongsToMany(Service::class, 'room_type_package_services', 'package_id', 'service_id')
+                ->withTimestamps();
+}
+
     public function translations()
     {
         return $this->hasMany(Translation::class, 'record_id')
@@ -62,6 +69,8 @@ class RoomTypePackage extends Model
     {
         return $this->hasMany(RoomOption::class, 'package_id', 'package_id');
     }
+
+    
 
     /**
      * Get formatted price modifier

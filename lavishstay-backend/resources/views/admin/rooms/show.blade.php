@@ -69,7 +69,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
             <!-- Main Content -->
             <div class="xl:col-span-2 space-y-6">

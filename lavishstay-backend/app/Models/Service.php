@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Service extends Model
 {
@@ -15,12 +16,14 @@ class Service extends Model
         'description',
         'price_vnd',
         'unit',
+        'included_services',
         'is_active'
     ];
 
     protected $casts = [
         'price_vnd' => 'decimal:2',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'included_services' => 'boolean'
     ];
 
     /**
@@ -55,6 +58,11 @@ class Service extends Model
         )->withTimestamps();
     }
 
+    public function packages(){
+        return $this->belongsToMany(RoomTypePackage::class, 'room_type_package_services', 'service_id', 'package_id')
+                    ->withTimestamps();
+    }
+
     /**
      * Scope for active services
      */
@@ -79,4 +87,18 @@ class Service extends Model
         $price = $this->formatted_price;
         return $this->unit ? $price . '/' . $this->unit : $price;
     }
+    public function bookingServices(): HasMany
+    {
+        return $this->hasMany(BookingService::class, 'service_id', 'service_id');
+    }
+
+    
+    /**
+     * Scope for included services (add-on services)
+     */
+    public function scopeIncluded($query)
+    {
+        return $query->where('included_services', true);
+    }
+
 }

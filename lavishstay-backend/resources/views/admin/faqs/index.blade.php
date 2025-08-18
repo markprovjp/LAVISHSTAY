@@ -20,8 +20,8 @@
 
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">FAQs Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all FAQs and their configurations</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Câu hỏi thường gặp</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý tất cả các câu hỏi thường gặp và cấu hình của chúng</p>
             </div>
 
             <!-- Right: Actions -->
@@ -34,7 +34,7 @@
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add FAQs</span>
+                        <span class="max-xs:sr-only cursor-pointer">Thêm Câu Hỏi</span>
                     </button>
                 </a>
             </div>
@@ -152,15 +152,14 @@
                                                                 onclick="toggleDetails({{ $faq->faq_id }}); closeDropdown({{ $faq->faq_id }})"
                                                                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                                 role="menuitem">
-
-                                                                View Details
+                                                                Xem Chi Tiết
                                                             </button>
 
                                                             <!-- Edit -->
                                                             <a href="{{ route('admin.faqs.edit', $faq->faq_id) }}"
                                                                 class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                                 role="menuitem">
-                                                                Edit FAQ
+                                                                Sửa Câu Hỏi
                                                             </a>
 
 
@@ -180,7 +179,7 @@
                                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                                     </path>
                                                                 </svg>
-                                                                Delete FAQ
+                                                                Xoá Câu Hỏi
                                                             </button>
                                                         </div>
                                                     </div>
@@ -198,7 +197,7 @@
                                                         <div>
                                                             <h4
                                                                 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                The Question</h4>
+                                                                Câu Hỏi</h4>
                                                             <div class="space-y-2">
                                                                 @if ($faq->question_en)
                                                                     <div>
@@ -228,7 +227,7 @@
                                                             <div>
                                                                 <h4
                                                                     class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                    The Answer</h4>
+                                                                    Câu Trả Lời</h4>
                                                                 <div class="space-y-2">
                                                                     @if ($faq->answer_en)
                                                                         <div>
@@ -266,13 +265,13 @@
                                                         <div>
                                                             <h4
                                                                 class="font-medium text-gray-800 dark:text-gray-100 mb-2">
-                                                                Timestamps</h4>
+                                                                Mốc thời gian</h4>
                                                             <div
                                                                 class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                                                                <div>Created:
+                                                                <div>Ngày tạo:
                                                                     {{ $faq->created_at->format('M d, Y H:i') }}
                                                                 </div>
-                                                                <div>Updated:
+                                                                <div>Ngày sửa:
                                                                     {{ $faq->updated_at->format('M d, Y H:i') }}
                                                                 </div>
                                                             </div>

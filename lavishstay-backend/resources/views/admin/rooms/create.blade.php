@@ -181,22 +181,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Base Price -->
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Giá cơ bản (VND/đêm) <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="number" name="base_price_vnd" value="{{ old('base_price_vnd') }}"
-                                        min="0" step="1000"
-                                        class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-                                        placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
-                                        @error('base_price_vnd') border-red-500 @enderror"
-                                        placeholder="VD: 2500000">
-                                    @error('base_price_vnd')
-                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
                                 <!-- Description -->
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

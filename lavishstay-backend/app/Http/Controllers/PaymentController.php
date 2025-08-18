@@ -14,12 +14,379 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Mail\BookingConfirmation;
+use App\Models\PaymentSetting;
 use Illuminate\Support\Facades\Mail;
 
 class PaymentController extends Controller
 {
 
 
+    public function settings()
+    {
+        try {
+            // Get all payment settings organized by groups
+            $settings = [
+                'vietqr' => $this->getVietQRSettings(),
+                'cpay' => $this->getCPaySettings(),
+                'vnpay' => $this->getVNPaySettings(),
+                'pay_at_hotel' => $this->getPayAtHotelSettings(),
+                'general' => $this->getGeneralSettings()
+            ];
+
+            // Get statistics for the dashboard cards
+            $statistics = [
+                'total_settings' => PaymentSetting::count(),
+                'active_settings' => PaymentSetting::where('is_active', true)->count(),
+                'last_updated' => PaymentSetting::latest('updated_at')->first()?->updated_at,
+                'enabled_methods' => $this->getEnabledPaymentMethods()
+            ];
+
+            return view('admin.payment.settings', compact('settings', 'statistics'));
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to load payment settings page', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Không thể tải trang cấu hình thanh toán.');
+        }
+    }
+
+    public function updateSettings(Request $request)
+    {
+        try {
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                // VietQR
+                'vietqr_bank_id' => 'required|string|max:20',
+                'vietqr_account_no' => 'required|string|max:50|regex:/^\d+$/',
+                'vietqr_account_name' => 'required|string|max:255',
+                'vietqr_template' => 'required|in:print,compact,qr_only',
+                'vietqr_enabled' => 'boolean',
+                
+                // CPay
+                'cpay_timeout' => 'required|integer|min:5|max:300',
+                'cpay_enabled' => 'boolean',
+                
+                // VNPay
+                'vnpay_enabled' => 'boolean',
+                
+                // Pay at Hotel
+                'pay_at_hotel_enabled' => 'boolean',
+                
+                // General
+                'general_default_payment_method' => 'required|in:vietqr,vnpay,pay_at_hotel',
+                'general_api_base_url' => 'required|url',
+                'general_payment_timeout' => 'required|integer|min:300|max:3600',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput()
+                    ->with('error', 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+            }
+
+            $validated = $validator->validated();
+
+            // Prepare settings array
+            $settingsToUpdate = [
+                // VietQR Settings
+                ['key' => 'vietqr.bank_id', 'value' => $validated['vietqr_bank_id'], 'type' => 'string'],
+                ['key' => 'vietqr.account_no', 'value' => $validated['vietqr_account_no'], 'type' => 'string'],
+                ['key' => 'vietqr.account_name', 'value' => $validated['vietqr_account_name'], 'type' => 'string'],
+                ['key' => 'vietqr.template', 'value' => $validated['vietqr_template'], 'type' => 'string'],
+                ['key' => 'vietqr.enabled', 'value' => $request->has('vietqr_enabled') ? '1' : '0', 'type' => 'boolean'],
+
+                // CPay Settings
+                ['key' => 'cpay.timeout', 'value' => $validated['cpay_timeout'], 'type' => 'number'],
+                ['key' => 'cpay.enabled', 'value' => $request->has('cpay_enabled') ? '1' : '0', 'type' => 'boolean'],
+
+                // VNPay Settings
+                ['key' => 'vnpay.enabled', 'value' => $request->has('vnpay_enabled') ? '1' : '0', 'type' => 'boolean'],
+
+                // Pay at Hotel Settings
+                ['key' => 'pay_at_hotel.enabled', 'value' => $request->has('pay_at_hotel_enabled') ? '1' : '0', 'type' => 'boolean'],
+
+                // General Settings
+                ['key' => 'general.default_payment_method', 'value' => $validated['general_default_payment_method'], 'type' => 'string'],
+                ['key' => 'general.api_base_url', 'value' => $validated['general_api_base_url'], 'type' => 'string'],
+                ['key' => 'general.payment_timeout', 'value' => $validated['general_payment_timeout'], 'type' => 'number'],
+            ];
+
+            // Update each setting
+            foreach ($settingsToUpdate as $settingData) {
+                PaymentSetting::updateOrCreate(
+                    ['key' => $settingData['key']],
+                    [
+                        'value' => $settingData['value'],
+                        'type' => $settingData['type'],
+                        'group_name' => $this->getGroupFromKey($settingData['key']),
+                        'description' => $this->getDescriptionFromKey($settingData['key']),
+                        'is_encrypted' => $this->shouldEncrypt($settingData['key']),
+                        'is_active' => true
+                    ]
+                );
+            }
+
+            // Clear cache
+            PaymentSetting::clearCache();
+
+            // Log the update
+            Log::info('Payment settings updated via admin panel', [
+                'user_id' => auth()->id(),
+                'updated_settings' => array_column($settingsToUpdate, 'key'),
+                'ip' => $request->ip()
+            ]);
+
+            return redirect()->back()->with('success', 'Cập nhật cấu hình thanh toán thành công!');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to update payment settings', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+                'request_data' => $request->except(['_token'])
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Không thể cập nhật cấu hình. Vui lòng thử lại.');
+        }
+    }
+
+
+    public function testVietQRFromAdmin(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'bank_id' => 'required|string|max:20',
+                'account_no' => 'required|string|max:50',
+                'account_name' => 'required|string|max:255'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dữ liệu không hợp lệ',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $validated = $validator->validated();
+
+            // Test generate QR URL
+            $testAmount = 10000;
+            $testContent = 'Test connection - ' . now()->format('H:i:s');
+            $encodedContent = urlencode($testContent);
+            $encodedAccountName = urlencode($validated['account_name']);
+            
+            $qrUrl = "https://img.vietqr.io/image/{$validated['bank_id']}-{$validated['account_no']}-print.png?amount={$testAmount}&addInfo={$encodedContent}&accountName={$encodedAccountName}";
+
+            // Try to fetch the QR image to verify
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $qrUrl,
+                CURLOPT_NOBODY => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 15,
+                CURLOPT_USERAGENT => 'LavishStay Payment System',
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_RETURNTRANSFER => true
+            ]);
+
+            $result = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            if ($result === false || !empty($error)) {
+                throw new \Exception("cURL Error: {$error}");
+            }
+
+            if ($httpCode === 200) {
+                Log::info('VietQR test successful via admin panel', [
+                    'bank_id' => $validated['bank_id'],
+                    'account_no' => $validated['account_no'],
+                    'test_url' => $qrUrl,
+                    'user_id' => auth()->id()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Kết nối VietQR thành công! QR code có thể được tạo.',
+                    'test_url' => $qrUrl
+                ]);
+            } else {
+                throw new \Exception("HTTP {$httpCode}: Không thể tạo QR code. Vui lòng kiểm tra thông tin tài khoản.");
+            }
+        } catch (\Exception $e) {
+            Log::error('VietQR test failed via admin panel', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->id()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Test VietQR thất bại: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset settings to default from admin panel
+     */
+    public function resetToDefaultsFromAdmin()
+    {
+        try {
+            // Define default settings
+            $defaultSettings = [
+                ['key' => 'vietqr.bank_id', 'value' => 'MBBank', 'type' => 'string'],
+                ['key' => 'vietqr.account_no', 'value' => '0335920306', 'type' => 'string'],
+                ['key' => 'vietqr.account_name', 'value' => 'NGUYEN VAN QUYEN', 'type' => 'string'],
+                ['key' => 'vietqr.template', 'value' => 'print', 'type' => 'string'],
+                ['key' => 'vietqr.enabled', 'value' => '1', 'type' => 'boolean'],
+                ['key' => 'cpay.timeout', 'value' => '30', 'type' => 'number'],
+                ['key' => 'cpay.enabled', 'value' => '1', 'type' => 'boolean'],
+                ['key' => 'vnpay.enabled', 'value' => '0', 'type' => 'boolean'],
+                ['key' => 'pay_at_hotel.enabled', 'value' => '1', 'type' => 'boolean'],
+                ['key' => 'general.default_payment_method', 'value' => 'vietqr', 'type' => 'string'],
+                ['key' => 'general.api_base_url', 'value' => 'http://localhost:8888/api', 'type' => 'string'],
+                ['key' => 'general.payment_timeout', 'value' => '900', 'type' => 'number'],
+            ];
+
+            foreach ($defaultSettings as $setting) {
+                PaymentSetting::updateOrCreate(
+                    ['key' => $setting['key']],
+                    [
+                        'value' => $setting['value'],
+                        'type' => $setting['type'],
+                        'group_name' => $this->getGroupFromKey($setting['key']),
+                        'description' => $this->getDescriptionFromKey($setting['key']),
+                        'is_encrypted' => $this->shouldEncrypt($setting['key']),
+                        'is_active' => true
+                    ]
+                );
+            }
+
+            PaymentSetting::clearCache();
+
+            Log::info('Payment settings reset to defaults via admin panel', [
+                'user_id' => auth()->id(),
+                'ip' => request()->ip()
+            ]);
+
+            return redirect()->back()->with('success', 'Đã khôi phục cấu hình mặc định thành công!');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to reset payment settings via admin panel', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id()
+            ]);
+
+            return redirect()->back()->with('error', 'Không thể khôi phục cấu hình mặc định.');
+        }
+    }
+
+    // Private helper methods
+    private function getVietQRSettings(): array
+    {
+        return [
+            'bank_id' => PaymentSetting::get('vietqr.bank_id', 'MBBank'),
+            'account_no' => PaymentSetting::get('vietqr.account_no', '0335920306'),
+            'account_name' => PaymentSetting::get('vietqr.account_name', 'NGUYEN VAN QUYEN'),
+            'template' => PaymentSetting::get('vietqr.template', 'print'),
+            'enabled' => PaymentSetting::get('vietqr.enabled', true)
+        ];
+    }
+
+    private function getCPaySettings(): array
+    {
+        return [
+            'timeout' => PaymentSetting::get('cpay.timeout', 30),
+            'enabled' => PaymentSetting::get('cpay.enabled', true)
+        ];
+    }
+
+    private function getVNPaySettings(): array
+    {
+        return [
+            'enabled' => PaymentSetting::get('vnpay.enabled', false)
+        ];
+    }
+
+    private function getPayAtHotelSettings(): array
+    {
+        return [
+            'enabled' => PaymentSetting::get('pay_at_hotel.enabled', true)
+        ];
+    }
+
+    private function getGeneralSettings(): array
+    {
+        return [
+            'default_payment_method' => PaymentSetting::get('general.default_payment_method', 'vietqr'),
+            'api_base_url' => PaymentSetting::get('general.api_base_url', 'http://localhost:8888/api'),
+            'payment_timeout' => PaymentSetting::get('general.payment_timeout', 900)
+        ];
+    }
+
+    private function getGroupFromKey(string $key): string
+    {
+        return explode('.', $key)[0];
+    }
+
+    private function getDescriptionFromKey(string $key): string
+    {
+        $descriptions = [
+            'vietqr.bank_id' => 'Mã ngân hàng cho VietQR',
+            'vietqr.account_no' => 'Số tài khoản ngân hàng',
+            'vietqr.account_name' => 'Tên chủ tài khoản',
+            'vietqr.template' => 'Template QR code',
+            'vietqr.enabled' => 'Bật/tắt thanh toán VietQR',
+            'cpay.timeout' => 'Timeout cho API CPay (giây)',
+            'cpay.enabled' => 'Bật/tắt kiểm tra thanh toán CPay',
+            'vnpay.enabled' => 'Bật/tắt thanh toán VNPay',
+            'pay_at_hotel.enabled' => 'Bật/tắt thanh toán tại khách sạn',
+            'general.default_payment_method' => 'Phương thức thanh toán mặc định',
+            'general.api_base_url' => 'Base URL cho API',
+            'general.payment_timeout' => 'Thời gian timeout thanh toán (giây)'
+        ];
+
+        return $descriptions[$key] ?? 'Cấu hình hệ thống';
+    }
+
+    private function shouldEncrypt(string $key): bool
+    {
+        $encryptedKeys = [
+            'cpay.google_script_url',
+            'vnpay.merchant_id',
+            'vnpay.hash_secret'
+        ];
+
+        return in_array($key, $encryptedKeys);
+    }
+
+    private function getEnabledPaymentMethods(): array
+    {
+        $methods = [];
+        
+        if (PaymentSetting::get('vietqr.enabled', true)) {
+            $methods[] = 'VietQR';
+        }
+        
+        if (PaymentSetting::get('vnpay.enabled', false)) {
+            $methods[] = 'VNPay';
+        }
+        
+        if (PaymentSetting::get('pay_at_hotel.enabled', true)) {
+            $methods[] = 'Thanh toán tại khách sạn';
+        }
+        
+        return $methods;
+    }
+    
     /**
      * Admin view
      */
@@ -84,6 +451,38 @@ class PaymentController extends Controller
             }
         }
 
+        Log::info('Booking notes:', ['notes' => $request->input('notes')]);
+        // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
+        $userId = null;
+        // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
+        if ($request->user()) {
+            $userId = $request->user()->id;
+            Log::info('User is authenticated, user_id set from request->user()', ['user_id' => $userId]);
+        } elseif ($request->has('user_id')) {
+            $userId = $request->input('user_id');
+            Log::info('User_id received from request input', ['user_id' => $userId]);
+        } else {
+            Log::info('No user_id found, booking will be guest booking');
+        }
+
+        $booking = Booking::create([
+            'booking_code' => '', // Will be updated after creation
+            'guest_name' => $request->input('customer_name'),
+            'guest_email' => $request->input('customer_email'),
+            'guest_phone' => $request->input('customer_phone'),
+            'check_in_date' => $checkInDate,
+            'check_out_date' => $checkOutDate,
+            'guest_count' => $request->input('total_guests'),
+            'total_price_vnd' => $request->input('total_price'),
+            'status' => 'pending', // Vẫn pending cho đến khi thanh toán
+            'notes' => $request->input('notes'),
+            'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
+            'user_id' => $userId,
+            'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
+            'option_id' => null, // Sẽ cập nhật sau khi có booking_code
+        ]);
+        Log::info('Booking created, user_id in booking:', ['user_id' => $booking->user_id, 'booking_id' => $booking->booking_id]);
+
         // 2. Kiểm tra availability
         foreach ($requestedRoomTypes as $roomTypeId => $details) {
             $requestedCount = $details['count'];
@@ -111,37 +510,34 @@ class PaymentController extends Controller
         Log::info('Booking notes:', ['notes' => $request->input('notes')]);
         
         // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
-        $booking = Booking::create([
-            'booking_code' => '', // Will be updated after creation
-            'guest_name' => $request->input('customer_name'),
-            'guest_email' => $request->input('customer_email'),
-            'guest_phone' => $request->input('customer_phone'),
-            'check_in_date' => $checkInDate,
-            'check_out_date' => $checkOutDate,
-            'guest_count' => $request->input('total_guests'),
-            'total_price_vnd' => $request->input('total_price'),
-            'status' => 'pending', // Vẫn pending cho đến khi thanh toán
-            'notes' => $request->input('notes'),
-            'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
-            'user_id' => null,
-            'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
+        $userId = null;
+        // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
+        if ($request->user()) {
+            $userId = $request->user()->id;
+        } elseif ($request->has('user_id')) {
+            $userId = $request->input('user_id');
+        }
 
-        ]);
 
         // Generate booking code
         $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');
         $booking->booking_code = $bookingCode;
         $booking->save();
+        Log::info('Booking updated with booking_code:', ['booking_code' => $bookingCode, 'booking_id' => $booking->booking_id]);
+
+        // Generate option_id for later use (do NOT set in booking yet)
+        $optionId = 'BOOK-' . $bookingCode;
 
         // 4. Lưu thông tin rooms vào session/cache để xử lý sau khi thanh toán thành công
-        // Thay vì tạo ngay tất cả records, chúng ta lưu data để xử lý sau
+        // Sinh option_id duy nhất cho booking
         $roomsData = [
             'rooms' => $request->input('rooms'),
             'customer_id_card' => $request->input('customer_id_card', ''),
             'payment_method' => $request->input('payment_method'),
-            'nights' => $nights
+            'nights' => $nights,
+            'option_id' => $optionId // Lưu option_id để dùng sau khi thanh toán
         ];
-        
+        Log::info('Rooms data cached with option_id:', ['option_id' => $optionId, 'booking_code' => $bookingCode]);
         // Lưu vào cache với key là booking_code để xử lý sau
         cache()->put("booking_rooms_data_{$bookingCode}", $roomsData, now()->addHours(24));
 
@@ -1269,7 +1665,7 @@ class PaymentController extends Controller
             Log::info("🔧 DEBUG: Testing CPay API", [
                 'booking_code' => $bookingCode,
                 'amount' => $expectedAmount,
-                'app_env' => env('APP_ENV'),
+                'app_env' => env('APP_ENV'), 
                 'cpay_auto_confirm' => env('CPAY_AUTO_CONFIRM'),
                 'cpay_url' => env('CPAY_GOOGLE_SCRIPT_URL')
             ]);
@@ -1344,47 +1740,139 @@ class PaymentController extends Controller
                 'updated_at' => now(),
             ]);
 
+            // Tạo 1 room_option duy nhất cho booking (dùng dữ liệu từ phòng đầu tiên)
+            $optionId = 'BOOK-' . $bookingCode;
+            $firstRoom = $rooms[0];
+            $cancellationPolicyId = $firstRoom['policies']['cancellation']['policy_id'] ?? null;
+            $depositPolicyId = $firstRoom['policies']['deposit']['policy_id'] ?? null;
+            $checkOutPolicyId = $firstRoom['policies']['check_out']['policy_id'] ?? null;
+            
+            // Validate foreign key references - set to null if they don't exist
+            $mealType = $firstRoom['meal_type'] ?? null;
+            $bedType = $firstRoom['bed_type'] ?? null;
+            $packageId = $firstRoom['package_id'] ?? null;
+            
+            // Validate that foreign key IDs actually exist in their respective tables
+            if ($mealType && !DB::table('meal_types')->where('id', $mealType)->exists()) {
+                Log::warning("Invalid meal_type ID: {$mealType}, setting to null");
+                $mealType = null;
+            }
+            
+            if ($bedType && !DB::table('bed_types')->where('id', $bedType)->exists()) {
+                Log::warning("Invalid bed_type ID: {$bedType}, setting to null");
+                $bedType = null;
+            }
+            
+            if ($packageId && !DB::table('room_type_package')->where('package_id', $packageId)->exists()) {
+                Log::warning("Invalid package_id: {$packageId}, setting to null");
+                $packageId = null;
+            }
+            
+            if ($depositPolicyId && !DB::table('deposit_policies')->where('policy_id', $depositPolicyId)->exists()) {
+                Log::warning("Invalid deposit_policy_id: {$depositPolicyId}, setting to null");
+                $depositPolicyId = null;
+            }
+            
+            if ($cancellationPolicyId && !DB::table('cancellation_policies')->where('policy_id', $cancellationPolicyId)->exists()) {
+                Log::warning("Invalid cancellation_policy_id: {$cancellationPolicyId}, setting to null");
+                $cancellationPolicyId = null;
+            }
+            
+            if ($checkOutPolicyId && !DB::table('check_out_policies')->where('policy_id', $checkOutPolicyId)->exists()) {
+                Log::warning("Invalid check_out_policy_id: {$checkOutPolicyId}, setting to null");
+                $checkOutPolicyId = null;
+            }
+            
+            $roomOptionData = [
+                'option_id' => $optionId,
+                'room_id' => NULL,
+                'name' => $firstRoom['option_name'] ?? ('Gói đặt phòng ' . $bookingCode),
+                'price_per_night_vnd' => $this->extractPrice($firstRoom['option_price'] ?? $firstRoom['room_price'] ?? 0),
+                'max_guests' => ($firstRoom['adults'] ?? 1) + ($firstRoom['children'] ?? 0),
+                'min_guests' => $firstRoom['adults'] ?? 1,
+                'urgency_message' => $firstRoom['urgency_message'] ?? null,
+                'most_popular' => $firstRoom['most_popular'] ?? 0,
+                'recommended' => $firstRoom['recommended'] ?? 0,
+                'meal_type' => $mealType,
+                'bed_type' => $bedType,
+                'recommendation_score' => $firstRoom['recommendation_score'] ?? null,
+                'deposit_policy_id' => $depositPolicyId,
+                'cancellation_policy_id' => $cancellationPolicyId,
+                'check_out_policy_id' => $checkOutPolicyId,
+                'package_id' => $packageId,
+                'policy_applied_reason' => 'Áp dụng sau khi thanh toán thành công',
+                'policy_applied_date' => $checkInDate,
+                'policy_snapshot_json' => json_encode($firstRoom['policies'] ?? []),
+                'adjusted_price' => $this->extractPrice($firstRoom['option_price'] ?? $firstRoom['room_price'] ?? 0),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            Log::info("[completeBookingAfterPayment] Insert room_option duy nhất cho booking:", [
+                'booking_code' => $bookingCode,
+                'option_id' => $roomOptionData['option_id'],
+                'meal_type' => $roomOptionData['meal_type'],
+                'bed_type' => $roomOptionData['bed_type'],
+                'package_id' => $roomOptionData['package_id'],
+                'deposit_policy_id' => $roomOptionData['deposit_policy_id'],
+                'cancellation_policy_id' => $roomOptionData['cancellation_policy_id'],
+                'check_out_policy_id' => $roomOptionData['check_out_policy_id'],
+            ]);
+            $roomOptionInserted = false;
+            $finalOptionId = null;
+            
+            try {
+                DB::table('room_option')->insert($roomOptionData);
+                $roomOptionInserted = true;
+                $finalOptionId = $optionId;
+                Log::info("[completeBookingAfterPayment] ĐÃ INSERT room_option thành công:", [
+                    'option_id' => $optionId,
+                    'package_id' => $roomOptionData['package_id'],
+                    'deposit_policy_id' => $roomOptionData['deposit_policy_id'],
+                    'cancellation_policy_id' => $roomOptionData['cancellation_policy_id'],
+                    'check_out_policy_id' => $roomOptionData['check_out_policy_id'],
+                ]);
+            } catch (\Exception $e) {
+                Log::error("[completeBookingAfterPayment] LỖI khi insert room_option:", [
+                    'option_id' => $optionId,
+                    'package_id' => $roomOptionData['package_id'],
+                    'deposit_policy_id' => $roomOptionData['deposit_policy_id'],
+                    'cancellation_policy_id' => $roomOptionData['cancellation_policy_id'],
+                    'check_out_policy_id' => $roomOptionData['check_out_policy_id'],
+                    'error' => $e->getMessage(),
+                    'sql_state' => $e->getCode()
+                ]);
+                // Nếu insert room_option thất bại, sử dụng NULL cho option_id
+                $finalOptionId = null;
+            }
+
+            // Cập nhật option_id vào bảng booking SAU KHI đã insert room_option thành công
+            if ($roomOptionInserted) {
+                try {
+                    $booking->option_id = $optionId;
+                    $booking->save();
+                    Log::info("[completeBookingAfterPayment] ĐÃ UPDATE booking.option_id thành công", [
+                        'booking_id' => $booking->booking_id,
+                        'option_id' => $optionId
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("[completeBookingAfterPayment] LỖI khi update booking.option_id:", [
+                        'booking_id' => $booking->booking_id,
+                        'option_id' => $optionId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
             // Xử lý từng phòng
             foreach ($rooms as $roomIndex => $roomData) {
-                Log::info("Completing room {$roomIndex} for booking {$bookingCode}:", $roomData);
+                Log::info("[completeBookingAfterPayment] Room {$roomIndex} data for booking {$bookingCode}:", $roomData);
 
+                // Không insert room_option trong từng phòng nữa
                 $room = Room::find($roomData['room_id']);
                 if (!$room) {
-                    Log::error("Invalid room ID provided: " . $roomData['room_id']);
+                    Log::error("[completeBookingAfterPayment] Invalid room ID provided: " . $roomData['room_id']);
                     continue; // Skip invalid room instead of throwing exception
                 }
-
-                // Tạo option_id unique
-                $optionId = 'BOOK-' . $bookingCode . '-R' . $roomData['room_id'] . '-' . ($roomIndex + 1);
-
-                // Extract policies safely
-                $cancellationPolicyId = $roomData['policies']['cancellation']['policy_id'] ?? null;
-                $depositPolicyId = $roomData['policies']['deposit']['policy_id'] ?? null;
-                $checkOutPolicyId = $roomData['policies']['check_out']['policy_id'] ?? null;
-
-                // Tạo room_option
-                DB::table('room_option')->insert([
-                    'option_id' => $optionId,
-                    'room_id' => NULL,
-                    'name' => $roomData['option_name'] ?? ('Gói đặt phòng ' . $bookingCode),
-                    'price_per_night_vnd' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
-                    'max_guests' => ($roomData['adults'] ?? 1) + ($roomData['children'] ?? 0),
-                    'min_guests' => $roomData['adults'] ?? 1,
-                    'urgency_message' => $roomData['urgency_message'] ?? null,
-                    'most_popular' => $roomData['most_popular'] ?? 0,
-                    'recommended' => $roomData['recommended'] ?? 0,
-                    'meal_type' => $roomData['meal_type'] ?? null,
-                    'bed_type' => $roomData['bed_type'] ?? null,
-                    'recommendation_score' => $roomData['recommendation_score'] ?? null,
-                    'deposit_policy_id' => $depositPolicyId,
-                    'cancellation_policy_id' => $cancellationPolicyId,
-                    'check_out_policy_id' => $checkOutPolicyId,
-                    'package_id' => $roomData['package_id'] ?? null,
-                    'policy_applied_reason' => 'Áp dụng sau khi thanh toán thành công',
-                    'policy_applied_date' => $checkInDate,
-                    'policy_snapshot_json' => json_encode($roomData['policies'] ?? []),
-                    'adjusted_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
-                ]);
 
                 // Xử lý representative cho room này
                 $representativeId = $mainRepresentativeId;
@@ -1404,12 +1892,14 @@ class PaymentController extends Controller
                     ]);
                 }
 
-                // Tạo booking_room record
-                $bookingRoomId = DB::table('booking_rooms')->insertGetId([
+                // Tạo booking_room record, sử dụng finalOptionId (có thể là NULL nếu room_option insert thất bại)
+                Log::info("[completeBookingAfterPayment] Creating booking_room with finalOptionId: " . ($finalOptionId ?? 'NULL'));
+                
+                $bookingRoomData = [
                     'booking_id' => $booking->booking_id,
                     'booking_code' => $bookingCode,
                     'room_id' => NULL,
-                    'option_id' => $optionId,
+                    'option_id' => $finalOptionId, // Sử dụng finalOptionId thay vì optionId
                     'option_name' => $roomData['option_name'] ?? 'Custom Package',
                     'option_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
                     'representative_id' => $representativeId,
@@ -1423,7 +1913,22 @@ class PaymentController extends Controller
                     'check_out_date' => $checkOutDate,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ];
+                
+                try {
+                    $bookingRoomId = DB::table('booking_rooms')->insertGetId($bookingRoomData);
+                    Log::info("[completeBookingAfterPayment] Successfully created booking_room:", [
+                        'booking_room_id' => $bookingRoomId,
+                        'option_id' => $finalOptionId
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("[completeBookingAfterPayment] Error creating booking_room:", [
+                        'error' => $e->getMessage(),
+                        'booking_room_data' => $bookingRoomData,
+                        'sql_state' => $e->getCode()
+                    ]);
+                    throw $e; // Re-throw để không tiếp tục xử lý room này
+                }
 
                 // Tạo booking_room_children records nếu có
                 if (isset($roomData['children_age']) && is_array($roomData['children_age']) && !empty($roomData['children_age'])) {

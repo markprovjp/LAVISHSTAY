@@ -35,11 +35,13 @@ import ReviewBooking from "./pages/ReviewBooking";
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
+import NewsDetailPage from "./pages/NewsDetailPage";
+
 import ConfirmRepresentativePayment from "./pages/reception/room-management/ConfirmRepresentativePayment";
 import PaymentBookingReception from "./pages/reception/room-management/PaymentBookingReception";
 import RoomManagementDashboard from "./pages/reception/room-management/RoomManagementDashboard";
 import BookingManagementPage from "./pages/reception/booking-management";
-
+import PaymentSuccess from "./pages/reception/room-management/PaymentSuccess";
 import ChatBot from "./components/ui/ChatBot";
 import ContactFloatButton from './components/ui/ContactFloatButton';
 // Import profile components
@@ -76,6 +78,8 @@ import "./index.css";
 import "./styles/theme-transitions.css";
 import "./styles/global.css";
 import "./styles/performance-optimizations.css";
+import News from "./pages/News";
+
 
 const { Content } = Layout;
 
@@ -118,9 +122,9 @@ const App: React.FC = React.memo(() => {
         <Breadcrumb />
         <Content
           style={{
-  
+
             background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
-           
+
           }}
         >
           <Routes>            {/* Main Pages */}
@@ -128,6 +132,8 @@ const App: React.FC = React.memo(() => {
             <Route path="/about" element={<About />} />
             <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* Thêm dòng này */}
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             <Route path="/room-types-demo" element={<RoomTypesDemo />} />
             <Route path="/review-booking" element={<ReviewBooking />} />
@@ -149,6 +155,7 @@ const App: React.FC = React.memo(() => {
 
             {/* Legacy routes for backward compatibility */}            {/* Reception Routes with nested routing */}
             <Route path="/reception" element={<ReceptionLayout />}>
+
               <Route index element={<ReceptionDashboard />} />
               <Route path="dashboard" element={<ReceptionDashboard />} />
               <Route path="room-management-list" element={<RoomManagementDashboard />} />
@@ -156,7 +163,9 @@ const App: React.FC = React.memo(() => {
               <Route path="confirm-representative-payment" element={<ConfirmRepresentativePayment />} />
               <Route path="payment-booking" element={<PaymentBookingReception />} />
               <Route path="room-management/today" element={<RoomManagementDashboard />} />
-            </Route>            {/* Other routes */}
+              <Route path="payment-success" element={<PaymentSuccess />} />
+            </Route>
+            {/* Other routes */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/destinations" element={<Destinations />} />
             <Route path="/payment" element={<Payment />} />

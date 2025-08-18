@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Jul 20, 2025 at 04:44 PM
+-- Generation Time: Aug 16, 2025 at 10:53 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.1.10
 
@@ -44,7 +44,7 @@ CREATE TABLE `amenities` (
 --
 
 INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Điều hòa không khí', 'Snowflake', 'lucide', 'basic', 'Hệ thống điều hòa nhiệt độ hiện đại', 1, '2025-06-25 21:06:10', '2025-06-25 21:06:10'),
+(1, 'Điều hòa không khí tân tiến', 'Snowflake', 'lucide', 'basic', 'Hệ thống điều hòa nhiệt độ hiện đại', 1, '2025-06-25 21:06:10', '2025-08-15 04:13:49'),
 (2, 'TV truyền hình cáp', 'Tv2', 'lucide', 'entertainment', 'Smart TV màn hình phẳng với truyền hình cáp', 1, '2025-06-25 21:06:10', '2025-06-25 21:06:10'),
 (3, 'Minibar với nước miễn phí', 'CupSoda', 'lucide', 'basic', 'Minibar với 2 chai nước suối, trà, cà phê miễn phí', 1, '2025-06-25 21:06:10', '2025-06-25 21:06:10'),
 (4, 'WiFi miễn phí', 'Wifi', 'lucide', 'connectivity', 'Kết nối wifi tốc độ cao 24/7', 1, '2025-06-25 21:06:10', '2025-06-25 21:06:10'),
@@ -98,14 +98,94 @@ INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `
 --
 
 CREATE TABLE `audit_logs` (
-  `log_id` int NOT NULL,
-  `user_id` bigint UNSIGNED DEFAULT NULL,
-  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `table_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `record_id` int NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `audit_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Người thực hiện hành động',
+  `session_id` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Session ID để track theo phiên',
+  `action` enum('create','update','delete','restore','login','logout','bulk_update','bulk_delete','other') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại hành động',
+  `model` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên model/bảng tác động',
+  `model_id` bigint UNSIGNED NOT NULL COMMENT 'ID bản ghi tác động',
+  `old_values` json DEFAULT NULL COMMENT 'Dữ liệu trước khi thay đổi',
+  `new_values` json DEFAULT NULL COMMENT 'Dữ liệu sau khi thay đổi',
+  `changes_summary` text COLLATE utf8mb4_unicode_ci COMMENT 'Tóm tắt thay đổi (human readable)',
+  `description` text COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả hành động hoặc lý do',
+  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'IP address',
+  `user_agent` text COLLATE utf8mb4_unicode_ci COMMENT 'User agent string',
+  `url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'URL được truy cập',
+  `method` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'HTTP method',
+  `metadata` json DEFAULT NULL COMMENT 'Thông tin bổ sung (tags, categories, etc.)',
+  `is_sensitive` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Có chứa dữ liệu nhạy cảm không',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ lịch sử thay đổi dữ liệu hệ thống';
+
+--
+-- Dumping data for table `audit_logs`
+--
+
+INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`, `model_id`, `old_values`, `new_values`, `changes_summary`, `description`, `ip_address`, `user_agent`, `url`, `method`, `metadata`, `is_sensitive`, `created_at`) VALUES
+(1, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'update', 'CancellationPolicy', 2, '{\"name\": \"Hủy có phí\", \"priority\": 0, \"is_active\": true, \"policy_id\": 2, \"conditions\": null, \"description\": \"Phạt 50% nếu hủy trong vòng 2 ngày\", \"penalty_days\": 3, \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"max_booking_amount\": null, \"min_booking_amount\": null, \"penalty_percentage\": \"50.00\", \"free_cancellation_days\": null, \"penalty_fixed_amount_vnd\": null}', '{\"penalty_percentage\": \"30.00\"}', NULL, 'NGUYỄN ANH ĐỨC đã cập nhật CancellationPolicy #2', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/cancellation-policies/update/2', 'PUT', '{\"route_name\": \"admin.cancellation-policies.update\", \"model_class\": \"App\\\\Models\\\\CancellationPolicy\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\CancellationPolicyController@update\", \"action_timestamp\": \"2025-08-15T03:03:56.425091Z\"}', 0, '2025-08-15 03:03:56'),
+(2, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'delete', 'User', 8, '{\"id\": 8, \"name\": \"Phương nguyễn\", \"role\": null, \"email\": \"maiiphuong1981@gmail.com\", \"phone\": null, \"avatar\": \"https://lh3.googleusercontent.com/a/ACg8ocIGGrOzbzC7mG4bgj1Wz_l4crSDbQ3SWRkvHbbEus5j4BYCO-PR=s96-c\", \"address\": null, \"password\": \"eyJpdiI6IkppR2JXZVErMmc3R3MrR21yN3RiNHc9PSIsInZhbHVlIjoiODhUZVM0QTNtbmxvM3JodjgvZVpMYWdZbTJHbzNRNEZ2Y3F6OStqVkZYQTJlQThVUHYxM1BEb1JPbHlxVDZqN3pkbWxPT3ZOQ1RaSStqekpzeEk3bmc9PSIsIm1hYyI6IjUzZmIzZDQ1MWY3ZTNmNjhmMzUxOGMzZDE3MTcyYTMyZDhiZTNjYzExNzEwNmUyNzIxMDE3MjE5YjdlYzY5MTkiLCJ0YWciOiIifQ==\", \"google_id\": \"107379410125025514536\", \"created_at\": \"2025-07-20T21:36:42.000000Z\", \"updated_at\": \"2025-07-20T21:36:42.000000Z\", \"identity_code\": null, \"remember_token\": \"eyJpdiI6Im96Y2ZWOVhyU3ZlRzBSRlhsZktqQ2c9PSIsInZhbHVlIjoiTXZtYWdlVnVoSGg2dVNkRFdVamdsdz09IiwibWFjIjoiNjRlMjk0ZGI4MjIxYjI5NzI3NTJjN2M2YTUyMDcyZjY0Y2JhMzYyNjI5ZWEzZDZmNmM4ODYzZGFhMjc1N2E2OSIsInRhZyI6IiJ9\", \"current_team_id\": null, \"email_verified_at\": null, \"two_factor_secret\": \"eyJpdiI6IlBJRWZGcFl0Yzc3VFhPeW5uMUEwWHc9PSIsInZhbHVlIjoiaVE0S2VUNzBYWGtxZVUxMVNqNis1Zz09IiwibWFjIjoiYTU0OTdkM2Y1ZjljZWE4NTVjYzZhZGRhY2E1NTJmOGIyZjNkNGVjZTUyZmE0OTA3ZDNlZTZjMzlmOTE5ZmUzNCIsInRhZyI6IiJ9\", \"profile_photo_path\": null, \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6Ik5jb0pLMmdUejN2OXozalJQY0ovQ3c9PSIsInZhbHVlIjoiQytNN0hzUm9LTUhtMGtqaHUzcGxtUT09IiwibWFjIjoiMzI4NDMzNGM0Y2Y1NjMwMWZmM2I5OGZhZDMxZGMwYWFiMmNlZjYyMGMxM2Q3ZmFhYjc4ODk5NGY2ZDFhYjJjYiIsInRhZyI6IiJ9\"}', 'null', NULL, 'NGUYỄN ANH ĐỨC đã xóa User #8', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/staffs/destroy/8', 'DELETE', '{\"route_name\": \"admin.users.staffs.destroy\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\StaffController@destroy\", \"action_timestamp\": \"2025-08-15T03:24:49.397110Z\"}', 1, '2025-08-15 03:24:49'),
+(3, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'delete', 'User', 8, '{\"id\": 8, \"name\": \"Phương nguyễn\", \"role\": null, \"email\": \"maiiphuong1981@gmail.com\", \"phone\": null, \"avatar\": \"https://lh3.googleusercontent.com/a/ACg8ocIGGrOzbzC7mG4bgj1Wz_l4crSDbQ3SWRkvHbbEus5j4BYCO-PR=s96-c\", \"address\": null, \"password\": \"eyJpdiI6IlVORkFRc2ZKZTlJSkxhd29NNjlwL3c9PSIsInZhbHVlIjoicFA2QWtsZU9RekRVYVFrdWNTdHI5dHc3V1NrQWJSM3RYbEx1dGkrVDZJOUJieWZiOTJzSFpiMm9pRElFZURJMnplRW1IWVkrN3B1b0NrV3RuOU5Uc3c9PSIsIm1hYyI6IjI1MzcwNmNmNzk0YWQzOWVjZTk0NjY4OTEyNjY0ZDU4MDU5MmNhNTBjZTA4ZDIwOWJjZWQ2MWUwNzIzOTJjYmYiLCJ0YWciOiIifQ==\", \"google_id\": \"107379410125025514536\", \"created_at\": \"2025-07-20T21:36:42.000000Z\", \"updated_at\": \"2025-07-20T21:36:42.000000Z\", \"identity_code\": null, \"remember_token\": \"eyJpdiI6ImN2L1pLV1ZjRWhteFdacEEvR08vcGc9PSIsInZhbHVlIjoiQ3hEV0hmZ3BHZnF3SkowbkRRQTJadz09IiwibWFjIjoiMWIxZmFmZDRhMjNmZTkyMDhiYTZmNmM1ODc0MzlmMzFmNTNlNjljYTc4NDUxNTdhMmIyOTIwMWVlMGMzMGQ1MSIsInRhZyI6IiJ9\", \"current_team_id\": null, \"email_verified_at\": null, \"two_factor_secret\": \"eyJpdiI6IlNLQW5oNUhhZDJCTWJNM3VsakNPU1E9PSIsInZhbHVlIjoiZTJYMFV4TFlIM1lMNU1Eemd0ZHBrQT09IiwibWFjIjoiMzhhOGI1NjkwZGYyNGVlODgzNWFiMmM0Y2I0ZDlhZDliZDQzZmYwOGMyMmE5MTFiNWQ4M2FhN2ZlOWM4ZjgwNCIsInRhZyI6IiJ9\", \"profile_photo_path\": null, \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6Inp2cHBZWGFYcE5wN0Ird0FlTXpVSGc9PSIsInZhbHVlIjoiNlg0TW1aOGtxeTJucVp0djJXaUd2Zz09IiwibWFjIjoiNWMxMWVkNDE0ZTVlMDc2NWVkOTIyZGJlYTkxYTFiYWVmMzQ2ODAwZTQ2MjIzYzNkMTJjMDE0ZWFiYThiY2JiNCIsInRhZyI6IiJ9\"}', 'null', NULL, 'NGUYỄN ANH ĐỨC đã xóa User #8', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/staffs/destroy/8', 'DELETE', '{\"route_name\": \"admin.users.staffs.destroy\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\StaffController@destroy\", \"action_timestamp\": \"2025-08-15T03:24:49.417803Z\"}', 1, '2025-08-15 03:24:49'),
+(4, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'create', 'User', 9, 'null', '{\"id\": 9, \"name\": \"Phương nguyễn\", \"email\": \"maiiphuong1981@gmail.com\", \"phone\": null, \"avatar\": \"https://lh3.googleusercontent.com/a/ACg8ocIGGrOzbzC7mG4bgj1Wz_l4crSDbQ3SWRkvHbbEus5j4BYCO-PR=s96-c\", \"address\": null, \"password\": \"eyJpdiI6IjRRblk0ZU44c1ljUXlIR3RUVnJXbUE9PSIsInZhbHVlIjoiTFdySUVGd1BrUXIyRE96MVA5eENDT2JCRzg2Y1oxRmxibTZ4YzJLZzYvQklvSWl4bXcrSWNBNVpHVnVpQVZTUVpZRUtZcE5xeTk1VmliM0VGSEduZUE9PSIsIm1hYyI6ImQ2ZGJkNGM5N2Q3Y2VjOTk4YzJmN2QxZTY0N2JiMTM0MDQxMzNhZDFiYWMyYzNiMGQ2ZjI3MzkwYmM5MGZjZmEiLCJ0YWciOiIifQ==\", \"google_id\": \"107379410125025514536\", \"created_at\": \"2025-08-15 10:25:38\", \"updated_at\": \"2025-08-15 10:25:38\", \"identity_code\": null, \"current_team_id\": null, \"profile_photo_path\": null}', NULL, 'NGUYỄN ANH ĐỨC đã tạo mới User #9', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/audit/2/restore', 'POST', '{\"route_name\": \"admin.audit.restore\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\AuditController@restore\", \"action_timestamp\": \"2025-08-15T03:25:38.774313Z\"}', 1, '2025-08-15 03:25:38'),
+(5, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'create', 'User', 9, 'null', '{\"id\": 9, \"name\": \"Phương nguyễn\", \"email\": \"maiiphuong1981@gmail.com\", \"phone\": null, \"avatar\": \"https://lh3.googleusercontent.com/a/ACg8ocIGGrOzbzC7mG4bgj1Wz_l4crSDbQ3SWRkvHbbEus5j4BYCO-PR=s96-c\", \"address\": null, \"password\": \"eyJpdiI6IjJqMWRkbjh3T0NBMVk4ajhCS1R2V2c9PSIsInZhbHVlIjoiZFJwN29IV3R4a25Od3d4UDVEY0xNeDFNWUhSL29ZSG1KRm5FanlkLzlrWjVCVTZhZ29XemhWak5pS2crNXhKQnBzUzRoVWpRNmtQNEpNeGNWZzBZY3c9PSIsIm1hYyI6ImM0Mzk2YmIxZDJjNGRiMTk2OTQwNjViOTA0MWUwMzUyZjE4NGU0ZmIzMTViYmU4Mzc3MjQzOTJjNmVjNDEzYWYiLCJ0YWciOiIifQ==\", \"google_id\": \"107379410125025514536\", \"created_at\": \"2025-08-15 10:25:38\", \"updated_at\": \"2025-08-15 10:25:38\", \"identity_code\": null, \"current_team_id\": null, \"profile_photo_path\": null}', NULL, 'NGUYỄN ANH ĐỨC đã tạo mới User #9', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/audit/2/restore', 'POST', '{\"route_name\": \"admin.audit.restore\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\AuditController@restore\", \"action_timestamp\": \"2025-08-15T03:25:38.803578Z\"}', 1, '2025-08-15 03:25:38'),
+(6, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'restore', 'User', 9, 'null', '{\"id\": 8, \"name\": \"Phương nguyễn\", \"role\": null, \"email\": \"maiiphuong1981@gmail.com\", \"phone\": null, \"avatar\": \"https://lh3.googleusercontent.com/a/ACg8ocIGGrOzbzC7mG4bgj1Wz_l4crSDbQ3SWRkvHbbEus5j4BYCO-PR=s96-c\", \"address\": null, \"password\": \"eyJpdiI6InlVL3ZQMXRjV0VvbTlITDRKN3V2ZlE9PSIsInZhbHVlIjoiR2hGcjdNMlh5V2xoWkU1a3BtdjRqN1NEVU5vbjJaZ0tsSDFaUHl3RHRnWUJlK1pJNnliRVBXUERzcVEwOGVaWDh2dWlVZUNoMUUyalY3TS9ZQ1pnVEE9PSIsIm1hYyI6IjM4NmEyMjk0YzJjZDFlYTBmODI3OTE5NmQ1MzAxZTQzOWQ2ZWUyZjM0ZTM0NDU2NmJkNjRiOTA4ZGZlMjU2ZWUiLCJ0YWciOiIifQ==\", \"google_id\": \"107379410125025514536\", \"created_at\": \"2025-07-20T21:36:42.000000Z\", \"updated_at\": \"2025-07-20T21:36:42.000000Z\", \"identity_code\": null, \"remember_token\": \"eyJpdiI6ImdrVmFHYTBKZW5MTEpvbDRNaGIwZFE9PSIsInZhbHVlIjoiekNOdjFPREtXbGU3ZnNXY0l3V1c5QT09IiwibWFjIjoiNGIzYmEzOGVjMzI3MzFjNmM2MDVlMGUwYjc1NDgyMjQ5M2M3NWVmNGQ2N2YzNDhkNzkxZWY1ZjhiZDE1NWZiYSIsInRhZyI6IiJ9\", \"current_team_id\": null, \"email_verified_at\": null, \"two_factor_secret\": \"eyJpdiI6Im5KQ1lEeTZSZ2J4am5jMWFubXBScWc9PSIsInZhbHVlIjoiTHB5REpWajVtOCs0Q1AzeVZRakdXdz09IiwibWFjIjoiYTJlYjkwNzBjM2MxZjQ3MTNkNTQyNWRlMGVmMjE0NTVmMjRiY2FjMTljNTQ4NDg5MTEzM2UxZWIxZmFhODk3MSIsInRhZyI6IiJ9\", \"profile_photo_path\": null, \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6IjlPM29YeEt5ODhkaXpxUnJSUmJLOHc9PSIsInZhbHVlIjoiM0JtTkRTdk5WUWIvaE1HTXJxMDYrQT09IiwibWFjIjoiMjBhYWQzMDI0YmIxYmZhOTk3Njg1YTc0MzA0ZGU5NzAyNDRhYTA0Y2I4ZjRhNjNkMDU0NWVhMzE3N2U1YmM3YSIsInRhZyI6IiJ9\"}', NULL, 'Khôi phục bản ghi từ audit log #2', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/audit/2/restore', 'POST', '{\"original_deleted_at\": \"2025-08-15T03:24:49.000000Z\", \"restored_from_audit_id\": 2}', 1, '2025-08-15 03:25:38'),
+(7, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'update', 'CancellationPolicy', 11, '{\"name\": \"Hủy miễn phí 3 ngày - Lễ Tết\", \"priority\": 20, \"is_active\": true, \"policy_id\": 11, \"conditions\": null, \"description\": \"Áp dụng cho ngày lễ tết, hủy trước 3 ngày\", \"penalty_days\": null, \"applies_to_holiday\": 1, \"applies_to_weekend\": 0, \"max_booking_amount\": null, \"min_booking_amount\": null, \"penalty_percentage\": \"50.00\", \"free_cancellation_days\": 3, \"penalty_fixed_amount_vnd\": \"0.00\"}', '{\"free_cancellation_days\": \"2\"}', NULL, 'NGUYỄN ANH ĐỨC đã cập nhật CancellationPolicy #11', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/cancellation-policies/update/11', 'PUT', '{\"route_name\": \"admin.cancellation-policies.update\", \"model_class\": \"App\\\\Models\\\\CancellationPolicy\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\CancellationPolicyController@update\", \"action_timestamp\": \"2025-08-15T03:28:49.600160Z\"}', 0, '2025-08-15 03:28:49'),
+(8, 1, 'XqR8mMQecfzQKvjFUZh2fPsufG5fbA5M5dbxBVtU', 'update', 'Amenity', 1, '{\"icon\": \"Snowflake\", \"name\": \"Điều hòa không khí\", \"category\": \"basic\", \"icon_lib\": \"lucide\", \"is_active\": true, \"amenity_id\": 1, \"description\": \"Hệ thống điều hòa nhiệt độ hiện đại\"}', '{\"name\": \"Điều hòa không khí tân tiến\"}', NULL, 'NGUYỄN ANH ĐỨC đã cập nhật Amenity #1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/services/amenities/update/1', 'PUT', '{\"route_name\": \"admin.services.amenities.update\", \"model_class\": \"App\\\\Models\\\\Amenity\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\ServiceAmenityController@update\", \"action_timestamp\": \"2025-08-15T04:13:49.974875Z\"}', 0, '2025-08-15 04:13:49'),
+(9, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'RoomType', 1, '{\"name\": \"Deluxe Room\", \"view\": \"ABC\", \"rating\": 0, \"is_active\": 1, \"room_area\": 32, \"room_code\": \"deluxe\", \"base_price\": \"5000\", \"max_guests\": 2, \"total_room\": 90, \"description\": \"Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.\", \"room_type_id\": 1}', '{\"base_price\": \"50000\"}', NULL, 'NGUYỄN ANH ĐỨC đã cập nhật RoomType #1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/room-types/update/1', 'PUT', '{\"route_name\": \"admin.room-types.update\", \"model_class\": \"App\\\\Models\\\\RoomType\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\RoomTypeController@update\", \"action_timestamp\": \"2025-08-15T07:00:26.224259Z\"}', 0, '2025-08-15 07:00:26'),
+(10, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'User', 1, '{\"id\": 1, \"name\": \"NGUYỄN ANH ĐỨC\", \"role\": \"admin\", \"email\": \"nguyenanhduc2909@gmail.com\", \"phone\": \"0822153447\", \"avatar\": null, \"address\": \"Thanh Hóa\", \"password\": \"eyJpdiI6InIvd0RBTTlPRXhRMWdQdjh1M054Z0E9PSIsInZhbHVlIjoiQmVEcUFOcXE1enBqOHNiSjBlbENPZ0t6bDA4RVdUQ2IxY2s4cHJLNU1SUk1DZVJVRkQzNmZHVHN0dHdwQVFwc1p3clRJN2E3UUQ0OHZRWjdJNmNqbkE9PSIsIm1hYyI6IjUwYzVmODJjMjU3Y2VhMTE4Nzc1YjBiYjk1OTExZTU3ZDRkNGJjMmQzNzU1Yjk1OTI0NDE5NmI2OWIwYzdjMDAiLCJ0YWciOiIifQ==\", \"google_id\": null, \"identity_code\": \"038205000950\", \"current_team_id\": null, \"two_factor_secret\": \"eyJpdiI6IlgwSnFkbXlCTlRELzQwWEhFcElKMkE9PSIsInZhbHVlIjoidXM2ak9Fc1h6WXErbXRMOWc1dUNqZz09IiwibWFjIjoiMjVhNTdlZTMyMjQ5MTZkYmRlNWFhMWQ2ZWJkMDM4OGI5ODMxZTIxNTAzMTAzYzA2YzI4Zjg3ZTAxMDE0MDMyMyIsInRhZyI6IiJ9\", \"profile_photo_path\": \"profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png\", \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6IlVjMDhLYjBENzNpQlBBNy9lNUJnbkE9PSIsInZhbHVlIjoidGRvSTh3OXRXcDBHZWdwa2NHREpCQT09IiwibWFjIjoiY2E4OWYxODI4ZGRjYTgzOTg0ZjExOWJkZjk0MjNlN2UwYzgyZjc1NTJiYzBkNjFhMzIwNGNhMGVkY2MzNWUyNiIsInRhZyI6IiJ9\"}', '{\"name\": \"Nguyễn Anh Đứccc\"}', NULL, 'NGUYỄN ANH ĐỨC đã cập nhật User #1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/staffs/update/1', 'PUT', '{\"route_name\": \"admin.users.staffs.update\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\StaffController@update\", \"action_timestamp\": \"2025-08-15T07:16:23.235854Z\"}', 1, '2025-08-15 07:16:23'),
+(11, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'User', 1, '{\"id\": 1, \"name\": \"NGUYỄN ANH ĐỨC\", \"role\": \"admin\", \"email\": \"nguyenanhduc2909@gmail.com\", \"phone\": \"0822153447\", \"avatar\": null, \"address\": \"Thanh Hóa\", \"password\": \"eyJpdiI6IjJLd2xiL3ozVEExRVFOMkN5NDlCSnc9PSIsInZhbHVlIjoiYXNrcE00NGFINmVpUmxJNFJHQ20wb0pMdCtJb0JxNTZtaGJ5ZXdDSW5XRTlTdC9jdEF4RnNHNVJmd1hRS3pkQnNZUzg5ZTVKaUtHa1ZIZTNaVXZ1amc9PSIsIm1hYyI6ImY2MmQ1MDYxM2ZlZTAzYjgxMDMyNzdlMDlmOGQ5YTFiOGE4OTU0N2Q5MjQ0OTYwMGMyYzk0OGYxZjdkMzYzNGMiLCJ0YWciOiIifQ==\", \"google_id\": null, \"identity_code\": \"038205000950\", \"current_team_id\": null, \"two_factor_secret\": \"eyJpdiI6Ii9MaU9Ia3F3c1ZpZm9BWklMS0NXd0E9PSIsInZhbHVlIjoiRVBYbGV4bjdoWFdRWEhGUjhDU0Nidz09IiwibWFjIjoiNjEwYWIwZjZmOWZhY2VhZDUyMzdhNjZiNTYzOWNhMGJiYzQ0OThiNGRkNzg0NmQ5MTkyNmNmMGFlZDRiYjhhNSIsInRhZyI6IiJ9\", \"profile_photo_path\": \"profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png\", \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6Ik5WNWdLSHR2eXpCZWd2engzOThqbUE9PSIsInZhbHVlIjoicjBPcjBqeHlHbkd6L0ZVaVpGWis3UT09IiwibWFjIjoiOWM0YTVmMjI1YzhiMTcyOWZkYWUwNjY0NWVkZGYzY2NmZTI0Y2U2NDdiMWVlZGFmOTI2MGIzMzcwMWE4YTgxMiIsInRhZyI6IiJ9\"}', '{\"name\": \"Nguyễn Anh Đứccc\"}', NULL, 'NGUYỄN ANH ĐỨC đã cập nhật User #1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/staffs/update/1', 'PUT', '{\"route_name\": \"admin.users.staffs.update\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\StaffController@update\", \"action_timestamp\": \"2025-08-15T07:16:23.258562Z\"}', 1, '2025-08-15 07:16:23'),
+(12, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'User', 1, '{\"id\": 1, \"name\": \"Nguyễn Anh Đứccc\", \"role\": \"admin\", \"email\": \"nguyenanhduc2909@gmail.com\", \"phone\": \"0822153447\", \"avatar\": null, \"address\": \"Thanh Hóa\", \"password\": \"eyJpdiI6ImdBdUMrR2VuV3RhUE8yaWxJU2xnREE9PSIsInZhbHVlIjoieEVHajVsMVZwREg5eEF1NDRUQ1UwaGhHbWRUVnNNRkREUXFzbU1BbnMya251K2dOKzJQUW9WaFhSdFlXcW1pWmcrUWxjZFRVc2ZRdG92bk5SM3JRMVE9PSIsIm1hYyI6IjdjYzk3N2ZhNzgyNDY2ZDg1ODgwYjMyMjEzNDJlYjlkZTQ1ZWU2ODkzZTdlODQ0ZDRlNmY1NDFmMTYzMGMyOWEiLCJ0YWciOiIifQ==\", \"google_id\": null, \"identity_code\": \"038205000950\", \"current_team_id\": null, \"two_factor_secret\": \"eyJpdiI6Ii9NMkRLL29VeFlIdEd0T1djTjgwUlE9PSIsInZhbHVlIjoiT3lCNHkxZ2VMTzVkMjRVVnF6TnF4UT09IiwibWFjIjoiMWFhNDQ0ZTZjYTUwNWExZjdkMmM2NGIwNGNkYzQ5ZTQ2MDZmNDFmYWU0M2VjMWJlYTA3ZGMyNmRmYTIwNDI5OSIsInRhZyI6IiJ9\", \"profile_photo_path\": \"profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png\", \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6IlVNL2cwVlRSdmZxNUxRZWtiSk4wVEE9PSIsInZhbHVlIjoiT1BRdnBMUjM4SjJsY0pPVjRqRHB5UT09IiwibWFjIjoiOTQ5MmQyZDg3NjcwNjQ3Y2Q3OGM0NTAxMDQ1NWJkYzM4YjIyYjViYjNlODM2MjI0NzhhODI2ZDAxNmU5ZjdkYiIsInRhZyI6IiJ9\"}', '{\"name\": \"Nguyễn Anh Đức\", \"phone\": \"08221534477\"}', NULL, 'Nguyễn Anh Đứccc đã cập nhật User #1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/staffs/update/1', 'PUT', '{\"route_name\": \"admin.users.staffs.update\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\StaffController@update\", \"action_timestamp\": \"2025-08-15T07:16:36.310840Z\"}', 1, '2025-08-15 07:16:36'),
+(13, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'User', 1, '{\"id\": 1, \"name\": \"Nguyễn Anh Đứccc\", \"role\": \"admin\", \"email\": \"nguyenanhduc2909@gmail.com\", \"phone\": \"0822153447\", \"avatar\": null, \"address\": \"Thanh Hóa\", \"password\": \"eyJpdiI6IjJXR0g2MW1UR1FJL0JUZ3lqa3dMZEE9PSIsInZhbHVlIjoickd5VjZXdGhuVW1UZmk2NHdNdVlLd3ZjeGhDL0o1Q2dteXFnOCtzNWhtZjZjQ1JyNEF2ZG1oMHQ4WW04QjJRdVJYM1lKNEVvNTg1cVVvWFFIM1VBNEE9PSIsIm1hYyI6IjE4ZjhhMzU5NTdhNmE0N2ExZDI5NzhhOTFmZTAxOGFlZmQxNGQyZGVmMTJlNzk4MjdkNWYxYWE1NjJlMjVkMjIiLCJ0YWciOiIifQ==\", \"google_id\": null, \"identity_code\": \"038205000950\", \"current_team_id\": null, \"two_factor_secret\": \"eyJpdiI6IjBjMDNTTVJiTUNVeEx4dEpoZ1hjaXc9PSIsInZhbHVlIjoiSEVlQTJrTktuZUhjNGNscUlpUmJTdz09IiwibWFjIjoiMWZiYWMyYzA5NjRjN2JmNTk4ZTczNDMzY2JhMDEyY2NhNTIyOGRjZGUzMzcyMjZlYTVmNWIxNDhiNTRiYjkwYiIsInRhZyI6IiJ9\", \"profile_photo_path\": \"profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png\", \"two_factor_confirmed_at\": null, \"two_factor_recovery_codes\": \"eyJpdiI6Ikxzbk83Uis0TUJaM1ZxQVJnSkQrS2c9PSIsInZhbHVlIjoiRzRkcDlMbWlPU29pS0d2eDh3MmhNQT09IiwibWFjIjoiY2M0MjgyZTk2ZjVjOTM3MDNmYWE4YWRjMzJmYTc3NDA1ZDhjNjM4Yzg2ODFkMWEyZmE3NGQ2NDQyMjE3MjYxNSIsInRhZyI6IiJ9\"}', '{\"name\": \"Nguyễn Anh Đức\", \"phone\": \"08221534477\"}', NULL, 'Nguyễn Anh Đứccc đã cập nhật User #1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/staffs/update/1', 'PUT', '{\"route_name\": \"admin.users.staffs.update\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\StaffController@update\", \"action_timestamp\": \"2025-08-15T07:16:36.328509Z\"}', 1, '2025-08-15 07:16:36'),
+(14, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'create', 'User', 10, 'null', '{\"id\": 10, \"name\": \"PHNguyễn Anh Đức\", \"email\": \"nguyenanhduc2909@gmail.comm\", \"phone\": \"0822153447\", \"address\": \"Thanh Hóa\\r\\nThanh Hóa\", \"password\": \"eyJpdiI6Ilh1UlBFYTNFaFBhdmJad29USGJyc2c9PSIsInZhbHVlIjoiRjZwcHV4M1Y4UVBrcFFYN3BRNGxUSGxLaEJqdCt0OWhucVZHcjgxRU90eVBTKzZScDlJK2kxM1JPVXBrNG1Bbys4OVpwVHpZR0FRUzZlc29VYXlLYVE9PSIsIm1hYyI6IjZkMWY1MzJjY2I0OTY0MjAxODk5MTY3ZTYzYjFlMzAxY2VkYWIzMzdkNGM2NWYyN2RjN2M2ZDI1ZTUxYWU1ZWQiLCJ0YWciOiIifQ==\", \"created_at\": \"2025-08-15 14:46:42\", \"updated_at\": \"2025-08-15 14:46:42\", \"identity_code\": \"0356562189457\"}', NULL, 'Nguyễn Anh Đức đã tạo mới User #10', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/customers/store', 'POST', '{\"route_name\": \"admin.users.customers.store\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\CustomerController@store\", \"action_timestamp\": \"2025-08-15T07:46:42.241831Z\"}', 1, '2025-08-15 07:46:42'),
+(15, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'create', 'User', 10, 'null', '{\"id\": 10, \"name\": \"PHNguyễn Anh Đức\", \"email\": \"nguyenanhduc2909@gmail.comm\", \"phone\": \"0822153447\", \"address\": \"Thanh Hóa\\r\\nThanh Hóa\", \"password\": \"eyJpdiI6InVQdUNxSmlQOFJqeFhkNXcxVU01V0E9PSIsInZhbHVlIjoic1dtT1k0ejFmRkpYbjFQTHJ6WFpnNDhIeTZEMmVXaVNvRlpDa21OYVl3OS9OdFFLY3lHUWN3R3I2SDBvU25OYUNBOVRWemV2UDVmQlh1ZngxUm1ZaUE9PSIsIm1hYyI6ImZkNjM4NTI5MDAwYWIwY2U3YWI2MGU5Y2Y3ZDEwMmQ0ZmI0YjM0OTExMTlkODc1MjQ2OGE0NTVlODhmOWY4NjAiLCJ0YWciOiIifQ==\", \"created_at\": \"2025-08-15 14:46:42\", \"updated_at\": \"2025-08-15 14:46:42\", \"identity_code\": \"0356562189457\"}', NULL, 'Nguyễn Anh Đức đã tạo mới User #10', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/customers/store', 'POST', '{\"route_name\": \"admin.users.customers.store\", \"model_class\": \"App\\\\Models\\\\User\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Admin\\\\CustomerController@store\", \"action_timestamp\": \"2025-08-15T07:46:42.265801Z\"}', 1, '2025-08-15 07:46:42'),
+(16, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 295, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"50000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 1, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 65000, \"price_history_id\": 295}', NULL, 'System đã tạo mới RoomPriceHistory #295', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.074879Z\"}', 0, '2025-08-15 08:28:44'),
+(17, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 296, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"1500000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 2, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1950000, \"price_history_id\": 296}', NULL, 'System đã tạo mới RoomPriceHistory #296', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.147415Z\"}', 0, '2025-08-15 08:28:44'),
+(18, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 297, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 3, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 297}', NULL, 'System đã tạo mới RoomPriceHistory #297', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.166730Z\"}', 0, '2025-08-15 08:28:44'),
+(19, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 298, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 4, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":90}}]\\\"\", \"adjusted_price\": 1370000, \"price_history_id\": 298}', NULL, 'System đã tạo mới RoomPriceHistory #298', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.184154Z\"}', 0, '2025-08-15 08:28:44'),
+(20, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 299, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 5, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 299}', NULL, 'System đã tạo mới RoomPriceHistory #299', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.207918Z\"}', 0, '2025-08-15 08:28:44'),
+(21, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 300, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 6, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 300}', NULL, 'System đã tạo mới RoomPriceHistory #300', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.228522Z\"}', 0, '2025-08-15 08:28:44'),
+(22, NULL, 'k6IvCRDC6LdVD8mWs8DQy6Uy3XVJpG8KbDnLJvix', 'create', 'RoomPriceHistory', 301, 'null', '{\"date\": \"2025-08-16 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-15 15:28:44\", \"updated_at\": \"2025-08-15 15:28:44\", \"room_type_id\": 7, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 301}', NULL, 'System đã tạo mới RoomPriceHistory #301', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:28:44.250290Z\"}', 0, '2025-08-15 08:28:44'),
+(23, NULL, 'vfVSh8hwF7K7hAj59he5ynGvfzYLMCgRiGj9EmPm', 'update', 'RoomPriceHistory', 295, '{\"date\": \"2025-08-15T17:00:00.000000Z\", \"base_price\": \"50000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\", \"adjusted_price\": \"65000.00\", \"price_history_id\": 295}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":2,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"90.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":93}}]\\\"\", \"adjusted_price\": 70000}', NULL, 'System đã cập nhật RoomPriceHistory #295', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:47:22.468412Z\"}', 0, '2025-08-15 08:47:22'),
+(24, NULL, 'vfVSh8hwF7K7hAj59he5ynGvfzYLMCgRiGj9EmPm', 'update', 'RoomPriceHistory', 298, '{\"date\": \"2025-08-15T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 4, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":90}}]\", \"adjusted_price\": \"1370000.00\", \"price_history_id\": 298}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":83}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #298', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-15T08:47:22.535425Z\"}', 0, '2025-08-15 08:47:22'),
+(25, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'RoomPriceHistory', 109, '{\"date\": \"2025-08-14T17:00:00.000000Z\", \"base_price\": \"5000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\", \"adjusted_price\": \"6500.00\", \"price_history_id\": 109}', '{\"base_price\": 50000, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":1,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"80.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":80}}]\\\"\", \"adjusted_price\": 65000}', NULL, 'Nguyễn Anh Đức đã cập nhật RoomPriceHistory #109', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.083650Z\"}', 0, '2025-08-15 08:55:17'),
+(26, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'RoomPriceHistory', 295, '{\"date\": \"2025-08-15T17:00:00.000000Z\", \"base_price\": \"50000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":93}}]\", \"adjusted_price\": \"70000.00\", \"price_history_id\": 295}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":1,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"80.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":87}}]\\\"\"}', NULL, 'Nguyễn Anh Đức đã cập nhật RoomPriceHistory #295', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.116595Z\"}', 0, '2025-08-15 08:55:17'),
+(27, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'create', 'RoomPriceHistory', 302, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": 50000, \"created_at\": \"2025-08-15 15:55:17\", \"updated_at\": \"2025-08-15 15:55:17\", \"room_type_id\": \"1\", \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 65000, \"price_history_id\": 302}', NULL, 'Nguyễn Anh Đức đã tạo mới RoomPriceHistory #302', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.127475Z\"}', 0, '2025-08-15 08:55:17'),
+(28, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'update', 'RoomPriceHistory', 159, '{\"date\": \"2025-08-17T17:00:00.000000Z\", \"base_price\": \"5000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"6000.00\", \"price_history_id\": 159}', '{\"base_price\": 50000, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 60000}', NULL, 'Nguyễn Anh Đức đã cập nhật RoomPriceHistory #159', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.140265Z\"}', 0, '2025-08-15 08:55:17');
+INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`, `model_id`, `old_values`, `new_values`, `changes_summary`, `description`, `ip_address`, `user_agent`, `url`, `method`, `metadata`, `is_sensitive`, `created_at`) VALUES
+(29, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'create', 'RoomPriceHistory', 303, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": 50000, \"created_at\": \"2025-08-15 15:55:17\", \"updated_at\": \"2025-08-15 15:55:17\", \"room_type_id\": \"1\", \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 60000, \"price_history_id\": 303}', NULL, 'Nguyễn Anh Đức đã tạo mới RoomPriceHistory #303', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.152411Z\"}', 0, '2025-08-15 08:55:17'),
+(30, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'create', 'RoomPriceHistory', 304, 'null', '{\"date\": \"2025-08-20 00:00:00\", \"base_price\": 50000, \"created_at\": \"2025-08-15 15:55:17\", \"updated_at\": \"2025-08-15 15:55:17\", \"room_type_id\": \"1\", \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 60000, \"price_history_id\": 304}', NULL, 'Nguyễn Anh Đức đã tạo mới RoomPriceHistory #304', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.163674Z\"}', 0, '2025-08-15 08:55:17'),
+(31, 1, 'lfYI0quVcaG2FEh5Ah5HSzRT53jevLjlC1r6fWnh', 'create', 'RoomPriceHistory', 305, 'null', '{\"date\": \"2025-08-21 00:00:00\", \"base_price\": 50000, \"created_at\": \"2025-08-15 15:55:17\", \"updated_at\": \"2025-08-15 15:55:17\", \"room_type_id\": \"1\", \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 60000, \"price_history_id\": 305}', NULL, 'Nguyễn Anh Đức đã tạo mới RoomPriceHistory #305', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/pricing/preview?end_date=2025-08-21&room_type_id=1&start_date=2025-08-15', 'GET', '{\"route_name\": \"admin.pricing.preview\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PricingManagementController@getPricingPreview\", \"action_timestamp\": \"2025-08-15T08:55:17.175324Z\"}', 0, '2025-08-15 08:55:17'),
+(32, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'update', 'RoomPriceHistory', 302, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"50000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\", \"adjusted_price\": \"65000.00\", \"price_history_id\": 302}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":2,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"90.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":95}}]\\\"\", \"adjusted_price\": 70000}', NULL, 'System đã cập nhật RoomPriceHistory #302', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.050699Z\"}', 0, '2025-08-16 09:09:18'),
+(33, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'create', 'RoomPriceHistory', 306, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": \"1500000\", \"created_at\": \"2025-08-16 16:09:18\", \"updated_at\": \"2025-08-16 16:09:18\", \"room_type_id\": 2, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1950000, \"price_history_id\": 306}', NULL, 'System đã tạo mới RoomPriceHistory #306', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.163202Z\"}', 0, '2025-08-16 09:09:18'),
+(34, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'create', 'RoomPriceHistory', 307, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-16 16:09:18\", \"updated_at\": \"2025-08-16 16:09:18\", \"room_type_id\": 3, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 307}', NULL, 'System đã tạo mới RoomPriceHistory #307', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.252010Z\"}', 0, '2025-08-16 09:09:18'),
+(35, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'create', 'RoomPriceHistory', 308, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-16 16:09:18\", \"updated_at\": \"2025-08-16 16:09:18\", \"room_type_id\": 4, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":87}}]\\\"\", \"adjusted_price\": 1370000, \"price_history_id\": 308}', NULL, 'System đã tạo mới RoomPriceHistory #308', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.292431Z\"}', 0, '2025-08-16 09:09:18'),
+(36, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'create', 'RoomPriceHistory', 309, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-16 16:09:18\", \"updated_at\": \"2025-08-16 16:09:18\", \"room_type_id\": 5, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 309}', NULL, 'System đã tạo mới RoomPriceHistory #309', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.325404Z\"}', 0, '2025-08-16 09:09:18'),
+(37, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'create', 'RoomPriceHistory', 310, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-16 16:09:18\", \"updated_at\": \"2025-08-16 16:09:18\", \"room_type_id\": 6, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 310}', NULL, 'System đã tạo mới RoomPriceHistory #310', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.355471Z\"}', 0, '2025-08-16 09:09:18'),
+(38, NULL, 'NN0rle7b61yfZHhos8VWeZKQifN2ozfI1SBSNkku', 'create', 'RoomPriceHistory', 311, 'null', '{\"date\": \"2025-08-17 00:00:00\", \"base_price\": \"1000000\", \"created_at\": \"2025-08-16 16:09:18\", \"updated_at\": \"2025-08-16 16:09:18\", \"room_type_id\": 7, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1300000, \"price_history_id\": 311}', NULL, 'System đã tạo mới RoomPriceHistory #311', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T09:09:18.387349Z\"}', 0, '2025-08-16 09:09:18'),
+(39, NULL, 'g689UJ834IJkmdXVV8ny35Dc9OScg2WKh4hw2yi7', 'update', 'RoomPriceHistory', 295, '{\"date\": \"2025-08-15T17:00:00.000000Z\", \"base_price\": \"50000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":87}}]\", \"adjusted_price\": \"70000.00\", \"price_history_id\": 295}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 65000}', NULL, 'System đã cập nhật RoomPriceHistory #295', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-packages/search', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomAvailabilityController@getAvailablePackages\", \"action_timestamp\": \"2025-08-16T09:13:34.450124Z\"}', 0, '2025-08-16 09:13:34'),
+(40, NULL, 'g689UJ834IJkmdXVV8ny35Dc9OScg2WKh4hw2yi7', 'update', 'RoomPriceHistory', 298, '{\"date\": \"2025-08-15T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 4, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":83}}]\", \"adjusted_price\": \"1370000.00\", \"price_history_id\": 298}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":82}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #298', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-packages/search', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomAvailabilityController@getAvailablePackages\", \"action_timestamp\": \"2025-08-16T09:13:34.650947Z\"}', 0, '2025-08-16 09:13:34'),
+(41, NULL, '4p468tmZYVnyRXY86st0zCSZmmy5z3AdzpDjloxJ', 'create', 'Booking', 171, 'null', '{\"notes\": \"d\", \"status\": \"pending\", \"room_id\": null, \"user_id\": 1, \"option_id\": null, \"booking_id\": 171, \"created_at\": \"2025-08-16 16:13:43\", \"guest_name\": \"Nguyễn Anh Đức\", \"updated_at\": \"2025-08-16 16:13:43\", \"guest_count\": 7, \"guest_email\": \"nguyenanhduc2909@gmail.com\", \"guest_phone\": \"08221534477\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-16 00:00:00\", \"check_out_date\": \"2025-08-17 00:00:00\", \"total_price_vnd\": 250000}', NULL, 'System đã tạo mới Booking #171', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:13:43.303666Z\"}', 0, '2025-08-16 09:13:43'),
+(42, NULL, '4p468tmZYVnyRXY86st0zCSZmmy5z3AdzpDjloxJ', 'update', 'Booking', 171, '{\"notes\": \"d\", \"status\": \"pending\", \"room_id\": null, \"user_id\": 1, \"option_id\": null, \"booking_id\": 171, \"guest_name\": \"Nguyễn Anh Đức\", \"guest_count\": 7, \"guest_email\": \"nguyenanhduc2909@gmail.com\", \"guest_phone\": \"08221534477\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-15T17:00:00.000000Z\", \"check_out_date\": \"2025-08-16T17:00:00.000000Z\", \"total_price_vnd\": 250000}', '{\"booking_code\": \"LVS171161343\"}', NULL, 'System đã cập nhật Booking #171', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:13:43.332547Z\"}', 0, '2025-08-16 09:13:43'),
+(43, NULL, '4p468tmZYVnyRXY86st0zCSZmmy5z3AdzpDjloxJ', 'create', 'Payment', 134, 'null', '{\"status\": \"pending\", \"amount_vnd\": 250000, \"booking_id\": 171, \"created_at\": \"2025-08-16 16:13:43\", \"payment_id\": 134, \"updated_at\": \"2025-08-16 16:13:43\", \"payment_type\": \"vietqr\"}', NULL, 'System đã tạo mới Payment #134', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Payment\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:13:43.338626Z\"}', 0, '2025-08-16 09:13:43'),
+(44, 1, 'vwsm2XgnaOtdvcU7RN1WyG9nDke9AwO9qJFlvdeW', 'update', 'PaymentSetting', 2, '{\"id\": 2, \"key\": \"vietqr.account_no\", \"type\": \"string\", \"value\": \"0335920306\", \"is_active\": true, \"group_name\": \"vietqr\", \"description\": \"Số tài khoản ngân hàng\", \"is_encrypted\": false}', '{\"value\": \"19290920058383\"}', NULL, 'Nguyễn Anh Đức đã cập nhật PaymentSetting #2', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/payment/setting', 'PUT', '{\"route_name\": \"admin.payment.setting.update\", \"model_class\": \"App\\\\Models\\\\PaymentSetting\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@updateSettings\", \"action_timestamp\": \"2025-08-16T09:14:30.382886Z\"}', 0, '2025-08-16 09:14:30'),
+(45, 1, 'vwsm2XgnaOtdvcU7RN1WyG9nDke9AwO9qJFlvdeW', 'update', 'PaymentSetting', 3, '{\"id\": 3, \"key\": \"vietqr.account_name\", \"type\": \"string\", \"value\": \"NGUYEN VAN QUYEN\", \"is_active\": true, \"group_name\": \"vietqr\", \"description\": \"Tên chủ tài khoản\", \"is_encrypted\": false}', '{\"value\": \"NGUYEN ANH DUC\"}', NULL, 'Nguyễn Anh Đức đã cập nhật PaymentSetting #3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/payment/setting', 'PUT', '{\"route_name\": \"admin.payment.setting.update\", \"model_class\": \"App\\\\Models\\\\PaymentSetting\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@updateSettings\", \"action_timestamp\": \"2025-08-16T09:14:30.408276Z\"}', 0, '2025-08-16 09:14:30'),
+(46, NULL, 'Kid4zrYfFr4UxAgzPMuA8TAnSXvQt01nYoVcFfxr', 'create', 'Booking', 172, 'null', '{\"notes\": \"tg\", \"status\": \"pending\", \"room_id\": null, \"user_id\": 1, \"option_id\": null, \"booking_id\": 172, \"created_at\": \"2025-08-16 16:14:40\", \"guest_name\": \"Nguyễn Anh Đức\", \"updated_at\": \"2025-08-16 16:14:40\", \"guest_count\": 7, \"guest_email\": \"nguyenanhduc2909@gmail.com\", \"guest_phone\": \"08221534477\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-16 00:00:00\", \"check_out_date\": \"2025-08-17 00:00:00\", \"total_price_vnd\": 250000}', NULL, 'System đã tạo mới Booking #172', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:14:40.183274Z\"}', 0, '2025-08-16 09:14:40'),
+(47, NULL, 'Kid4zrYfFr4UxAgzPMuA8TAnSXvQt01nYoVcFfxr', 'update', 'Booking', 172, '{\"notes\": \"tg\", \"status\": \"pending\", \"room_id\": null, \"user_id\": 1, \"option_id\": null, \"booking_id\": 172, \"guest_name\": \"Nguyễn Anh Đức\", \"guest_count\": 7, \"guest_email\": \"nguyenanhduc2909@gmail.com\", \"guest_phone\": \"08221534477\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-15T17:00:00.000000Z\", \"check_out_date\": \"2025-08-16T17:00:00.000000Z\", \"total_price_vnd\": 250000}', '{\"booking_code\": \"LVS172161440\"}', NULL, 'System đã cập nhật Booking #172', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:14:40.219208Z\"}', 0, '2025-08-16 09:14:40'),
+(48, NULL, 'Kid4zrYfFr4UxAgzPMuA8TAnSXvQt01nYoVcFfxr', 'create', 'Payment', 135, 'null', '{\"status\": \"pending\", \"amount_vnd\": 250000, \"booking_id\": 172, \"created_at\": \"2025-08-16 16:14:40\", \"payment_id\": 135, \"updated_at\": \"2025-08-16 16:14:40\", \"payment_type\": \"vietqr\"}', NULL, 'System đã tạo mới Payment #135', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Payment\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:14:40.223808Z\"}', 0, '2025-08-16 09:14:40'),
+(49, 1, 'vwsm2XgnaOtdvcU7RN1WyG9nDke9AwO9qJFlvdeW', 'update', 'PaymentSetting', 2, '{\"id\": 2, \"key\": \"vietqr.account_no\", \"type\": \"string\", \"value\": \"19290920058383\", \"is_active\": true, \"group_name\": \"vietqr\", \"description\": \"Số tài khoản ngân hàng\", \"is_encrypted\": false}', '{\"value\": \"0335920306\"}', NULL, 'Nguyễn Anh Đức đã cập nhật PaymentSetting #2', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/payment/setting/reset', 'GET', '{\"route_name\": \"admin.payment.setting.reset\", \"model_class\": \"App\\\\Models\\\\PaymentSetting\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@resetToDefaultsFromAdmin\", \"action_timestamp\": \"2025-08-16T09:14:52.530220Z\"}', 0, '2025-08-16 09:14:52'),
+(50, 1, 'vwsm2XgnaOtdvcU7RN1WyG9nDke9AwO9qJFlvdeW', 'update', 'PaymentSetting', 3, '{\"id\": 3, \"key\": \"vietqr.account_name\", \"type\": \"string\", \"value\": \"NGUYEN ANH DUC\", \"is_active\": true, \"group_name\": \"vietqr\", \"description\": \"Tên chủ tài khoản\", \"is_encrypted\": false}', '{\"value\": \"NGUYEN VAN QUYEN\"}', NULL, 'Nguyễn Anh Đức đã cập nhật PaymentSetting #3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/admin/payment/setting/reset', 'GET', '{\"route_name\": \"admin.payment.setting.reset\", \"model_class\": \"App\\\\Models\\\\PaymentSetting\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@resetToDefaultsFromAdmin\", \"action_timestamp\": \"2025-08-16T09:14:52.553530Z\"}', 0, '2025-08-16 09:14:52'),
+(51, NULL, 'd5GHbSKXqstpwv4eshpWCLLkuelbL5Rde9aC1HZP', 'create', 'Booking', 173, 'null', '{\"notes\": \"d\", \"status\": \"pending\", \"room_id\": null, \"user_id\": 1, \"option_id\": null, \"booking_id\": 173, \"created_at\": \"2025-08-16 16:15:04\", \"guest_name\": \"Nguyễn Anh Đức\", \"updated_at\": \"2025-08-16 16:15:04\", \"guest_count\": 7, \"guest_email\": \"nguyenanhduc2909@gmail.com\", \"guest_phone\": \"08221534477\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-16 00:00:00\", \"check_out_date\": \"2025-08-17 00:00:00\", \"total_price_vnd\": 250000}', NULL, 'System đã tạo mới Booking #173', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:15:04.180355Z\"}', 0, '2025-08-16 09:15:04'),
+(52, NULL, 'd5GHbSKXqstpwv4eshpWCLLkuelbL5Rde9aC1HZP', 'update', 'Booking', 173, '{\"notes\": \"d\", \"status\": \"pending\", \"room_id\": null, \"user_id\": 1, \"option_id\": null, \"booking_id\": 173, \"guest_name\": \"Nguyễn Anh Đức\", \"guest_count\": 7, \"guest_email\": \"nguyenanhduc2909@gmail.com\", \"guest_phone\": \"08221534477\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-15T17:00:00.000000Z\", \"check_out_date\": \"2025-08-16T17:00:00.000000Z\", \"total_price_vnd\": 250000}', '{\"booking_code\": \"LVS173161504\"}', NULL, 'System đã cập nhật Booking #173', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:15:04.207676Z\"}', 0, '2025-08-16 09:15:04'),
+(53, NULL, 'd5GHbSKXqstpwv4eshpWCLLkuelbL5Rde9aC1HZP', 'create', 'Payment', 136, 'null', '{\"status\": \"pending\", \"amount_vnd\": 250000, \"booking_id\": 173, \"created_at\": \"2025-08-16 16:15:04\", \"payment_id\": 136, \"updated_at\": \"2025-08-16 16:15:04\", \"payment_type\": \"vietqr\"}', NULL, 'System đã tạo mới Payment #136', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Payment\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-16T09:15:04.221366Z\"}', 0, '2025-08-16 09:15:04'),
+(54, NULL, 'LkTEiWo9NYGCBmmMYicWEVOR26tlH3bUdFuAG06f', 'update', 'RoomPriceHistory', 302, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"50000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":95}}]\", \"adjusted_price\": \"70000.00\", \"price_history_id\": 302}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":1,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"80.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":86}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #302', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T10:02:32.322063Z\"}', 0, '2025-08-16 10:02:32'),
+(55, NULL, 'LkTEiWo9NYGCBmmMYicWEVOR26tlH3bUdFuAG06f', 'update', 'RoomPriceHistory', 306, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"1500000.00\", \"room_type_id\": 2, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\", \"adjusted_price\": \"1950000.00\", \"price_history_id\": 306}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":4,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"30.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"90.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":95}}]\\\"\", \"adjusted_price\": 2100000}', NULL, 'System đã cập nhật RoomPriceHistory #306', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T10:02:32.512231Z\"}', 0, '2025-08-16 10:02:32'),
+(56, NULL, 'LkTEiWo9NYGCBmmMYicWEVOR26tlH3bUdFuAG06f', 'update', 'RoomPriceHistory', 308, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 4, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":87}}]\", \"adjusted_price\": \"1370000.00\", \"price_history_id\": 308}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":83}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #308', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/room-types', 'GET', '{\"route_name\": \"room-types.index\", \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomTypeController@index\", \"action_timestamp\": \"2025-08-16T10:02:32.593655Z\"}', 0, '2025-08-16 10:02:32'),
+(57, NULL, 'rsgiHckFkSEr1utsSujOyGiIaGXcWxRj95pCGk3B', 'update', 'Booking', 24, '{\"notes\": \"Check-in completed at 2025-08-05 19:39:26\", \"status\": \"Operational\", \"room_id\": 2, \"user_id\": 2, \"children\": 2, \"quantity\": 3, \"option_id\": \"OPT10\", \"booking_id\": 24, \"guest_name\": \"húhu\", \"guest_count\": 2, \"guest_email\": \"quyen@gmai.comđ\", \"guest_phone\": \"231443342423\", \"booking_code\": \"LAVISHYSTAY_931923\", \"children_age\": \"3\", \"room_type_id\": 2, \"check_in_date\": \"2025-08-03T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-08-14T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 500000, \"is_document_verified\": 0}', '{\"notes\": \"Check-in completed at 2025-08-05 19:39:26\\nCheck-out completed at 2025-08-16 17:05:05\", \"status\": \"Cleaning\", \"total_price_vnd\": 2900000}', NULL, 'System đã cập nhật Booking #24', '127.0.0.1', 'PostmanRuntime/7.45.0', 'http://127.0.0.1:8888/api/bookings/24/checkout', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@processCheckout\", \"action_timestamp\": \"2025-08-16T10:05:05.720325Z\"}', 0, '2025-08-16 10:05:05'),
+(58, NULL, 'rsgiHckFkSEr1utsSujOyGiIaGXcWxRj95pCGk3B', 'create', 'Invoice', 1, 'null', '{\"status\": \"Draft\", \"issued_at\": \"2025-08-16 17:05:05\", \"booking_id\": 24, \"invoice_id\": 1, \"total_amount_vnd\": 2900000}', NULL, 'System đã tạo mới Invoice #1', '127.0.0.1', 'PostmanRuntime/7.45.0', 'http://127.0.0.1:8888/api/bookings/24/checkout', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Invoice\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@processCheckout\", \"action_timestamp\": \"2025-08-16T10:05:05.755007Z\"}', 0, '2025-08-16 10:05:05'),
+(59, NULL, 'UqRZyvSmD6MCluI21plkg1COVYc0phS9bIvEHswQ', 'update', 'RoomPriceHistory', 302, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"50000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":86}}]\", \"adjusted_price\": \"70000.00\", \"price_history_id\": 302}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 65000}', NULL, 'System đã cập nhật RoomPriceHistory #302', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-16T10:05:26.955643Z\"}', 0, '2025-08-16 10:05:26');
+INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`, `model_id`, `old_values`, `new_values`, `changes_summary`, `description`, `ip_address`, `user_agent`, `url`, `method`, `metadata`, `is_sensitive`, `created_at`) VALUES
+(60, NULL, 'UqRZyvSmD6MCluI21plkg1COVYc0phS9bIvEHswQ', 'update', 'RoomPriceHistory', 306, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"1500000.00\", \"room_type_id\": 2, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":4,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"30.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":95}}]\", \"adjusted_price\": \"2100000.00\", \"price_history_id\": 306}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1950000}', NULL, 'System đã cập nhật RoomPriceHistory #306', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-16T10:05:27.107236Z\"}', 0, '2025-08-16 10:05:27'),
+(61, NULL, 'UqRZyvSmD6MCluI21plkg1COVYc0phS9bIvEHswQ', 'update', 'RoomPriceHistory', 308, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 4, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":83}}]\", \"adjusted_price\": \"1370000.00\", \"price_history_id\": 308}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":84}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #308', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-16T10:05:27.286342Z\"}', 0, '2025-08-16 10:05:27'),
+(62, NULL, 'edaxKSDLZVjZHUkPSt6GYFPuQDy4r6hV3I4gjcoB', 'update', 'RoomPriceHistory', 260, '{\"date\": \"2025-08-05T17:00:00.000000Z\", \"base_price\": \"5000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"6000.00\", \"price_history_id\": 260}', '{\"base_price\": \"50000\", \"adjusted_price\": 60000}', NULL, 'System đã cập nhật RoomPriceHistory #260', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/rooms/available?check_in_date=2025-08-06&check_out_date=2025-08-08', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomAvailabilityController@getAvailableRooms\", \"action_timestamp\": \"2025-08-16T10:07:05.076640Z\"}', 0, '2025-08-16 10:07:05');
 
 -- --------------------------------------------------------
 
@@ -127,7 +207,7 @@ CREATE TABLE `bed_types` (
 --
 
 INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'King', 'hh', 1, '2025-06-10 00:16:30', '2025-06-26 03:21:52'),
+(1, 'King', '1 giường cực lớn', 1, '2025-06-10 00:16:30', '2025-08-06 07:19:38'),
 (2, 'Twin', '2 giường đơn', 1, '2025-06-26 03:22:13', '2025-06-26 03:22:13');
 
 -- --------------------------------------------------------
@@ -145,9 +225,11 @@ CREATE TABLE `booking` (
   `check_out_date` date NOT NULL COMMENT 'Ngày trả phòng',
   `total_price_vnd` decimal(15,2) NOT NULL COMMENT 'Tổng giá (VND)',
   `guest_count` int DEFAULT NULL COMMENT 'Số khách',
-  `status` enum('Pending','Confirmed','Operational','Completed','Cancelled','Cancelled With Penalty','Unsuccessful') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Trạng thái đặt phòng',
+  `status` enum('Pending','Confirmed','Operational','Completed','Cancelled','Cancelled With Penalty','Unsuccessful','Cleaning') COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Trạng thái đặt phòng, bao gồm Cleaning để biểu thị phòng đang dọn dẹp',
+  `booking_source` enum('website','phone','walk_in','agent','online_travel_agency') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Nguồn đặt',
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `quantity` int DEFAULT NULL,
+  `payment_policy` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `room_type_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật',
@@ -156,104 +238,141 @@ CREATE TABLE `booking` (
   `guest_phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số điện thoại khách',
   `room_id` int DEFAULT NULL,
   `children` int DEFAULT NULL,
-  `children_age` json DEFAULT NULL
+  `children_age` json DEFAULT NULL,
+  `is_document_verified` tinyint DEFAULT '0' COMMENT 'Xác nhận giấy tờ của khách (0: chưa xác nhận, 1: đã xác nhận)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin đặt phòng';
 
 --
 -- Dumping data for table `booking`
 --
 
-INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `status`, `notes`, `quantity`, `room_type_id`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`, `children`, `children_age`) VALUES
-(23, 'LAVISHSTAY_509999', NULL, NULL, '2025-07-01', '2025-07-02', 2400000.00, 2, 'Cancelled', '', 2, NULL, '2025-07-01 04:08:52', '2025-07-04 02:26:20', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', 255, NULL, NULL),
-(24, 'LAVISHYSTAY_931923', 2, 'OPT10', '2025-07-04', '2025-07-09', 999999.00, 2, 'Confirmed', '', 3, NULL, '2025-07-04 03:41:38', '2025-07-07 02:55:21', 'húhu', 'quyen@gmai.comđ', '231443342423', 1, 2, '3'),
-(25, 'LVS20250707030928246', NULL, NULL, '2025-07-07', '2025-07-08', 2880000.00, 2, 'Confirmed', '', 1, NULL, '2025-07-06 20:09:28', '2025-07-06 20:09:28', 'qeweqw', 'reception@hotel.com', '0335920306', NULL, 1, '4'),
-(26, 'LVS20250707031018433', NULL, NULL, '2025-07-07', '2025-07-11', 5760000.00, 2, 'Confirmed', '', 1, NULL, '2025-07-06 20:10:18', '2025-07-06 20:10:18', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', NULL, 1, '4'),
-(27, 'LVS20250707031110789', NULL, NULL, '2025-07-07', '2025-07-11', 5760000.00, 2, 'Confirmed', '', 1, NULL, '2025-07-06 20:11:10', '2025-07-06 20:11:10', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', NULL, 1, '10'),
-(31, 'LVS31050405', NULL, NULL, '2025-07-09', '2025-07-10', 2000000.00, 2, 'Confirmed', '', NULL, NULL, '2025-07-07 22:04:05', '2025-07-07 22:04:05', 'Nguyen Van Test', 'test@email.com', '0123456789', NULL, 0, NULL),
-(32, 'LVS32050513', NULL, NULL, '2025-07-09', '2025-07-10', 2000000.00, 2, 'Confirmed', '', NULL, NULL, '2025-07-07 22:05:13', '2025-07-07 22:05:13', 'Nguyen Van Test', 'test@email.com', '0123456789', NULL, 0, NULL),
-(33, 'LVS33050538', NULL, NULL, '2025-07-09', '2025-07-10', 2000000.00, 2, 'Confirmed', '', NULL, NULL, '2025-07-07 22:05:38', '2025-07-07 22:05:38', 'Nguyen Van Test', 'test@email.com', '0123456789', NULL, 0, NULL),
-(34, 'LVS34050642', NULL, NULL, '2025-07-07', '2025-07-08', 3200000.00, 3, 'Confirmed', '', NULL, NULL, '2025-07-07 22:06:42', '2025-07-07 22:06:42', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(35, 'LVS35050702', NULL, NULL, '2025-07-07', '2025-07-08', 3200000.00, 3, 'Confirmed', '', NULL, NULL, '2025-07-07 22:07:02', '2025-07-07 22:07:02', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(36, 'LVS36050814', NULL, NULL, '2025-07-07', '2025-07-08', 3200000.00, 3, 'Confirmed', '', NULL, NULL, '2025-07-07 22:08:14', '2025-07-07 22:08:14', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(37, 'LVS37051044', NULL, NULL, '2025-07-07', '2025-07-08', 2300000.00, 3, 'Pending', '', NULL, NULL, '2025-07-07 22:10:44', '2025-07-07 22:10:44', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', NULL, 0, NULL),
-(38, 'LVS38051120', NULL, NULL, '2025-07-07', '2025-07-08', 2300000.00, 3, 'Pending', '', NULL, NULL, '2025-07-07 22:11:20', '2025-07-07 22:11:20', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(39, 'LVS39063958', NULL, NULL, '2025-07-07', '2025-07-08', 6200000.00, 2, 'Pending', '', NULL, NULL, '2025-07-07 23:39:57', '2025-07-07 23:39:58', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(40, 'LVS40064052', NULL, NULL, '2025-07-07', '2025-07-08', 6200000.00, 2, 'Pending', '', NULL, NULL, '2025-07-07 23:40:52', '2025-07-07 23:40:52', 'qeweqw', 'reception@hotel.com', '0987654321', NULL, 0, NULL),
-(41, 'LVS41073901', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 2, 'Pending', '', NULL, NULL, '2025-07-08 00:39:01', '2025-07-08 00:39:01', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(42, 'LVS42074259', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 2, 'Pending', '', NULL, NULL, '2025-07-08 00:42:59', '2025-07-08 00:42:59', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(43, 'LVS43074325', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 2, 'Pending', '', NULL, NULL, '2025-07-08 00:43:25', '2025-07-08 00:43:25', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(44, 'LVS44074700', NULL, NULL, '2025-07-07', '2025-07-08', 7320000.00, 7, 'Pending', '', NULL, NULL, '2025-07-08 00:47:00', '2025-07-08 00:47:00', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(45, 'LVS45075351', NULL, NULL, '2025-07-07', '2025-07-08', 8640000.00, 13, 'Pending', '', NULL, NULL, '2025-07-08 00:53:51', '2025-07-08 00:53:51', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(46, 'LVS46075512', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 6, 'Pending', '', NULL, NULL, '2025-07-08 00:55:12', '2025-07-08 00:55:12', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(51, 'LVS51083510', NULL, NULL, '2025-07-07', '2025-07-08', 2880000.00, 11, 'Pending', NULL, NULL, NULL, '2025-07-08 01:35:10', '2025-07-08 01:35:10', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[]'),
-(53, 'LVS53093059', NULL, NULL, '2025-07-09', '2025-07-10', 4320000.00, 13, 'Pending', NULL, NULL, NULL, '2025-07-08 02:30:59', '2025-07-08 02:30:59', 'Nguyen Van Test', 'test@gmail.com', '0987654321', NULL, 5, '[]'),
-(54, 'LVS54093118', NULL, NULL, '2025-07-09', '2025-07-10', 1200000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-08 02:31:18', '2025-07-08 02:31:18', 'Test User', 'test@test.com', '0123456789', NULL, 0, '[]'),
-(56, 'LVS56094825', NULL, NULL, '2025-07-09', '2025-07-10', 1200000.00, 5, 'Pending', NULL, NULL, NULL, '2025-07-08 02:48:25', '2025-07-08 02:48:25', 'Test User Full', 'test@test.com', '0123456789', NULL, 3, '[[{\"age\": 8}, {\"age\": 10}, {\"age\": 5}]]'),
-(60, 'LVS60104819', NULL, NULL, '2025-07-07', '2025-07-08', 4320000.00, 13, 'Pending', NULL, NULL, NULL, '2025-07-08 03:48:19', '2025-07-08 03:48:19', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[[{\"id\": \"room_0_child_1\", \"age\": 8}, {\"id\": \"room_0_child_2\", \"age\": 8}, {\"id\": \"room_0_child_3\", \"age\": 8}], [{\"id\": \"room_1_child_1\", \"age\": 8}, {\"id\": \"room_1_child_2\", \"age\": 8}], []]'),
-(61, 'LVS61105534', NULL, NULL, '2025-07-07', '2025-07-08', 4320000.00, 13, 'Pending', NULL, NULL, NULL, '2025-07-08 03:55:34', '2025-07-08 03:55:34', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[[{\"id\": \"room_0_child_1\", \"age\": 8}, {\"id\": \"room_0_child_2\", \"age\": 8}, {\"id\": \"room_0_child_3\", \"age\": 8}], [{\"id\": \"room_1_child_1\", \"age\": 8}, {\"id\": \"room_1_child_2\", \"age\": 8}], []]'),
-(62, 'LVS62153758', NULL, NULL, '2025-07-07', '2025-07-08', 4320000.00, 13, 'Pending', NULL, NULL, NULL, '2025-07-08 08:37:58', '2025-07-08 08:37:58', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[[{\"id\": \"room_0_child_1\", \"age\": 8}, {\"id\": \"room_0_child_2\", \"age\": 8}, {\"id\": \"room_0_child_3\", \"age\": 8}], [{\"id\": \"room_1_child_1\", \"age\": 8}, {\"id\": \"room_1_child_2\", \"age\": 8}], []]'),
-(63, 'LVS63162115', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-08 09:21:15', '2025-07-08 09:45:21', 'Huỳnh Thị Bích Tuyền', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]'),
-(64, 'LVS64164554', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-08 09:45:54', '2025-07-08 09:46:51', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]'),
-(65, 'LVS65165011', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-08 09:50:11', '2025-07-08 09:50:54', 'qeweqw', 'quyenjpn@gmail.com', '333241324342', NULL, 0, '[[]]'),
-(66, 'LVS66165335', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-08 09:53:35', '2025-07-08 09:54:06', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]'),
-(67, 'LVS67031840', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 1, 'Confirmed', NULL, NULL, NULL, '2025-07-08 20:18:40', '2025-07-08 20:19:17', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]'),
-(68, 'LVS68032045', NULL, NULL, '2025-07-08', '2025-07-10', 22000.00, 3, 'Confirmed', NULL, NULL, NULL, '2025-07-08 20:20:45', '2025-07-08 20:22:08', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]'),
-(69, 'LVS69050107', NULL, NULL, '2025-07-08', '2025-07-11', 33000.00, 3, 'Pending', NULL, NULL, NULL, '2025-07-08 22:01:07', '2025-07-08 22:01:07', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]'),
-(75, 'LVS75070930', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-09 00:09:30', '2025-07-09 00:09:30', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]'),
-(76, 'LVS76073559', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-09 00:35:59', '2025-07-09 00:35:59', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]'),
-(77, 'LVS77082516', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-09 01:25:16', '2025-07-09 01:25:16', '明心', 'quyenjpn@gmail.com', '12342342341', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]'),
-(79, 'LVS79072153', NULL, NULL, '2025-07-13', '2025-07-14', 6200000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 00:21:53', '2025-07-14 00:21:53', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(80, 'LVS80072418', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-14 00:24:18', '2025-07-14 00:26:13', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(81, 'LVS81091621', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-14 02:16:21', '2025-07-14 02:17:03', '明心', 'quyenjpn@gmail.com', '123412341234', NULL, 0, '{\"totals\": {\"nights\": 1, \"taxAmount\": 0, \"finalTotal\": 11000, \"roomsTotal\": 11000, \"serviceFee\": 0, \"breakfastTotal\": 0, \"discountAmount\": 0}, \"rooms_data\": [{\"adults\": 2, \"room_id\": \"1\", \"bed_type\": null, \"children\": 0, \"policies\": {\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}, \"meal_type\": null, \"option_id\": \"pkg-1\", \"guest_name\": \"明心\", \"package_id\": \"1\", \"room_price\": 11000, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"123412341234\", \"option_name\": \"Standard Package\", \"recommended\": 1, \"children_age\": [], \"most_popular\": 0, \"option_price\": 11000, \"payment_policy\": \"Đặt cọc 30% giá trị booking\", \"urgency_message\": null, \"check_out_policy\": \"Check-out tiêu chuẩn 12:00\", \"deposit_percentage\": \"30.00\", \"penalty_percentage\": \"0.00\", \"cancellation_policy\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"deposit_fixed_amount\": \"0.00\", \"penalty_fixed_amount\": \"200000.00\", \"recommendation_score\": null, \"free_cancellation_days\": 7, \"standard_check_out_time\": \"12:00:00\"}], \"payment_method\": \"vietqr\"}'),
-(82, 'LVS82092729', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 02:27:29', '2025-07-14 02:27:29', '明心', 'quyenjpn@gmail.com', '123412342', NULL, 0, '{\"totals\": {\"nights\": 1, \"taxAmount\": 0, \"finalTotal\": 11000, \"roomsTotal\": 11000, \"serviceFee\": 0, \"breakfastTotal\": 0, \"discountAmount\": 0}, \"rooms_data\": [{\"adults\": 2, \"room_id\": \"1\", \"bed_type\": null, \"children\": 0, \"policies\": {\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}, \"meal_type\": null, \"option_id\": \"pkg-1\", \"guest_name\": \"明心\", \"package_id\": \"1\", \"room_price\": 11000, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"123412342\", \"option_name\": \"Standard Package\", \"recommended\": 1, \"children_age\": [], \"most_popular\": 0, \"option_price\": 11000, \"payment_policy\": \"Đặt cọc 30% giá trị booking\", \"urgency_message\": null, \"check_out_policy\": \"Check-out tiêu chuẩn 12:00\", \"deposit_percentage\": \"30.00\", \"penalty_percentage\": \"0.00\", \"cancellation_policy\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"deposit_fixed_amount\": \"0.00\", \"penalty_fixed_amount\": \"200000.00\", \"recommendation_score\": null, \"free_cancellation_days\": 7, \"standard_check_out_time\": \"12:00:00\"}], \"payment_method\": \"vietqr\"}'),
-(85, 'LVS85093648', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 02:36:48', '2025-07-14 02:36:48', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '{\"totals\": {\"nights\": 1, \"taxAmount\": 0, \"finalTotal\": 11000, \"roomsTotal\": 11000, \"serviceFee\": 0, \"breakfastTotal\": 0, \"discountAmount\": 0}, \"rooms_data\": [{\"adults\": 2, \"room_id\": \"1\", \"bed_type\": null, \"children\": 0, \"policies\": {\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}, \"meal_type\": null, \"option_id\": \"pkg-1\", \"guest_name\": \"明心\", \"package_id\": \"1\", \"room_price\": 11000, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0987654321\", \"option_name\": \"Standard Package\", \"recommended\": 1, \"children_age\": [], \"most_popular\": 0, \"option_price\": 11000, \"payment_policy\": \"Đặt cọc 30% giá trị booking\", \"urgency_message\": null, \"check_out_policy\": \"Check-out tiêu chuẩn 12:00\", \"deposit_percentage\": \"30.00\", \"penalty_percentage\": \"0.00\", \"cancellation_policy\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"deposit_fixed_amount\": \"0.00\", \"penalty_fixed_amount\": \"200000.00\", \"recommendation_score\": null, \"free_cancellation_days\": 7, \"standard_check_out_time\": \"12:00:00\"}], \"payment_method\": \"vietqr\"}'),
-(88, 'LVS88094850', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-14 02:48:50', '2025-07-14 02:49:53', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(89, 'LVS89103511', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 03:35:11', '2025-07-14 03:35:11', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(90, 'LVS90104127', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 03:41:27', '2025-07-14 03:41:27', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(91, 'LVS91104507', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 03:45:07', '2025-07-14 03:45:07', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(92, 'LVS92105428', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', '', NULL, NULL, '2025-07-14 03:54:28', '2025-07-14 11:05:54', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(93, 'LVS93105832', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 03:58:32', '2025-07-14 03:58:32', '明心', 'quyenjpn@gmail.com', '23413421243', NULL, 0, NULL),
-(94, 'LVS94111645', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', '12341234', NULL, NULL, '2025-07-14 04:16:45', '2025-07-14 04:21:04', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(95, 'LVS95112222', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', 'hú hsu loo lô', NULL, NULL, '2025-07-14 04:22:22', '2025-07-14 04:22:29', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(96, 'LVS96112503', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', 'sdffsdfdfgdfgsd', NULL, NULL, '2025-07-14 04:25:03', '2025-07-14 04:25:53', '明心', 'quyenjpn@gmail.com', '1234123412431', NULL, 0, NULL),
-(97, 'LVS97113050', NULL, NULL, '2025-07-13', '2025-07-14', 132000.00, 5, 'Pending', '412324311234', NULL, NULL, '2025-07-14 04:30:50', '2025-07-14 04:30:50', '明心', 'quyenjpn@gmail.com', '124314232134', NULL, 0, NULL),
-(98, 'LVS98114231', NULL, NULL, '2025-07-13', '2025-07-14', 132000.00, 5, 'Confirmed', '11234234123', NULL, NULL, '2025-07-14 04:42:31', '2025-07-14 04:42:51', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(99, 'LVS99114449', NULL, NULL, '2025-07-13', '2025-07-14', 132000.00, 5, 'Confirmed', '12341234', NULL, NULL, '2025-07-14 04:44:49', '2025-07-14 04:44:57', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, 0, NULL),
-(100, 'LVS100023425', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', '123r1243', NULL, NULL, '2025-07-14 19:34:25', '2025-07-14 19:35:46', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(101, 'LVS101023558', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', '123412342314', NULL, NULL, '2025-07-14 19:35:58', '2025-07-14 19:37:12', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(102, 'LVS102024015', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', '1234123421', NULL, NULL, '2025-07-14 19:40:15', '2025-07-14 19:40:18', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(103, 'LVS103024501', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', '1341234123', NULL, NULL, '2025-07-14 19:45:01', '2025-07-14 19:45:43', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(104, 'LVS104024936', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '1234', NULL, NULL, '2025-07-14 19:49:36', '2025-07-14 19:49:44', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(105, 'LVS105025917', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '1234', NULL, NULL, '2025-07-14 19:59:17', '2025-07-14 20:00:09', '明心', 'quyenjpn@gmail.com', '1234', NULL, 0, NULL),
-(106, 'LVS106030509', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '23452', NULL, NULL, '2025-07-14 20:05:09', '2025-07-14 20:05:12', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(107, 'LVS107030523', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '253425432543', NULL, NULL, '2025-07-14 20:05:23', '2025-07-14 20:08:36', '明心', 'quyenjpn@gmail.com', '2354', NULL, 0, NULL),
-(108, 'LVS108031734', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', '1234234', NULL, NULL, '2025-07-14 20:17:34', '2025-07-14 20:17:34', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(109, 'LVS109033233', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', '123414231423', NULL, NULL, '2025-07-14 20:32:33', '2025-07-14 20:32:33', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(110, 'LVS110041104', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', '31241234', NULL, NULL, '2025-07-14 21:11:04', '2025-07-14 21:11:04', '明心', 'quyenjpn@gmail.com', '12341234', NULL, 0, NULL),
-(111, 'LVS111042232', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-14 21:22:32', '2025-07-14 21:22:32', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL),
-(112, 'LVS112044511', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '2341', NULL, NULL, '2025-07-14 21:45:11', '2025-07-14 22:05:39', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL),
-(113, 'LVS113070418', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '324234', NULL, NULL, '2025-07-15 00:04:18', '2025-07-15 00:04:49', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(114, 'LVS114070529', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-15 00:05:29', '2025-07-15 00:07:55', '明心', 'quyenjpn@gmail.com', '1234124312341', NULL, NULL, NULL),
-(115, 'LVS115071036', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 00:10:36', '2025-07-15 00:10:36', '明心', 'quyenjpn@gmail.com', '2134', NULL, NULL, NULL),
-(116, 'LVS116072010', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 00:20:10', '2025-07-15 00:20:10', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(117, 'LVS117072552', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 00:25:52', '2025-07-15 00:25:52', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(118, 'LVS118072800', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 00:27:59', '2025-07-15 00:28:00', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(119, 'LVS119075227', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 00:52:27', '2025-07-15 00:52:27', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(120, 'LVS120085204', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 01:52:04', '2025-07-15 01:52:04', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(121, 'LVS121091522', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', '', NULL, NULL, '2025-07-15 02:15:22', '2025-07-15 02:30:14', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(124, 'LVS124093516', NULL, NULL, '2025-07-14', '2025-07-16', 22000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 02:35:16', '2025-07-15 02:35:16', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(125, 'LVS125105711', NULL, NULL, '2025-07-15', '2025-07-16', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 03:57:11', '2025-07-15 03:57:11', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(126, 'LVS126023058', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 19:30:58', '2025-07-15 19:30:58', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(127, 'LVS127025346', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-15 19:53:46', '2025-07-15 19:54:17', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(128, 'LVS128025435', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Pending', NULL, NULL, NULL, '2025-07-15 19:54:35', '2025-07-15 19:54:35', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(129, 'LVS129030846', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', 'hihihihi', NULL, NULL, '2025-07-15 20:08:46', '2025-07-15 20:09:37', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(130, 'LVS130033257', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-15 20:32:57', '2025-07-15 20:33:11', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(131, 'LVS131033527', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-15 20:35:27', '2025-07-15 20:36:09', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(132, 'LVS132033857', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', '1234', NULL, NULL, '2025-07-15 20:38:57', '2025-07-15 20:39:30', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL),
-(133, 'LVS133070932', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, '2025-07-16 00:09:32', '2025-07-16 00:10:00', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL),
-(134, 'LVS134073202', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 4, 'Pending', 'ewf', NULL, NULL, '2025-07-16 00:32:02', '2025-07-16 00:32:02', 'DuongTele', 'dancrunguyen2909@gmail.com', '0822153447', NULL, NULL, NULL),
-(135, 'LVS135134920', NULL, NULL, '2025-07-16', '2025-07-17', 121000.00, 4, 'Pending', 'fef', NULL, NULL, '2025-07-16 06:49:20', '2025-07-16 06:49:20', 'DuongTele', 'dancrunguyen2909@gmail.com', '0822153447', NULL, NULL, NULL),
-(136, 'LVS136022052', NULL, NULL, '2025-07-17', '2025-07-18', 231000.00, 4, 'Pending', NULL, NULL, NULL, '2025-07-16 19:20:52', '2025-07-16 19:20:52', 'NGUYỄN ANH ĐỨC', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL);
+INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `status`, `booking_source`, `notes`, `quantity`, `payment_policy`, `room_type_id`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`, `children`, `children_age`, `is_document_verified`) VALUES
+(23, 'LAVISHSTAY_509999', NULL, NULL, '2025-07-01', '2025-07-02', 2400000.00, 2, 'Cancelled', NULL, '', 2, NULL, NULL, '2025-07-01 04:08:52', '2025-07-04 02:26:20', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', 255, NULL, NULL, 0),
+(24, 'LAVISHYSTAY_931923', 2, 'OPT10', '2025-08-04', '2025-08-15', 2900000.00, 2, 'Cleaning', NULL, 'Check-in completed at 2025-08-05 19:39:26\nCheck-out completed at 2025-08-16 17:05:05', 3, NULL, 2, '2025-07-04 03:41:38', '2025-08-16 10:05:05', 'húhu', 'quyen@gmai.comđ', '231443342423', 2, 2, '3', 0),
+(25, 'LVS20250707030928246', NULL, NULL, '2025-07-07', '2025-07-08', 2880000.00, 2, 'Confirmed', NULL, '', 1, NULL, NULL, '2025-07-06 20:09:28', '2025-07-06 20:09:28', 'qeweqw', 'reception@hotel.com', '0335920306', NULL, 1, '4', 0),
+(26, 'LVS20250707031018433', NULL, NULL, '2025-07-07', '2025-07-11', 5760000.00, 2, 'Confirmed', NULL, '', 1, NULL, NULL, '2025-07-06 20:10:18', '2025-07-06 20:10:18', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', NULL, 1, '4', 0),
+(27, 'LVS20250707031110789', NULL, NULL, '2025-07-07', '2025-07-11', 5760000.00, 2, 'Confirmed', NULL, '', 1, NULL, NULL, '2025-07-06 20:11:10', '2025-07-06 20:11:10', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', NULL, 1, '10', 0),
+(31, 'LVS31050405', NULL, NULL, '2025-07-09', '2025-07-10', 2000000.00, 2, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-07 22:04:05', '2025-07-07 22:04:05', 'Nguyen Van Test', 'test@email.com', '0123456789', NULL, 0, NULL, 0),
+(32, 'LVS32050513', NULL, NULL, '2025-07-09', '2025-07-10', 2000000.00, 2, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-07 22:05:13', '2025-07-07 22:05:13', 'Nguyen Van Test', 'test@email.com', '0123456789', NULL, 0, NULL, 0),
+(33, 'LVS33050538', NULL, NULL, '2025-07-09', '2025-07-10', 2000000.00, 2, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-07 22:05:38', '2025-07-07 22:05:38', 'Nguyen Van Test', 'test@email.com', '0123456789', NULL, 0, NULL, 0),
+(34, 'LVS34050642', NULL, NULL, '2025-07-07', '2025-07-08', 3200000.00, 3, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-07 22:06:42', '2025-07-07 22:06:42', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(35, 'LVS35050702', NULL, NULL, '2025-07-07', '2025-07-08', 3200000.00, 3, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-07 22:07:02', '2025-07-07 22:07:02', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(36, 'LVS36050814', NULL, NULL, '2025-07-07', '2025-07-08', 3200000.00, 3, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-07 22:08:14', '2025-07-07 22:08:14', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(37, 'LVS37051044', NULL, NULL, '2025-07-07', '2025-07-08', 2300000.00, 3, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-07 22:10:44', '2025-07-07 22:10:44', 'qeweqw', 'quyenjpn@gmail.com', '0335920306', NULL, 0, NULL, 0),
+(38, 'LVS38051120', NULL, NULL, '2025-07-07', '2025-07-08', 2300000.00, 3, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-07 22:11:20', '2025-07-07 22:11:20', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(39, 'LVS39063958', NULL, NULL, '2025-07-07', '2025-07-08', 6200000.00, 2, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-07 23:39:57', '2025-07-07 23:39:58', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(40, 'LVS40064052', NULL, NULL, '2025-07-07', '2025-07-08', 6200000.00, 2, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-07 23:40:52', '2025-07-07 23:40:52', 'qeweqw', 'reception@hotel.com', '0987654321', NULL, 0, NULL, 0),
+(41, 'LVS41073901', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 2, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-08 00:39:01', '2025-07-08 00:39:01', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(42, 'LVS42074259', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 2, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-08 00:42:59', '2025-07-08 00:42:59', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(43, 'LVS43074325', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 2, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-08 00:43:25', '2025-07-08 00:43:25', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(44, 'LVS44074700', NULL, NULL, '2025-07-07', '2025-07-08', 7320000.00, 7, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-08 00:47:00', '2025-07-08 00:47:00', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(45, 'LVS45075351', NULL, NULL, '2025-07-07', '2025-07-08', 8640000.00, 13, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-08 00:53:51', '2025-07-08 00:53:51', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(46, 'LVS46075512', NULL, NULL, '2025-07-07', '2025-07-08', 1440000.00, 6, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-08 00:55:12', '2025-07-08 00:55:12', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(51, 'LVS51083510', NULL, NULL, '2025-07-07', '2025-07-08', 2880000.00, 11, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 01:35:10', '2025-07-08 01:35:10', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[]', 0),
+(53, 'LVS53093059', NULL, NULL, '2025-07-09', '2025-07-10', 4320000.00, 13, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 02:30:59', '2025-07-08 02:30:59', 'Nguyen Van Test', 'test@gmail.com', '0987654321', NULL, 5, '[]', 0),
+(54, 'LVS54093118', NULL, NULL, '2025-07-09', '2025-07-10', 1200000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 02:31:18', '2025-07-08 02:31:18', 'Test User', 'test@test.com', '0123456789', NULL, 0, '[]', 0),
+(56, 'LVS56094825', NULL, NULL, '2025-07-09', '2025-07-10', 1200000.00, 5, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 02:48:25', '2025-07-08 02:48:25', 'Test User Full', 'test@test.com', '0123456789', NULL, 3, '[[{\"age\": 8}, {\"age\": 10}, {\"age\": 5}]]', 0),
+(60, 'LVS60104819', NULL, NULL, '2025-07-07', '2025-07-08', 4320000.00, 13, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 03:48:19', '2025-07-08 03:48:19', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[[{\"id\": \"room_0_child_1\", \"age\": 8}, {\"id\": \"room_0_child_2\", \"age\": 8}, {\"id\": \"room_0_child_3\", \"age\": 8}], [{\"id\": \"room_1_child_1\", \"age\": 8}, {\"id\": \"room_1_child_2\", \"age\": 8}], []]', 0),
+(61, 'LVS61105534', NULL, NULL, '2025-07-07', '2025-07-08', 4320000.00, 13, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 03:55:34', '2025-07-08 03:55:34', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[[{\"id\": \"room_0_child_1\", \"age\": 8}, {\"id\": \"room_0_child_2\", \"age\": 8}, {\"id\": \"room_0_child_3\", \"age\": 8}], [{\"id\": \"room_1_child_1\", \"age\": 8}, {\"id\": \"room_1_child_2\", \"age\": 8}], []]', 0),
+(62, 'LVS62153758', NULL, NULL, '2025-07-07', '2025-07-08', 4320000.00, 13, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 08:37:58', '2025-07-08 08:37:58', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 5, '[[{\"id\": \"room_0_child_1\", \"age\": 8}, {\"id\": \"room_0_child_2\", \"age\": 8}, {\"id\": \"room_0_child_3\", \"age\": 8}], [{\"id\": \"room_1_child_1\", \"age\": 8}, {\"id\": \"room_1_child_2\", \"age\": 8}], []]', 0),
+(63, 'LVS63162115', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-08 09:21:15', '2025-07-08 09:45:21', 'Huỳnh Thị Bích Tuyền', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]', 0),
+(64, 'LVS64164554', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-08 09:45:54', '2025-07-08 09:46:51', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]', 0),
+(65, 'LVS65165011', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-08 09:50:11', '2025-07-08 09:50:54', 'qeweqw', 'quyenjpn@gmail.com', '333241324342', NULL, 0, '[[]]', 0),
+(66, 'LVS66165335', NULL, NULL, '2025-07-07', '2025-07-08', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-08 09:53:35', '2025-07-08 09:54:06', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]', 0),
+(67, 'LVS67031840', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 1, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-08 20:18:40', '2025-07-08 20:19:17', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '[[]]', 0),
+(68, 'LVS68032045', NULL, NULL, '2025-07-08', '2025-07-10', 22000.00, 3, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-08 20:20:45', '2025-07-08 20:22:08', 'qeweqw', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]', 0),
+(69, 'LVS69050107', NULL, NULL, '2025-07-08', '2025-07-11', 33000.00, 3, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-08 22:01:07', '2025-07-08 22:01:07', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]', 0),
+(75, 'LVS75070930', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-09 00:09:30', '2025-07-09 00:09:30', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]', 0),
+(76, 'LVS76073559', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-09 00:35:59', '2025-07-09 00:35:59', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]', 0),
+(77, 'LVS77082516', NULL, NULL, '2025-07-08', '2025-07-09', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-09 01:25:16', '2025-07-09 01:25:16', '明心', 'quyenjpn@gmail.com', '12342342341', NULL, 1, '[[{\"id\": \"room_0_child_1\", \"age\": 8}]]', 0),
+(79, 'LVS79072153', NULL, NULL, '2025-07-13', '2025-07-14', 6200000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 00:21:53', '2025-07-14 00:21:53', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(80, 'LVS80072418', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-14 00:24:18', '2025-07-14 00:26:13', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(81, 'LVS81091621', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-14 02:16:21', '2025-07-14 02:17:03', '明心', 'quyenjpn@gmail.com', '123412341234', NULL, 0, '{\"totals\": {\"nights\": 1, \"taxAmount\": 0, \"finalTotal\": 11000, \"roomsTotal\": 11000, \"serviceFee\": 0, \"breakfastTotal\": 0, \"discountAmount\": 0}, \"rooms_data\": [{\"adults\": 2, \"room_id\": \"1\", \"bed_type\": null, \"children\": 0, \"policies\": {\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}, \"meal_type\": null, \"option_id\": \"pkg-1\", \"guest_name\": \"明心\", \"package_id\": \"1\", \"room_price\": 11000, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"123412341234\", \"option_name\": \"Standard Package\", \"recommended\": 1, \"children_age\": [], \"most_popular\": 0, \"option_price\": 11000, \"payment_policy\": \"Đặt cọc 30% giá trị booking\", \"urgency_message\": null, \"check_out_policy\": \"Check-out tiêu chuẩn 12:00\", \"deposit_percentage\": \"30.00\", \"penalty_percentage\": \"0.00\", \"cancellation_policy\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"deposit_fixed_amount\": \"0.00\", \"penalty_fixed_amount\": \"200000.00\", \"recommendation_score\": null, \"free_cancellation_days\": 7, \"standard_check_out_time\": \"12:00:00\"}], \"payment_method\": \"vietqr\"}', 0),
+(82, 'LVS82092729', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 02:27:29', '2025-07-14 02:27:29', '明心', 'quyenjpn@gmail.com', '123412342', NULL, 0, '{\"totals\": {\"nights\": 1, \"taxAmount\": 0, \"finalTotal\": 11000, \"roomsTotal\": 11000, \"serviceFee\": 0, \"breakfastTotal\": 0, \"discountAmount\": 0}, \"rooms_data\": [{\"adults\": 2, \"room_id\": \"1\", \"bed_type\": null, \"children\": 0, \"policies\": {\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}, \"meal_type\": null, \"option_id\": \"pkg-1\", \"guest_name\": \"明心\", \"package_id\": \"1\", \"room_price\": 11000, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"123412342\", \"option_name\": \"Standard Package\", \"recommended\": 1, \"children_age\": [], \"most_popular\": 0, \"option_price\": 11000, \"payment_policy\": \"Đặt cọc 30% giá trị booking\", \"urgency_message\": null, \"check_out_policy\": \"Check-out tiêu chuẩn 12:00\", \"deposit_percentage\": \"30.00\", \"penalty_percentage\": \"0.00\", \"cancellation_policy\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"deposit_fixed_amount\": \"0.00\", \"penalty_fixed_amount\": \"200000.00\", \"recommendation_score\": null, \"free_cancellation_days\": 7, \"standard_check_out_time\": \"12:00:00\"}], \"payment_method\": \"vietqr\"}', 0),
+(85, 'LVS85093648', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 02:36:48', '2025-07-14 02:36:48', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, '{\"totals\": {\"nights\": 1, \"taxAmount\": 0, \"finalTotal\": 11000, \"roomsTotal\": 11000, \"serviceFee\": 0, \"breakfastTotal\": 0, \"discountAmount\": 0}, \"rooms_data\": [{\"adults\": 2, \"room_id\": \"1\", \"bed_type\": null, \"children\": 0, \"policies\": {\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}, \"meal_type\": null, \"option_id\": \"pkg-1\", \"guest_name\": \"明心\", \"package_id\": \"1\", \"room_price\": 11000, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0987654321\", \"option_name\": \"Standard Package\", \"recommended\": 1, \"children_age\": [], \"most_popular\": 0, \"option_price\": 11000, \"payment_policy\": \"Đặt cọc 30% giá trị booking\", \"urgency_message\": null, \"check_out_policy\": \"Check-out tiêu chuẩn 12:00\", \"deposit_percentage\": \"30.00\", \"penalty_percentage\": \"0.00\", \"cancellation_policy\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"deposit_fixed_amount\": \"0.00\", \"penalty_fixed_amount\": \"200000.00\", \"recommendation_score\": null, \"free_cancellation_days\": 7, \"standard_check_out_time\": \"12:00:00\"}], \"payment_method\": \"vietqr\"}', 0),
+(88, 'LVS88094850', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-14 02:48:50', '2025-07-14 02:49:53', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(89, 'LVS89103511', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 03:35:11', '2025-07-14 03:35:11', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(90, 'LVS90104127', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 03:41:27', '2025-07-14 03:41:27', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(91, 'LVS91104507', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 03:45:07', '2025-07-14 03:45:07', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(92, 'LVS92105428', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, '', NULL, NULL, NULL, '2025-07-14 03:54:28', '2025-07-14 11:05:54', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(93, 'LVS93105832', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 03:58:32', '2025-07-14 03:58:32', '明心', 'quyenjpn@gmail.com', '23413421243', NULL, 0, NULL, 0),
+(94, 'LVS94111645', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, '12341234', NULL, NULL, NULL, '2025-07-14 04:16:45', '2025-07-14 04:21:04', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(95, 'LVS95112222', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, 'hú hsu loo lô', NULL, NULL, NULL, '2025-07-14 04:22:22', '2025-07-14 04:22:29', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(96, 'LVS96112503', NULL, NULL, '2025-07-13', '2025-07-14', 11000.00, 2, 'Confirmed', NULL, 'sdffsdfdfgdfgsd', NULL, NULL, NULL, '2025-07-14 04:25:03', '2025-07-14 04:25:53', '明心', 'quyenjpn@gmail.com', '1234123412431', NULL, 0, NULL, 0),
+(97, 'LVS97113050', NULL, NULL, '2025-07-13', '2025-07-14', 132000.00, 5, 'Pending', NULL, '412324311234', NULL, NULL, NULL, '2025-07-14 04:30:50', '2025-07-14 04:30:50', '明心', 'quyenjpn@gmail.com', '124314232134', NULL, 0, NULL, 0),
+(98, 'LVS98114231', NULL, NULL, '2025-07-13', '2025-07-14', 132000.00, 5, 'Confirmed', NULL, '11234234123', NULL, NULL, NULL, '2025-07-14 04:42:31', '2025-07-14 04:42:51', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(99, 'LVS99114449', NULL, NULL, '2025-07-13', '2025-07-14', 132000.00, 5, 'Confirmed', NULL, '12341234', NULL, NULL, NULL, '2025-07-14 04:44:49', '2025-07-14 04:44:57', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, 0, NULL, 0),
+(100, 'LVS100023425', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', NULL, '123r1243', NULL, NULL, NULL, '2025-07-14 19:34:25', '2025-07-14 19:35:46', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(101, 'LVS101023558', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', NULL, '123412342314', NULL, NULL, NULL, '2025-07-14 19:35:58', '2025-07-14 19:37:12', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(102, 'LVS102024015', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', NULL, '1234123421', NULL, NULL, NULL, '2025-07-14 19:40:15', '2025-07-14 19:40:18', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(103, 'LVS103024501', NULL, NULL, '2025-07-14', '2025-07-15', 132000.00, 5, 'Confirmed', NULL, '1341234123', NULL, NULL, NULL, '2025-07-14 19:45:01', '2025-07-14 19:45:43', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(104, 'LVS104024936', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '1234', NULL, NULL, NULL, '2025-07-14 19:49:36', '2025-07-14 19:49:44', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(105, 'LVS105025917', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '1234', NULL, NULL, NULL, '2025-07-14 19:59:17', '2025-07-14 20:00:09', '明心', 'quyenjpn@gmail.com', '1234', NULL, 0, NULL, 0),
+(106, 'LVS106030509', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '23452', NULL, NULL, NULL, '2025-07-14 20:05:09', '2025-07-14 20:05:12', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(107, 'LVS107030523', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '253425432543', NULL, NULL, NULL, '2025-07-14 20:05:23', '2025-07-14 20:08:36', '明心', 'quyenjpn@gmail.com', '2354', NULL, 0, NULL, 0),
+(108, 'LVS108031734', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, '1234234', NULL, NULL, NULL, '2025-07-14 20:17:34', '2025-07-14 20:17:34', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(109, 'LVS109033233', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, '123414231423', NULL, NULL, NULL, '2025-07-14 20:32:33', '2025-07-14 20:32:33', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(110, 'LVS110041104', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, '31241234', NULL, NULL, NULL, '2025-07-14 21:11:04', '2025-07-14 21:11:04', '明心', 'quyenjpn@gmail.com', '12341234', NULL, 0, NULL, 0),
+(111, 'LVS111042232', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-14 21:22:32', '2025-07-14 21:22:32', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, 0, NULL, 0),
+(112, 'LVS112044511', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '2341', NULL, NULL, NULL, '2025-07-14 21:45:11', '2025-07-14 22:05:39', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(113, 'LVS113070418', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '324234', NULL, NULL, NULL, '2025-07-15 00:04:18', '2025-07-15 00:04:49', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(114, 'LVS114070529', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:05:29', '2025-07-15 00:07:55', '明心', 'quyenjpn@gmail.com', '1234124312341', NULL, NULL, NULL, 0),
+(115, 'LVS115071036', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:10:36', '2025-07-15 00:10:36', '明心', 'quyenjpn@gmail.com', '2134', NULL, NULL, NULL, 0),
+(116, 'LVS116072010', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:20:10', '2025-07-15 00:20:10', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(117, 'LVS117072552', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:25:52', '2025-07-15 00:25:52', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(118, 'LVS118072800', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:27:59', '2025-07-15 00:28:00', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(119, 'LVS119075227', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:52:27', '2025-07-15 00:52:27', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(120, 'LVS120085204', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 01:52:04', '2025-07-15 01:52:04', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(121, 'LVS121091522', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-15 02:15:22', '2025-07-15 02:30:14', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(124, 'LVS124093516', NULL, NULL, '2025-07-14', '2025-07-16', 22000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 02:35:16', '2025-07-15 02:35:16', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(125, 'LVS125105711', NULL, NULL, '2025-07-15', '2025-07-16', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 03:57:11', '2025-07-15 03:57:11', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(126, 'LVS126023058', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 19:30:58', '2025-07-15 19:30:58', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(127, 'LVS127025346', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-15 19:53:46', '2025-07-15 19:54:17', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(128, 'LVS128025435', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Completed', NULL, NULL, NULL, NULL, NULL, '2025-07-15 19:54:35', '2025-08-16 10:10:30', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(129, 'LVS129030846', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Completed', NULL, 'hihihihi', NULL, NULL, NULL, '2025-07-15 20:08:46', '2025-08-16 10:10:57', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(130, 'LVS130033257', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Operational', NULL, NULL, NULL, NULL, NULL, '2025-07-15 20:32:57', '2025-07-18 12:57:45', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(131, 'LVS131033527', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-15 20:35:27', '2025-07-15 20:36:09', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(132, 'LVS132033857', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, '1234', NULL, NULL, NULL, '2025-07-15 20:38:57', '2025-07-15 20:39:30', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(133, 'LVS133070932', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-16 00:09:32', '2025-07-16 00:10:00', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(134, 'LVS134032119', NULL, NULL, '2025-07-17', '2025-07-18', 11000.00, 1, 'Pending', NULL, 'qeqweqwqwe', NULL, NULL, NULL, '2025-07-16 20:21:19', '2025-07-16 20:21:19', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(136, 'LVS20250717034906701', NULL, NULL, '2025-07-17', '2025-07-24', 42000.00, 1, 'Confirmed', NULL, NULL, 1, NULL, NULL, '2025-07-16 20:49:06', '2025-07-16 20:49:06', 'Quyền Nguyễn Văn', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(137, 'LVS137075500', NULL, NULL, '2025-07-17', '2025-07-18', 5510000.00, 5, 'Confirmed', NULL, 'bich tuyen', NULL, NULL, 6, '2025-07-17 00:55:00', '2025-07-18 09:29:12', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(138, 'LVS138081920', NULL, NULL, '2025-07-17', '2025-07-18', 5400000.00, 4, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-17 01:19:20', '2025-07-17 01:20:38', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(139, 'LVS139082730', NULL, NULL, '2025-07-17', '2025-07-18', 5400000.00, 4, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-17 01:27:30', '2025-07-17 01:28:01', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(140, 'LVS140103856', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Confirmed', NULL, 'test', NULL, NULL, NULL, '2025-07-17 03:38:56', '2025-07-17 03:39:28', 'Quyền', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(141, 'LVS141104347', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Confirmed', NULL, 'trtyrtrytyre', NULL, NULL, NULL, '2025-07-17 03:43:47', '2025-07-17 03:44:07', '明têttetetete', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(142, 'LVS142120903', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Confirmed', NULL, 'bich tuyen cute', NULL, NULL, 6, '2025-07-17 05:09:03', '2025-07-18 09:05:00', 'test', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(143, 'LVS143125143', NULL, NULL, '2025-08-18', '2025-08-21', 15450000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, NULL, '2025-07-18 05:51:43', '2025-07-18 19:10:32', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(144, 'LVS144031538', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:15:38', '2025-07-18 20:16:40', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(145, 'LVS145032559', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Pending', NULL, 'kokoko', NULL, NULL, NULL, '2025-07-18 20:25:59', '2025-07-18 20:25:59', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(146, 'LVS146033153', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:31:53', '2025-07-18 20:31:53', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(147, 'LVS147033726', NULL, NULL, '2025-08-18', '2025-08-21', 1716000.00, 10, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:37:26', '2025-07-18 20:37:26', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(148, 'LVS148033746', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:37:46', '2025-07-18 20:37:46', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(149, 'LVS149034419', NULL, NULL, '2025-08-14', '2025-08-16', 20850000.00, 10, 'Cancelled', NULL, 'thgisch', NULL, NULL, 6, '2025-07-18 20:44:19', '2025-07-31 13:56:40', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(150, 'LVS150034633', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, 6, '2025-07-18 20:46:33', '2025-07-31 13:57:03', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(151, 'LVS151023546', NULL, NULL, '2025-08-18', '2025-08-22', 27800000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, 6, '2025-07-19 19:35:46', '2025-07-31 13:57:29', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(152, 'LVS152023648', NULL, NULL, '2025-08-18', '2025-08-22', 10248000.00, 10, 'Confirmed', NULL, NULL, NULL, NULL, 1, '2025-07-19 19:36:48', '2025-07-19 19:37:24', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(153, 'LVS153025209', NULL, NULL, '2025-08-18', '2025-08-22', 2288000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, 1, '2025-07-19 19:52:09', '2025-07-31 13:37:24', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(154, 'LVS154095008', NULL, NULL, '2025-07-22', '2025-07-23', 11000.00, 2, 'Pending', NULL, 'v', NULL, NULL, 1, '2025-07-21 02:50:08', '2025-07-21 02:50:08', 'Đào Tùng Dưn', 'dun@gmail.com', '02151651121', NULL, NULL, NULL, 0),
+(155, 'LVS155092059', NULL, NULL, '2025-07-28', '2025-07-29', 22000.00, 6, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-07-28 02:20:59', '2025-07-28 02:20:59', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(156, 'LVS156093654', NULL, NULL, '2025-07-28', '2025-07-29', 22000.00, 6, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-07-28 02:36:54', '2025-07-28 02:36:54', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(157, 'LVS157124518', NULL, NULL, '2025-07-28', '2025-07-29', 22000.00, 6, 'Pending', NULL, 'q', NULL, NULL, 1, '2025-07-28 05:45:18', '2025-07-28 05:45:18', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(158, 'LVS158124550', NULL, NULL, '2025-07-28', '2025-07-29', 22000.00, 6, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-07-28 05:45:50', '2025-07-28 05:45:50', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(159, 'LVS159132746', NULL, NULL, '2025-07-28', '2025-07-29', 22000.00, 6, 'Pending', NULL, NULL, NULL, NULL, 1, '2025-07-28 06:27:46', '2025-07-28 06:27:46', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(160, 'LVS160021712', NULL, NULL, '2025-08-01', '2025-08-05', 49414.40, 6, 'Operational', NULL, 'za', NULL, NULL, 1, '2025-07-28 19:17:12', '2025-08-02 15:11:50', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(161, 'LVS161110042', NULL, NULL, '2025-08-13', '2025-08-14', 22000.00, 6, 'Pending', NULL, 'ge', NULL, NULL, 1, '2025-08-13 04:00:42', '2025-08-13 04:00:42', 'PHNguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(162, 'LVS162221924', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'x', NULL, NULL, 1, '2025-08-13 15:19:24', '2025-08-13 15:19:24', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(163, 'LVS163223826', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 15:38:26', '2025-08-13 15:38:26', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(164, 'LVS164224016', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'đ', NULL, NULL, 1, '2025-08-13 15:40:16', '2025-08-13 15:40:16', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(165, 'LVS165224128', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'đ', NULL, NULL, 1, '2025-08-13 15:41:28', '2025-08-13 15:41:28', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(166, 'LVS166224716', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 15:47:16', '2025-08-13 15:47:16', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(167, 'LVS167225123', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 15:51:23', '2025-08-13 15:51:23', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(168, 'LVS168225441', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 15:54:41', '2025-08-13 15:54:41', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(169, 'LVS169225915', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 15:59:15', '2025-08-13 15:59:15', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(170, 'LVS170230519', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 16:05:19', '2025-08-13 16:05:19', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
+(171, 'LVS171161343', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-16 09:13:43', '2025-08-16 09:13:43', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0),
+(172, 'LVS172161440', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'tg', NULL, NULL, 1, '2025-08-16 09:14:40', '2025-08-16 09:14:40', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0),
+(173, 'LVS173161504', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-16 09:15:04', '2025-08-16 09:15:04', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -281,14 +400,33 @@ CREATE TABLE `booking_extensions` (
 CREATE TABLE `booking_reschedules` (
   `reschedule_id` int NOT NULL,
   `booking_id` int NOT NULL,
-  `new_check_in_date` date NOT NULL,
-  `new_check_out_date` date NOT NULL,
-  `additional_fee_vnd` decimal(15,2) DEFAULT '0.00',
-  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `new_check_in_date` date DEFAULT NULL,
+  `new_check_out_date` date DEFAULT NULL,
+  `new_room_id` int DEFAULT NULL,
+  `new_option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `reschedule_policy_id` int DEFAULT NULL,
+  `price_difference_vnd` decimal(15,2) DEFAULT NULL,
+  `payment_id` int DEFAULT NULL,
+  `status` enum('Pending','Approved','Rejected','Cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending',
   `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `suggested_rooms` json DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `processed_by` bigint UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `booking_reschedules`
+--
+
+INSERT INTO `booking_reschedules` (`reschedule_id`, `booking_id`, `new_check_in_date`, `new_check_out_date`, `new_room_id`, `new_option_id`, `reschedule_policy_id`, `price_difference_vnd`, `payment_id`, `status`, `reason`, `suggested_rooms`, `created_at`, `updated_at`, `processed_by`) VALUES
+(2, 24, '2025-08-10', '2025-08-15', 2, 'OPT10', 5, -5175000.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-03 16:23:41', '2025-08-03 16:23:41', NULL),
+(3, 24, '2025-08-10', '2025-08-15', 4, 'OPT10', 5, 0.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-03 16:24:41', '2025-08-03 16:24:41', NULL),
+(4, 24, '2025-08-10', '2025-08-15', 2, 'OPT10', 5, 0.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-03 16:25:27', '2025-08-03 16:25:27', NULL),
+(6, 24, '2025-08-10', '2025-08-15', 95, 'OPT10', 3, 8175000.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-04 04:57:59', '2025-08-04 04:57:59', NULL),
+(7, 24, '2025-08-10', '2025-08-15', 91, 'OPT10', 3, 0.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-04 04:58:52', '2025-08-04 04:58:52', NULL),
+(8, 24, '2025-08-10', '2025-08-15', 92, 'OPT10', 3, 0.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-04 04:59:01', '2025-08-04 04:59:01', NULL),
+(9, 24, '2025-08-10', '2025-08-15', 91, 'OPT10', 3, 0.00, NULL, 'Approved', 'Thay đổi kế hoạch cá nhân', '\"[]\"', '2025-08-05 09:07:51', '2025-08-05 09:07:51', NULL);
 
 -- --------------------------------------------------------
 
@@ -401,7 +539,27 @@ INSERT INTO `booking_rooms` (`id`, `booking_id`, `booking_code`, `room_id`, `opt
 (115, 130, 'LVS130033257', 1, 'BOOK-LVS130033257-R1-1', 'Standard Package', 11000.00, 106, 2, 0, NULL, 11000, 1, 11000, '2025-07-16', '2025-07-17', '2025-07-15 20:33:11', '2025-07-15 20:33:11'),
 (116, 131, 'LVS131033527', 1, 'BOOK-LVS131033527-R1-1', 'Standard Package', 11000.00, 107, 2, 0, NULL, 11000, 1, 11000, '2025-07-16', '2025-07-17', '2025-07-15 20:36:09', '2025-07-15 20:36:09'),
 (117, 132, 'LVS132033857', 1, 'BOOK-LVS132033857-R1-1', 'Standard Package', 11000.00, 108, 2, 0, NULL, 11000, 1, 11000, '2025-07-16', '2025-07-17', '2025-07-15 20:39:30', '2025-07-15 20:39:30'),
-(118, 133, 'LVS133070932', 1, 'BOOK-LVS133070932-R1-1', 'Standard Package', 11000.00, 109, 2, 0, NULL, 11000, 1, 11000, '2025-07-16', '2025-07-17', '2025-07-16 00:10:00', '2025-07-16 00:10:00');
+(118, 133, 'LVS133070932', 1, 'BOOK-LVS133070932-R1-1', 'Standard Package', 11000.00, 109, 2, 0, NULL, 11000, 1, 11000, '2025-07-16', '2025-07-17', '2025-07-16 00:10:00', '2025-07-16 00:10:00'),
+(120, 136, 'LVS20250717034906701', 4, NULL, NULL, NULL, 111, NULL, NULL, NULL, 6000, -7, -42000, '2025-07-17', '2025-07-24', '2025-07-16 20:49:06', '2025-07-16 20:49:06'),
+(121, 137, 'LVS137075500', 5, 'BOOK-LVS137075500-R5-1', 'Suite Package', 2700000.00, 112, 2, 1, NULL, 5510000, 1, 5510000, '2025-07-17', '2025-07-18', '2025-07-17 00:56:06', '2025-07-17 00:56:06'),
+(122, 137, 'LVS137075500', 5, 'BOOK-LVS137075500-R5-2', 'Suite Package', 2700000.00, 112, 2, 0, NULL, 5510000, 1, 5510000, '2025-07-17', '2025-07-18', '2025-07-17 00:56:06', '2025-07-17 00:56:06'),
+(123, 138, 'LVS138081920', NULL, 'BOOK-LVS138081920-R5-1', 'Suite Package', 2700000.00, 113, 2, 0, NULL, 5400000, 1, 5400000, '2025-07-17', '2025-07-18', '2025-07-17 01:20:32', '2025-07-17 09:42:58'),
+(124, 138, 'LVS138081920', NULL, 'BOOK-LVS138081920-R5-2', 'Suite Package', 2700000.00, 113, 2, 0, NULL, 5400000, 1, 5400000, '2025-07-17', '2025-07-18', '2025-07-17 01:20:32', '2025-07-17 09:42:58'),
+(125, 141, 'LVS141104347', NULL, 'BOOK-LVS141104347-R5-1', 'Suite Package', 2700000.00, 114, 2, 4, NULL, 8650000, 1, 8650000, '2025-07-17', '2025-07-18', '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(126, 141, 'LVS141104347', NULL, 'BOOK-LVS141104347-R5-2', 'Suite Package', 2700000.00, 114, 3, 2, NULL, 8650000, 1, 8650000, '2025-07-17', '2025-07-18', '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(127, 141, 'LVS141104347', NULL, 'BOOK-LVS141104347-R5-3', 'Suite Package', 2700000.00, 114, 2, 0, NULL, 8650000, 1, 8650000, '2025-07-17', '2025-07-18', '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(128, 142, 'LVS142120903', 255, 'BOOK-LVS142120903-R5-1', 'Suite Package', 2700000.00, 115, 2, 4, NULL, 8650000, 1, 8650000, '2025-07-17', '2025-07-18', '2025-07-17 05:10:26', '2025-07-18 05:57:45'),
+(129, 142, 'LVS142120903', 256, 'BOOK-LVS142120903-R5-2', 'Suite Package', 2700000.00, 115, 3, 2, NULL, 8650000, 1, 8650000, '2025-07-17', '2025-07-18', '2025-07-17 05:10:26', '2025-07-18 05:57:45'),
+(130, 142, 'LVS142120903', 257, 'BOOK-LVS142120903-R5-3', 'Suite Package', 2700000.00, 115, 2, 0, NULL, 8650000, 1, 8650000, '2025-07-17', '2025-07-18', '2025-07-17 05:10:26', '2025-07-18 05:57:45'),
+(131, 144, 'LVS144031538', NULL, 'BOOK-LVS144031538-R6-1', 'Luxury Package', 3200000.00, 116, 2, 4, NULL, 20850000, 3, 62550000, '2025-08-18', '2025-08-21', '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(132, 144, 'LVS144031538', NULL, 'BOOK-LVS144031538-R6-2', 'Luxury Package', 3200000.00, 116, 2, 2, NULL, 20850000, 3, 62550000, '2025-08-18', '2025-08-21', '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(133, 151, 'LVS151023546', NULL, 'BOOK-LVS151023546-R6-1', 'Luxury Package', 3200000.00, 117, 2, 4, NULL, 27800000, 4, 111200000, '2025-08-18', '2025-08-22', '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(134, 151, 'LVS151023546', NULL, 'BOOK-LVS151023546-R6-2', 'Luxury Package', 3200000.00, 117, 2, 2, NULL, 27800000, 4, 111200000, '2025-08-18', '2025-08-22', '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(135, 152, 'LVS152023648', NULL, 'BOOK-LVS152023648-R1-1', 'Premium Package', 1006000.00, 118, 2, 4, NULL, 10248000, 4, 40992000, '2025-08-18', '2025-08-22', '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(136, 152, 'LVS152023648', NULL, 'BOOK-LVS152023648-R1-2', 'Premium Package', 1006000.00, 118, 2, 2, NULL, 10248000, 4, 40992000, '2025-08-18', '2025-08-22', '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(137, 153, 'LVS153025209', NULL, 'BOOK-LVS153025209-R1-1', 'Standard Package', 11000.00, 119, 2, 4, NULL, 2288000, 4, 9152000, '2025-08-18', '2025-08-22', '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(138, 153, 'LVS153025209', NULL, 'BOOK-LVS153025209-R1-2', 'Standard Package', 11000.00, 119, 2, 2, NULL, 2288000, 4, 9152000, '2025-08-18', '2025-08-22', '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(149, 24, NULL, 91, 'OPT10', NULL, NULL, NULL, NULL, NULL, NULL, 2000000, 5, 10000000, '2025-08-10', '2025-08-15', '2025-08-05 09:07:51', '2025-08-05 09:07:51');
 
 -- --------------------------------------------------------
 
@@ -426,7 +584,68 @@ INSERT INTO `booking_room_children` (`id`, `booking_room_id`, `age`, `child_inde
 (1, 91, 8, 0, '2025-07-14 04:42:51', '2025-07-14 04:42:51'),
 (2, 93, 8, 0, '2025-07-14 04:44:57', '2025-07-14 04:44:57'),
 (3, 95, 8, 0, '2025-07-14 19:35:46', '2025-07-14 19:35:46'),
-(4, 97, 8, 0, '2025-07-14 19:45:43', '2025-07-14 19:45:43');
+(4, 97, 8, 0, '2025-07-14 19:45:43', '2025-07-14 19:45:43'),
+(5, 121, 8, 0, '2025-07-17 00:56:06', '2025-07-17 00:56:06'),
+(6, 125, 8, 0, '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(7, 125, 3, 1, '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(8, 125, 8, 2, '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(9, 125, 8, 3, '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(10, 126, 8, 0, '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(11, 126, 12, 1, '2025-07-17 03:44:03', '2025-07-17 03:44:03'),
+(12, 128, 8, 0, '2025-07-17 05:10:26', '2025-07-17 05:10:26'),
+(13, 128, 3, 1, '2025-07-17 05:10:26', '2025-07-17 05:10:26'),
+(14, 128, 8, 2, '2025-07-17 05:10:26', '2025-07-17 05:10:26'),
+(15, 128, 8, 3, '2025-07-17 05:10:26', '2025-07-17 05:10:26'),
+(16, 129, 8, 0, '2025-07-17 05:10:26', '2025-07-17 05:10:26'),
+(17, 129, 12, 1, '2025-07-17 05:10:26', '2025-07-17 05:10:26'),
+(18, 131, 8, 0, '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(19, 131, 3, 1, '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(20, 131, 8, 2, '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(21, 131, 8, 3, '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(22, 132, 8, 0, '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(23, 132, 12, 1, '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
+(24, 133, 8, 0, '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(25, 133, 3, 1, '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(26, 133, 8, 2, '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(27, 133, 8, 3, '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(28, 134, 8, 0, '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(29, 134, 12, 1, '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
+(30, 135, 8, 0, '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(31, 135, 3, 1, '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(32, 135, 8, 2, '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(33, 135, 8, 3, '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(34, 136, 8, 0, '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(35, 136, 12, 1, '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(36, 137, 8, 0, '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(37, 137, 3, 1, '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(38, 137, 8, 2, '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(39, 137, 8, 3, '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(40, 138, 8, 0, '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
+(41, 138, 12, 1, '2025-07-19 19:53:06', '2025-07-19 19:53:06');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `booking_services`
+--
+
+CREATE TABLE `booking_services` (
+  `id` int NOT NULL,
+  `booking_id` int NOT NULL,
+  `service_id` int NOT NULL,
+  `quantity` int NOT NULL DEFAULT '1',
+  `price_vnd` decimal(15,2) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin dịch vụ phát sinh cho mỗi booking';
+
+--
+-- Dumping data for table `booking_services`
+--
+
+INSERT INTO `booking_services` (`id`, `booking_id`, `service_id`, `quantity`, `price_vnd`, `created_at`, `updated_at`) VALUES
+(1, 24, 10, 2, 200000.00, '2025-08-11 10:47:20', '2025-08-11 10:47:20'),
+(2, 24, 8, 1, 2000000.00, '2025-08-11 10:47:20', '2025-08-11 10:47:20');
 
 -- --------------------------------------------------------
 
@@ -436,8 +655,9 @@ INSERT INTO `booking_room_children` (`id`, `booking_room_id`, `age`, `child_inde
 
 CREATE TABLE `cancellation_policies` (
   `policy_id` int NOT NULL,
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `free_cancellation_days` int DEFAULT NULL COMMENT 'Số ngày trước check-in được hủy miễn phí',
+  `penalty_days` int DEFAULT NULL COMMENT 'số ngày hủy sau khi đặt phòng sẽ bị phạt.',
   `penalty_percentage` decimal(5,2) DEFAULT NULL COMMENT 'Phạt hủy (%)',
   `penalty_fixed_amount_vnd` decimal(15,2) DEFAULT NULL COMMENT 'Phạt hủy cố định (VND)',
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
@@ -456,10 +676,96 @@ CREATE TABLE `cancellation_policies` (
 -- Dumping data for table `cancellation_policies`
 --
 
-INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_booking_amount`, `max_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Hủy miễn phí 7 ngày', 7, 0.00, 200000.00, 'Hủy miễn phí nếu trước 7 ngày', 0, NULL, 0, 0, NULL, NULL, 1, '2025-06-11 02:26:26', '2025-06-11 01:24:04'),
-(2, 'Hủy có phí', 2, 50.00, NULL, 'Phạt 50% nếu hủy trong vòng 2 ngày', 0, NULL, 0, 0, NULL, NULL, 0, '2025-06-11 02:26:26', '2025-06-13 00:23:30'),
-(11, 'Hủy miễn phí 3 ngày - Lễ tết', 3, 50.00, 0.00, 'Áp dụng cho ngày lễ tết, hủy trước 3 ngày', 20, NULL, 0, 0, NULL, NULL, 1, '2025-07-12 09:51:47', '2025-07-12 09:51:47');
+INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_booking_amount`, `max_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
+(2, 'Hủy có phí', NULL, 3, 30.00, NULL, 'Phạt 50% nếu hủy trong vòng 2 ngày', 0, NULL, 0, 0, NULL, NULL, 1, '2025-06-11 02:26:26', '2025-08-15 03:03:56'),
+(10, 'Hủy miễn phí 7 ngày', 7, NULL, 0.00, 200000.00, 'Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k', 10, NULL, 0, 0, NULL, NULL, 1, '2025-07-12 09:51:47', '2025-07-12 09:51:47'),
+(11, 'Hủy miễn phí 3 ngày - Lễ Tết', 2, NULL, 50.00, 0.00, 'Áp dụng cho ngày lễ tết, hủy trước 3 ngày', 20, NULL, 0, 1, NULL, NULL, 1, '2025-07-12 09:51:47', '2025-08-15 03:28:49');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cancellation_requests`
+--
+
+CREATE TABLE `cancellation_requests` (
+  `request_id` int NOT NULL COMMENT 'Khóa chính, mã yêu cầu hủy',
+  `booking_id` int NOT NULL COMMENT 'Khóa ngoại, mã đặt phòng',
+  `cancellation_policy_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã chính sách hủy áp dụng',
+  `status` enum('Pending','Approved','Rejected','Processed','Refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu hủy',
+  `request_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian yêu cầu hủy',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Lý do hủy do khách hàng cung cấp',
+  `cancellation_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí hủy (VND), nếu có',
+  `refund_amount_vnd` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền hoàn lại (VND), nếu có',
+  `refund_status` enum('NotApplicable','Pending','Completed','Failed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'NotApplicable' COMMENT 'Trạng thái hoàn tiền',
+  `refund_transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mã giao dịch hoàn tiền (nếu có)',
+  `processed_at` timestamp NULL DEFAULT NULL COMMENT 'Thời gian xử lý yêu cầu',
+  `processed_by` bigint UNSIGNED DEFAULT NULL COMMENT 'Khóa ngoại, ID nhân viên xử lý (nếu có)',
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Ghi chú bổ sung từ hệ thống hoặc nhân viên',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu trữ các yêu cầu hủy phòng';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `check_in_policies`
+--
+
+CREATE TABLE `check_in_policies` (
+  `policy_id` int NOT NULL COMMENT 'Khóa chính, mã chính sách nhận phòng',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên chính sách',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chính sách',
+  `standard_check_in_time` time NOT NULL COMMENT 'Thời gian nhận phòng tiêu chuẩn',
+  `early_check_in_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí nhận phòng sớm (VND)',
+  `early_check_in_max_hours` int DEFAULT NULL COMMENT 'Số giờ tối đa cho phép nhận phòng sớm',
+  `late_check_in_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí nhận phòng muộn (VND)',
+  `late_check_in_max_hours` int DEFAULT NULL COMMENT 'Số giờ tối đa cho phép nhận phòng muộn',
+  `applies_to_holiday` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho ngày lễ (1: Có, 0: Không)',
+  `applies_to_weekend` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho cuối tuần (1: Có, 0: Không)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật',
+  `conditions` text COLLATE utf8mb4_general_ci COMMENT 'Điều kiện áp dụng chính sách (JSON hoặc text)',
+  `action` text COLLATE utf8mb4_general_ci COMMENT 'Hành động khi chính sách được áp dụng',
+  `priority` int DEFAULT '0' COMMENT 'Mức độ ưu tiên (cao hơn được áp dụng trước)'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách chính sách nhận phòng';
+
+--
+-- Dumping data for table `check_in_policies`
+--
+
+INSERT INTO `check_in_policies` (`policy_id`, `name`, `description`, `standard_check_in_time`, `early_check_in_fee_vnd`, `early_check_in_max_hours`, `late_check_in_fee_vnd`, `late_check_in_max_hours`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`, `conditions`, `action`, `priority`) VALUES
+(5, 'Standard Check-in', 'Check-in từ 14:00–23:59, yêu cầu giấy tờ và thanh toán 100%.', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"time\": \"14:00-23:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true}', 'Allow check-in, assign room, provide welcome drink', 10),
+(6, 'Early Check-in', 'Check-in từ 8:00–13:59, phụ phí 50% nếu trước 12:00, miễn phí nếu phòng trống.', '08:00:00', 1000000.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 04:02:39', '{\"time\": \"08:00-13:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true, \"room_availability\": \"optional\"}', 'Allow check-in, charge 50% if before 12:00, assign room', 20),
+(7, 'Late Check-in', 'Check-in sau 23:00, cần đảm bảo booking bằng thẻ tín dụng.', '23:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"time\": \"23:00-07:59\", \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true, \"guaranteed_booking\": true}', 'Allow check-in, assign room, concierge support', 15),
+(8, 'Walk-in Check-in', 'Check-in không đặt trước, cần phòng trống và thanh toán 100%.', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"no_booking\": true, \"payment_status\": \"100%\", \"room_assigned\": false, \"document_verified\": true, \"room_availability\": true}', 'Assign available room, process payment, allow check-in', 5),
+(9, 'Group Check-in', 'Check-in cho đoàn (>10 người), thanh toán trước 50%.', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"guest_count\": \">10\", \"payment_status\": \">=50%\", \"room_assigned\": true, \"document_verified\": true}', 'Assign multiple rooms, process group check-in', 8),
+(10, 'Special Request Check-in', 'Check-in với yêu cầu đặc biệt (tầng cao, view đẹp, giường phụ).', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"special_requests\": true, \"payment_status\": \">=100%\", \"room_assigned\": true, \"document_verified\": true}', 'Assign room matching requests, allow check-in', 12),
+(11, 'No-show Policy', 'Hủy booking nếu không đến trước 23:59, phạt 100%.', '23:59:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"time\": \">23:59\", \"no_show\": true, \"payment_status\": \"any\"}', 'Cancel booking, charge 100% penalty', 1),
+(12, 'Invalid Payment Check-in', 'Thẻ tín dụng không hợp lệ, yêu cầu phương thức thanh toán khác.', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"payment_status\": \"invalid\", \"room_assigned\": true, \"document_verified\": true}', 'Reject check-in, request alternative payment', 2),
+(13, 'Missing Document Check-in', 'Thiếu giấy tờ, yêu cầu xác minh trước khi check-in.', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"document_verified\": false, \"payment_status\": \">=100%\", \"room_assigned\": true}', 'Reject check-in, request document verification', 3),
+(14, 'Room Unavailable Check-in', 'Phòng chưa sẵn sàng hoặc hỏng, chuyển sang phòng khác.', '14:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"room_assigned\": true, \"room_availability\": false, \"document_verified\": true, \"payment_status\": \">=100%\"}', 'Assign alternative room or upgrade, allow check-in', 4),
+(15, 'Booking Cancellation', 'Hủy booking trước check-in, miễn phí nếu trước 48 giờ, phạt 50% trong 48 giờ, 100% trong 24 giờ.', '00:00:00', 0.00, NULL, 0.00, NULL, 0, 0, 1, '2025-08-05 03:35:35', '2025-08-05 03:35:35', '{\"cancellation\": true, \"time_before_check_in\": \"<=48h\", \"payment_status\": \"any\"}', 'Apply cancellation fee (0%, 50%, or 100% based on time)', 6);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `check_in_requests`
+--
+
+CREATE TABLE `check_in_requests` (
+  `request_id` int NOT NULL COMMENT 'Khóa chính, tự động tăng',
+  `booking_id` int NOT NULL COMMENT 'ID của booking liên quan',
+  `policy_id` int DEFAULT NULL COMMENT 'Chính sách check-in được áp dụng',
+  `type` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Loại yêu cầu check-in (VD: Standard, Early, Walk-in)',
+  `requested_check_in_time` datetime NOT NULL COMMENT 'Thời gian yêu cầu check-in',
+  `fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí bổ sung (VD: phí check-in sớm)',
+  `special_requests` text COLLATE utf8mb4_general_ci COMMENT 'Yêu cầu đặc biệt (JSON hoặc text, VD: tầng cao, giường phụ)',
+  `total_amount_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Tổng chi phí cần thanh toán (bao gồm phí sớm nếu có)',
+  `status` enum('Pending','Approved','Rejected','Awaiting Payment','Missing Document','Room Unavailable') COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu check-in',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Yêu cầu check-in từ khách';
 
 -- --------------------------------------------------------
 
@@ -482,17 +788,23 @@ CREATE TABLE `check_out_policies` (
   `standard_check_out_time` time NOT NULL DEFAULT '12:00:00',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `action` text COLLATE utf8mb4_general_ci COMMENT 'Hành động khi chính sách được áp dụng'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `check_out_policies`
 --
 
-INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `early_check_out_max_hours`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `standard_check_out_time`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Trả phòng muộn sau 4 giờ', 0.00, 200000.00, 4, NULL, 'Phí 200,000 VND nếu trả phòng muộn tối đa 4 giờ', 0, NULL, 0, 0, '12:00:00', 1, '2025-06-11 02:36:00', '2025-06-16 18:37:57'),
-(3, 'e', NULL, 0.00, NULL, 4, 'e', 0, NULL, 0, 0, '12:00:00', 1, '2025-06-16 18:40:33', '2025-06-16 18:40:56'),
-(4, 'Check-out tiêu chuẩn', 0.00, 500000.00, 2, 4, 'Check-out tiêu chuẩn 12:00', 0, NULL, 0, 0, '12:00:00', 1, '2025-07-12 09:51:47', '2025-07-12 09:51:47');
+INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `early_check_out_max_hours`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `standard_check_out_time`, `is_active`, `created_at`, `updated_at`, `action`) VALUES
+(5, 'Standard Check-out', NULL, 0.00, NULL, NULL, 'Check-out trước 12:00, thanh toán đầy đủ, hóa đơn gửi qua email nếu yêu cầu.', 10, '{\"time\": \"<=12:00\", \"payment_status\": \"100%\", \"services_settled\": true}', 0, 0, '12:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Allow check-out, generate invoice, mark room as Cleaning'),
+(6, 'Late Check-out', NULL, 1000000.00, NULL, NULL, 'Check-out từ 12:01–18:00, phụ phí 50% nếu trước 15:00, 100% nếu sau 15:00, miễn phí nếu phòng trống.', 20, '{\"time\": \"12:01-18:00\", \"payment_status\": \"100%\", \"services_settled\": true, \"room_availability\": \"optional\"}', 0, 0, '18:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Allow check-out, charge 50% or 100% based on time, mark room as Cleaning'),
+(7, 'Early Check-out', NULL, 0.00, NULL, NULL, 'Check-out trước ngày dự kiến, phạt 50% nếu không báo trước 24 giờ.', 15, '{\"check_out_date\": \"<expected_date\", \"payment_status\": \"100%\", \"services_settled\": true}', 0, 0, '00:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Allow check-out, charge 50% if no 24h notice, mark room as Cleaning'),
+(8, 'Express Check-out', NULL, 0.00, NULL, NULL, 'Check-out nhanh qua ứng dụng/thẻ, hóa đơn gửi qua email.', 12, '{\"payment_status\": \"100%\", \"services_settled\": true, \"express_check_out\": true}', 0, 0, '12:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Allow check-out, send invoice via email, mark room as Cleaning'),
+(9, 'Service Dispute Check-out', NULL, 0.00, NULL, NULL, 'Khách không đồng ý với hóa đơn dịch vụ, cần kiểm tra.', 5, '{\"payment_status\": \"<100%\", \"service_dispute\": true, \"services_settled\": false}', 0, 0, '12:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Hold check-out, verify services, update invoice'),
+(10, 'Incomplete Check-out', NULL, 0.00, NULL, NULL, 'Khách rời đi không thông báo, cần xử lý thanh toán.', 3, '{\"payment_status\": \"<100%\", \"services_settled\": \"any\", \"no_check_out_confirmation\": true}', 0, 0, '12:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Process payment, mark room as Cleaning, notify customer'),
+(11, 'Special Request Check-out', NULL, 0.00, NULL, NULL, 'Check-out với yêu cầu đặc biệt (lưu trữ hành lý, hóa đơn đa ngôn ngữ).', 8, '{\"payment_status\": \"100%\", \"services_settled\": true, \"special_requests\": true}', 0, 0, '12:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Allow check-out, handle special requests, mark room as Cleaning'),
+(12, 'Invalid Payment Check-out', NULL, 0.00, NULL, NULL, 'Thẻ tín dụng không hợp lệ, yêu cầu phương thức thanh toán khác.', 4, '{\"payment_status\": \"invalid\", \"services_settled\": true}', 0, 0, '12:00:00', 1, '2025-08-05 03:37:17', '2025-08-05 03:37:17', 'Hold check-out, request alternative payment');
 
 -- --------------------------------------------------------
 
@@ -501,22 +813,25 @@ INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`
 --
 
 CREATE TABLE `check_out_requests` (
-  `request_id` int NOT NULL,
+  `request_id` int NOT NULL COMMENT 'Khóa chính, tự động tăng',
   `booking_id` int NOT NULL,
   `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `requested_check_out_time` datetime NOT NULL,
   `fee_vnd` decimal(15,2) DEFAULT '0.00',
-  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
+  `status` enum('Pending','Approved','Rejected','Awaiting Payment','Disputed','Incomplete') COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu check-out',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `policy_id` int DEFAULT NULL COMMENT 'Chính sách check-out được áp dụng',
+  `special_requests` text COLLATE utf8mb4_general_ci COMMENT 'Yêu cầu đặc biệt (JSON hoặc text, ví dụ: lưu trữ hành lý, hóa đơn đa ngôn ngữ)',
+  `total_amount_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Tổng chi phí cần thanh toán (phòng + dịch vụ + phí bổ sung)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `check_out_requests`
 --
 
-INSERT INTO `check_out_requests` (`request_id`, `booking_id`, `type`, `requested_check_out_time`, `fee_vnd`, `status`, `created_at`, `updated_at`) VALUES
-(1, 26, 'early', '2025-07-11 03:00:00', 0.00, 'approved', '2025-07-09 00:29:58', '2025-07-09 00:29:58');
+INSERT INTO `check_out_requests` (`request_id`, `booking_id`, `type`, `requested_check_out_time`, `fee_vnd`, `status`, `created_at`, `updated_at`, `policy_id`, `special_requests`, `total_amount_vnd`) VALUES
+(1, 26, 'early', '2025-07-11 03:00:00', 0.00, 'Approved', '2025-07-09 00:29:58', '2025-07-09 00:29:58', NULL, NULL, 0.00);
 
 -- --------------------------------------------------------
 
@@ -533,16 +848,107 @@ CREATE TABLE `children_surcharges` (
   `requires_extra_bed` tinyint(1) NOT NULL DEFAULT '0',
   `surcharge_amount_vnd` int UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `booking_id` int DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `children_surcharges`
 --
 
-INSERT INTO `children_surcharges` (`id`, `min_age`, `max_age`, `is_free`, `count_as_adult`, `requires_extra_bed`, `surcharge_amount_vnd`, `created_at`, `updated_at`) VALUES
-(1, 0, 6, 1, 0, 0, NULL, '2025-07-10 03:09:55', '2025-07-10 06:13:23'),
-(2, 7, 12, 0, 0, 0, 110000, '2025-07-10 03:09:55', '2025-07-11 08:24:32');
+INSERT INTO `children_surcharges` (`id`, `min_age`, `max_age`, `is_free`, `count_as_adult`, `requires_extra_bed`, `surcharge_amount_vnd`, `created_at`, `updated_at`, `booking_id`) VALUES
+(1, 0, 6, 1, 0, 0, NULL, '2025-07-09 20:09:55', '2025-07-09 23:13:23', NULL),
+(2, 7, 12, 0, 0, 0, 110000, '2025-07-09 20:09:55', '2025-07-11 01:24:32', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `compensation_policies`
+--
+
+CREATE TABLE `compensation_policies` (
+  `compensation_policy_id` int NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên chính sách bồi thường',
+  `description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết',
+  `applies_to_room_type_id` int DEFAULT NULL COMMENT 'Loại phòng áp dụng, NULL nếu áp dụng cho tất cả',
+  `condition_type` enum('room_damage','service_failure','overbooking','other') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại sự cố áp dụng',
+  `discount_type` enum('percentage','fixed_amount') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại giảm giá: % hoặc số tiền cố định',
+  `discount_value` decimal(15,2) NOT NULL COMMENT 'Giá trị giảm',
+  `max_compensation_amount` decimal(15,2) DEFAULT NULL COMMENT 'Mức bồi thường tối đa (nếu có)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `compensation_policies`
+--
+
+INSERT INTO `compensation_policies` (`compensation_policy_id`, `name`, `description`, `applies_to_room_type_id`, `condition_type`, `discount_type`, `discount_value`, `max_compensation_amount`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Hoàn tiền toàn bộ - phòng không thể sử dụng', 'Áp dụng khi phòng hỏng/không thể sử dụng và không có phòng thay thế. Hoàn tiền 100% cho các đêm chưa sử dụng; nhân viên cần ghi rõ số đêm và nightly_rate trong booking_compensations.', NULL, 'room_damage', 'percentage', 100.00, NULL, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06'),
+(2, 'Giảm 50% - đêm bị ảnh hưởng', 'Áp dụng khi dịch vụ bị gián đoạn (ví dụ mất điện, điều hòa hỏng) cho đêm hiện tại; giảm 50% trên giá đêm bị ảnh hưởng.', NULL, 'service_failure', 'percentage', 50.00, NULL, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06'),
+(3, 'Chi trả chỗ nghỉ tạm & di chuyển (Overbook/Out-of-service)', 'Khi khách phải chuyển sang khách sạn khác: khách sạn chi trả chi phí chỗ nghỉ thay thế và chi phí di chuyển hợp lý. Ghi rõ hóa đơn/phiếu chi vào booking_compensations để hoàn trả.', NULL, 'overbooking', 'fixed_amount', 2000000.00, 2000000.00, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06'),
+(4, 'Credit dịch vụ tại chỗ', 'Cấp credit dùng cho F&B hoặc spa trong thời gian lưu trú. Thường dùng cho trường hợp service failure nhỏ.', NULL, 'service_failure', 'fixed_amount', 300000.00, 300000.00, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06'),
+(5, 'Voucher 1 đêm cho lần ở sau', 'Voucher trị giá 1 đêm (giá tham chiếu: 1,000,000 VND) dùng cho lần đặt tiếp theo. Xử lý voucher ngoài luồng thanh toán.', NULL, 'other', 'fixed_amount', 1000000.00, 1000000.00, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06'),
+(6, 'Nâng hạng phòng miễn phí', 'Nâng hạng phòng (non-monetary). Ghi voucher/note trong booking; xử lý áp dụng thủ công tại check-in/out.', NULL, 'service_failure', 'fixed_amount', 0.00, 0.00, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06'),
+(7, 'Giảm 30% trên hóa đơn hiện tại', 'Giảm 30% trên tổng booking hoặc trên đêm bị ảnh hưởng (theo cấu hình).', NULL, 'service_failure', 'percentage', 30.00, NULL, 1, '2025-08-12 02:31:06', '2025-08-12 02:31:06');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `compensation_requests`
+--
+
+CREATE TABLE `compensation_requests` (
+  `request_id` int NOT NULL COMMENT 'ID yêu cầu bồi thường',
+  `booking_id` int NOT NULL COMMENT 'ID booking liên quan',
+  `requested_by` bigint UNSIGNED NOT NULL COMMENT 'ID lễ tân gửi yêu cầu (users.id)',
+  `policy_id` int DEFAULT NULL COMMENT 'ID chính sách trong compensation_policies, NULL nếu là yêu cầu khác',
+  `custom_reason` text COLLATE utf8mb4_general_ci COMMENT 'Lý do nhập tay nếu không chọn policy có sẵn',
+  `status` enum('pending','approved','rejected','applied') COLLATE utf8mb4_general_ci DEFAULT 'pending' COMMENT 'Trạng thái xử lý',
+  `requested_amount` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền lễ tân đề xuất bồi thường (nếu có)',
+  `approved_amount` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền quản lý duyệt cuối cùng',
+  `approved_by` bigint UNSIGNED NOT NULL COMMENT 'ID người duyệt (users.id)',
+  `approved_at` timestamp NULL DEFAULT NULL COMMENT 'Thời gian duyệt',
+  `attachments` json DEFAULT NULL COMMENT 'Danh sách file đính kèm (ảnh/video)',
+  `admin_note` text COLLATE utf8mb4_general_ci COMMENT 'Ghi chú của quản lý khi duyệt hoặc từ chối',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `compensation_requests`
+--
+
+INSERT INTO `compensation_requests` (`request_id`, `booking_id`, `requested_by`, `policy_id`, `custom_reason`, `status`, `requested_amount`, `approved_amount`, `approved_by`, `approved_at`, `attachments`, `admin_note`, `created_at`, `updated_at`) VALUES
+(1, 24, 6, NULL, 'dưdwd', 'approved', 100000.00, 200000.00, 1, '2025-08-13 02:24:13', NULL, 'sqsqs', '2025-08-12 07:49:11', '2025-08-13 02:24:13');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `conversations`
+--
+
+CREATE TABLE `conversations` (
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Người dùng khởi tạo cuộc trò chuyện',
+  `client_token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Mã định danh của người không đăng nhập',
+  `is_bot_only` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Chỉ là chat với bot',
+  `handover_to_user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Chuyển tiếp cho nhân viên nếu cần',
+  `status` enum('open','active','closed','pending') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'open' COMMENT 'Trạng thái hội thoại',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `conversations`
+--
+
+INSERT INTO `conversations` (`id`, `user_id`, `client_token`, `is_bot_only`, `handover_to_user_id`, `status`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, 0, NULL, 'active', '2025-07-21 10:31:45', '2025-07-21 10:31:45'),
+(2, NULL, 'a18c23b1-cc1e-4d3f-bc9a-bc01f153d88f', 0, NULL, 'active', '2025-07-21 10:31:45', '2025-07-21 10:31:45'),
+(3, NULL, '87182c0f-5517-4644-b130-a85c2ce9eaef', 0, NULL, 'pending', '2025-07-21 23:13:03', '2025-07-21 23:13:03'),
+(4, NULL, 'e6d96243-6af4-4673-bece-4624324838d0', 1, NULL, 'active', '2025-07-23 00:15:47', '2025-07-28 04:41:33');
 
 -- --------------------------------------------------------
 
@@ -611,7 +1017,7 @@ CREATE TABLE `deposit_policies` (
 
 INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_days_before_checkin`, `min_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Đặt cọc 50%', 50.00, NULL, 'Yêu cầu đặt cọc 50% tổng giá haha', 0, NULL, 0, 0, NULL, NULL, 1, '2025-06-11 02:24:24', '2025-07-10 03:55:39'),
-(10, 'Đặt cọc 30%', 30.00, 0.00, 'Đặt cọc 30% giá trị booking', 0, NULL, 0, 0, NULL, NULL, 1, '2025-07-12 09:51:47', '2025-07-12 09:51:47'),
+(10, 'Đặt cọc 20%', 20.00, 0.00, 'Đặt cọc 20% giá trị booking', 0, NULL, 0, 0, NULL, NULL, 1, '2025-07-12 09:51:47', '2025-07-21 03:41:18'),
 (11, 'Đặt cọc 50% - Lễ tết', 50.00, 0.00, 'Đặt cọc 50% cho ngày lễ tết', 0, NULL, 0, 0, NULL, NULL, 1, '2025-07-12 09:51:47', '2025-07-12 09:51:47');
 
 -- --------------------------------------------------------
@@ -672,6 +1078,74 @@ INSERT INTO `events` (`event_id`, `name`, `start_date`, `end_date`, `description
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `extension_policies`
+--
+
+CREATE TABLE `extension_policies` (
+  `policy_id` int NOT NULL COMMENT 'Khóa chính, mã chính sách gia hạn',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên chính sách',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chính sách gia hạn',
+  `max_extension_days` int DEFAULT NULL COMMENT 'Số ngày tối đa được phép gia hạn, NULL nếu không giới hạn',
+  `extension_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí gia hạn cố định (VND)',
+  `extension_percentage` decimal(5,2) DEFAULT '0.00' COMMENT 'Phí gia hạn theo phần trăm giá phòng',
+  `min_days_before_checkout` int DEFAULT NULL COMMENT 'Số ngày tối thiểu trước ngày trả phòng để gia hạn',
+  `applies_to_holiday` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho ngày lễ',
+  `applies_to_weekend` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho cuối tuần',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách chính sách gia hạn đặt phòng';
+
+--
+-- Dumping data for table `extension_policies`
+--
+
+INSERT INTO `extension_policies` (`policy_id`, `name`, `description`, `max_extension_days`, `extension_fee_vnd`, `extension_percentage`, `min_days_before_checkout`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Gia hạn tiêu chuẩn', 'Cho phép gia hạn không giới hạn ngày nếu phòng trống, phí cố định 500,000 VND mỗi lần gia hạn', NULL, 500000.00, 0.00, 2, 0, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(2, 'Gia hạn cuối tuần', 'Gia hạn tối đa 2 ngày vào cuối tuần với 10% giá phòng mỗi ngày', 2, 0.00, 10.00, 1, 0, 1, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(3, 'Gia hạn ngày lễ', 'Gia hạn tối đa 1 ngày vào ngày lễ với phí cố định 1,000,000 VND', 1, 1000000.00, 0.00, 3, 1, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(4, 'Gia hạn mùa cao điểm', 'Gia hạn tối đa 3 ngày trong mùa cao điểm với 15% giá phòng mỗi ngày', 3, 0.00, 15.00, 2, 1, 1, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(5, 'Gia hạn ngắn ngày', 'Gia hạn tối đa 1 ngày vào ngày thường với phí cố định 300,000 VND', 1, 300000.00, 0.00, 1, 0, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(6, 'Gia hạn dài ngày', 'Cho phép gia hạn không giới hạn ngày nếu phòng trống, phí 5% giá phòng mỗi ngày', NULL, 0.00, 5.00, 1, 0, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:54:04'),
+(7, 'Gia hạn sự kiện đặc biệt', 'Gia hạn tối đa 2 ngày trong các sự kiện lớn với phí 1,500,000 VND mỗi lần', 2, 1500000.00, 0.00, 4, 1, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(8, 'Gia hạn linh hoạt', 'Gia hạn không giới hạn ngày nếu phòng trống, kết hợp phí cố định 200,000 VND và 3% giá phòng mỗi ngày', NULL, 200000.00, 3.00, 2, 0, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(9, 'Gia hạn cuối tuần ngày lễ', 'Gia hạn tối đa 1 ngày vào cuối tuần trùng ngày lễ với phí 1,200,000 VND', 1, 1200000.00, 0.00, 3, 1, 1, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(10, 'Gia hạn thấp điểm', 'Gia hạn không giới hạn ngày trong mùa thấp điểm với phí cố định 250,000 VND mỗi lần', NULL, 250000.00, 0.00, 1, 0, 0, 1, '2025-08-01 12:05:00', '2025-08-01 12:05:00'),
+(11, 'Gia hạn ngày lễ linh hoạt', 'Cho phép gia hạn dài ngày vào ngày lễ với phí cố định 800,000 VND', NULL, 800000.00, 0.00, 1, 1, 1, 1, '2025-08-01 12:51:00', '2025-08-01 12:51:00'),
+(12, 'Gia hạn mặc định', 'Chính sách gia hạn mặc định cho mọi trường hợp, phí 10% giá phòng', NULL, 0.00, 10.00, NULL, 0, 0, 1, '2025-08-01 12:51:00', '2025-08-01 12:51:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `extension_requests`
+--
+
+CREATE TABLE `extension_requests` (
+  `request_id` int NOT NULL COMMENT 'Khóa chính, mã yêu cầu gia hạn',
+  `booking_id` int NOT NULL COMMENT 'Khóa ngoại, mã đặt phòng',
+  `extension_policy_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã chính sách gia hạn',
+  `new_check_out_date` date NOT NULL COMMENT 'Ngày trả phòng mới',
+  `extension_days` int NOT NULL COMMENT 'Số ngày gia hạn',
+  `extension_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí gia hạn (VND)',
+  `status` enum('Pending','Approved','Rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu',
+  `processed_by` bigint UNSIGNED DEFAULT NULL COMMENT 'Khóa ngoại, mã người xử lý',
+  `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Ghi chú yêu cầu',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu trữ yêu cầu gia hạn đặt phòng';
+
+--
+-- Dumping data for table `extension_requests`
+--
+
+INSERT INTO `extension_requests` (`request_id`, `booking_id`, `extension_policy_id`, `new_check_out_date`, `extension_days`, `extension_fee_vnd`, `status`, `processed_by`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 160, 12, '2025-08-10', -8, 5866.67, 'Approved', NULL, NULL, '2025-08-01 12:59:25', '2025-08-01 12:59:25'),
+(2, 160, 12, '2025-08-10', -8, 7430.93, 'Approved', NULL, NULL, '2025-08-01 13:03:34', '2025-08-01 13:03:34'),
+(3, 160, 6, '2025-08-10', 8, 14118.40, 'Approved', NULL, NULL, '2025-08-01 13:08:43', '2025-08-01 13:08:43');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `failed_jobs`
 --
 
@@ -699,6 +1173,7 @@ CREATE TABLE `faqs` (
   `answer_vi` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Câu trả lời (tiếng Việt)',
   `sort_order` int DEFAULT '0' COMMENT 'Thứ tự sắp xếp câu hỏi',
   `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động (0: không, 1: có)',
+  `priority` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo câu hỏi',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật câu hỏi'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ câu hỏi thường gặp và câu trả lời';
@@ -707,12 +1182,12 @@ CREATE TABLE `faqs` (
 -- Dumping data for table `faqs`
 --
 
-INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer_vi`, `sort_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Do you serve breakfast?', 'Họ có phục vụ bữa sáng không?', 'Yes, we offer an excellent buffet breakfast from 6:30 AM to 10:30 AM daily with both international and Vietnamese cuisine.', 'Có, chúng tôi cung cấp bữa sáng buffet tuyệt hảo từ 6:30 đến 10:30 hàng ngày với ẩm thực quốc tế và Việt Nam.', 5, 1, '2025-05-23 02:50:42', '2025-06-02 03:21:17'),
-(2, 'Is parking available?', 'Chỗ nghỉ có chỗ đỗ xe không?', 'Yes, we provide complimentary self-parking for hotel guests. Valet parking is also available for an additional charge.', 'Có, chúng tôi cung cấp chỗ đỗ xe tự phục vụ miễn phí cho khách khách sạn. Dịch vụ đỗ xe có người phục vụ cũng có sẵn với phí bổ sung.', 3, 1, '2025-05-23 02:50:42', '2025-06-02 03:33:00'),
-(3, 'Do you provide airport shuttle service?', 'Chỗ nghỉ có dịch vụ đưa đón sân bay không?', 'Yes, we offer airport transfer service for $25 per trip. Please contact our concierge to arrange your transfer.', 'Có, chúng tôi cung cấp dịch vụ đưa đón sân bay với giá $25 mỗi chuyến. Vui lòng liên hệ với lễ tân để sắp xếp chuyến đi.', 10, 1, '2025-05-23 02:50:42', '2025-06-02 03:33:16'),
-(4, 'What is your WiFi ?', 'Chỗ nghỉ có  Wi-Fi ra sao?', 'High-speed WiFi is complimentary throughout the hotel including all guest rooms and public areas.', 'Wi-Fi tốc độ cao miễn phí trong toàn bộ khách sạn bao gồm tất cả các phòng khách và khu vực công cộng.', 0, 1, '2025-05-23 02:50:42', '2025-06-12 00:57:25'),
-(7, 'Am i handsome?', 'Tôi có đẹp trai không?', 'Yes Sirrrrr', 'Chắc chắn  rồi broooo', 2, 1, '2025-06-02 02:14:43', '2025-06-02 03:01:20');
+INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer_vi`, `sort_order`, `is_active`, `priority`, `created_at`, `updated_at`) VALUES
+(1, 'Do you serve breakfast?', 'Họ có phục vụ bữa sáng không?', 'Yes, we offer an excellent buffet breakfast from 6:30 AM to 10:30 AM daily with both international and Vietnamese cuisine.', 'Có, chúng tôi cung cấp bữa sáng buffet tuyệt hảo từ 6:30 đến 10:30 hàng ngày với ẩm thực quốc tế và Việt Nam.', 5, 1, NULL, '2025-05-23 02:50:42', '2025-06-02 03:21:17'),
+(2, 'Is parking available?', 'Chỗ nghỉ có chỗ đỗ xe không?', 'Yes, we provide complimentary self-parking for hotel guests. Valet parking is also available for an additional charge.', 'Có, chúng tôi cung cấp chỗ đỗ xe tự phục vụ miễn phí cho khách khách sạn. Dịch vụ đỗ xe có người phục vụ cũng có sẵn với phí bổ sung.', 3, 1, NULL, '2025-05-23 02:50:42', '2025-06-02 03:33:00'),
+(3, 'Do you provide airport shuttle service?', 'Chỗ nghỉ có dịch vụ đưa đón sân bay không?', 'Yes, we offer airport transfer service for $25 per trip. Please contact our concierge to arrange your transfer.', 'Có, chúng tôi cung cấp dịch vụ đưa đón sân bay với giá $25 mỗi chuyến. Vui lòng liên hệ với lễ tân để sắp xếp chuyến đi.', 10, 1, NULL, '2025-05-23 02:50:42', '2025-06-02 03:33:16'),
+(4, 'What is your WiFi ?', 'Chỗ nghỉ có  Wi-Fi ra sao?', 'High-speed WiFi is complimentary throughout the hotel including all guest rooms and public areas.', 'Wi-Fi tốc độ cao miễn phí trong toàn bộ khách sạn bao gồm tất cả các phòng khách và khu vực công cộng.', 0, 1, NULL, '2025-05-23 02:50:42', '2025-06-12 00:57:25'),
+(7, 'Am i handsome?', 'Tôi có đẹp trai không?', 'Yes Sirrrrr', 'Chắc chắn  rồi broooo', 2, 1, NULL, '2025-06-02 02:14:43', '2025-06-02 03:01:20');
 
 -- --------------------------------------------------------
 
@@ -809,23 +1284,6 @@ INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `d
 -- --------------------------------------------------------
 
 --
--- Table structure for table `guests`
---
-
-CREATE TABLE `guests` (
-  `guest_id` bigint UNSIGNED NOT NULL,
-  `user_id` bigint UNSIGNED NOT NULL,
-  `gender` enum('male','female','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `dob` date DEFAULT NULL COMMENT 'Ngày sinh',
-  `nationality` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Quốc tịch',
-  `passport_number` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Số hộ chiếu / CMND',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `holidays`
 --
 
@@ -871,21 +1329,25 @@ INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `hotel_rating`
+-- Table structure for table `invoices`
 --
 
-CREATE TABLE `hotel_rating` (
-  `hotel_id` int NOT NULL COMMENT 'Khóa chính, mã khách sạn',
-  `overall_rating` decimal(3,1) NOT NULL COMMENT 'Điểm đánh giá tổng thể',
-  `total_reviews` int NOT NULL COMMENT 'Tổng số lượt đánh giá',
-  `rating_text` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mô tả đánh giá',
-  `location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Vị trí khách sạn',
-  `cleanliness` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá sự sạch sẽ',
-  `location_rating` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá vị trí',
-  `facilities` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá cơ sở vật chất',
-  `service` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá dịch vụ',
-  `value_for_money` decimal(3,1) DEFAULT NULL COMMENT 'Đánh giá giá trị đồng tiền'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu đánh giá tổng quan khách sạn';
+CREATE TABLE `invoices` (
+  `invoice_id` int NOT NULL,
+  `booking_id` int NOT NULL,
+  `total_amount_vnd` decimal(15,2) NOT NULL,
+  `issued_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` enum('Draft','Sent','Paid') COLLATE utf8mb4_general_ci DEFAULT 'Draft',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin hóa đơn';
+
+--
+-- Dumping data for table `invoices`
+--
+
+INSERT INTO `invoices` (`invoice_id`, `booking_id`, `total_amount_vnd`, `issued_at`, `status`, `created_at`, `updated_at`) VALUES
+(1, 24, 2900000.00, '2025-08-16 10:05:05', 'Draft', '2025-08-16 10:05:05', '2025-08-16 10:05:05');
 
 -- --------------------------------------------------------
 
@@ -948,6 +1410,74 @@ CREATE TABLE `media_files` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh';
 
+--
+-- Dumping data for table `media_files`
+--
+
+INSERT INTO `media_files` (`id`, `filename`, `filepath`, `alt_text`, `title`, `type`, `size`, `used_in`, `created_at`, `updated_at`) VALUES
+(1, '1753807880_screenshot-1png.png', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Hình ảnh bài viết', 'Hình ảnh bài viết', 'image/png', 60413, 'news', '2025-07-29 09:51:20', '2025-08-11 21:28:03'),
+(2, '1753807896_logopng.png', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Hình ảnh bài viết', 'Hình ảnh bài viết', 'image/png', 1818956, 'news', '2025-07-29 09:51:36', '2025-08-11 21:28:06'),
+(3, '1753852598_logopng.png', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Hình ảnh bài viết', 'Hình ảnh bài viết', 'image/png', 1818956, 'news', '2025-07-29 22:16:38', '2025-08-11 21:28:08'),
+(4, '1754039682_screenshot-1png.png', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Hình ảnh bài viết', 'Hình ảnh bài viết', 'image/png', 60413, 'news', '2025-08-01 02:14:42', '2025-08-11 21:28:10'),
+(5, 'hotel-lobby.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Sảnh khách sạn sang trọng với thiết kế hiện đại', 'Sảnh Khách Sạn LavishStay', 'image/jpeg', 2048576, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:11'),
+(6, 'deluxe-room.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Phòng deluxe với view biển tuyệt đẹp', 'Phòng Deluxe Sea View', 'image/jpeg', 1876543, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:13'),
+(7, 'restaurant-dining.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Nhà hàng với không gian ấm cúng và món ăn tinh tế', 'Nhà Hàng LavishStay', 'image/jpeg', 1654321, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:15'),
+(8, 'swimming-pool.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Hồ bơi infinity với view toàn cảnh thành phố', 'Hồ Bơi Infinity', 'image/jpeg', 2234567, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:16'),
+(9, 'spa-treatment.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Phòng spa với không gian thư giãn và massage', 'Spa & Massage', 'image/jpeg', 1987654, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:19'),
+(10, 'beach-view.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Bãi biển tuyệt đẹp với cát trắng và nước trong xanh', 'Bãi Biển Paradise', 'image/jpeg', 2345678, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:21'),
+(11, 'conference-room.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Phòng hội nghị hiện đại với thiết bị công nghệ cao', 'Phòng Hội Nghị', 'image/jpeg', 1765432, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:24'),
+(12, 'fitness-center.jpg', 'http://localhost:8888/storage/room-types/1/1.jpg', 'Phòng gym với thiết bị tập luyện hiện đại', 'Trung Tâm Thể Dục', 'image/jpeg', 1456789, 'news', '2025-08-11 02:37:45', '2025-08-11 21:28:27');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `messages`
+--
+
+CREATE TABLE `messages` (
+  `id` bigint UNSIGNED NOT NULL,
+  `conversation_id` bigint UNSIGNED NOT NULL,
+  `sender_type` enum('user','staff','bot','guest') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sender_id` bigint UNSIGNED DEFAULT NULL COMMENT 'user_id nếu là người dùng, staff_id nếu là nhân viên, null nếu là bot',
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nội dung tin nhắn',
+  `is_from_bot` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `is_read` tinyint DEFAULT '0',
+  `message_type` enum('text','image','file','system') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `metadata` text COLLATE utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `messages`
+--
+
+INSERT INTO `messages` (`id`, `conversation_id`, `sender_type`, `sender_id`, `message`, `is_from_bot`, `created_at`, `updated_at`, `is_read`, `message_type`, `metadata`) VALUES
+(1, 1, 'user', 1, 'Khách sạn có chỗ đậu ô tô không?', 0, '2025-07-21 10:23:21', '2025-07-21 23:12:52', 1, NULL, NULL),
+(2, 1, 'staff', 1, 'Dạ có, bãi đậu xe miễn phí ạ!', 0, '2025-07-21 10:25:21', '2025-07-21 10:25:21', 0, NULL, NULL),
+(3, 2, 'guest', NULL, 'Check-in lúc 13h được không bạn?', 0, '2025-07-21 10:27:21', '2025-07-21 23:12:54', 1, NULL, NULL),
+(4, 2, 'staff', 1, 'Dạ, thời gian check-in tiêu chuẩn là từ 14h, tuy nhiên bên em có thể hỗ trợ nếu phòng sẵn sàng.', 0, '2025-07-21 10:29:21', '2025-07-21 10:29:21', 0, NULL, NULL),
+(5, 3, 'guest', NULL, 'Chào bạn', 0, '2025-07-21 23:13:03', '2025-07-23 00:15:05', 1, NULL, NULL),
+(6, 3, 'staff', NULL, 'Câu hỏi của bạn đã được chuyển đến nhân viên hỗ trợ. Chúng tôi sẽ trả lời sớm nhất có thể.', 1, '2025-07-21 23:13:03', '2025-07-21 23:13:03', 0, 'system', NULL),
+(7, 3, 'guest', NULL, 'Xin chào', 0, '2025-07-23 00:10:55', '2025-07-23 00:15:05', 1, NULL, NULL),
+(8, 3, 'guest', NULL, 'fjej', 0, '2025-07-23 00:10:58', '2025-07-23 00:15:05', 1, NULL, NULL),
+(9, 3, 'guest', NULL, 'fef', 0, '2025-07-23 00:11:00', '2025-07-23 00:15:05', 1, NULL, NULL),
+(10, 3, 'guest', NULL, 'uktu', 0, '2025-07-23 00:14:53', '2025-07-23 00:15:05', 1, NULL, NULL),
+(11, 3, 'guest', NULL, 'pụ;', 0, '2025-07-23 00:14:54', '2025-07-23 00:15:05', 1, NULL, NULL),
+(12, 3, 'guest', NULL, 'Chào bạn', 0, '2025-07-23 00:15:17', '2025-07-23 00:15:19', 1, NULL, NULL),
+(13, 4, 'guest', NULL, 'Hiiii', 0, '2025-07-23 00:15:47', '2025-07-28 04:41:07', 1, NULL, NULL),
+(14, 3, 'guest', NULL, 'Hii', 0, '2025-07-23 00:16:49', '2025-07-23 00:18:33', 1, NULL, NULL),
+(15, 3, 'guest', NULL, 'êf', 0, '2025-07-23 00:18:39', '2025-07-23 00:19:29', 1, NULL, NULL),
+(16, 3, 'guest', NULL, 'Heloo', 0, '2025-07-23 00:18:52', '2025-07-23 00:19:29', 1, NULL, NULL),
+(17, 3, 'guest', NULL, 'e', 0, '2025-07-23 00:20:39', '2025-07-23 00:21:04', 1, NULL, NULL),
+(18, 3, 'guest', NULL, 'Helooo', 0, '2025-07-23 00:21:38', '2025-07-23 00:23:05', 1, NULL, NULL),
+(19, 3, 'guest', NULL, 'Hi', 0, '2025-07-23 00:23:14', '2025-07-23 00:23:36', 1, NULL, NULL),
+(20, 3, 'guest', NULL, 'Hi', 0, '2025-07-23 00:23:39', '2025-07-23 00:23:47', 1, NULL, NULL),
+(21, 3, 'guest', NULL, 'Hii', 0, '2025-07-23 00:24:33', '2025-08-15 08:00:25', 1, NULL, NULL),
+(22, 3, 'staff', NULL, 'Câu hỏi của bạn đã được chuyển đến nhân viên hỗ trợ. Chúng tôi sẽ trả lời sớm nhất có thể.', 1, '2025-07-23 00:24:33', '2025-07-23 00:24:33', 0, 'system', NULL),
+(23, 1, 'staff', 1, 'Có máy bay không', 0, '2025-07-23 00:29:05', '2025-07-23 00:29:05', 0, NULL, NULL),
+(24, 4, 'staff', 1, 'Cảm ơn bạn đã liên hệ. Chúng tôi sẽ xử lý yêu cầu của bạn sớm nhất có thể.', 0, '2025-07-28 04:41:33', '2025-07-28 04:41:33', 0, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -980,7 +1510,13 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (13, '2025_07_09_040618_add_google_fields_to_users_table', 7),
 (14, '2025_07_10_100745_create_children_surcharges_table', 8),
 (15, '2025_07_11_152058_add_requires_extra_bed_to_children_surcharges_table', 9),
-(16, '2025_07_12_164643_enhance_policy_tables', 10);
+(16, '2025_07_12_164643_enhance_policy_tables', 10),
+(17, '2025_07_21_094709_create_conversations_table', 11),
+(18, '2025_07_21_094715_create_messages_table', 11),
+(19, '2025_07_21_094809_add_client_token_to_conversations_table', 11),
+(20, '2025_07_21_145143_create_faqs_table', 12),
+(21, '2025_08_13_160235_create_payment_settings_table', 13),
+(22, '2025_08_14_104639_create_audit_logs_table', 14);
 
 -- --------------------------------------------------------
 
@@ -989,10 +1525,50 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 --
 
 CREATE TABLE `news` (
+  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính, mã bài viết',
+  `slug` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn không dấu, duy nhất cho mỗi bài viết (SEO)',
+  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tiêu đề bài viết',
+  `summary` text COLLATE utf8mb4_general_ci COMMENT 'Tóm tắt ngắn nội dung bài viết',
+  `content` longtext COLLATE utf8mb4_general_ci COMMENT 'Nội dung chi tiết bài viết (HTML)',
+  `tags` json DEFAULT NULL COMMENT 'Danh sách tag (mảng string, phục vụ tìm kiếm, phân loại)',
+  `thumbnail_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID ảnh đại diện (liên kết media_files)',
+  `author_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID tác giả (liên kết users)',
+  `category_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID chuyên mục/danh mục (liên kết news_categories)',
+  `meta_title` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tiêu đề SEO (meta title)',
+  `meta_description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả SEO (meta description)',
+  `meta_keywords` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Từ khóa SEO (meta keywords)',
+  `canonical_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL chuẩn SEO (canonical)',
+  `schema_json` json DEFAULT NULL COMMENT 'Dữ liệu cấu trúc SEO (schema.org, dạng JSON)',
+  `views` int DEFAULT '0' COMMENT 'Số lượt xem bài viết',
+  `status` tinyint DEFAULT '1' COMMENT 'Trạng thái bài viết (1: hiển thị, 0: ẩn, nháp...)',
+  `is_featured` tinyint(1) DEFAULT '1',
+  `published_at` datetime DEFAULT NULL COMMENT 'Thời điểm xuất bản',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `news`
+--
+
+INSERT INTO `news` (`id`, `slug`, `title`, `summary`, `content`, `tags`, `thumbnail_id`, `author_id`, `category_id`, `meta_title`, `meta_description`, `meta_keywords`, `canonical_url`, `schema_json`, `views`, `status`, `is_featured`, `published_at`, `created_at`, `updated_at`) VALUES
+(1, 'kham-pha-khong-gian-sang-trong-tai-lavishstay-resort', 'Khám Phá Không Gian Sang Trọng Tại LavishStay Resort', 'Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.', '<p>LavishStay Resort mang đến cho du khách một trải nghiệm nghỉ dưỡng đẳng cấp với không gian sang trọng và dịch vụ tận tâm. Tọa lạc tại vị trí đắc địa, resort sở hữu kiến trúc hiện đại hòa quyện với thiên nhiên.</p><p>Các phòng nghỉ được thiết kế tinh tế với đầy đủ tiện nghi cao cấp, mang đến sự thoải mái tối đa cho khách hàng. Từ phòng Deluxe đến Suite Presidential, mỗi không gian đều được chăm chút kỹ lưỡng về từng chi tiết.</p><p>Resort còn sở hữu hệ thống tiện ích đa dạng bao gồm nhà hàng fine dining, spa cao cấp, hồ bơi infinity và trung tâm thể dục hiện đại.</p>', '[\"resort\", \"luxury\", \"accommodation\", \"travel\"]', 6, 3, 2, 'LavishStay Resort - Không Gian Nghỉ Dưỡng Đẳng Cấp 5 Sao', 'Khám phá LavishStay Resort với không gian sang trọng, dịch vụ 5 sao và trải nghiệm nghỉ dưỡng đẳng cấp. Đặt phòng ngay để nhận ưu đãi đặc biệt.', 'lavishstay, resort, luxury hotel, 5 star, nghỉ dưỡng, khách sạn cao cấp', '/news/kham-pha-khong-gian-sang-trong-tai-lavishstay-resort', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Khám Phá Không Gian Sang Trọng Tại LavishStay Resort\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.\"}', 2806, 1, 1, '2025-07-29 16:37:45', '2025-08-11 02:37:45', '2025-08-13 20:41:46'),
+(2, 'uu-dai-mua-he-2024-giam-gia-len-den-40-phan-tram', 'Ưu Đãi Mùa Hè 2024 - Giảm Giá Lên Đến 40%', 'Chương trình ưu đãi mùa hè đặc biệt với mức giảm giá lên đến 40% cho tất cả các hạng phòng tại LavishStay.', '<p>Mùa hè đã đến và LavishStay mang đến chương trình ưu đãi đặc biệt dành cho tất cả du khách. Với mức giảm giá lên đến 40%, đây là cơ hội tuyệt vời để bạn trải nghiệm kỳ nghỉ trong mơ.</p><h3>Ưu đãi bao gồm:</h3><ul><li>Giảm 40% cho phòng Suite và Presidential</li><li>Giảm 30% cho phòng Deluxe và Superior</li><li>Giảm 20% cho tất cả dịch vụ spa</li><li>Buffet sáng miễn phí cho trẻ em dưới 12 tuổi</li><li>Late check-out đến 14:00 miễn phí</li></ul><p>Chương trình có hiệu lực từ ngày 1/6 đến 31/8/2024. Áp dụng cho các đêm nghỉ từ Chủ Nhật đến Thứ Năm.</p>', '[\"promotion\", \"summer\", \"discount\", \"offer\"]', 7, 3, 3, 'Ưu Đãi Mùa Hè 2024 - Giảm Đến 40% Tại LavishStay Resort', 'Đừng bỏ lỡ chương trình ưu đãi mùa hè với giảm giá lên đến 40% tất cả hạng phòng. Đặt ngay để nhận ưu đãi tốt nhất!', 'ưu đãi, khuyến mãi, giảm giá, mùa hè, summer promotion', '/news/uu-dai-mua-he-2024-giam-gia-len-den-40-phan-tram', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Ưu Đãi Mùa Hè 2024 - Giảm Giá Lên Đến 40%\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Chương trình ưu đãi mùa hè đặc biệt với mức giảm giá lên đến 40% cho tất cả các hạng phòng tại LavishStay.\"}', 4327, 1, 0, '2025-08-03 16:37:45', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(3, 'top-10-dia-diem-du-lich-khong-the-bo-qua-gan-lavishstay', 'Top 10 Địa Điểm Du Lịch Không Thể Bỏ Qua Gần LavishStay', 'Khám phá những địa điểm du lịch hấp dẫn xung quanh khu vực LavishStay Resort với hướng dẫn chi tiết từ A đến Z.', '<p>Khi lưu trú tại LavishStay Resort, bạn sẽ có cơ hội khám phá nhiều địa điểm du lịch tuyệt vời xung quanh. Dưới đây là danh sách 10 địa điểm không thể bỏ qua:</p><h3>1. Bãi Biển Paradise</h3><p>Chỉ cách resort 5 phút đi bộ, bãi biển Paradise với làn nước trong xanh và bãi cát trắng mịn là nơi lý tưởng để thư giãn và tắm nắng.</p><h3>2. Chợ Đêm Địa Phương</h3><p>Trải nghiệm văn hóa địa phương qua những món ăn đường phố đặc sắc và các sản phẩm thủ công truyền thống.</p><h3>3. Đảo San Hô</h3><p>Tour lặn ngắm san hô với nhiều loài cá nhiệt đới đầy màu sắc, phù hợp cho cả người mới bắt đầu và chuyên nghiệp.</p><p>... và còn 7 địa điểm thú vị khác đang chờ bạn khám phá!</p>', '[\"travel guide\", \"attractions\", \"tourism\", \"local\"]', 2, 7, 7, 'Top 10 Địa Điểm Du Lịch Gần LavishStay Resort - Hướng Dẫn Chi Tiết', 'Khám phá 10 địa điểm du lịch tuyệt vời xung quanh LavishStay Resort. Hướng dẫn đầy đủ về các hoạt động và điểm tham quan không thể bỏ qua.', 'du lịch, điểm tham quan, hướng dẫn, tourism, attractions, travel guide', '/news/top-10-dia-diem-du-lich-khong-the-bo-qua-gan-lavishstay', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Top 10 Địa Điểm Du Lịch Không Thể Bỏ Qua Gần LavishStay\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Khám phá những địa điểm du lịch hấp dẫn xung quanh khu vực LavishStay Resort với hướng dẫn chi tiết từ A đến Z.\"}', 3662, 1, 0, '2025-08-04 16:37:45', '2025-08-11 02:37:45', '2025-08-16 10:01:55'),
+(4, 'grand-opening-le-khai-truong-nha-hang-rooftop-moi', 'Grand Opening - Lễ Khai Trương Nhà Hàng Rooftop Mới', 'Tham gia lễ khai trương nhà hàng rooftop mới với không gian 360 độ và thực đơn fine dining độc đáo.', '<p>LavishStay Resort hân hạnh giới thiệu nhà hàng rooftop mới - Sky Lounge với tầm nhìn 360 độ tuyệt đẹp ra toàn thành phố và biển cả.</p><h3>Điểm đặc biệt của Sky Lounge:</h3><ul><li>Không gian mở với tầm nhìn panoramic</li><li>Thực đơn fusion cuisine do chef Michelin star thiết kế</li><li>Bar cocktail với hơn 200 loại đồ uống cao cấp</li><li>Live music mỗi tối từ 19:00-22:00</li><li>Không gian riêng tư cho các sự kiện đặc biệt</li></ul><p>Lễ khai trương sẽ diễn ra vào 20:00 ngày 15/12/2024 với sự tham gia của các celebrity và food blogger nổi tiếng. Khách mời sẽ được thưởng thức cocktail welcome drink và canapé miễn phí.</p>', '[\"event\", \"restaurant\", \"opening\", \"rooftop\"]', 7, 2, 7, 'Khai Trương Sky Lounge - Nhà Hàng Rooftop Đẳng Cấp Tại LavishStay', 'Tham gia lễ khai trương Sky Lounge - nhà hàng rooftop với tầm nhìn 360 độ và thực đơn fine dining độc đáo tại LavishStay Resort.', 'nhà hàng rooftop, khai trương, sky lounge, fine dining, event', '/news/grand-opening-le-khai-truong-nha-hang-rooftop-moi', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Grand Opening - Lễ Khai Trương Nhà Hàng Rooftop Mới\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Tham gia lễ khai trương nhà hàng rooftop mới với không gian 360 độ và thực đơn fine dining độc đáo.\"}', 6308, 1, 0, '2025-08-01 16:37:45', '2025-08-11 02:37:45', '2025-08-11 23:26:14'),
+(5, 'thuc-don-mua-dong-dac-biet-huong-vi-am-thuc-chau-a', 'Thực Đơn Mùa Đông Đặc Biệt - Hương Vị Âm Thực Châu Á', 'Khám phá thực đơn mùa đông với những món ăn truyền thống châu Á được chế biến bởi đội ngũ chef chuyên nghiệp.', '<p>Mùa đông đã đến và LavishStay Restaurant mang đến thực đơn đặc biệt với hương vị ấm áp của ẩm thực châu Á truyền thống.</p><h3>Món khai vị:</h3><ul><li>Dumpling tôm hấp với sốt gừng</li><li>Salad đu đủ Thái cay nhẹ</li><li>Chả cá Lã Vọng truyền thống</li></ul><h3>Món chính:</h3><ul><li>Lẩu Thái tôm hùm chua cay</li><li>Bún bò Huế chính hiệu</li><li>Cơm niêu Singapore với tôm rang</li><li>Mì Udon Nhật Bản nước dashi đậm đà</li></ul><h3>Tráng miệng:</h3><ul><li>Chè đậu xanh nước cốt dừa</li><li>Mochi ice cream vị matcha</li><li>Bánh flan caramen</li></ul><p>Thực đơn có hiệu lực từ 1/12/2024 đến 28/2/2025. Đặt bàn trước để được ưu tiên phục vụ.</p>', '[\"cuisine\", \"asian food\", \"winter menu\", \"restaurant\"]', 11, 6, 4, 'Thực Đơn Mùa Đông Châu Á - Ẩm Thực Đặc Sắc Tại LavishStay', 'Thưởng thức thực đơn mùa đông đặc biệt với hương vị ẩm thực châu Á truyền thống tại nhà hàng LavishStay Resort.', 'ẩm thực châu á, thực đơn mùa đông, nhà hàng, món ăn đặc sắc', '/news/thuc-don-mua-dong-dac-biet-huong-vi-am-thuc-chau-a', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Thực Đơn Mùa Đông Đặc Biệt - Hương Vị Âm Thực Châu Á\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Khám phá thực đơn mùa đông với những món ăn truyền thống châu Á được chế biến bởi đội ngũ chef chuyên nghiệp.\"}', 1294, 1, 1, '2025-07-17 16:37:45', '2025-08-11 02:37:45', '2025-08-12 20:56:26'),
+(6, 'bai-viet-mau-so-6', 'Bài viết mẫu số 6', 'Đây là bài viết mẫu số 6 để test dữ liệu.', '<p>Nội dung chi tiết của bài viết mẫu số 6.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', '[\"sample\", \"test\", \"demo\"]', 1, 3, 7, 'Bài viết mẫu số 6', 'Mô tả bài viết mẫu số 6', 'sample, test, demo', '/news/bai-viet-mau-so-6', '[]', 122, 1, 0, '2025-07-28 16:37:45', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(7, 'bai-viet-mau-so-7', 'Bài viết mẫu số 7', 'Đây là bài viết mẫu số 7 để test dữ liệu.', '<p>Nội dung chi tiết của bài viết mẫu số 7.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', '[\"sample\", \"test\", \"demo\"]', 11, 6, 5, 'Bài viết mẫu số 7', 'Mô tả bài viết mẫu số 7', 'sample, test, demo', '/news/bai-viet-mau-so-7', '[]', 168, 1, 0, '2025-06-25 16:37:45', '2025-08-11 02:37:45', '2025-08-11 02:37:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `news1`
+--
+
+CREATE TABLE `news1` (
   `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính, định danh bài viết',
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tiêu đề bài viết, hiển thị ở đầu trang và thẻ H1',
   `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Slug URL thân thiện SEO – không dấu, không trùng',
-  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Tóm tắt ngắn bài viết, hiển thị ở danh sách bài viết',
   `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Nội dung đầy đủ bài viết (có thể chứa HTML, ảnh...)',
   `thumbnail_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID ảnh đại diện – liên kết đến bảng media_files',
   `author_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID người tạo bài viết – liên kết bảng users',
@@ -1024,6 +1600,66 @@ CREATE TABLE `news_categories` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục tin tức phân loại nội dung';
 
+--
+-- Dumping data for table `news_categories`
+--
+
+INSERT INTO `news_categories` (`id`, `name`, `slug`, `description`, `created_at`, `updated_at`) VALUES
+(2, 'Tin Tức Khách Sạn', 'tin-tuc-khach-san', 'Các tin tức mới nhất về khách sạn và dịch vụ', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(3, 'Ưu Đãi & Khuyến Mãi', 'uu-dai-khuyen-mai', 'Thông tin về các chương trình ưu đãi, khuyến mãi đặc biệt', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(4, 'Hướng Dẫn Du Lịch', 'huong-dan-du-lich', 'Các bài viết hướng dẫn du lịch, địa điểm tham quan', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(5, 'Sự Kiện', 'su-kien', 'Thông tin về các sự kiện, lễ hội, hoạt động tại khách sạn', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(6, 'Ẩm Thực', 'am-thuc', 'Giới thiệu về ẩm thực, nhà hàng và các món ăn đặc sắc', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
+(7, 'Tips & Tricks', 'tips-tricks', 'Các mẹo và kinh nghiệm hữu ích cho khách du lịch', '2025-08-11 02:37:45', '2025-08-11 02:37:45');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `news_comments`
+--
+
+CREATE TABLE `news_comments` (
+  `id` bigint UNSIGNED NOT NULL,
+  `news_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `content` text COLLATE utf8mb4_general_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `likes` int DEFAULT '0',
+  `parent_id` bigint UNSIGNED DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `news_comments`
+--
+
+INSERT INTO `news_comments` (`id`, `news_id`, `user_id`, `content`, `created_at`, `likes`, `parent_id`, `updated_at`) VALUES
+(1, 3, 1, 'dfdfdf', '2025-08-16 10:01:40', 1, NULL, '2025-08-16 10:01:50');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `news_user_actions`
+--
+
+CREATE TABLE `news_user_actions` (
+  `id` bigint UNSIGNED NOT NULL,
+  `news_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `is_liked` tinyint DEFAULT '0',
+  `is_bookmarked` tinyint DEFAULT '0',
+  `rating` float DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `news_user_actions`
+--
+
+INSERT INTO `news_user_actions` (`id`, `news_id`, `user_id`, `is_liked`, `is_bookmarked`, `rating`, `created_at`, `updated_at`) VALUES
+(1, 3, 1, 0, 0, 5, '2025-08-16 09:57:08', '2025-08-16 10:01:18');
+
 -- --------------------------------------------------------
 
 --
@@ -1051,7 +1687,7 @@ CREATE TABLE `payment` (
   `payment_id` int NOT NULL COMMENT 'Khóa chính, mã thanh toán',
   `booking_id` int DEFAULT NULL COMMENT 'Khóa ngoại, mã đặt phòng',
   `amount_vnd` decimal(15,2) NOT NULL COMMENT 'Số tiền thanh toán (VND)',
-  `payment_type` enum('deposit','full','qr_code','at_hotel','pay_now_with_vietQR') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại thanh toán',
+  `payment_type` enum('deposit','full','qr_code','at_hotel','vietqr','refund','additional') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại thanh toán',
   `status` enum('pending','completed','failed','refunded') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Trạng thái thanh toán',
   `transaction_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mã giao dịch (từ cổng thanh toán)',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
@@ -1145,9 +1781,87 @@ INSERT INTO `payment` (`payment_id`, `booking_id`, `amount_vnd`, `payment_type`,
 (80, 131, 11000.00, 'full', 'completed', 'CPAY_LVS131033527_1752636969', '2025-07-15 20:35:27', '2025-07-15 20:36:09'),
 (81, 132, 11000.00, 'full', 'completed', 'CPAY_LVS132033857_1752637170', '2025-07-15 20:38:57', '2025-07-15 20:39:30'),
 (82, 133, 11000.00, 'full', 'completed', 'CPAY_LVS133070932_1752649800', '2025-07-16 00:09:32', '2025-07-16 00:10:00'),
-(83, 134, 11000.00, 'full', 'pending', NULL, '2025-07-16 00:32:02', '2025-07-16 00:32:02'),
-(84, 135, 121000.00, 'full', 'pending', NULL, '2025-07-16 06:49:20', '2025-07-16 06:49:20'),
-(85, 136, 231000.00, 'full', 'pending', NULL, '2025-07-16 19:20:52', '2025-07-16 19:20:52');
+(83, 134, 11000.00, 'full', 'pending', NULL, '2025-07-16 20:21:19', '2025-07-16 20:21:19'),
+(84, 137, 5510000.00, 'full', 'completed', 'CPAY_LVS137075500_1752738966', '2025-07-17 00:55:00', '2025-07-17 00:56:06'),
+(85, 138, 5400000.00, 'full', 'completed', 'CPAY_LVS138081920_1752740432', '2025-07-17 01:19:20', '2025-07-17 01:20:38'),
+(86, 139, 5400000.00, 'full', 'completed', 'CPAY_LVS139082730_1752740881', '2025-07-17 01:27:30', '2025-07-17 01:28:01'),
+(87, 140, 8650000.00, 'full', 'completed', 'CPAY_LVS140103856_1752748768', '2025-07-17 03:38:56', '2025-07-17 03:39:28'),
+(88, 141, 8650000.00, 'full', 'completed', 'CPAY_LVS141104347_1752749043', '2025-07-17 03:43:47', '2025-07-17 03:44:07'),
+(89, 142, 8650000.00, 'full', 'completed', 'CPAY_LVS142120903_1752754226', '2025-07-17 05:09:03', '2025-07-17 05:10:30'),
+(90, 143, 15450000.00, 'full', 'pending', NULL, '2025-07-18 05:51:43', '2025-07-18 05:51:43'),
+(91, 144, 20850000.00, 'full', 'completed', 'CPAY_LVS144031538_1752894994', '2025-07-18 20:15:38', '2025-07-18 20:16:40'),
+(92, 145, 20850000.00, 'full', 'pending', NULL, '2025-07-18 20:25:59', '2025-07-18 20:25:59'),
+(93, 146, 20850000.00, 'full', 'pending', NULL, '2025-07-18 20:31:53', '2025-07-18 20:31:53'),
+(94, 147, 1716000.00, 'full', 'pending', NULL, '2025-07-18 20:37:26', '2025-07-18 20:37:26'),
+(95, 148, 20850000.00, 'full', 'pending', NULL, '2025-07-18 20:37:46', '2025-07-18 20:37:46'),
+(96, 149, 20850000.00, 'at_hotel', 'pending', NULL, '2025-07-18 20:44:19', '2025-07-18 20:44:19'),
+(97, 150, 20850000.00, 'vietqr', 'pending', NULL, '2025-07-18 20:46:33', '2025-07-18 20:46:33'),
+(98, 151, 27800000.00, 'vietqr', 'completed', 'CPAY_LVS151023546_1752978972', '2025-07-19 19:35:46', '2025-07-19 19:36:16'),
+(99, 152, 10248000.00, 'vietqr', 'completed', 'CPAY_LVS152023648_1752979040', '2025-07-19 19:36:48', '2025-07-19 19:37:24'),
+(100, 153, 2288000.00, 'vietqr', 'completed', 'CPAY_LVS153025209_1752979986', '2025-07-19 19:52:09', '2025-07-19 19:53:10'),
+(101, 154, 11000.00, 'vietqr', 'pending', NULL, '2025-07-21 02:50:08', '2025-07-21 02:50:08'),
+(102, 155, 22000.00, 'vietqr', 'pending', NULL, '2025-07-28 02:20:59', '2025-07-28 02:20:59'),
+(103, 156, 22000.00, 'vietqr', 'pending', NULL, '2025-07-28 02:36:54', '2025-07-28 02:36:54'),
+(104, 157, 22000.00, 'vietqr', 'pending', NULL, '2025-07-28 05:45:18', '2025-07-28 05:45:18'),
+(105, 158, 22000.00, 'vietqr', 'pending', NULL, '2025-07-28 05:45:50', '2025-07-28 05:45:50'),
+(106, 159, 22000.00, 'vietqr', 'pending', NULL, '2025-07-28 06:27:46', '2025-07-28 06:27:46'),
+(107, 160, 22000.00, 'vietqr', 'pending', NULL, '2025-07-28 19:17:12', '2025-07-28 19:17:12'),
+(108, 160, 9414.00, 'refund', 'pending', NULL, '2025-08-02 15:28:33', '2025-08-02 15:28:33'),
+(109, 160, 9414.00, 'refund', 'pending', NULL, '2025-08-02 15:29:20', '2025-08-02 15:29:20'),
+(123, 24, 11000000.00, 'vietqr', 'completed', '1', '2025-08-05 07:02:22', '2025-08-05 07:02:22'),
+(124, 161, 22000.00, 'vietqr', 'pending', NULL, '2025-08-13 04:00:42', '2025-08-13 04:00:42'),
+(125, 162, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:19:24', '2025-08-13 15:19:24'),
+(126, 163, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:38:26', '2025-08-13 15:38:26'),
+(127, 164, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:40:16', '2025-08-13 15:40:16'),
+(128, 165, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:41:28', '2025-08-13 15:41:28'),
+(129, 166, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:47:16', '2025-08-13 15:47:16'),
+(130, 167, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:51:23', '2025-08-13 15:51:23'),
+(131, 168, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:54:41', '2025-08-13 15:54:41'),
+(132, 169, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 15:59:15', '2025-08-13 15:59:15'),
+(133, 170, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 16:05:19', '2025-08-13 16:05:19'),
+(134, 171, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:13:43', '2025-08-16 09:13:43'),
+(135, 172, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:14:40', '2025-08-16 09:14:40'),
+(136, 173, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:15:04', '2025-08-16 09:15:04');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payment_settings`
+--
+
+CREATE TABLE `payment_settings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text COLLATE utf8mb4_unicode_ci,
+  `type` enum('string','number','boolean','json') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'string',
+  `group_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci,
+  `is_encrypted` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `payment_settings`
+--
+
+INSERT INTO `payment_settings` (`id`, `key`, `value`, `type`, `group_name`, `description`, `is_encrypted`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'vietqr.bank_id', 'MBBank', 'string', 'vietqr', 'Mã ngân hàng cho VietQR', 0, 1, '2025-08-13 09:07:02', '2025-08-13 17:09:23'),
+(2, 'vietqr.account_no', '0335920306', 'string', 'vietqr', 'Số tài khoản ngân hàng', 0, 1, '2025-08-13 09:07:02', '2025-08-16 09:14:52'),
+(3, 'vietqr.account_name', 'NGUYEN VAN QUYEN', 'string', 'vietqr', 'Tên chủ tài khoản', 0, 1, '2025-08-13 09:07:02', '2025-08-16 09:14:52'),
+(4, 'vietqr.template', 'print', 'string', 'vietqr', 'Template QR code', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(5, 'vietqr.enabled', '1', 'boolean', 'vietqr', 'Bật/tắt thanh toán VietQR', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(6, 'cpay.google_script_url', 'https://script.google.com/macros/s/AKfycbx4F-yvXHfFifvP4JkunVHRiTwgL9cZNg7yE6CgcXZs3hmAjVtr6-1qKIa7ZEk52d00/exec', 'string', 'cpay', 'URL Google Apps Script cho CPay', 1, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(7, 'cpay.timeout', '30', 'number', 'cpay', 'Timeout cho API CPay (giây)', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(8, 'cpay.enabled', '1', 'boolean', 'cpay', 'Bật/tắt kiểm tra thanh toán CPay', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(9, 'vnpay.enabled', '0', 'boolean', 'vnpay', 'Bật/tắt thanh toán VNPay', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(10, 'vnpay.merchant_id', '', 'string', 'vnpay', 'Mã merchant VNPay', 1, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(11, 'vnpay.hash_secret', '', 'string', 'vnpay', 'Hash secret VNPay', 1, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(12, 'pay_at_hotel.enabled', '1', 'boolean', 'pay_at_hotel', 'Bật/tắt thanh toán tại khách sạn', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(13, 'general.default_payment_method', 'vietqr', 'string', 'general', 'Phương thức thanh toán mặc định', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(14, 'general.api_base_url', 'http://localhost:8888/api', 'string', 'general', 'Base URL cho API', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02'),
+(15, 'general.payment_timeout', '900', 'number', 'general', 'Thời gian timeout thanh toán (giây)', 0, 1, '2025-08-13 09:07:02', '2025-08-13 09:07:02');
 
 -- --------------------------------------------------------
 
@@ -1169,10 +1883,25 @@ CREATE TABLE `permissions` (
 --
 
 INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_at`, `parent_id`) VALUES
-(1, 'quan_ly_user', 'Quản lý user', '2025-06-25 03:58:44', '2025-06-25 03:58:44', NULL),
-(2, 'quan_ly_nhan_vien', 'Quản lý nhân viên', '2025-06-25 03:58:44', '2025-06-25 03:58:52', 1),
-(3, 'quan_ly_khach_hang', 'Quản lý khách hàng', '2025-06-25 03:58:44', '2025-06-25 03:58:55', 1),
-(4, 'vai_tro_&&_quyen', 'Quản lý vai trò và phân quyền', '2025-06-25 04:03:48', '2025-06-25 04:03:48', NULL);
+(1, 'quan_ly_user', 'Quản lý user', '2025-06-24 20:58:44', '2025-06-24 20:58:44', NULL),
+(2, 'quan_ly_nhan_vien', 'Quản lý nhân viên', '2025-06-24 20:58:44', '2025-06-24 20:58:52', 1),
+(3, 'quan_ly_khach_hang', 'Quản lý khách hàng', '2025-06-24 20:58:44', '2025-06-24 20:58:55', 1),
+(4, 'vai_tro_&&_quyen', 'Quản lý vai trò và phân quyền', '2025-06-24 21:03:48', '2025-06-24 21:03:48', NULL),
+(20, 'bang_dieu_khien', 'Bảng điều khiển', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(21, 'cai dat', 'Cài đặt', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(22, 'gia_phong', 'Giá phòng', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(23, 'xac_thuc', 'Xác thực', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(24, 'ho_tro_khach_hang', 'Hỗ trợ khách hàng', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(25, 'danh_gia', 'Đánh giá', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(26, 'cau_hoi_thuong_gap', 'Câu hỏi thường gặp', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(27, 'bookings', 'Bookings', '2025-08-06 00:36:37', '2025-08-13 03:09:11', NULL),
+(28, 'sua_doi_phong', 'Sửa đổi phòng', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(29, 'quan_ly_phong', 'Quản lý phòng', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(30, 'chinh_sach', 'Chính sách', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(31, 'dich_vu', 'Dịch vụ', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(32, 'quan_ly_tin_tuc', 'Quản lý tin tức', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(33, 'da_quoc_gia', 'Đa quốc gia', '2025-08-06 00:36:37', '2025-08-06 00:36:37', NULL),
+(34, 'thanh_toan', 'Thanh toán', '2025-08-13 03:09:49', '2025-08-13 03:09:49', NULL);
 
 -- --------------------------------------------------------
 
@@ -1194,7 +1923,21 @@ INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
 (2, 1),
 (3, 1),
 (4, 1),
-(2, 2);
+(20, 1),
+(21, 1),
+(22, 1),
+(23, 1),
+(24, 1),
+(25, 1),
+(26, 1),
+(27, 1),
+(28, 1),
+(29, 1),
+(30, 1),
+(31, 1),
+(32, 1),
+(33, 1),
+(34, 1);
 
 -- --------------------------------------------------------
 
@@ -1222,8 +1965,8 @@ CREATE TABLE `personal_access_tokens` (
 INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `expires_at`, `created_at`, `updated_at`) VALUES
 (3, 'App\\Models\\User', 5, 'auth_token', 'cd118426368c486572eb14b9ca92e9453134a0df511a9b1de5a85a82e602d3a3', '[\"*\"]', NULL, NULL, '2025-07-08 21:54:40', '2025-07-08 21:54:40'),
 (6, 'App\\Models\\User', 5, 'auth_token', 'b286cf3d87c084d1e0d292089de64ac1004cfed69b04f508a4b5a478b580ce84', '[\"*\"]', NULL, NULL, '2025-07-09 00:05:13', '2025-07-09 00:05:13'),
-(8, 'App\\Models\\User', 5, 'auth_token', '6fe08daf71f69ec19447fb248f0715268d4b752ec0cb020b0fc47e9de24dc4b7', '[\"*\"]', NULL, NULL, '2025-07-15 00:25:35', '2025-07-15 00:25:35'),
-(9, 'App\\Models\\User', 1, 'auth_token', 'cebdfcc070b588625a1b2d2799d78fb239e5f8c65a9a2e7c771ae60176b0968e', '[\"*\"]', NULL, NULL, '2025-07-16 07:21:02', '2025-07-16 07:21:02');
+(14, 'App\\Models\\User', 5, 'auth_token', 'a7dce83486592a96856608a098572e0311c9ba83ed782dbb426e4f692e924e29', '[\"*\"]', NULL, NULL, '2025-07-20 22:09:02', '2025-07-20 22:09:02'),
+(15, 'App\\Models\\User', 1, 'auth_token', 'bd90ae824dd8bb49e942ac7c7ea67cf04cbe98b88cfdce57585ac1c8334aec20', '[\"*\"]', '2025-08-15 08:29:58', NULL, '2025-08-15 08:29:48', '2025-08-15 08:29:58');
 
 -- --------------------------------------------------------
 
@@ -1295,89 +2038,169 @@ CREATE TABLE `representatives` (
   `id` int NOT NULL,
   `booking_id` int NOT NULL,
   `booking_code` varchar(55) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `room_id` int NOT NULL,
+  `room_id` int DEFAULT NULL,
   `full_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `phone_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `id_card` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `user_id` bigint UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `representatives`
 --
 
-INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `full_name`, `phone_number`, `email`, `id_card`, `created_at`, `updated_at`) VALUES
-(21, 23, 'LAVISHSTAY_509999', 255, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-01 04:08:52', '2025-07-01 04:08:52'),
-(22, 23, 'LAVISHSTAY_509999', 256, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-01 04:08:52', '2025-07-01 04:08:52'),
-(23, 25, 'LVS20250707030928246', 1, 'qeweqw', '0335920306', 'reception@hotel.com', 'qweqweqweqwe', '2025-07-06 20:09:28', '2025-07-06 20:09:28'),
-(24, 26, 'LVS20250707031018433', 15, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-06 20:10:18', '2025-07-06 20:10:18'),
-(25, 27, 'LVS20250707031110789', 15, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-06 20:11:10', '2025-07-06 20:11:10'),
-(27, 31, 'LVS31050405', 1, 'Nguyen Van Test', '0123456789', 'test@email.com', '123456789', '2025-07-07 22:04:05', '2025-07-07 22:04:05'),
-(28, 32, 'LVS32050513', 1, 'Nguyen Van Test', '0123456789', 'test@email.com', '123456789', '2025-07-07 22:05:13', '2025-07-07 22:05:13'),
-(29, 33, 'LVS33050538', 1, 'Nguyen Van Test', '0123456789', 'test@email.com', '123456789', '2025-07-07 22:05:38', '2025-07-07 22:05:38'),
-(30, 34, 'LVS34050642', 6, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:06:42', '2025-07-07 22:06:42'),
-(31, 35, 'LVS35050702', 6, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:07:02', '2025-07-07 22:07:02'),
-(32, 36, 'LVS36050814', 6, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:08:14', '2025-07-07 22:08:14'),
-(33, 37, 'LVS37051044', 2, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-07 22:10:44', '2025-07-07 22:10:44'),
-(34, 38, 'LVS38051120', 2, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:11:20', '2025-07-07 22:11:20'),
-(35, 39, 'LVS39063958', 7, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 23:39:58', '2025-07-07 23:39:58'),
-(36, 40, 'LVS40064052', 7, 'qeweqw', '0987654321', 'reception@hotel.com', '', '2025-07-07 23:40:52', '2025-07-07 23:40:52'),
-(37, 41, 'LVS41073901', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:39:01', '2025-07-08 00:39:01'),
-(38, 42, 'LVS42074259', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:42:59', '2025-07-08 00:42:59'),
-(39, 43, 'LVS43074325', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:43:25', '2025-07-08 00:43:25'),
-(40, 44, 'LVS44074700', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:47:00', '2025-07-08 00:47:00'),
-(41, 45, 'LVS45075351', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:53:51', '2025-07-08 00:53:51'),
-(42, 46, 'LVS46075512', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:55:12', '2025-07-08 00:55:12'),
-(43, 51, 'LVS51083510', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 01:35:10', '2025-07-08 01:35:10'),
-(44, 53, 'LVS53093059', 255, 'Nguyen Van Test', '0987654321', 'test@gmail.com', '', '2025-07-08 02:30:59', '2025-07-08 02:30:59'),
-(45, 54, 'LVS54093118', 255, 'Test User', '0123456789', 'test@test.com', '', '2025-07-08 02:31:18', '2025-07-08 02:31:18'),
-(46, 56, 'LVS56094825', 255, 'Test User Full', '0123456789', 'test@test.com', '', '2025-07-08 02:48:25', '2025-07-08 02:48:25'),
-(47, 60, 'LVS60104819', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 03:48:19', '2025-07-08 03:48:19'),
-(48, 61, 'LVS61105534', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 03:55:34', '2025-07-08 03:55:34'),
-(49, 62, 'LVS62153758', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 08:37:58', '2025-07-08 08:37:58'),
-(50, 63, 'LVS63162115', 1, 'Huỳnh Thị Bích Tuyền', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 09:21:15', '2025-07-08 09:21:15'),
-(51, 64, 'LVS64164554', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 09:45:54', '2025-07-08 09:45:54'),
-(52, 65, 'LVS65165011', 1, 'qeweqw', '333241324342', 'quyenjpn@gmail.com', '', '2025-07-08 09:50:11', '2025-07-08 09:50:11'),
-(53, 66, 'LVS66165335', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 09:53:35', '2025-07-08 09:53:35'),
-(54, 67, 'LVS67031840', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 20:18:40', '2025-07-08 20:18:40'),
-(55, 68, 'LVS68032045', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 20:20:45', '2025-07-08 20:20:45'),
-(56, 69, 'LVS69050107', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 22:01:07', '2025-07-08 22:01:07'),
-(59, 75, 'LVS75070930', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-09 00:09:30', '2025-07-09 00:09:30'),
-(60, 76, 'LVS76073559', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-09 00:35:59', '2025-07-09 00:35:59'),
-(61, 77, 'LVS77082516', 1, '明心', '12342342341', 'quyenjpn@gmail.com', '', '2025-07-09 01:25:16', '2025-07-09 01:25:16'),
-(63, 79, 'LVS79072153', 7, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 00:21:53', '2025-07-14 00:21:53'),
-(64, 80, 'LVS80072418', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 00:24:18', '2025-07-14 00:24:18'),
-(65, 81, 'LVS81091621', 1, '明心', '123412341234', 'quyenjpn@gmail.com', '', '2025-07-14 02:16:21', '2025-07-14 02:16:21'),
-(66, 82, 'LVS82092729', 1, '明心', '123412342', 'quyenjpn@gmail.com', '', '2025-07-14 02:27:29', '2025-07-14 02:27:29'),
-(69, 85, 'LVS85093648', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 02:36:48', '2025-07-14 02:36:48'),
-(72, 88, 'LVS88094850', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 02:48:50', '2025-07-14 02:48:50'),
-(73, 92, 'LVS92105428', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 03:54:28', '2025-07-14 03:54:28'),
-(74, 93, 'LVS93105832', 1, '明心', '23413421243', 'quyenjpn@gmail.com', '', '2025-07-14 03:58:32', '2025-07-14 03:58:32'),
-(78, 94, 'LVS94111645', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 04:21:04', '2025-07-14 04:21:04'),
-(79, 95, 'LVS95112222', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 04:22:29', '2025-07-14 04:22:29'),
-(80, 96, 'LVS96112503', 1, '明心', '1234123412431', 'quyenjpn@gmail.com', '', '2025-07-14 04:25:53', '2025-07-14 04:25:53'),
-(81, 98, 'LVS98114231', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 04:42:51', '2025-07-14 04:42:51'),
-(82, 99, 'LVS99114449', 1, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-14 04:44:57', '2025-07-14 04:44:57'),
-(83, 100, 'LVS100023425', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:35:46', '2025-07-14 19:35:46'),
-(84, 101, 'LVS101023558', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:37:12', '2025-07-14 19:37:12'),
-(85, 102, 'LVS102024015', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:40:18', '2025-07-14 19:40:18'),
-(86, 103, 'LVS103024501', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:45:43', '2025-07-14 19:45:43'),
-(87, 104, 'LVS104024936', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:49:44', '2025-07-14 19:49:44'),
-(88, 105, 'LVS105025917', 1, '明心', '1234', 'quyenjpn@gmail.com', '', '2025-07-14 19:59:17', '2025-07-14 19:59:17'),
-(89, 106, 'LVS106030509', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 20:05:12', '2025-07-14 20:05:12'),
-(90, 107, 'LVS107030523', 1, '明心', '2354', 'quyenjpn@gmail.com', '', '2025-07-14 20:08:35', '2025-07-14 20:08:35'),
-(98, 113, 'LVS113070418', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 00:04:49', '2025-07-15 00:04:49'),
-(99, 114, 'LVS114070529', 1, '明心', '1234124312341', 'quyenjpn@gmail.com', '', '2025-07-15 00:07:55', '2025-07-15 00:07:55'),
-(100, 121, 'LVS121091522', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 02:15:22', '2025-07-15 02:15:22'),
-(103, 124, 'LVS124093516', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 02:35:16', '2025-07-15 02:35:16'),
-(104, 127, 'LVS127025346', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 19:54:17', '2025-07-15 19:54:17'),
-(105, 129, 'LVS129030846', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:09:37', '2025-07-15 20:09:37'),
-(106, 130, 'LVS130033257', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:33:11', '2025-07-15 20:33:11'),
-(107, 131, 'LVS131033527', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:36:09', '2025-07-15 20:36:09'),
-(108, 132, 'LVS132033857', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:39:30', '2025-07-15 20:39:30'),
-(109, 133, 'LVS133070932', 1, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-16 00:10:00', '2025-07-16 00:10:00');
+INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `full_name`, `phone_number`, `email`, `id_card`, `created_at`, `updated_at`, `user_id`) VALUES
+(21, 23, 'LAVISHSTAY_509999', 255, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-01 04:08:52', '2025-07-01 04:08:52', NULL),
+(22, 23, 'LAVISHSTAY_509999', 256, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-01 04:08:52', '2025-07-01 04:08:52', NULL),
+(23, 25, 'LVS20250707030928246', 1, 'qeweqw', '0335920306', 'reception@hotel.com', 'qweqweqweqwe', '2025-07-06 20:09:28', '2025-07-06 20:09:28', NULL),
+(24, 26, 'LVS20250707031018433', 15, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-06 20:10:18', '2025-07-06 20:10:18', NULL),
+(25, 27, 'LVS20250707031110789', 15, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', 'qweqweqweqwe', '2025-07-06 20:11:10', '2025-07-06 20:11:10', NULL),
+(27, 31, 'LVS31050405', 1, 'Nguyen Van Test', '0123456789', 'test@email.com', '123456789', '2025-07-07 22:04:05', '2025-07-07 22:04:05', NULL),
+(28, 32, 'LVS32050513', 1, 'Nguyen Van Test', '0123456789', 'test@email.com', '123456789', '2025-07-07 22:05:13', '2025-07-07 22:05:13', NULL),
+(29, 33, 'LVS33050538', 1, 'Nguyen Van Test', '0123456789', 'test@email.com', '123456789', '2025-07-07 22:05:38', '2025-07-07 22:05:38', NULL),
+(30, 34, 'LVS34050642', 6, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:06:42', '2025-07-07 22:06:42', NULL),
+(31, 35, 'LVS35050702', 6, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:07:02', '2025-07-07 22:07:02', NULL),
+(32, 36, 'LVS36050814', 6, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:08:14', '2025-07-07 22:08:14', NULL),
+(33, 37, 'LVS37051044', 2, 'qeweqw', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-07 22:10:44', '2025-07-07 22:10:44', NULL),
+(34, 38, 'LVS38051120', 2, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 22:11:20', '2025-07-07 22:11:20', NULL),
+(35, 39, 'LVS39063958', 7, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-07 23:39:58', '2025-07-07 23:39:58', NULL),
+(36, 40, 'LVS40064052', 7, 'qeweqw', '0987654321', 'reception@hotel.com', '', '2025-07-07 23:40:52', '2025-07-07 23:40:52', NULL),
+(37, 41, 'LVS41073901', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:39:01', '2025-07-08 00:39:01', NULL),
+(38, 42, 'LVS42074259', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:42:59', '2025-07-08 00:42:59', NULL),
+(39, 43, 'LVS43074325', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:43:25', '2025-07-08 00:43:25', NULL),
+(40, 44, 'LVS44074700', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:47:00', '2025-07-08 00:47:00', NULL),
+(41, 45, 'LVS45075351', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:53:51', '2025-07-08 00:53:51', NULL),
+(42, 46, 'LVS46075512', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 00:55:12', '2025-07-08 00:55:12', NULL),
+(43, 51, 'LVS51083510', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 01:35:10', '2025-07-08 01:35:10', NULL),
+(44, 53, 'LVS53093059', 255, 'Nguyen Van Test', '0987654321', 'test@gmail.com', '', '2025-07-08 02:30:59', '2025-07-08 02:30:59', NULL),
+(45, 54, 'LVS54093118', 255, 'Test User', '0123456789', 'test@test.com', '', '2025-07-08 02:31:18', '2025-07-08 02:31:18', NULL),
+(46, 56, 'LVS56094825', 255, 'Test User Full', '0123456789', 'test@test.com', '', '2025-07-08 02:48:25', '2025-07-08 02:48:25', NULL),
+(47, 60, 'LVS60104819', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 03:48:19', '2025-07-08 03:48:19', NULL),
+(48, 61, 'LVS61105534', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 03:55:34', '2025-07-08 03:55:34', NULL),
+(49, 62, 'LVS62153758', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 08:37:58', '2025-07-08 08:37:58', NULL),
+(50, 63, 'LVS63162115', 1, 'Huỳnh Thị Bích Tuyền', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 09:21:15', '2025-07-08 09:21:15', NULL),
+(51, 64, 'LVS64164554', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 09:45:54', '2025-07-08 09:45:54', NULL),
+(52, 65, 'LVS65165011', 1, 'qeweqw', '333241324342', 'quyenjpn@gmail.com', '', '2025-07-08 09:50:11', '2025-07-08 09:50:11', NULL),
+(53, 66, 'LVS66165335', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 09:53:35', '2025-07-08 09:53:35', NULL),
+(54, 67, 'LVS67031840', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 20:18:40', '2025-07-08 20:18:40', NULL),
+(55, 68, 'LVS68032045', 1, 'qeweqw', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 20:20:45', '2025-07-08 20:20:45', NULL),
+(56, 69, 'LVS69050107', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-08 22:01:07', '2025-07-08 22:01:07', NULL),
+(59, 75, 'LVS75070930', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-09 00:09:30', '2025-07-09 00:09:30', NULL),
+(60, 76, 'LVS76073559', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-09 00:35:59', '2025-07-09 00:35:59', NULL),
+(61, 77, 'LVS77082516', 1, '明心', '12342342341', 'quyenjpn@gmail.com', '', '2025-07-09 01:25:16', '2025-07-09 01:25:16', NULL),
+(63, 79, 'LVS79072153', 7, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 00:21:53', '2025-07-14 00:21:53', NULL),
+(64, 80, 'LVS80072418', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 00:24:18', '2025-07-14 00:24:18', NULL),
+(65, 81, 'LVS81091621', 1, '明心', '123412341234', 'quyenjpn@gmail.com', '', '2025-07-14 02:16:21', '2025-07-14 02:16:21', NULL),
+(66, 82, 'LVS82092729', 1, '明心', '123412342', 'quyenjpn@gmail.com', '', '2025-07-14 02:27:29', '2025-07-14 02:27:29', NULL),
+(69, 85, 'LVS85093648', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 02:36:48', '2025-07-14 02:36:48', NULL),
+(72, 88, 'LVS88094850', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 02:48:50', '2025-07-14 02:48:50', NULL),
+(73, 92, 'LVS92105428', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 03:54:28', '2025-07-14 03:54:28', NULL),
+(74, 93, 'LVS93105832', 1, '明心', '23413421243', 'quyenjpn@gmail.com', '', '2025-07-14 03:58:32', '2025-07-14 03:58:32', NULL),
+(78, 94, 'LVS94111645', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 04:21:04', '2025-07-14 04:21:04', NULL),
+(79, 95, 'LVS95112222', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 04:22:29', '2025-07-14 04:22:29', NULL),
+(80, 96, 'LVS96112503', 1, '明心', '1234123412431', 'quyenjpn@gmail.com', '', '2025-07-14 04:25:53', '2025-07-14 04:25:53', NULL),
+(81, 98, 'LVS98114231', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 04:42:51', '2025-07-14 04:42:51', NULL),
+(82, 99, 'LVS99114449', 1, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-14 04:44:57', '2025-07-14 04:44:57', NULL),
+(83, 100, 'LVS100023425', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:35:46', '2025-07-14 19:35:46', NULL),
+(84, 101, 'LVS101023558', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:37:12', '2025-07-14 19:37:12', NULL),
+(85, 102, 'LVS102024015', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:40:18', '2025-07-14 19:40:18', NULL),
+(86, 103, 'LVS103024501', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:45:43', '2025-07-14 19:45:43', NULL),
+(87, 104, 'LVS104024936', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 19:49:44', '2025-07-14 19:49:44', NULL),
+(88, 105, 'LVS105025917', 1, '明心', '1234', 'quyenjpn@gmail.com', '', '2025-07-14 19:59:17', '2025-07-14 19:59:17', NULL),
+(89, 106, 'LVS106030509', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-14 20:05:12', '2025-07-14 20:05:12', NULL),
+(90, 107, 'LVS107030523', 1, '明心', '2354', 'quyenjpn@gmail.com', '', '2025-07-14 20:08:35', '2025-07-14 20:08:35', NULL),
+(98, 113, 'LVS113070418', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 00:04:49', '2025-07-15 00:04:49', NULL),
+(99, 114, 'LVS114070529', 1, '明心', '1234124312341', 'quyenjpn@gmail.com', '', '2025-07-15 00:07:55', '2025-07-15 00:07:55', NULL),
+(100, 121, 'LVS121091522', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 02:15:22', '2025-07-15 02:15:22', NULL),
+(103, 124, 'LVS124093516', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 02:35:16', '2025-07-15 02:35:16', NULL),
+(104, 127, 'LVS127025346', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 19:54:17', '2025-07-15 19:54:17', NULL),
+(105, 129, 'LVS129030846', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:09:37', '2025-07-15 20:09:37', NULL),
+(106, 130, 'LVS130033257', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:33:11', '2025-07-15 20:33:11', NULL),
+(107, 131, 'LVS131033527', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:36:09', '2025-07-15 20:36:09', NULL),
+(108, 132, 'LVS132033857', 1, '明心', '0987654321', 'quyenjpn@gmail.com', '', '2025-07-15 20:39:30', '2025-07-15 20:39:30', NULL),
+(109, 133, 'LVS133070932', 1, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-16 00:10:00', '2025-07-16 00:10:00', NULL),
+(111, 136, 'LVS20250717034906701', 4, 'Quyền Nguyễn Văn', '0335920306', 'quyenjpn@gmail.com', '12341234123', '2025-07-16 20:49:06', '2025-07-16 20:49:06', NULL),
+(112, 137, 'LVS137075500', 5, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-17 00:56:06', '2025-07-17 00:56:06', NULL),
+(113, 138, 'LVS138081920', 5, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-17 01:20:32', '2025-07-17 01:20:32', NULL),
+(114, 141, 'LVS141104347', NULL, '明têttetetete', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-17 03:44:03', '2025-07-17 03:44:03', NULL),
+(115, 142, 'LVS142120903', NULL, 'test', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-17 05:10:26', '2025-07-17 05:10:26', NULL),
+(116, 144, 'LVS144031538', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-18 20:16:34', '2025-07-18 20:16:34', NULL),
+(117, 151, 'LVS151023546', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:36:12', '2025-07-19 19:36:12', NULL),
+(118, 152, 'LVS152023648', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:37:20', '2025-07-19 19:37:20', NULL),
+(119, 153, 'LVS153025209', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:53:06', '2025-07-19 19:53:06', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reschedule_policies`
+--
+
+CREATE TABLE `reschedule_policies` (
+  `policy_id` int NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `room_type_id` int DEFAULT NULL,
+  `min_days_before_checkin` int DEFAULT NULL COMMENT 'Số ngày tối thiểu trước check-in để được phép rời lịch',
+  `reschedule_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí rời lịch cố định (nếu có)',
+  `reschedule_fee_percentage` decimal(5,2) DEFAULT '0.00' COMMENT 'Phí rời lịch theo phần trăm giá booking',
+  `applies_to_holiday` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho ngày lễ',
+  `applies_to_weekend` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho cuối tuần',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `reschedule_policies`
+--
+
+INSERT INTO `reschedule_policies` (`policy_id`, `name`, `description`, `room_type_id`, `min_days_before_checkin`, `reschedule_fee_vnd`, `reschedule_fee_percentage`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Rời lịch miễn phí 7 ngày', 'Miễn phí nếu yêu cầu rời lịch trước 7 ngày check-in, áp dụng cho tất cả các loại phòng vào ngày thường.', NULL, 7, 0.00, 0.00, 0, 0, 1, '2025-08-03 13:54:00', '2025-08-03 13:54:00'),
+(2, 'Rời lịch tiêu chuẩn 3 ngày', 'Phí 200,000 VND nếu yêu cầu rời lịch trong vòng 3-7 ngày trước check-in, áp dụng cho tất cả các loại phòng.', NULL, 3, 200000.00, 0.00, 0, 0, 1, '2025-08-03 13:54:00', '2025-08-05 01:36:57'),
+(3, 'Rời lịch phòng VIP 5 ngày', 'Miễn phí nếu yêu cầu trước 5 ngày cho phòng VIP (room_type_id=2), phí 10% giá trị booking nếu trong vòng 2-5 ngày.', 2, 5, 0.00, 10.00, 0, 0, 1, '2025-08-03 13:54:00', '2025-08-03 13:54:00'),
+(4, 'Rời lịch ngày lễ phòng Suite', 'Phí 15% giá trị booking nếu yêu cầu rời lịch trong vòng 7 ngày trước check-in cho phòng Suite (room_type_id=3) vào ngày lễ.', 3, 7, 0.00, 15.00, 1, 0, 1, '2025-08-03 13:54:00', '2025-08-03 13:54:00'),
+(5, 'Rời lịch cuối tuần phòng tiêu chuẩn', 'Phí 300,000 VND nếu yêu cầu rời lịch trong vòng 3 ngày trước check-in cho phòng tiêu chuẩn (room_type_id=1) vào cuối tuần.', 1, 3, 300000.00, 0.00, 0, 1, 1, '2025-08-03 13:54:00', '2025-08-03 13:54:00'),
+(6, 'Rời lịch khẩn cấp', 'Phí 500,000 VND cho yêu cầu rời lịch trong vòng 24 giờ trước check-in, áp dụng cho tất cả các loại phòng.', NULL, 1, 500000.00, 0.00, 1, 1, 1, '2025-08-03 13:54:00', '2025-08-03 13:54:00'),
+(7, 'Rời lịch The Level', 'Miễn phí nếu yêu cầu trước 10 ngày cho phòng The Level (room_type_id=4), phí 20% giá trị booking nếu trong vòng 5-10 ngày.', 4, 10, 0.00, 20.00, 1, 1, 1, '2025-08-03 13:54:00', '2025-08-03 13:54:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reviews`
+--
+
+CREATE TABLE `reviews` (
+  `review_id` int NOT NULL COMMENT 'Mã đánh giá',
+  `booking_id` int NOT NULL COMMENT 'Liên kết đến booking',
+  `rating` decimal(2,1) NOT NULL COMMENT 'Điểm đánh giá (0.0 – 5.0)',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `review_date` date NOT NULL,
+  `helpful` int UNSIGNED DEFAULT '0',
+  `not_helpful` int UNSIGNED DEFAULT '0',
+  `travel_type` enum('business','couple','solo','family_young','group') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `admin_reply_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `admin_reply_date` date DEFAULT NULL,
+  `admin_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `score_cleanliness` decimal(2,1) DEFAULT NULL COMMENT 'Độ sạch sẽ',
+  `score_location` decimal(2,1) DEFAULT NULL COMMENT 'Vị trí',
+  `score_facilities` decimal(2,1) DEFAULT NULL COMMENT 'Cơ sở vật chất',
+  `score_service` decimal(2,1) DEFAULT NULL COMMENT 'Dịch vụ',
+  `score_value` decimal(2,1) DEFAULT NULL COMMENT 'Đáng giá tiền',
+  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Đánh giá gắn với booking';
+
+--
+-- Dumping data for table `reviews`
+--
+
+INSERT INTO `reviews` (`review_id`, `booking_id`, `rating`, `title`, `comment`, `review_date`, `helpful`, `not_helpful`, `travel_type`, `admin_reply_content`, `admin_reply_date`, `admin_name`, `created_at`, `updated_at`, `score_cleanliness`, `score_location`, `score_facilities`, `score_service`, `score_value`, `status`) VALUES
+(5, 23, 5.0, 'Chất lượng tuyệt vời', 'Chất lượng tuyệt vời', '2025-07-25', 1, 0, 'solo', NULL, NULL, NULL, '2025-07-25 03:20:12', '2025-07-24 20:21:20', NULL, NULL, NULL, NULL, NULL, 'approved');
 
 -- --------------------------------------------------------
 
@@ -1421,7 +2244,8 @@ CREATE TABLE `role_user` (
 
 INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 (1, 1),
-(7, 2);
+(7, 2),
+(10, 4);
 
 -- --------------------------------------------------------
 
@@ -1747,22 +2571,6 @@ INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_availability`
---
-
-CREATE TABLE `room_availability` (
-  `availability_id` int NOT NULL COMMENT 'Khóa chính, mã lịch',
-  `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Khóa ngoại, mã tùy chọn phòng',
-  `date` date NOT NULL COMMENT 'Ngày áp dụng',
-  `total_rooms` int NOT NULL COMMENT 'Tổng số phòng',
-  `available_rooms` int NOT NULL COMMENT 'Số phòng còn trống',
-  `created_at` date NOT NULL,
-  `updated_at` date DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu lịch đặt phòng theo ngày';
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `room_bed_types`
 --
 
@@ -1845,71 +2653,92 @@ CREATE TABLE `room_option` (
   `policy_snapshot_json` json DEFAULT NULL,
   `cancellation_policy_id` int DEFAULT NULL,
   `package_id` int DEFAULT NULL,
-  `adjusted_price` decimal(15,2) DEFAULT NULL COMMENT 'Giá sau khi áp dụng các quy tắc'
+  `adjusted_price` decimal(15,2) DEFAULT NULL COMMENT 'Giá sau khi áp dụng các quy tắc',
+  `created_at` date DEFAULT NULL,
+  `updated_at` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu tùy chọn giá và dịch vụ của phòng';
 
 --
 -- Dumping data for table `room_option`
 --
 
-INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_policy_id`, `check_out_policy_id`, `policy_applied_reason`, `policy_applied_date`, `policy_snapshot_json`, `cancellation_policy_id`, `package_id`, `adjusted_price`) VALUES
-('BOOK-LVS100023425-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS100023425-R1-2', NULL, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS103024501-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS103024501-R1-2', NULL, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS104024936-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS105025917-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS106030509-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS107030523-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS113070418-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS114070529-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS121091522-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS124093516-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-14', '[]', NULL, NULL, 11000.00),
-('BOOK-LVS127025346-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS129030846-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS130033257-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS131033527-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS132033857-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS133070932-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS60104819-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS60104819-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS60104819-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS61105534-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS61105534-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS61105534-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS62153758-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS62153758-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS62153758-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00),
-('BOOK-LVS63162115-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS64164554-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS65165011-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS66165335-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS67031840-R1-1', 1, 'Standard Package', 11000.00, 1, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS68032045-R1-1', 1, 'Standard Package', 11000.00, 3, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS69050107-R1-1', 1, 'Standard Package', 11000.00, 3, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS75070930-R1-1', 1, 'Standard Package', 11000.00, 2, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS76073559-R1-1', 1, 'Standard Package', 11000.00, 2, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS77082516-R1-1', 1, 'Standard Package', 11000.00, 2, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00),
-('BOOK-LVS79072153-R7-1', 7, 'Presidential Package', 6200000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 7, 6200000.00),
-('BOOK-LVS80072418-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS88094850-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS92105428-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS93105832-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS94111645-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS95112222-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS96112503-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS98114231-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS98114231-R1-2', 1, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS99114449-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('BOOK-LVS99114449-R1-2', NULL, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 4, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', NULL, 1, 11000.00),
-('OPT10', 257, 'Premium Corner King', 2000000.00, 2, 1, 'Phòng cao cấp, đặt ngay!', 1, 1, 1, 1, 95.00, 1, NULL, NULL, NULL, NULL, 1, 2, 2000000.00),
-('OPT11', 258, 'The Level Premium King', 2500000.00, 2, 1, 'Chỉ còn 1 phòng!', 0, 1, 1, 1, 88.00, 1, NULL, NULL, NULL, NULL, 1, 3, 2500000.00),
-('OPT12', 259, 'The Level Premium Corner Twin', 2800000.00, 2, 1, 'Phòng cao cấp, đặt ngay!', 1, 1, 1, 2, 92.00, 1, NULL, NULL, NULL, NULL, 1, 4, 2800000.00),
-('OPT13', 261, 'Suite King', 4000000.00, 2, 1, 'Phòng cao cấp nhất!', 1, 1, 1, 1, 99.00, 1, NULL, NULL, NULL, NULL, 1, 6, 4000000.00),
-('OPT6', 260, 'The Level Suite King', 3500000.00, 2, 1, 'Phòng sang trọng, đặt ngay!', 1, 1, 1, 1, 97.00, 1, NULL, NULL, NULL, NULL, 1, 5, 3500000.00),
-('OPT8', 255, 'Deluxe King Room', 1200000.00, 2, 1, 'Chỉ còn 3 phòng!', 1, 1, 1, 1, 90.00, 1, NULL, NULL, NULL, NULL, 1, 1, 1200000.00),
-('OPT9', 256, 'Deluxe Twin Room', 1300000.00, 2, 1, 'Chỉ còn 2 phòng!', 0, 1, 1, 2, 85.00, 1, NULL, NULL, NULL, NULL, 1, 1, 1300000.00),
-('OPT_PRES_1', 295, 'Presidential Suite King', 10000000.00, 4, 2, 'Phòng Tổng thống, đặt ngay!', 1, 1, 1, 1, 100.00, 1, NULL, NULL, NULL, NULL, 1, 7, 10000000.00);
+INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_policy_id`, `check_out_policy_id`, `policy_applied_reason`, `policy_applied_date`, `policy_snapshot_json`, `cancellation_policy_id`, `package_id`, `adjusted_price`, `created_at`, `updated_at`) VALUES
+('BOOK-LVS100023425-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS100023425-R1-2', NULL, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS103024501-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS103024501-R1-2', NULL, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS104024936-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS105025917-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS106030509-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS107030523-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS113070418-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS114070529-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS121091522-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-14', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS124093516-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-14', '[]', NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS127025346-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS129030846-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS130033257-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS131033527-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS132033857-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS133070932-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-16', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS137075500-R5-1', NULL, 'Suite Package', 2700000.00, 3, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS137075500-R5-2', NULL, 'Suite Package', 2700000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS138081920-R5-1', NULL, 'Suite Package', 2700000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS138081920-R5-2', NULL, 'Suite Package', 2700000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS141104347-R5-1', NULL, 'Suite Package', 2700000.00, 6, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS141104347-R5-2', NULL, 'Suite Package', 2700000.00, 5, 3, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS141104347-R5-3', NULL, 'Suite Package', 2700000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS142120903-R5-1', NULL, 'Suite Package', 2700000.00, 6, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS142120903-R5-2', NULL, 'Suite Package', 2700000.00, 5, 3, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS142120903-R5-3', NULL, 'Suite Package', 2700000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-07-17', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 5, 2700000.00, NULL, NULL),
+('BOOK-LVS144031538-R6-1', NULL, 'Luxury Package', 3200000.00, 6, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 6, 3200000.00, NULL, NULL),
+('BOOK-LVS144031538-R6-2', NULL, 'Luxury Package', 3200000.00, 4, 2, NULL, 0, 0, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 6, 3200000.00, NULL, NULL),
+('BOOK-LVS151023546-R6-1', NULL, 'Luxury Package', 3200000.00, 6, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 6, 3200000.00, NULL, NULL),
+('BOOK-LVS151023546-R6-2', NULL, 'Luxury Package', 3200000.00, 4, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 6, 3200000.00, NULL, NULL),
+('BOOK-LVS152023648-R1-1', NULL, 'Premium Package', 1006000.00, 6, 2, NULL, 1, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 8, 1006000.00, NULL, NULL),
+('BOOK-LVS152023648-R1-2', NULL, 'Premium Package', 1006000.00, 4, 2, NULL, 1, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 8, 1006000.00, NULL, NULL),
+('BOOK-LVS153025209-R1-1', NULL, 'Standard Package', 11000.00, 6, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS153025209-R1-2', NULL, 'Standard Package', 11000.00, 4, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS60104819-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS60104819-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS60104819-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS61105534-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS61105534-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS61105534-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS62153758-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS62153758-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS62153758-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
+('BOOK-LVS63162115-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS64164554-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS65165011-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS66165335-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS67031840-R1-1', 1, 'Standard Package', 11000.00, 1, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS68032045-R1-1', 1, 'Standard Package', 11000.00, 3, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS69050107-R1-1', 1, 'Standard Package', 11000.00, 3, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS75070930-R1-1', 1, 'Standard Package', 11000.00, 2, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS76073559-R1-1', 1, 'Standard Package', 11000.00, 2, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS77082516-R1-1', 1, 'Standard Package', 11000.00, 2, 1, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11000.00, NULL, NULL),
+('BOOK-LVS79072153-R7-1', 7, 'Presidential Package', 6200000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 7, 6200000.00, NULL, NULL),
+('BOOK-LVS80072418-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS88094850-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS92105428-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS93105832-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL);
+INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_policy_id`, `check_out_policy_id`, `policy_applied_reason`, `policy_applied_date`, `policy_snapshot_json`, `cancellation_policy_id`, `package_id`, `adjusted_price`, `created_at`, `updated_at`) VALUES
+('BOOK-LVS94111645-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS95112222-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS96112503-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS98114231-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS98114231-R1-2', 1, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS99114449-R1-1', NULL, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS99114449-R1-2', NULL, 'Standard Package', 11000.00, 3, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('OPT10', 92, 'Premium Corner King', 2000000.00, 2, 1, 'Phòng cao cấp, đặt ngay!', 1, 1, 1, 1, 95.00, 1, NULL, NULL, NULL, NULL, NULL, 2, 2000000.00, NULL, '2025-08-03'),
+('OPT11', 258, 'The Level Premium King', 2500000.00, 2, 1, 'Chỉ còn 1 phòng!', 0, 1, 1, 1, 88.00, 1, NULL, NULL, NULL, NULL, NULL, 3, 2500000.00, NULL, NULL),
+('OPT12', 259, 'The Level Premium Corner Twin', 2800000.00, 2, 1, 'Phòng cao cấp, đặt ngay!', 1, 1, 1, 2, 92.00, 1, NULL, NULL, NULL, NULL, NULL, 4, 2800000.00, NULL, NULL),
+('OPT13', 261, 'Suite King', 4000000.00, 2, 1, 'Phòng cao cấp nhất!', 1, 1, 1, 1, 99.00, 1, NULL, NULL, NULL, NULL, NULL, 6, 4000000.00, NULL, NULL),
+('OPT6', 260, 'The Level Suite King', 3500000.00, 2, 1, 'Phòng sang trọng, đặt ngay!', 1, 1, 1, 1, 97.00, 1, NULL, NULL, NULL, NULL, NULL, 5, 3500000.00, NULL, NULL),
+('OPT8', 255, 'Deluxe King Room', 1200000.00, 2, 1, 'Chỉ còn 3 phòng!', 1, 1, 1, 1, 90.00, 1, NULL, NULL, NULL, NULL, NULL, 1, 1200000.00, NULL, NULL),
+('OPT9', 256, 'Deluxe Twin Room', 1300000.00, 2, 1, 'Chỉ còn 2 phòng!', 0, 1, 1, 2, 85.00, 1, NULL, NULL, NULL, NULL, NULL, 1, 1300000.00, NULL, NULL),
+('OPT_PRES_1', 295, 'Presidential Suite King', 10000000.00, 4, 2, 'Phòng Tổng thống, đặt ngay!', 1, 1, 1, 1, 100.00, 1, NULL, NULL, NULL, NULL, NULL, 7, 10000000.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1949,34 +2778,34 @@ CREATE TABLE `room_price_history` (
 INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
 (1, 2, '2025-06-27', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:53:28', '2025-06-26 21:53:28'),
 (2, 2, '2025-07-01', 1500000.00, 1710000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-07-03 01:59:50'),
-(3, 2, '2025-07-02', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-29 02:35:55'),
+(3, 2, '2025-07-02', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-07-31 10:11:54'),
 (4, 2, '2025-07-03', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:55:01', '2025-06-29 02:35:55'),
 (5, 2, '2025-07-04', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":80}}]\"', '2025-06-26 21:55:01', '2025-07-03 03:12:38'),
-(6, 2, '2025-07-31', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:59:08', '2025-06-29 21:43:29'),
-(7, 2, '2025-08-01', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":87}}]\"', '2025-06-26 21:59:08', '2025-06-29 21:43:29'),
+(6, 2, '2025-07-31', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:59:08', '2025-07-31 14:02:33'),
+(7, 2, '2025-08-01', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-26 21:59:08', '2025-07-31 13:59:57'),
 (8, 1, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:01', '2025-06-28 02:47:01'),
 (9, 1, '2025-06-29', 1200000.00, 1680000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
 (10, 1, '2025-06-30', 1200000.00, 1368000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
-(11, 1, '2025-07-01', 5000.00, 5700.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-07-16 01:14:00'),
-(12, 1, '2025-07-02', 1200000.00, 1440000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
+(11, 1, '2025-07-01', 5000.00, 5700.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-07-16 01:14:26'),
+(12, 1, '2025-07-02', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-07-31 10:11:54'),
 (13, 1, '2025-07-03', 1200000.00, 1440000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:01', '2025-06-29 09:09:46'),
 (14, 3, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:03', '2025-06-28 02:47:03'),
 (15, 3, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:03', '2025-06-29 04:30:12'),
 (16, 3, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-29 21:13:26'),
 (17, 3, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-07-03 01:59:50'),
-(18, 3, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-29 04:30:12'),
+(18, 3, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-07-31 10:11:54'),
 (19, 3, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:03', '2025-06-29 04:30:12'),
 (20, 7, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:08', '2025-06-28 02:47:08'),
 (21, 7, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 02:47:08', '2025-06-29 02:30:36'),
 (22, 7, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-29 23:54:20'),
 (23, 7, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-07-03 01:59:50'),
-(24, 7, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-29 02:30:36'),
+(24, 7, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-07-31 10:11:54'),
 (25, 7, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 02:47:08', '2025-06-29 02:30:36'),
 (26, 6, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:23', '2025-06-28 03:40:23'),
 (27, 6, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:23', '2025-06-29 02:33:36'),
 (28, 6, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-07-02 03:28:15'),
 (29, 6, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-07-03 01:59:50'),
-(30, 6, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-06-29 02:33:36'),
+(30, 6, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-07-31 10:11:54'),
 (31, 6, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:40:23', '2025-06-29 02:33:36'),
 (32, 2, '2025-06-28', 0.00, 0.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"15.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:24', '2025-06-28 03:40:24'),
 (33, 2, '2025-06-29', 1500000.00, 1950000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:40:24', '2025-06-29 05:15:28'),
@@ -1985,15 +2814,15 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (36, 4, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 03:42:30', '2025-06-29 02:34:36'),
 (37, 4, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-06-29 20:52:43'),
 (38, 4, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-03 01:59:50'),
-(39, 4, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-01 01:46:03'),
+(39, 4, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-31 10:11:54'),
 (40, 4, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 03:42:30', '2025-07-02 04:22:05'),
 (41, 4, '2025-07-04', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":74}}]\"', '2025-06-28 23:26:04', '2025-07-03 03:12:38'),
 (42, 6, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:29:06', '2025-06-29 02:33:36'),
 (43, 3, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:29:18', '2025-06-29 04:30:12'),
 (44, 5, '2025-06-29', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
 (45, 5, '2025-06-30', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-07-02 03:28:15'),
-(46, 5, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-30T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-07-01T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-07-03 01:59:50'),
-(47, 5, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
+(46, 5, '2025-07-01', 1000000.00, 1140000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":18,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"event\\\",\\\"price_adjustment\\\":\\\"-6.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"event\\\",\\\"event_name\\\":\\\"S\\\\u1ef1 ki\\\\u1ec7n c\\\\u00f3 1 0 2\\\",\\\"event_dates\\\":{\\\"start_date\\\":\\\"2025-06-29T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-06-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-07-30 02:42:35'),
+(47, 5, '2025-07-02', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-07-31 10:11:54'),
 (48, 5, '2025-07-03', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
 (49, 5, '2025-07-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-28 23:31:55', '2025-06-29 02:33:38'),
 (50, 3, '2025-07-05', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 00:47:05', '2025-06-29 04:30:12'),
@@ -2009,7 +2838,7 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (60, 1, '2025-07-06', 1200000.00, 1560000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 20:52:16', '2025-07-05 00:36:49'),
 (61, 4, '2025-07-06', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":85}}]\"', '2025-06-29 20:52:43', '2025-07-06 20:50:35'),
 (62, 3, '2025-07-06', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 21:13:26', '2025-06-29 21:13:26'),
-(63, 2, '2025-07-30', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-06-29 21:43:29', '2025-06-29 21:43:29'),
+(63, 2, '2025-07-30', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-06-29 21:43:29', '2025-07-29 10:37:07'),
 (64, 7, '2025-07-06', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-06-29 23:54:20', '2025-06-29 23:54:20'),
 (65, 2, '2025-07-07', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-02 04:26:19', '2025-07-02 04:26:19'),
 (66, 2, '2025-07-08', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-02 04:26:19', '2025-07-02 04:26:19'),
@@ -2042,21 +2871,21 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (92, 5, '2025-07-10', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-08 19:31:34', '2025-07-08 19:31:34'),
 (93, 6, '2025-07-10', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-08 19:31:34', '2025-07-08 19:31:34'),
 (94, 7, '2025-07-10', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-08 19:31:34', '2025-07-08 19:31:34'),
-(95, 1, '2025-07-11', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-11 08:59:23'),
-(96, 2, '2025-07-11', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-11 09:13:00'),
+(95, 1, '2025-07-11', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-22 23:59:42'),
+(96, 2, '2025-07-11', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":4,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"30.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":92}}]\"', '2025-07-09 22:12:13', '2025-07-23 02:49:07'),
 (97, 3, '2025-07-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-09 22:12:13'),
-(98, 4, '2025-07-11', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":91}}]\"', '2025-07-09 22:12:13', '2025-07-11 09:13:00'),
+(98, 4, '2025-07-11', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-07-09 22:12:13', '2025-07-23 02:49:07'),
 (99, 5, '2025-07-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-09 22:12:13'),
 (100, 6, '2025-07-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-09 22:12:13'),
 (101, 7, '2025-07-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-09 22:12:13', '2025-07-09 22:12:13'),
-(102, 1, '2025-07-12', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":91}}]\"', '2025-07-10 21:21:00', '2025-07-12 09:55:29'),
-(103, 2, '2025-07-12', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":89}}]\"', '2025-07-10 21:21:00', '2025-07-12 09:55:29'),
+(102, 1, '2025-07-12', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":87}}]\"', '2025-07-10 21:21:00', '2025-07-23 09:09:36'),
+(103, 2, '2025-07-12', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":85}}]\"', '2025-07-10 21:21:00', '2025-07-23 09:09:36'),
 (104, 3, '2025-07-12', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-10 21:21:00', '2025-07-10 21:21:00'),
-(105, 4, '2025-07-12', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":94}}]\"', '2025-07-10 21:21:00', '2025-07-12 09:55:29'),
+(105, 4, '2025-07-12', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":72}}]\"', '2025-07-10 21:21:00', '2025-07-23 09:09:36'),
 (106, 5, '2025-07-12', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-10 21:21:00', '2025-07-10 21:21:00'),
 (107, 6, '2025-07-12', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-10 21:21:00', '2025-07-10 21:21:00'),
 (108, 7, '2025-07-12', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-10 21:21:00', '2025-07-10 21:21:00'),
-(109, 1, '2025-08-15', 5000.00, 6500.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-07-12 05:00:40', '2025-07-12 05:00:40'),
+(109, 1, '2025-08-15', 50000.00, 65000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":80}}]\"', '2025-07-12 05:00:40', '2025-08-15 08:55:17'),
 (110, 1, '2025-07-14', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-12 07:18:05', '2025-07-12 07:18:05'),
 (111, 2, '2025-07-14', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-12 07:18:05', '2025-07-12 07:18:05'),
 (112, 3, '2025-07-14', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-12 07:18:05', '2025-07-12 07:18:05'),
@@ -2081,7 +2910,7 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (131, 1, '2025-07-17', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
 (132, 2, '2025-07-17', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
 (133, 3, '2025-07-17', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
-(134, 4, '2025-07-17', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
+(134, 4, '2025-07-17', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-16 01:28:35'),
 (135, 5, '2025-07-17', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
 (136, 6, '2025-07-17', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
 (137, 7, '2025-07-17', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-13 22:22:11', '2025-07-13 22:22:11'),
@@ -2092,29 +2921,175 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (142, 5, '2025-07-16', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-14 19:58:52', '2025-07-14 19:58:52'),
 (143, 6, '2025-07-16', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-14 19:58:53', '2025-07-14 19:58:53'),
 (144, 7, '2025-07-16', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-14 19:58:53', '2025-07-14 19:58:53'),
-(145, 1, '2025-07-18', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":91}}]\"', '2025-07-16 07:10:15', '2025-07-16 19:14:33'),
-(146, 1, '2025-07-19', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":87}}]\"', '2025-07-16 07:10:15', '2025-07-16 07:10:15'),
-(147, 1, '2025-07-20', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":89}}]\"', '2025-07-16 07:10:15', '2025-07-16 07:10:15'),
-(148, 1, '2025-07-21', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 07:10:15', '2025-07-16 07:10:15'),
-(149, 1, '2025-07-22', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 07:10:15', '2025-07-16 07:10:15'),
-(150, 2, '2025-07-18', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":4,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"30.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":91}}]\"', '2025-07-16 19:14:33', '2025-07-16 19:14:33'),
-(151, 3, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 19:14:33', '2025-07-16 19:14:33'),
-(152, 4, '2025-07-18', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":76}}]\"', '2025-07-16 19:14:33', '2025-07-16 19:14:33'),
-(153, 5, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 19:14:33', '2025-07-16 19:14:33'),
-(154, 6, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 19:14:33', '2025-07-16 19:14:33'),
-(155, 7, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 19:14:33', '2025-07-16 19:14:33'),
-(156, 2, '2025-07-21', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 03:49:53', '2025-07-20 03:49:53'),
-(157, 3, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 03:49:53', '2025-07-20 03:49:53'),
-(158, 4, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 03:49:53', '2025-07-20 03:49:53'),
-(159, 5, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 03:49:53', '2025-07-20 03:49:53'),
-(160, 6, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 03:49:53', '2025-07-20 03:49:53'),
-(161, 7, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 03:49:53', '2025-07-20 03:49:53'),
-(162, 2, '2025-07-20', 1500000.00, 1950000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-20 03:49:59', '2025-07-20 03:49:59'),
-(163, 3, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-20 03:49:59', '2025-07-20 03:49:59'),
-(164, 4, '2025-07-20', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":74}}]\"', '2025-07-20 03:49:59', '2025-07-20 03:49:59'),
-(165, 5, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-20 03:49:59', '2025-07-20 03:49:59'),
-(166, 6, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-20 03:49:59', '2025-07-20 03:49:59'),
-(167, 7, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-20 03:49:59', '2025-07-20 03:49:59');
+(145, 1, '2025-07-18', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 20:16:52', '2025-07-17 08:45:59'),
+(146, 2, '2025-07-18', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 20:16:52', '2025-07-18 03:52:25'),
+(147, 3, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 20:16:52', '2025-07-16 20:16:52'),
+(148, 4, '2025-07-18', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":76}}]\"', '2025-07-16 20:16:52', '2025-07-18 03:52:25'),
+(149, 5, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 20:16:52', '2025-07-16 20:16:52'),
+(150, 6, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 20:16:52', '2025-07-16 20:16:52'),
+(151, 7, '2025-07-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-16 20:16:52', '2025-07-16 20:16:52'),
+(152, 1, '2025-07-19', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":1,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":80}}]\"', '2025-07-18 00:25:35', '2025-07-22 22:12:09'),
+(153, 2, '2025-07-19', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":82}}]\"', '2025-07-18 00:25:36', '2025-07-22 22:12:09'),
+(154, 3, '2025-07-19', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 00:25:36', '2025-07-18 00:25:36'),
+(155, 4, '2025-07-19', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":77}}]\"', '2025-07-18 00:25:36', '2025-07-22 22:12:09'),
+(156, 5, '2025-07-19', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 00:25:36', '2025-07-18 00:25:36'),
+(157, 6, '2025-07-19', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 00:25:36', '2025-07-18 00:25:36'),
+(158, 7, '2025-07-19', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 00:25:36', '2025-07-18 00:25:36'),
+(159, 1, '2025-08-18', 50000.00, 60000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-15 08:55:17'),
+(160, 2, '2025-08-18', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
+(161, 3, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
+(162, 4, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 20:37:38'),
+(163, 5, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
+(164, 6, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
+(165, 1, '2025-07-20', 5000.00, 6500.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 18:46:30', '2025-07-20 19:18:20'),
+(166, 2, '2025-07-20', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-07-18 18:46:30', '2025-07-20 19:18:20');
+INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
+(167, 3, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 18:46:30', '2025-07-18 18:46:30'),
+(168, 4, '2025-07-20', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":75}}]\"', '2025-07-18 18:46:30', '2025-07-20 19:18:20'),
+(169, 5, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 18:46:30', '2025-07-18 18:46:30'),
+(170, 6, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 18:46:31', '2025-07-18 18:46:31'),
+(171, 7, '2025-07-20', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 18:46:31', '2025-07-18 18:46:31'),
+(172, 1, '2025-07-21', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(173, 2, '2025-07-21', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(174, 3, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(175, 4, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(176, 5, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(177, 6, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(178, 7, '2025-07-21', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 19:06:00', '2025-07-18 19:06:00'),
+(179, 1, '2025-07-22', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(180, 2, '2025-07-22', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(181, 3, '2025-07-22', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(182, 4, '2025-07-22', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(183, 5, '2025-07-22', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(184, 6, '2025-07-22', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(185, 7, '2025-07-22', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-20 19:07:02', '2025-07-20 19:07:02'),
+(186, 1, '2025-07-23', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(187, 2, '2025-07-23', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(188, 3, '2025-07-23', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(189, 4, '2025-07-23', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(190, 5, '2025-07-23', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(191, 6, '2025-07-23', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(192, 7, '2025-07-23', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-21 23:12:43', '2025-07-21 23:12:43'),
+(193, 1, '2025-07-24', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(194, 2, '2025-07-24', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(195, 3, '2025-07-24', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(196, 4, '2025-07-24', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(197, 5, '2025-07-24', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(198, 6, '2025-07-24', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(199, 7, '2025-07-24', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 21:59:54', '2025-07-22 21:59:54'),
+(200, 1, '2025-08-03', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":93}}]\"', '2025-07-22 22:00:07', '2025-08-03 04:16:54'),
+(201, 2, '2025-08-03', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":4,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"30.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":93}}]\"', '2025-07-22 22:00:07', '2025-08-03 04:16:54'),
+(202, 3, '2025-08-03', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-22 22:00:07', '2025-08-03 04:16:54'),
+(203, 4, '2025-08-03', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":84}}]\"', '2025-07-22 22:00:07', '2025-08-03 04:16:55'),
+(204, 5, '2025-08-03', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-22 22:00:07', '2025-08-03 04:16:55'),
+(205, 6, '2025-08-03', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-22 22:00:07', '2025-08-03 04:16:55'),
+(206, 7, '2025-08-03', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-22 22:00:07', '2025-07-22 22:00:07'),
+(207, 1, '2025-08-11', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(208, 2, '2025-08-11', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(209, 3, '2025-08-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(210, 4, '2025-08-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(211, 5, '2025-08-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(212, 6, '2025-08-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(213, 7, '2025-08-11', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-22 22:11:05', '2025-07-22 22:11:05'),
+(214, 1, '2025-07-25', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-24 20:01:19', '2025-07-24 20:01:19'),
+(215, 1, '2025-07-26', 5000.00, 6500.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-24 20:01:19', '2025-07-24 20:25:01'),
+(216, 1, '2025-07-27', 5000.00, 7000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":2,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":94}}]\"', '2025-07-24 20:01:19', '2025-07-24 20:01:19'),
+(217, 1, '2025-07-28', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-24 20:01:19', '2025-07-24 20:01:19'),
+(218, 1, '2025-07-29', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-24 20:01:19', '2025-07-24 20:01:19'),
+(219, 1, '2025-07-30', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-24 20:01:19', '2025-07-29 10:37:07'),
+(220, 1, '2025-07-31', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-24 20:01:19', '2025-07-31 14:02:33'),
+(221, 2, '2025-07-26', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-07-24 20:25:01', '2025-07-24 20:25:01'),
+(222, 3, '2025-07-26', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-24 20:25:01', '2025-07-24 20:25:01'),
+(223, 4, '2025-07-26', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":72}}]\"', '2025-07-24 20:25:01', '2025-07-24 20:25:01'),
+(224, 5, '2025-07-26', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-24 20:25:01', '2025-07-24 20:25:01'),
+(225, 6, '2025-07-26', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-24 20:25:01', '2025-07-24 20:25:01'),
+(226, 7, '2025-07-26', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-24 20:25:02', '2025-07-24 20:25:02'),
+(227, 2, '2025-07-29', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:34:22', '2025-07-27 19:34:22'),
+(228, 3, '2025-07-29', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:34:22', '2025-07-27 19:34:22'),
+(229, 4, '2025-07-29', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":70}}]\"', '2025-07-27 19:34:22', '2025-07-28 06:25:46'),
+(230, 5, '2025-07-29', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:34:22', '2025-07-27 19:34:22'),
+(231, 6, '2025-07-29', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:34:22', '2025-07-27 19:34:22'),
+(232, 7, '2025-07-29', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:34:22', '2025-07-27 19:34:22'),
+(233, 2, '2025-07-28', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:36:37', '2025-07-27 19:36:37'),
+(234, 3, '2025-07-28', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:36:37', '2025-07-27 19:36:37'),
+(235, 4, '2025-07-28', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:36:37', '2025-07-27 19:36:37'),
+(236, 5, '2025-07-28', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:36:37', '2025-07-27 19:36:37'),
+(237, 6, '2025-07-28', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-27 19:36:37', '2025-07-27 19:36:37'),
+(238, 3, '2025-07-30', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-29 00:44:57', '2025-07-29 10:37:07'),
+(239, 4, '2025-07-30', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":70}}]\"', '2025-07-29 00:44:57', '2025-07-29 16:42:49'),
+(240, 5, '2025-07-30', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-29 00:44:57', '2025-07-29 10:37:07'),
+(241, 6, '2025-07-30', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-29 00:44:57', '2025-07-29 10:37:07'),
+(242, 7, '2025-07-30', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-29 00:44:57', '2025-07-29 10:37:07'),
+(243, 1, '2025-08-01', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 07:29:19', '2025-07-31 10:11:05'),
+(244, 3, '2025-08-01', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 07:29:19', '2025-07-31 07:29:19'),
+(245, 4, '2025-08-01', 1000000.00, 1270000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":84}}]\"', '2025-07-31 07:29:19', '2025-07-31 13:59:57'),
+(246, 5, '2025-08-01', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 07:29:19', '2025-07-31 07:29:19'),
+(247, 6, '2025-08-01', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 07:29:19', '2025-07-31 07:29:19'),
+(248, 7, '2025-08-01', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 07:29:19', '2025-07-31 07:29:19'),
+(249, 3, '2025-07-31', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 14:02:33', '2025-07-31 14:02:33'),
+(250, 4, '2025-07-31', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 14:02:33', '2025-07-31 14:02:33'),
+(251, 5, '2025-07-31', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 14:02:33', '2025-07-31 14:02:33'),
+(252, 6, '2025-07-31', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-31 14:02:33', '2025-07-31 14:02:33'),
+(253, 1, '2025-08-04', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 04:16:06'),
+(254, 2, '2025-08-04', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 04:16:06'),
+(255, 3, '2025-08-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 04:16:06'),
+(256, 4, '2025-08-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 07:02:14'),
+(257, 5, '2025-08-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 04:16:06');
+INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
+(258, 6, '2025-08-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 04:16:06'),
+(259, 7, '2025-08-04', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-03 04:16:06', '2025-08-03 04:16:06'),
+(260, 1, '2025-08-06', 50000.00, 60000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-16 10:07:05'),
+(261, 2, '2025-08-06', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-05 09:14:08'),
+(262, 3, '2025-08-06', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-05 09:14:08'),
+(263, 4, '2025-08-06', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-05 09:14:08'),
+(264, 5, '2025-08-06', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-05 09:14:08'),
+(265, 6, '2025-08-06', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-05 09:14:08'),
+(266, 7, '2025-08-06', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-05 09:14:08', '2025-08-05 09:14:08'),
+(267, 1, '2025-08-07', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(268, 2, '2025-08-07', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(269, 3, '2025-08-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(270, 4, '2025-08-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(271, 5, '2025-08-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(272, 6, '2025-08-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(273, 7, '2025-08-07', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-06 06:44:47', '2025-08-06 06:44:47'),
+(274, 1, '2025-08-12', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(275, 2, '2025-08-12', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(276, 3, '2025-08-12', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(277, 4, '2025-08-12', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(278, 5, '2025-08-12', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(279, 6, '2025-08-12', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(280, 7, '2025-08-12', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 11:12:18', '2025-08-11 11:12:18'),
+(281, 1, '2025-08-13', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(282, 2, '2025-08-13', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(283, 3, '2025-08-13', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(284, 4, '2025-08-13', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(285, 5, '2025-08-13', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(286, 6, '2025-08-13', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(287, 7, '2025-08-13', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-11 17:15:52', '2025-08-11 17:15:52'),
+(288, 1, '2025-08-14', 5000.00, 6000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(289, 2, '2025-08-14', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(290, 3, '2025-08-14', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(291, 4, '2025-08-14', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(292, 5, '2025-08-14', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(293, 6, '2025-08-14', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(294, 7, '2025-08-14', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-13 04:00:30', '2025-08-13 04:00:30'),
+(295, 1, '2025-08-16', 50000.00, 65000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:28:44', '2025-08-16 09:13:34'),
+(296, 2, '2025-08-16', 1500000.00, 1950000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:28:44', '2025-08-15 08:28:44'),
+(297, 3, '2025-08-16', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:28:44', '2025-08-15 08:28:44'),
+(298, 4, '2025-08-16', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":82}}]\"', '2025-08-15 08:28:44', '2025-08-16 09:13:34'),
+(299, 5, '2025-08-16', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:28:44', '2025-08-15 08:28:44'),
+(300, 6, '2025-08-16', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:28:44', '2025-08-15 08:28:44'),
+(301, 7, '2025-08-16', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:28:44', '2025-08-15 08:28:44'),
+(302, 1, '2025-08-17', 50000.00, 65000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-15 08:55:17', '2025-08-16 10:05:26'),
+(303, 1, '2025-08-19', 50000.00, 60000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-15 08:55:17', '2025-08-15 08:55:17'),
+(304, 1, '2025-08-20', 50000.00, 60000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-15 08:55:17', '2025-08-15 08:55:17'),
+(305, 1, '2025-08-21', 50000.00, 60000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-15 08:55:17', '2025-08-15 08:55:17'),
+(306, 2, '2025-08-17', 1500000.00, 1950000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 10:05:27'),
+(307, 3, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18'),
+(308, 4, '2025-08-17', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":84}}]\"', '2025-08-16 09:09:18', '2025-08-16 10:05:27'),
+(309, 5, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18'),
+(310, 6, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18'),
+(311, 7, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18');
 
 -- --------------------------------------------------------
 
@@ -2127,11 +3102,71 @@ CREATE TABLE `room_transfers` (
   `booking_id` int NOT NULL,
   `old_room_id` int NOT NULL,
   `new_room_id` int NOT NULL,
-  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `additional_fee_vnd` decimal(15,2) DEFAULT '0.00',
+  `new_option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Mã gói phòng mới',
+  `transfer_policy_id` int DEFAULT NULL COMMENT 'Mã chính sách chuyển phòng',
+  `status` enum('Pending','Approved','Rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu',
+  `price_difference_vnd` decimal(15,2) DEFAULT NULL COMMENT 'Chênh lệch giá (dương: bù tiền, âm: hoàn tiền)',
+  `payment_id` int DEFAULT NULL COMMENT 'Mã hóa đơn liên quan (nếu có bù tiền)',
+  `processed_by` bigint UNSIGNED DEFAULT NULL COMMENT 'Mã nhân viên xử lý',
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Lý do chuyển phòng',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `room_transfers`
+--
+
+INSERT INTO `room_transfers` (`transfer_id`, `booking_id`, `old_room_id`, `new_room_id`, `new_option_id`, `transfer_policy_id`, `status`, `price_difference_vnd`, `payment_id`, `processed_by`, `reason`, `created_at`, `updated_at`) VALUES
+(3, 24, 20, 20, 'OPT10', 7, 'Approved', -959999.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-02 16:21:40', '2025-08-02 16:21:40'),
+(4, 24, 20, 20, 'OPT10', 7, 'Approved', 0.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-02 16:33:47', '2025-08-02 16:33:47'),
+(5, 24, 20, 20, 'OPT10', 7, 'Approved', 3980000.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-02 16:35:08', '2025-08-02 16:35:08'),
+(6, 24, 20, 20, 'OPT10', 7, 'Approved', 0.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-02 16:40:34', '2025-08-02 16:40:34'),
+(7, 24, 20, 20, 'OPT10', 7, 'Approved', 0.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-02 16:40:36', '2025-08-02 16:40:36'),
+(8, 24, 20, 20, 'OPT10', 7, 'Approved', 0.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-02 16:40:39', '2025-08-02 16:40:39'),
+(9, 24, 20, 20, 'OPT10', 7, 'Approved', 0.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-03 04:19:40', '2025-08-03 04:19:40'),
+(10, 24, 20, 20, 'OPT10', 7, 'Approved', -3980000.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-03 04:19:46', '2025-08-03 04:19:46'),
+(11, 24, 92, 92, 'OPT10', 7, 'Approved', 7960000.00, NULL, NULL, 'Khách yêu cầu nâng cấp phòng', '2025-08-03 04:22:14', '2025-08-03 04:22:14'),
+(12, 24, 95, 95, 'OPT10', 7, 'Approved', 0.00, NULL, NULL, 'Khách yêu cầu nâng cấp gói phòng', '2025-08-03 11:18:19', '2025-08-03 11:18:19');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `room_transfer_policies`
+--
+
+CREATE TABLE `room_transfer_policies` (
+  `policy_id` int NOT NULL,
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên chính sách',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chính sách',
+  `transfer_fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí chuyển phòng cố định (VND)',
+  `transfer_fee_percentage` decimal(5,2) DEFAULT '0.00' COMMENT 'Phí chuyển phòng theo phần trăm giá phòng mới',
+  `min_days_before_check_in` int DEFAULT NULL COMMENT 'Số ngày tối thiểu trước check-in để áp dụng chuyển phòng',
+  `applies_to_holiday` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho ngày lễ',
+  `applies_to_weekend` tinyint(1) DEFAULT '0' COMMENT 'Áp dụng cho cuối tuần',
+  `requires_guest_confirmation` tinyint(1) DEFAULT '1' COMMENT 'Yêu cầu xác nhận từ khách',
+  `room_type_id` int DEFAULT NULL COMMENT 'Loại phòng áp dụng (NULL nếu áp dụng tất cả)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái kích hoạt',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` date DEFAULT NULL,
+  `applies_to_package_change` tinyint(1) DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Chính sách chuyển phòng';
+
+--
+-- Dumping data for table `room_transfer_policies`
+--
+
+INSERT INTO `room_transfer_policies` (`policy_id`, `name`, `description`, `transfer_fee_vnd`, `transfer_fee_percentage`, `min_days_before_check_in`, `applies_to_holiday`, `applies_to_weekend`, `requires_guest_confirmation`, `room_type_id`, `is_active`, `created_at`, `updated_at`, `deleted_at`, `applies_to_package_change`) VALUES
+(1, 'Chuyển phòng tiêu chuẩn', 'Chuyển phòng cùng loại hoặc nâng cấp, miễn phí nếu thông báo trước 1 ngày, áp dụng cho mọi loại phòng.', 0.00, 0.00, 1, 0, 0, 0, NULL, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(2, 'Chuyển phòng ngày lễ', 'Chuyển phòng trong ngày lễ, phí cố định 500,000 VND, yêu cầu thông báo trước 2 ngày, áp dụng cho mọi loại phòng.', 500000.00, 0.00, 2, 1, 0, 1, NULL, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(3, 'Chuyển phòng cuối tuần Deluxe', 'Chuyển phòng loại Deluxe vào cuối tuần, phí 10% giá phòng mới, yêu cầu thông báo trước 1 ngày.', 0.00, 10.00, 1, 0, 1, 1, 2, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(4, 'Nâng cấp phòng Suite', 'Nâng cấp lên phòng Suite, phí cố định 1,000,000 VND, áp dụng cho loại phòng Suite.', 1000000.00, 0.00, NULL, 0, 0, 1, 3, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(5, 'Chuyển phòng khẩn cấp', 'Chuyển phòng trong ngày, phí 15% giá phòng mới, áp dụng cho mọi loại phòng, không yêu cầu thông báo trước.', 0.00, 15.00, 0, 0, 0, 1, NULL, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(6, 'Chuyển phòng Standard ngày lễ', 'Chuyển phòng loại Standard trong ngày lễ, phí cố định 300,000 VND, yêu cầu thông báo trước 2 ngày.', 300000.00, 0.00, 2, 1, 0, 1, 1, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(7, 'Chuyển phòng cùng loại miễn phí', 'Chuyển phòng cùng loại phòng, miễn phí, không yêu cầu thông báo trước, áp dụng cho mọi loại phòng.', 0.00, 0.00, NULL, 0, 0, 0, NULL, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(8, 'Chuyển phòng hạ cấp', 'Chuyển sang phòng loại thấp hơn, phí cố định 200,000 VND, áp dụng cho mọi loại phòng.', 200000.00, 0.00, 1, 0, 0, 1, NULL, 1, '2025-08-02 15:21:00', '2025-08-02 15:21:00', NULL, 0),
+(9, 'Chuyển phòng với gói khác', NULL, 50000.00, 5.00, NULL, 0, 0, 0, NULL, 1, '2025-08-03 04:43:28', '2025-08-03 04:43:28', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -2158,7 +3193,7 @@ CREATE TABLE `room_types` (
 --
 
 INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `total_room`, `base_price`, `room_area`, `view`, `rating`, `max_guests`, `is_active`) VALUES
-(1, 'deluxe', 'Deluxe Room', 'Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.', 90, 5000.00, 32, 'ABC', 0, 2, 1),
+(1, 'deluxe', 'Deluxe Room', 'Phòng giường đôi rộng rãi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng cùng bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, tủ để quần áo cũng như tầm nhìn ra thành phố.', 90, 50000.00, 32, 'ABC', 0, 2, 1),
 (2, 'premium_corner', 'Premium Corner', 'Phòng giường đôi rộng rãi này có máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm.', 96, 1500000.00, 64, 'BCD', 0, 2, 1),
 (3, 'the_level_premium', 'The Level Premium', 'Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.', 36, 1000000.00, 92, 'BBJ', 0, 2, 1),
 (4, 'the_level_premium_corner', 'The Level Premium Corner', 'Phòng giường đôi này được bố trí máy điều hòa, tường cách âm cũng như phòng tắm riêng với buồng tắm đứng và bồn tắm. Phòng giường đôi có sàn trải thảm, khu vực ghế ngồi với TV màn hình phẳng, minibar, máy pha cà phê cũng như tầm nhìn ra thành phố.\n\n', 32, 1000000.00, 20, 'WD', 0, 2, 1),
@@ -2529,6 +3564,14 @@ CREATE TABLE `room_type_package_services` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `room_type_package_services`
+--
+
+INSERT INTO `room_type_package_services` (`id`, `package_id`, `service_id`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, '2025-07-30 03:52:03', '2025-07-30 03:52:03'),
+(2, 8, 1, '2025-07-30 03:52:25', '2025-07-30 03:52:25');
+
 -- --------------------------------------------------------
 
 --
@@ -2553,25 +3596,6 @@ INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at
 -- --------------------------------------------------------
 
 --
--- Table structure for table `seo_scores`
---
-
-CREATE TABLE `seo_scores` (
-  `news_id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính – liên kết bài viết',
-  `seo_score` int DEFAULT '0' COMMENT 'Điểm SEO (0–100), chấm tự động dựa trên tiêu chí kỹ thuật',
-  `focus_keyword` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Từ khóa chính bài viết nhắm đến',
-  `has_h1` tinyint(1) DEFAULT NULL COMMENT 'Có thẻ H1 duy nhất không',
-  `has_image_with_alt` tinyint(1) DEFAULT NULL COMMENT 'Có ảnh có ALT không',
-  `has_internal_link` tinyint(1) DEFAULT NULL COMMENT 'Có link nội bộ không',
-  `keyword_density` decimal(5,2) DEFAULT NULL COMMENT 'Mật độ từ khóa chính trong nội dung (%)',
-  `is_slug_contain_keyword` tinyint(1) DEFAULT NULL COMMENT 'Slug có chứa từ khóa chính không',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tính điểm SEO',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Cập nhật gần nhất'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu điểm SEO tự động từng bài viết để kiểm soát chất lượng nội dung';
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `services`
 --
 
@@ -2581,6 +3605,7 @@ CREATE TABLE `services` (
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `price_vnd` decimal(15,2) NOT NULL DEFAULT '0.00',
   `unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Ví dụ: lần, ngày, giờ, kg',
+  `included_services` tinyint(1) DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -2590,8 +3615,18 @@ CREATE TABLE `services` (
 -- Dumping data for table `services`
 --
 
-INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Ăn uống tại phòng', 'Khách có thể đặt các món ăn, đồ uống từ thực đơn của nhà hàng khách sạn và được nhân viên mang đến tận phòng.', 5000.00, '1', 1, '2025-06-25 16:25:18', '2025-07-08 15:46:46');
+INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`, `included_services`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Ăn uống tại phòng', 'Khách có thể đặt các món ăn, đồ uống từ thực đơn của nhà hàng khách sạn và được nhân viên mang đến tận phòng.', 50000.00, '1', 0, 1, '2025-06-25 16:25:18', '2025-08-16 10:20:46'),
+(2, 'Dịch vụ spa và massage', 'Các liệu pháp spa thư giãn, massage toàn thân hoặc chuyên sâu, sử dụng tinh dầu và kỹ thuật chuyên nghiệp.', 500000.00, 'lần', 0, 1, '2025-08-11 10:34:37', '2025-08-11 10:34:37'),
+(3, 'Dịch vụ giặt ủi', 'Giặt khô, giặt ướt và ủi quần áo, hoàn thành trong 24 giờ.', 50000.00, 'kg', 0, 1, '2025-08-11 10:34:37', '2025-08-11 10:34:37'),
+(4, 'Mini bar', 'Sử dụng đồ uống, snack và rượu từ mini bar trong phòng, tính phí theo sản phẩm tiêu thụ.', 100000.00, 'lần', 1, 1, '2025-08-11 10:34:37', '2025-08-11 10:35:27'),
+(5, 'Xe đưa đón sân bay', 'Dịch vụ đưa đón hai chiều từ sân bay đến khách sạn bằng xe riêng.', 300000.00, 'chuyến', 0, 1, '2025-08-11 10:34:37', '2025-08-11 10:35:16'),
+(6, 'Tour du lịch địa phương', 'Tổ chức tour tham quan các địa danh nổi tiếng, bao gồm hướng dẫn viên và phương tiện di chuyển.', 800000.00, 'người', 1, 1, '2025-08-11 10:34:37', '2025-08-11 10:35:32'),
+(7, 'Thuê xe hơi hoặc xe máy', 'Thuê xe hơi tự lái hoặc có tài xế, hoặc xe máy để khám phá khu vực lân cận.', 500000.00, 'ngày', 1, 1, '2025-08-11 10:34:37', '2025-08-11 10:35:04'),
+(8, 'Dịch vụ hội nghị và sự kiện', 'Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.', 2000000.00, 'giờ', 1, 1, '2025-08-11 10:34:37', '2025-08-11 10:35:46'),
+(9, 'Bữa tối đặc biệt', 'Bữa tối lãng mạn hoặc theo chủ đề tại nhà hàng, với menu tùy chỉnh và rượu vang.', 1000000.00, 'người', 0, 1, '2025-08-11 10:34:37', '2025-08-11 10:34:37'),
+(10, 'Dịch vụ trông trẻ', 'Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.', 200000.00, 'giờ', 1, 1, '2025-08-11 10:34:37', '2025-08-11 10:34:59'),
+(11, 'Dịch vụ phòng 24/7', 'Dịch vụ phục vụ đồ ăn, thức uống tận phòng bất kỳ lúc nào trong ngày.', 50000.00, 'lần', 0, 1, '2025-08-11 10:34:37', '2025-08-11 10:34:37');
 
 -- --------------------------------------------------------
 
@@ -2613,7 +3648,17 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('XO0UFFxDF8WdI0LOsiEa4DeBHakWOkxQt3RZe8qb', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiMjV2VzRkVkVGWjJ6VjJ0VEgwUFdHWWhoU1dqM1VsaDZJQWxwZ0pzTiI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjM2OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vYm9va2luZ3MiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1753029848);
+('5gOK3ldmiZbmf62iko8uexlRMN9B2mQlShRLekXE', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiTER5Wmo3N3VpWW9UcVJnbUYwVVJNQk5sbFlmRHNid3JVdEk2MVdtUSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODg4OC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752301336),
+('8ZR9jSid1KTtEOuxSVnEyS5HVVA0ss9OYgIet2Tu', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiWkhXbVlOVmZGcnJocGF6OXFBNkwzdVM5U3FTQ1UyQlRGWkJLZFI5RyI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czo0ODoiaHR0cDovLzEyNy4wLjAuMTo4ODg4L2FkbWluL3Jvb21zP3Jvb21fdHlwZV9pZD0xIjt9czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDg6Imh0dHA6Ly8xMjcuMC4wLjE6ODg4OC9hZG1pbi9yb29tcz9yb29tX3R5cGVfaWQ9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752331964),
+('DRODFLxFPrKpW7VuSK1CvBaGuOkLJa8vVQJCtJEo', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiRld6bnRrT3NWbloxSEZwRE5nSlhFOUhONGQxTE13MDlnYVJiTEpuYyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODg4OC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752321197),
+('e8KJ8MkgdWDFwY8i82LB8Vv6CA6QL3h8Q3dW8qS0', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoibDVCZXdKM0p1QzJmcjhUVjY0SVd2cGdEWWtRUllnMENjQkxZZVBXNyI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ4OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vcm9vbXM/cm9vbV90eXBlX2lkPTEiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1752320952),
+('FOBt9dtCMx2EXJRbwMe2jBjrUm0LqIRGxvAlrH1w', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoieG43cjVnV2VSTkR0SHp5VDRhNWJMQXBDSDBWV05KZEhJWHBiaVQzZyI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ5OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vY2FuY2VsbGF0aW9uLXBvbGljaWVzIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1752333411),
+('GFQ2TBiH8WwYeOwrxjw5wMvsZfAfJuNq6jpROJXQ', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiaTBYcEc4ZUVxTENHTmJaS0gyWEE1aDVTMzRZTjBEQURNcnFVeXRMViI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjM4OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vcm9vbS10eXBlcyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1752250620),
+('i33TjfDog7jIyXZTAooqYHXBUycsU1QbtnRJfhNC', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoieVhYbnM5QU1TbXptNXBEU241UHF5OFV1c0pqQUxyMGtFYzRDa0JrRCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODg4OC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752312665),
+('oNitxo9SjAS8zo9AyPyT4wG1ysAD78aH5vZ6lJRZ', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiY2h6aUdtZHFmcFF3d2dUd09iWE9iWVBTQ3lNUVBSRFd3ZkZLbkFORCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODg4OC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752329409),
+('ulzMoazgYv2MmzpEkyYisMA5VcZQIexnOjVwFEZC', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiSXl3bUhDdWFqVGZZT1lBYXJadzgwM0lxMVR2bzZWakRHUkZ3SFNEZiI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODg4OC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752340222),
+('wi72prq2WsWUE2tEZWZj1rt7cNj5BmPCZ0lOluXU', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiUWFWVEtRTlhocXliUnpjNWhwb2xmenhmbFJtUFI1cjBPaW1nS2d4dSI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjQ0OiJodHRwOi8vMTI3LjAuMC4xOjg4ODgvYWRtaW4vZGVwb3NpdC1wb2xpY2llcyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1752305193),
+('ZxzdyZPTSkAz58POHTttrWwZJTWmdvPSr1BmW9wf', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiYWNFTWV2aU9wbHNkYzcwbWFXTm44QnRibkY4RTFTSzBmR2x4bWpWVSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODg4OC9sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1752250643);
 
 -- --------------------------------------------------------
 
@@ -2686,12 +3731,14 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `google_id`, `avatar`, `email_verified_at`, `password`, `phone`, `address`, `identity_code`, `role`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `current_team_id`, `profile_photo_path`, `created_at`, `updated_at`) VALUES
-(1, 'NGUYỄN ANH ĐỨC', 'nguyenanhduc2909@gmail.com', NULL, NULL, NULL, '$2y$12$c2dNZ4nJgjNNQzaupkPYP.qIR6Ax7vkA65tXqK/n/uStI/bAr5haa', '0822153447', 'Thanh Hóa', '035653556536', 'admin', NULL, NULL, NULL, NULL, NULL, 'profile-photos/HkHH1opjbMUOUFbd9DPPimJKVRodA9lwkuKMCHmJ.jpg', '2025-05-21 01:07:42', '2025-07-20 07:43:32'),
+(1, 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', NULL, NULL, NULL, '$2y$12$c2dNZ4nJgjNNQzaupkPYP.qIR6Ax7vkA65tXqK/n/uStI/bAr5haa', '08221534477', 'Thanh Hóa', '038205000950', 'admin', NULL, NULL, NULL, NULL, NULL, 'profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png', '2025-05-21 01:07:42', '2025-08-15 07:16:36'),
 (2, 'Nguyễn Anh Đức', 'nguyenandhduc2909@gmail.com', NULL, NULL, NULL, '$2y$12$ofny2jH99JRC2egJJaVzLOyRIuw2.5aL93twDg6Zw4hOq0KKWdxAu', '08221534422', 'Thanh Hóa', NULL, 'guest', NULL, NULL, NULL, NULL, NULL, NULL, '2025-06-10 09:47:13', '2025-06-10 09:47:13'),
 (3, 'Thu Huyền', 'nguyenanhduc29090@gmail.com', NULL, NULL, NULL, '$2y$12$sIBuDRsM3GZwHvaxR8xNeeF6UIW1YTu5wCghwC.M63T3qWoUC6gna', '03111512022', 'Tuyên Quang', '035656218945', NULL, NULL, NULL, NULL, NULL, NULL, 'profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg', '2025-06-27 00:17:18', '2025-06-27 00:17:18'),
-(5, '明心', 'quyenjpn@gmail.com', '109271388597887089369', 'https://lh3.googleusercontent.com/a/ACg8ocLibsuu8ZHTUKCZ5jMRf4XanikYipmCOnfOQFqEYq_3W7lJkd6YCA=s96-c', NULL, '$2y$12$/AcXTgdK8ApiZERpHkvx3.RE/9rRrtszdM3lV.WFPfqCW3j40v/XG', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-08 21:51:07', '2025-07-08 21:51:07'),
-(6, 'Pro Mark', 'markpro824@gmail.com', '103984459604437565231', 'https://lh3.googleusercontent.com/a/ACg8ocLyS17KMeW7ftc9SYLqQGewq65wYm54Chs2pk1kHjkOBT0SBg=s96-c', NULL, '$2y$12$eeWAk0mGEgXsJItVMonL3eP7bVFMFZXKl25jO8gpZL6pU60lGG82e', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-08 21:54:23', '2025-07-08 21:54:23'),
-(7, 'nguyễn văn quyền ADMIN', 'werwerww@gmail.com', NULL, NULL, NULL, '$2y$12$fYWYXd5Bo5JeaCgj/6pgl.f7O4WHg/tZjpwbddGbpASPebWu1u4Em', '0987654321', 'jhvbujh', '324123423', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-09 00:07:53', '2025-07-09 00:12:49');
+(5, '明心', 'quyenjpn@gmail.com', '109271388597887089369', 'https://lh3.googleusercontent.com/a/ACg8ocLibsuu8ZHTUKCZ5jMRf4XanikYipmCOnfOQFqEYq_3W7lJkd6YCA=s96-c', NULL, '$2y$12$/AcXTgdK8ApiZERpHkvx3.RE/9rRrtszdM3lV.WFPfqCW3j40v/XG', '0335920306', 'Thanh hoá', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-08 21:51:07', '2025-07-08 21:51:07'),
+(6, 'Pro Mark', 'markpro824@gmail.com', '103984459604437565231', 'https://lh3.googleusercontent.com/a/ACg8ocLyS17KMeW7ftc9SYLqQGewq65wYm54Chs2pk1kHjkOBT0SBg=s96-c', NULL, '$2y$12$eeWAk0mGEgXsJItVMonL3eP7bVFMFZXKl25jO8gpZL6pU60lGG82e', NULL, NULL, NULL, 'receptionist', NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-08 21:54:23', '2025-07-08 21:54:23'),
+(7, 'nguyễn văn quyền ADMIN', 'werwerww@gmail.com', NULL, NULL, NULL, '$2y$12$fYWYXd5Bo5JeaCgj/6pgl.f7O4WHg/tZjpwbddGbpASPebWu1u4Em', '0987654321', 'jhvbujh', '324123423', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-09 00:07:53', '2025-07-09 00:12:49'),
+(9, 'Phương nguyễn', 'maiiphuong1981@gmail.com', '107379410125025514536', 'https://lh3.googleusercontent.com/a/ACg8ocIGGrOzbzC7mG4bgj1Wz_l4crSDbQ3SWRkvHbbEus5j4BYCO-PR=s96-c', NULL, '$2y$12$SOT8QcuNDrfkZuExPoOGKu/iI8weNR9.Wsu9QGCrKGkFPMD.Ozw0q', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-08-15 03:25:38', '2025-08-15 03:25:38'),
+(10, 'PHNguyễn Anh Đức', 'nguyenanhduc2909@gmail.comm', NULL, NULL, NULL, '$2y$12$C/HiE4KzEReWluPgA3JT2unQ1pdde/OR/dUENi944FM1c/n43taPq', '0822153447', 'Thanh Hóa\r\nThanh Hóa', '0356562189457', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-08-15 07:46:42', '2025-08-15 07:46:42');
 
 -- --------------------------------------------------------
 
@@ -2734,8 +3781,13 @@ ALTER TABLE `amenities`
 -- Indexes for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  ADD PRIMARY KEY (`log_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD PRIMARY KEY (`audit_id`),
+  ADD KEY `idx_user_time` (`user_id`,`created_at`),
+  ADD KEY `idx_model_record` (`model`,`model_id`),
+  ADD KEY `idx_action_time` (`action`,`created_at`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_session` (`session_id`),
+  ADD KEY `idx_ip` (`ip_address`);
 
 --
 -- Indexes for table `bed_types`
@@ -2765,7 +3817,12 @@ ALTER TABLE `booking_extensions`
 --
 ALTER TABLE `booking_reschedules`
   ADD PRIMARY KEY (`reschedule_id`),
-  ADD KEY `booking_id` (`booking_id`);
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `new_room_id` (`new_room_id`),
+  ADD KEY `new_option_id` (`new_option_id`),
+  ADD KEY `reschedule_policy_id` (`reschedule_policy_id`),
+  ADD KEY `payment_id` (`payment_id`),
+  ADD KEY `processed_by` (`processed_by`);
 
 --
 -- Indexes for table `booking_rooms`
@@ -2784,10 +3841,41 @@ ALTER TABLE `booking_room_children`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `booking_services`
+--
+ALTER TABLE `booking_services`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `service_id` (`service_id`);
+
+--
 -- Indexes for table `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   ADD PRIMARY KEY (`policy_id`);
+
+--
+-- Indexes for table `cancellation_requests`
+--
+ALTER TABLE `cancellation_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `cancellation_policy_id` (`cancellation_policy_id`),
+  ADD KEY `processed_by` (`processed_by`);
+
+--
+-- Indexes for table `check_in_policies`
+--
+ALTER TABLE `check_in_policies`
+  ADD PRIMARY KEY (`policy_id`);
+
+--
+-- Indexes for table `check_in_requests`
+--
+ALTER TABLE `check_in_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `policy_id` (`policy_id`);
 
 --
 -- Indexes for table `check_out_policies`
@@ -2800,13 +3888,40 @@ ALTER TABLE `check_out_policies`
 --
 ALTER TABLE `check_out_requests`
   ADD PRIMARY KEY (`request_id`),
-  ADD KEY `booking_id` (`booking_id`);
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `policy_id` (`policy_id`);
 
 --
 -- Indexes for table `children_surcharges`
 --
 ALTER TABLE `children_surcharges`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `compensation_policies`
+--
+ALTER TABLE `compensation_policies`
+  ADD PRIMARY KEY (`compensation_policy_id`),
+  ADD KEY `applies_to_room_type_id` (`applies_to_room_type_id`);
+
+--
+-- Indexes for table `compensation_requests`
+--
+ALTER TABLE `compensation_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `policy_id` (`policy_id`),
+  ADD KEY `requested_by` (`requested_by`),
+  ADD KEY `approved_by` (`approved_by`);
+
+--
+-- Indexes for table `conversations`
+--
+ALTER TABLE `conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `conversations_client_token_unique` (`client_token`),
+  ADD KEY `conversations_user_id_foreign` (`user_id`),
+  ADD KEY `conversations_handover_to_user_id_foreign` (`handover_to_user_id`);
 
 --
 -- Indexes for table `currency`
@@ -2841,6 +3956,21 @@ ALTER TABLE `events`
   ADD PRIMARY KEY (`event_id`);
 
 --
+-- Indexes for table `extension_policies`
+--
+ALTER TABLE `extension_policies`
+  ADD PRIMARY KEY (`policy_id`);
+
+--
+-- Indexes for table `extension_requests`
+--
+ALTER TABLE `extension_requests`
+  ADD PRIMARY KEY (`request_id`),
+  ADD KEY `booking_id` (`booking_id`),
+  ADD KEY `extension_policy_id` (`extension_policy_id`),
+  ADD KEY `processed_by` (`processed_by`);
+
+--
 -- Indexes for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
@@ -2871,13 +4001,6 @@ ALTER TABLE `floors`
   ADD UNIQUE KEY `floor_number` (`floor_number`);
 
 --
--- Indexes for table `guests`
---
-ALTER TABLE `guests`
-  ADD PRIMARY KEY (`guest_id`),
-  ADD KEY `fk_guests_user` (`user_id`);
-
---
 -- Indexes for table `holidays`
 --
 ALTER TABLE `holidays`
@@ -2891,10 +4014,11 @@ ALTER TABLE `hotel`
   ADD KEY `idx_hotel_id` (`hotel_id`);
 
 --
--- Indexes for table `hotel_rating`
+-- Indexes for table `invoices`
 --
-ALTER TABLE `hotel_rating`
-  ADD PRIMARY KEY (`hotel_id`);
+ALTER TABLE `invoices`
+  ADD PRIMARY KEY (`invoice_id`),
+  ADD KEY `booking_id` (`booking_id`);
 
 --
 -- Indexes for table `language`
@@ -2915,6 +4039,13 @@ ALTER TABLE `media_files`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `messages`
+--
+ALTER TABLE `messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `messages_conversation_id_foreign` (`conversation_id`);
+
+--
 -- Indexes for table `migrations`
 --
 ALTER TABLE `migrations`
@@ -2924,6 +4055,16 @@ ALTER TABLE `migrations`
 -- Indexes for table `news`
 --
 ALTER TABLE `news`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `slug` (`slug`),
+  ADD KEY `thumbnail_id` (`thumbnail_id`),
+  ADD KEY `author_id` (`author_id`),
+  ADD KEY `category_id` (`category_id`);
+
+--
+-- Indexes for table `news1`
+--
+ALTER TABLE `news1`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `slug` (`slug`),
   ADD KEY `fk_news_thumbnail` (`thumbnail_id`),
@@ -2936,6 +4077,23 @@ ALTER TABLE `news`
 ALTER TABLE `news_categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `slug` (`slug`);
+
+--
+-- Indexes for table `news_comments`
+--
+ALTER TABLE `news_comments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `news_id` (`news_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `parent_id` (`parent_id`);
+
+--
+-- Indexes for table `news_user_actions`
+--
+ALTER TABLE `news_user_actions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `news_id` (`news_id`,`user_id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `notifications`
@@ -2951,6 +4109,13 @@ ALTER TABLE `notifications`
 ALTER TABLE `payment`
   ADD PRIMARY KEY (`payment_id`),
   ADD KEY `idx_booking_status` (`booking_id`,`status`);
+
+--
+-- Indexes for table `payment_settings`
+--
+ALTER TABLE `payment_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `payment_settings_key_unique` (`key`);
 
 --
 -- Indexes for table `permissions`
@@ -2994,7 +4159,22 @@ ALTER TABLE `pricing_config`
 ALTER TABLE `representatives`
   ADD PRIMARY KEY (`id`),
   ADD KEY `booking_id` (`booking_id`),
-  ADD KEY `room_id` (`room_id`);
+  ADD KEY `room_id` (`room_id`),
+  ADD KEY `fk_representative_user` (`user_id`);
+
+--
+-- Indexes for table `reschedule_policies`
+--
+ALTER TABLE `reschedule_policies`
+  ADD PRIMARY KEY (`policy_id`),
+  ADD KEY `room_type_id` (`room_type_id`);
+
+--
+-- Indexes for table `reviews`
+--
+ALTER TABLE `reviews`
+  ADD PRIMARY KEY (`review_id`),
+  ADD KEY `booking_id` (`booking_id`);
 
 --
 -- Indexes for table `roles`
@@ -3019,13 +4199,6 @@ ALTER TABLE `room`
   ADD KEY `idx_room_type_id` (`room_type_id`),
   ADD KEY `bed_type_fixed` (`bed_type_fixed`),
   ADD KEY `floor_id` (`floor_id`);
-
---
--- Indexes for table `room_availability`
---
-ALTER TABLE `room_availability`
-  ADD PRIMARY KEY (`availability_id`),
-  ADD KEY `idx_option_date` (`option_id`,`date`);
 
 --
 -- Indexes for table `room_bed_types`
@@ -3084,7 +4257,18 @@ ALTER TABLE `room_transfers`
   ADD PRIMARY KEY (`transfer_id`),
   ADD KEY `booking_id` (`booking_id`),
   ADD KEY `old_room_id` (`old_room_id`),
-  ADD KEY `new_room_id` (`new_room_id`);
+  ADD KEY `new_room_id` (`new_room_id`),
+  ADD KEY `new_option_id` (`new_option_id`),
+  ADD KEY `transfer_policy_id` (`transfer_policy_id`),
+  ADD KEY `payment_id` (`payment_id`),
+  ADD KEY `processed_by` (`processed_by`);
+
+--
+-- Indexes for table `room_transfer_policies`
+--
+ALTER TABLE `room_transfer_policies`
+  ADD PRIMARY KEY (`policy_id`),
+  ADD KEY `room_type_id` (`room_type_id`);
 
 --
 -- Indexes for table `room_types`
@@ -3128,12 +4312,6 @@ ALTER TABLE `room_type_service`
   ADD PRIMARY KEY (`id`),
   ADD KEY `room_type_id` (`room_type_id`),
   ADD KEY `service_id` (`service_id`);
-
---
--- Indexes for table `seo_scores`
---
-ALTER TABLE `seo_scores`
-  ADD PRIMARY KEY (`news_id`);
 
 --
 -- Indexes for table `services`
@@ -3192,7 +4370,7 @@ ALTER TABLE `amenities`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `log_id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `audit_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `bed_types`
@@ -3204,7 +4382,7 @@ ALTER TABLE `bed_types`
 -- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=137;
+  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=174;
 
 --
 -- AUTO_INCREMENT for table `booking_extensions`
@@ -3216,19 +4394,25 @@ ALTER TABLE `booking_extensions`
 -- AUTO_INCREMENT for table `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
-  MODIFY `reschedule_id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `reschedule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=150;
 
 --
 -- AUTO_INCREMENT for table `booking_room_children`
 --
 ALTER TABLE `booking_room_children`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+
+--
+-- AUTO_INCREMENT for table `booking_services`
+--
+ALTER TABLE `booking_services`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `cancellation_policies`
@@ -3237,22 +4421,58 @@ ALTER TABLE `cancellation_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
+-- AUTO_INCREMENT for table `cancellation_requests`
+--
+ALTER TABLE `cancellation_requests`
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã yêu cầu hủy';
+
+--
+-- AUTO_INCREMENT for table `check_in_policies`
+--
+ALTER TABLE `check_in_policies`
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã chính sách nhận phòng', AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `check_in_requests`
+--
+ALTER TABLE `check_in_requests`
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, tự động tăng';
+
+--
 -- AUTO_INCREMENT for table `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
-  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
-  MODIFY `request_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, tự động tăng', AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `children_surcharges`
 --
 ALTER TABLE `children_surcharges`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `compensation_policies`
+--
+ALTER TABLE `compensation_policies`
+  MODIFY `compensation_policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `compensation_requests`
+--
+ALTER TABLE `compensation_requests`
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'ID yêu cầu bồi thường', AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `conversations`
+--
+ALTER TABLE `conversations`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `datafeeds`
@@ -3279,6 +4499,18 @@ ALTER TABLE `events`
   MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `extension_policies`
+--
+ALTER TABLE `extension_policies`
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã chính sách gia hạn', AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `extension_requests`
+--
+ALTER TABLE `extension_requests`
+  MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã yêu cầu gia hạn', AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
@@ -3303,12 +4535,6 @@ ALTER TABLE `floors`
   MODIFY `floor_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã tầng', AUTO_INCREMENT=35;
 
 --
--- AUTO_INCREMENT for table `guests`
---
-ALTER TABLE `guests`
-  MODIFY `guest_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT for table `holidays`
 --
 ALTER TABLE `holidays`
@@ -3321,6 +4547,12 @@ ALTER TABLE `hotel`
   MODIFY `hotel_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khách sạn', AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `invoices`
+--
+ALTER TABLE `invoices`
+  MODIFY `invoice_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `meal_types`
 --
 ALTER TABLE `meal_types`
@@ -3330,25 +4562,49 @@ ALTER TABLE `meal_types`
 -- AUTO_INCREMENT for table `media_files`
 --
 ALTER TABLE `media_files`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính của file ảnh/media';
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính của file ảnh/media', AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `messages`
+--
+ALTER TABLE `messages`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `news`
 --
 ALTER TABLE `news`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, định danh bài viết';
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bài viết', AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `news1`
+--
+ALTER TABLE `news1`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, định danh bài viết', AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `news_categories`
 --
 ALTER TABLE `news_categories`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính chuyên mục';
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính chuyên mục', AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `news_comments`
+--
+ALTER TABLE `news_comments`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `news_user_actions`
+--
+ALTER TABLE `news_user_actions`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `notifications`
@@ -3360,13 +4616,19 @@ ALTER TABLE `notifications`
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `payment_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã thanh toán', AUTO_INCREMENT=86;
+  MODIFY `payment_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã thanh toán', AUTO_INCREMENT=137;
+
+--
+-- AUTO_INCREMENT for table `payment_settings`
+--
+ALTER TABLE `payment_settings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `policy_applications`
@@ -3384,19 +4646,25 @@ ALTER TABLE `pricing_config`
 -- AUTO_INCREMENT for table `representatives`
 --
 ALTER TABLE `representatives`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
+
+--
+-- AUTO_INCREMENT for table `reschedule_policies`
+--
+ALTER TABLE `reschedule_policies`
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `reviews`
+--
+ALTER TABLE `reviews`
+  MODIFY `review_id` int NOT NULL AUTO_INCREMENT COMMENT 'Mã đánh giá', AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `room`
 --
 ALTER TABLE `room`
   MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=296;
-
---
--- AUTO_INCREMENT for table `room_availability`
---
-ALTER TABLE `room_availability`
-  MODIFY `availability_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã lịch', AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `room_occupancy`
@@ -3414,13 +4682,19 @@ ALTER TABLE `room_option_promotion`
 -- AUTO_INCREMENT for table `room_price_history`
 --
 ALTER TABLE `room_price_history`
-  MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
+  MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=312;
 
 --
 -- AUTO_INCREMENT for table `room_transfers`
 --
 ALTER TABLE `room_transfers`
-  MODIFY `transfer_id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `transfer_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `room_transfer_policies`
+--
+ALTER TABLE `room_transfer_policies`
+  MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `room_types`
@@ -3444,7 +4718,7 @@ ALTER TABLE `room_type_package`
 -- AUTO_INCREMENT for table `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `room_type_service`
@@ -3456,7 +4730,7 @@ ALTER TABLE `room_type_service`
 -- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
-  MODIFY `service_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `service_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `table_translation`
@@ -3474,7 +4748,7 @@ ALTER TABLE `translation`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `weekend_days`
@@ -3490,7 +4764,7 @@ ALTER TABLE `weekend_days`
 -- Constraints for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  ADD CONSTRAINT `audit_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `booking`
@@ -3510,7 +4784,12 @@ ALTER TABLE `booking_extensions`
 -- Constraints for table `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
-  ADD CONSTRAINT `booking_reschedules_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `booking_reschedules_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `booking_reschedules_ibfk_2` FOREIGN KEY (`new_room_id`) REFERENCES `room` (`room_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `booking_reschedules_ibfk_3` FOREIGN KEY (`new_option_id`) REFERENCES `room_option` (`option_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `booking_reschedules_ibfk_4` FOREIGN KEY (`reschedule_policy_id`) REFERENCES `reschedule_policies` (`policy_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `booking_reschedules_ibfk_5` FOREIGN KEY (`payment_id`) REFERENCES `payment` (`payment_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `booking_reschedules_ibfk_6` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `booking_rooms`
@@ -3522,16 +4801,70 @@ ALTER TABLE `booking_rooms`
   ADD CONSTRAINT `booking_rooms_option_id_foreign` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `booking_services`
+--
+ALTER TABLE `booking_services`
+  ADD CONSTRAINT `booking_services_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `booking_services_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE RESTRICT;
+
+--
+-- Constraints for table `cancellation_requests`
+--
+ALTER TABLE `cancellation_requests`
+  ADD CONSTRAINT `cancellation_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `cancellation_requests_ibfk_2` FOREIGN KEY (`cancellation_policy_id`) REFERENCES `cancellation_policies` (`policy_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `cancellation_requests_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `check_in_requests`
+--
+ALTER TABLE `check_in_requests`
+  ADD CONSTRAINT `check_in_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `check_in_requests_ibfk_2` FOREIGN KEY (`policy_id`) REFERENCES `check_in_policies` (`policy_id`) ON DELETE SET NULL;
+
+--
 -- Constraints for table `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
-  ADD CONSTRAINT `check_out_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `check_out_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `check_out_requests_ibfk_2` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `check_out_requests_ibfk_3` FOREIGN KEY (`policy_id`) REFERENCES `check_out_policies` (`policy_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `compensation_policies`
+--
+ALTER TABLE `compensation_policies`
+  ADD CONSTRAINT `compensation_policies_ibfk_1` FOREIGN KEY (`applies_to_room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `compensation_requests`
+--
+ALTER TABLE `compensation_requests`
+  ADD CONSTRAINT `compensation_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `compensation_requests_ibfk_2` FOREIGN KEY (`policy_id`) REFERENCES `compensation_policies` (`compensation_policy_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `compensation_requests_ibfk_3` FOREIGN KEY (`requested_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  ADD CONSTRAINT `compensation_requests_ibfk_4` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+--
+-- Constraints for table `conversations`
+--
+ALTER TABLE `conversations`
+  ADD CONSTRAINT `conversations_handover_to_user_id_foreign` FOREIGN KEY (`handover_to_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `conversations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD CONSTRAINT `dynamic_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `extension_requests`
+--
+ALTER TABLE `extension_requests`
+  ADD CONSTRAINT `extension_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `extension_requests_ibfk_2` FOREIGN KEY (`extension_policy_id`) REFERENCES `extension_policies` (`policy_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `extension_requests_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `flexible_pricing_rules`
@@ -3542,24 +4875,47 @@ ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_3` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `guests`
+-- Constraints for table `invoices`
 --
-ALTER TABLE `guests`
-  ADD CONSTRAINT `fk_guests_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+ALTER TABLE `invoices`
+  ADD CONSTRAINT `invoices_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `hotel_rating`
+-- Constraints for table `messages`
 --
-ALTER TABLE `hotel_rating`
-  ADD CONSTRAINT `hotel_rating_ibfk_1` FOREIGN KEY (`hotel_id`) REFERENCES `hotel` (`hotel_id`) ON DELETE CASCADE;
+ALTER TABLE `messages`
+  ADD CONSTRAINT `messages_conversation_id_foreign` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `news`
 --
 ALTER TABLE `news`
+  ADD CONSTRAINT `news_ibfk_1` FOREIGN KEY (`thumbnail_id`) REFERENCES `media_files` (`id`),
+  ADD CONSTRAINT `news_ibfk_2` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `news_ibfk_3` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`);
+
+--
+-- Constraints for table `news1`
+--
+ALTER TABLE `news1`
   ADD CONSTRAINT `fk_news_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_news_thumbnail` FOREIGN KEY (`thumbnail_id`) REFERENCES `media_files` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `news_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+  ADD CONSTRAINT `news1_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+--
+-- Constraints for table `news_comments`
+--
+ALTER TABLE `news_comments`
+  ADD CONSTRAINT `news_comments_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`),
+  ADD CONSTRAINT `news_comments_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `news_comments_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `news_comments` (`id`);
+
+--
+-- Constraints for table `news_user_actions`
+--
+ALTER TABLE `news_user_actions`
+  ADD CONSTRAINT `news_user_actions_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`),
+  ADD CONSTRAINT `news_user_actions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `notifications`
@@ -3585,8 +4941,21 @@ ALTER TABLE `permission_role`
 -- Constraints for table `representatives`
 --
 ALTER TABLE `representatives`
+  ADD CONSTRAINT `fk_representative_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `representatives_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
   ADD CONSTRAINT `representatives_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`);
+
+--
+-- Constraints for table `reschedule_policies`
+--
+ALTER TABLE `reschedule_policies`
+  ADD CONSTRAINT `reschedule_policies_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `reviews`
+--
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `fk_reviews_booking` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `role_user`
@@ -3602,12 +4971,6 @@ ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_2` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `room_ibfk_3` FOREIGN KEY (`bed_type_fixed`) REFERENCES `bed_types` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `room_ibfk_4` FOREIGN KEY (`floor_id`) REFERENCES `floors` (`floor_number`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-
---
--- Constraints for table `room_availability`
---
-ALTER TABLE `room_availability`
-  ADD CONSTRAINT `room_availability_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `room_bed_types`
@@ -3659,7 +5022,17 @@ ALTER TABLE `room_price_history`
 ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_transfers_ibfk_2` FOREIGN KEY (`old_room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT,
-  ADD CONSTRAINT `room_transfers_ibfk_3` FOREIGN KEY (`new_room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT;
+  ADD CONSTRAINT `room_transfers_ibfk_3` FOREIGN KEY (`new_room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT,
+  ADD CONSTRAINT `room_transfers_ibfk_4` FOREIGN KEY (`new_option_id`) REFERENCES `room_option` (`option_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `room_transfers_ibfk_5` FOREIGN KEY (`transfer_policy_id`) REFERENCES `room_transfer_policies` (`policy_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `room_transfers_ibfk_6` FOREIGN KEY (`payment_id`) REFERENCES `payment` (`payment_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `room_transfers_ibfk_7` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `room_transfer_policies`
+--
+ALTER TABLE `room_transfer_policies`
+  ADD CONSTRAINT `room_transfer_policies_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `room_type_amenity`
@@ -3689,40 +5062,10 @@ ALTER TABLE `room_type_service`
   ADD CONSTRAINT `room_type_service_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `seo_scores`
---
-ALTER TABLE `seo_scores`
-  ADD CONSTRAINT `seo_scores_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `translation`
 --
 ALTER TABLE `translation`
   ADD CONSTRAINT `translation_ibfk_1` FOREIGN KEY (`language_code`) REFERENCES `language` (`language_code`) ON DELETE CASCADE;
-
-DELIMITER $$
---
--- Events
---
-CREATE DEFINER=`root`@`localhost` EVENT `insert_daily_room_occupancy` ON SCHEDULE EVERY 1 DAY STARTS '2025-07-01 00:00:00' ON COMPLETION NOT PRESERVE ENABLE DO BEGIN
-  INSERT INTO room_occupancy (room_type_id, date, total_rooms, booked_rooms, occupancy_rate, created_at, updated_at)
-  SELECT
-    rt.room_type_id,
-    CURRENT_DATE,
-    rt.total_room,
-    0,
-    0,
-    NOW(),
-    NOW()
-  FROM room_types AS rt
-  WHERE rt.is_active = 1
-    AND NOT EXISTS (
-      SELECT 1 FROM room_occupancy ro
-      WHERE ro.room_type_id = rt.room_type_id AND ro.date = CURRENT_DATE
-    );
-END$$
-
-DELIMITER ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

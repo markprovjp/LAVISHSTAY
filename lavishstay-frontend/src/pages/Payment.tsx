@@ -1,7 +1,7 @@
-import React, { useState, useEffect, Children } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Layout, Typography, Form, Steps, Alert, message, Row, Col
+    Layout, Typography, Form, Steps, Alert, message, Row, Col, Spin
 } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import store from '../store';
@@ -9,6 +9,7 @@ import { selectBookingState, selectSelectedRoomsSummary, selectHasSelectedRooms,
 import { selectSearchData } from "../store/slices/searchSlice";
 import { BookingInfoStep, PaymentStep, PaymentSummary, CompletionStep } from '../components/payment';
 import { useBookingManager } from '../hooks/useBookingManager';
+import { usePaymentSettings } from '../hooks/usePaymentSetting';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -44,17 +45,26 @@ const Payment: React.FC = () => {
     const dispatch = useDispatch();
     const [form] = Form.useForm();
     const [currentStep, setCurrentStep] = useState(0);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vietqr'); // Default to VietQR
-    const [countdown, setCountdown] = useState(900); // 15 minutes
+    const [countdown, setCountdown] = useState(900); // Will be updated from settings
     const [backendBookingCode, setBackendBookingCode] = useState<string | null>(null);
     const [paymentProcessing, setPaymentProcessing] = useState(false);
-    const [customerInfo, setCustomerInfo] = useState<any>(null); // Store customer info separately
+    const [customerInfo, setCustomerInfo] = useState<any>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(''); // Will be set from settings
 
     // Redux state
     const bookingState = useSelector(selectBookingState);
     const searchData = useSelector(selectSearchData);
     const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
     const hasSelectedRooms = useSelector(selectHasSelectedRooms);
+
+    // Payment settings hook
+    const {
+        settings: paymentSettings,
+        loading: settingsLoading,
+        error: settingsError,
+        generateVietQRUrl,
+        getAvailablePaymentMethods
+    } = usePaymentSettings();
 
     // Anti-spam booking manager
     const {
@@ -63,6 +73,22 @@ const Payment: React.FC = () => {
         canProceed,
         cooldownInfo
     } = useBookingManager();
+
+    // Initialize settings-dependent state
+    useEffect(() => {
+        if (!settingsLoading && paymentSettings) {
+            // Set default payment method from settings
+            if (!selectedPaymentMethod) {
+                setSelectedPaymentMethod(paymentSettings.general.default_payment_method);
+            }
+            
+            // Set countdown from settings
+            setCountdown(paymentSettings.general.payment_timeout);
+        }
+    }, [settingsLoading, paymentSettings, selectedPaymentMethod]);
+
+    // API Base URL from settings
+    const API_BASE_URL = paymentSettings.general.api_base_url;
 
     // Check if we have booking data from navigation or Redux
     useEffect(() => {
@@ -164,7 +190,7 @@ const Payment: React.FC = () => {
 
                 if (error instanceof TypeError && error.message.includes('fetch')) {
                     if (attempt === retries) {
-                        throw new Error('Không thể kết nối đến server. Vui lòng:\n1. Kiểm tra kết nối internet\n2. Đảm bảo backend đang chạy tại http://localhost:8888\n3. Thử lại sau vài giây');
+                        throw new Error('Không thể kết nối đến server. Vui lòng:\n1. Kiểm tra kết nối internet\n2. Đảm bảo backend đang chạy tại ' + API_BASE_URL + '\n3. Thử lại sau vài giây');
                     }
                     // Wait before retry
                     await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
@@ -205,52 +231,36 @@ const Payment: React.FC = () => {
 
         setPaymentProcessing(true);
         try {
-
-
-            // PROBLEM: selectedRoomsSummary có thể chỉ có 1 phòng được chọn nhiều lần
-            // nhưng searchData.rooms có 4 phòng khác nhau với thông tin guest khác nhau
-
-            // Solution: Tạo roomsPayload từ searchData.rooms để đảm bảo có đủ 4 phòng
+            // Create rooms payload (existing logic)
             const roomsPayload = [];
 
             if (searchData.rooms && searchData.rooms.length > 0 && selectedRoomsSummary.length > 0) {
                 // Sử dụng searchData.rooms làm nguồn chính cho số lượng phòng và guest info
                 for (let i = 0; i < searchData.rooms.length; i++) {
                     const guestInfoForThisRoom = searchData.rooms[i];
+                    const roomSummary = selectedRoomsSummary[0];
 
-                    // Lấy thông tin phòng từ selectedRoomsSummary (có thể là cùng 1 loại phòng)
-                    const roomSummary = selectedRoomsSummary[0]; // Sử dụng phòng đầu tiên được chọn
-
-                    console.log(`🔍 Debug - Room ${i}:`, {
-                        roomSummary: roomSummary,
-                        guestInfoForThisRoom: guestInfoForThisRoom
-                    });
-
-                    // Check if we have individual guest names for this room (from form values)
                     const roomGuestName = values[`room_${i}_guest_name`] || values.fullName;
                     const roomGuestEmail = values[`room_${i}_guest_email`] || values.email;
                     const roomGuestPhone = values[`room_${i}_guest_phone`] || values.phone;
 
-                    // Use the exact price values from the selected room summary
-                    const roomPrice = roomSummary.totalPrice; // Total price for the entire stay
-                    const optionPricePerNight = roomSummary.pricePerNight; // Price per night
+                    const roomPrice = roomSummary.totalPrice;
+                    const optionPricePerNight = roomSummary.pricePerNight;
 
                     const roomPayload = {
                         room_id: roomSummary.room.id,
-                                                                                               room_type_id: roomSummary.room.room_type_id || roomSummary.room.id,
-                        room_price: roomPrice, // Total price for the entire stay
+                        room_type_id: roomSummary.room.room_type_id || roomSummary.room.id,
+                        room_price: roomPrice,
                         guest_name: roomGuestName,
                         guest_email: roomGuestEmail,
                         guest_phone: roomGuestPhone,
                         adults: guestInfoForThisRoom.adults,
                         children: guestInfoForThisRoom.children,
-                        children_age: guestInfoForThisRoom.childrenAges || [], // Get children ages from searchData
+                        children_age: guestInfoForThisRoom.childrenAges || [],
                         option_id: roomSummary.optionId,
                         option_name: roomSummary.option.name,
-                        option_price: optionPricePerNight, // Price per night for option
-                        // Include full policies information from room summary
+                        option_price: optionPricePerNight,
                         policies: (roomSummary.room as any)?.policies || (roomSummary.option as any)?.policies || {},
-                        // Include individual policy fields for easier backend access
                         package_id: (roomSummary.option as any)?.id?.replace('pkg-', '') || null,
                         meal_type: (roomSummary.option as any)?.mealType || null,
                         bed_type: (roomSummary.option as any)?.bedType || null,
@@ -258,7 +268,6 @@ const Payment: React.FC = () => {
                         recommended: (roomSummary.option as any)?.recommended ? 1 : 0,
                         urgency_message: (roomSummary.option as any)?.urgencyMessage || null,
                         recommendation_score: (roomSummary.option as any)?.recommendationScore || null,
-                        // Policy fields for easier access
                         cancellation_policy: (roomSummary.option as any)?.cancellationPolicy,
                         payment_policy: (roomSummary.option as any)?.paymentPolicy,
                         check_out_policy: (roomSummary.option as any)?.checkOutPolicy,
@@ -270,12 +279,10 @@ const Payment: React.FC = () => {
                         standard_check_out_time: (roomSummary.option as any)?.standardCheckOutTime
                     };
 
-                    console.log(`🔍 Debug - Room ${i} payload:`, roomPayload);
-
                     roomsPayload.push(roomPayload);
                 }
             } else {
-                // Fallback: sử dụng selectedRoomsSummary như cũ nếu không có searchData.rooms
+                // Fallback logic (existing code)
                 roomsPayload.push(...selectedRoomsSummary.map((roomSummary, index) => {
                     const guestInfoForThisRoom = { adults: 1, children: 0, childrenAges: [] };
 
@@ -298,14 +305,13 @@ const Payment: React.FC = () => {
                         option_id: roomSummary.optionId,
                         option_name: roomSummary.option.name,
                         option_price: optionPricePerNight,
-                        // Add missing fields for consistency
-                        policies: (roomSummary.option as any)?.policies || 
-                                 (roomSummary as any)?.policies || 
-                                 {
-                                     cancellation: { description: 'Chính sách hủy phòng sẽ được áp dụng theo quy định' },
-                                     deposit: { description: 'Chính sách thanh toán theo quy định' },
-                                     check_out: { description: 'Chính sách trả phòng theo quy định' }
-                                 },
+                        policies: (roomSummary.option as any)?.policies ||
+                            (roomSummary as any)?.policies ||
+                        {
+                            cancellation: { description: 'Chính sách hủy phòng sẽ được áp dụng theo quy định' },
+                            deposit: { description: 'Chính sách thanh toán theo quy định' },
+                            check_out: { description: 'Chính sách trả phòng theo quy định' }
+                        },
                         package_id: (roomSummary.option as any)?.packageId || null,
                         meal_type: (roomSummary.option as any)?.mealType || null,
                         bed_type: (roomSummary.option as any)?.bedType || null,
@@ -314,6 +320,17 @@ const Payment: React.FC = () => {
             }
 
             const totalGuests = roomsPayload.reduce((acc, room) => acc + room.adults + room.children, 0);
+
+            let userId = null;
+            try {
+                const userStr = localStorage.getItem('authUser');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    userId = user?.id || null;
+                }
+            } catch (e) {
+                userId = null;
+            }
 
             const bookingPayload = {
                 customer_name: values.fullName,
@@ -325,7 +342,7 @@ const Payment: React.FC = () => {
                 total_price: totals.finalTotal,
                 payment_method: selectedPaymentMethod,
                 notes: values.specialRequests,
-                room_type_id: roomsPayload[0].room_type_id, // Include room type ID
+                room_type_id: roomsPayload[0].room_type_id,
                 rooms: roomsPayload,
                 totals: {
                     roomsTotal: totals.roomsTotal,
@@ -335,11 +352,12 @@ const Payment: React.FC = () => {
                     discountAmount: totals.discountAmount,
                     finalTotal: totals.finalTotal,
                     nights: nights,
-                }
+                },
+                user_id: userId
             };
 
             console.log('Submitting booking to backend:', JSON.stringify(bookingPayload, null, 2));
-console.log('roomsPayload:', roomsPayload);
+            
             // Use retry mechanism for better reliability
             const result = await createBookingWithRetry(bookingPayload);
 
@@ -349,9 +367,9 @@ console.log('roomsPayload:', roomsPayload);
 
                 // If pay_at_hotel, move to completion step
                 if (selectedPaymentMethod === 'pay_at_hotel') {
-                    setCurrentStep(2); // Move to completion step instead of navigating away
+                    setCurrentStep(2);
                 } else {
-                    setCurrentStep(1); // Move to payment step for other methods
+                    setCurrentStep(1);
                 }
             } else {
                 throw new Error(result.message || 'Không thể tạo đơn đặt phòng.');
@@ -377,7 +395,7 @@ console.log('roomsPayload:', roomsPayload);
             }
 
             if (selectedPaymentMethod === 'pay_at_hotel') {
-                setCurrentStep(2); // Move to completion step
+                setCurrentStep(2);
                 message.success('Đặt phòng thành công! Bạn sẽ thanh toán tại khách sạn.');
                 return;
             }
@@ -427,19 +445,6 @@ console.log('roomsPayload:', roomsPayload);
         }
     };
 
-    // Function to generate VietQR URL
-    const generateVietQRUrl = (amount: number, _content: string) => {
-        const bankId = 'MBBank';
-        const accountNo = '0335920306';
-        const template = 'print';
-        // Use booking code in the content for easier tracking
-        const paymentContent = `Thanh toan dat phong ${backendBookingCode || bookingCode}`;
-        const encodedContent = encodeURIComponent(paymentContent);
-        const accountName = encodeURIComponent('NGUYEN VAN QUYEN');
-
-        return `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${amount}&addInfo=${encodedContent}&accountName=${accountName}`;
-    };
-
     // Handle payment confirmation (for VietQR)
     const handleConfirmPayment = async (transaction?: any) => {
         console.log('🔄 handleConfirmPayment called with:', { transaction, selectedPaymentMethod });
@@ -452,8 +457,8 @@ console.log('roomsPayload:', roomsPayload);
                 if (transaction) {
                     console.log('✅ Payment confirmed via CPay auto-check:', transaction);
                     message.success('Thanh toán thành công!');
-                    setCurrentStep(2); // Move to completion step
-                    setPaymentProcessing(false); // Reset processing state
+                    setCurrentStep(2);
+                    setPaymentProcessing(false);
                     return;
                 }
 
@@ -475,7 +480,7 @@ console.log('roomsPayload:', roomsPayload);
 
                 if (verifyResult.success) {
                     message.success('Thanh toán thành công!');
-                    setCurrentStep(2); // Move to completion step instead of navigating away
+                    setCurrentStep(2);
                 } else {
                     message.error('Không thể xác nhận thanh toán. Vui lòng liên hệ hỗ trợ.');
                 }
@@ -501,7 +506,6 @@ console.log('roomsPayload:', roomsPayload);
 
     // Use totals from Redux store (already calculated with correct prices)
     const totals = React.useMemo(() => {
-        // Always use the totals from Redux store as it has the correct calculated prices
         const storeTotals = bookingState.totals || {
             roomsTotal: 0,
             breakfastTotal: 0,
@@ -512,23 +516,18 @@ console.log('roomsPayload:', roomsPayload);
             nights: 1
         };
 
-        // If we have selected rooms, verify the totals are correct
         if (selectedRoomsSummary.length > 0) {
-            // Calculate total directly from selected rooms to ensure consistency
             const calculatedRoomsTotal = selectedRoomsSummary.reduce(
                 (sum, room) => sum + room.totalPrice,
                 0
             );
 
-            // Calculate final total
             const calculatedTotal = calculatedRoomsTotal +
                 (storeTotals.breakfastTotal || 0) +
                 (storeTotals.serviceFee || 0) +
                 (storeTotals.taxAmount || 0) -
                 (storeTotals.discountAmount || 0);
 
-            // If the calculated total is different from the stored total,
-            // update the store to ensure consistency
             if (Math.abs(calculatedTotal - storeTotals.finalTotal) > 1) {
                 const updatedTotals = {
                     ...storeTotals,
@@ -537,14 +536,11 @@ console.log('roomsPayload:', roomsPayload);
                     nights: nights
                 };
 
-                // Update Redux store with accurate totals
                 dispatch(setTotals(updatedTotals));
-
                 return updatedTotals;
             }
         }
 
-        // Update nights if different
         const updatedTotals = {
             ...storeTotals,
             nights: nights
@@ -553,17 +549,14 @@ console.log('roomsPayload:', roomsPayload);
         return updatedTotals;
     }, [bookingState.totals, nights, selectedRoomsSummary, dispatch]);
 
-    // API Base URL
-    const API_BASE_URL = 'http://localhost:8888/api';
-
     // Handle navigation functions
     const handleViewBookings = () => {
-        dispatch(clearBookingData()); // Clear booking data after completion
+        dispatch(clearBookingData());
         navigate('/bookings');
     };
 
     const handleNewBooking = () => {
-        dispatch(clearBookingData()); // Clear booking data for new booking
+        dispatch(clearBookingData());
         navigate('/search');
     };
 
@@ -582,6 +575,8 @@ console.log('roomsPayload:', roomsPayload);
                                 isProcessing={isProcessing || paymentProcessing}
                                 disabled={!canProceed || cooldownInfo.inCooldown}
                                 selectedPaymentMethod={selectedPaymentMethod}
+                                availablePaymentMethods={getAvailablePaymentMethods()}
+                                onPaymentMethodChange={setSelectedPaymentMethod}
                             />
                         </Col>
                         <Col span={8}>
@@ -611,6 +606,7 @@ console.log('roomsPayload:', roomsPayload);
                                 countdown={countdown}
                                 formatTime={formatTime}
                                 generateVietQRUrl={generateVietQRUrl}
+                                availablePaymentMethods={getAvailablePaymentMethods()}
                             />
                         </Col>
                         <Col span={8}>
@@ -644,8 +640,48 @@ console.log('roomsPayload:', roomsPayload);
         }
     };
 
+    // Show loading spinner while fetching settings
+    if (settingsLoading) {
+        return (
+            <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', marginTop: 64 }}>
+                <Content style={{ padding: '24px' }}>
+                    <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center', paddingTop: '100px' }}>
+                        <Spin size="large" />
+                        <div style={{ marginTop: 16 }}>Đang tải cấu hình thanh toán...</div>
+                    </div>
+                </Content>
+            </Layout>
+        );
+    }
+
+    // Show error if settings failed to load
+    if (settingsError) {
+        return (
+            <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', marginTop: 64 }}>
+                <Content style={{ padding: '24px' }}>
+                    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+                        <Alert
+                            message="Lỗi tải cấu hình thanh toán"
+                            description={settingsError}
+                            type="error"
+                            showIcon
+                            action={
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="ant-btn ant-btn-primary"
+                                >
+                                    Thử lại
+                                </button>
+                            }
+                        />
+                    </div>
+                </Content>
+            </Layout>
+        );
+    }
+
     return (
-        <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+        <Layout style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', marginTop: 64 }}>
             <Content style={{ padding: '24px' }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                     {/* Header */}
@@ -697,4 +733,3 @@ console.log('roomsPayload:', roomsPayload);
 };
 
 export default Payment;
-

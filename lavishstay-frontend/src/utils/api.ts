@@ -1,6 +1,8 @@
+import qs from 'qs';
 // src/utils/api.ts
 import axios from 'axios';
 import { BookingQuotePayload } from '../hooks/useReception'; // Import the type
+import { CreateMultiRoomBookingRequest } from '../types/booking';
 
 // Create a base axios instance
 const api = axios.create({
@@ -187,9 +189,9 @@ export const roomsAPI = {
     return response.data;
   },
 
-  // Get room options/packages (kept for compatibility)
-  getRoomOptions: async (roomId: string | number) => {
-    const response = await api.get(`/room-options?room_id=${roomId}`);
+  // Get room options/packages (support both room_id and room_type_id as query param)
+  getRoomOptions: async (params: { room_id?: string | number; room_type_id?: string | number }) => {
+    const response = await api.get('/room-options', { params });
     return response.data;
   },
 
@@ -226,6 +228,11 @@ export const dashboardAPI = {
 };
 // Reception Management API
 export const receptionAPI = {
+  // Lấy danh sách gói phòng (package) theo room_type_id
+  getPackagesByRoomType: async (room_type_id: number) => {
+    const response = await api.get(`/room-type-packages/by-room-type/${room_type_id}`);
+    return response.data;
+  },
   // Legacy booking methods (keep for compatibility)
   createLegacyBooking: async (data: any) => api.post('/reception/book', data),
   getBookingDetail: async (bookingId: string) => api.get(`/reception/booking/${bookingId}`),
@@ -249,7 +256,18 @@ export const receptionAPI = {
   },
 
   createBooking: async (data: any) => {
-    const response = await api.post('/reception/bookings', data);
+    const response = await api.post('/reception/bookings/create', data);
+    return response.data;
+  },
+  createBookingReception: async (data: any) => {
+    const response = await api.post('/reception/bookings/createBookingReception', data);
+    return response.data;
+  },
+
+
+
+  confirmBooking: async (data: any) => {
+    const response = await api.post('/reception/bookings/confirm', data);
     return response.data;
   },
 
@@ -262,10 +280,10 @@ export const receptionAPI = {
     const response = await api.put(`/reception/bookings/${bookingId}/cancel`);
     return response.data;
   },
- assignRoomToBooking: async (params: { booking_room_id: number; room_id: number }) => {
-   const response = await api.post('/reception/bookings/assign-room', params);
-   return response.data;
- },
+  assignRoomToBooking: async (params: { booking_room_id: number; room_id: number }) => {
+    const response = await api.post('/reception/bookings/assign-room', params);
+    return response.data;
+  },
   assignMultipleRooms: async (assignments: { booking_room_id: number; room_id: number }[]) => {
     const response = await api.post('/reception/bookings/assign-multiple-rooms', { assignments });
     return response.data;
@@ -303,13 +321,58 @@ export const receptionAPI = {
     return response.data;
   },
 
-  transferBooking: async (params: {
-    booking_id: number;
-    old_room_id: number;
-    new_room_id: number;
-    reason?: string;
-  }) => {
-    const response = await api.post('/reception/bookings/transfer', params);
+
+
+
+  /**
+   * Chuyển phòng cho booking (hỗ trợ truyền option_id/new_option_id)
+   * @param params
+   *   - booking_id: number (bắt buộc)
+   *   - old_room_id: number (bắt buộc)
+   *   - new_room_id: number (bắt buộc)
+   *   - option_id: number (tùy chọn, gói phòng cũ)
+   *   - new_option_id: number (tùy chọn, gói phòng mới)
+   *   - reason: string (tùy chọn)
+   */
+  transferBooking: async (
+    bookingId: number,
+    params: {
+      new_room_ids: number[];
+      new_option_id: number;
+      reason?: string;
+    }
+  ) => {
+    // Gửi đúng 3 trường backend yêu cầu, đúng URL
+    const payload: any = {
+      new_room_ids: Array.isArray(params.new_room_ids) ? params.new_room_ids.map(Number) : [],
+      new_option_id: Number(params.new_option_id),
+    };
+    if (params.reason) payload.reason = params.reason;
+    const response = await api.post(`/bookings/${bookingId}/transfer`, payload);
+    return response.data;
+  },
+
+  // Expose getRoomOptions for room option/package selection in ChangeRoomTab
+  getRoomOptions: async (roomId: string | number) => {
+    const response = await api.get(`/room-options?room_id=${roomId}`);
+    return response.data;
+  },
+
+  /**
+   * Preview transfer fee/policy for booking room change
+   * @param bookingId
+   * @param new_room_id
+   * @param new_option_id
+   * @param reason
+   */
+  previewTransferBooking: async (bookingId: number, new_room_ids: number[], new_option_id: number, reason?: string) => {
+    // Đảm bảo truyền đúng kiểu số nguyên cho BE và serialize đúng chuẩn Laravel
+    const params: any = { new_room_ids: new_room_ids.map(Number), new_option_id: Number(new_option_id) };
+    if (reason) params.reason = reason;
+    const response = await api.get(`/bookings/${bookingId}/transfer`, {
+      params,
+      paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'indices' })
+    });
     return response.data;
   },
 
@@ -328,6 +391,75 @@ export const receptionAPI = {
     actual_check_out_time?: string;
   }) => {
     const response = await api.post('/reception/bookings/check-out', params);
+    return response.data;
+  },
+
+  // Services for reception (available services and booking service management)
+  getAvailableServices: async () => {
+    const response = await api.get('/reception/services/available');
+    return response.data;
+  },
+
+  addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
+    // Backend expects service additions on the booking resource: /bookings/{id}/services
+    // For reception flow the route is namespaced under /reception
+    const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    return response.data;
+  },
+
+  // Services for reception (available services and booking service management)
+  getAvailableServices: async () => {
+    const response = await api.get('/reception/services/available');
+    return response.data;
+  },
+
+  addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
+    // Backend expects service additions on the booking resource: /bookings/{id}/services
+    const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    return response.data;
+  },
+
+  // Checkout related helpers
+  getCheckoutInfo: async (bookingId: number) => {
+    const response = await api.get(`/reception/bookings/${bookingId}/checkout-info`);
+    // Some backend responses wrap payload in { success, message, data }
+    // Return inner data when available for easier consumption by UI
+    return response.data && response.data.data ? response.data.data : response.data;
+  },
+
+  processCheckout: async (bookingId: number, payload: any = {}) => {
+    const response = await api.post(`/reception/bookings/${bookingId}/checkout`, payload);
+    return response.data;
+  },
+
+  updateBookingService: async (bookingId: number, serviceId: number, data: { quantity?: number }) => {
+    const response = await api.put(`/reception/bookings/${bookingId}/services/${serviceId}`, data);
+    return response.data;
+  },
+
+  removeBookingService: async (bookingId: number, serviceId: number) => {
+    const response = await api.delete(`/reception/bookings/${bookingId}/services/${serviceId}`);
+    return response.data;
+  },
+
+  createCheckoutCompensation: async (bookingId: number, data: { custom_reason: string; requested_amount: number; attachments?: any[]; requested_by: number }) => {
+    const response = await api.post(`/reception/bookings/${bookingId}/checkout/compensation`, data);
+    return response.data;
+  },
+
+  // Check-in API methods
+  getCheckinInfo: async (bookingId: number) => {
+    const response = await api.get(`/checkin/booking/${bookingId}/info`);
+    return response.data;
+  },
+
+  processCheckin: async (bookingId: number, data: any = {}) => {
+    const response = await api.post(`/checkin/booking/${bookingId}/process`, data);
+    return response.data;
+  },
+
+  getTodayCheckins: async () => {
+    const response = await api.get('/checkin/today');
     return response.data;
   },
 
@@ -361,7 +493,42 @@ export const paymentAPI = {
   getPaymentStatus: async (bookingId: string) => {
     const response = await api.get(`/payment/status/${bookingId}`);
     return response.data;
-  }
+  },
+  checkCPayPayment: async (bookingCode: string, amount: number) => {
+    return api.post('/payment/check-cpay', { booking_code: bookingCode, amount: amount });
+  },
+};
+
+export const processEarlyCheckOut = async (values: any) => {
+  // Implement your early check-out logic here
+  // For example, you can make an API call to your backend to process the early check-out
+  console.log('Processing early check-out for booking ID:', values.bookingId);
+  // Replace this with your actual API call
+  return Promise.resolve();
+};
+
+export const fetchRoomAvailability = async (dates: any) => {
+  console.log('Checking room availability for dates:', dates);
+  // Mocked response: always available
+  return Promise.resolve(true);
+};
+
+export const updateBooking = async (values: any) => {
+  console.log('Updating booking with values:', values);
+  // Mocked response: successful update
+  return Promise.resolve({ success: true });
+};
+
+export const fetchRooms = async () => {
+  console.log('Fetching rooms');
+  // Mocked response: return a list of rooms
+  return Promise.resolve([
+    { id: 1, number: '101', type: 'Standard', status: 'Available' },
+    { id: 2, number: '102', type: 'Deluxe', status: 'Occupied' },
+    { id: 3, number: '201', type: 'Suite', status: 'Available' },
+  ]);
 };
 
 export default api;
+
+

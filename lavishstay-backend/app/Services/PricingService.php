@@ -529,10 +529,10 @@ class PricingService
         return rand(40, 70);
     }
 
-            /**
-             * Update occupancy data for a specific room type and date
-             */
-            public function updateOccupancyData($roomTypeId, $date)
+    /**
+     * Update occupancy data for a specific room type and date
+     */
+    public function updateOccupancyData($roomTypeId, $date)
     {
         try {
             // Get total rooms for this room type
@@ -610,6 +610,45 @@ class PricingService
         });
     }
 
+    public function dailyUpdateRoomOccupancy()
+    {
+        $today = Carbon::today()->toDateString();
+        $yesterday = Carbon::yesterday()->toDateString();
+        $roomTypes = RoomType::where('is_active', 1)->get();
+
+        foreach ($roomTypes as $roomType) {
+            // Cập nhật dữ liệu thực tế cho hôm nay
+            $this->updateOccupancyData($roomType->room_type_id, $today);
+
+            // Lấy dữ liệu vừa cập nhật
+            $todayOccupancy = RoomOccupancy::where('room_type_id', $roomType->room_type_id)
+                ->where('date', $today)
+                ->first();
+
+            // Nếu không có dữ liệu thực tế, lấy từ hôm qua
+            if (!$todayOccupancy) {
+                $yesterdayOccupancy = RoomOccupancy::where('room_type_id', $roomType->room_type_id)
+                    ->where('date', $yesterday)
+                    ->first();
+
+                $totalRooms = $yesterdayOccupancy ? $yesterdayOccupancy->total_rooms : 0;
+                $bookedRooms = $yesterdayOccupancy ? $yesterdayOccupancy->booked_rooms : 0;
+                $occupancyRate = $totalRooms > 0 ? round(($bookedRooms / $totalRooms) * 100, 2) : 0;
+
+                RoomOccupancy::updateOrCreate(
+                    [
+                        'room_type_id' => $roomType->room_type_id,
+                        'date' => $today
+                    ],
+                    [
+                        'total_rooms' => $totalRooms,
+                        'booked_rooms' => $bookedRooms,
+                        'occupancy_rate' => $occupancyRate
+                    ]
+                );
+            }
+        }
+    }
     /**
      * Save price history
      */
