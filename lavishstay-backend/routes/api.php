@@ -264,7 +264,10 @@ Route::prefix('checkin')->group(function () {
 // Checkout
 Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
 Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
-Route::post('/bookings/{id}/checkout/compensation ', [BookingCheckoutController::class, 'createCompensationRequest']);
+Route::post('/bookings/{id}/checkout/compensation', [BookingCheckoutController::class, 'createCompensationRequest']);
+
+    // Invoice PDF generation
+    Route::get('/bookings/{bookingId}/invoice', [ReceptionController::class, 'generateInvoice']);
 
     // Service management for checkout and the checkout flow itself handled by BookingCheckoutController
     Route::get('/services/available', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'getAvailableServices']);
