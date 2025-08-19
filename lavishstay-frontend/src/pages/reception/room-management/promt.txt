@@ -1,0 +1,77 @@
+
+
+
+
+
+2. Section 1: Giới thiệu khách sạn
+
+Layout 2 cột:
+
+Bên trái:
+
+Tiêu đề lớn (Hãy để bản thân đắm mình trong thế giới xa hoa cùng tiện nghi độc quyền)
+
+Đoạn mô tả (Tại Meliá Vinpearl Thanh Hóa, chúng tôi chào đón bạn với những trải nghiệm được thiết kế riêng, phù hợp với từng khách hàng. The Level cung cấp hàng loạt các đặc quyền, dịch vụ và không gian độc quyền nhằm nâng cao mức độ hài lòng, sự riêng tư và thoải mái của khách hàng.
+)
+
+Bên phải:
+
+Ảnh toàn cảnh phòng sang trọng.
+
+Nút nhỏ ở góc phải dưới ảnh: XEM THƯ VIỆN.
+
+Bên dưới có logo LEVEL (logo SVG ở file component ) - THE LEVEL căn giữa.
+
+3. Section 2: Tiện ích & Dịch vụ
+
+Đoạn text mô tả (Hưởng thụ dịch vụ đẳng cấp mới trong kỳ nghỉ tại Thanh Hóa. The Level cung cấp nhiều lựa chọn phòng nghỉ đi kèm cơ sở vật chất chọn lọc kỹ lưỡng, dịch vụ được cá nhân hoá, các đặc quyền độc đáo cùng quyền lui tới khu vực riêng. Khám phá những đặc quyền chỉ hạng phòng cao cấp mới có và biến khoảng thời gian lưu trú của bạn thành một trải nghiệm đáng nhớ. Bước vào một thế giới khác với The Level.
+
+).
+
+Bên dưới là danh sách icon + mô tả ngắn (dạng grid 6 cột):
+
+Icon giường → Lưu trú trong những căn phòng độc đáo nhất của chúng tôi”
+
+Icon lịch → “Nhận phòng và trả phòng riêng”
+
+Icon dao nĩa → “Ăn sáng tại nhà hàng riêng”
+
+Icon huy hiệu → “Quyền vào sảnh khách riêng”
+
+Icon biểu đồ → “Phòng họp lịch sự”
+
+Icon lịch → “Late check-out (subject to availability)”
+
+4. Section 3: The Level Lounge
+
+Tiêu đề phụ: “Trải nghiệm độc đáo”.
+
+Layout 2 cột:
+
+Trái: ảnh khu buffet sang trọng, có chữ mờ “LEVEL” trên ảnh.
+
+Phải: tiêu đề “The Level Lounge” + đoạn mô tả dịch vụ lounge, giờ phục vụ, cocktail, coffee, phòng riêng, VIP lounge…
+
+Có pagination: 1/3 và mũi tên qua lại.
+
+5. Section 4: Phòng cao cấp
+
+Tiêu đề phụ: “Các phòng cao cấp khác”.
+
+Layout 3 cột dạng slider:
+
+Cột trái: ảnh phòng.
+
+Cột giữa: mô tả phòng (tên, diện tích, tiện nghi liệt kê bằng icon + text).
+
+Cột phải: ảnh khác của phòng.
+
+Nút: Tìm hiểu thêm và Đặt ngay.
+
+6. Section 5: Bộ sưu tập ảnh
+
+Full-width hình ảnh khách sạn (ảnh lobby).
+
+Nút XEM THƯ VIỆN nổi ở góc phải dưới.
+
+Có thể kéo ngang để xem ảnh tiếp theo.

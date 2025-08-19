@@ -294,6 +294,7 @@ Route::post('/bookings/{id}/checkout/compensation ', [BookingCheckoutController:
         Route::get('/notifications', [ChartReceptionController::class, 'getNotifications']);
         Route::get('/top-booked-services', [ChartReceptionController::class, 'getTopBookedServices']);
         Route::get('/dashboard-stats', [ChartReceptionController::class, 'getDashboardStats']);
+        Route::get('/room-status', [ChartReceptionController::class, 'getRoomStatus']);
     });
     
     // Legacy booking routes (keep for compatibility)

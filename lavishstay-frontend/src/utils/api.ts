@@ -25,14 +25,14 @@ api.interceptors.request.use((config) => {
   // Debug: show which token is present and what header will be sent
   try {
     // eslint-disable-next-line no-console
-    console.log('[api] outgoing auth token (from localStorage):', token);
+    // console.log('[api] outgoing auth token (from localStorage):', token);
   } catch (e) { }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
     try {
       // eslint-disable-next-line no-console
-      console.log('[api] setting Authorization header:', config.headers.Authorization);
+      // console.log('[api] setting Authorization header:', config.headers.Authorization);
     } catch (e) { }
   }
 
@@ -589,19 +589,19 @@ export const processEarlyCheckOut = async (values: any) => {
 };
 
 export const fetchRoomAvailability = async (dates: any) => {
-  console.log('Checking room availability for dates:', dates);
+  // console.log('Checking room availability for dates:', dates);
   // Mocked response: always available
   return Promise.resolve(true);
 };
 
 export const updateBooking = async (values: any) => {
-  console.log('Updating booking with values:', values);
+  // console.log('Updating booking with values:', values);
   // Mocked response: successful update
   return Promise.resolve({ success: true });
 };
 
 export const fetchRooms = async () => {
-  console.log('Fetching rooms');
+  // console.log('Fetching rooms');
   // Mocked response: return a list of rooms
   return Promise.resolve([
     { id: 1, number: '101', type: 'Standard', status: 'Available' },

@@ -149,7 +149,12 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       label: "Tin tức",
       icon: null,
     },
-  {
+    {
+      key: "/the-level",
+      label: "The Level",
+      icon: null,
+    },
+    {
       key: "/booking/lookup",
       label: "Tra cứu booking",
       icon: null,
@@ -179,7 +184,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       <Menu.Item key="wishlist" icon={<HeartOutlined />}>
         <Link to="/profile/wishlist">{t("user.wishlist")}</Link>
       </Menu.Item>
-     
+
       <Menu.Divider />
       <Menu.Item key="logout" icon={<LogoutOutlined />}>
         {t("user.logout")}
