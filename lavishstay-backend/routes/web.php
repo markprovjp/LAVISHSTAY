@@ -46,10 +46,12 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NewsController\NewsController;
 use App\Http\Controllers\NewsController\MediaController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReschedulePolicyController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomTransferPolicyController;
 use App\Http\Controllers\SpecialRequestController;
+use App\Http\Controllers\TransactionController;
 
 Route::redirect('/', 'login');
 Route::get('/home', [DashboardController::class, 'index'])->name('home');
@@ -356,6 +358,22 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    // Transaction Management Routes
+    Route::prefix('admin/transactions')->name('admin.transactions.')->group(function () {
+        Route::get('/', [TransactionController::class, 'index'])->name('index');
+        Route::get('/analytics', [TransactionController::class, 'analytics'])->name('analytics');
+        Route::get('/export', [TransactionController::class, 'export'])->name('export');
+        Route::get('/daily-comparison', [TransactionController::class, 'getDailyComparison'])->name('daily-comparison');
+        Route::get('/{id}', [TransactionController::class, 'show'])->name('show');
+    });
+
+    // API Routes for AJAX
+    Route::prefix('api/transactions')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('/analytics', [TransactionController::class, 'analytics']);
+        Route::get('/daily-comparison', [TransactionController::class, 'getDailyComparison']);
+        Route::get('/{id}', [TransactionController::class, 'show']);
+    });
 
 
     ////////////////////// YÊU CẦU ĐẶT PHÒNG /////////////////////////////////////////////////////
@@ -749,4 +767,65 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Cleanup old logs
         Route::post('/cleanup', [AuditController::class, 'cleanup'])->name('cleanup');
     });
+
+
+
+
+
+    // Notification routes - session-based authentication
+Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
+    // Basic notification endpoints
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
+    Route::get('/statistics', [NotificationController::class, 'statistics'])->name('statistics');
+    
+    // Mark as read endpoints
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+    Route::post('/mark-multiple-read', [NotificationController::class, 'markMultipleAsRead'])->name('mark-multiple');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all');
+    
+    // Delete notifications
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    
+    // User notification settings
+    Route::get('/settings', [NotificationController::class, 'getSettings'])->name('settings.get');
+    Route::post('/settings', [NotificationController::class, 'updateSettings'])->name('settings.update');
+});
+
+// Admin-only notification management routes
+Route::middleware(['auth', 'role:admin'])->prefix('notifications/admin')->name('notifications.admin.')->group(function () {
+    // Notification types management
+    Route::get('/types', [NotificationController::class, 'getTypes'])->name('types');
+    
+    // Send test notifications
+    Route::post('/send-test', [NotificationController::class, 'sendTest'])->name('send-test');
+    
+    // View all users' notifications (admin only)
+    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->name('all');
+    
+    // Notification statistics for all users
+    Route::get('/statistics/global', [NotificationController::class, 'getGlobalStatistics'])->name('statistics.global');
+    
+    // Bulk operations
+    Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('bulk-mark-read');
+});
+
+// Manager-level notification sending routes
+Route::middleware(['auth', 'role:admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {
+    // Send notifications to specific users or roles
+    Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('users');
+    Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('roles');
+    Route::post('/broadcast', [NotificationController::class, 'broadcastNotification'])->name('broadcast');
+});
+
+// Development/Testing endpoints
+if (app()->environment(['local', 'staging'])) {
+    Route::middleware(['auth', 'role:admin'])->prefix('notifications/dev')->name('notifications.dev.')->group(function () {
+        Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('trigger');
+        Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('pusher');
+        Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('fake');
+    });
+}
+
 });

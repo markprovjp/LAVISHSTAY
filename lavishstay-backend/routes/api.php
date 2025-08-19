@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\NewsAPICategoryController;
 use App\Http\Controllers\Api\NewsUserActionController;
 use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -439,3 +440,82 @@ Route::prefix('payment')->name('api.payment.')->group(function () {
     Route::post('/vnpay', [PaymentController::class, 'processVNPay'])->name('vnpay');
     Route::post('/pay-at-hotel', [PaymentController::class, 'processPayAtHotel'])->name('pay-at-hotel');
 });
+
+// Notification routes - require authentication and notification permissions
+Route::middleware(['auth:sanctum', 'notification.owner'])->prefix('notifications')->group(function () {
+    // Basic notification endpoints
+    Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
+    Route::get('/statistics', [NotificationController::class, 'statistics'])->name('notifications.statistics');
+    
+    // Mark as read endpoints
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/mark-multiple-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all');
+    
+    // Delete notifications
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // User notification settings
+    Route::get('/settings', [NotificationController::class, 'getSettings'])->name('notifications.settings.get');
+    Route::post('/settings', [NotificationController::class, 'updateSettings'])->name('notifications.settings.update');
+});
+
+// Admin-only notification management routes
+Route::middleware(['auth:sanctum', 'notification.manage'])->prefix('notifications/admin')->group(function () {
+    // Notification types management
+    Route::get('/types', [NotificationController::class, 'getTypes'])->name('notifications.types');
+    
+    // Send test notifications
+    Route::post('/send-test', [NotificationController::class, 'sendTest'])->name('notifications.send-test');
+    
+    // View all users' notifications (admin only)
+    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->name('notifications.all');
+    
+    // Notification statistics for all users
+    Route::get('/statistics/global', [NotificationController::class, 'getGlobalStatistics'])->name('notifications.statistics.global');
+    
+    // Bulk operations
+    Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('notifications.bulk-delete');
+    Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('notifications.bulk-mark-read');
+});
+
+// Manager-level notification sending routes
+Route::middleware(['auth:sanctum', 'notification.send'])->prefix('notifications/send')->group(function () {
+    // Send notifications to specific users or roles
+    Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('notifications.send.users');
+    Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('notifications.send.roles');
+    Route::post('/broadcast', [NotificationController::class, 'broadcastNotification'])->name('notifications.broadcast');
+});
+
+// Webhook endpoints for external services (if needed)
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('notifications/webhooks')->group(function () {
+    // Payment service webhooks
+    Route::post('/payment-success', [NotificationController::class, 'handlePaymentSuccess'])->name('notifications.webhook.payment.success');
+    Route::post('/payment-failed', [NotificationController::class, 'handlePaymentFailed'])->name('notifications.webhook.payment.failed');
+    
+    // Booking service webhooks
+    Route::post('/booking-created', [NotificationController::class, 'handleBookingCreated'])->name('notifications.webhook.booking.created');
+    Route::post('/booking-cancelled', [NotificationController::class, 'handleBookingCancelled'])->name('notifications.webhook.booking.cancelled');
+    
+    // Review service webhooks
+    Route::post('/review-submitted', [NotificationController::class, 'handleReviewSubmitted'])->name('notifications.webhook.review.submitted');
+});
+
+// Public notification endpoints (no auth required)
+Route::prefix('notifications/public')->group(function () {
+    // System status notifications
+    Route::get('/system-status', [NotificationController::class, 'getSystemStatus'])->name('notifications.system-status');
+    
+    // Maintenance announcements
+    Route::get('/maintenance', [NotificationController::class, 'getMaintenanceAnnouncements'])->name('notifications.maintenance');
+});
+
+// Real-time notification testing endpoints (development only)
+if (app()->environment(['local', 'staging'])) {
+    Route::middleware(['auth:sanctum', 'role:admin'])->prefix('notifications/dev')->group(function () {
+        Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('notifications.dev.trigger');
+        Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('notifications.dev.pusher');
+        Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('notifications.dev.fake');
+    });
+}
