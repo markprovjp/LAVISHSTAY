@@ -15,7 +15,7 @@ echo [*] Directory: %CD%
 echo [*] URL: http://localhost:8888
 echo [*] Stack: Laravel
  echo.
-cd /d "D:\PRO224\DEV\lavishstay-backend"
+cd /d "C:\Users\ADMIN\DEV2\LAVISHSTAY\lavishstay-backend"
 php artisan serve --port=8888
 echo.
 echo !line!

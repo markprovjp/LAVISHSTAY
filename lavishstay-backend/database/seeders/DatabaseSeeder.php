@@ -16,8 +16,9 @@ class DatabaseSeeder extends Seeder
     {
 
         $this->call([
-            DashboardTableSeeder::class,
-            HotelSeeder::class,
+            // DashboardTableSeeder::class,
+            // HotelSeeder::class,
+            NotificationTypesSeeder::class,
         ]);
     }
 }

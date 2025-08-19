@@ -1,631 +1,421 @@
 {
     "success": true,
-    "data": [
-        {
-            "id": 20,
-            "slug": "bai-viet-mau-so-20",
-            "title": "Bài viết mẫu số 20",
-            "summary": "Đây là bài viết mẫu số 20 để test dữ liệu.",
-            "content": "<p>Nội dung chi tiết của bài viết mẫu số 20.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>",
-            "tags": [
-                "sample",
-                "test",
-                "demo"
-            ],
-            "thumbnail_id": 1,
-            "author_id": 2,
-            "category_id": 6,
-            "meta_title": "Bài viết mẫu số 20",
-            "meta_description": "Mô tả bài viết mẫu số 20",
-            "meta_keywords": "sample, test, demo",
-            "canonical_url": "/news/bai-viet-mau-so-20",
-            "schema_json": [],
-            "views": 232,
-            "status": true,
-            "published_at": "2025-08-09T09:37:46.000000Z",
-            "created_at": "2025-08-11T09:37:46.000000Z",
-            "updated_at": "2025-08-11T09:37:46.000000Z",
-            "thumbnail": {
-                "id": 1,
-                "filename": "1753807880_screenshot-1png.png",
-                "filepath": "http://localhost/storage/media/1753807880_screenshot-1png.png",
-                "alt_text": "Hình ảnh bài viết",
-                "title": "Hình ảnh bài viết",
-                "type": "image/png",
-                "size": 60413,
-                "used_in": "news",
-                "created_at": "2025-07-29T16:51:20.000000Z",
-                "updated_at": "2025-07-29T16:51:20.000000Z"
-            },
-            "category": {
-                "id": 6,
-                "name": "Ẩm Thực",
-                "slug": "am-thuc",
-                "description": "Giới thiệu về ẩm thực, nhà hàng và các món ăn đặc sắc",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 2,
-                "name": "Nguyễn Anh Đức",
-                "email": "nguyenandhduc2909@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "08221534422",
-                "address": "Thanh Hóa",
-                "identity_code": null,
-                "role": "guest",
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": null,
-                "created_at": "2025-06-10T09:47:13.000000Z",
-                "updated_at": "2025-06-10T09:47:13.000000Z",
-                "profile_photo_url": "https://ui-avatars.com/api/?name=N+A+%C4%90&color=7F9CF5&background=EBF4FF"
+    "message": "Lấy thông tin check-out thành công",
+    "data": {
+        "booking_info": {
+            "booking_id": 24,
+            "booking_code": "LAVISHYSTAY_931923",
+            "status": "Cleaning",
+            "check_in_date": "2025-08-03T17:00:00.000000Z",
+            "check_out_date": "2025-08-14T17:00:00.000000Z",
+            "original_total_price_vnd": 2900000,
+            "guest_count": 2,
+            "adults": null,
+            "children": 2,
+            "notes": "Check-in completed at 2025-08-05 19:39:26\nCheck-out completed at 2025-08-16 17:05:05"
+        },
+        "guest_info": {
+            "guest_name": "húhu",
+            "guest_email": "quyen@gmai.comđ",
+            "guest_phone": "231443342423",
+            "guest_count": 2,
+            "adults": null,
+            "children": 2,
+            "children_age": "3"
+        },
+        "room_info": {
+            "total_rooms": 1,
+            "rooms": [
+                {
+                    "room_id": 91,
+                    "room_number": "1001",
+                    "room_type": "Premium Corner",
+                    "room_type_id": 2,
+                    "floor": null,
+                    "status": "available",
+                    "description": null
+                }
+            ]
+        },
+        "hotel_info": {
+            "hotel_id": null,
+            "hotel_name": "Không xác định",
+            "hotel_address": "Không xác định",
+            "hotel_phone": "Không xác định",
+            "hotel_email": null
+        },
+        "available_services": {
+            "total_services": 5,
+            "services": [
+                {
+                    "service_id": 8,
+                    "name": "Dịch vụ hội nghị và sự kiện",
+                    "description": "Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.",
+                    "price_vnd": "2000000.00",
+                    "unit": "giờ",
+                    "formatted_price": "2.000.000 ₫",
+                    "price_with_unit": "2.000.000 ₫/giờ"
+                },
+                {
+                    "service_id": 10,
+                    "name": "Dịch vụ trông trẻ",
+                    "description": "Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.",
+                    "price_vnd": "200000.00",
+                    "unit": "giờ",
+                    "formatted_price": "200.000 ₫",
+                    "price_with_unit": "200.000 ₫/giờ"
+                },
+                {
+                    "service_id": 4,
+                    "name": "Mini bar",
+                    "description": "Sử dụng đồ uống, snack và rượu từ mini bar trong phòng, tính phí theo sản phẩm tiêu thụ.",
+                    "price_vnd": "100000.00",
+                    "unit": "lần",
+                    "formatted_price": "100.000 ₫",
+                    "price_with_unit": "100.000 ₫/lần"
+                },
+                {
+                    "service_id": 7,
+                    "name": "Thuê xe hơi hoặc xe máy",
+                    "description": "Thuê xe hơi tự lái hoặc có tài xế, hoặc xe máy để khám phá khu vực lân cận.",
+                    "price_vnd": "500000.00",
+                    "unit": "ngày",
+                    "formatted_price": "500.000 ₫",
+                    "price_with_unit": "500.000 ₫/ngày"
+                },
+                {
+                    "service_id": 6,
+                    "name": "Tour du lịch địa phương",
+                    "description": "Tổ chức tour tham quan các địa danh nổi tiếng, bao gồm hướng dẫn viên và phương tiện di chuyển.",
+                    "price_vnd": "800000.00",
+                    "unit": "người",
+                    "formatted_price": "800.000 ₫",
+                    "price_with_unit": "800.000 ₫/người"
+                }
+            ]
+        },
+        "booking_services": {
+            "total_services": 2,
+            "total_service_amount": 2400000,
+            "services": [
+                {
+                    "id": 1,
+                    "service_id": 10,
+                    "service_name": "Dịch vụ trông trẻ",
+                    "service_description": "Dịch vụ giữ trẻ chuyên nghiệp tại phòng hoặc khu vui chơi, với nhân viên được đào tạo.",
+                    "quantity": 2,
+                    "unit_price_vnd": "200000.00",
+                    "total_price_vnd": 400000,
+                    "unit": "giờ",
+                    "created_at": "2025-08-11T10:47:20.000000Z"
+                },
+                {
+                    "id": 2,
+                    "service_id": 8,
+                    "service_name": "Dịch vụ hội nghị và sự kiện",
+                    "service_description": "Thuê phòng họp hoặc hội trường cho hội nghị, tiệc cưới, với thiết bị âm thanh và ánh sáng đầy đủ.",
+                    "quantity": 1,
+                    "unit_price_vnd": "2000000.00",
+                    "total_price_vnd": 2000000,
+                    "unit": "giờ",
+                    "created_at": "2025-08-11T10:47:20.000000Z"
+                }
+            ]
+        },
+        "amount_calculation": {
+            "room_amount": 2900000,
+            "service_amount": 2400000,
+            "total_amount": 5300000,
+            "breakdown": {
+                "original_booking_amount": 2900000,
+                "additional_services_amount": 2400000,
+                "final_total_amount": 5300000
             }
         },
-        {
-            "id": 8,
-            "slug": "bai-viet-mau-so-8",
-            "title": "Bài viết mẫu số 8",
-            "summary": "Đây là bài viết mẫu số 8 để test dữ liệu.",
-            "content": "<p>Nội dung chi tiết của bài viết mẫu số 8.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>",
-            "tags": [
-                "sample",
-                "test",
-                "demo"
+        "payment_status": {
+            "total_required": 5300000,
+            "total_paid": "11000000.00",
+            "remaining_amount": -5700000,
+            "is_sufficient": true,
+            "payment_percentage": 207.54716981132074,
+            "payments": [
+                {
+                    "payment_id": 123,
+                    "amount_vnd": "11000000.00",
+                    "payment_type": "vietqr",
+                    "status": "completed",
+                    "transaction_id": "1",
+                    "created_at": "2025-08-05T07:02:22.000000Z"
+                }
             ],
-            "thumbnail_id": 7,
-            "author_id": 2,
-            "category_id": 3,
-            "meta_title": "Bài viết mẫu số 8",
-            "meta_description": "Mô tả bài viết mẫu số 8",
-            "meta_keywords": "sample, test, demo",
-            "canonical_url": "/news/bai-viet-mau-so-8",
-            "schema_json": [],
-            "views": 473,
-            "status": true,
-            "published_at": "2025-08-08T09:37:45.000000Z",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-11T09:37:45.000000Z",
-            "thumbnail": {
-                "id": 7,
-                "filename": "restaurant-dining.jpg",
-                "filepath": "/storage/media/restaurant-dining.jpg",
-                "alt_text": "Nhà hàng với không gian ấm cúng và món ăn tinh tế",
-                "title": "Nhà Hàng LavishStay",
-                "type": "image/jpeg",
-                "size": 1654321,
-                "used_in": "news",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "category": {
-                "id": 3,
-                "name": "Ưu Đãi & Khuyến Mãi",
-                "slug": "uu-dai-khuyen-mai",
-                "description": "Thông tin về các chương trình ưu đãi, khuyến mãi đặc biệt",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 2,
-                "name": "Nguyễn Anh Đức",
-                "email": "nguyenandhduc2909@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "08221534422",
-                "address": "Thanh Hóa",
-                "identity_code": null,
-                "role": "guest",
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": null,
-                "created_at": "2025-06-10T09:47:13.000000Z",
-                "updated_at": "2025-06-10T09:47:13.000000Z",
-                "profile_photo_url": "https://ui-avatars.com/api/?name=N+A+%C4%90&color=7F9CF5&background=EBF4FF"
+            "payment_summary": {
+                "completed_payments": 1,
+                "pending_payments": 0,
+                "failed_payments": 0
             }
         },
-        {
-            "id": 16,
-            "slug": "bai-viet-mau-so-16",
-            "title": "Bài viết mẫu số 16",
-            "summary": "Đây là bài viết mẫu số 16 để test dữ liệu.",
-            "content": "<p>Nội dung chi tiết của bài viết mẫu số 16.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>",
-            "tags": [
-                "sample",
-                "test",
-                "demo"
+        "checkout_validation": {
+            "summary": {
+                "can_checkout": false,
+                "total_rules_checked": 8,
+                "blocking_failures_count": 1,
+                "warnings_count": 0,
+                "passed_count": 7,
+                "validation_status": "BLOCKED"
+            },
+            "blocking_failures": [
+                {
+                    "rule_id": "booking_status",
+                    "passes": false,
+                    "message": "Booking phải ở trạng thái \"Đang lưu trú\" mới có thể check-out",
+                    "priority": 1,
+                    "is_blocking": true
+                }
             ],
-            "thumbnail_id": 9,
-            "author_id": 1,
-            "category_id": 5,
-            "meta_title": "Bài viết mẫu số 16",
-            "meta_description": "Mô tả bài viết mẫu số 16",
-            "meta_keywords": "sample, test, demo",
-            "canonical_url": "/news/bai-viet-mau-so-16",
-            "schema_json": [],
-            "views": 246,
-            "status": true,
-            "published_at": "2025-08-07T09:37:46.000000Z",
-            "created_at": "2025-08-11T09:37:46.000000Z",
-            "updated_at": "2025-08-11T09:37:46.000000Z",
-            "thumbnail": {
-                "id": 9,
-                "filename": "spa-treatment.jpg",
-                "filepath": "/storage/media/spa-treatment.jpg",
-                "alt_text": "Phòng spa với không gian thư giãn và massage",
-                "title": "Spa & Massage",
-                "type": "image/jpeg",
-                "size": 1987654,
-                "used_in": "news",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "category": {
-                "id": 5,
-                "name": "Sự Kiện",
-                "slug": "su-kien",
-                "description": "Thông tin về các sự kiện, lễ hội, hoạt động tại khách sạn",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 1,
-                "name": "NGUYỄN ANH ĐỨC",
-                "email": "nguyenanhduc2909@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "0822153447",
-                "address": "Thanh Hóa",
-                "identity_code": "038205000950",
-                "role": "admin",
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": "profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png",
-                "created_at": "2025-05-21T01:07:42.000000Z",
-                "updated_at": "2025-07-21T02:55:59.000000Z",
-                "profile_photo_url": "http://localhost/storage/profile-photos/mfqMmmx1jtzkRy9YdNHQRl7xjSLZwxGgqDHJd4JS.png"
+            "warnings": [],
+            "passed_rules": [
+                {
+                    "rule_id": "payment_sufficient",
+                    "passes": true,
+                    "message": "Chưa thanh toán đủ để có thể check-out",
+                    "priority": 2,
+                    "is_blocking": true
+                },
+                {
+                    "rule_id": "damage_assessment",
+                    "passes": true,
+                    "message": "Có phí phạt hoặc bồi thường hư hỏng. Vui lòng xác nhận với khách hàng.",
+                    "priority": 4,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "checkout_time",
+                    "passes": true,
+                    "message": "Check-out muộn quá giờ quy định (15:00). Có thể phát sinh phí phụ thu.",
+                    "priority": 5,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "early_checkout",
+                    "passes": true,
+                    "message": "Check-out sớm hơn ngày dự kiến. Vui lòng xác nhận với khách hàng.",
+                    "priority": 6,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "outstanding_services",
+                    "passes": true,
+                    "message": "Có dịch vụ bổ sung chưa được xác nhận",
+                    "priority": 7,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "guest_information",
+                    "passes": true,
+                    "message": "Thông tin khách hàng chưa đầy đủ (tên, email, số điện thoại)",
+                    "priority": 8,
+                    "is_blocking": false
+                },
+                {
+                    "rule_id": "room_availability",
+                    "passes": true,
+                    "message": "Phòng không thể chuyển sang trạng thái dọn dẹp",
+                    "priority": 10,
+                    "is_blocking": false
+                }
+            ],
+            "all_rule_results": {
+                "booking_status": {
+                    "rule_id": "booking_status",
+                    "passes": false,
+                    "message": "Booking phải ở trạng thái \"Đang lưu trú\" mới có thể check-out",
+                    "priority": 1,
+                    "is_blocking": true
+                },
+                "payment_sufficient": {
+                    "rule_id": "payment_sufficient",
+                    "passes": true,
+                    "message": "Chưa thanh toán đủ để có thể check-out",
+                    "priority": 2,
+                    "is_blocking": true
+                },
+                "damage_assessment": {
+                    "rule_id": "damage_assessment",
+                    "passes": true,
+                    "message": "Có phí phạt hoặc bồi thường hư hỏng. Vui lòng xác nhận với khách hàng.",
+                    "priority": 4,
+                    "is_blocking": false
+                },
+                "checkout_time": {
+                    "rule_id": "checkout_time",
+                    "passes": true,
+                    "message": "Check-out muộn quá giờ quy định (15:00). Có thể phát sinh phí phụ thu.",
+                    "priority": 5,
+                    "is_blocking": false
+                },
+                "early_checkout": {
+                    "rule_id": "early_checkout",
+                    "passes": true,
+                    "message": "Check-out sớm hơn ngày dự kiến. Vui lòng xác nhận với khách hàng.",
+                    "priority": 6,
+                    "is_blocking": false
+                },
+                "outstanding_services": {
+                    "rule_id": "outstanding_services",
+                    "passes": true,
+                    "message": "Có dịch vụ bổ sung chưa được xác nhận",
+                    "priority": 7,
+                    "is_blocking": false
+                },
+                "guest_information": {
+                    "rule_id": "guest_information",
+                    "passes": true,
+                    "message": "Thông tin khách hàng chưa đầy đủ (tên, email, số điện thoại)",
+                    "priority": 8,
+                    "is_blocking": false
+                },
+                "room_availability": {
+                    "rule_id": "room_availability",
+                    "passes": true,
+                    "message": "Phòng không thể chuyển sang trạng thái dọn dẹp",
+                    "priority": 10,
+                    "is_blocking": false
+                }
             }
         },
-        {
-            "id": 3,
-            "slug": "top-10-dia-diem-du-lich-khong-the-bo-qua-gan-lavishstay",
-            "title": "Top 10 Địa Điểm Du Lịch Không Thể Bỏ Qua Gần LavishStay",
-            "summary": "Khám phá những địa điểm du lịch hấp dẫn xung quanh khu vực LavishStay Resort với hướng dẫn chi tiết từ A đến Z.",
-            "content": "<p>Khi lưu trú tại LavishStay Resort, bạn sẽ có cơ hội khám phá nhiều địa điểm du lịch tuyệt vời xung quanh. Dưới đây là danh sách 10 địa điểm không thể bỏ qua:</p><h3>1. Bãi Biển Paradise</h3><p>Chỉ cách resort 5 phút đi bộ, bãi biển Paradise với làn nước trong xanh và bãi cát trắng mịn là nơi lý tưởng để thư giãn và tắm nắng.</p><h3>2. Chợ Đêm Địa Phương</h3><p>Trải nghiệm văn hóa địa phương qua những món ăn đường phố đặc sắc và các sản phẩm thủ công truyền thống.</p><h3>3. Đảo San Hô</h3><p>Tour lặn ngắm san hô với nhiều loài cá nhiệt đới đầy màu sắc, phù hợp cho cả người mới bắt đầu và chuyên nghiệp.</p><p>... và còn 7 địa điểm thú vị khác đang chờ bạn khám phá!</p>",
-            "tags": [
-                "travel guide",
-                "attractions",
-                "tourism",
-                "local"
-            ],
-            "thumbnail_id": 2,
-            "author_id": 7,
-            "category_id": 7,
-            "meta_title": "Top 10 Địa Điểm Du Lịch Gần LavishStay Resort - Hướng Dẫn Chi Tiết",
-            "meta_description": "Khám phá 10 địa điểm du lịch tuyệt vời xung quanh LavishStay Resort. Hướng dẫn đầy đủ về các hoạt động và điểm tham quan không thể bỏ qua.",
-            "meta_keywords": "du lịch, điểm tham quan, hướng dẫn, tourism, attractions, travel guide",
-            "canonical_url": "/news/top-10-dia-diem-du-lich-khong-the-bo-qua-gan-lavishstay",
-            "schema_json": {
-                "@type": "Article",
-                "author": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
-                },
-                "@context": "https://schema.org",
-                "headline": "Top 10 Địa Điểm Du Lịch Không Thể Bỏ Qua Gần LavishStay",
-                "publisher": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
-                },
-                "description": "Khám phá những địa điểm du lịch hấp dẫn xung quanh khu vực LavishStay Resort với hướng dẫn chi tiết từ A đến Z."
-            },
-            "views": 3644,
-            "status": true,
-            "published_at": "2025-08-04T09:37:45.000000Z",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-11T09:37:45.000000Z",
-            "thumbnail": {
-                "id": 2,
-                "filename": "1753807896_logopng.png",
-                "filepath": "http://localhost/storage/media/1753807896_logopng.png",
-                "alt_text": "Hình ảnh bài viết",
-                "title": "Hình ảnh bài viết",
-                "type": "image/png",
-                "size": 1818956,
-                "used_in": "news",
-                "created_at": "2025-07-29T16:51:36.000000Z",
-                "updated_at": "2025-07-29T16:51:36.000000Z"
-            },
-            "category": {
-                "id": 7,
-                "name": "Tips & Tricks",
-                "slug": "tips-tricks",
-                "description": "Các mẹo và kinh nghiệm hữu ích cho khách du lịch",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 7,
-                "name": "nguyễn văn quyền ADMIN",
-                "email": "werwerww@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "0987654321",
-                "address": "jhvbujh",
-                "identity_code": "324123423",
-                "role": null,
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": null,
-                "created_at": "2025-07-09T00:07:53.000000Z",
-                "updated_at": "2025-07-09T00:12:49.000000Z",
-                "profile_photo_url": "https://ui-avatars.com/api/?name=n+v+q+A&color=7F9CF5&background=EBF4FF"
-            }
+        "checkout_conditions": {
+            "payment_sufficient": true,
+            "ready_for_checkout": false,
+            "has_warnings": false,
+            "has_blocking_issues": true
         },
-        {
-            "id": 2,
-            "slug": "uu-dai-mua-he-2024-giam-gia-len-den-40-phan-tram",
-            "title": "Ưu Đãi Mùa Hè 2024 - Giảm Giá Lên Đến 40%",
-            "summary": "Chương trình ưu đãi mùa hè đặc biệt với mức giảm giá lên đến 40% cho tất cả các hạng phòng tại LavishStay.",
-            "content": "<p>Mùa hè đã đến và LavishStay mang đến chương trình ưu đãi đặc biệt dành cho tất cả du khách. Với mức giảm giá lên đến 40%, đây là cơ hội tuyệt vời để bạn trải nghiệm kỳ nghỉ trong mơ.</p><h3>Ưu đãi bao gồm:</h3><ul><li>Giảm 40% cho phòng Suite và Presidential</li><li>Giảm 30% cho phòng Deluxe và Superior</li><li>Giảm 20% cho tất cả dịch vụ spa</li><li>Buffet sáng miễn phí cho trẻ em dưới 12 tuổi</li><li>Late check-out đến 14:00 miễn phí</li></ul><p>Chương trình có hiệu lực từ ngày 1/6 đến 31/8/2024. Áp dụng cho các đêm nghỉ từ Chủ Nhật đến Thứ Năm.</p>",
-            "tags": [
-                "promotion",
-                "summer",
-                "discount",
-                "offer"
-            ],
-            "thumbnail_id": 7,
-            "author_id": 3,
-            "category_id": 3,
-            "meta_title": "Ưu Đãi Mùa Hè 2024 - Giảm Đến 40% Tại LavishStay Resort",
-            "meta_description": "Đừng bỏ lỡ chương trình ưu đãi mùa hè với giảm giá lên đến 40% tất cả hạng phòng. Đặt ngay để nhận ưu đãi tốt nhất!",
-            "meta_keywords": "ưu đãi, khuyến mãi, giảm giá, mùa hè, summer promotion",
-            "canonical_url": "/news/uu-dai-mua-he-2024-giam-gia-len-den-40-phan-tram",
-            "schema_json": {
-                "@type": "Article",
-                "author": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
+        "compensation_policies": {
+            "total_policies": 7,
+            "policies": [
+                {
+                    "compensation_policy_id": 3,
+                    "name": "Chi trả chỗ nghỉ tạm & di chuyển (Overbook/Out-of-service)",
+                    "description": "Khi khách phải chuyển sang khách sạn khác: khách sạn chi trả chi phí chỗ nghỉ thay thế và chi phí di chuyển hợp lý. Ghi rõ hóa đơn/phiếu chi vào booking_compensations để hoàn trả.",
+                    "condition_type": "overbooking",
+                    "condition_type_label": "Overbooking",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "2000000.00",
+                    "formatted_discount_value": "2.000.000 ₫",
+                    "max_compensation_amount": "2000000.00",
+                    "applies_to_room_type_id": null
                 },
-                "@context": "https://schema.org",
-                "headline": "Ưu Đãi Mùa Hè 2024 - Giảm Giá Lên Đến 40%",
-                "publisher": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
+                {
+                    "compensation_policy_id": 4,
+                    "name": "Credit dịch vụ tại chỗ",
+                    "description": "Cấp credit dùng cho F&B hoặc spa trong thời gian lưu trú. Thường dùng cho trường hợp service failure nhỏ.",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "300000.00",
+                    "formatted_discount_value": "300.000 ₫",
+                    "max_compensation_amount": "300000.00",
+                    "applies_to_room_type_id": null
                 },
-                "description": "Chương trình ưu đãi mùa hè đặc biệt với mức giảm giá lên đến 40% cho tất cả các hạng phòng tại LavishStay."
-            },
-            "views": 4327,
-            "status": true,
-            "published_at": "2025-08-03T09:37:45.000000Z",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-11T09:37:45.000000Z",
-            "thumbnail": {
-                "id": 7,
-                "filename": "restaurant-dining.jpg",
-                "filepath": "/storage/media/restaurant-dining.jpg",
-                "alt_text": "Nhà hàng với không gian ấm cúng và món ăn tinh tế",
-                "title": "Nhà Hàng LavishStay",
-                "type": "image/jpeg",
-                "size": 1654321,
-                "used_in": "news",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "category": {
-                "id": 3,
-                "name": "Ưu Đãi & Khuyến Mãi",
-                "slug": "uu-dai-khuyen-mai",
-                "description": "Thông tin về các chương trình ưu đãi, khuyến mãi đặc biệt",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 3,
-                "name": "Thu Huyền",
-                "email": "nguyenanhduc29090@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "03111512022",
-                "address": "Tuyên Quang",
-                "identity_code": "035656218945",
-                "role": null,
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": "profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg",
-                "created_at": "2025-06-27T00:17:18.000000Z",
-                "updated_at": "2025-06-27T00:17:18.000000Z",
-                "profile_photo_url": "http://localhost/storage/profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg"
-            }
+                {
+                    "compensation_policy_id": 7,
+                    "name": "Giảm 30% trên hóa đơn hiện tại",
+                    "description": "Giảm 30% trên tổng booking hoặc trên đêm bị ảnh hưởng (theo cấu hình).",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "percentage",
+                    "discount_type_label": "Phần trăm",
+                    "discount_value": "30.00",
+                    "formatted_discount_value": "30.00%",
+                    "max_compensation_amount": null,
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 2,
+                    "name": "Giảm 50% - đêm bị ảnh hưởng",
+                    "description": "Áp dụng khi dịch vụ bị gián đoạn (ví dụ mất điện, điều hòa hỏng) cho đêm hiện tại; giảm 50% trên giá đêm bị ảnh hưởng.",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "percentage",
+                    "discount_type_label": "Phần trăm",
+                    "discount_value": "50.00",
+                    "formatted_discount_value": "50.00%",
+                    "max_compensation_amount": null,
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 1,
+                    "name": "Hoàn tiền toàn bộ - phòng không thể sử dụng",
+                    "description": "Áp dụng khi phòng hỏng/không thể sử dụng và không có phòng thay thế. Hoàn tiền 100% cho các đêm chưa sử dụng; nhân viên cần ghi rõ số đêm và nightly_rate trong booking_compensations.",
+                    "condition_type": "room_damage",
+                    "condition_type_label": "Hư hỏng phòng",
+                    "discount_type": "percentage",
+                    "discount_type_label": "Phần trăm",
+                    "discount_value": "100.00",
+                    "formatted_discount_value": "100.00%",
+                    "max_compensation_amount": null,
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 6,
+                    "name": "Nâng hạng phòng miễn phí",
+                    "description": "Nâng hạng phòng (non-monetary). Ghi voucher/note trong booking; xử lý áp dụng thủ công tại check-in/out.",
+                    "condition_type": "service_failure",
+                    "condition_type_label": "Lỗi dịch vụ",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "0.00",
+                    "formatted_discount_value": "0 ₫",
+                    "max_compensation_amount": "0.00",
+                    "applies_to_room_type_id": null
+                },
+                {
+                    "compensation_policy_id": 5,
+                    "name": "Voucher 1 đêm cho lần ở sau",
+                    "description": "Voucher trị giá 1 đêm (giá tham chiếu: 1,000,000 VND) dùng cho lần đặt tiếp theo. Xử lý voucher ngoài luồng thanh toán.",
+                    "condition_type": "other",
+                    "condition_type_label": "Khác",
+                    "discount_type": "fixed_amount",
+                    "discount_type_label": "Số tiền cố định",
+                    "discount_value": "1000000.00",
+                    "formatted_discount_value": "1.000.000 ₫",
+                    "max_compensation_amount": "1000000.00",
+                    "applies_to_room_type_id": null
+                }
+            ]
         },
-        {
-            "id": 4,
-            "slug": "grand-opening-le-khai-truong-nha-hang-rooftop-moi",
-            "title": "Grand Opening - Lễ Khai Trương Nhà Hàng Rooftop Mới",
-            "summary": "Tham gia lễ khai trương nhà hàng rooftop mới với không gian 360 độ và thực đơn fine dining độc đáo.",
-            "content": "<p>LavishStay Resort hân hạnh giới thiệu nhà hàng rooftop mới - Sky Lounge với tầm nhìn 360 độ tuyệt đẹp ra toàn thành phố và biển cả.</p><h3>Điểm đặc biệt của Sky Lounge:</h3><ul><li>Không gian mở với tầm nhìn panoramic</li><li>Thực đơn fusion cuisine do chef Michelin star thiết kế</li><li>Bar cocktail với hơn 200 loại đồ uống cao cấp</li><li>Live music mỗi tối từ 19:00-22:00</li><li>Không gian riêng tư cho các sự kiện đặc biệt</li></ul><p>Lễ khai trương sẽ diễn ra vào 20:00 ngày 15/12/2024 với sự tham gia của các celebrity và food blogger nổi tiếng. Khách mời sẽ được thưởng thức cocktail welcome drink và canapé miễn phí.</p>",
-            "tags": [
-                "event",
-                "restaurant",
-                "opening",
-                "rooftop"
-            ],
-            "thumbnail_id": 7,
-            "author_id": 2,
-            "category_id": 7,
-            "meta_title": "Khai Trương Sky Lounge - Nhà Hàng Rooftop Đẳng Cấp Tại LavishStay",
-            "meta_description": "Tham gia lễ khai trương Sky Lounge - nhà hàng rooftop với tầm nhìn 360 độ và thực đơn fine dining độc đáo tại LavishStay Resort.",
-            "meta_keywords": "nhà hàng rooftop, khai trương, sky lounge, fine dining, event",
-            "canonical_url": "/news/grand-opening-le-khai-truong-nha-hang-rooftop-moi",
-            "schema_json": {
-                "@type": "Article",
-                "author": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
-                },
-                "@context": "https://schema.org",
-                "headline": "Grand Opening - Lễ Khai Trương Nhà Hàng Rooftop Mới",
-                "publisher": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
-                },
-                "description": "Tham gia lễ khai trương nhà hàng rooftop mới với không gian 360 độ và thực đơn fine dining độc đáo."
-            },
-            "views": 6295,
-            "status": true,
-            "published_at": "2025-08-01T09:37:45.000000Z",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-11T09:37:45.000000Z",
-            "thumbnail": {
-                "id": 7,
-                "filename": "restaurant-dining.jpg",
-                "filepath": "/storage/media/restaurant-dining.jpg",
-                "alt_text": "Nhà hàng với không gian ấm cúng và món ăn tinh tế",
-                "title": "Nhà Hàng LavishStay",
-                "type": "image/jpeg",
-                "size": 1654321,
-                "used_in": "news",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "category": {
-                "id": 7,
-                "name": "Tips & Tricks",
-                "slug": "tips-tricks",
-                "description": "Các mẹo và kinh nghiệm hữu ích cho khách du lịch",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 2,
-                "name": "Nguyễn Anh Đức",
-                "email": "nguyenandhduc2909@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "08221534422",
-                "address": "Thanh Hóa",
-                "identity_code": null,
-                "role": "guest",
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": null,
-                "created_at": "2025-06-10T09:47:13.000000Z",
-                "updated_at": "2025-06-10T09:47:13.000000Z",
-                "profile_photo_url": "https://ui-avatars.com/api/?name=N+A+%C4%90&color=7F9CF5&background=EBF4FF"
-            }
+        "existing_compensation_requests": {
+            "total_requests": 1,
+            "requests": [
+                {
+                    "request_id": 1,
+                    "policy_name": "Yêu cầu khác",
+                    "custom_reason": "dưdwd",
+                    "status": "approved",
+                    "status_label": "Đã duyệt",
+                    "requested_amount": "100000.00",
+                    "approved_amount": "200000.00",
+                    "formatted_approved_amount": "200.000 ₫",
+                    "requested_by": "Pro Mark",
+                    "approved_by": "Nguyễn Anh Đức",
+                    "approved_at": "2025-08-13T02:24:13.000000Z",
+                    "admin_note": "sqsqs",
+                    "attachments": null,
+                    "created_at": "2025-08-12T07:49:11.000000Z"
+                }
+            ]
         },
-        {
-            "id": 14,
-            "slug": "bai-viet-mau-so-14",
-            "title": "Bài viết mẫu số 14",
-            "summary": "Đây là bài viết mẫu số 14 để test dữ liệu.",
-            "content": "<p>Nội dung chi tiết của bài viết mẫu số 14.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>",
-            "tags": [
-                "sample",
-                "test",
-                "demo"
-            ],
-            "thumbnail_id": 1,
-            "author_id": 5,
-            "category_id": 2,
-            "meta_title": "Bài viết mẫu số 14",
-            "meta_description": "Mô tả bài viết mẫu số 14",
-            "meta_keywords": "sample, test, demo",
-            "canonical_url": "/news/bai-viet-mau-so-14",
-            "schema_json": [],
-            "views": 424,
-            "status": true,
-            "published_at": "2025-07-31T09:37:46.000000Z",
-            "created_at": "2025-08-11T09:37:46.000000Z",
-            "updated_at": "2025-08-11T09:37:46.000000Z",
-            "thumbnail": {
-                "id": 1,
-                "filename": "1753807880_screenshot-1png.png",
-                "filepath": "http://localhost/storage/media/1753807880_screenshot-1png.png",
-                "alt_text": "Hình ảnh bài viết",
-                "title": "Hình ảnh bài viết",
-                "type": "image/png",
-                "size": 60413,
-                "used_in": "news",
-                "created_at": "2025-07-29T16:51:20.000000Z",
-                "updated_at": "2025-07-29T16:51:20.000000Z"
-            },
-            "category": {
-                "id": 2,
-                "name": "Tin Tức Khách Sạn",
-                "slug": "tin-tuc-khach-san",
-                "description": "Các tin tức mới nhất về khách sạn và dịch vụ",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 5,
-                "name": "明心",
-                "email": "quyenjpn@gmail.com",
-                "google_id": "109271388597887089369",
-                "avatar": "https://lh3.googleusercontent.com/a/ACg8ocLibsuu8ZHTUKCZ5jMRf4XanikYipmCOnfOQFqEYq_3W7lJkd6YCA=s96-c",
-                "email_verified_at": null,
-                "phone": "0335920306",
-                "address": "Thanh hoá",
-                "identity_code": null,
-                "role": null,
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": null,
-                "created_at": "2025-07-08T21:51:07.000000Z",
-                "updated_at": "2025-07-08T21:51:07.000000Z",
-                "profile_photo_url": "https://ui-avatars.com/api/?name=%E6%98%8E&color=7F9CF5&background=EBF4FF"
-            }
-        },
-        {
-            "id": 17,
-            "slug": "bai-viet-mau-so-17",
-            "title": "Bài viết mẫu số 17",
-            "summary": "Đây là bài viết mẫu số 17 để test dữ liệu.",
-            "content": "<p>Nội dung chi tiết của bài viết mẫu số 17.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>",
-            "tags": [
-                "sample",
-                "test",
-                "demo"
-            ],
-            "thumbnail_id": 5,
-            "author_id": 3,
-            "category_id": 6,
-            "meta_title": "Bài viết mẫu số 17",
-            "meta_description": "Mô tả bài viết mẫu số 17",
-            "meta_keywords": "sample, test, demo",
-            "canonical_url": "/news/bai-viet-mau-so-17",
-            "schema_json": [],
-            "views": 345,
-            "status": true,
-            "published_at": "2025-07-31T09:37:46.000000Z",
-            "created_at": "2025-08-11T09:37:46.000000Z",
-            "updated_at": "2025-08-11T09:37:46.000000Z",
-            "thumbnail": {
-                "id": 5,
-                "filename": "hotel-lobby.jpg",
-                "filepath": "/storage/media/hotel-lobby.jpg",
-                "alt_text": "Sảnh khách sạn sang trọng với thiết kế hiện đại",
-                "title": "Sảnh Khách Sạn LavishStay",
-                "type": "image/jpeg",
-                "size": 2048576,
-                "used_in": "news",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "category": {
-                "id": 6,
-                "name": "Ẩm Thực",
-                "slug": "am-thuc",
-                "description": "Giới thiệu về ẩm thực, nhà hàng và các món ăn đặc sắc",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 3,
-                "name": "Thu Huyền",
-                "email": "nguyenanhduc29090@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "03111512022",
-                "address": "Tuyên Quang",
-                "identity_code": "035656218945",
-                "role": null,
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": "profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg",
-                "created_at": "2025-06-27T00:17:18.000000Z",
-                "updated_at": "2025-06-27T00:17:18.000000Z",
-                "profile_photo_url": "http://localhost/storage/profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg"
-            }
-        },
-        {
-            "id": 1,
-            "slug": "kham-pha-khong-gian-sang-trong-tai-lavishstay-resort",
-            "title": "Khám Phá Không Gian Sang Trọng Tại LavishStay Resort",
-            "summary": "Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.",
-            "content": "<p>LavishStay Resort mang đến cho du khách một trải nghiệm nghỉ dưỡng đẳng cấp với không gian sang trọng và dịch vụ tận tâm. Tọa lạc tại vị trí đắc địa, resort sở hữu kiến trúc hiện đại hòa quyện với thiên nhiên.</p><p>Các phòng nghỉ được thiết kế tinh tế với đầy đủ tiện nghi cao cấp, mang đến sự thoải mái tối đa cho khách hàng. Từ phòng Deluxe đến Suite Presidential, mỗi không gian đều được chăm chút kỹ lưỡng về từng chi tiết.</p><p>Resort còn sở hữu hệ thống tiện ích đa dạng bao gồm nhà hàng fine dining, spa cao cấp, hồ bơi infinity và trung tâm thể dục hiện đại.</p>",
-            "tags": [
-                "resort",
-                "luxury",
-                "accommodation",
-                "travel"
-            ],
-            "thumbnail_id": 6,
-            "author_id": 3,
-            "category_id": 2,
-            "meta_title": "LavishStay Resort - Không Gian Nghỉ Dưỡng Đẳng Cấp 5 Sao",
-            "meta_description": "Khám phá LavishStay Resort với không gian sang trọng, dịch vụ 5 sao và trải nghiệm nghỉ dưỡng đẳng cấp. Đặt phòng ngay để nhận ưu đãi đặc biệt.",
-            "meta_keywords": "lavishstay, resort, luxury hotel, 5 star, nghỉ dưỡng, khách sạn cao cấp",
-            "canonical_url": "/news/kham-pha-khong-gian-sang-trong-tai-lavishstay-resort",
-            "schema_json": {
-                "@type": "Article",
-                "author": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
-                },
-                "@context": "https://schema.org",
-                "headline": "Khám Phá Không Gian Sang Trọng Tại LavishStay Resort",
-                "publisher": {
-                    "name": "LavishStay Resort",
-                    "@type": "Organization"
-                },
-                "description": "Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort."
-            },
-            "views": 2787,
-            "status": true,
-            "published_at": "2025-07-29T09:37:45.000000Z",
-            "created_at": "2025-08-11T09:37:45.000000Z",
-            "updated_at": "2025-08-11T09:37:45.000000Z",
-            "thumbnail": {
-                "id": 6,
-                "filename": "deluxe-room.jpg",
-                "filepath": "/storage/media/deluxe-room.jpg",
-                "alt_text": "Phòng deluxe với view biển tuyệt đẹp",
-                "title": "Phòng Deluxe Sea View",
-                "type": "image/jpeg",
-                "size": 1876543,
-                "used_in": "news",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "category": {
-                "id": 2,
-                "name": "Tin Tức Khách Sạn",
-                "slug": "tin-tuc-khach-san",
-                "description": "Các tin tức mới nhất về khách sạn và dịch vụ",
-                "created_at": "2025-08-11T09:37:45.000000Z",
-                "updated_at": "2025-08-11T09:37:45.000000Z"
-            },
-            "author": {
-                "id": 3,
-                "name": "Thu Huyền",
-                "email": "nguyenanhduc29090@gmail.com",
-                "google_id": null,
-                "avatar": null,
-                "email_verified_at": null,
-                "phone": "03111512022",
-                "address": "Tuyên Quang",
-                "identity_code": "035656218945",
-                "role": null,
-                "two_factor_confirmed_at": null,
-                "current_team_id": null,
-                "profile_photo_path": "profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg",
-                "created_at": "2025-06-27T00:17:18.000000Z",
-                "updated_at": "2025-06-27T00:17:18.000000Z",
-                "profile_photo_url": "http://localhost/storage/profile-photos/sVoWN7luhQjbSUrhKANRv2sJKh7h1hOc0saidVWn.jpg"
-            }
+        "checkout_summary": {
+            "can_checkout": false,
+            "validation_status": "BLOCKED",
+            "total_stay_amount": 5300000,
+            "remaining_payment": -5700000,
+            "checkout_date": "2025-08-17",
+            "checkout_time": "14:51",
+            "blocking_issues_count": 1,
+            "warnings_count": 0,
+            "has_compensation_requests": true
         }
-    ],
-    "current_page": 1,
-    "last_page": 3,
-    "total": 20
+    }
 }

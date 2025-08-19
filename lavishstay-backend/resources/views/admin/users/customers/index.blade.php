@@ -18,8 +18,8 @@
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
-                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Customer Management</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Manage all customers in the system</p>
+                <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">Quản lý khách hàng</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Quản lý tất cả khách hàng trong hệ thống</p>
             </div>
 
             <!-- Right: Actions -->
@@ -31,7 +31,7 @@
                             <path
                                 d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                         </svg>
-                        <span class="max-xs:sr-only">Add Customer</span>
+                        <span class="max-xs:sr-only cursor-pointer">Thêm khách hàng</span>
                     </button>
                 </a>
             </div>
@@ -113,28 +113,28 @@
                                 <tr class="bg-gray-50 dark:bg-gray-700">
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Avatar</th>
+                                        Ảnh</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Name</th>
+                                        Tên</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Email</th>
+                                        E-Mail</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Phone</th>
+                                        Số Điện Thoại</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        ID card / Passport number</th>
+                                        Số CMND / Hộ chiếu</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Role</th>
+                                        Vai trò</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Join Date</th>
+                                        Ngày Tạo</th>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Actions</th>
+                                        Hành Động</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -243,7 +243,7 @@
                                                 <a href="{{ route('admin.users.customers.show', $user->id) }}"
                                                     class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
                                                     role="menuitem">
-                                                    View Customer
+                                                    Xem Chi Tiết
                                                 </a>
 
                                                 <!-- Divider -->
@@ -262,7 +262,7 @@
                                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
                                                         </path>
                                                     </svg>
-                                                    Delete Customer
+                                                    Xoá Khách Hàng
                                                 </button>
                                             </div>
                                         </div>

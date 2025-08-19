@@ -26,9 +26,14 @@ const CommentForm: React.FC<CommentFormProps> = ({
     const [form] = Form.useForm();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const createCommentMutation = useCreateComment();
+    const createCommentMutation = useCreateComment(newsId);
 
     const handleSubmit = async (values: { content: string }) => {
+        if (!newsId) {
+            message.error(t('news.comments.form.noNewsId', 'Không tìm thấy bài viết'));
+            return;
+        }
+
         if (!values.content.trim()) {
             message.warning(t('news.comments.form.contentRequired', 'Vui lòng nhập nội dung bình luận'));
             return;

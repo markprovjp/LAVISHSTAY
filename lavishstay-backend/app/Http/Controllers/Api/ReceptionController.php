@@ -23,7 +23,262 @@ class ReceptionController extends Controller
     {
         $this->pricingService = $pricingService;
     }
-    
+ /**
+     * Generate invoice PDF for a booking
+     */
+    public function generateInvoice($bookingId)
+    {
+        try {
+            Log::info('=== Generate Invoice PDF START ===', ['booking_id' => $bookingId]);
+
+            // Get booking details with related data
+            $booking = DB::table('booking')
+                ->where('booking_id', $bookingId)
+                ->first();
+
+            if (!$booking) {
+                return response()->json(['error' => 'Booking not found'], 404);
+            }
+
+            // Get booking rooms with room and room type details
+            $bookingRooms = DB::table('booking_rooms as br')
+                ->leftJoin('room as r', 'br.room_id', '=', 'r.room_id')
+                ->leftJoin('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                ->leftJoin('representatives as rep', 'br.representative_id', '=', 'rep.id')
+                ->where('br.booking_id', $bookingId)
+                ->select([
+                    'br.*',
+                    'r.name as room_name',
+                    'r.floor_id',
+                    'rt.name as room_type_name',
+                    'rt.description as room_type_description',
+                    'rep.full_name as representative_name',
+                    'rep.phone_number as representative_phone'
+                ])
+                ->get();
+
+            // Get booking services
+            $bookingServices = DB::table('booking_services as bs')
+                ->leftJoin('services as s', 'bs.service_id', '=', 's.service_id')
+                ->where('bs.booking_id', $bookingId)
+                ->select([
+                    'bs.*',
+                    's.name as service_name',
+                    's.description as service_description',
+                    's.unit as service_unit'
+                ])
+                ->get();
+
+            // Calculate totals
+            // Service total is additional and should be added to the booking's stored total_price_vnd
+            $serviceTotal = $bookingServices->sum(function($service) {
+                return $service->quantity * $service->price_vnd;
+            });
+
+            // Use booking's stored total (total_price_vnd) for room/package total to avoid double-counting
+            $roomTotal = $booking->total_price_vnd ?? $booking->total_price ?? $bookingRooms->sum('total_price');
+
+            // Grand total = booking's room/package total + additional service charges
+            $grandTotal = ($booking->total_price_vnd ?? $roomTotal) + $serviceTotal;
+
+            // Prepare data for invoice
+            $invoiceData = [
+                'booking' => $booking,
+                'booking_rooms' => $bookingRooms,
+                'booking_services' => $bookingServices,
+                'room_total' => $roomTotal,
+                'service_total' => $serviceTotal,
+                'grand_total' => $grandTotal,
+                'invoice_number' => 'INV-' . $booking->booking_code . '-' . date('Ymd'),
+                'invoice_date' => date('d/m/Y'),
+                'hotel_info' => [
+                    'name' => 'LavishStay Hotel',
+                        'address' => 'Số 27 Trần Phú, Phường Điện Biên, Thành Phố Thanh Hóa , Việt Nam',
+                        'phone' => '(028) 1234 5678',
+                        'email' => 'info@lavishstay.com',
+                        'website' => 'www.lavishstay.com',
+                        // Try to load logo from frontend assets and convert to data URI for dompdf
+                        'logo' => (function(){
+                            try {
+                                $path = base_path('lavishstay-frontend/src/assets/images/logo-light.png');
+                                if (file_exists($path)) {
+                                    $data = file_get_contents($path);
+                                    $base64 = base64_encode($data);
+                                    return 'data:image/png;base64,' . $base64;
+                                }
+                            } catch (\Exception $e) {
+                                Log::warning('Unable to load logo for invoice: ' . $e->getMessage());
+                            }
+                            return null;
+                        })()
+                ]
+            ];
+
+            Log::info('Invoice data prepared', [
+                'room_count' => $bookingRooms->count(),
+                'service_count' => $bookingServices->count(),
+                'grand_total' => $grandTotal
+            ]);
+
+            // Render view to HTML first (save for debugging) then load HTML into dompdf
+            $html = view('invoice.booking', $invoiceData)->render();
+            try {
+                $debugPath = storage_path('logs/invoice_debug_' . $booking->booking_id . '_' . time() . '.html');
+                @file_put_contents($debugPath, $html);
+                Log::info('Invoice HTML saved for debug', ['path' => $debugPath]);
+            } catch (\Exception $e) {
+                Log::warning('Unable to save invoice debug HTML: ' . $e->getMessage());
+            }
+
+            try {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+            } catch (\Exception $e) {
+                // Save HTML on error to help debugging and rethrow
+                try { @file_put_contents(storage_path('logs/invoice_error_' . $booking->booking_id . '_' . time() . '.html'), $html); } catch (\Exception $ee) {}
+                Log::error('DomPDF failed to load HTML for invoice: ' . $e->getMessage());
+                throw $e;
+            }
+            
+            // Set paper size and orientation
+            $pdf->setPaper('A4', 'portrait');
+
+            // Return PDF as download
+            $filename = 'invoice-' . $booking->booking_code . '-' . date('Ymd') . '.pdf';
+            
+            Log::info('=== Generate Invoice PDF SUCCESS ===', ['filename' => $filename]);
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('=== ERROR in generateInvoice ===');
+            Log::error('Error message: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile());
+            Log::error('Line: ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi tạo hoá đơn',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+     /**
+     * Check-in guest
+     */
+    public function checkIn(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'booking_id' => 'required|integer',
+                'room_id' => 'required|integer',
+                'actual_check_in_time' => 'nullable|date_format:Y-m-d H:i:s'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Update booking status
+                DB::table('booking')
+                    ->where('booking_id', $request->booking_id)
+                    ->update([
+                        'status' => 'confirmed',
+                        'updated_at' => Carbon::now()
+                    ]);
+                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Check-in completed successfully',
+                    'data' => [
+                        'booking_id' => $request->booking_id,
+                        'room_id' => $request->room_id,
+                        'check_in_time' => $request->actual_check_in_time ?: Carbon::now()->format('Y-m-d H:i:s')
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error checking in: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing check-in',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check-out guest
+     */
+    public function checkOut(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'booking_id' => 'required|integer',
+                'room_id' => 'required|integer',
+                'actual_check_out_time' => 'nullable|date_format:Y-m-d H:i:s'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Update booking status
+                DB::table('booking')
+                    ->where('booking_id', $request->booking_id)
+                    ->update([
+                        'status' => 'completed',
+                        'updated_at' => Carbon::now()
+                    ]);
+                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Check-out completed successfully',
+                    'data' => [
+                        'booking_id' => $request->booking_id,
+                        'room_id' => $request->room_id,
+                        'check_out_time' => $request->actual_check_out_time ?: Carbon::now()->format('Y-m-d H:i:s')
+                    ]
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error checking out: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing check-out',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
    /**
      * Get all rooms with filters for room management dashboard
      */
@@ -562,6 +817,74 @@ class ReceptionController extends Controller
                 ->orderBy('name')
                 ->get();
 
+            // Enrich room types with images and package options to make frontend simpler
+            $roomTypes = $roomTypes->map(function ($rt) {
+                $images = [];
+                try {
+                    $imagesTableExists = DB::select("SHOW TABLES LIKE 'room_type_images'");
+                    if (!empty($imagesTableExists)) {
+                        $imgs = DB::table('room_type_images')
+                            ->where('room_type_id', $rt->id)
+                            ->get();
+
+                        $images = $imgs->map(function ($img) {
+                            return [
+                                'id' => $img->image_id ?? $img->id,
+                                'room_type_id' => $img->room_type_id ?? null,
+                                'image_path' => $img->image_path ?? null,
+                                'image_url' => $img->image_path ? asset($img->image_path) : null,
+                                'alt_text' => $img->alt_text ?? '',
+                                'is_main' => isset($img->is_main) ? (bool) $img->is_main : false,
+                            ];
+                        })->toArray();
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error fetching room type images: ' . $e->getMessage(), ['room_type_id' => $rt->id]);
+                }
+
+                // Load package options if available
+                $packages = [];
+                try {
+                    $packages = DB::table('room_type_package')
+                        ->where('room_type_id', $rt->id)
+                        ->select('package_id', 'name as package_name', 'price_modifier_vnd', 'description')
+                        ->orderBy('name')
+                        ->get()
+                        ->map(function ($p) {
+                            return [
+                                'package_id' => $p->package_id,
+                                'package_name' => $p->package_name,
+                                'price_modifier_vnd' => $p->price_modifier_vnd,
+                                'description' => $p->description ?? ''
+                            ];
+                        })->toArray();
+                } catch (\Exception $e) {
+                    Log::error('Error fetching room type packages: ' . $e->getMessage(), ['room_type_id' => $rt->id]);
+                }
+
+                // Determine main image
+                $mainImage = null;
+                foreach ($images as $img) {
+                    if (!empty($img['is_main'])) {
+                        $mainImage = $img['image_url'];
+                        break;
+                    }
+                }
+                if (!$mainImage && !empty($images)) {
+                    $mainImage = $images[0]['image_url'] ?? null;
+                }
+
+                // Return enriched object (keep original fields)
+                return (object) array_merge((array) $rt, [
+                    'images' => $images,
+                    // keep legacy field name used in some places
+                    'room_type_images' => $images,
+                    'main_image' => $mainImage,
+                    'package_options' => $packages,
+                    'cheapest_package_price' => $rt->base_price ?? 0,
+                ]);
+            });
+
             return response()->json([
                 'success' => true,
                 'data' => $roomTypes,
@@ -578,120 +901,7 @@ class ReceptionController extends Controller
         }
     }
 
-    /**
-     * Check-in guest
-     */
-    public function checkIn(Request $request): JsonResponse
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'booking_id' => 'required|integer',
-                'room_id' => 'required|integer',
-                'actual_check_in_time' => 'nullable|date_format:Y-m-d H:i:s'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            try {
-                // Update booking status
-                DB::table('booking')
-                    ->where('booking_id', $request->booking_id)
-                    ->update([
-                        'status' => 'confirmed',
-                        'updated_at' => Carbon::now()
-                    ]);
-                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Check-in completed successfully',
-                    'data' => [
-                        'booking_id' => $request->booking_id,
-                        'room_id' => $request->room_id,
-                        'check_in_time' => $request->actual_check_in_time ?: Carbon::now()->format('Y-m-d H:i:s')
-                    ]
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                throw $e;
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error checking in: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error processing check-in',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Check-out guest
-     */
-    public function checkOut(Request $request): JsonResponse
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'booking_id' => 'required|integer',
-                'room_id' => 'required|integer',
-                'actual_check_out_time' => 'nullable|date_format:Y-m-d H:i:s'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            try {
-                // Update booking status
-                DB::table('booking')
-                    ->where('booking_id', $request->booking_id)
-                    ->update([
-                        'status' => 'completed',
-                        'updated_at' => Carbon::now()
-                    ]);
-                // Đã xoá đoạn update status phòng để tránh lỗi SQL khi giá trị không hợp lệ
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Check-out completed successfully',
-                    'data' => [
-                        'booking_id' => $request->booking_id,
-                        'room_id' => $request->room_id,
-                        'check_out_time' => $request->actual_check_out_time ?: Carbon::now()->format('Y-m-d H:i:s')
-                    ]
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                throw $e;
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Error checking out: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error processing check-out',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
+   
 
 
 
@@ -1635,5 +1845,7 @@ $allChildrenAges = DB::table('booking_room_children')
             return $roomType ? $roomType->base_price : 1200000;
         }
     }
+
+   
 
 }

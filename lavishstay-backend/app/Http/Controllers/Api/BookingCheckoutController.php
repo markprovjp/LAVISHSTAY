@@ -5,27 +5,75 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingService;
+use App\Models\CompensationPolicy;
+use App\Models\CompensationRequest;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Service;
+use App\Services\Checkout\CheckoutRuleEngine;
+use App\Notifications\CheckoutCompletedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class BookingCheckoutController extends Controller
 {
+    private CheckoutRuleEngine $ruleEngine;
+
+    public function __construct(CheckoutRuleEngine $ruleEngine)
+    {
+        $this->ruleEngine = $ruleEngine;
+    }
+
     /**
-     * Get available services for booking
+     * Get checkout information for a specific booking
      */
-    public function getAvailableServices(Request $request)
+    public function getCheckoutInfo(Request $request, $bookingId)
     {
         try {
-            Log::info('=== BookingCheckoutController@getAvailableServices START ===');
+            Log::info('=== BookingCheckoutController@getCheckoutInfo START ===');
+            Log::info('Request URL: ' . $request->fullUrl());
+            Log::info('Booking ID: ' . $bookingId);
 
-            // Get all active services
-            $services = Service::active()
+            // Validate booking ID
+            if (!is_numeric($bookingId)) {
+                Log::error('Invalid booking ID', ['booking_id' => $bookingId]);
+                return response()->json(['error' => 'ID đặt phòng không hợp lệ'], 400);
+            }
+
+            // Find booking with relationships
+            $booking = Booking::with(['user', 'roomOption', 'payments', 'room', 'bookingServices.service'])
+                ->find($bookingId);
+            
+            if (!$booking) {
+                Log::error('Booking not found', ['booking_id' => $bookingId]);
+                return response()->json(['error' => 'Không tìm thấy đặt phòng'], 404);
+            }
+
+            Log::info('Found booking: ' . $booking->booking_code);
+
+            // Get booking services and calculate total
+            $bookingServices = $this->getBookingServices($booking);
+            $amountCalculation = $this->calculateTotalAmount($booking, $bookingServices);
+
+            // Run checkout validation using rule engine
+            $validationResult = $this->ruleEngine->validate($booking, [
+                'total_amount' => $amountCalculation['total_amount'],
+                'booking_services' => $bookingServices,
+                'amount_calculation' => $amountCalculation
+            ]);
+
+            // Get additional information
+            $roomInfo = $this->getRoomInformation($booking);
+            $hotelInfo = $this->getHotelInformation($booking);
+            $guestInfo = $this->getGuestInformation($booking);
+
+            // Get available services
+            $availableServices = Service::active()
+                ->included()
                 ->orderBy('name')
                 ->get()
                 ->map(function ($service) {
@@ -40,113 +88,361 @@ class BookingCheckoutController extends Controller
                     ];
                 });
 
-            Log::info('=== BookingCheckoutController@getAvailableServices SUCCESS ===');
+            // Get payment status
+            $paymentStatus = $this->getPaymentStatus($booking, $amountCalculation['total_amount']);
+
+            // Get active compensation policies
+            $compensationPolicies = CompensationPolicy::active()
+                ->orderBy('name')
+                ->get()
+                ->map(function ($policy) {
+                    return [
+                        'compensation_policy_id' => $policy->compensation_policy_id,
+                        'name' => $policy->name,
+                        'description' => $policy->description,
+                        'condition_type' => $policy->condition_type,
+                        'condition_type_label' => $policy->condition_type_label,
+                        'discount_type' => $policy->discount_type,
+                        'discount_type_label' => $policy->discount_type_label,
+                        'discount_value' => $policy->discount_value,
+                        'formatted_discount_value' => $policy->formatted_discount_value,
+                        'max_compensation_amount' => $policy->max_compensation_amount,
+                        'applies_to_room_type_id' => $policy->applies_to_room_type_id
+                    ];
+                });
+
+            // Check for existing compensation requests
+            $existingCompensationRequests = CompensationRequest::where('booking_id', $booking->booking_id)
+                ->with(['policy', 'requestedBy', 'approvedBy'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($request) {
+                    return [
+                        'request_id' => $request->request_id,
+                        'policy_name' => $request->policy ? $request->policy->name : 'Yêu cầu khác',
+                        'custom_reason' => $request->custom_reason,
+                        'status' => $request->status,
+                        'status_label' => $request->status_label,
+                        'requested_amount' => $request->requested_amount,
+                        'approved_amount' => $request->approved_amount,
+                        'formatted_approved_amount' => $request->formatted_approved_amount,
+                        'requested_by' => $request->requestedBy ? $request->requestedBy->name : null,
+                        'approved_by' => $request->approvedBy ? $request->approvedBy->name : null,
+                        'approved_at' => $request->approved_at,
+                        'admin_note' => $request->admin_note,
+                        'attachments' => $request->attachments,
+                        'created_at' => $request->created_at
+                    ];
+                });
+
+            // Prepare checkout information with rule validation
+            $checkoutInfo = [
+                'booking_info' => [
+                    'booking_id' => $booking->booking_id,
+                    'booking_code' => $booking->booking_code,
+                    'status' => $booking->status,
+                    'check_in_date' => $booking->check_in_date,
+                    'check_out_date' => $booking->check_out_date,
+                    'original_total_price_vnd' => $booking->total_price_vnd,
+                    'guest_count' => $booking->guest_count,
+                    'adults' => $booking->adults,
+                    'children' => $booking->children,
+                    'notes' => $booking->notes
+                ],
+                'guest_info' => $guestInfo,
+                'room_info' => $roomInfo,
+                'hotel_info' => $hotelInfo,
+                'available_services' => [
+                    'total_services' => $availableServices->count(),
+                    'services' => $availableServices->toArray()
+                ],
+                'booking_services' => $bookingServices,
+                'amount_calculation' => $amountCalculation,
+                'payment_status' => $paymentStatus,
+                
+                // Rule-based validation results
+                'checkout_validation' => $validationResult->getDetailedResults(),
+                'checkout_conditions' => [
+                    'payment_sufficient' => $paymentStatus['is_sufficient'],
+                    'ready_for_checkout' => $validationResult->canCheckout,
+                    'has_warnings' => $validationResult->hasWarnings(),
+                    'has_blocking_issues' => $validationResult->hasBlockingFailures()
+                ],
+
+                // Compensation workflow
+                'compensation_policies' => [
+                    'total_policies' => $compensationPolicies->count(),
+                    'policies' => $compensationPolicies->toArray()
+                ],
+                'existing_compensation_requests' => [
+                    'total_requests' => $existingCompensationRequests->count(),
+                    'requests' => $existingCompensationRequests->toArray()
+                ],
+                
+                'checkout_summary' => [
+                    'can_checkout' => $validationResult->canCheckout,
+                    'validation_status' => $validationResult->canCheckout ? 'APPROVED' : 'BLOCKED',
+                    'total_stay_amount' => $amountCalculation['total_amount'],
+                    'remaining_payment' => $paymentStatus['remaining_amount'],
+                    'checkout_date' => Carbon::now()->format('Y-m-d'),
+                    'checkout_time' => Carbon::now()->format('H:i'),
+                    'blocking_issues_count' => count($validationResult->blockingFailures),
+                    'warnings_count' => count($validationResult->warnings),
+                    'has_compensation_requests' => $existingCompensationRequests->count() > 0
+                ]
+            ];
+
+            Log::info('=== BookingCheckoutController@getCheckoutInfo SUCCESS ===');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lấy danh sách dịch vụ thành công',
-                'data' => [
-                    'total_services' => $services->count(),
-                    'services' => $services->toArray()
-                ]
+                'message' => 'Lấy thông tin check-out thành công',
+                'data' => $checkoutInfo
             ]);
 
         } catch (\Exception $e) {
-            Log::error('=== ERROR in getAvailableServices ===');
+            Log::error('=== ERROR in getCheckoutInfo ===');
             Log::error('Error message: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile());
+            Log::error('Line: ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi lấy danh sách dịch vụ',
+                'message' => 'Có lỗi xảy ra khi lấy thông tin check-out',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Add service to booking
+     * Process normal checkout for a booking
      */
-    public function addBookingService(Request $request, $bookingId)
+    public function processCheckout(Request $request, $bookingId)
     {
         try {
-            Log::info('=== BookingCheckoutController@addBookingService START ===');
+            Log::info('=== BookingCheckoutController@processCheckout START ===');
+            Log::info('Request URL: ' . $request->fullUrl());
             Log::info('Booking ID: ' . $bookingId);
             Log::info('Request data: ', $request->all());
 
             // Validate input
             $validated = $request->validate([
-                'service_id' => 'required|integer|exists:services,service_id',
-                'quantity' => 'required|integer|min:1',
-                'notes' => 'nullable|string|max:500'
+                'checkout_time' => 'nullable|date_format:H:i',
+                'notes' => 'nullable|string|max:1000',
+                'final_payment_method' => 'nullable|string|in:cash,card,transfer,vietqr',
+                'send_invoice' => 'nullable|boolean',
+                'guest_email_for_invoice' => 'nullable|email',
+                'override_warnings' => 'nullable|boolean',
+                'force_checkout' => 'nullable|boolean'
             ]);
 
             // Validate booking ID
             if (!is_numeric($bookingId)) {
+                Log::error('Invalid booking ID', ['booking_id' => $bookingId]);
                 return response()->json(['error' => 'ID đặt phòng không hợp lệ'], 400);
             }
 
-            // Find booking
-            $booking = Booking::find($bookingId);
+            // Find booking with relationships
+            $booking = Booking::with(['user', 'roomOption', 'payments', 'room', 'bookingServices.service'])
+                ->find($bookingId);
+            
             if (!$booking) {
+                Log::error('Booking not found', ['booking_id' => $bookingId]);
                 return response()->json(['error' => 'Không tìm thấy đặt phòng'], 404);
             }
 
-            // Check if booking is in valid status for adding services
-            if (!in_array($booking->status, ['Confirmed', 'Operational'])) {
-                return response()->json([
-                    'error' => 'Không thể thêm dịch vụ cho booking này',
-                    'current_status' => $booking->status,
-                    'allowed_statuses' => ['Confirmed', 'Operational']
-                ], 400);
-            }
+            // Get booking services and calculate total
+            $bookingServices = $this->getBookingServices($booking);
+            $amountCalculation = $this->calculateTotalAmount($booking, $bookingServices);
 
-            // Get service information
-            $service = Service::find($validated['service_id']);
-            if (!$service || !$service->is_active) {
-                return response()->json(['error' => 'Dịch vụ không tồn tại hoặc không khả dụng'], 404);
-            }
-
-            // Check if service already exists for this booking
-            $existingService = BookingService::where('booking_id', $bookingId)
-                ->where('service_id', $validated['service_id'])
-                ->first();
-
-            if ($existingService) {
-                return response()->json([
-                    'error' => 'Dịch vụ đã được thêm cho booking này',
-                    'message' => 'Sử dụng API cập nhật để thay đổi số lượng'
-                ], 400);
-            }
-
-            // Add service to booking
-            $bookingService = BookingService::create([
-                'booking_id' => $bookingId,
-                'service_id' => $validated['service_id'],
-                'quantity' => $validated['quantity'],
-                'price_vnd' => $service->price_vnd,
-                'created_at' => Carbon::now()
+            // Run checkout validation using rule engine
+            $validationResult = $this->ruleEngine->validate($booking, [
+                'total_amount' => $amountCalculation['total_amount'],
+                'booking_services' => $bookingServices,
+                'amount_calculation' => $amountCalculation
             ]);
 
-            // Get updated booking services
-            $bookingServices = $this->getBookingServices($booking);
+            // Check if checkout is allowed
+            if (!$validationResult->canCheckout && !($validated['force_checkout'] ?? false)) {
+                Log::error('Checkout blocked by validation rules', [
+                    'booking_id' => $bookingId,
+                    'blocking_failures' => $validationResult->blockingFailures
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể check-out do không đáp ứng các điều kiện bắt buộc',
+                    'validation_result' => $validationResult->getDetailedResults(),
+                    'blocking_issues' => $validationResult->blockingFailures,
+                    'can_force_checkout' => (Auth::check() && Auth::user()->hasRole('admin')), // Guard null user
+                ], 400);
+            }
 
-            Log::info('=== BookingCheckoutController@addBookingService SUCCESS ===');
+            // If has warnings and not overridden, return warning
+            if ($validationResult->hasWarnings() && !($validated['override_warnings'] ?? false)) {
+                Log::warning('Checkout has warnings requiring confirmation', [
+                    'booking_id' => $bookingId,
+                    'warnings' => $validationResult->warnings
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Có cảnh báo cần xác nhận trước khi check-out',
+                    'validation_result' => $validationResult->getDetailedResults(),
+                    'warnings' => $validationResult->warnings,
+                    'require_confirmation' => true,
+                ], 422);
+            }
+
+            $paymentStatus = $this->getPaymentStatus($booking, $amountCalculation['total_amount']);
+
+            // Get additional information
+            $roomInfo = $this->getRoomInformation($booking);
+            $hotelInfo = $this->getHotelInformation($booking);
+            $guestInfo = $this->getGuestInformation($booking);
+
+            // Process checkout within transaction
+            $checkoutResult = null;
+            DB::transaction(function () use ($booking, $validated, $amountCalculation, $paymentStatus, $bookingServices, $validationResult, &$checkoutResult) {
+                
+                $checkoutTime = $validated['checkout_time'] ?? Carbon::now()->format('H:i');
+                $checkoutDateTime = Carbon::now();
+
+                // Update booking status to Cleaning (not Completed)
+                $booking->status = 'Cleaning';
+                $booking->notes = ($booking->notes ? $booking->notes . "\n" : '') . 
+                                ($validated['notes'] ?? 'Check-out completed at ' . $checkoutDateTime->format('Y-m-d H:i:s'));
+                
+                // Add validation summary to notes
+                if ($validationResult->hasWarnings()) {
+                    $booking->notes .= "\nWarnings overridden: " . count($validationResult->warnings) . " warnings";
+                }
+                
+                // Update total price if there are additional services
+                if ($amountCalculation['total_amount'] != $booking->total_price_vnd) {
+                    $booking->total_price_vnd = $amountCalculation['total_amount'];
+                }
+                
+                $booking->save();
+
+                // Create final payment record if there was remaining amount
+                $finalPaymentId = null;
+                if ($paymentStatus['remaining_amount'] > 0) {
+                    $finalPayment = Payment::create([
+                        'booking_id' => $booking->booking_id,
+                        'amount_vnd' => $paymentStatus['remaining_amount'],
+                        'payment_type' => $validated['final_payment_method'] ?? 'cash',
+                        'status' => 'completed',
+                        'transaction_id' => 'CHECKOUT_' . $booking->booking_code . '_' . time(),
+                        'created_at' => $checkoutDateTime,
+                    ]);
+                    $finalPaymentId = $finalPayment->payment_id;
+                }
+
+                // Create invoice using the Invoice model
+                $invoice = Invoice::create([
+                    'booking_id' => $booking->booking_id,
+                    'total_amount_vnd' => $amountCalculation['total_amount'],
+                    'issued_at' => $checkoutDateTime,
+                    'status' => ($validated['send_invoice'] ?? false) ? 'Sent' : 'Draft'
+                ]);
+
+                // Update room status to cleaning
+                $roomIds = $this->updateRoomStatusToCleaning($booking);
+
+                // Create audit log with validation results
+                $this->createAuditLog($booking, $checkoutTime, $amountCalculation, $validationResult);
+
+                $checkoutResult = [
+                    'invoice_id' => $invoice->invoice_id,
+                    'final_payment_id' => $finalPaymentId,
+                    'checkout_datetime' => $checkoutDateTime,
+                    'room_ids' => $roomIds,
+                    'validation_result' => $validationResult
+                ];
+            });
+
+            // Send notification to guest user after successful checkout
+            try {
+                if ($booking->user) {
+                    $booking->user->notify(new CheckoutCompletedNotification($booking));
+                    Log::info('Checkout notification sent to user', ['user_id' => $booking->user->id, 'booking_id' => $booking->booking_id]);
+                } else {
+                    Log::warning('No user associated with booking for notification', ['booking_id' => $booking->booking_id]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send checkout notification', [
+                    'booking_id' => $booking->booking_id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the checkout if notification fails
+            }
+
+            // Prepare comprehensive response
+            $responseData = [
+                'booking_info' => [
+                    'booking_id' => $booking->booking_id,
+                    'booking_code' => $booking->booking_code,
+                    'status' => $booking->status, // Now "Cleaning"
+                    'check_in_date' => $booking->check_in_date,
+                    'check_out_date' => $booking->check_out_date,
+                    'final_total_price_vnd' => $booking->total_price_vnd,
+                    'notes' => $booking->notes
+                ],
+                'guest_info' => $guestInfo,
+                'room_info' => $roomInfo,
+                'hotel_info' => $hotelInfo,
+                'checkout_details' => [
+                    'checkout_time' => $validated['checkout_time'] ?? Carbon::now()->format('H:i'),
+                    'checkout_date' => Carbon::now()->format('Y-m-d'),
+                    'checkout_datetime' => $checkoutResult['checkout_datetime']->toDateTimeString(),
+                    'processed_by' => Auth::id(),
+                    'invoice_id' => $checkoutResult['invoice_id'],
+                    'validation_overrides' => [
+                        'warnings_overridden' => $validated['override_warnings'] ?? false,
+                        'force_checkout' => $validated['force_checkout'] ?? false
+                    ]
+                ],
+                'booking_services' => $bookingServices,
+                'amount_calculation' => $amountCalculation,
+                'final_payment_status' => [
+                    'total_amount' => $amountCalculation['total_amount'],
+                    'total_paid' => $amountCalculation['total_amount'], // Now fully paid
+                    'remaining_amount' => 0,
+                    'is_sufficient' => true,
+                    'final_payment_id' => $checkoutResult['final_payment_id']
+                ],
+                'invoice_info' => [
+                    'invoice_id' => $checkoutResult['invoice_id'],
+                    'total_amount_vnd' => $amountCalculation['total_amount'],
+                    'status' => ($validated['send_invoice'] ?? false) ? 'Sent' : 'Draft',
+                    'issued_at' => $checkoutResult['checkout_datetime']->toDateTimeString()
+                ],
+                'validation_summary' => $validationResult->getSummary(),
+                'checkout_summary' => [
+                    'checkout_completed' => true,
+                    'booking_status' => 'Cleaning',
+                    'invoice_created' => true,
+                    'invoice_sent' => $validated['send_invoice'] ?? false,
+                    'rooms_set_to_cleaning' => !empty($checkoutResult['room_ids']),
+                    'validation_status' => $validationResult->canCheckout ? 'APPROVED' : 'FORCED',
+                    'warnings_count' => count($validationResult->warnings),
+                    'next_steps' => [
+                        'Khách đã check-out thành công',
+                        'Booking chuyển sang trạng thái "Cleaning"',
+                        'Hóa đơn đã được tạo',
+                        'Phòng đã được chuyển sang trạng thái dọn dẹp',
+                        'Thông báo cho bộ phận housekeeping',
+                        'Sau khi dọn dẹp xong, chuyển booking sang "Completed"'
+                    ]
+                ]
+            ];
+
+            Log::info('=== BookingCheckoutController@processCheckout SUCCESS ===');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Thêm dịch vụ thành công',
-                'data' => [
-                    'booking_service_id' => $bookingService->id,
-                    'service_info' => [
-                        'service_id' => $service->service_id,
-                        'service_name' => $service->name,
-                        'quantity' => $validated['quantity'],
-                        'unit_price_vnd' => $service->price_vnd,
-                        'total_price_vnd' => $bookingService->total_price,
-                        'unit' => $service->unit
-                    ],
-                    'booking_services_summary' => $bookingServices
-                ]
+                'message' => 'Check-out thành công. Booking đã chuyển sang trạng thái dọn dẹp.',
+                'data' => $responseData
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -157,13 +453,418 @@ class BookingCheckoutController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('=== ERROR in addBookingService ===');
+            Log::error('=== ERROR in processCheckout ===');
             Log::error('Error message: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile());
+            Log::error('Line: ' . $e->getLine());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi thêm dịch vụ',
+                'message' => 'Có lỗi xảy ra khi check-out',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create compensation request for special cases
+     */
+    public function createCompensationRequest(Request $request, $bookingId)
+    {
+        try {
+            Log::info('=== BookingCheckoutController@createCompensationRequest START ===');
+            Log::info('Request URL: ' . $request->fullUrl());
+            Log::info('Booking ID: ' . $bookingId);
+            Log::info('Request data: ', $request->all());
+
+            // Validate input
+            $validated = $request->validate([
+                'policy_id' => 'nullable|integer|exists:compensation_policies,compensation_policy_id',
+                'custom_reason' => 'nullable|string|max:2000',
+                'requested_amount' => 'nullable|numeric|min:0',
+                'attachments' => 'nullable|array|max:5',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', // 5MB max per file
+            ]);
+
+            // Validate booking ID
+            if (!is_numeric($bookingId)) {
+                Log::error('Invalid booking ID', ['booking_id' => $bookingId]);
+                return response()->json(['error' => 'ID đặt phòng không hợp lệ'], 400);
+            }
+
+            // Find booking
+            $booking = Booking::find($bookingId);
+            if (!$booking) {
+                Log::error('Booking not found', ['booking_id' => $bookingId]);
+                return response()->json(['error' => 'Không tìm thấy đặt phòng'], 404);
+            }
+
+            // Check if policy_id or custom_reason is provided
+            if (empty($validated['policy_id']) && empty($validated['custom_reason'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Phải chọn chính sách bồi thường hoặc nhập lý do tùy chỉnh',
+                    'errors' => [
+                        'policy_id' => ['Phải chọn chính sách hoặc nhập lý do tùy chỉnh'],
+                        'custom_reason' => ['Phải chọn chính sách hoặc nhập lý do tùy chỉnh']
+                    ]
+                ], 422);
+            }
+
+            // Handle file uploads
+            $attachmentPaths = [];
+            if (!empty($validated['attachments'])) {
+                foreach ($validated['attachments'] as $index => $file) {
+                    $fileName = time() . '_' . $index . '_' . $file->getClientOriginalName();
+                    $filePath = 'compensation_attachments/' . $fileName;
+                    
+                    // Move file to public directory
+                    $file->move(public_path('compensation_attachments'), $fileName);
+                    
+                    $attachmentPaths[] = [
+                        'original_name' => $file->getClientOriginalName(),
+                        'file_name' => $fileName,
+                        'file_path' => $filePath,
+                        'file_size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                        'uploaded_at' => Carbon::now()->toDateTimeString()
+                    ];
+                }
+            }
+
+            // Get policy details if policy_id is provided
+            $policy = null;
+            $calculatedAmount = null;
+            if (!empty($validated['policy_id'])) {
+                $policy = CompensationPolicy::find($validated['policy_id']);
+                if (!$policy || !$policy->is_active) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Chính sách bồi thường không tồn tại hoặc không hoạt động'
+                    ], 404);
+                }
+
+                // Calculate compensation amount based on policy
+                $bookingServices = $this->getBookingServices($booking);
+                $amountCalculation = $this->calculateTotalAmount($booking, $bookingServices);
+                $calculatedAmount = $policy->calculateCompensation($amountCalculation['total_amount']);
+            }
+
+            // Create compensation request within transaction
+            $compensationRequest = null;
+            DB::transaction(function () use ($booking, $validated, $attachmentPaths, $calculatedAmount, &$compensationRequest) {
+                $compensationRequest = CompensationRequest::create([
+                    'booking_id' => $booking->booking_id,
+                    'requested_by' => Auth::id(),
+                    'policy_id' => $validated['policy_id'] ?? null,
+                    'custom_reason' => $validated['custom_reason'] ?? null,
+                    'status' => 'pending',
+                    'requested_amount' => $validated['requested_amount'] ?? $calculatedAmount,
+                    'attachments' => $attachmentPaths,
+                    'created_at' => Carbon::now(),
+                ]);
+
+                // Create audit log
+                DB::table('audit_logs')->insert([
+                    'user_id' => Auth::id(),
+                    'action' => 'Create Compensation Request',
+                    'table_name' => 'compensation_requests',
+                    'record_id' => $compensationRequest->request_id,
+                    'description' => "Created compensation request for booking {$booking->booking_code}. " . 
+                                   ($validated['policy_id'] ? "Policy ID: {$validated['policy_id']}" : "Custom reason provided"),
+                    'created_at' => Carbon::now(),
+                ]);
+            });
+
+            // Prepare response data
+            $responseData = [
+                'compensation_request' => [
+                    'request_id' => $compensationRequest->request_id,
+                    'booking_id' => $booking->booking_id,
+                    'booking_code' => $booking->booking_code,
+                    'policy_id' => $compensationRequest->policy_id,
+                    'policy_name' => $policy ? $policy->name : null,
+                    'custom_reason' => $compensationRequest->custom_reason,
+                    'status' => $compensationRequest->status,
+                    'status_label' => $compensationRequest->status_label,
+                    'requested_amount' => $compensationRequest->requested_amount,
+                    'formatted_requested_amount' => $compensationRequest->formatted_requested_amount,
+                    'attachments' => $compensationRequest->attachments,
+                    'requested_by' => Auth::user()->name,
+                    'created_at' => $compensationRequest->created_at
+                ],
+                'next_steps' => [
+                    'Yêu cầu bồi thường đã được gửi',
+                    'Trạng thái: Chờ duyệt',
+                    'Quản lý sẽ xem xét và phê duyệt',
+                    'Bạn sẽ nhận được thông báo khi có kết quả',
+                    'Có thể tiếp tục theo dõi trạng thái yêu cầu'
+                ]
+            ];
+
+            Log::info('=== BookingCheckoutController@createCompensationRequest SUCCESS ===');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tạo yêu cầu bồi thường thành công. Đang chờ quản lý phê duyệt.',
+                'data' => $responseData
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error: ', $e->errors());
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('=== ERROR in createCompensationRequest ===');
+            Log::error('Error message: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile());
+            Log::error('Line: ' . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi tạo yêu cầu bồi thường',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available services for booking
+     */
+    public function getAvailableServices(Request $request)
+    {
+        try {
+            Log::info('=== BookingCheckoutController@getAvailableServices START ===', ['query' => $request->query()]);
+
+            // Optional: if booking_id is passed, include current selection
+            $bookingId = $request->query('booking_id');
+            $selectedMap = collect();
+
+            if (!empty($bookingId) && is_numeric($bookingId)) {
+                $selectedMap = BookingService::where('booking_id', (int) $bookingId)
+                    ->get()
+                    ->keyBy('service_id');
+            }
+
+            // Fetch add-on services from services table
+            $services = Service::active()
+                ->included()
+                ->orderBy('name')
+                ->get()
+                ->map(function ($service) use ($selectedMap) {
+                    $selected = $selectedMap->get($service->service_id);
+
+                    $selectedQuantity = $selected ? (int) $selected->quantity : 0;
+                    $unitPrice = (float) $service->price_vnd;
+                    $selectedTotal = $selectedQuantity * $unitPrice;
+
+                    return [
+                        'service_id' => $service->service_id,
+                        'name' => $service->name,
+                        'description' => $service->description,
+                        'price_vnd' => $unitPrice,
+                        'unit' => $service->unit,
+                        'formatted_price' => $service->formatted_price,
+                        'price_with_unit' => $service->price_with_unit,
+
+                        // Current selection (if any)
+                        'selected_quantity' => $selectedQuantity,
+                        'selected_total_price_vnd' => $selectedTotal,
+                    ];
+                });
+
+            $summary = null;
+            if ($selectedMap->isNotEmpty()) {
+                $summary = [
+                    'selected_count' => $selectedMap->count(),
+                    'total_selected_amount_vnd' => $selectedMap->values()->sum(function ($bs) {
+                        return (int) $bs->quantity * (float) $bs->price_vnd;
+                    }),
+                ];
+            }
+
+            Log::info('=== BookingCheckoutController@getAvailableServices SUCCESS ===', [
+                'count' => $services->count(),
+                'booking_id' => $bookingId ? (int) $bookingId : null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lấy danh sách dịch vụ bổ sung thành công',
+                'data' => [
+                    'total_services' => $services->count(),
+                    'services' => $services->toArray(),
+                    'current_selection_summary' => $summary,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('=== ERROR in getAvailableServices ===', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lấy danh sách dịch vụ bổ sung',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Add service to booking
+     */
+    public function addBookingService(Request $request, $bookingId)
+    {
+        try {
+            Log::info('=== BookingCheckoutController@addBookingService START ===', ['booking_id' => $bookingId, 'payload' => $request->all()]);
+
+            // Validate booking id
+            if (!is_numeric($bookingId)) {
+                return response()->json(['success' => false, 'message' => 'ID đặt phòng không hợp lệ'], 400);
+            }
+
+            // Validate input: accept multiple selected services with quantities
+            $validated = $request->validate([
+                'services' => 'required|array|min:1',
+                'services.*.service_id' => 'required|integer|exists:services,service_id',
+                'services.*.quantity' => 'required|integer|min:1',
+            ]);
+
+            // Find booking
+            $booking = Booking::find($bookingId);
+            if (!$booking) {
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy đặt phòng'], 404);
+            }
+
+            // Check status allows adding services
+            if (!in_array($booking->status, ['Confirmed', 'Operational'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể thêm dịch vụ cho booking ở trạng thái hiện tại',
+                    'current_status' => $booking->status,
+                    'allowed_statuses' => ['Confirmed', 'Operational'],
+                ], 400);
+            }
+
+            // Normalize duplicate service_ids in payload by summing quantities
+            $incoming = collect($validated['services'])
+                ->groupBy('service_id')
+                ->map(fn($items) => [
+                    'service_id' => (int) $items->first()['service_id'],
+                    'quantity' => (int) $items->sum('quantity'),
+                ])
+                ->values();
+
+            // Load services and validate they are active and included
+            $serviceIds = $incoming->pluck('service_id')->all();
+            $serviceRecords = Service::whereIn('service_id', $serviceIds)->get()->keyBy('service_id');
+
+            $invalid = [];
+            foreach ($serviceIds as $sid) {
+                $svc = $serviceRecords->get($sid);
+                if (!$svc || !$svc->is_active || !$svc->included_services) {
+                    $invalid[] = $sid;
+                }
+            }
+
+            if (!empty($invalid)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Một hoặc nhiều dịch vụ không hợp lệ (không phải dịch vụ bổ sung hoặc không hoạt động)',
+                    'invalid_service_ids' => $invalid,
+                ], 422);
+            }
+
+            // Apply create/update in a transaction
+            $results = [
+                'created' => [],
+                'updated' => [],
+            ];
+
+            DB::transaction(function () use ($bookingId, $incoming, $serviceRecords, &$results) {
+                foreach ($incoming as $item) {
+                    $sid = (int) $item['service_id'];
+                    $qtyToAdd = (int) $item['quantity'];
+                    $svc = $serviceRecords->get($sid);
+
+                    // Find existing selection
+                    $existing = BookingService::where('booking_id', $bookingId)
+                        ->where('service_id', $sid)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($existing) {
+                        $oldQty = (int) $existing->quantity;
+                        $newQty = $oldQty + $qtyToAdd;
+
+                        $existing->update([
+                            'quantity' => $newQty,
+                        ]);
+
+                        $results['updated'][] = [
+                            'service_id' => $sid,
+                            'service_name' => $svc->name,
+                            'old_quantity' => $oldQty,
+                            'added_quantity' => $qtyToAdd,
+                            'new_quantity' => $newQty,
+                            'unit_price_vnd' => (float) $existing->price_vnd,
+                            'total_price_vnd' => $newQty * (float) $existing->price_vnd,
+                        ];
+                    } else {
+                        $bs = BookingService::create([
+                            'booking_id' => $bookingId,
+                            'service_id' => $sid,
+                            'quantity' => $qtyToAdd,
+                            'price_vnd' => $svc->price_vnd,
+                            'created_at' => Carbon::now(),
+                        ]);
+
+                        $results['created'][] = [
+                            'booking_service_id' => $bs->id,
+                            'service_id' => $sid,
+                            'service_name' => $svc->name,
+                            'quantity' => $qtyToAdd,
+                            'unit_price_vnd' => (float) $svc->price_vnd,
+                            'total_price_vnd' => $qtyToAdd * (float) $svc->price_vnd,
+                            'unit' => $svc->unit,
+                        ];
+                    }
+                }
+            });
+
+            // Build updated summary
+            $bookingServicesSummary = $this->getBookingServices($booking);
+
+            Log::info('=== BookingCheckoutController@addBookingService SUCCESS ===', [
+                'booking_id' => (int) $bookingId,
+                'created' => count($results['created']),
+                'updated' => count($results['updated']),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật dịch vụ bổ sung cho booking thành công',
+                'data' => [
+                    'booking_id' => (int) $bookingId,
+                    'results' => $results,
+                    'booking_services_summary' => $bookingServicesSummary,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in addBookingService', ['errors' => $e->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('=== ERROR in addBookingService ===', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi cập nhật dịch vụ bổ sung',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -337,388 +1038,7 @@ class BookingCheckoutController extends Controller
         }
     }
 
-    /**
-     * Get checkout information for a specific booking
-     */
-    public function getCheckoutInfo(Request $request, $bookingId)
-    {
-        try {
-            Log::info('=== BookingCheckoutController@getCheckoutInfo START ===');
-            Log::info('Booking ID: ' . $bookingId);
-
-            // Validate booking ID
-            if (!is_numeric($bookingId)) {
-                return response()->json(['error' => 'ID đặt phòng không hợp lệ'], 400);
-            }
-
-            // Find booking with relationships
-            $booking = Booking::with(['user', 'roomOption', 'payments', 'room', 'bookingServices.service'])
-                ->find($bookingId);
-            
-            if (!$booking) {
-                return response()->json(['error' => 'Không tìm thấy đặt phòng'], 404);
-            }
-
-            Log::info('Found booking: ' . $booking->booking_code);
-
-            // Check if booking can be checked out
-            if ($booking->status !== 'Operational') {
-                return response()->json([
-                    'error' => 'Booking không thể check-out',
-                    'current_status' => $booking->status,
-                    'required_status' => 'Operational',
-                    'message' => 'Chỉ có thể check-out booking đang ở trạng thái "Đang lưu trú"'
-                ], 400);
-            }
-
-            // Get room information
-            $roomInfo = $this->getRoomInformation($booking);
-            Log::info('Room info retrieved');
-
-            // Get hotel information
-            $hotelInfo = $this->getHotelInformation($booking);
-            Log::info('Hotel info retrieved');
-
-            // Get guest information
-            $guestInfo = $this->getGuestInformation($booking);
-            Log::info('Guest info retrieved');
-
-            // Get available services
-            $availableServices = Service::active()
-                ->orderBy('name')
-                ->get()
-                ->map(function ($service) {
-                    return [
-                        'service_id' => $service->service_id,
-                        'name' => $service->name,
-                        'description' => $service->description,
-                        'price_vnd' => $service->price_vnd,
-                        'unit' => $service->unit,
-                        'formatted_price' => $service->formatted_price,
-                        'price_with_unit' => $service->price_with_unit
-                    ];
-                });
-
-            // Get booking services (additional services during stay)
-            $bookingServices = $this->getBookingServices($booking);
-            Log::info('Booking services retrieved');
-
-            // Calculate total amounts
-            $amountCalculation = $this->calculateTotalAmount($booking, $bookingServices);
-            Log::info('Amount calculation completed');
-
-            // Get payment status
-            $paymentStatus = $this->getPaymentStatus($booking, $amountCalculation['total_amount']);
-            Log::info('Payment status retrieved');
-
-            // Check if ready for checkout
-            $readyForCheckout = $paymentStatus['is_sufficient'];
-
-            // Prepare checkout information
-            $checkoutInfo = [
-                'booking_info' => [
-                    'booking_id' => $booking->booking_id,
-                    'booking_code' => $booking->booking_code,
-                    'status' => $booking->status,
-                    'check_in_date' => $booking->check_in_date,
-                    'check_out_date' => $booking->check_out_date,
-                    'original_total_price_vnd' => $booking->total_price_vnd,
-                    'guest_count' => $booking->guest_count,
-                    'adults' => $booking->adults,
-                    'children' => $booking->children,
-                    'notes' => $booking->notes
-                ],
-                'guest_info' => $guestInfo,
-                'room_info' => $roomInfo,
-                'hotel_info' => $hotelInfo,
-                'available_services' => [
-                    'total_services' => $availableServices->count(),
-                    'services' => $availableServices->toArray()
-                ],
-                'booking_services' => $bookingServices,
-                'amount_calculation' => $amountCalculation,
-                'payment_status' => $paymentStatus,
-                'checkout_conditions' => [
-                    'payment_sufficient' => $paymentStatus['is_sufficient'],
-                    'ready_for_checkout' => $readyForCheckout
-                ],
-                'warnings' => $this->getCheckoutWarnings($paymentStatus),
-                'checkout_summary' => [
-                    'can_checkout' => $readyForCheckout,
-                    'total_stay_amount' => $amountCalculation['total_amount'],
-                    'remaining_payment' => $paymentStatus['remaining_amount'],
-                    'checkout_date' => Carbon::now()->format('Y-m-d'),
-                    'checkout_time' => Carbon::now()->format('H:i')
-                ]
-            ];
-
-            Log::info('=== BookingCheckoutController@getCheckoutInfo SUCCESS ===');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Lấy thông tin check-out thành công',
-                'data' => $checkoutInfo
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('=== ERROR in getCheckoutInfo ===');
-            Log::error('Error message: ' . $e->getMessage());
-            Log::error('File: ' . $e->getFile());
-            Log::error('Line: ' . $e->getLine());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi lấy thông tin check-out',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Process checkout for a booking
-     */
-    public function processCheckout(Request $request, $bookingId)
-    {
-        try {
-            Log::info('=== BookingCheckoutController@processCheckout START ===');
-            Log::info('Booking ID: ' . $bookingId);
-            Log::info('Request data: ', $request->all());
-
-            // Validate input
-            $validated = $request->validate([
-                'checkout_time' => 'nullable|date_format:H:i',
-                'notes' => 'nullable|string|max:1000',
-                'final_payment_method' => 'nullable|string|in:cash,card,transfer,vietqr',
-                'send_invoice' => 'nullable|boolean',
-                'guest_email_for_invoice' => 'nullable|email'
-            ]);
-
-            // Validate booking ID
-            if (!is_numeric($bookingId)) {
-                return response()->json(['error' => 'ID đặt phòng không hợp lệ'], 400);
-            }
-
-            // Find booking with relationships
-            $booking = Booking::with(['user', 'roomOption', 'payments', 'room', 'bookingServices.service'])
-                ->find($bookingId);
-            
-            if (!$booking) {
-                return response()->json(['error' => 'Không tìm thấy đặt phòng'], 404);
-            }
-
-            // Check if booking can be checked out
-            if ($booking->status !== 'Operational') {
-                return response()->json([
-                    'error' => 'Booking không thể check-out',
-                    'current_status' => $booking->status,
-                    'required_status' => 'Operational'
-                ], 400);
-            }
-
-            // Get booking services and calculate total
-            $bookingServices = $this->getBookingServices($booking);
-            $amountCalculation = $this->calculateTotalAmount($booking, $bookingServices);
-            $paymentStatus = $this->getPaymentStatus($booking, $amountCalculation['total_amount']);
-
-            // Check if payment is sufficient
-            if (!$paymentStatus['is_sufficient']) {
-                return response()->json([
-                    'error' => 'Chưa thanh toán đủ để check-out',
-                    'payment_details' => $paymentStatus,
-                    'remaining_amount' => $paymentStatus['remaining_amount'],
-                    'message' => 'Vui lòng thanh toán đầy đủ trước khi check-out'
-                ], 400);
-            }
-
-            // Get additional information
-            $roomInfo = $this->getRoomInformation($booking);
-            $hotelInfo = $this->getHotelInformation($booking);
-            $guestInfo = $this->getGuestInformation($booking);
-
-            // Process checkout within transaction
-            $checkoutResult = null;
-            DB::transaction(function () use ($booking, $validated, $amountCalculation, $paymentStatus, $bookingServices, &$checkoutResult) {
-                
-                $checkoutTime = $validated['checkout_time'] ?? Carbon::now()->format('H:i');
-                $checkoutDateTime = Carbon::now();
-
-                // Update booking status to Cleaning (not Completed)
-                $booking->status = 'Cleaning';
-                $booking->notes = ($booking->notes ? $booking->notes . "\n" : '') . 
-                                ($validated['notes'] ?? 'Check-out completed at ' . $checkoutDateTime->format('Y-m-d H:i:s'));
-                
-                // Update total price if there are additional services
-                if ($amountCalculation['total_amount'] != $booking->total_price_vnd) {
-                    $booking->total_price_vnd = $amountCalculation['total_amount'];
-                }
-                
-                $booking->save();
-
-                // Create final payment record if there was remaining amount
-                $finalPaymentId = null;
-                if ($paymentStatus['remaining_amount'] > 0) {
-                    $finalPayment = Payment::create([
-                        'booking_id' => $booking->booking_id,
-                        'amount_vnd' => $paymentStatus['remaining_amount'],
-                        'payment_type' => $validated['final_payment_method'] ?? 'cash',
-                        'status' => 'completed',
-                        'transaction_id' => 'CHECKOUT_' . $booking->booking_code . '_' . time(),
-                        'created_at' => $checkoutDateTime,
-                    ]);
-                    $finalPaymentId = $finalPayment->payment_id;
-                }
-
-                // Create invoice using the Invoice model
-                $invoice = Invoice::create([
-                    'booking_id' => $booking->booking_id,
-                    'total_amount_vnd' => $amountCalculation['total_amount'],
-                    'issued_at' => $checkoutDateTime,
-                    'status' => ($validated['send_invoice'] ?? false) ? 'Sent' : 'Draft'
-                ]);
-
-                // Update room status to cleaning
-                try {
-                    $roomIds = [];
-                    
-                    // Try multiple table structures
-                    try {
-                        $roomIds = DB::table('booking_rooms')
-                            ->where('booking_id', $booking->booking_id)
-                            ->pluck('room_id')
-                            ->toArray();
-                    } catch (\Exception $e) {
-                        Log::warning("booking_rooms table query failed: " . $e->getMessage());
-                    }
-                    
-                    if (empty($roomIds)) {
-                        try {
-                            $roomIds = DB::table('booking_room')
-                                ->where('booking_id', $booking->booking_id)
-                                ->pluck('room_id')
-                                ->toArray();
-                        } catch (\Exception $e) {
-                            Log::warning("booking_room table query failed: " . $e->getMessage());
-                        }
-                    }
-                    
-                    if (empty($roomIds) && $booking->room_id) {
-                        $roomIds = [$booking->room_id];
-                    }
-                    
-                    if (!empty($roomIds)) {
-                        DB::table('room')
-                            ->whereIn('room_id', $roomIds)
-                            ->where('status', '!=', 'maintenance')
-                            ->update(['status' => 'cleaning']);
-                    }
-                } catch (\Exception $e) {
-                    Log::warning("Could not update room status: " . $e->getMessage());
-                }
-
-                // Create audit log
-                try {
-                    DB::table('audit_logs')->insert([
-                        'user_id' => Auth::id(),
-                        'action' => 'Check-out',
-                        'table_name' => 'booking',
-                        'record_id' => $booking->booking_id,
-                        'description' => "Check-out completed for booking {$booking->booking_code} at {$checkoutTime}. Total amount: " . number_format($amountCalculation['total_amount']) . " VND. Status changed to Cleaning.",
-                        'created_at' => $checkoutDateTime,
-                    ]);
-                } catch (\Exception $e) {
-                    Log::warning("Could not create audit log: " . $e->getMessage());
-                }
-
-                $checkoutResult = [
-                    'invoice_id' => $invoice->invoice_id,
-                    'final_payment_id' => $finalPaymentId,
-                    'checkout_datetime' => $checkoutDateTime,
-                    'room_ids' => $roomIds ?? []
-                ];
-            });
-
-            // Prepare comprehensive response
-            $responseData = [
-                'booking_info' => [
-                    'booking_id' => $booking->booking_id,
-                    'booking_code' => $booking->booking_code,
-                    'status' => $booking->status, // Now "Cleaning"
-                    'check_in_date' => $booking->check_in_date,
-                    'check_out_date' => $booking->check_out_date,
-                    'final_total_price_vnd' => $booking->total_price_vnd,
-                    'notes' => $booking->notes
-                ],
-                'guest_info' => $guestInfo,
-                'room_info' => $roomInfo,
-                'hotel_info' => $hotelInfo,
-                'checkout_details' => [
-                    'checkout_time' => $validated['checkout_time'] ?? Carbon::now()->format('H:i'),
-                    'checkout_date' => Carbon::now()->format('Y-m-d'),
-                    'checkout_datetime' => $checkoutResult['checkout_datetime']->toDateTimeString(),
-                    'processed_by' => Auth::id(),
-                    'invoice_id' => $checkoutResult['invoice_id']
-                ],
-                'booking_services' => $bookingServices,
-                'amount_calculation' => $amountCalculation,
-                'final_payment_status' => [
-                    'total_amount' => $amountCalculation['total_amount'],
-                    'total_paid' => $amountCalculation['total_amount'], // Now fully paid
-                    'remaining_amount' => 0,
-                    'is_sufficient' => true,
-                    'final_payment_id' => $checkoutResult['final_payment_id']
-                ],
-                'invoice_info' => [
-                    'invoice_id' => $checkoutResult['invoice_id'],
-                    'total_amount_vnd' => $amountCalculation['total_amount'],
-                    'status' => ($validated['send_invoice'] ?? false) ? 'Sent' : 'Draft',
-                    'issued_at' => $checkoutResult['checkout_datetime']->toDateTimeString()
-                ],
-                'checkout_summary' => [
-                    'checkout_completed' => true,
-                    'booking_status' => 'Cleaning',
-                    'invoice_created' => true,
-                    'invoice_sent' => $validated['send_invoice'] ?? false,
-                    'rooms_set_to_cleaning' => !empty($checkoutResult['room_ids']),
-                    'next_steps' => [
-                        'Khách đã check-out thành công',
-                        'Booking chuyển sang trạng thái "Cleaning"',
-                        'Hóa đơn đã được tạo',
-                        'Phòng đã được chuyển sang trạng thái dọn dẹp',
-                        'Thông báo cho bộ phận housekeeping',
-                        'Sau khi dọn dẹp xong, chuyển booking sang "Completed"'
-                    ]
-                ]
-            ];
-
-            Log::info('=== BookingCheckoutController@processCheckout SUCCESS ===');
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Check-out thành công. Booking đã chuyển sang trạng thái dọn dẹp.',
-                'data' => $responseData
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error: ', $e->errors());
-            return response()->json([
-                'success' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('=== ERROR in processCheckout ===');
-            Log::error('Error message: ' . $e->getMessage());
-            Log::error('File: ' . $e->getFile());
-            Log::error('Line: ' . $e->getLine());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Có lỗi xảy ra khi check-out',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    // Private helper methods...
 
     /**
      * Get room information for a booking
@@ -1006,20 +1326,68 @@ class BookingCheckoutController extends Controller
     }
 
     /**
-     * Get checkout warnings
+     * Update room status to cleaning
      */
-    private function getCheckoutWarnings($paymentStatus)
+    private function updateRoomStatusToCleaning($booking)
     {
-        $warnings = [];
+        try {
+            $roomIds = [];
+            
+            // Try multiple table structures
+            try {
+                $roomIds = DB::table('booking_rooms')
+                    ->where('booking_id', $booking->booking_id)
+                    ->pluck('room_id')
+                    ->toArray();
+            } catch (\Exception $e) {
+                Log::warning("booking_rooms table query failed: " . $e->getMessage());
+            }
+            
+            if (empty($roomIds)) {
+                try {
+                    $roomIds = DB::table('booking_room')
+                        ->where('booking_id', $booking->booking_id)
+                        ->pluck('room_id')
+                        ->toArray();
+                } catch (\Exception $e) {
+                    Log::warning("booking_room table query failed: " . $e->getMessage());
+                }
+            }
+            
+            if (empty($roomIds) && $booking->room_id) {
+                $roomIds = [$booking->room_id];
+            }
+            
+            if (!empty($roomIds)) {
+                DB::table('room')
+                    ->whereIn('room_id', $roomIds)
+                    ->where('status', '!=', 'maintenance')
+                    ->update(['status' => 'cleaning']);
+            }
 
-        if (!$paymentStatus['is_sufficient']) {
-            $warnings[] = [
-                'type' => 'payment',
-                'message' => 'Chưa thanh toán đủ',
-                'details' => "Còn thiếu " . number_format($paymentStatus['remaining_amount']) . " VND"
-            ];
+            return $roomIds;
+        } catch (\Exception $e) {
+            Log::warning("Could not update room status: " . $e->getMessage());
+            return [];
         }
+    }
 
-        return $warnings;
+    /**
+     * Create audit log
+     */
+    private function createAuditLog($booking, $checkoutTime, $amountCalculation, $validationResult)
+    {
+        try {
+            DB::table('audit_logs')->insert([
+                'user_id' => Auth::id(),
+                'action' => 'Check-out',
+                'table_name' => 'booking',
+                'record_id' => $booking->booking_id,
+                'description' => "Check-out completed for booking {$booking->booking_code} at {$checkoutTime}. Total amount: " . number_format($amountCalculation['total_amount']) . " VND. Status changed to Cleaning. Validation: " . ($validationResult->canCheckout ? 'APPROVED' : 'FORCED') . " with " . count($validationResult->warnings) . " warnings.",
+                'created_at' => Carbon::now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning("Could not create audit log: " . $e->getMessage());
+        }
     }
 }

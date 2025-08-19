@@ -114,6 +114,8 @@ const BookingManagement: React.FC = () => {
     const [cancelLoading, setCancelLoading] = useState(false);
     const [cancelBookingId, setCancelBookingId] = useState<number | string | null>(null);
     const [cancelConfirming, setCancelConfirming] = useState(false);
+    // Review eligibility cache: { [bookingId]: { eligible: boolean, reason?: string } }
+    const [reviewEligibility, setReviewEligibility] = useState<Record<number, { eligible: boolean; reason?: string }>>({});
 
     // State cho gia hạn
     const [extendPolicy, setExtendPolicy] = useState<any | null>(null);
@@ -286,6 +288,22 @@ const BookingManagement: React.FC = () => {
         }
     }, []);
 
+    // Check review eligibility for a booking and cache the result
+    const fetchReviewEligibility = useCallback(async (bookingId: number) => {
+        if (reviewEligibility[bookingId]) return reviewEligibility[bookingId];
+        try {
+            const res = await bookingService.getReviewEligibility(bookingId);
+            const entry = { eligible: !!res.eligible, reason: res.reason };
+            setReviewEligibility(prev => ({ ...prev, [bookingId]: entry }));
+            return entry;
+        } catch (err: any) {
+            // If API returns 400 with reason, err may contain reason
+            const entry = { eligible: false, reason: err?.reason || err?.message || 'Không thể kiểm tra điều kiện' };
+            setReviewEligibility(prev => ({ ...prev, [bookingId]: entry }));
+            return entry;
+        }
+    }, [reviewEligibility]);
+
     // Xác nhận gia hạn
     const handleConfirmExtend = useCallback(async () => {
         if (!extendBookingId || !extendDate) return;
@@ -437,7 +455,7 @@ const BookingManagement: React.FC = () => {
         }
     }, [rescheduleBookingId, rescheduleCheckIn, rescheduleCheckOut, rescheduleReason]);
     return (
-        <div style={{ padding: 0, minHeight: '100vh' }}>
+        <div style={{ padding: 0, minHeight: '100vh' , marginTop: 64 }}>
             {/* Header */}
             <div style={{ marginBottom: 32 }}>
                 <Row align="middle" justify="space-between">
@@ -685,6 +703,39 @@ const BookingManagement: React.FC = () => {
                                                                     >
                                                                         Rời lịch
                                                                     </Button>
+                                                                </Tooltip>
+                                                                {/* Nút Đánh giá: kiểm tra điều kiện trước khi cho phép */}
+                                                                <Tooltip title={
+                                                                    reviewEligibility[booking.booking_id]
+                                                                        ? (reviewEligibility[booking.booking_id].eligible ? 'Bấm để đánh giá' : reviewEligibility[booking.booking_id].reason)
+                                                                        : 'Di chuột để kiểm tra điều kiện đánh giá'
+                                                                }>
+                                                                    <span onMouseEnter={() => { if (!reviewEligibility[booking.booking_id]) { fetchReviewEligibility(booking.booking_id); } }}>
+                                                                        <Button
+                                                                            type="default"
+                                                                            size="small"
+                                                                            style={{ borderRadius: 4, fontWeight: 500 }}
+                                                                            onClick={e => {
+                                                                                e.stopPropagation();
+                                                                                const entry = reviewEligibility[booking.booking_id];
+                                                                                if (entry && entry.eligible) {
+                                                                                    // navigate to review page
+                                                                                    window.location.href = `/review-booking?booking=${booking.booking_id}`;
+                                                                                } else if (entry && !entry.eligible) {
+                                                                                    message.info(entry.reason || 'Không đủ điều kiện để đánh giá');
+                                                                                } else {
+                                                                                    // If not yet loaded, fetch then act
+                                                                                    fetchReviewEligibility(booking.booking_id).then(res => {
+                                                                                        if (res.eligible) window.location.href = `/review-booking?booking=${booking.booking_id}`;
+                                                                                        else message.info(res.reason || 'Không đủ điều kiện để đánh giá');
+                                                                                    });
+                                                                                }
+                                                                            }}
+                                                                            disabled={!(reviewEligibility[booking.booking_id] && reviewEligibility[booking.booking_id].eligible)}
+                                                                        >
+                                                                            Đánh giá
+                                                                        </Button>
+                                                                    </span>
                                                                 </Tooltip>
                                                             </Space>
                                                             {/* Modal nhập thông tin rời lịch và xem chính sách */}

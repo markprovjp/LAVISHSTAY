@@ -14,6 +14,50 @@ export const useNewsList = (params: ApiParams = {}) => {
     });
 };
 
+// Featured news (tin nổi bật banner)
+export const useFeaturedNews = (params: ApiParams = {}) => {
+    // Đảm bảo is_featured là number
+    const fixedParams = { ...params, is_featured: params.is_featured === true ? 1 : params.is_featured === false ? 0 : params.is_featured };
+    return useQuery({
+        queryKey: ['featuredNews', fixedParams],
+        queryFn: () => newsApi.getFeaturedNews(fixedParams),
+        staleTime: 10 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
+};
+
+// Trending news (tin thịnh hành)
+export const useTrendingNews = (params: ApiParams = {}) => {
+    return useQuery({
+        queryKey: ['trendingNews', params],
+        queryFn: () => newsApi.getTrendingNews(params),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 15 * 60 * 1000,
+    });
+};
+
+// News by category
+export const useNewsByCategory = (categoryId: number, params: ApiParams = {}) => {
+    return useQuery({
+        queryKey: ['newsByCategory', categoryId, params],
+        queryFn: () => newsApi.getNewsByCategory(categoryId, params),
+        enabled: !!categoryId,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    });
+};
+
+// Related news
+export const useRelatedNews = (newsId: number, limit = 5) => {
+    return useQuery({
+        queryKey: ['relatedNews', newsId, limit],
+        queryFn: () => newsApi.getRelatedNews(newsId, limit),
+        enabled: !!newsId,
+        staleTime: 15 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
+};
+
 // News detail
 export const useNewsDetail = (slug: string) => {
     return useQuery({
@@ -66,12 +110,65 @@ export const useCreateComment = (newsId: number) => {
 export const useToggleCommentLike = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (commentId: number) => newsApi.toggleCommentLike(commentId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['comments'] });
+        // accept object {newsId, commentId} to call nested endpoint
+        mutationFn: (args: { newsId: number; commentId: number }) => {
+            const { newsId, commentId } = args as { newsId: number; commentId: number };
+            if (!newsId) throw new Error('Missing newsId');
+            return newsApi.toggleCommentLike(newsId, commentId);
         },
-        onError: () => {
+        // Optimistic update: update specific comment in cache
+        onMutate: async (variables) => {
+            const { newsId, commentId } = variables as { newsId: number; commentId: number };
+            await queryClient.cancelQueries({ queryKey: ['comments', newsId] });
+
+            const previous = queryClient.getQueryData<any>(['comments', newsId]);
+
+            // Update cache optimistically for all queries matching ['comments', newsId]
+            queryClient.setQueriesData({ queryKey: ['comments', newsId] }, (old: any) => {
+                if (!old) return old;
+                // old may be the paginated shape or array; normalize to object with data
+                const snapshot = old?.data ? { ...old } : { data: Array.isArray(old) ? old : [] };
+                if (!snapshot.data) return old;
+
+                const newData = { ...snapshot };
+                newData.data = newData.data.map((c: any) => {
+                    if (c.id === commentId) {
+                        const likes = (c.likes ?? c.likes_count ?? 0) + 1;
+                        return { ...c, likes, likes_count: likes, is_liked: true };
+                    }
+                    // update replies if present
+                    if (c.replies && Array.isArray(c.replies)) {
+                        c.replies = c.replies.map((r: any) => {
+                            if (r.id === commentId) {
+                                const likes = (r.likes ?? r.likes_count ?? 0) + 1;
+                                return { ...r, likes, likes_count: likes, is_liked: true };
+                            }
+                            return r;
+                        });
+                    }
+                    return c;
+                });
+
+                // return same shape as original
+                if (old?.data) {
+                    return { ...old, data: newData.data };
+                }
+                return newData.data;
+            });
+
+            return { previous };
+        },
+        onError: (_err, variables, context: any) => {
+            const newsId = (variables as { newsId: number }).newsId;
+            if (context?.previous) {
+                queryClient.setQueryData(['comments', newsId], context.previous);
+            }
             message.error('Không thể thích bình luận');
+        },
+        onSuccess: (_data, variables) => {
+            const newsId = (variables as { newsId: number }).newsId;
+            // ensure final state by invalidating specific comments query
+            queryClient.invalidateQueries({ queryKey: ['comments', newsId] });
         },
     });
 };

@@ -1,3 +1,4 @@
+
 // src/components/news/CommentList.tsx
 import React from 'react';
 import { List, Avatar, Button, Space, Empty, Spin, message } from 'antd';
@@ -5,6 +6,7 @@ import { UserOutlined, LikeOutlined, ReplyArrowIcon } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useComments, useToggleCommentLike } from '../../hooks/useNews';
+import { Comment } from '../../services/newsApi';
 import { formatTimeAgo } from '../../utils/timeHelpers';
 
 interface CommentListProps {
@@ -20,16 +22,23 @@ const CommentList: React.FC<CommentListProps> = ({
 
     // API queries
     const {
-        data: comments,
+        data: commentsResponse,
         isLoading,
         error
     } = useComments(newsId);
+
+    const comments = commentsResponse?.data || [];
 
     const toggleCommentLikeMutation = useToggleCommentLike();
 
     // Handle comment like
     const handleLikeComment = (commentId: number) => {
-        toggleCommentLikeMutation.mutate(commentId, {
+        if (!newsId) {
+            message.error(t('news.comments.error.no_news_id', 'Không tìm thấy bài viết'));
+            return;
+        }
+
+        toggleCommentLikeMutation.mutate({ newsId, commentId }, {
             onSuccess: () => {
                 onCommentUpdated?.();
             },
@@ -77,7 +86,7 @@ const CommentList: React.FC<CommentListProps> = ({
             <List
                 itemLayout="vertical"
                 dataSource={comments}
-                renderItem={(comment, index) => (
+                renderItem={(comment: Comment, index) => (
                     <motion.div
                         key={comment.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -96,7 +105,7 @@ const CommentList: React.FC<CommentListProps> = ({
                                         onClick={() => handleLikeComment(comment.id)}
                                         loading={toggleCommentLikeMutation.isPending}
                                     >
-                                        {comment.likes_count || 0}
+                                        {(comment as any).likes ?? comment.likes_count ?? 0}
                                     </Button>
                                 </Space>,
                                 <Space key="time">
@@ -128,9 +137,9 @@ const CommentList: React.FC<CommentListProps> = ({
                             />
 
                             {/* Replies */}
-                            {comment.replies && comment.replies.length > 0 && (
+                            {comment.replies && Array.isArray(comment.replies) && comment.replies.length > 0 && (
                                 <div className="ml-12 mt-4 border-l-2 border-gray-100 pl-4">
-                                    {comment.replies.map((reply) => (
+                                    {comment.replies.map((reply: Comment) => (
                                         <div key={reply.id} className="mb-4">
                                             <div className="flex items-start space-x-3">
                                                 <Avatar
@@ -160,7 +169,7 @@ const CommentList: React.FC<CommentListProps> = ({
                                                             onClick={() => handleLikeComment(reply.id)}
                                                             loading={toggleCommentLikeMutation.isPending}
                                                         >
-                                                            {reply.likes_count || 0}
+                                                            {(reply as any).likes ?? reply.likes_count ?? 0}
                                                         </Button>
                                                     </div>
                                                 </div>
