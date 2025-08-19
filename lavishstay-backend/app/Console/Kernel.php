@@ -12,6 +12,7 @@ class Kernel extends ConsoleKernel
         Commands\ClearPricingCache::class,
         Commands\CleanupPendingBookings::class,
         Commands\AutoBookingCleanup::class,
+        \App\Console\Commands\NotificationDebugCommand::class
     ];
 
     protected function schedule(Schedule $schedule)
@@ -32,11 +33,49 @@ class Kernel extends ConsoleKernel
         $schedule->command('room-occupancy:daily-update')->daily();
         // Auto cleanup booking: xoá pending quá 15 phút, chuyển completed khi qua ngày checkout
         $schedule->command('booking:auto-cleanup')->everyMinute();
+        // Clean up old notifications daily at 2 AM
+        $schedule->command('notifications:cleanup --days=30')
+                 ->dailyAt('02:00')
+                 ->withoutOverlapping()
+                 ->runInBackground()
+                 ->appendOutputTo(storage_path('logs/notification-cleanup.log'));
+
+        // Send shift reminders every 15 minutes during business hours
+        $schedule->command('notifications:cleanup --send-reminders')
+                 ->everyFifteenMinutes()
+                 ->between('06:00', '23:00')
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Send checkin reminders every hour during the day
+        $schedule->command('notifications:cleanup --send-reminders')
+                 ->hourly()
+                 ->between('08:00', '20:00')
+                 ->withoutOverlapping();
+
+        // Weekly notification statistics report (for admins)
+        $schedule->command('notifications:stats --email-report')
+                 ->weeklyOn(1, '09:00') // Every Monday at 9 AM
+                 ->withoutOverlapping();
+
+        // Clean up very old notifications (older than 90 days) monthly
+        $schedule->command('notifications:cleanup --days=90')
+                 ->monthlyOn(1, '03:00') // First day of month at 3 AM
+                 ->withoutOverlapping();
+
+        // Backup notification data before cleanup (if needed)
+        $schedule->command('notifications:backup')
+                 ->monthlyOn(1, '01:00') // Before cleanup
+                 ->withoutOverlapping();
     }
 
     protected function commands()
     {
         $this->load(__DIR__.'/Commands');
         require base_path('routes/console.php');
+    }
+     protected function scheduleTimezone(): string
+    {
+        return config('app.timezone', 'UTC');
     }
 }
