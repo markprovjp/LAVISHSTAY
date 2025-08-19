@@ -82,7 +82,7 @@ class ChartReceptionController extends Controller
             $query = DB::table('booking')
                 ->leftJoin('room_types', 'booking.room_type_id', '=', 'room_types.room_type_id')
                 ->select(
-                    DB::raw('COALESCE(room_types.type_name, "Khác") as type'),
+                    DB::raw('COALESCE(room_types.name, "Khác") as type'),
                     DB::raw('SUM(booking.total_price_vnd) as value'),
                     DB::raw('COUNT(*) as booking_count'),
                     DB::raw('AVG(booking.total_price_vnd) as avg_price')
@@ -101,7 +101,7 @@ class ChartReceptionController extends Controller
             }
 
             $categoryRevenue = $query
-                ->groupBy('room_types.type_name')
+                ->groupBy('room_types.name')
                 ->orderBy('value', 'desc')
                 ->get();
 
@@ -223,7 +223,7 @@ class ChartReceptionController extends Controller
                     'booking.guest_phone',
                     'booking.check_in_date',
                     'booking.status',
-                    'room_types.type_name as room_type'
+                    'room_types.name as room_type'
                 )
                 ->whereDate('booking.check_in_date', $today)
                 ->whereIn('booking.status', ['Confirmed', 'Pending'])
@@ -240,7 +240,7 @@ class ChartReceptionController extends Controller
                     'booking.guest_phone',
                     'booking.check_out_date',
                     'booking.status',
-                    'room_types.type_name as room_type'
+                    'room_types.name as room_type'
                 )
                 ->whereDate('booking.check_out_date', $today)
                 ->whereIn('booking.status', ['Operational'])
@@ -256,7 +256,7 @@ class ChartReceptionController extends Controller
                     'booking.guest_name',
                     'booking.check_in_date',
                     'booking.check_out_date',
-                    'room_types.type_name as room_type'
+                    'room_types.name as room_type'
                 )
                 ->where('booking.status', 'Operational')
                 ->where('booking.check_in_date', '<=', $today)
@@ -336,8 +336,8 @@ class ChartReceptionController extends Controller
                     'action',
                     'description',
                     'created_at',
-                    'table_name',
-                    'record_id'
+                    'model',
+                    'model_id'
                 )
                 ->orderBy('created_at', 'desc')
                 ->limit($limit)
@@ -438,7 +438,7 @@ class ChartReceptionController extends Controller
             $query = DB::table('booking')
                 ->leftJoin('room_types', 'booking.room_type_id', '=', 'room_types.room_type_id')
                 ->select(
-                    DB::raw('COALESCE(room_types.type_name, "Không xác định") as keyword'),
+                    DB::raw('COALESCE(room_types.name, "Không xác định") as keyword'),
                     DB::raw('COUNT(*) as users'),
                     DB::raw('SUM(booking.total_price_vnd) as total_revenue'),
                     DB::raw('AVG(booking.total_price_vnd) as avg_price'),
@@ -568,6 +568,50 @@ class ChartReceptionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi lấy thống kê dashboard',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API trạng thái phòng
+     * GET /api/reception/chart/room-status
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRoomStatus(Request $request)
+    {
+        try {
+            $roomStatus = DB::table('room')
+                ->select('status', DB::raw('COUNT(*) as count'))
+                ->groupBy('status')
+                ->get();
+
+            // Format data with Vietnamese status names
+            $statusMapping = [
+                'available' => 'Sẵn sàng',
+                'occupied' => 'Đang sử dụng',
+                'maintenance' => 'Bảo trì',
+                'cleaning' => 'Đang dọn',
+                'out_of_order' => 'Hỏng'
+            ];
+
+            $formattedData = $roomStatus->map(function ($item) use ($statusMapping) {
+                return [
+                    'status' => $statusMapping[$item->status] ?? ucfirst($item->status),
+                    'count' => (int)$item->count
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $formattedData->values()->toArray()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi lấy trạng thái phòng',
                 'error' => $e->getMessage()
             ], 500);
         }

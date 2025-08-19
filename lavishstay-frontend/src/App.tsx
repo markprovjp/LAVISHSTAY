@@ -82,7 +82,7 @@ import "./styles/global.css";
 import "./styles/performance-optimizations.css";
 import News from "./pages/News";
 import NotificationsPage from "./pages/NotificationsPage";
-
+import TheLevelPage from "./pages/reception/the-level/TheLevelPage-Final";
 
 const { Content } = Layout;
 
@@ -138,6 +138,7 @@ const App: React.FC = React.memo(() => {
               <Route path="/search" element={<SearchResults />} />
               <Route path="/news" element={<News />} />
               <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* Thêm dòng này */}
+              <Route path="/the-level" element={<TheLevelPage />} />
               <Route path="/booking/confirmation" element={<BookingConfirmation />} />
               <Route path="/booking/lookup" element={<LookupBookingByPhone />} />
               <Route path="/room-types-demo" element={<RoomTypesDemo />} />
