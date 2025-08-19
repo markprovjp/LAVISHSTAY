@@ -559,6 +559,14 @@ export const receptionAPI = {
     const response = await api.post('/reception/bookings/calculate-price', payload);
     return response.data;
   },
+
+  // --- NEW: Generate Invoice PDF ---
+  generateInvoice: async (bookingId: number) => {
+    const response = await api.get(`/reception/bookings/${bookingId}/invoice`, {
+      responseType: 'blob'
+    });
+    return response;
+  },
 };
 
 // Payment API for Reception

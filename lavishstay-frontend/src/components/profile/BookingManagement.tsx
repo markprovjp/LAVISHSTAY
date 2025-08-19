@@ -455,7 +455,7 @@ const BookingManagement: React.FC = () => {
         }
     }, [rescheduleBookingId, rescheduleCheckIn, rescheduleCheckOut, rescheduleReason]);
     return (
-        <div style={{ padding: 0, minHeight: '100vh' }}>
+        <div style={{ padding: 0, minHeight: '100vh' , marginTop: 64 }}>
             {/* Header */}
             <div style={{ marginBottom: 32 }}>
                 <Row align="middle" justify="space-between">

@@ -23,6 +23,147 @@ class ReceptionController extends Controller
     {
         $this->pricingService = $pricingService;
     }
+ /**
+     * Generate invoice PDF for a booking
+     */
+    public function generateInvoice($bookingId)
+    {
+        try {
+            Log::info('=== Generate Invoice PDF START ===', ['booking_id' => $bookingId]);
+
+            // Get booking details with related data
+            $booking = DB::table('booking')
+                ->where('booking_id', $bookingId)
+                ->first();
+
+            if (!$booking) {
+                return response()->json(['error' => 'Booking not found'], 404);
+            }
+
+            // Get booking rooms with room and room type details
+            $bookingRooms = DB::table('booking_rooms as br')
+                ->leftJoin('room as r', 'br.room_id', '=', 'r.room_id')
+                ->leftJoin('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
+                ->leftJoin('representatives as rep', 'br.representative_id', '=', 'rep.id')
+                ->where('br.booking_id', $bookingId)
+                ->select([
+                    'br.*',
+                    'r.name as room_name',
+                    'r.floor_id',
+                    'rt.name as room_type_name',
+                    'rt.description as room_type_description',
+                    'rep.full_name as representative_name',
+                    'rep.phone_number as representative_phone'
+                ])
+                ->get();
+
+            // Get booking services
+            $bookingServices = DB::table('booking_services as bs')
+                ->leftJoin('services as s', 'bs.service_id', '=', 's.service_id')
+                ->where('bs.booking_id', $bookingId)
+                ->select([
+                    'bs.*',
+                    's.name as service_name',
+                    's.description as service_description',
+                    's.unit as service_unit'
+                ])
+                ->get();
+
+            // Calculate totals
+            // Service total is additional and should be added to the booking's stored total_price_vnd
+            $serviceTotal = $bookingServices->sum(function($service) {
+                return $service->quantity * $service->price_vnd;
+            });
+
+            // Use booking's stored total (total_price_vnd) for room/package total to avoid double-counting
+            $roomTotal = $booking->total_price_vnd ?? $booking->total_price ?? $bookingRooms->sum('total_price');
+
+            // Grand total = booking's room/package total + additional service charges
+            $grandTotal = ($booking->total_price_vnd ?? $roomTotal) + $serviceTotal;
+
+            // Prepare data for invoice
+            $invoiceData = [
+                'booking' => $booking,
+                'booking_rooms' => $bookingRooms,
+                'booking_services' => $bookingServices,
+                'room_total' => $roomTotal,
+                'service_total' => $serviceTotal,
+                'grand_total' => $grandTotal,
+                'invoice_number' => 'INV-' . $booking->booking_code . '-' . date('Ymd'),
+                'invoice_date' => date('d/m/Y'),
+                'hotel_info' => [
+                    'name' => 'LavishStay Hotel',
+                        'address' => 'Số 27 Trần Phú, Phường Điện Biên, Thành Phố Thanh Hóa , Việt Nam',
+                        'phone' => '(028) 1234 5678',
+                        'email' => 'info@lavishstay.com',
+                        'website' => 'www.lavishstay.com',
+                        // Try to load logo from frontend assets and convert to data URI for dompdf
+                        'logo' => (function(){
+                            try {
+                                $path = base_path('lavishstay-frontend/src/assets/images/logo-light.png');
+                                if (file_exists($path)) {
+                                    $data = file_get_contents($path);
+                                    $base64 = base64_encode($data);
+                                    return 'data:image/png;base64,' . $base64;
+                                }
+                            } catch (\Exception $e) {
+                                Log::warning('Unable to load logo for invoice: ' . $e->getMessage());
+                            }
+                            return null;
+                        })()
+                ]
+            ];
+
+            Log::info('Invoice data prepared', [
+                'room_count' => $bookingRooms->count(),
+                'service_count' => $bookingServices->count(),
+                'grand_total' => $grandTotal
+            ]);
+
+            // Render view to HTML first (save for debugging) then load HTML into dompdf
+            $html = view('invoice.booking', $invoiceData)->render();
+            try {
+                $debugPath = storage_path('logs/invoice_debug_' . $booking->booking_id . '_' . time() . '.html');
+                @file_put_contents($debugPath, $html);
+                Log::info('Invoice HTML saved for debug', ['path' => $debugPath]);
+            } catch (\Exception $e) {
+                Log::warning('Unable to save invoice debug HTML: ' . $e->getMessage());
+            }
+
+            try {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
+            } catch (\Exception $e) {
+                // Save HTML on error to help debugging and rethrow
+                try { @file_put_contents(storage_path('logs/invoice_error_' . $booking->booking_id . '_' . time() . '.html'), $html); } catch (\Exception $ee) {}
+                Log::error('DomPDF failed to load HTML for invoice: ' . $e->getMessage());
+                throw $e;
+            }
+            
+            // Set paper size and orientation
+            $pdf->setPaper('A4', 'portrait');
+
+            // Return PDF as download
+            $filename = 'invoice-' . $booking->booking_code . '-' . date('Ymd') . '.pdf';
+            
+            Log::info('=== Generate Invoice PDF SUCCESS ===', ['filename' => $filename]);
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('=== ERROR in generateInvoice ===');
+            Log::error('Error message: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile());
+            Log::error('Line: ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi tạo hoá đơn',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
      /**
      * Check-in guest
      */
@@ -1704,5 +1845,7 @@ $allChildrenAges = DB::table('booking_room_children')
             return $roomType ? $roomType->base_price : 1200000;
         }
     }
+
+   
 
 }

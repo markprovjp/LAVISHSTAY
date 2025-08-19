@@ -29,10 +29,11 @@ import {
     Descriptions,
     Collapse
 } from 'antd';
-import { HomeOutlined, EditOutlined, SaveOutlined, CloseOutlined, MoreOutlined, UserOutlined, PhoneOutlined, MailOutlined, DollarOutlined, TeamOutlined, CreditCardOutlined, SwapOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, ExclamationCircleOutlined, CalendarOutlined } from '@ant-design/icons';
+import { HomeOutlined, EditOutlined, SaveOutlined, CloseOutlined, MoreOutlined, UserOutlined, PhoneOutlined, MailOutlined, DollarOutlined, TeamOutlined, CreditCardOutlined, SwapOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, ExclamationCircleOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
 import { BedDouble, CalendarDays, UserRound, Pencil, DoorOpen, LogOut, XCircle, Ban, ArrowRightLeft } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
+import { receptionAPI } from '../../../utils/api';
 import RoomSelectionModal from './RoomSelectionModal';
 import {
     ChangeRoomTab,
@@ -197,6 +198,9 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
     const [bookingDetail, setBookingDetail] = useState<BookingDetail | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
+    const [bookingServices, setBookingServices] = useState<any[]>([]);
+    const [servicesLoading, setServicesLoading] = useState(false);
+    const [downloadingPDF, setDownloadingPDF] = useState(false);
     // Room selection modal state
     const [roomSelectionModal, setRoomSelectionModal] = useState({
         visible: false,
@@ -236,6 +240,18 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                 data.representatives = representatives;
                 data.payment = data.payment || null;
                 setBookingDetail(data);
+                // if backend already included booking_services in booking details, normalize and set them
+                const rawServices = data.booking_services?.services || data.booking_services || [];
+                const normalized = (Array.isArray(rawServices) ? rawServices : []).map((s: any) => ({
+                    id: s.id ?? s.service_id ?? s.service?.id,
+                    service_id: s.service_id ?? s.id ?? s.service?.service_id,
+                    name: s.service_name ?? s.name ?? s.service?.name ?? (s.service?.title || ''),
+                    quantity: s.quantity ?? s.qty ?? 0,
+                    price_vnd: s.unit_price_vnd ?? s.price_vnd ?? s.price ?? (s.unit_price ?? 0),
+                    total_price_vnd: s.total_price_vnd ?? s.total_price ?? (Number(s.quantity ?? 0) * Number(s.unit_price_vnd ?? s.price_vnd ?? s.price ?? 0)),
+                    raw: s,
+                }));
+                setBookingServices(normalized);
                 form.setFieldsValue({
                     guest_name: data.guest_name || '',
                     guest_email: data.guest_email || '',
@@ -258,6 +274,60 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
             setBookingDetail(null);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchBookingServices = async () => {
+        if (!bookingId) return;
+        setServicesLoading(true);
+        try {
+            const res: any = await receptionAPI.getCheckoutInfo(Number(bookingId));
+            // getCheckoutInfo returns either raw data or { data }
+            const payload = res?.data ? res.data : res;
+            const rawServices = payload?.booking_services?.services || payload?.booking_services || [];
+            const normalized = (Array.isArray(rawServices) ? rawServices : []).map((s: any) => ({
+                id: s.id ?? s.service_id ?? s.service?.id,
+                service_id: s.service_id ?? s.id ?? s.service?.service_id,
+                name: s.service_name ?? s.name ?? s.service?.name ?? (s.service?.title || ''),
+                quantity: s.quantity ?? s.qty ?? 0,
+                price_vnd: s.unit_price_vnd ?? s.price_vnd ?? s.price ?? (s.unit_price ?? 0),
+                total_price_vnd: s.total_price_vnd ?? s.total_price ?? (Number(s.quantity ?? 0) * Number(s.unit_price_vnd ?? s.price_vnd ?? s.price ?? 0)),
+                raw: s,
+            }));
+            setBookingServices(normalized);
+        } catch (err) {
+            console.error('Error fetching booking services', err);
+        } finally {
+            setServicesLoading(false);
+        }
+    };
+
+    const handleDownloadInvoice = async () => {
+        if (!bookingDetail?.id) return;
+
+        try {
+            setDownloadingPDF(true);
+            const response = await receptionAPI.generateInvoice(bookingDetail.id);
+
+            // Tạo blob từ response data
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+
+            // Tạo URL và download
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Hoa_don_booking_${bookingDetail.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            message.success('Tải hoá đơn thành công!');
+        } catch (error) {
+            console.error('Error downloading invoice:', error);
+            message.error('Có lỗi khi tải hoá đơn. Vui lòng thử lại!');
+        } finally {
+            setDownloadingPDF(false);
         }
     };
 
@@ -677,13 +747,23 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 </Button>
                             </>
                         ) : (
-                            <Button
-                                type="primary"
-                                icon={<EditOutlined />}
-                                onClick={() => setIsEditing(true)}
-                            >
-                                Chỉnh sửa
-                            </Button>
+                            <>
+                                <Button
+                                    type="default"
+                                    icon={<FileTextOutlined />}
+                                    onClick={handleDownloadInvoice}
+                                    loading={downloadingPDF}
+                                >
+                                    Xuất hoá đơn
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    icon={<EditOutlined />}
+                                    onClick={() => setIsEditing(true)}
+                                >
+                                    Chỉnh sửa
+                                </Button>
+                            </>
                         )}
                     </Space>
                 </div>
@@ -820,7 +900,15 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                             </Form>
                         </Card>
 
-                        <Tabs defaultActiveKey="rooms">
+                        <Tabs
+                            defaultActiveKey="rooms"
+                            onChange={(key) => {
+                                if (key === 'services' && bookingId) {
+                                    // fetch latest booking services when services tab is opened
+                                    fetchBookingServices();
+                                }
+                            }}
+                        >
                             <TabPane tab={
                                 <span>
                                     <HomeOutlined style={{ marginRight: 8 }} />
@@ -899,14 +987,14 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                                         <Descriptions.Item label="Email">{room.representative?.email || '-'}</Descriptions.Item>
                                                         <Descriptions.Item label="CMND/CCCD">{room.representative?.identity_number || '-'}</Descriptions.Item>
                                                     </Descriptions>
-                                                    <Divider style={{ margin: '12px 0' }} />
+                                                    {/* <Divider style={{ margin: '12px 0' }} />
                                                     <Space wrap>
                                                         <Button icon={<ArrowRightLeft size={16} />} onClick={() => handleRoomAction('transfer', [room.booking_room_id])}>Đổi phòng</Button>
                                                         <Button icon={<LogOut size={16} />} onClick={() => handleRoomAction('check_in', [room.booking_room_id])}>Check-in</Button>
                                                         <Button icon={<XCircle size={16} />} onClick={() => handleRoomAction('check_out', [room.booking_room_id])}>Check-out</Button>
                                                         <Button icon={<Ban size={16} />} danger onClick={() => handleRoomAction('cancel', [room.booking_room_id])}>Hủy</Button>
                                                         <Button icon={<ExclamationCircleOutlined />} danger onClick={() => handleRoomAction('no_show', [room.booking_room_id])}>No show</Button>
-                                                    </Space>
+                                                    </Space> */}
                                                 </Card>
                                             </Collapse.Panel>
                                         ))
@@ -1108,6 +1196,61 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     <div style={{ textAlign: 'center', padding: '40px 0' }}>
                                         <Text type="secondary">Tính năng hóa đơn sẽ được phát triển trong phiên bản tiếp theo</Text>
                                     </div>
+                                </Card>
+                            </TabPane>
+                            <TabPane tab="Dịch vụ phát sinh" key="services">
+                                <Card>
+                                    <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Text strong style={{ fontSize: 16 }}>Dịch vụ phát sinh</Text>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                        <div />
+                                        <div>
+                                            <Button size="small" onClick={() => fetchBookingServices()} style={{ marginRight: 8 }}>Làm mới</Button>
+                                        </div>
+                                    </div>
+                                    <Table
+                                        dataSource={bookingServices || []}
+                                        loading={servicesLoading}
+                                        rowKey={(record: any) => record.service_id ?? record.id ?? record.raw?.service_id}
+                                        pagination={false}
+                                        columns={[
+                                            {
+                                                title: 'Tên dịch vụ',
+                                                key: 'name',
+                                                render: (_: any, record: any) => (
+                                                    record.name || record.service_name || record.raw?.service_name || record.raw?.service?.name || '-'
+                                                )
+                                            },
+                                            {
+                                                title: 'Số lượng',
+                                                key: 'quantity',
+                                                width: 120,
+                                                render: (_: any, record: any) => (record.quantity ?? record.qty ?? record.raw?.quantity ?? 0)
+                                            },
+                                            {
+                                                title: 'Đơn giá',
+                                                key: 'price_vnd',
+                                                align: 'right',
+                                                render: (_: any, record: any) => {
+                                                    const val = record.price_vnd ?? record.unit_price_vnd ?? record.raw?.unit_price_vnd ?? record.raw?.price_vnd ?? record.raw?.price;
+                                                    return val ? new Intl.NumberFormat('vi-VN').format(Number(val)) + ' ₫' : '-';
+                                                }
+                                            },
+                                            {
+                                                title: 'Thành tiền',
+                                                key: 'total',
+                                                align: 'right',
+                                                render: (_: any, record: any) => {
+                                                    const total = record.total_price_vnd ?? record.raw?.total_price_vnd ?? record.raw?.total_price;
+                                                    if (total) return new Intl.NumberFormat('vi-VN').format(Number(total)) + ' ₫';
+                                                    const qty = Number(record.quantity ?? record.qty ?? record.raw?.quantity ?? 0);
+                                                    const price = Number(record.price_vnd ?? record.unit_price_vnd ?? record.raw?.unit_price_vnd ?? record.raw?.price_vnd ?? record.raw?.price ?? 0);
+                                                    return new Intl.NumberFormat('vi-VN').format(qty * price) + ' ₫';
+                                                }
+                                            }
+                                        ]}
+                                    />
                                 </Card>
                             </TabPane>
                             <TabPane tab="Gia hạn" key="extend">
