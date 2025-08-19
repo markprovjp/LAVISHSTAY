@@ -676,6 +676,74 @@ class ReceptionController extends Controller
                 ->orderBy('name')
                 ->get();
 
+            // Enrich room types with images and package options to make frontend simpler
+            $roomTypes = $roomTypes->map(function ($rt) {
+                $images = [];
+                try {
+                    $imagesTableExists = DB::select("SHOW TABLES LIKE 'room_type_images'");
+                    if (!empty($imagesTableExists)) {
+                        $imgs = DB::table('room_type_images')
+                            ->where('room_type_id', $rt->id)
+                            ->get();
+
+                        $images = $imgs->map(function ($img) {
+                            return [
+                                'id' => $img->image_id ?? $img->id,
+                                'room_type_id' => $img->room_type_id ?? null,
+                                'image_path' => $img->image_path ?? null,
+                                'image_url' => $img->image_path ? asset($img->image_path) : null,
+                                'alt_text' => $img->alt_text ?? '',
+                                'is_main' => isset($img->is_main) ? (bool) $img->is_main : false,
+                            ];
+                        })->toArray();
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error fetching room type images: ' . $e->getMessage(), ['room_type_id' => $rt->id]);
+                }
+
+                // Load package options if available
+                $packages = [];
+                try {
+                    $packages = DB::table('room_type_package')
+                        ->where('room_type_id', $rt->id)
+                        ->select('package_id', 'name as package_name', 'price_modifier_vnd', 'description')
+                        ->orderBy('name')
+                        ->get()
+                        ->map(function ($p) {
+                            return [
+                                'package_id' => $p->package_id,
+                                'package_name' => $p->package_name,
+                                'price_modifier_vnd' => $p->price_modifier_vnd,
+                                'description' => $p->description ?? ''
+                            ];
+                        })->toArray();
+                } catch (\Exception $e) {
+                    Log::error('Error fetching room type packages: ' . $e->getMessage(), ['room_type_id' => $rt->id]);
+                }
+
+                // Determine main image
+                $mainImage = null;
+                foreach ($images as $img) {
+                    if (!empty($img['is_main'])) {
+                        $mainImage = $img['image_url'];
+                        break;
+                    }
+                }
+                if (!$mainImage && !empty($images)) {
+                    $mainImage = $images[0]['image_url'] ?? null;
+                }
+
+                // Return enriched object (keep original fields)
+                return (object) array_merge((array) $rt, [
+                    'images' => $images,
+                    // keep legacy field name used in some places
+                    'room_type_images' => $images,
+                    'main_image' => $mainImage,
+                    'package_options' => $packages,
+                    'cheapest_package_price' => $rt->base_price ?? 0,
+                ]);
+            });
+
             return response()->json([
                 'success' => true,
                 'data' => $roomTypes,
