@@ -61,6 +61,16 @@ Route::prefix('public')->middleware(['throttle:20,1'])->group(function () {
         ->name('public.bookings.search');
     Route::get('/bookings/{bookingId}/detail', [\App\Http\Controllers\Api\PublicBookingController::class, 'getBookingDetail'])
         ->name('public.bookings.detail');
+    
+    // Review routes
+    Route::get('/bookings/{bookingId}/review-eligibility', [\App\Http\Controllers\Api\PublicReviewController::class, 'checkEligibility'])
+        ->name('public.bookings.review.eligibility');
+    Route::get('/bookings/{bookingId}/review', [\App\Http\Controllers\Api\PublicReviewController::class, 'getReview'])
+        ->name('public.bookings.review.get');
+    Route::post('/bookings/{bookingId}/review', [\App\Http\Controllers\Api\PublicReviewController::class, 'submitReview'])
+        ->name('public.bookings.review.submit');
+    Route::post('/review-media/upload', [\App\Http\Controllers\Api\PublicReviewController::class, 'uploadMedia'])
+        ->name('public.review.media.upload');
 });
 
 // Route test gửi email

@@ -134,5 +134,11 @@ class Booking extends Model
     {
         return $this->hasMany(CompensationRequest::class, 'booking_id', 'booking_id');
     }
-
+  /**
+     * Relationship with reviews
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'booking_id', 'id');
+    }
 }
