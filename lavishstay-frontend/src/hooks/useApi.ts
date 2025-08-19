@@ -108,8 +108,21 @@ export const useLogin = () => {
       return authAPI.login(credentials.email, credentials.password);
     },
     onSuccess: (response) => {
-      localStorage.setItem('accessToken', response.data.access_token);
-      localStorage.setItem('refreshToken', response.data.refresh_token);
+      // Support multiple backend response shapes.
+      // Backend may return token in response.data.data.token or response.data.token or response.data.access_token
+      const token = response?.data?.data?.token || response?.data?.access_token || response?.data?.token || response?.data?.data?.access_token || null;
+      const refreshToken = response?.data?.refresh_token || response?.data?.data?.refresh_token || null;
+
+      if (token) {
+        // store both keys for compatibility with various callers
+        localStorage.setItem('accessToken', token);
+        localStorage.setItem('token', token);
+      }
+
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+
       message.success('Đăng nhập thành công!');
     },
     onError: (error: any) => {

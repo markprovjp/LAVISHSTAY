@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ChatSupportController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\RoleController;
@@ -45,9 +46,12 @@ use App\Http\Controllers\FloorController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NewsController\NewsController;
 use App\Http\Controllers\NewsController\MediaController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReschedulePolicyController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomTransferPolicyController;
+use App\Http\Controllers\SpecialRequestController;
+use App\Http\Controllers\TransactionController;
 
 Route::redirect('/', 'login');
 Route::get('/home', [DashboardController::class, 'index'])->name('home');
@@ -354,6 +358,22 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+    // Transaction Management Routes
+    Route::prefix('admin/transactions')->name('admin.transactions.')->group(function () {
+        Route::get('/', [TransactionController::class, 'index'])->name('index');
+        Route::get('/analytics', [TransactionController::class, 'analytics'])->name('analytics');
+        Route::get('/export', [TransactionController::class, 'export'])->name('export');
+        Route::get('/daily-comparison', [TransactionController::class, 'getDailyComparison'])->name('daily-comparison');
+        Route::get('/{id}', [TransactionController::class, 'show'])->name('show');
+    });
+
+    // API Routes for AJAX
+    Route::prefix('api/transactions')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('/analytics', [TransactionController::class, 'analytics']);
+        Route::get('/daily-comparison', [TransactionController::class, 'getDailyComparison']);
+        Route::get('/{id}', [TransactionController::class, 'show']);
+    });
 
 
     ////////////////////// YÊU CẦU ĐẶT PHÒNG /////////////////////////////////////////////////////
@@ -381,7 +401,29 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/check_out_requests/store', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
 
 
+    // Special Request Management Routes
 
+    // Special Requests Dashboard
+    Route::get('/admin/special-requests', [SpecialRequestController::class, 'index'])
+        ->name('admin.special-requests');
+    
+    // Get request details for modal
+    Route::get('/admin/special-requests/{type}/{id}', [SpecialRequestController::class, 'show'])
+        ->name('admin.special-requests.show');
+    
+    // Approve request
+    Route::post('/admin/special-requests/{type}/{id}/approve', [SpecialRequestController::class, 'approve'])
+        ->name('admin.special-requests.approve');
+
+    // Reject request
+    Route::post('/admin/special-requests/{type}/{id}/reject', [SpecialRequestController::class, 'reject'])
+        ->name('admin.special-requests.reject');
+
+    // Get statistics (AJAX)
+    Route::get('/admin/special-requests/statistics', [SpecialRequestController::class, 'getStatistics'])
+        ->name('admin.special-requests.statistics');
+
+Route::get('/admin/special-requests/stream', [SpecialRequestController::class, 'stream']);
 
     ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
 
@@ -584,6 +626,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/data', [RoomPriceHistoryController::class, 'getData'])->name('data');
         Route::get('/statistics', [RoomPriceHistoryController::class, 'getStatistics'])->name('statistics');
         Route::get('/chart', [RoomPriceHistoryController::class, 'getChartData'])->name('chart');
+        Route::get('/weekend-price/room-types', [RoomPriceHistoryController::class, 'getRoomTypes'])->name('room-types');
         Route::get('/show/{id}', [RoomPriceHistoryController::class, 'show'])->name('show');
         Route::get('/export', [RoomPriceHistoryController::class, 'export'])->name('export');
         Route::get('/export-single/{id}', [RoomPriceHistoryController::class, 'exportSingle'])->name('export-single');
@@ -652,6 +695,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/admin/faqs/destroy/{faqId}', [FAQController::class, 'destroy'])->name('admin.faqs.destroy');
     Route::patch('/admin/faqs/toggle-status/{faqId}', [FAQController::class, 'toggleStatus'])->name('faqs.toggle-status');
 
+
+
     // Payment Management Routes
     Route::get('/admin/bookings/trading', [PaymentController::class, 'adminIndex'])->name('admin.payment.index');
 
@@ -670,18 +715,117 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
 
+    Route::get('/admin/payment/setting', [PaymentController::class, 'settings'])->name('admin.payment.setting');
+    Route::put('/admin/payment/setting', [PaymentController::class, 'updateSettings'])->name('admin.payment.setting.update'); 
+    Route::post('/admin/payment/setting/test-vietqr', [PaymentController::class, 'testVietQRFromAdmin'])->name('admin.payment.setting.test-vietqr');
+    Route::get('/admin/payment/setting/reset', [PaymentController::class, 'resetToDefaultsFromAdmin'])->name('admin.payment.setting.reset');
+
 
     //Chat bot
     Route::get('/admin/chatbot', [ChatController::class, 'show'])->name('admin.chat-support');
     // Admin Chat Support Routes
-   Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('/chat-support', [ChatSupportController::class, 'index'])->name('chat-support');
-        Route::post('/chat-support/{conversation}/send', [ChatSupportController::class, 'sendMessage'])->name('chat-support.send');
-        Route::post('/chat-support/{conversation}/status', [ChatSupportController::class, 'updateStatus'])->name('chat-support.status');
-        Route::get('/chat-support/{conversation}/messages/latest', [ChatSupportController::class, 'getLatestMessages'])->name('chat-support.messages.latest');
-        Route::post('/chat-support/{conversation}/read', [ChatSupportController::class, 'markAsRead'])->name('chat-support.read');
-        Route::delete('/chat-support/{conversation}', [ChatSupportController::class, 'deleteConversation'])->name('chat-support.delete');
-        Route::get('/chat-support/{conversation}/export', [ChatSupportController::class, 'exportConversation'])->name('chat-support.export');
+    Route::prefix('admin')->name('admin.')->group(function () {
+            Route::get('/chat-support', [ChatSupportController::class, 'index'])->name('chat-support');
+            Route::post('/chat-support/{conversation}/send', [ChatSupportController::class, 'sendMessage'])->name('chat-support.send');
+            Route::post('/chat-support/{conversation}/status', [ChatSupportController::class, 'updateStatus'])->name('chat-support.status');
+            Route::get('/chat-support/{conversation}/messages/latest', [ChatSupportController::class, 'getLatestMessages'])->name('chat-support.messages.latest');
+            Route::post('/chat-support/{conversation}/read', [ChatSupportController::class, 'markAsRead'])->name('chat-support.read');
+            Route::delete('/chat-support/{conversation}', [ChatSupportController::class, 'deleteConversation'])->name('chat-support.delete');
+            Route::get('/chat-support/{conversation}/export', [ChatSupportController::class, 'exportConversation'])->name('chat-support.export');
+        });
+
+
+
+
+    //Audit log
+    // Route::get('/admin/audit', [AuditController::class, 'index'])->name('admin.audit.index');
+    // Route::get('/admin/audit/export', [AuditController::class, 'export'])->name('admin.audit.export');
+    // Route::get('/admin/audit/cleanup', [AuditController::class, 'cleanup'])->name('admin.audit.cleanup');
+    // Route::get('/admin/audit/restore', [AuditController::class, 'restore'])->name('admin.audit.restore');
+    // Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('admin.audit.show');
+
+    // Audit Log Routes
+    Route::prefix('admin/audit')->name('admin.audit.')->group(function () {
+        // Main audit log page
+        Route::get('/', [AuditController::class, 'index'])->name('index');
+        
+        // Show specific audit log (supports AJAX)
+        Route::get('/{auditLog}', [AuditController::class, 'show'])->name('show');
+        
+        // Compare two audit logs
+        Route::get('/compare', [AuditController::class, 'compare'])->name('compare');
+        
+        // Export audit logs
+        Route::post('/export', [AuditController::class, 'export'])->name('export');
+        
+        // Get statistics (AJAX endpoint)
+        Route::get('/api/statistics', [AuditController::class, 'statistics'])->name('statistics');
+        
+        // Restore deleted record
+        Route::post('/{auditLog}/restore', [AuditController::class, 'restore'])->name('restore');
+        
+        // Cleanup old logs
+        Route::post('/cleanup', [AuditController::class, 'cleanup'])->name('cleanup');
     });
+
+
+
+
+
+    // Notification routes - session-based authentication
+Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
+    // Basic notification endpoints
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
+    Route::get('/statistics', [NotificationController::class, 'statistics'])->name('statistics');
+    
+    // Mark as read endpoints
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+    Route::post('/mark-multiple-read', [NotificationController::class, 'markMultipleAsRead'])->name('mark-multiple');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all');
+    
+    // Delete notifications
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    
+    // User notification settings
+    Route::get('/settings', [NotificationController::class, 'getSettings'])->name('settings.get');
+    Route::post('/settings', [NotificationController::class, 'updateSettings'])->name('settings.update');
+});
+
+// Admin-only notification management routes
+Route::middleware(['auth', 'role:admin'])->prefix('notifications/admin')->name('notifications.admin.')->group(function () {
+    // Notification types management
+    Route::get('/types', [NotificationController::class, 'getTypes'])->name('types');
+    
+    // Send test notifications
+    Route::post('/send-test', [NotificationController::class, 'sendTest'])->name('send-test');
+    
+    // View all users' notifications (admin only)
+    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->name('all');
+    
+    // Notification statistics for all users
+    Route::get('/statistics/global', [NotificationController::class, 'getGlobalStatistics'])->name('statistics.global');
+    
+    // Bulk operations
+    Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('bulk-mark-read');
+});
+
+// Manager-level notification sending routes
+Route::middleware(['auth', 'role:admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {
+    // Send notifications to specific users or roles
+    Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('users');
+    Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('roles');
+    Route::post('/broadcast', [NotificationController::class, 'broadcastNotification'])->name('broadcast');
+});
+
+// Development/Testing endpoints
+if (app()->environment(['local', 'staging'])) {
+    Route::middleware(['auth', 'role:admin'])->prefix('notifications/dev')->name('notifications.dev.')->group(function () {
+        Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('trigger');
+        Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('pusher');
+        Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('fake');
+    });
+}
 
 });

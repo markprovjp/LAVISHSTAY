@@ -1,7 +1,11 @@
 // Reception Chart API Service
 // File: src/services/receptionChartApi.ts
 
-import { request } from '@/utils/request';
+import axios from 'axios';
+
+const request = axios.create({
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8888',
+});
 
 export interface RevenueByMonthData {
     date: string;
@@ -49,6 +53,11 @@ export interface NotificationItem {
     read: boolean;
 }
 
+export interface RoomStatusData {
+    status: string;
+    count: number;
+}
+
 export interface TopServiceItem {
     rank: number;
     keyword: string;
@@ -76,7 +85,7 @@ export const receptionChartApi = {
             success: boolean;
             data: RevenueByMonthData[];
             summary: { total_revenue: number; total_bookings: number; year: number };
-        }>('/api/reception/chart/revenue-by-month', { params }),
+        }>('reception/chart/revenue-by-month', { params }),
 
     // API phân loại doanh thu
     getRevenueByCategory: (params?: { period?: 'month' | 'quarter' | 'year'; date?: string }) =>
@@ -84,14 +93,14 @@ export const receptionChartApi = {
             success: boolean;
             data: RevenueByCategoryData[];
             summary: { total_categories: number; total_revenue: number; period: string; date: string };
-        }>('/api/reception/chart/revenue-by-category', { params }),
+        }>('reception/chart/revenue-by-category', { params }),
 
     // API hiệu suất hoạt động
     getActivityRate: () =>
         request.get<{
             success: boolean;
             data: ActivityRateData;
-        }>('/api/reception/chart/activity-rate'),
+        }>('reception/chart/activity-rate'),
 
     // API lịch trình hôm nay
     getTodaySchedule: (params?: { date?: string }) =>
@@ -109,7 +118,7 @@ export const receptionChartApi = {
                     date: string;
                 };
             };
-        }>('/api/reception/chart/today-schedule', { params }),
+        }>('reception/chart/today-schedule', { params }),
 
     // API thông báo quan trọng
     getNotifications: (params?: { limit?: number }) =>
@@ -117,7 +126,7 @@ export const receptionChartApi = {
             success: boolean;
             data: NotificationItem[];
             summary: { total_notifications: number; unread_count: number; urgent_count: number };
-        }>('/api/reception/chart/notifications', { params }),
+        }>('reception/chart/notifications', { params }),
 
     // API xếp hạng đặt phòng
     getTopBookedServices: (params?: { period?: 'week' | 'month' | 'quarter'; limit?: number }) =>
@@ -129,14 +138,21 @@ export const receptionChartApi = {
                 avg_search: { value: number; trend: string; color: string; data: Array<{ x: number; y: number }> };
             };
             summary: { period: string; total_services: number; total_bookings: number; total_revenue: number };
-        }>('/api/reception/chart/top-booked-services', { params }),
+        }>('reception/chart/top-booked-services', { params }),
 
     // API tổng hợp thống kê dashboard
     getDashboardStats: () =>
         request.get<{
             success: boolean;
             data: DashboardStatsData;
-        }>('/api/reception/chart/dashboard-stats'),
+        }>('reception/chart/dashboard-stats'),
+
+    // API trạng thái phòng
+    getRoomStatus: () =>
+        request.get<{
+            success: boolean;
+            data: RoomStatusData[];
+        }>('reception/chart/room-status'),
 };
 
 export default receptionChartApi;

@@ -1,8 +1,9 @@
 // src/components/news/NewsCategoryTabs.tsx
 import React, { useState } from 'react';
-import { Tabs, Badge, Button, Tag } from 'antd';
+import { Tabs, Badge, Button, Spin, Alert } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useNewsCategories } from '../../hooks/useNews';
 import {
     HomeOutlined,
     CrownOutlined,
@@ -19,14 +20,6 @@ interface CategoryTabsProps {
     onCategoryChange?: (category: string) => void;
 }
 
-interface Category {
-    key: string;
-    label: string;
-    icon: React.ReactNode;
-    count?: number;
-    color: string;
-}
-
 const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
     activeCategory = 'all',
     onCategoryChange
@@ -34,71 +27,79 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
     const { t } = useTranslation();
     const [selectedTab, setSelectedTab] = useState(activeCategory);
 
-    const categories: Category[] = [
-        {
-            key: 'all',
-            label: t('news.categories.all', 'Tất cả'),
-            icon: <HomeOutlined />,
-            count: 156,
-            color: 'blue'
-        },
-        {
-            key: 'hotel',
-            label: t('news.categories.hotel', 'Khách sạn'),
-            icon: <CrownOutlined />,
-            count: 45,
-            color: 'purple'
-        },
-        {
-            key: 'offers',
-            label: t('news.categories.offers', 'Ưu đãi'),
-            icon: <GiftOutlined />,
-            count: 23,
-            color: 'red'
-        },
-        {
-            key: 'events',
-            label: t('news.categories.events', 'Sự kiện'),
-            icon: <CalendarOutlined />,
-            count: 18,
-            color: 'green'
-        },
-        {
-            key: 'lifestyle',
-            label: t('news.categories.lifestyle', 'Lifestyle'),
-            icon: <HeartOutlined />,
-            count: 32,
-            color: 'pink'
-        },
-        {
-            key: 'family',
-            label: t('news.categories.family', 'Gia đình'),
-            icon: <TeamOutlined />,
-            count: 15,
-            color: 'orange'
-        },
-        {
-            key: 'awards',
-            label: t('news.categories.awards', 'Giải thưởng'),
-            icon: <TrophyOutlined />,
-            count: 12,
-            color: 'gold'
-        },
-        {
-            key: 'featured',
-            label: t('news.categories.featured', 'Nổi bật'),
-            icon: <StarOutlined />,
-            count: 28,
-            color: 'cyan'
-        }
-    ];
+    // Lấy danh mục từ API
+    const { data: categoriesResponse, isLoading, error } = useNewsCategories();
+
+    // Icon mapping cho các category
+    const getIconForCategory = (slug: string) => {
+        const iconMap: Record<string, React.ReactNode> = {
+            'khach-san': <CrownOutlined />,
+            'hotel': <CrownOutlined />,
+            'uu-dai': <GiftOutlined />,
+            'offers': <GiftOutlined />,
+            'su-kien': <CalendarOutlined />,
+            'events': <CalendarOutlined />,
+            'lifestyle': <HeartOutlined />,
+            'gia-dinh': <TeamOutlined />,
+            'family': <TeamOutlined />,
+            'giai-thuong': <TrophyOutlined />,
+            'awards': <TrophyOutlined />,
+            'noi-bat': <StarOutlined />,
+            'featured': <StarOutlined />,
+        };
+        return iconMap[slug] || <CrownOutlined />;
+    };
+
+    // Color mapping cho các category
+    const getColorForCategory = (index: number) => {
+        const colors = ['blue', 'purple', 'red', 'green', 'pink', 'orange', 'gold', 'cyan'];
+        return colors[index % colors.length];
+    };
 
     const handleTabChange = (key: string) => {
         setSelectedTab(key);
         onCategoryChange?.(key);
     };
 
-    const tabItems = categories.map((category) => ({
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-8">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <Alert
+                message={t('news.error.loadCategories', 'Không thể tải danh mục')}
+                description={t('news.error.tryAgain', 'Vui lòng thử lại sau')}
+                type="error"
+                showIcon
+                className="mb-4"
+            />
+        );
+    }
+
+    // Tạo danh sách categories với "Tất cả" ở đầu
+    const allCategories = [
+        {
+            key: 'all',
+            label: t('news.categories.all', 'Tất cả'),
+            icon: <HomeOutlined />,
+            count: categoriesResponse?.data.reduce((total, cat) => total + (cat.news_count || 0), 0) || 0,
+            color: 'blue'
+        },
+        ...(categoriesResponse?.data.map((category, index) => ({
+            key: category.id.toString(),
+            label: category.name,
+            icon: getIconForCategory(category.slug),
+            count: category.news_count || 0,
+            color: getColorForCategory(index + 1)
+        })) || [])
+    ];
+
+    const tabItems = allCategories.map((category) => ({
         key: category.key,
         label: (
             <div
@@ -206,7 +207,7 @@ const NewsCategoryTabs: React.FC<CategoryTabsProps> = ({
             >
                 <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    <span>{t('news.stats.total', 'Tổng số')}: {categories.find(c => c.key === selectedTab)?.count || 0}</span>
+                    <span>{t('news.stats.total', 'Tổng số')}: {allCategories.find(c => c.key === selectedTab)?.count || 0}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full" />

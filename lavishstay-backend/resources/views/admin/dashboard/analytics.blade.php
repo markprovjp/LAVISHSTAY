@@ -23,7 +23,7 @@
                     <svg class="fill-current shrink-0 w-4 h-4" viewBox="0 0 16 16">
                         <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8c1.8 0 3.4-.6 4.7-1.6L11 12.7c-.9.7-2 1.1-3 1.1-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5h-2l3 3 3-3h-2c0-4.4-3.6-8-8-8z"/>
                     </svg>
-                    <span class="ml-2">Làm mới</span>
+                    <span class="max-xs:sr-only cursor-pointer">Làm mới</span>
                 </button>
             </div>
         </div>

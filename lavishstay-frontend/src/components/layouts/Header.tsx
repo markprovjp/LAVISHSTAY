@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Layout,
   Menu,
@@ -37,6 +37,7 @@ import { useTranslation } from "react-i18next";
 import logoLight from "../../assets/images/logo-light.png";
 import logoDark from "../../assets/images/logo-dark.png";
 import AuthModal from "../auth/AuthModal";
+import { useNotifications } from "../../contexts/NotificationContext";
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
@@ -53,6 +54,7 @@ interface MenuItem {
 
 const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -64,7 +66,8 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
   const { token } = theme.useToken(); // Lấy token từ theme
   const { t } = useTranslation();
 
-
+  // Use notification context
+  const { notifications: userNotifications, unreadCount, markAsRead } = useNotifications();
 
   // Xử lý đăng xuất
   const handleLogout = async () => {
@@ -80,17 +83,31 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     }
   };
 
-  // Sample notification data
-  const notifications = [
+  // Handle notification click
+  const handleNotificationClick = async (notification: any) => {
+    if (!notification.read_at) {
+      await markAsRead(notification.id);
+    }
+    if (notification.data?.url) {
+      navigate(notification.data.url);
+    }
+  };
 
-    {
-      id: 1,
-      message: "Hãy viết đánh giá cho chuyến đi của bạn!",
-      read: true,
-      time: "1 ngày trước",
-      link: "/review-booking",
-    },
-  ];
+  // Helper function to format notification time
+  const formatNotificationTime = (createdAt: string): string => {
+    const date = new Date(createdAt);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) {
+      return 'Vừa xong';
+    } else if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays} ngày trước`;
+    }
+  };
 
   // Check if scrolled for transparent header effect
   useEffect(() => {
@@ -105,9 +122,9 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-console.log("Avatar:", user?.avatar);
+  // console.log("Avatar:", user?.avatar);
   // Phong cách tiêu đề động dựa trên cuộn và prop trong suốt
-  const headerStyle = {
+  const headerStyle: React.CSSProperties = {
     position: "fixed",
     top: 0,
     width: "100%",
@@ -132,7 +149,16 @@ console.log("Avatar:", user?.avatar);
       label: "Tin tức",
       icon: null,
     },
-
+    {
+      key: "/the-level",
+      label: "The Level",
+      icon: null,
+    },
+    {
+      key: "/booking/lookup",
+      label: "Tra cứu booking",
+      icon: null,
+    }
   ];
 
   // User menu dropdown
@@ -158,9 +184,7 @@ console.log("Avatar:", user?.avatar);
       <Menu.Item key="wishlist" icon={<HeartOutlined />}>
         <Link to="/profile/wishlist">{t("user.wishlist")}</Link>
       </Menu.Item>
-      <Menu.Item key="settings" icon={<SettingOutlined />}>
-        <Link to="/profile/settings">{t("user.settings")}</Link>
-      </Menu.Item>
+
       <Menu.Divider />
       <Menu.Item key="logout" icon={<LogoutOutlined />}>
         {t("user.logout")}
@@ -186,31 +210,41 @@ console.log("Avatar:", user?.avatar);
         </Link>
       </div>
       <Divider style={{ margin: "0" }} />
-      {notifications.map((notification) => (
-        <Menu.Item
-          key={notification.id}
-          style={{
-            background: !notification.read
-              ? isDarkMode
-                ? token.colorPrimary + "20"
-                : token.colorPrimary + "10"
-              : undefined,
-            padding: 0,
-          }}
-        >
-          <Link to={notification.link} style={{ display: 'block', padding: '12px 16px' }}>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <Text style={{ color: token.colorTextBase }}>{notification.message}</Text>
-                {!notification.read && <Badge color={token.colorPrimary} style={{ marginLeft: 8 }} />}
+      {userNotifications.length === 0 ? (
+        <div className="px-4 py-6 text-center">
+          <Text type="secondary">Không có thông báo nào</Text>
+        </div>
+      ) : (
+        userNotifications.slice(0, 5).map((notification) => (
+          <Menu.Item
+            key={notification.id}
+            style={{
+              background: !notification.read_at
+                ? isDarkMode
+                  ? token.colorPrimary + "20"
+                  : token.colorPrimary + "10"
+                : undefined,
+              padding: 0,
+              cursor: 'pointer',
+            }}
+            onClick={() => handleNotificationClick(notification)}
+          >
+            <div style={{ display: 'block', padding: '12px 16px' }}>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <Text style={{ color: token.colorTextBase }}>
+                    {notification.data?.message || 'Thông báo mới'}
+                  </Text>
+                  {!notification.read_at && <Badge color={token.colorPrimary} style={{ marginLeft: 8 }} />}
+                </div>
+                <Text type="secondary" className="text-xs">
+                  {formatNotificationTime(notification.created_at)}
+                </Text>
               </div>
-              <Text type="secondary" className="text-xs">
-                {notification.time}
-              </Text>
             </div>
-          </Link>
-        </Menu.Item>
-      ))}
+          </Menu.Item>
+        ))
+      )}
     </Menu>
   );
 
@@ -304,7 +338,7 @@ console.log("Avatar:", user?.avatar);
             placement="bottomRight"
           >
             <Badge
-              count={notifications.filter((n) => !n.read).length}
+              count={unreadCount}
               size="small"
               style={{ backgroundColor: token.colorPrimary }}
             >

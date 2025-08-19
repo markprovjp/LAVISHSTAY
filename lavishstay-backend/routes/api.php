@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\ReviewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\RoomOptionController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Api\ChatController;
@@ -29,7 +30,12 @@ use App\Http\Controllers\Api\BookingExtensionController;
 use App\Http\Controllers\Api\BookingRescheduleController;
 use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\Api\NewsCommentController;
+use App\Http\Controllers\Api\NewsAPICategoryController;
+use App\Http\Controllers\Api\NewsUserActionController;
+use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
+use App\Http\Controllers\NotificationController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -44,8 +50,30 @@ use App\Http\Controllers\NewsController\NewsCategoryController;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+// Broadcasting routes for notifications
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::middleware('auth:sanctum')->get('/user/bookings', [BookingController::class, 'getUserBookings']);
 Route::middleware('auth:sanctum')->post('/booking/assign', [BookingController::class, 'assignBookingToUser']);
+
+// Public booking lookup routes (no auth required, with throttling)
+Route::prefix('public')->middleware(['throttle:20,1'])->group(function () {
+    Route::get('/bookings/search', [\App\Http\Controllers\Api\PublicBookingController::class, 'searchBookings'])
+        ->name('public.bookings.search');
+    Route::get('/bookings/{bookingId}/detail', [\App\Http\Controllers\Api\PublicBookingController::class, 'getBookingDetail'])
+        ->name('public.bookings.detail');
+    
+    // Review routes
+    Route::get('/bookings/{bookingId}/review-eligibility', [\App\Http\Controllers\Api\PublicReviewController::class, 'checkEligibility'])
+        ->name('public.bookings.review.eligibility');
+    Route::get('/bookings/{bookingId}/review', [\App\Http\Controllers\Api\PublicReviewController::class, 'getReview'])
+        ->name('public.bookings.review.get');
+    Route::post('/bookings/{bookingId}/review', [\App\Http\Controllers\Api\PublicReviewController::class, 'submitReview'])
+        ->name('public.bookings.review.submit');
+    Route::post('/review-media/upload', [\App\Http\Controllers\Api\PublicReviewController::class, 'uploadMedia'])
+        ->name('public.review.media.upload');
+});
+
 // Route test gửi email
 Route::get('/test-email/{bookingId}', [PaymentController::class, 'testEmail']);
 
@@ -55,23 +83,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/google', [AuthController::class, 'googleLogin']); // Đổi từ google-login thành google
     
-    // Protected routes
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout']);
-        Route::get('/me', [AuthController::class, 'me']);
-    });
-});
 
-// Dashboard API
-Route::get('/dashboard/room-statistics', [\App\Http\Controllers\Api\DashboardController::class, 'getRoomStatistics']);
-Route::get('/dashboard/filter-options', [\App\Http\Controllers\Api\DashboardController::class, 'getFilterOptions']);
-
-// Room Types API
-Route::apiResource('room-types', RoomTypeController::class);
-
-// Search API
-Route::prefix('search')->group(function () {
-    Route::post('/rooms', [SearchController::class, 'searchRooms']);
     Route::get('/room-types/{roomTypeId}/pricing', [SearchController::class, 'getRoomTypePricing']);
     Route::get('/pricing-rules', [SearchController::class, 'getPricingRules']);
 });
@@ -121,18 +133,6 @@ Route::prefix('checkin')->group(function () {
 });
 
 
-// API Routes cho Check-in///////////////////////////////////////////////////
-// Service management
-Route::get('/services/available', [BookingCheckoutController::class, 'getAvailableServices']);
-Route::post('/bookings/{id}/services', [BookingCheckoutController::class, 'addBookingService']);
-Route::put('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'updateBookingService']);
-Route::delete('/bookings/{id}/services/{serviceId}', [BookingCheckoutController::class, 'removeBookingService']);
-
-// Checkout
-Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
-Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
-
-
 
 
 // Rooms API  
@@ -179,19 +179,7 @@ Route::prefix('payment')->group(function () {
     // Get booking details with rooms and options
     Route::get('/booking-details/{bookingCode}', [PaymentController::class, 'getBookingWithRooms']);
     
-    // VNPay create payment URL (new API)
-    Route::post('/vnpay', [PaymentController::class, 'createVNPayPaymentAPI']);
-    
-    // VNPay callback/return
-    Route::post('/vnpay/return', [PaymentController::class, 'handleVNPayReturn']);
-    Route::get('/vnpay/return', [PaymentController::class, 'handleVNPayReturn']);
-    
-    // Legacy VNPay route (keep for compatibility)
-    Route::post('/vnpay-legacy', [PaymentController::class, 'vnpayPayment']);
-    
-    // Test VNPay config (only in dev)
-    Route::get('/test-vnpay-config', [PaymentController::class, 'testVNPayConfig']);
-    
+
     // Admin routes
     Route::prefix('admin')->group(function () {
         // Lấy danh sách booking chờ thanh toán
@@ -265,8 +253,37 @@ Route::prefix('reception')->group(function () {
     Route::put('/bookings/{bookingId}/status', [ReceptionController::class, 'updateBookingStatus']);
     Route::put('/bookings/{bookingId}/cancel', [ReceptionController::class, 'cancelBooking']);
     Route::post('/bookings/transfer', [ReceptionController::class, 'transferBooking']);
-    Route::post('/bookings/check-in', [ReceptionController::class, 'checkIn']);
-    Route::post('/bookings/check-out', [ReceptionController::class, 'checkOut']);
+    // Reception check-in: delegate to BookingCheckinController for check-in flows
+// API Routes cho Check-in///////////////////////////////////////////////////
+Route::prefix('checkin')->group(function () {
+    Route::get('/today', [BookingCheckinController::class, 'getTodayCheckins'])->name('api.checkin.today');
+    Route::get('/booking/{bookingId}/info', [BookingCheckinController::class, 'getCheckinInfo'])->name('api.checkin.info');
+    Route::post('/booking/{bookingId}/process', [BookingCheckinController::class, 'processCheckin'])->name('api.checkin.process');
+});
+    // Reception check-out: run through BookingCheckoutController so services are calculated before finalizing
+// Checkout
+Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
+Route::post('/bookings/{id}/checkout', [BookingCheckoutController::class, 'processCheckout']);
+Route::post('/bookings/{id}/checkout/compensation', [BookingCheckoutController::class, 'createCompensationRequest']);
+
+    // Invoice PDF generation
+    Route::get('/bookings/{bookingId}/invoice', [ReceptionController::class, 'generateInvoice']);
+
+    // Service management for checkout and the checkout flow itself handled by BookingCheckoutController
+    Route::get('/services/available', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'getAvailableServices']);
+    Route::post('/bookings/{id}/services', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'addBookingService']);
+    Route::put('/bookings/{id}/services/{serviceId}', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'updateBookingService']);
+    Route::delete('/bookings/{id}/services/{serviceId}', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'removeBookingService']);
+
+    // Notifications (with auth middleware)
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+    });
+
+
     
     // Filters
     Route::get('/floors', [ReceptionController::class, 'getFloors']);
@@ -281,6 +298,7 @@ Route::prefix('reception')->group(function () {
         Route::get('/notifications', [ChartReceptionController::class, 'getNotifications']);
         Route::get('/top-booked-services', [ChartReceptionController::class, 'getTopBookedServices']);
         Route::get('/dashboard-stats', [ChartReceptionController::class, 'getDashboardStats']);
+        Route::get('/room-status', [ChartReceptionController::class, 'getRoomStatus']);
     });
     
     // Legacy booking routes (keep for compatibility)
@@ -337,6 +355,8 @@ Route::prefix('news')->name('news.')->group(function () {
     // Public routes
     Route::get('/', [NewsController::class, 'index'])->name('index');
     Route::get('/popular', [NewsController::class, 'getPopular'])->name('popular');
+    Route::get('/featured', [NewsController::class, 'getFeatured'])->name('featured');
+    Route::get('/trending', [NewsController::class, 'getTrending'])->name('trending');
     Route::get('/search-by-tags', [NewsController::class, 'searchByTags'])->name('search-tags');
     Route::get('/{slug}', [NewsController::class, 'show'])->name('show');
     Route::get('/{slug}/related', [NewsController::class, 'getRelated'])->name('related');
@@ -349,12 +369,12 @@ Route::prefix('news')->name('news.')->group(function () {
 
 // News Categories API Routes  
 Route::prefix('news-categories')->name('news-categories.')->group(function () {
-    Route::get('/', [NewsCategoryController::class, 'index'])->name('index');
-    Route::post('/', [NewsCategoryController::class, 'store'])->name('store');
-    Route::get('/{id}', [NewsCategoryController::class, 'show'])->name('show');
-    Route::put('/{id}', [NewsCategoryController::class, 'update'])->name('update');
-    Route::delete('/{id}', [NewsCategoryController::class, 'destroy'])->name('destroy');
-    Route::get('/{id}/news', [NewsCategoryController::class, 'getNews'])->name('news');
+    Route::get('/', [NewsAPICategoryController::class, 'index'])->name('index');
+    Route::post('/', [NewsAPICategoryController::class, 'store'])->name('store');
+    Route::get('/{id}', [NewsAPICategoryController::class, 'show'])->name('show');
+    Route::put('/{id}', [NewsAPICategoryController::class, 'update'])->name('update');
+    Route::delete('/{id}', [NewsAPICategoryController::class, 'destroy'])->name('destroy');
+    Route::get('/{id}/news', [NewsAPICategoryController::class, 'getNews'])->name('news');
 });
 
 // News Comments API Routes
@@ -391,3 +411,114 @@ Route::get('/sitemap', [SitemapController::class, 'index']);
 Route::get('/sitemap-main', [SitemapController::class, 'main']);
 Route::get('/sitemap-categories', [SitemapController::class, 'categories']);
 Route::get('/sitemap-news', [SitemapController::class, 'news']);            
+
+
+
+
+
+
+
+
+
+// Payment Settings API Routes (Public - no auth required for reading settings)
+Route::prefix('payment-settings')->name('api.payment-settings.')->group(function () {
+    // Get all payment settings
+    Route::get('/', [PaymentSettingsController::class, 'index'])->name('index');
+    
+    // Get specific payment method settings
+    Route::get('/{method}', [PaymentSettingsController::class, 'getByMethod'])
+        ->where('method', 'vietqr|cpay|vnpay|pay_at_hotel|general')
+        ->name('method');
+    
+    // Test VietQR connection (public for frontend testing)
+    Route::post('/test-vietqr', [PaymentSettingsController::class, 'testVietQR'])->name('test-vietqr');
+});
+
+// Payment Processing API Routes (existing)
+Route::prefix('payment')->name('api.payment.')->group(function () {
+    Route::post('/generate-vietqr', [PaymentController::class, 'generateVietQR'])->name('generate-vietqr');
+    Route::post('/check-payment', [PaymentController::class, 'checkPayment'])->name('check-payment');
+    Route::get('/methods', [PaymentController::class, 'getPaymentMethods'])->name('methods');
+    Route::get('/config', [PaymentController::class, 'getPaymentConfig'])->name('config');
+    Route::post('/vnpay', [PaymentController::class, 'processVNPay'])->name('vnpay');
+    Route::post('/pay-at-hotel', [PaymentController::class, 'processPayAtHotel'])->name('pay-at-hotel');
+});
+
+// Notification routes - require authentication and notification permissions
+Route::middleware(['auth:sanctum', 'notification.owner'])->prefix('notifications')->group(function () {
+    // Basic notification endpoints
+    Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
+    Route::get('/statistics', [NotificationController::class, 'statistics'])->name('notifications.statistics');
+    
+    // Mark as read endpoints
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/mark-multiple-read', [NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all');
+    
+    // Delete notifications
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // User notification settings
+    Route::get('/settings', [NotificationController::class, 'getSettings'])->name('notifications.settings.get');
+    Route::post('/settings', [NotificationController::class, 'updateSettings'])->name('notifications.settings.update');
+});
+
+// Admin-only notification management routes
+Route::middleware(['auth:sanctum', 'notification.manage'])->prefix('notifications/admin')->group(function () {
+    // Notification types management
+    Route::get('/types', [NotificationController::class, 'getTypes'])->name('notifications.types');
+    
+    // Send test notifications
+    Route::post('/send-test', [NotificationController::class, 'sendTest'])->name('notifications.send-test');
+    
+    // View all users' notifications (admin only)
+    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->name('notifications.all');
+    
+    // Notification statistics for all users
+    Route::get('/statistics/global', [NotificationController::class, 'getGlobalStatistics'])->name('notifications.statistics.global');
+    
+    // Bulk operations
+    Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('notifications.bulk-delete');
+    Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('notifications.bulk-mark-read');
+});
+
+// Manager-level notification sending routes
+Route::middleware(['auth:sanctum', 'notification.send'])->prefix('notifications/send')->group(function () {
+    // Send notifications to specific users or roles
+    Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('notifications.send.users');
+    Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('notifications.send.roles');
+    Route::post('/broadcast', [NotificationController::class, 'broadcastNotification'])->name('notifications.broadcast');
+});
+
+// Webhook endpoints for external services (if needed)
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('notifications/webhooks')->group(function () {
+    // Payment service webhooks
+    Route::post('/payment-success', [NotificationController::class, 'handlePaymentSuccess'])->name('notifications.webhook.payment.success');
+    Route::post('/payment-failed', [NotificationController::class, 'handlePaymentFailed'])->name('notifications.webhook.payment.failed');
+    
+    // Booking service webhooks
+    Route::post('/booking-created', [NotificationController::class, 'handleBookingCreated'])->name('notifications.webhook.booking.created');
+    Route::post('/booking-cancelled', [NotificationController::class, 'handleBookingCancelled'])->name('notifications.webhook.booking.cancelled');
+    
+    // Review service webhooks
+    Route::post('/review-submitted', [NotificationController::class, 'handleReviewSubmitted'])->name('notifications.webhook.review.submitted');
+});
+
+// Public notification endpoints (no auth required)
+Route::prefix('notifications/public')->group(function () {
+    // System status notifications
+    Route::get('/system-status', [NotificationController::class, 'getSystemStatus'])->name('notifications.system-status');
+    
+    // Maintenance announcements
+    Route::get('/maintenance', [NotificationController::class, 'getMaintenanceAnnouncements'])->name('notifications.maintenance');
+});
+
+// Real-time notification testing endpoints (development only)
+if (app()->environment(['local', 'staging'])) {
+    Route::middleware(['auth:sanctum', 'role:admin'])->prefix('notifications/dev')->group(function () {
+        Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('notifications.dev.trigger');
+        Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('notifications.dev.pusher');
+        Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('notifications.dev.fake');
+    });
+}

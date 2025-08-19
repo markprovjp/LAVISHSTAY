@@ -15,6 +15,9 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        <!-- Pusher Scripts (for real-time notifications) -->
+        <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+        
         <!-- Custom CSS -->
         <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
         <!-- Styles -->
@@ -98,4 +101,91 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<!-- User Data for JavaScript -->
+    <script>
+        window.Laravel = {
+            csrfToken: '{{ csrf_token() }}',
+            user: @auth {
+                id: {{ auth()->id() }},
+                name: '{{ auth()->user()->name }}',
+                email: '{{ auth()->user()->email }}',
+                roles: @json(auth()->user()->roles->pluck('name')),
+                unreadNotificationsCount: {{ auth()->user()->unreadNotifications()->count() }}
+            } @else null @endauth,
+            pusher: {
+                key: '{{ config("broadcasting.connections.pusher.key") }}',
+                cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}',
+                encrypted: true
+            },
+            urls: {
+                notifications: {
+                    recent: '{{ route("notifications.recent") }}',
+                    markAsRead: '{{ url("/api/notifications") }}',
+                    markAllRead: '{{ route("notifications.mark-all") }}',
+                    settings: '{{ route("notifications.settings.get") }}'
+                }
+            }
+        };
+    </script>
+
+    <!-- Additional scripts -->
+    @stack('scripts')
+    
+    <!-- Toast notifications container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Toast notification script -->
+    <script>
+        // Simple toast notification system
+        window.showToast = function(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+            
+            toast.className = `${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, duration);
+        };
+        
+        // Global error handler for AJAX requests
+        window.handleApiError = function(error) {
+            console.error('API Error:', error);
+            
+            if (error.status === 401) {
+                showToast('Please log in to continue', 'error');
+                // Optionally redirect to login
+                // window.location.href = '/login';
+            } else if (error.status === 403) {
+                showToast('You do not have permission to perform this action', 'error');
+            } else if (error.status === 422) {
+                showToast('Please check your input and try again', 'error');
+            } else if (error.status >= 500) {
+                showToast('Server error. Please try again later', 'error');
+            } else {
+                showToast('An error occurred. Please try again', 'error');
+            }
+        };
+    </script>
 

@@ -15,10 +15,25 @@ const api = axios.create({
 
 // Add request interceptor to add auth token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
+  // Support multiple token key names (accessToken, token, authToken)
+  const token =
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('authToken') ||
+    null;
+
+  // Debug: show which token is present and what header will be sent
+  try {
+    // eslint-disable-next-line no-console
+    // console.log('[api] outgoing auth token (from localStorage):', token);
+  } catch (e) { }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    try {
+      // eslint-disable-next-line no-console
+      // console.log('[api] setting Authorization header:', config.headers.Authorization);
+    } catch (e) { }
   }
 
   return config;
@@ -122,27 +137,104 @@ export const bookingsAPI = {
 // Room Types API Functions
 export const roomTypesAPI = {
   getAll: async (params?: any) => {
-    const response = await api.get('/room-types', { params });
-    return response.data;
+    const response = await api.get('/reception/room-types', { params });
+    // Normalize backend shape to frontend RoomTypeData where possible
+    const payload = response.data;
+    if (!payload || !payload.data) return payload;
+    const mapped = payload.data.map((r: any) => ({
+      room_type_id: r.id ?? r.room_type_id,
+      room_type_name: r.name ?? r.room_type_name,
+      bed_type_name: r.bed_type_name,
+      room_code: r.room_code ?? (r.name || '').toString().toLowerCase().replace(/\s+/g, '_'),
+      description: r.description,
+      size: r.room_area ?? r.size ?? 0,
+      max_guests: r.max_guests ?? r.max_people ?? 0,
+      rating: r.rating ?? 0,
+      base_price: r.base_price ?? r.price ?? '0',
+      adjusted_price: r.adjusted_price ?? r.adjusted_price_per_night ?? 0,
+      available_rooms: r.available_rooms ?? r.available ?? '0',
+      rooms_needed: r.rooms_needed ?? 1,
+      images: (r.images || []).map((img: any) => ({
+        id: img.id,
+        room_type_id: img.room_type_id ?? r.id,
+        image_url: img.image_url ?? img.url ?? img.path,
+        alt_text: img.alt_text || img.alt || '',
+        is_main: img.is_main,
+      })),
+      main_image: r.main_image ? {
+        id: r.main_image.id,
+        room_type_id: r.main_image.room_type_id ?? r.id,
+        image_url: r.main_image.image_url ?? r.main_image.url ?? r.main_image.path,
+        alt_text: r.main_image.alt_text || r.main_image.alt || '',
+        is_main: r.main_image.is_main,
+      } : undefined,
+      amenities: r.amenities,
+      highlighted_amenities: r.highlighted_amenities,
+      package_options: r.package_options,
+      cheapest_package_price: r.cheapest_package_price ?? r.base_price ?? 0,
+      search_criteria: r.search_criteria ?? { guest_count: '1', check_in_date: '', check_out_date: '', nights: 1 },
+      // keep original raw object for anything else
+      __raw: r,
+    }));
+
+    return { ...payload, data: mapped };
   },
 
   getById: async (id: number) => {
-    const response = await api.get(`/room-types/${id}`);
-    return response.data;
+    const response = await api.get(`/reception/room-types/${id}`);
+    const payload = response.data;
+    if (!payload || !payload.data) return payload;
+    const r = payload.data;
+    const mapped = {
+      room_type_id: r.id ?? r.room_type_id,
+      room_type_name: r.name ?? r.room_type_name,
+      bed_type_name: r.bed_type_name,
+      room_code: r.room_code ?? (r.name || '').toString().toLowerCase().replace(/\s+/g, '_'),
+      description: r.description,
+      size: r.room_area ?? r.size ?? 0,
+      max_guests: r.max_guests ?? r.max_people ?? 0,
+      rating: r.rating ?? 0,
+      base_price: r.base_price ?? r.price ?? '0',
+      adjusted_price: r.adjusted_price ?? r.adjusted_price_per_night ?? 0,
+      available_rooms: r.available_rooms ?? r.available ?? '0',
+      rooms_needed: r.rooms_needed ?? 1,
+      images: (r.images || []).map((img: any) => ({
+        id: img.id,
+        room_type_id: img.room_type_id ?? r.id,
+        image_url: img.image_url ?? img.url ?? img.path,
+        alt_text: img.alt_text || img.alt || '',
+        is_main: img.is_main,
+      })),
+      main_image: r.main_image ? {
+        id: r.main_image.id,
+        room_type_id: r.main_image.room_type_id ?? r.id,
+        image_url: r.main_image.image_url ?? r.main_image.url ?? r.main_image.path,
+        alt_text: r.main_image.alt_text || r.main_image.alt || '',
+        is_main: r.main_image.is_main,
+      } : undefined,
+      amenities: r.amenities,
+      highlighted_amenities: r.highlighted_amenities,
+      package_options: r.package_options,
+      cheapest_package_price: r.cheapest_package_price ?? r.base_price ?? 0,
+      search_criteria: r.search_criteria ?? { guest_count: '1', check_in_date: '', check_out_date: '', nights: 1 },
+      __raw: r,
+    };
+
+    return { ...payload, data: mapped };
   },
 
   create: async (data: any) => {
-    const response = await api.post('/room-types', data);
+    const response = await api.post('/reception/room-types', data);
     return response.data;
   },
 
   update: async (id: number, data: any) => {
-    const response = await api.put(`/room-types/${id}`, data);
+    const response = await api.put(`/reception/room-types/${id}`, data);
     return response.data;
   },
 
   delete: async (id: number) => {
-    const response = await api.delete(`/room-types/${id}`);
+    const response = await api.delete(`/reception/room-types/${id}`);
     return response.data;
   }
 };
@@ -394,6 +486,48 @@ export const receptionAPI = {
     return response.data;
   },
 
+  // Services for reception (available services and booking service management)
+  getAvailableServices: async () => {
+    const response = await api.get('/reception/services/available');
+    return response.data;
+  },
+
+  addBookingServices: async (bookingId: number, services: { service_id: number; quantity: number }[]) => {
+    // Backend expects service additions on the booking resource: /bookings/{id}/services
+    // For reception flow the route is namespaced under /reception
+    const response = await api.post(`/reception/bookings/${bookingId}/services`, { services });
+    return response.data;
+  },
+
+
+  // Checkout related helpers
+  getCheckoutInfo: async (bookingId: number) => {
+    const response = await api.get(`/reception/bookings/${bookingId}/checkout-info`);
+    // Some backend responses wrap payload in { success, message, data }
+    // Return inner data when available for easier consumption by UI
+    return response.data && response.data.data ? response.data.data : response.data;
+  },
+
+  processCheckout: async (bookingId: number, payload: any = {}) => {
+    const response = await api.post(`/reception/bookings/${bookingId}/checkout`, payload);
+    return response.data;
+  },
+
+  updateBookingService: async (bookingId: number, serviceId: number, data: { quantity?: number }) => {
+    const response = await api.put(`/reception/bookings/${bookingId}/services/${serviceId}`, data);
+    return response.data;
+  },
+
+  removeBookingService: async (bookingId: number, serviceId: number) => {
+    const response = await api.delete(`/reception/bookings/${bookingId}/services/${serviceId}`);
+    return response.data;
+  },
+
+  createCheckoutCompensation: async (bookingId: number, data: { custom_reason: string; requested_amount: number; attachments?: any[]; requested_by: number }) => {
+    const response = await api.post(`/reception/bookings/${bookingId}/checkout/compensation`, data);
+    return response.data;
+  },
+
   // Check-in API methods
   getCheckinInfo: async (bookingId: number) => {
     const response = await api.get(`/checkin/booking/${bookingId}/info`);
@@ -425,6 +559,14 @@ export const receptionAPI = {
     const response = await api.post('/reception/bookings/calculate-price', payload);
     return response.data;
   },
+
+  // --- NEW: Generate Invoice PDF ---
+  generateInvoice: async (bookingId: number) => {
+    const response = await api.get(`/reception/bookings/${bookingId}/invoice`, {
+      responseType: 'blob'
+    });
+    return response;
+  },
 };
 
 // Payment API for Reception
@@ -455,19 +597,19 @@ export const processEarlyCheckOut = async (values: any) => {
 };
 
 export const fetchRoomAvailability = async (dates: any) => {
-  console.log('Checking room availability for dates:', dates);
+  // console.log('Checking room availability for dates:', dates);
   // Mocked response: always available
   return Promise.resolve(true);
 };
 
 export const updateBooking = async (values: any) => {
-  console.log('Updating booking with values:', values);
+  // console.log('Updating booking with values:', values);
   // Mocked response: successful update
   return Promise.resolve({ success: true });
 };
 
 export const fetchRooms = async () => {
-  console.log('Fetching rooms');
+  // console.log('Fetching rooms');
   // Mocked response: return a list of rooms
   return Promise.resolve([
     { id: 1, number: '101', type: 'Standard', status: 'Available' },

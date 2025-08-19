@@ -3,13 +3,12 @@ import React from 'react';
 import { Card, Tag, Space, Typography, Avatar } from 'antd';
 import { EyeOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import type { NewsItem } from '../../services/newsApi';
-import { formatNewsData } from '../../utils/formatNewsData';
+import { NormalizedNewsItem } from '../../utils/normalizeNewsData';
 
 const { Title, Text, Paragraph } = Typography;
 
 interface NewsItemProps {
-    news: NewsItem;
+    news: NormalizedNewsItem;
     onClick?: (slug: string) => void;
     showCategory?: boolean;
     showAuthor?: boolean;
@@ -27,7 +26,8 @@ const NewsItem: React.FC<NewsItemProps> = ({
     showTags = true,
     className = '',
 }) => {
-    const formattedNews = formatNewsData(news);
+    // No need for formatNewsData since data is already normalized
+    const formattedNews = news;
 
     const handleClick = () => {
         if (onClick) {
@@ -56,7 +56,7 @@ const NewsItem: React.FC<NewsItemProps> = ({
         return `${diffInYears} năm trước`;
     };
 
-    const timeAgo = formatTimeAgo(formattedNews.publishedAt);
+    const timeAgo = formatTimeAgo(formattedNews.publishedDate);
 
     const cardContent = (
         <>
@@ -77,7 +77,7 @@ const NewsItem: React.FC<NewsItemProps> = ({
                             color="blue"
                             className="px-2 py-1 text-xs font-medium bg-blue-500 text-white border-0"
                         >
-                            {formattedNews.category}
+                            {formattedNews.categoryName}
                         </Tag>
                     </div>
                 )}
@@ -125,20 +125,20 @@ const NewsItem: React.FC<NewsItemProps> = ({
                             <Space size="small">
                                 <Avatar
                                     size="small"
-                                    src={formattedNews.author.avatar}
+                                    src={formattedNews.authorAvatar}
                                     icon={<UserOutlined />}
                                 />
                                 <Text type="secondary" className="text-sm">
-                                    {formattedNews.author.name}
+                                    {formattedNews.authorName}
                                 </Text>
                             </Space>
                         )}
                     </Space>
 
                     {/* Tags */}
-                    {showTags && formattedNews.tags && formattedNews.tags.length > 0 && (
+                    {showTags && formattedNews.formattedTags && formattedNews.formattedTags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                            {formattedNews.tags.slice(0, 3).map((tag: string, index: number) => (
+                            {formattedNews.formattedTags.slice(0, 3).map((tag: string, index: number) => (
                                 <Tag
                                     key={index}
                                     className="text-xs px-2 py-1 bg-gray-50 border-gray-200 text-gray-600"
@@ -146,9 +146,9 @@ const NewsItem: React.FC<NewsItemProps> = ({
                                     #{tag}
                                 </Tag>
                             ))}
-                            {formattedNews.tags.length > 3 && (
+                            {formattedNews.formattedTags.length > 3 && (
                                 <Tag className="text-xs px-2 py-1 bg-gray-50 border-gray-200 text-gray-400">
-                                    +{formattedNews.tags.length - 3}
+                                    +{formattedNews.formattedTags.length - 3}
                                 </Tag>
                             )}
                         </div>

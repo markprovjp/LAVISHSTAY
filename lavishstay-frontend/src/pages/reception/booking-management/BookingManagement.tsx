@@ -18,6 +18,7 @@ import {
     Flex,
     message
 } from 'antd';
+import CheckoutInfoModal from './CheckoutInfoModal';
 import { ProTable, type ProColumns } from '@ant-design/pro-components';
 import {
     EyeOutlined,
@@ -39,7 +40,6 @@ import {
     SmileOutlined
 } from '@ant-design/icons';
 import { useGetBookings, useGetBookingStatistics, useCancelBooking } from '../../../hooks/useReception';
-import { receptionAPI } from '../../../utils/api';
 import {
     Booking,
     BookingFilters
@@ -51,6 +51,8 @@ import CheckinModal from './CheckinModal';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import RoomSelectionModal from './RoomSelectionModal';
+import ReceptionServicesModal from './ReceptionServicesModal';
+import { receptionAPI } from '../../../utils/api';
 dayjs.locale('vi');
 
 const { Content } = Layout;
@@ -106,6 +108,11 @@ const BookingManagement: React.FC = () => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [isCheckinModalVisible, setIsCheckinModalVisible] = useState(false);
     const [checkinBookingId, setCheckinBookingId] = useState<number | null>(null);
+    const [isServicesModalVisible, setIsServicesModalVisible] = useState(false);
+    const [servicesBookingId, setServicesBookingId] = useState<number | null>(null);
+    const [isCheckoutDrawerVisible, setIsCheckoutDrawerVisible] = useState(false);
+    const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
+    const [checkoutInfo, setCheckoutInfo] = useState<any>(null);
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -342,13 +349,16 @@ const BookingManagement: React.FC = () => {
                         setCheckinBookingId(record.booking_id);
                         setIsCheckinModalVisible(true);
                     } else if (key === 'checkout') {
-                        // Gọi API check-out qua axios
+                        // Try to fetch checkout info first. If services already selected, show checkout summary.
                         try {
-                            await receptionAPI.checkOut({ booking_id: record.booking_id, room_id: record.room_id || 0 });
-                            message.success('Check-out thành công!');
-                            refetch();
-                        } catch (e) {
-                            message.error('Check-out thất bại!');
+                            const info = await receptionAPI.getCheckoutInfo(record.booking_id);
+                            setCheckoutInfo(info);
+                            setCheckoutBookingId(record.booking_id);
+                            setIsCheckoutDrawerVisible(true);
+                        } catch (err) {
+                            // If fetching checkout-info fails (e.g., none selected yet), open services modal
+                            setServicesBookingId(record.booking_id);
+                            setIsServicesModalVisible(true);
                         }
                     }
                 };
@@ -402,6 +412,19 @@ const BookingManagement: React.FC = () => {
 
                 <BookingFilterBar onSearch={handleSearch} loading={isLoading} />
 
+                <CheckoutInfoModal
+                    visible={isCheckoutDrawerVisible}
+                    bookingId={checkoutBookingId}
+                    initialData={checkoutInfo}
+                    onClose={() => { setIsCheckoutDrawerVisible(false); setCheckoutInfo(null); setCheckoutBookingId(null); }}
+                    onAddServicesRequest={() => {
+                        setIsCheckoutDrawerVisible(false);
+                        setIsServicesModalVisible(true);
+                        setServicesBookingId(checkoutBookingId);
+                    }}
+                    onUpdated={() => { refetch(); }}
+                />
+
                 <Card style={{ borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
                     <ErrorBoundary fallback={<Alert message="Lỗi hiển thị bảng" type="error" showIcon />}>
                         <ProTable<BookingTableData>
@@ -454,6 +477,26 @@ const BookingManagement: React.FC = () => {
                     onSuccess={() => {
                         refetch();
                         message.success('Check-in thành công!');
+                    }}
+                />
+                <ReceptionServicesModal
+                    visible={isServicesModalVisible}
+                    bookingId={servicesBookingId}
+                    onClose={() => {
+                        setIsServicesModalVisible(false);
+                        setServicesBookingId(null);
+                    }}
+                    onAdded={(checkoutInfo?: any) => {
+                        // after services added, refresh data so receptionist can proceed to checkout
+                        refetch();
+                        message.success('Dịch vụ đã được thêm.');
+                        if (checkoutInfo) {
+                            setCheckoutInfo(checkoutInfo);
+                            setCheckoutBookingId(servicesBookingId);
+                            setIsCheckoutDrawerVisible(true);
+                        } else {
+                            message.info('Vui lòng mở Check-out để xác nhận tổng tiền.');
+                        }
                     }}
                 />
             </Content>
