@@ -1,0 +1,11 @@
+/* Theme cho chế độ sáng */
+body:not(.dark) .cke_editable {
+    background-color: #ffffff; /* nền sáng */
+    color: #000000; /* chữ đen */
+}
+
+/* Theme cho chế độ tối */
+body.dark .cke_editable {
+    background-color: #2d2d2d; /* nền tối */
+    color: #ffffff; /* chữ trắng */
+}
