@@ -12,41 +12,39 @@ class Review extends Model
 
     protected $fillable = [
         'booking_id',
-        'user_id',
         'rating',
         'title',
         'comment',
+        'detailed_scores',
+        'pros',
+        'cons',
+        'travel_type',
         'review_date',
         'helpful',
         'not_helpful',
-        'travel_type',
         'admin_reply_content',
         'admin_reply_date',
         'admin_name',
-        'score_cleanliness',
-        'score_location',
-        'score_facilities',
-        'score_service',
-        'score_value',
         'status',
     ];
 
     protected $casts = [
-        'rating' => 'decimal:2',
+        'rating' => 'decimal:1',
         'review_date' => 'date',
         'admin_reply_date' => 'date',
-        'score_cleanliness' => 'decimal:2',
-        'score_location' => 'decimal:2',
-        'score_facilities' => 'decimal:2',
-        'score_service' => 'decimal:2',
-        'score_value' => 'decimal:2',
+        'detailed_scores' => 'array',
         'helpful' => 'integer',
         'not_helpful' => 'integer',
     ];
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+    }
+
+    public function reviewMedia()
+    {
+        return $this->hasMany(ReviewMedia::class, 'review_id', 'review_id');
     }
 
     public function user()
@@ -54,7 +52,7 @@ class Review extends Model
         return $this->hasOneThrough(
             User::class,
             Booking::class,
-            'booking_id',
+            'id',
             'id',
             'booking_id',
             'user_id'
@@ -67,7 +65,7 @@ class Review extends Model
         return $this->hasOneThrough(
             RoomOption::class,
             Booking::class,
-            'booking_id', // Khóa ngoại trên booking
+            'id', // Khóa ngoại trên booking
             'option_id',  // Khóa chính của room_options
             'booking_id', // Khóa chính của reviews
             'option_id'   // Khóa ngoại trên booking

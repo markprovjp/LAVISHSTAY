@@ -11,6 +11,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Services\Checkout\CheckoutRuleEngine;
+use App\Notifications\CheckoutCompletedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -359,6 +360,22 @@ class BookingCheckoutController extends Controller
                     'validation_result' => $validationResult
                 ];
             });
+
+            // Send notification to guest user after successful checkout
+            try {
+                if ($booking->user) {
+                    $booking->user->notify(new CheckoutCompletedNotification($booking));
+                    Log::info('Checkout notification sent to user', ['user_id' => $booking->user->id, 'booking_id' => $booking->booking_id]);
+                } else {
+                    Log::warning('No user associated with booking for notification', ['booking_id' => $booking->booking_id]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send checkout notification', [
+                    'booking_id' => $booking->booking_id,
+                    'error' => $e->getMessage()
+                ]);
+                // Don't fail the checkout if notification fails
+            }
 
             // Prepare comprehensive response
             $responseData = [

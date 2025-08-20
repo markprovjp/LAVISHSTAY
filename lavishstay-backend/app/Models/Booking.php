@@ -62,6 +62,14 @@ class Booking extends Model
     {
         return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
     }
+
+    /**
+     * Alias relationship for booking rooms to match controller usage
+     */
+    public function bookingRooms()
+    {
+        return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
+    }
     
     public function representatives()
     {
@@ -126,5 +134,11 @@ class Booking extends Model
     {
         return $this->hasMany(CompensationRequest::class, 'booking_id', 'booking_id');
     }
-
+  /**
+     * Relationship with reviews
+     */
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'booking_id', 'id');
+    }
 }

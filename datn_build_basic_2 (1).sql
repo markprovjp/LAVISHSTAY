@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost:3306
--- Generation Time: Aug 16, 2025 at 10:53 AM
--- Server version: 8.0.30
--- PHP Version: 8.1.10
+-- Máy chủ: 127.0.0.1:3306
+-- Thời gian đã tạo: Th8 19, 2025 lúc 01:39 AM
+-- Phiên bản máy phục vụ: 8.0.30
+-- Phiên bản PHP: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `datn_build_basic2`
+-- Cơ sở dữ liệu: `datn_build_basic_2`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `amenities`
+-- Cấu trúc bảng cho bảng `amenities`
 --
 
 CREATE TABLE `amenities` (
@@ -40,7 +40,7 @@ CREATE TABLE `amenities` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `amenities`
+-- Đang đổ dữ liệu cho bảng `amenities`
 --
 
 INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -94,31 +94,31 @@ INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `
 -- --------------------------------------------------------
 
 --
--- Table structure for table `audit_logs`
+-- Cấu trúc bảng cho bảng `audit_logs`
 --
 
 CREATE TABLE `audit_logs` (
   `audit_id` bigint UNSIGNED NOT NULL,
   `user_id` bigint UNSIGNED DEFAULT NULL COMMENT 'Người thực hiện hành động',
-  `session_id` varchar(40) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Session ID để track theo phiên',
-  `action` enum('create','update','delete','restore','login','logout','bulk_update','bulk_delete','other') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại hành động',
-  `model` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên model/bảng tác động',
+  `session_id` varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Session ID để track theo phiên',
+  `action` enum('create','update','delete','restore','login','logout','bulk_update','bulk_delete','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại hành động',
+  `model` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên model/bảng tác động',
   `model_id` bigint UNSIGNED NOT NULL COMMENT 'ID bản ghi tác động',
   `old_values` json DEFAULT NULL COMMENT 'Dữ liệu trước khi thay đổi',
   `new_values` json DEFAULT NULL COMMENT 'Dữ liệu sau khi thay đổi',
-  `changes_summary` text COLLATE utf8mb4_unicode_ci COMMENT 'Tóm tắt thay đổi (human readable)',
-  `description` text COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả hành động hoặc lý do',
-  `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'IP address',
-  `user_agent` text COLLATE utf8mb4_unicode_ci COMMENT 'User agent string',
-  `url` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'URL được truy cập',
-  `method` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'HTTP method',
+  `changes_summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Tóm tắt thay đổi (human readable)',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả hành động hoặc lý do',
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'IP address',
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'User agent string',
+  `url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'URL được truy cập',
+  `method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'HTTP method',
   `metadata` json DEFAULT NULL COMMENT 'Thông tin bổ sung (tags, categories, etc.)',
   `is_sensitive` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Có chứa dữ liệu nhạy cảm không',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ lịch sử thay đổi dữ liệu hệ thống';
 
 --
--- Dumping data for table `audit_logs`
+-- Đang đổ dữ liệu cho bảng `audit_logs`
 --
 
 INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`, `model_id`, `old_values`, `new_values`, `changes_summary`, `description`, `ip_address`, `user_agent`, `url`, `method`, `metadata`, `is_sensitive`, `created_at`) VALUES
@@ -185,12 +185,44 @@ INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`
 INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`, `model_id`, `old_values`, `new_values`, `changes_summary`, `description`, `ip_address`, `user_agent`, `url`, `method`, `metadata`, `is_sensitive`, `created_at`) VALUES
 (60, NULL, 'UqRZyvSmD6MCluI21plkg1COVYc0phS9bIvEHswQ', 'update', 'RoomPriceHistory', 306, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"1500000.00\", \"room_type_id\": 2, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":4,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"30.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"90.00\\\",\\\"current_occupancy\\\":95}}]\", \"adjusted_price\": \"2100000.00\", \"price_history_id\": 306}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}}]\\\"\", \"adjusted_price\": 1950000}', NULL, 'System đã cập nhật RoomPriceHistory #306', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-16T10:05:27.107236Z\"}', 0, '2025-08-16 10:05:27'),
 (61, NULL, 'UqRZyvSmD6MCluI21plkg1COVYc0phS9bIvEHswQ', 'update', 'RoomPriceHistory', 308, '{\"date\": \"2025-08-16T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 4, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":83}}]\", \"adjusted_price\": \"1370000.00\", \"price_history_id\": 308}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}},{\\\\\\\"rule_id\\\\\\\":12,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"10.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"weekend\\\\\\\",\\\\\\\"days_of_week\\\\\\\":[\\\\\\\"Saturday\\\\\\\",\\\\\\\"Sunday\\\\\\\"]}},{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"dynamic\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"occupancy\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"7.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"occupancy_threshold\\\\\\\":\\\\\\\"70.00\\\\\\\",\\\\\\\"current_occupancy\\\\\\\":84}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #308', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-16T10:05:27.286342Z\"}', 0, '2025-08-16 10:05:27'),
-(62, NULL, 'edaxKSDLZVjZHUkPSt6GYFPuQDy4r6hV3I4gjcoB', 'update', 'RoomPriceHistory', 260, '{\"date\": \"2025-08-05T17:00:00.000000Z\", \"base_price\": \"5000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"6000.00\", \"price_history_id\": 260}', '{\"base_price\": \"50000\", \"adjusted_price\": 60000}', NULL, 'System đã cập nhật RoomPriceHistory #260', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/rooms/available?check_in_date=2025-08-06&check_out_date=2025-08-08', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomAvailabilityController@getAvailableRooms\", \"action_timestamp\": \"2025-08-16T10:07:05.076640Z\"}', 0, '2025-08-16 10:07:05');
+(62, NULL, 'edaxKSDLZVjZHUkPSt6GYFPuQDy4r6hV3I4gjcoB', 'update', 'RoomPriceHistory', 260, '{\"date\": \"2025-08-05T17:00:00.000000Z\", \"base_price\": \"5000.00\", \"room_type_id\": 1, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"6000.00\", \"price_history_id\": 260}', '{\"base_price\": \"50000\", \"adjusted_price\": 60000}', NULL, 'System đã cập nhật RoomPriceHistory #260', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'http://localhost:8888/api/rooms/available?check_in_date=2025-08-06&check_out_date=2025-08-08', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\RoomAvailabilityController@getAvailableRooms\", \"action_timestamp\": \"2025-08-16T10:07:05.076640Z\"}', 0, '2025-08-16 10:07:05'),
+(63, NULL, 'b0NBw0iiP7sL4nIJVJziqox54mgfGShxMRSDsQjd', 'update', 'RoomPriceHistory', 160, '{\"date\": \"2025-08-17T17:00:00.000000Z\", \"base_price\": \"1500000.00\", \"room_type_id\": 2, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"1800000.00\", \"price_history_id\": 160}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #160', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-17T06:57:26.397391Z\"}', 0, '2025-08-17 06:57:28'),
+(64, NULL, 'b0NBw0iiP7sL4nIJVJziqox54mgfGShxMRSDsQjd', 'update', 'RoomPriceHistory', 161, '{\"date\": \"2025-08-17T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 3, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"1200000.00\", \"price_history_id\": 161}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #161', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-17T06:57:28.721511Z\"}', 0, '2025-08-17 06:57:28'),
+(65, NULL, 'b0NBw0iiP7sL4nIJVJziqox54mgfGShxMRSDsQjd', 'update', 'RoomPriceHistory', 162, '{\"date\": \"2025-08-17T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 4, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"1200000.00\", \"price_history_id\": 162}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #162', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-17T06:57:28.765704Z\"}', 0, '2025-08-17 06:57:28'),
+(66, NULL, 'b0NBw0iiP7sL4nIJVJziqox54mgfGShxMRSDsQjd', 'update', 'RoomPriceHistory', 163, '{\"date\": \"2025-08-17T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 5, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"1200000.00\", \"price_history_id\": 163}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #163', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-17T06:57:28.805318Z\"}', 0, '2025-08-17 06:57:28'),
+(67, NULL, 'b0NBw0iiP7sL4nIJVJziqox54mgfGShxMRSDsQjd', 'update', 'RoomPriceHistory', 164, '{\"date\": \"2025-08-17T17:00:00.000000Z\", \"base_price\": \"1000000.00\", \"room_type_id\": 6, \"applied_rules\": \"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\", \"adjusted_price\": \"1200000.00\", \"price_history_id\": 164}', '{\"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\"}', NULL, 'System đã cập nhật RoomPriceHistory #164', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-17T06:57:28.832573Z\"}', 0, '2025-08-17 06:57:28'),
+(68, NULL, 'b0NBw0iiP7sL4nIJVJziqox54mgfGShxMRSDsQjd', 'create', 'RoomPriceHistory', 312, 'null', '{\"date\": \"2025-08-18 00:00:00\", \"base_price\": \"1000000.00\", \"created_at\": \"2025-08-17 13:57:28\", \"updated_at\": \"2025-08-17 13:57:28\", \"room_type_id\": 7, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1200000, \"price_history_id\": 312}', NULL, 'System đã tạo mới RoomPriceHistory #312', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-17T06:57:28.864033Z\"}', 0, '2025-08-17 06:57:28'),
+(69, NULL, 'knW9aTmVII3kf8TKHJSiTjRAzNvUKGFKXZbzwc4W', 'create', 'BookingService', 3, 'null', '{\"id\": 3, \"quantity\": 2, \"price_vnd\": \"2000000.00\", \"booking_id\": \"160\", \"service_id\": 8}', NULL, 'System đã tạo mới BookingService #3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/160/services', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@addBookingService\", \"action_timestamp\": \"2025-08-17T06:57:46.121036Z\"}', 0, '2025-08-17 06:57:46'),
+(70, NULL, 'rRGWrfxetAkFLVGHNCjCjk9fEXgawGOoB4e1suu0', 'update', 'BookingService', 3, '{\"id\": 3, \"quantity\": 2, \"price_vnd\": \"2000000.00\", \"booking_id\": 160, \"service_id\": 8}', '{\"quantity\": 3}', NULL, 'System đã cập nhật BookingService #3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/160/services', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@addBookingService\", \"action_timestamp\": \"2025-08-17T07:15:12.733188Z\"}', 0, '2025-08-17 07:15:12'),
+(71, NULL, 'HyF8XaaKaCmPta6QAHUQprgMjMDXPrjXYHVDp7pN', 'update', 'Booking', 121, '{\"notes\": \"\", \"status\": \"Confirmed\", \"room_id\": null, \"user_id\": null, \"children\": null, \"quantity\": null, \"option_id\": null, \"booking_id\": 121, \"guest_name\": \"明心\", \"guest_count\": 2, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0987654321\", \"booking_code\": \"LVS121091522\", \"children_age\": null, \"room_type_id\": null, \"check_in_date\": \"2025-07-13T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-07-14T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 11000, \"is_document_verified\": 0}', '{\"notes\": \"Check-in completed at 2025-08-17 14:49:41\", \"status\": \"Operational\"}', NULL, 'System đã cập nhật Booking #121', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/checkin/booking/121/process', 'POST', '{\"route_name\": \"api.checkin.process\", \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckinController@processCheckin\", \"action_timestamp\": \"2025-08-17T07:49:41.141127Z\"}', 0, '2025-08-17 07:49:41'),
+(72, NULL, 'HZSZRO3Mzg4jBFiGBXHH8cVbzV0DUUkwfpAVz4D9', 'create', 'BookingService', 4, 'null', '{\"id\": 4, \"quantity\": 1, \"price_vnd\": \"2000000.00\", \"booking_id\": \"121\", \"service_id\": 8}', NULL, 'System đã tạo mới BookingService #4', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/121/services', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@addBookingService\", \"action_timestamp\": \"2025-08-17T07:50:33.375997Z\"}', 0, '2025-08-17 07:50:33'),
+(73, NULL, 'NTczrkSAgBGML3SzHgT1N2b5tk2soWLiSNlrlFqK', 'update', 'Booking', 152, '{\"notes\": null, \"status\": \"Confirmed\", \"room_id\": null, \"user_id\": null, \"children\": null, \"quantity\": null, \"option_id\": null, \"booking_id\": 152, \"guest_name\": \"明心\", \"guest_count\": 10, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"LVS152023648\", \"children_age\": null, \"room_type_id\": 1, \"check_in_date\": \"2025-08-17T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-08-21T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 10248000, \"is_document_verified\": 0}', '{\"notes\": \"Check-in completed at 2025-08-17 15:05:02\", \"status\": \"Operational\"}', NULL, 'System đã cập nhật Booking #152', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/checkin/booking/152/process', 'POST', '{\"route_name\": \"api.checkin.process\", \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckinController@processCheckin\", \"action_timestamp\": \"2025-08-17T08:05:02.576343Z\"}', 0, '2025-08-17 08:05:02'),
+(74, NULL, 'PE52LW7JPVFpzptAmF4zY1DwBoTcp1YOuruVu5HO', 'update', 'BookingService', 3, '{\"id\": 3, \"quantity\": 3, \"price_vnd\": \"2000000.00\", \"booking_id\": 160, \"service_id\": 8}', '{\"quantity\": 5}', NULL, 'System đã cập nhật BookingService #3', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/160/services/8', 'PUT', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@updateBookingService\", \"action_timestamp\": \"2025-08-17T08:40:50.898822Z\"}', 0, '2025-08-17 08:40:50'),
+(75, NULL, '60lsOMHFf1UVMgeshpbhcLNeg9iNj4c0FUq3vIyp', 'create', 'BookingService', 5, 'null', '{\"id\": 5, \"quantity\": 1, \"price_vnd\": \"200000.00\", \"booking_id\": \"160\", \"service_id\": 10}', NULL, 'System đã tạo mới BookingService #5', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/160/services', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@addBookingService\", \"action_timestamp\": \"2025-08-17T08:40:58.123959Z\"}', 0, '2025-08-17 08:40:58'),
+(76, NULL, 'Snk2THKrEGg3uTERTTfDmumojtwrCEQfXajsHoSP', 'update', 'Booking', 142, '{\"notes\": \"bich tuyen cute\", \"status\": \"Confirmed\", \"room_id\": null, \"user_id\": null, \"children\": null, \"quantity\": null, \"option_id\": null, \"booking_id\": 142, \"guest_name\": \"test\", \"guest_count\": 13, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"LVS142120903\", \"children_age\": null, \"room_type_id\": 6, \"check_in_date\": \"2025-07-16T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-07-17T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 8650000, \"is_document_verified\": 0}', '{\"notes\": \"bich tuyen cute\\nCheck-in completed at 2025-08-17 16:21:55\", \"status\": \"Operational\"}', NULL, 'System đã cập nhật Booking #142', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/checkin/booking/142/process', 'POST', '{\"route_name\": \"api.checkin.process\", \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckinController@processCheckin\", \"action_timestamp\": \"2025-08-17T09:21:55.399378Z\"}', 0, '2025-08-17 09:21:55'),
+(77, NULL, 'K971bw04xjXIeIBmnZOo2WmGSYsNoqDoHHMuiFbH', 'update', 'Booking', 142, '{\"notes\": \"bich tuyen cute\\nCheck-in completed at 2025-08-17 16:21:55\", \"status\": \"Operational\", \"room_id\": null, \"user_id\": null, \"children\": null, \"quantity\": null, \"option_id\": null, \"booking_id\": 142, \"guest_name\": \"test\", \"guest_count\": 13, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"LVS142120903\", \"children_age\": null, \"room_type_id\": 6, \"check_in_date\": \"2025-07-16T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-07-17T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 8650000, \"is_document_verified\": 0}', '{\"notes\": \"bich tuyen cute\\nCheck-in completed at 2025-08-17 16:21:55\\nCheck-out completed at 2025-08-17 16:21:59\", \"status\": \"Cleaning\"}', NULL, 'System đã cập nhật Booking #142', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/142/checkout', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@processCheckout\", \"action_timestamp\": \"2025-08-17T09:21:59.879979Z\"}', 0, '2025-08-17 09:21:59'),
+(78, NULL, 'K971bw04xjXIeIBmnZOo2WmGSYsNoqDoHHMuiFbH', 'create', 'Invoice', 2, 'null', '{\"status\": \"Draft\", \"issued_at\": \"2025-08-17 16:21:59\", \"booking_id\": 142, \"invoice_id\": 2, \"total_amount_vnd\": 8650000}', NULL, 'System đã tạo mới Invoice #2', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/142/checkout', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Invoice\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@processCheckout\", \"action_timestamp\": \"2025-08-17T09:21:59.893172Z\"}', 0, '2025-08-17 09:21:59'),
+(79, NULL, 'VoKJapoI3OW2aCHEwUvFxwEaHz2q4T9sL5XX8Ih6', 'create', 'Booking', 174, 'null', '{\"notes\": null, \"status\": \"pending\", \"room_id\": null, \"user_id\": 11, \"option_id\": null, \"booking_id\": 174, \"created_at\": \"2025-08-18 08:37:20\", \"guest_name\": \"明心\", \"updated_at\": \"2025-08-18 08:37:20\", \"guest_count\": 1, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-18 00:00:00\", \"check_out_date\": \"2025-08-19 00:00:00\", \"total_price_vnd\": 1060000}', NULL, 'System đã tạo mới Booking #174', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-18T01:37:20.100740Z\"}', 0, '2025-08-18 01:37:22'),
+(80, NULL, 'VoKJapoI3OW2aCHEwUvFxwEaHz2q4T9sL5XX8Ih6', 'update', 'Booking', 174, '{\"notes\": null, \"status\": \"pending\", \"room_id\": null, \"user_id\": 11, \"option_id\": null, \"booking_id\": 174, \"guest_name\": \"明心\", \"guest_count\": 1, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"\", \"room_type_id\": 1, \"check_in_date\": \"2025-08-17T17:00:00.000000Z\", \"check_out_date\": \"2025-08-18T17:00:00.000000Z\", \"total_price_vnd\": 1060000}', '{\"booking_code\": \"LVS174083722\"}', NULL, 'System đã cập nhật Booking #174', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-18T01:37:22.396305Z\"}', 0, '2025-08-18 01:37:22'),
+(81, NULL, 'VoKJapoI3OW2aCHEwUvFxwEaHz2q4T9sL5XX8Ih6', 'create', 'Payment', 137, 'null', '{\"status\": \"pending\", \"amount_vnd\": 1060000, \"booking_id\": 174, \"created_at\": \"2025-08-18 08:37:22\", \"payment_id\": 137, \"updated_at\": \"2025-08-18 08:37:22\", \"payment_type\": \"vietqr\"}', NULL, 'System đã tạo mới Payment #137', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/payment/create-booking', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Payment\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@createBooking\", \"action_timestamp\": \"2025-08-18T01:37:22.403475Z\"}', 0, '2025-08-18 01:37:22'),
+(82, NULL, 'l6niszFbw3ZdxAMAGt24y9Nh53mBulLJk7D9XqBg', 'update', 'Booking', 174, '{\"notes\": null, \"status\": \"Pending\", \"room_id\": null, \"user_id\": 11, \"children\": null, \"quantity\": null, \"option_id\": null, \"booking_id\": 174, \"guest_name\": \"明心\", \"guest_count\": 1, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"LVS174083722\", \"children_age\": null, \"room_type_id\": 1, \"check_in_date\": \"2025-08-17T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-08-18T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 1060000, \"is_document_verified\": 0}', '{\"option_id\": \"BOOK-LVS174083722\"}', NULL, 'System đã cập nhật Booking #174', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/payment/check-cpay', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@checkCPayPayment\", \"action_timestamp\": \"2025-08-18T01:37:59.823094Z\"}', 0, '2025-08-18 01:37:59'),
+(83, NULL, 'l6niszFbw3ZdxAMAGt24y9Nh53mBulLJk7D9XqBg', 'update', 'Booking', 174, '{\"notes\": null, \"status\": \"Pending\", \"room_id\": null, \"user_id\": 11, \"children\": null, \"quantity\": null, \"option_id\": null, \"booking_id\": 174, \"guest_name\": \"明心\", \"guest_count\": 1, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"LVS174083722\", \"children_age\": null, \"room_type_id\": 1, \"check_in_date\": \"2025-08-17T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-08-18T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 1060000, \"is_document_verified\": 0}', '{\"status\": \"confirmed\"}', NULL, 'System đã cập nhật Booking #174', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/payment/check-cpay', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@checkCPayPayment\", \"action_timestamp\": \"2025-08-18T01:38:05.774347Z\"}', 0, '2025-08-18 01:38:05'),
+(84, NULL, 'l6niszFbw3ZdxAMAGt24y9Nh53mBulLJk7D9XqBg', 'update', 'Payment', 137, '{\"status\": \"pending\", \"amount_vnd\": \"1060000.00\", \"booking_id\": 174, \"payment_id\": 137, \"payment_type\": \"vietqr\", \"transaction_id\": null}', '{\"status\": \"completed\", \"transaction_id\": \"CPAY_LVS174083722_1755481079\"}', NULL, 'System đã cập nhật Payment #137', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/payment/check-cpay', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\Payment\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\PaymentController@checkCPayPayment\", \"action_timestamp\": \"2025-08-18T01:38:05.780022Z\"}', 0, '2025-08-18 01:38:05'),
+(85, NULL, '32rdZoBTd82L7M1xBtCmcR1dN3KBckPj75c9fyd1', 'update', 'Booking', 174, '{\"notes\": null, \"status\": \"Confirmed\", \"room_id\": null, \"user_id\": 11, \"children\": null, \"quantity\": null, \"option_id\": \"BOOK-LVS174083722\", \"booking_id\": 174, \"guest_name\": \"明心\", \"guest_count\": 1, \"guest_email\": \"quyenjpn@gmail.com\", \"guest_phone\": \"0335920306\", \"booking_code\": \"LVS174083722\", \"children_age\": null, \"room_type_id\": 1, \"check_in_date\": \"2025-08-17T17:00:00.000000Z\", \"booking_source\": null, \"check_out_date\": \"2025-08-18T17:00:00.000000Z\", \"payment_policy\": null, \"total_price_vnd\": 1060000, \"is_document_verified\": 0}', '{\"notes\": \"Check-in completed at 2025-08-18 08:38:38\", \"status\": \"Operational\"}', NULL, 'System đã cập nhật Booking #174', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/checkin/booking/174/process', 'POST', '{\"route_name\": \"api.checkin.process\", \"model_class\": \"App\\\\Models\\\\Booking\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckinController@processCheckin\", \"action_timestamp\": \"2025-08-18T01:38:38.574933Z\"}', 0, '2025-08-18 01:38:38'),
+(86, NULL, 'ooofk1yrCIYuQlqTRzfMDMxUOcbodN8nG1sft9Qt', 'create', 'BookingService', 6, 'null', '{\"id\": 6, \"quantity\": 1, \"price_vnd\": \"2000000.00\", \"booking_id\": \"174\", \"service_id\": 8}', NULL, 'System đã tạo mới BookingService #6', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/174/services', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@addBookingService\", \"action_timestamp\": \"2025-08-18T01:38:47.890427Z\"}', 0, '2025-08-18 01:38:47'),
+(87, NULL, 'ISfoBN61gXd4XxBzqTywA6iCNTpcayASOMYTYAyl', 'create', 'BookingService', 7, 'null', '{\"id\": 7, \"quantity\": 1, \"price_vnd\": \"200000.00\", \"booking_id\": \"174\", \"service_id\": 10}', NULL, 'System đã tạo mới BookingService #7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/174/services', 'POST', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@addBookingService\", \"action_timestamp\": \"2025-08-18T02:12:18.692857Z\"}', 0, '2025-08-18 02:12:18'),
+(88, NULL, 'P4cJ7ArfHzNMjBeScFBEppBef2EhSdyphqEb0EtO', 'update', 'BookingService', 7, '{\"id\": 7, \"quantity\": 1, \"price_vnd\": \"200000.00\", \"booking_id\": 174, \"service_id\": 10}', '{\"quantity\": 2}', NULL, 'System đã cập nhật BookingService #7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/bookings/174/services/10', 'PUT', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\BookingService\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\BookingCheckoutController@updateBookingService\", \"action_timestamp\": \"2025-08-18T02:12:23.033182Z\"}', 0, '2025-08-18 02:12:23'),
+(89, NULL, 'Y0pIbJEUtA2uTuDp4gPHu2skqtVZH7hGcBYxgkG2', 'create', 'RoomPriceHistory', 313, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": \"1500000.00\", \"created_at\": \"2025-08-18 10:03:47\", \"updated_at\": \"2025-08-18 10:03:47\", \"room_type_id\": 2, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1800000, \"price_history_id\": 313}', NULL, 'System đã tạo mới RoomPriceHistory #313', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-18T03:03:47.510852Z\"}', 0, '2025-08-18 03:03:47'),
+(90, NULL, 'Y0pIbJEUtA2uTuDp4gPHu2skqtVZH7hGcBYxgkG2', 'create', 'RoomPriceHistory', 314, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": \"1000000.00\", \"created_at\": \"2025-08-18 10:03:47\", \"updated_at\": \"2025-08-18 10:03:47\", \"room_type_id\": 3, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1200000, \"price_history_id\": 314}', NULL, 'System đã tạo mới RoomPriceHistory #314', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-18T03:03:47.608273Z\"}', 0, '2025-08-18 03:03:47'),
+(91, NULL, 'Y0pIbJEUtA2uTuDp4gPHu2skqtVZH7hGcBYxgkG2', 'create', 'RoomPriceHistory', 315, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": \"1000000.00\", \"created_at\": \"2025-08-18 10:03:47\", \"updated_at\": \"2025-08-18 10:03:47\", \"room_type_id\": 4, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1200000, \"price_history_id\": 315}', NULL, 'System đã tạo mới RoomPriceHistory #315', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-18T03:03:47.649171Z\"}', 0, '2025-08-18 03:03:47'),
+(92, NULL, 'Y0pIbJEUtA2uTuDp4gPHu2skqtVZH7hGcBYxgkG2', 'create', 'RoomPriceHistory', 316, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": \"1000000.00\", \"created_at\": \"2025-08-18 10:03:47\", \"updated_at\": \"2025-08-18 10:03:47\", \"room_type_id\": 5, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1200000, \"price_history_id\": 316}', NULL, 'System đã tạo mới RoomPriceHistory #316', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-18T03:03:47.684509Z\"}', 0, '2025-08-18 03:03:47'),
+(93, NULL, 'Y0pIbJEUtA2uTuDp4gPHu2skqtVZH7hGcBYxgkG2', 'create', 'RoomPriceHistory', 317, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": \"1000000.00\", \"created_at\": \"2025-08-18 10:03:47\", \"updated_at\": \"2025-08-18 10:03:47\", \"room_type_id\": 6, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1200000, \"price_history_id\": 317}', NULL, 'System đã tạo mới RoomPriceHistory #317', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-18T03:03:47.712755Z\"}', 0, '2025-08-18 03:03:47'),
+(94, NULL, 'Y0pIbJEUtA2uTuDp4gPHu2skqtVZH7hGcBYxgkG2', 'create', 'RoomPriceHistory', 318, 'null', '{\"date\": \"2025-08-19 00:00:00\", \"base_price\": \"1000000.00\", \"created_at\": \"2025-08-18 10:03:47\", \"updated_at\": \"2025-08-18 10:03:47\", \"room_type_id\": 7, \"applied_rules\": \"\\\"[{\\\\\\\"rule_id\\\\\\\":5,\\\\\\\"type\\\\\\\":\\\\\\\"flexible\\\\\\\",\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"price_adjustment\\\\\\\":\\\\\\\"20.00\\\\\\\",\\\\\\\"details\\\\\\\":{\\\\\\\"rule_type\\\\\\\":\\\\\\\"season\\\\\\\",\\\\\\\"season_name\\\\\\\":\\\\\\\"M\\\\\\\\u00f9a cao \\\\\\\\u0111i\\\\\\\\u1ec3m\\\\\\\",\\\\\\\"season_dates\\\\\\\":{\\\\\\\"start_date\\\\\\\":\\\\\\\"2025-05-31T17:00:00.000000Z\\\\\\\",\\\\\\\"end_date\\\\\\\":\\\\\\\"2025-08-30T17:00:00.000000Z\\\\\\\"}}}]\\\"\", \"adjusted_price\": 1200000, \"price_history_id\": 318}', NULL, 'System đã tạo mới RoomPriceHistory #318', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', 'http://localhost:8888/api/reception/rooms?include=room_type', 'GET', '{\"route_name\": null, \"model_class\": \"App\\\\Models\\\\RoomPriceHistory\", \"route_action\": \"App\\\\Http\\\\Controllers\\\\Api\\\\ReceptionController@getRooms\", \"action_timestamp\": \"2025-08-18T03:03:47.740239Z\"}', 0, '2025-08-18 03:03:47');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `bed_types`
+-- Cấu trúc bảng cho bảng `bed_types`
 --
 
 CREATE TABLE `bed_types` (
@@ -203,7 +235,7 @@ CREATE TABLE `bed_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách các loại giường';
 
 --
--- Dumping data for table `bed_types`
+-- Đang đổ dữ liệu cho bảng `bed_types`
 --
 
 INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -213,7 +245,7 @@ INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking`
+-- Cấu trúc bảng cho bảng `booking`
 --
 
 CREATE TABLE `booking` (
@@ -225,11 +257,11 @@ CREATE TABLE `booking` (
   `check_out_date` date NOT NULL COMMENT 'Ngày trả phòng',
   `total_price_vnd` decimal(15,2) NOT NULL COMMENT 'Tổng giá (VND)',
   `guest_count` int DEFAULT NULL COMMENT 'Số khách',
-  `status` enum('Pending','Confirmed','Operational','Completed','Cancelled','Cancelled With Penalty','Unsuccessful','Cleaning') COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Trạng thái đặt phòng, bao gồm Cleaning để biểu thị phòng đang dọn dẹp',
+  `status` enum('Pending','Confirmed','Operational','Completed','Cancelled','Cancelled With Penalty','Unsuccessful','Cleaning') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Trạng thái đặt phòng, bao gồm Cleaning để biểu thị phòng đang dọn dẹp',
   `booking_source` enum('website','phone','walk_in','agent','online_travel_agency') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Nguồn đặt',
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `quantity` int DEFAULT NULL,
-  `payment_policy` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `payment_policy` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `room_type_id` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật',
@@ -243,7 +275,7 @@ CREATE TABLE `booking` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin đặt phòng';
 
 --
--- Dumping data for table `booking`
+-- Đang đổ dữ liệu cho bảng `booking`
 --
 
 INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `status`, `booking_source`, `notes`, `quantity`, `payment_policy`, `room_type_id`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`, `children`, `children_age`, `is_document_verified`) VALUES
@@ -323,7 +355,7 @@ INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `ch
 (118, 'LVS118072800', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:27:59', '2025-07-15 00:28:00', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
 (119, 'LVS119075227', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 00:52:27', '2025-07-15 00:52:27', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
 (120, 'LVS120085204', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 01:52:04', '2025-07-15 01:52:04', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
-(121, 'LVS121091522', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Confirmed', NULL, '', NULL, NULL, NULL, '2025-07-15 02:15:22', '2025-07-15 02:30:14', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
+(121, 'LVS121091522', NULL, NULL, '2025-07-14', '2025-07-15', 11000.00, 2, 'Operational', NULL, 'Check-in completed at 2025-08-17 14:49:41', NULL, NULL, NULL, '2025-07-15 02:15:22', '2025-08-17 07:49:41', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
 (124, 'LVS124093516', NULL, NULL, '2025-07-14', '2025-07-16', 22000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 02:35:16', '2025-07-15 02:35:16', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
 (125, 'LVS125105711', NULL, NULL, '2025-07-15', '2025-07-16', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 03:57:11', '2025-07-15 03:57:11', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
 (126, 'LVS126023058', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-15 19:30:58', '2025-07-15 19:30:58', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
@@ -335,13 +367,13 @@ INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `ch
 (132, 'LVS132033857', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, '1234', NULL, NULL, NULL, '2025-07-15 20:38:57', '2025-07-15 20:39:30', '明心', 'quyenjpn@gmail.com', '0987654321', NULL, NULL, NULL, 0),
 (133, 'LVS133070932', NULL, NULL, '2025-07-16', '2025-07-17', 11000.00, 2, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-16 00:09:32', '2025-07-16 00:10:00', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (134, 'LVS134032119', NULL, NULL, '2025-07-17', '2025-07-18', 11000.00, 1, 'Pending', NULL, 'qeqweqwqwe', NULL, NULL, NULL, '2025-07-16 20:21:19', '2025-07-16 20:21:19', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
-(136, 'LVS20250717034906701', NULL, NULL, '2025-07-17', '2025-07-24', 42000.00, 1, 'Confirmed', NULL, NULL, 1, NULL, NULL, '2025-07-16 20:49:06', '2025-07-16 20:49:06', 'Quyền Nguyễn Văn', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(136, 'LVS20250717034906701', NULL, NULL, '2025-07-17', '2025-07-24', 42000.00, 1, 'Operational', NULL, NULL, 1, NULL, NULL, '2025-07-16 20:49:06', '2025-08-17 08:04:57', 'Quyền Nguyễn Văn', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (137, 'LVS137075500', NULL, NULL, '2025-07-17', '2025-07-18', 5510000.00, 5, 'Confirmed', NULL, 'bich tuyen', NULL, NULL, 6, '2025-07-17 00:55:00', '2025-07-18 09:29:12', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (138, 'LVS138081920', NULL, NULL, '2025-07-17', '2025-07-18', 5400000.00, 4, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-17 01:19:20', '2025-07-17 01:20:38', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (139, 'LVS139082730', NULL, NULL, '2025-07-17', '2025-07-18', 5400000.00, 4, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-17 01:27:30', '2025-07-17 01:28:01', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (140, 'LVS140103856', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Confirmed', NULL, 'test', NULL, NULL, NULL, '2025-07-17 03:38:56', '2025-07-17 03:39:28', 'Quyền', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (141, 'LVS141104347', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Confirmed', NULL, 'trtyrtrytyre', NULL, NULL, NULL, '2025-07-17 03:43:47', '2025-07-17 03:44:07', '明têttetetete', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
-(142, 'LVS142120903', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Confirmed', NULL, 'bich tuyen cute', NULL, NULL, 6, '2025-07-17 05:09:03', '2025-07-18 09:05:00', 'test', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(142, 'LVS142120903', NULL, NULL, '2025-07-17', '2025-07-18', 8650000.00, 13, 'Cleaning', NULL, 'bich tuyen cute\nCheck-in completed at 2025-08-17 16:21:55\nCheck-out completed at 2025-08-17 16:21:59', NULL, NULL, 6, '2025-07-17 05:09:03', '2025-08-17 09:21:59', 'test', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (143, 'LVS143125143', NULL, NULL, '2025-08-18', '2025-08-21', 15450000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, NULL, '2025-07-18 05:51:43', '2025-07-18 19:10:32', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (144, 'LVS144031538', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Confirmed', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:15:38', '2025-07-18 20:16:40', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (145, 'LVS145032559', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Pending', NULL, 'kokoko', NULL, NULL, NULL, '2025-07-18 20:25:59', '2025-07-18 20:25:59', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
@@ -349,9 +381,9 @@ INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `ch
 (147, 'LVS147033726', NULL, NULL, '2025-08-18', '2025-08-21', 1716000.00, 10, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:37:26', '2025-07-18 20:37:26', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (148, 'LVS148033746', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Pending', NULL, NULL, NULL, NULL, NULL, '2025-07-18 20:37:46', '2025-07-18 20:37:46', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (149, 'LVS149034419', NULL, NULL, '2025-08-14', '2025-08-16', 20850000.00, 10, 'Cancelled', NULL, 'thgisch', NULL, NULL, 6, '2025-07-18 20:44:19', '2025-07-31 13:56:40', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
-(150, 'LVS150034633', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, 6, '2025-07-18 20:46:33', '2025-07-31 13:57:03', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(150, 'LVS150034633', NULL, NULL, '2025-08-18', '2025-08-21', 20850000.00, 10, 'Operational', NULL, NULL, NULL, NULL, 6, '2025-07-18 20:46:33', '2025-08-18 01:38:33', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (151, 'LVS151023546', NULL, NULL, '2025-08-18', '2025-08-22', 27800000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, 6, '2025-07-19 19:35:46', '2025-07-31 13:57:29', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
-(152, 'LVS152023648', NULL, NULL, '2025-08-18', '2025-08-22', 10248000.00, 10, 'Confirmed', NULL, NULL, NULL, NULL, 1, '2025-07-19 19:36:48', '2025-07-19 19:37:24', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
+(152, 'LVS152023648', NULL, NULL, '2025-08-18', '2025-08-22', 10248000.00, 10, 'Operational', NULL, 'Check-in completed at 2025-08-17 15:05:02', NULL, NULL, 1, '2025-07-19 19:36:48', '2025-08-17 08:05:02', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (153, 'LVS153025209', NULL, NULL, '2025-08-18', '2025-08-22', 2288000.00, 10, 'Cancelled', NULL, NULL, NULL, NULL, 1, '2025-07-19 19:52:09', '2025-07-31 13:37:24', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0),
 (154, 'LVS154095008', NULL, NULL, '2025-07-22', '2025-07-23', 11000.00, 2, 'Pending', NULL, 'v', NULL, NULL, 1, '2025-07-21 02:50:08', '2025-07-21 02:50:08', 'Đào Tùng Dưn', 'dun@gmail.com', '02151651121', NULL, NULL, NULL, 0),
 (155, 'LVS155092059', NULL, NULL, '2025-07-28', '2025-07-29', 22000.00, 6, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-07-28 02:20:59', '2025-07-28 02:20:59', 'PH Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
@@ -372,12 +404,13 @@ INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `ch
 (170, 'LVS170230519', NULL, NULL, '2025-08-13', '2025-08-14', 132000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-13 16:05:19', '2025-08-13 16:05:19', 'Đức Đẹp Trai', 'nguyenanhduc2909@gmail.com', '0822153447', NULL, NULL, NULL, 0),
 (171, 'LVS171161343', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-16 09:13:43', '2025-08-16 09:13:43', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0),
 (172, 'LVS172161440', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'tg', NULL, NULL, 1, '2025-08-16 09:14:40', '2025-08-16 09:14:40', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0),
-(173, 'LVS173161504', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-16 09:15:04', '2025-08-16 09:15:04', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0);
+(173, 'LVS173161504', 1, NULL, '2025-08-16', '2025-08-17', 250000.00, 7, 'Pending', NULL, 'd', NULL, NULL, 1, '2025-08-16 09:15:04', '2025-08-16 09:15:04', 'Nguyễn Anh Đức', 'nguyenanhduc2909@gmail.com', '08221534477', NULL, NULL, NULL, 0),
+(174, 'LVS174083722', 11, 'BOOK-LVS174083722', '2025-08-18', '2025-08-19', 1060000.00, 1, 'Operational', NULL, 'Check-in completed at 2025-08-18 08:38:38', NULL, NULL, 1, '2025-08-18 01:37:20', '2025-08-18 01:38:38', '明心', 'quyenjpn@gmail.com', '0335920306', NULL, NULL, NULL, 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_extensions`
+-- Cấu trúc bảng cho bảng `booking_extensions`
 --
 
 CREATE TABLE `booking_extensions` (
@@ -394,7 +427,7 @@ CREATE TABLE `booking_extensions` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_reschedules`
+-- Cấu trúc bảng cho bảng `booking_reschedules`
 --
 
 CREATE TABLE `booking_reschedules` (
@@ -416,7 +449,7 @@ CREATE TABLE `booking_reschedules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `booking_reschedules`
+-- Đang đổ dữ liệu cho bảng `booking_reschedules`
 --
 
 INSERT INTO `booking_reschedules` (`reschedule_id`, `booking_id`, `new_check_in_date`, `new_check_out_date`, `new_room_id`, `new_option_id`, `reschedule_policy_id`, `price_difference_vnd`, `payment_id`, `status`, `reason`, `suggested_rooms`, `created_at`, `updated_at`, `processed_by`) VALUES
@@ -431,7 +464,7 @@ INSERT INTO `booking_reschedules` (`reschedule_id`, `booking_id`, `new_check_in_
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_rooms`
+-- Cấu trúc bảng cho bảng `booking_rooms`
 --
 
 CREATE TABLE `booking_rooms` (
@@ -456,7 +489,7 @@ CREATE TABLE `booking_rooms` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `booking_rooms`
+-- Đang đổ dữ liệu cho bảng `booking_rooms`
 --
 
 INSERT INTO `booking_rooms` (`id`, `booking_id`, `booking_code`, `room_id`, `option_id`, `option_name`, `option_price`, `representative_id`, `adults`, `children`, `children_age`, `price_per_night`, `nights`, `total_price`, `check_in_date`, `check_out_date`, `created_at`, `updated_at`) VALUES
@@ -555,16 +588,17 @@ INSERT INTO `booking_rooms` (`id`, `booking_id`, `booking_code`, `room_id`, `opt
 (132, 144, 'LVS144031538', NULL, 'BOOK-LVS144031538-R6-2', 'Luxury Package', 3200000.00, 116, 2, 2, NULL, 20850000, 3, 62550000, '2025-08-18', '2025-08-21', '2025-07-18 20:16:34', '2025-07-18 20:16:34'),
 (133, 151, 'LVS151023546', NULL, 'BOOK-LVS151023546-R6-1', 'Luxury Package', 3200000.00, 117, 2, 4, NULL, 27800000, 4, 111200000, '2025-08-18', '2025-08-22', '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
 (134, 151, 'LVS151023546', NULL, 'BOOK-LVS151023546-R6-2', 'Luxury Package', 3200000.00, 117, 2, 2, NULL, 27800000, 4, 111200000, '2025-08-18', '2025-08-22', '2025-07-19 19:36:12', '2025-07-19 19:36:12'),
-(135, 152, 'LVS152023648', NULL, 'BOOK-LVS152023648-R1-1', 'Premium Package', 1006000.00, 118, 2, 4, NULL, 10248000, 4, 40992000, '2025-08-18', '2025-08-22', '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
-(136, 152, 'LVS152023648', NULL, 'BOOK-LVS152023648-R1-2', 'Premium Package', 1006000.00, 118, 2, 2, NULL, 10248000, 4, 40992000, '2025-08-18', '2025-08-22', '2025-07-19 19:37:20', '2025-07-19 19:37:20'),
+(135, 152, 'LVS152023648', 5, 'BOOK-LVS152023648-R1-1', 'Premium Package', 1006000.00, 118, 2, 4, NULL, 10248000, 4, 40992000, '2025-08-18', '2025-08-22', '2025-07-19 19:37:20', '2025-08-17 08:04:57'),
+(136, 152, 'LVS152023648', 6, 'BOOK-LVS152023648-R1-2', 'Premium Package', 1006000.00, 118, 2, 2, NULL, 10248000, 4, 40992000, '2025-08-18', '2025-08-22', '2025-07-19 19:37:20', '2025-08-17 08:04:57'),
 (137, 153, 'LVS153025209', NULL, 'BOOK-LVS153025209-R1-1', 'Standard Package', 11000.00, 119, 2, 4, NULL, 2288000, 4, 9152000, '2025-08-18', '2025-08-22', '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
 (138, 153, 'LVS153025209', NULL, 'BOOK-LVS153025209-R1-2', 'Standard Package', 11000.00, 119, 2, 2, NULL, 2288000, 4, 9152000, '2025-08-18', '2025-08-22', '2025-07-19 19:53:06', '2025-07-19 19:53:06'),
-(149, 24, NULL, 91, 'OPT10', NULL, NULL, NULL, NULL, NULL, NULL, 2000000, 5, 10000000, '2025-08-10', '2025-08-15', '2025-08-05 09:07:51', '2025-08-05 09:07:51');
+(149, 24, NULL, 91, 'OPT10', NULL, NULL, NULL, NULL, NULL, NULL, 2000000, 5, 10000000, '2025-08-10', '2025-08-15', '2025-08-05 09:07:51', '2025-08-05 09:07:51'),
+(150, 174, 'LVS174083722', 12, 'BOOK-LVS174083722', 'Premium Package', 1060000.00, 120, 1, 0, NULL, 1060000, 1, 1060000, '2025-08-18', '2025-08-19', '2025-08-18 01:37:59', '2025-08-18 01:38:33');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_room_children`
+-- Cấu trúc bảng cho bảng `booking_room_children`
 --
 
 CREATE TABLE `booking_room_children` (
@@ -577,7 +611,7 @@ CREATE TABLE `booking_room_children` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `booking_room_children`
+-- Đang đổ dữ liệu cho bảng `booking_room_children`
 --
 
 INSERT INTO `booking_room_children` (`id`, `booking_room_id`, `age`, `child_index`, `created_at`, `updated_at`) VALUES
@@ -626,7 +660,7 @@ INSERT INTO `booking_room_children` (`id`, `booking_room_id`, `age`, `child_inde
 -- --------------------------------------------------------
 
 --
--- Table structure for table `booking_services`
+-- Cấu trúc bảng cho bảng `booking_services`
 --
 
 CREATE TABLE `booking_services` (
@@ -640,17 +674,22 @@ CREATE TABLE `booking_services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin dịch vụ phát sinh cho mỗi booking';
 
 --
--- Dumping data for table `booking_services`
+-- Đang đổ dữ liệu cho bảng `booking_services`
 --
 
 INSERT INTO `booking_services` (`id`, `booking_id`, `service_id`, `quantity`, `price_vnd`, `created_at`, `updated_at`) VALUES
 (1, 24, 10, 2, 200000.00, '2025-08-11 10:47:20', '2025-08-11 10:47:20'),
-(2, 24, 8, 1, 2000000.00, '2025-08-11 10:47:20', '2025-08-11 10:47:20');
+(2, 24, 8, 1, 2000000.00, '2025-08-11 10:47:20', '2025-08-11 10:47:20'),
+(3, 160, 8, 5, 2000000.00, '2025-08-17 06:57:46', '2025-08-17 08:40:50'),
+(4, 121, 8, 1, 2000000.00, '2025-08-17 07:50:33', '2025-08-17 07:50:33'),
+(5, 160, 10, 1, 200000.00, '2025-08-17 08:40:58', '2025-08-17 08:40:58'),
+(6, 174, 8, 1, 2000000.00, '2025-08-18 01:38:47', '2025-08-18 01:38:47'),
+(7, 174, 10, 2, 200000.00, '2025-08-18 02:12:18', '2025-08-18 02:12:23');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `cancellation_policies`
+-- Cấu trúc bảng cho bảng `cancellation_policies`
 --
 
 CREATE TABLE `cancellation_policies` (
@@ -673,7 +712,7 @@ CREATE TABLE `cancellation_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `cancellation_policies`
+-- Đang đổ dữ liệu cho bảng `cancellation_policies`
 --
 
 INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_booking_amount`, `max_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -684,7 +723,7 @@ INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_day
 -- --------------------------------------------------------
 
 --
--- Table structure for table `cancellation_requests`
+-- Cấu trúc bảng cho bảng `cancellation_requests`
 --
 
 CREATE TABLE `cancellation_requests` (
@@ -708,7 +747,7 @@ CREATE TABLE `cancellation_requests` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `check_in_policies`
+-- Cấu trúc bảng cho bảng `check_in_policies`
 --
 
 CREATE TABLE `check_in_policies` (
@@ -725,13 +764,13 @@ CREATE TABLE `check_in_policies` (
   `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời gian tạo',
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời gian cập nhật',
-  `conditions` text COLLATE utf8mb4_general_ci COMMENT 'Điều kiện áp dụng chính sách (JSON hoặc text)',
-  `action` text COLLATE utf8mb4_general_ci COMMENT 'Hành động khi chính sách được áp dụng',
+  `conditions` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Điều kiện áp dụng chính sách (JSON hoặc text)',
+  `action` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Hành động khi chính sách được áp dụng',
   `priority` int DEFAULT '0' COMMENT 'Mức độ ưu tiên (cao hơn được áp dụng trước)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách chính sách nhận phòng';
 
 --
--- Dumping data for table `check_in_policies`
+-- Đang đổ dữ liệu cho bảng `check_in_policies`
 --
 
 INSERT INTO `check_in_policies` (`policy_id`, `name`, `description`, `standard_check_in_time`, `early_check_in_fee_vnd`, `early_check_in_max_hours`, `late_check_in_fee_vnd`, `late_check_in_max_hours`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`, `conditions`, `action`, `priority`) VALUES
@@ -750,19 +789,19 @@ INSERT INTO `check_in_policies` (`policy_id`, `name`, `description`, `standard_c
 -- --------------------------------------------------------
 
 --
--- Table structure for table `check_in_requests`
+-- Cấu trúc bảng cho bảng `check_in_requests`
 --
 
 CREATE TABLE `check_in_requests` (
   `request_id` int NOT NULL COMMENT 'Khóa chính, tự động tăng',
   `booking_id` int NOT NULL COMMENT 'ID của booking liên quan',
   `policy_id` int DEFAULT NULL COMMENT 'Chính sách check-in được áp dụng',
-  `type` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Loại yêu cầu check-in (VD: Standard, Early, Walk-in)',
+  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Loại yêu cầu check-in (VD: Standard, Early, Walk-in)',
   `requested_check_in_time` datetime NOT NULL COMMENT 'Thời gian yêu cầu check-in',
   `fee_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Phí bổ sung (VD: phí check-in sớm)',
-  `special_requests` text COLLATE utf8mb4_general_ci COMMENT 'Yêu cầu đặc biệt (JSON hoặc text, VD: tầng cao, giường phụ)',
+  `special_requests` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Yêu cầu đặc biệt (JSON hoặc text, VD: tầng cao, giường phụ)',
   `total_amount_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Tổng chi phí cần thanh toán (bao gồm phí sớm nếu có)',
-  `status` enum('Pending','Approved','Rejected','Awaiting Payment','Missing Document','Room Unavailable') COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu check-in',
+  `status` enum('Pending','Approved','Rejected','Awaiting Payment','Missing Document','Room Unavailable') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu check-in',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Yêu cầu check-in từ khách';
@@ -770,7 +809,7 @@ CREATE TABLE `check_in_requests` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `check_out_policies`
+-- Cấu trúc bảng cho bảng `check_out_policies`
 --
 
 CREATE TABLE `check_out_policies` (
@@ -789,11 +828,11 @@ CREATE TABLE `check_out_policies` (
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `action` text COLLATE utf8mb4_general_ci COMMENT 'Hành động khi chính sách được áp dụng'
+  `action` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Hành động khi chính sách được áp dụng'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `check_out_policies`
+-- Đang đổ dữ liệu cho bảng `check_out_policies`
 --
 
 INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `early_check_out_max_hours`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `standard_check_out_time`, `is_active`, `created_at`, `updated_at`, `action`) VALUES
@@ -809,7 +848,7 @@ INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `check_out_requests`
+-- Cấu trúc bảng cho bảng `check_out_requests`
 --
 
 CREATE TABLE `check_out_requests` (
@@ -818,16 +857,16 @@ CREATE TABLE `check_out_requests` (
   `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `requested_check_out_time` datetime NOT NULL,
   `fee_vnd` decimal(15,2) DEFAULT '0.00',
-  `status` enum('Pending','Approved','Rejected','Awaiting Payment','Disputed','Incomplete') COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu check-out',
+  `status` enum('Pending','Approved','Rejected','Awaiting Payment','Disputed','Incomplete') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Pending' COMMENT 'Trạng thái yêu cầu check-out',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `policy_id` int DEFAULT NULL COMMENT 'Chính sách check-out được áp dụng',
-  `special_requests` text COLLATE utf8mb4_general_ci COMMENT 'Yêu cầu đặc biệt (JSON hoặc text, ví dụ: lưu trữ hành lý, hóa đơn đa ngôn ngữ)',
+  `special_requests` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Yêu cầu đặc biệt (JSON hoặc text, ví dụ: lưu trữ hành lý, hóa đơn đa ngôn ngữ)',
   `total_amount_vnd` decimal(15,2) DEFAULT '0.00' COMMENT 'Tổng chi phí cần thanh toán (phòng + dịch vụ + phí bổ sung)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `check_out_requests`
+-- Đang đổ dữ liệu cho bảng `check_out_requests`
 --
 
 INSERT INTO `check_out_requests` (`request_id`, `booking_id`, `type`, `requested_check_out_time`, `fee_vnd`, `status`, `created_at`, `updated_at`, `policy_id`, `special_requests`, `total_amount_vnd`) VALUES
@@ -836,7 +875,7 @@ INSERT INTO `check_out_requests` (`request_id`, `booking_id`, `type`, `requested
 -- --------------------------------------------------------
 
 --
--- Table structure for table `children_surcharges`
+-- Cấu trúc bảng cho bảng `children_surcharges`
 --
 
 CREATE TABLE `children_surcharges` (
@@ -853,7 +892,7 @@ CREATE TABLE `children_surcharges` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `children_surcharges`
+-- Đang đổ dữ liệu cho bảng `children_surcharges`
 --
 
 INSERT INTO `children_surcharges` (`id`, `min_age`, `max_age`, `is_free`, `count_as_adult`, `requires_extra_bed`, `surcharge_amount_vnd`, `created_at`, `updated_at`, `booking_id`) VALUES
@@ -863,16 +902,16 @@ INSERT INTO `children_surcharges` (`id`, `min_age`, `max_age`, `is_free`, `count
 -- --------------------------------------------------------
 
 --
--- Table structure for table `compensation_policies`
+-- Cấu trúc bảng cho bảng `compensation_policies`
 --
 
 CREATE TABLE `compensation_policies` (
   `compensation_policy_id` int NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên chính sách bồi thường',
-  `description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tên chính sách bồi thường',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả chi tiết',
   `applies_to_room_type_id` int DEFAULT NULL COMMENT 'Loại phòng áp dụng, NULL nếu áp dụng cho tất cả',
-  `condition_type` enum('room_damage','service_failure','overbooking','other') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại sự cố áp dụng',
-  `discount_type` enum('percentage','fixed_amount') COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại giảm giá: % hoặc số tiền cố định',
+  `condition_type` enum('room_damage','service_failure','overbooking','other') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại sự cố áp dụng',
+  `discount_type` enum('percentage','fixed_amount') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Loại giảm giá: % hoặc số tiền cố định',
   `discount_value` decimal(15,2) NOT NULL COMMENT 'Giá trị giảm',
   `max_compensation_amount` decimal(15,2) DEFAULT NULL COMMENT 'Mức bồi thường tối đa (nếu có)',
   `is_active` tinyint(1) DEFAULT '1' COMMENT 'Trạng thái hoạt động',
@@ -881,7 +920,7 @@ CREATE TABLE `compensation_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `compensation_policies`
+-- Đang đổ dữ liệu cho bảng `compensation_policies`
 --
 
 INSERT INTO `compensation_policies` (`compensation_policy_id`, `name`, `description`, `applies_to_room_type_id`, `condition_type`, `discount_type`, `discount_value`, `max_compensation_amount`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -896,7 +935,7 @@ INSERT INTO `compensation_policies` (`compensation_policy_id`, `name`, `descript
 -- --------------------------------------------------------
 
 --
--- Table structure for table `compensation_requests`
+-- Cấu trúc bảng cho bảng `compensation_requests`
 --
 
 CREATE TABLE `compensation_requests` (
@@ -904,20 +943,20 @@ CREATE TABLE `compensation_requests` (
   `booking_id` int NOT NULL COMMENT 'ID booking liên quan',
   `requested_by` bigint UNSIGNED NOT NULL COMMENT 'ID lễ tân gửi yêu cầu (users.id)',
   `policy_id` int DEFAULT NULL COMMENT 'ID chính sách trong compensation_policies, NULL nếu là yêu cầu khác',
-  `custom_reason` text COLLATE utf8mb4_general_ci COMMENT 'Lý do nhập tay nếu không chọn policy có sẵn',
-  `status` enum('pending','approved','rejected','applied') COLLATE utf8mb4_general_ci DEFAULT 'pending' COMMENT 'Trạng thái xử lý',
+  `custom_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Lý do nhập tay nếu không chọn policy có sẵn',
+  `status` enum('pending','approved','rejected','applied') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending' COMMENT 'Trạng thái xử lý',
   `requested_amount` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền lễ tân đề xuất bồi thường (nếu có)',
   `approved_amount` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền quản lý duyệt cuối cùng',
   `approved_by` bigint UNSIGNED NOT NULL COMMENT 'ID người duyệt (users.id)',
   `approved_at` timestamp NULL DEFAULT NULL COMMENT 'Thời gian duyệt',
   `attachments` json DEFAULT NULL COMMENT 'Danh sách file đính kèm (ảnh/video)',
-  `admin_note` text COLLATE utf8mb4_general_ci COMMENT 'Ghi chú của quản lý khi duyệt hoặc từ chối',
+  `admin_note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Ghi chú của quản lý khi duyệt hoặc từ chối',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `compensation_requests`
+-- Đang đổ dữ liệu cho bảng `compensation_requests`
 --
 
 INSERT INTO `compensation_requests` (`request_id`, `booking_id`, `requested_by`, `policy_id`, `custom_reason`, `status`, `requested_amount`, `approved_amount`, `approved_by`, `approved_at`, `attachments`, `admin_note`, `created_at`, `updated_at`) VALUES
@@ -926,7 +965,7 @@ INSERT INTO `compensation_requests` (`request_id`, `booking_id`, `requested_by`,
 -- --------------------------------------------------------
 
 --
--- Table structure for table `conversations`
+-- Cấu trúc bảng cho bảng `conversations`
 --
 
 CREATE TABLE `conversations` (
@@ -941,7 +980,7 @@ CREATE TABLE `conversations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `conversations`
+-- Đang đổ dữ liệu cho bảng `conversations`
 --
 
 INSERT INTO `conversations` (`id`, `user_id`, `client_token`, `is_bot_only`, `handover_to_user_id`, `status`, `created_at`, `updated_at`) VALUES
@@ -953,7 +992,7 @@ INSERT INTO `conversations` (`id`, `user_id`, `client_token`, `is_bot_only`, `ha
 -- --------------------------------------------------------
 
 --
--- Table structure for table `currency`
+-- Cấu trúc bảng cho bảng `currency`
 --
 
 CREATE TABLE `currency` (
@@ -965,7 +1004,7 @@ CREATE TABLE `currency` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin tiền tệ và tỷ giá';
 
 --
--- Dumping data for table `currency`
+-- Đang đổ dữ liệu cho bảng `currency`
 --
 
 INSERT INTO `currency` (`currency_code`, `name`, `exchange_rate`, `symbol`, `format`) VALUES
@@ -975,7 +1014,7 @@ INSERT INTO `currency` (`currency_code`, `name`, `exchange_rate`, `symbol`, `for
 -- --------------------------------------------------------
 
 --
--- Table structure for table `datafeeds`
+-- Cấu trúc bảng cho bảng `datafeeds`
 --
 
 CREATE TABLE `datafeeds` (
@@ -991,7 +1030,7 @@ CREATE TABLE `datafeeds` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `deposit_policies`
+-- Cấu trúc bảng cho bảng `deposit_policies`
 --
 
 CREATE TABLE `deposit_policies` (
@@ -1012,7 +1051,7 @@ CREATE TABLE `deposit_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `deposit_policies`
+-- Đang đổ dữ liệu cho bảng `deposit_policies`
 --
 
 INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_days_before_checkin`, `min_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1023,7 +1062,7 @@ INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `depo
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dynamic_pricing_rules`
+-- Cấu trúc bảng cho bảng `dynamic_pricing_rules`
 --
 
 CREATE TABLE `dynamic_pricing_rules` (
@@ -1039,7 +1078,7 @@ CREATE TABLE `dynamic_pricing_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `dynamic_pricing_rules`
+-- Đang đổ dữ liệu cho bảng `dynamic_pricing_rules`
 --
 
 INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_threshold`, `price_adjustment`, `is_active`, `created_at`, `updated_at`, `priority`, `is_exclusive`) VALUES
@@ -1052,7 +1091,7 @@ INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_thres
 -- --------------------------------------------------------
 
 --
--- Table structure for table `events`
+-- Cấu trúc bảng cho bảng `events`
 --
 
 CREATE TABLE `events` (
@@ -1067,7 +1106,7 @@ CREATE TABLE `events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `events`
+-- Đang đổ dữ liệu cho bảng `events`
 --
 
 INSERT INTO `events` (`event_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1078,7 +1117,7 @@ INSERT INTO `events` (`event_id`, `name`, `start_date`, `end_date`, `description
 -- --------------------------------------------------------
 
 --
--- Table structure for table `extension_policies`
+-- Cấu trúc bảng cho bảng `extension_policies`
 --
 
 CREATE TABLE `extension_policies` (
@@ -1097,7 +1136,7 @@ CREATE TABLE `extension_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách chính sách gia hạn đặt phòng';
 
 --
--- Dumping data for table `extension_policies`
+-- Đang đổ dữ liệu cho bảng `extension_policies`
 --
 
 INSERT INTO `extension_policies` (`policy_id`, `name`, `description`, `max_extension_days`, `extension_fee_vnd`, `extension_percentage`, `min_days_before_checkout`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1117,7 +1156,7 @@ INSERT INTO `extension_policies` (`policy_id`, `name`, `description`, `max_exten
 -- --------------------------------------------------------
 
 --
--- Table structure for table `extension_requests`
+-- Cấu trúc bảng cho bảng `extension_requests`
 --
 
 CREATE TABLE `extension_requests` (
@@ -1135,7 +1174,7 @@ CREATE TABLE `extension_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu trữ yêu cầu gia hạn đặt phòng';
 
 --
--- Dumping data for table `extension_requests`
+-- Đang đổ dữ liệu cho bảng `extension_requests`
 --
 
 INSERT INTO `extension_requests` (`request_id`, `booking_id`, `extension_policy_id`, `new_check_out_date`, `extension_days`, `extension_fee_vnd`, `status`, `processed_by`, `notes`, `created_at`, `updated_at`) VALUES
@@ -1146,7 +1185,7 @@ INSERT INTO `extension_requests` (`request_id`, `booking_id`, `extension_policy_
 -- --------------------------------------------------------
 
 --
--- Table structure for table `failed_jobs`
+-- Cấu trúc bảng cho bảng `failed_jobs`
 --
 
 CREATE TABLE `failed_jobs` (
@@ -1162,7 +1201,7 @@ CREATE TABLE `failed_jobs` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `faqs`
+-- Cấu trúc bảng cho bảng `faqs`
 --
 
 CREATE TABLE `faqs` (
@@ -1179,7 +1218,7 @@ CREATE TABLE `faqs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ câu hỏi thường gặp và câu trả lời';
 
 --
--- Dumping data for table `faqs`
+-- Đang đổ dữ liệu cho bảng `faqs`
 --
 
 INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer_vi`, `sort_order`, `is_active`, `priority`, `created_at`, `updated_at`) VALUES
@@ -1192,7 +1231,7 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 -- --------------------------------------------------------
 
 --
--- Table structure for table `flexible_pricing_rules`
+-- Cấu trúc bảng cho bảng `flexible_pricing_rules`
 --
 
 CREATE TABLE `flexible_pricing_rules` (
@@ -1214,7 +1253,7 @@ CREATE TABLE `flexible_pricing_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Quy tắc giá linh động cho cuối tuần, sự kiện, ngày lễ, mùa';
 
 --
--- Dumping data for table `flexible_pricing_rules`
+-- Đang đổ dữ liệu cho bảng `flexible_pricing_rules`
 --
 
 INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `days_of_week`, `event_id`, `holiday_id`, `season_name`, `start_date`, `end_date`, `price_adjustment`, `is_active`, `created_at`, `updated_at`, `priority`, `is_exclusive`) VALUES
@@ -1226,7 +1265,7 @@ INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `d
 -- --------------------------------------------------------
 
 --
--- Table structure for table `floors`
+-- Cấu trúc bảng cho bảng `floors`
 --
 
 CREATE TABLE `floors` (
@@ -1242,7 +1281,7 @@ CREATE TABLE `floors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý các tầng của khách sạn';
 
 --
--- Dumping data for table `floors`
+-- Đang đổ dữ liệu cho bảng `floors`
 --
 
 INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `description`, `facilities`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1284,7 +1323,7 @@ INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `d
 -- --------------------------------------------------------
 
 --
--- Table structure for table `holidays`
+-- Cấu trúc bảng cho bảng `holidays`
 --
 
 CREATE TABLE `holidays` (
@@ -1299,7 +1338,7 @@ CREATE TABLE `holidays` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `holidays`
+-- Đang đổ dữ liệu cho bảng `holidays`
 --
 
 INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1309,7 +1348,7 @@ INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `descrip
 -- --------------------------------------------------------
 
 --
--- Table structure for table `hotel`
+-- Cấu trúc bảng cho bảng `hotel`
 --
 
 CREATE TABLE `hotel` (
@@ -1320,7 +1359,7 @@ CREATE TABLE `hotel` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin khách sạn';
 
 --
--- Dumping data for table `hotel`
+-- Đang đổ dữ liệu cho bảng `hotel`
 --
 
 INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
@@ -1329,7 +1368,7 @@ INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `invoices`
+-- Cấu trúc bảng cho bảng `invoices`
 --
 
 CREATE TABLE `invoices` (
@@ -1337,22 +1376,23 @@ CREATE TABLE `invoices` (
   `booking_id` int NOT NULL,
   `total_amount_vnd` decimal(15,2) NOT NULL,
   `issued_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` enum('Draft','Sent','Paid') COLLATE utf8mb4_general_ci DEFAULT 'Draft',
+  `status` enum('Draft','Sent','Paid') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'Draft',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin hóa đơn';
 
 --
--- Dumping data for table `invoices`
+-- Đang đổ dữ liệu cho bảng `invoices`
 --
 
 INSERT INTO `invoices` (`invoice_id`, `booking_id`, `total_amount_vnd`, `issued_at`, `status`, `created_at`, `updated_at`) VALUES
-(1, 24, 2900000.00, '2025-08-16 10:05:05', 'Draft', '2025-08-16 10:05:05', '2025-08-16 10:05:05');
+(1, 24, 2900000.00, '2025-08-16 10:05:05', 'Draft', '2025-08-16 10:05:05', '2025-08-16 10:05:05'),
+(2, 142, 8650000.00, '2025-08-17 09:21:59', 'Draft', '2025-08-17 09:21:59', '2025-08-17 09:21:59');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `language`
+-- Cấu trúc bảng cho bảng `language`
 --
 
 CREATE TABLE `language` (
@@ -1361,7 +1401,7 @@ CREATE TABLE `language` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ngôn ngữ hỗ trợ';
 
 --
--- Dumping data for table `language`
+-- Đang đổ dữ liệu cho bảng `language`
 --
 
 INSERT INTO `language` (`language_code`, `name`) VALUES
@@ -1371,7 +1411,7 @@ INSERT INTO `language` (`language_code`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `meal_types`
+-- Cấu trúc bảng cho bảng `meal_types`
 --
 
 CREATE TABLE `meal_types` (
@@ -1385,7 +1425,7 @@ CREATE TABLE `meal_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách các loại bữa ăn';
 
 --
--- Dumping data for table `meal_types`
+-- Đang đổ dữ liệu cho bảng `meal_types`
 --
 
 INSERT INTO `meal_types` (`id`, `type_name`, `description`, `base_price_vnd`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1394,7 +1434,7 @@ INSERT INTO `meal_types` (`id`, `type_name`, `description`, `base_price_vnd`, `i
 -- --------------------------------------------------------
 
 --
--- Table structure for table `media_files`
+-- Cấu trúc bảng cho bảng `media_files`
 --
 
 CREATE TABLE `media_files` (
@@ -1411,7 +1451,7 @@ CREATE TABLE `media_files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh';
 
 --
--- Dumping data for table `media_files`
+-- Đang đổ dữ liệu cho bảng `media_files`
 --
 
 INSERT INTO `media_files` (`id`, `filename`, `filepath`, `alt_text`, `title`, `type`, `size`, `used_in`, `created_at`, `updated_at`) VALUES
@@ -1431,7 +1471,7 @@ INSERT INTO `media_files` (`id`, `filename`, `filepath`, `alt_text`, `title`, `t
 -- --------------------------------------------------------
 
 --
--- Table structure for table `messages`
+-- Cấu trúc bảng cho bảng `messages`
 --
 
 CREATE TABLE `messages` (
@@ -1444,12 +1484,12 @@ CREATE TABLE `messages` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `is_read` tinyint DEFAULT '0',
-  `message_type` enum('text','image','file','system') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `metadata` text COLLATE utf8mb4_unicode_ci
+  `message_type` enum('text','image','file','system') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `metadata` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `messages`
+-- Đang đổ dữ liệu cho bảng `messages`
 --
 
 INSERT INTO `messages` (`id`, `conversation_id`, `sender_type`, `sender_id`, `message`, `is_from_bot`, `created_at`, `updated_at`, `is_read`, `message_type`, `metadata`) VALUES
@@ -1481,7 +1521,7 @@ INSERT INTO `messages` (`id`, `conversation_id`, `sender_type`, `sender_id`, `me
 -- --------------------------------------------------------
 
 --
--- Table structure for table `migrations`
+-- Cấu trúc bảng cho bảng `migrations`
 --
 
 CREATE TABLE `migrations` (
@@ -1491,7 +1531,7 @@ CREATE TABLE `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `migrations`
+-- Đang đổ dữ liệu cho bảng `migrations`
 --
 
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
@@ -1516,28 +1556,29 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (19, '2025_07_21_094809_add_client_token_to_conversations_table', 11),
 (20, '2025_07_21_145143_create_faqs_table', 12),
 (21, '2025_08_13_160235_create_payment_settings_table', 13),
-(22, '2025_08_14_104639_create_audit_logs_table', 14);
+(22, '2025_08_14_104639_create_audit_logs_table', 14),
+(23, '2025_08_18_111147_create_user_notifications_table', 15);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `news`
+-- Cấu trúc bảng cho bảng `news`
 --
 
 CREATE TABLE `news` (
   `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính, mã bài viết',
-  `slug` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn không dấu, duy nhất cho mỗi bài viết (SEO)',
-  `title` varchar(255) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tiêu đề bài viết',
-  `summary` text COLLATE utf8mb4_general_ci COMMENT 'Tóm tắt ngắn nội dung bài viết',
-  `content` longtext COLLATE utf8mb4_general_ci COMMENT 'Nội dung chi tiết bài viết (HTML)',
+  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn không dấu, duy nhất cho mỗi bài viết (SEO)',
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tiêu đề bài viết',
+  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Tóm tắt ngắn nội dung bài viết',
+  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Nội dung chi tiết bài viết (HTML)',
   `tags` json DEFAULT NULL COMMENT 'Danh sách tag (mảng string, phục vụ tìm kiếm, phân loại)',
   `thumbnail_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID ảnh đại diện (liên kết media_files)',
   `author_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID tác giả (liên kết users)',
   `category_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID chuyên mục/danh mục (liên kết news_categories)',
-  `meta_title` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tiêu đề SEO (meta title)',
-  `meta_description` text COLLATE utf8mb4_general_ci COMMENT 'Mô tả SEO (meta description)',
-  `meta_keywords` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Từ khóa SEO (meta keywords)',
-  `canonical_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL chuẩn SEO (canonical)',
+  `meta_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tiêu đề SEO (meta title)',
+  `meta_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả SEO (meta description)',
+  `meta_keywords` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Từ khóa SEO (meta keywords)',
+  `canonical_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL chuẩn SEO (canonical)',
   `schema_json` json DEFAULT NULL COMMENT 'Dữ liệu cấu trúc SEO (schema.org, dạng JSON)',
   `views` int DEFAULT '0' COMMENT 'Số lượt xem bài viết',
   `status` tinyint DEFAULT '1' COMMENT 'Trạng thái bài viết (1: hiển thị, 0: ẩn, nháp...)',
@@ -1548,22 +1589,22 @@ CREATE TABLE `news` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `news`
+-- Đang đổ dữ liệu cho bảng `news`
 --
 
 INSERT INTO `news` (`id`, `slug`, `title`, `summary`, `content`, `tags`, `thumbnail_id`, `author_id`, `category_id`, `meta_title`, `meta_description`, `meta_keywords`, `canonical_url`, `schema_json`, `views`, `status`, `is_featured`, `published_at`, `created_at`, `updated_at`) VALUES
-(1, 'kham-pha-khong-gian-sang-trong-tai-lavishstay-resort', 'Khám Phá Không Gian Sang Trọng Tại LavishStay Resort', 'Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.', '<p>LavishStay Resort mang đến cho du khách một trải nghiệm nghỉ dưỡng đẳng cấp với không gian sang trọng và dịch vụ tận tâm. Tọa lạc tại vị trí đắc địa, resort sở hữu kiến trúc hiện đại hòa quyện với thiên nhiên.</p><p>Các phòng nghỉ được thiết kế tinh tế với đầy đủ tiện nghi cao cấp, mang đến sự thoải mái tối đa cho khách hàng. Từ phòng Deluxe đến Suite Presidential, mỗi không gian đều được chăm chút kỹ lưỡng về từng chi tiết.</p><p>Resort còn sở hữu hệ thống tiện ích đa dạng bao gồm nhà hàng fine dining, spa cao cấp, hồ bơi infinity và trung tâm thể dục hiện đại.</p>', '[\"resort\", \"luxury\", \"accommodation\", \"travel\"]', 6, 3, 2, 'LavishStay Resort - Không Gian Nghỉ Dưỡng Đẳng Cấp 5 Sao', 'Khám phá LavishStay Resort với không gian sang trọng, dịch vụ 5 sao và trải nghiệm nghỉ dưỡng đẳng cấp. Đặt phòng ngay để nhận ưu đãi đặc biệt.', 'lavishstay, resort, luxury hotel, 5 star, nghỉ dưỡng, khách sạn cao cấp', '/news/kham-pha-khong-gian-sang-trong-tai-lavishstay-resort', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Khám Phá Không Gian Sang Trọng Tại LavishStay Resort\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.\"}', 2806, 1, 1, '2025-07-29 16:37:45', '2025-08-11 02:37:45', '2025-08-13 20:41:46'),
+(1, 'kham-pha-khong-gian-sang-trong-tai-lavishstay-resort', 'Khám Phá Không Gian Sang Trọng Tại LavishStay Resort', 'Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.', '<p>LavishStay Resort mang đến cho du khách một trải nghiệm nghỉ dưỡng đẳng cấp với không gian sang trọng và dịch vụ tận tâm. Tọa lạc tại vị trí đắc địa, resort sở hữu kiến trúc hiện đại hòa quyện với thiên nhiên.</p><p>Các phòng nghỉ được thiết kế tinh tế với đầy đủ tiện nghi cao cấp, mang đến sự thoải mái tối đa cho khách hàng. Từ phòng Deluxe đến Suite Presidential, mỗi không gian đều được chăm chút kỹ lưỡng về từng chi tiết.</p><p>Resort còn sở hữu hệ thống tiện ích đa dạng bao gồm nhà hàng fine dining, spa cao cấp, hồ bơi infinity và trung tâm thể dục hiện đại.</p>', '[\"resort\", \"luxury\", \"accommodation\", \"travel\"]', 6, 3, 2, 'LavishStay Resort - Không Gian Nghỉ Dưỡng Đẳng Cấp 5 Sao', 'Khám phá LavishStay Resort với không gian sang trọng, dịch vụ 5 sao và trải nghiệm nghỉ dưỡng đẳng cấp. Đặt phòng ngay để nhận ưu đãi đặc biệt.', 'lavishstay, resort, luxury hotel, 5 star, nghỉ dưỡng, khách sạn cao cấp', '/news/kham-pha-khong-gian-sang-trong-tai-lavishstay-resort', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Khám Phá Không Gian Sang Trọng Tại LavishStay Resort\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Trải nghiệm không gian nghỉ dưỡng đẳng cấp với thiết kế hiện đại và dịch vụ 5 sao tại LavishStay Resort.\"}', 2807, 1, 1, '2025-07-29 16:37:45', '2025-08-11 02:37:45', '2025-08-18 03:03:13'),
 (2, 'uu-dai-mua-he-2024-giam-gia-len-den-40-phan-tram', 'Ưu Đãi Mùa Hè 2024 - Giảm Giá Lên Đến 40%', 'Chương trình ưu đãi mùa hè đặc biệt với mức giảm giá lên đến 40% cho tất cả các hạng phòng tại LavishStay.', '<p>Mùa hè đã đến và LavishStay mang đến chương trình ưu đãi đặc biệt dành cho tất cả du khách. Với mức giảm giá lên đến 40%, đây là cơ hội tuyệt vời để bạn trải nghiệm kỳ nghỉ trong mơ.</p><h3>Ưu đãi bao gồm:</h3><ul><li>Giảm 40% cho phòng Suite và Presidential</li><li>Giảm 30% cho phòng Deluxe và Superior</li><li>Giảm 20% cho tất cả dịch vụ spa</li><li>Buffet sáng miễn phí cho trẻ em dưới 12 tuổi</li><li>Late check-out đến 14:00 miễn phí</li></ul><p>Chương trình có hiệu lực từ ngày 1/6 đến 31/8/2024. Áp dụng cho các đêm nghỉ từ Chủ Nhật đến Thứ Năm.</p>', '[\"promotion\", \"summer\", \"discount\", \"offer\"]', 7, 3, 3, 'Ưu Đãi Mùa Hè 2024 - Giảm Đến 40% Tại LavishStay Resort', 'Đừng bỏ lỡ chương trình ưu đãi mùa hè với giảm giá lên đến 40% tất cả hạng phòng. Đặt ngay để nhận ưu đãi tốt nhất!', 'ưu đãi, khuyến mãi, giảm giá, mùa hè, summer promotion', '/news/uu-dai-mua-he-2024-giam-gia-len-den-40-phan-tram', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Ưu Đãi Mùa Hè 2024 - Giảm Giá Lên Đến 40%\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Chương trình ưu đãi mùa hè đặc biệt với mức giảm giá lên đến 40% cho tất cả các hạng phòng tại LavishStay.\"}', 4327, 1, 0, '2025-08-03 16:37:45', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
 (3, 'top-10-dia-diem-du-lich-khong-the-bo-qua-gan-lavishstay', 'Top 10 Địa Điểm Du Lịch Không Thể Bỏ Qua Gần LavishStay', 'Khám phá những địa điểm du lịch hấp dẫn xung quanh khu vực LavishStay Resort với hướng dẫn chi tiết từ A đến Z.', '<p>Khi lưu trú tại LavishStay Resort, bạn sẽ có cơ hội khám phá nhiều địa điểm du lịch tuyệt vời xung quanh. Dưới đây là danh sách 10 địa điểm không thể bỏ qua:</p><h3>1. Bãi Biển Paradise</h3><p>Chỉ cách resort 5 phút đi bộ, bãi biển Paradise với làn nước trong xanh và bãi cát trắng mịn là nơi lý tưởng để thư giãn và tắm nắng.</p><h3>2. Chợ Đêm Địa Phương</h3><p>Trải nghiệm văn hóa địa phương qua những món ăn đường phố đặc sắc và các sản phẩm thủ công truyền thống.</p><h3>3. Đảo San Hô</h3><p>Tour lặn ngắm san hô với nhiều loài cá nhiệt đới đầy màu sắc, phù hợp cho cả người mới bắt đầu và chuyên nghiệp.</p><p>... và còn 7 địa điểm thú vị khác đang chờ bạn khám phá!</p>', '[\"travel guide\", \"attractions\", \"tourism\", \"local\"]', 2, 7, 7, 'Top 10 Địa Điểm Du Lịch Gần LavishStay Resort - Hướng Dẫn Chi Tiết', 'Khám phá 10 địa điểm du lịch tuyệt vời xung quanh LavishStay Resort. Hướng dẫn đầy đủ về các hoạt động và điểm tham quan không thể bỏ qua.', 'du lịch, điểm tham quan, hướng dẫn, tourism, attractions, travel guide', '/news/top-10-dia-diem-du-lich-khong-the-bo-qua-gan-lavishstay', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Top 10 Địa Điểm Du Lịch Không Thể Bỏ Qua Gần LavishStay\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Khám phá những địa điểm du lịch hấp dẫn xung quanh khu vực LavishStay Resort với hướng dẫn chi tiết từ A đến Z.\"}', 3662, 1, 0, '2025-08-04 16:37:45', '2025-08-11 02:37:45', '2025-08-16 10:01:55'),
 (4, 'grand-opening-le-khai-truong-nha-hang-rooftop-moi', 'Grand Opening - Lễ Khai Trương Nhà Hàng Rooftop Mới', 'Tham gia lễ khai trương nhà hàng rooftop mới với không gian 360 độ và thực đơn fine dining độc đáo.', '<p>LavishStay Resort hân hạnh giới thiệu nhà hàng rooftop mới - Sky Lounge với tầm nhìn 360 độ tuyệt đẹp ra toàn thành phố và biển cả.</p><h3>Điểm đặc biệt của Sky Lounge:</h3><ul><li>Không gian mở với tầm nhìn panoramic</li><li>Thực đơn fusion cuisine do chef Michelin star thiết kế</li><li>Bar cocktail với hơn 200 loại đồ uống cao cấp</li><li>Live music mỗi tối từ 19:00-22:00</li><li>Không gian riêng tư cho các sự kiện đặc biệt</li></ul><p>Lễ khai trương sẽ diễn ra vào 20:00 ngày 15/12/2024 với sự tham gia của các celebrity và food blogger nổi tiếng. Khách mời sẽ được thưởng thức cocktail welcome drink và canapé miễn phí.</p>', '[\"event\", \"restaurant\", \"opening\", \"rooftop\"]', 7, 2, 7, 'Khai Trương Sky Lounge - Nhà Hàng Rooftop Đẳng Cấp Tại LavishStay', 'Tham gia lễ khai trương Sky Lounge - nhà hàng rooftop với tầm nhìn 360 độ và thực đơn fine dining độc đáo tại LavishStay Resort.', 'nhà hàng rooftop, khai trương, sky lounge, fine dining, event', '/news/grand-opening-le-khai-truong-nha-hang-rooftop-moi', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Grand Opening - Lễ Khai Trương Nhà Hàng Rooftop Mới\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Tham gia lễ khai trương nhà hàng rooftop mới với không gian 360 độ và thực đơn fine dining độc đáo.\"}', 6308, 1, 0, '2025-08-01 16:37:45', '2025-08-11 02:37:45', '2025-08-11 23:26:14'),
 (5, 'thuc-don-mua-dong-dac-biet-huong-vi-am-thuc-chau-a', 'Thực Đơn Mùa Đông Đặc Biệt - Hương Vị Âm Thực Châu Á', 'Khám phá thực đơn mùa đông với những món ăn truyền thống châu Á được chế biến bởi đội ngũ chef chuyên nghiệp.', '<p>Mùa đông đã đến và LavishStay Restaurant mang đến thực đơn đặc biệt với hương vị ấm áp của ẩm thực châu Á truyền thống.</p><h3>Món khai vị:</h3><ul><li>Dumpling tôm hấp với sốt gừng</li><li>Salad đu đủ Thái cay nhẹ</li><li>Chả cá Lã Vọng truyền thống</li></ul><h3>Món chính:</h3><ul><li>Lẩu Thái tôm hùm chua cay</li><li>Bún bò Huế chính hiệu</li><li>Cơm niêu Singapore với tôm rang</li><li>Mì Udon Nhật Bản nước dashi đậm đà</li></ul><h3>Tráng miệng:</h3><ul><li>Chè đậu xanh nước cốt dừa</li><li>Mochi ice cream vị matcha</li><li>Bánh flan caramen</li></ul><p>Thực đơn có hiệu lực từ 1/12/2024 đến 28/2/2025. Đặt bàn trước để được ưu tiên phục vụ.</p>', '[\"cuisine\", \"asian food\", \"winter menu\", \"restaurant\"]', 11, 6, 4, 'Thực Đơn Mùa Đông Châu Á - Ẩm Thực Đặc Sắc Tại LavishStay', 'Thưởng thức thực đơn mùa đông đặc biệt với hương vị ẩm thực châu Á truyền thống tại nhà hàng LavishStay Resort.', 'ẩm thực châu á, thực đơn mùa đông, nhà hàng, món ăn đặc sắc', '/news/thuc-don-mua-dong-dac-biet-huong-vi-am-thuc-chau-a', '{\"@type\": \"Article\", \"author\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"@context\": \"https://schema.org\", \"headline\": \"Thực Đơn Mùa Đông Đặc Biệt - Hương Vị Âm Thực Châu Á\", \"publisher\": {\"name\": \"LavishStay Resort\", \"@type\": \"Organization\"}, \"description\": \"Khám phá thực đơn mùa đông với những món ăn truyền thống châu Á được chế biến bởi đội ngũ chef chuyên nghiệp.\"}', 1294, 1, 1, '2025-07-17 16:37:45', '2025-08-11 02:37:45', '2025-08-12 20:56:26'),
 (6, 'bai-viet-mau-so-6', 'Bài viết mẫu số 6', 'Đây là bài viết mẫu số 6 để test dữ liệu.', '<p>Nội dung chi tiết của bài viết mẫu số 6.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', '[\"sample\", \"test\", \"demo\"]', 1, 3, 7, 'Bài viết mẫu số 6', 'Mô tả bài viết mẫu số 6', 'sample, test, demo', '/news/bai-viet-mau-so-6', '[]', 122, 1, 0, '2025-07-28 16:37:45', '2025-08-11 02:37:45', '2025-08-11 02:37:45'),
-(7, 'bai-viet-mau-so-7', 'Bài viết mẫu số 7', 'Đây là bài viết mẫu số 7 để test dữ liệu.', '<p>Nội dung chi tiết của bài viết mẫu số 7.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', '[\"sample\", \"test\", \"demo\"]', 11, 6, 5, 'Bài viết mẫu số 7', 'Mô tả bài viết mẫu số 7', 'sample, test, demo', '/news/bai-viet-mau-so-7', '[]', 168, 1, 0, '2025-06-25 16:37:45', '2025-08-11 02:37:45', '2025-08-11 02:37:45');
+(7, 'bai-viet-mau-so-7', 'Bài viết mẫu số 7', 'Đây là bài viết mẫu số 7 để test dữ liệu.', '<p>Nội dung chi tiết của bài viết mẫu số 7.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', '[\"sample\", \"test\", \"demo\"]', 11, 6, 5, 'Bài viết mẫu số 7', 'Mô tả bài viết mẫu số 7', 'sample, test, demo', '/news/bai-viet-mau-so-7', '[]', 172, 1, 0, '2025-06-25 16:37:45', '2025-08-11 02:37:45', '2025-08-17 05:17:52');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `news1`
+-- Cấu trúc bảng cho bảng `news1`
 --
 
 CREATE TABLE `news1` (
@@ -1588,7 +1629,7 @@ CREATE TABLE `news1` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `news_categories`
+-- Cấu trúc bảng cho bảng `news_categories`
 --
 
 CREATE TABLE `news_categories` (
@@ -1601,7 +1642,7 @@ CREATE TABLE `news_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục tin tức phân loại nội dung';
 
 --
--- Dumping data for table `news_categories`
+-- Đang đổ dữ liệu cho bảng `news_categories`
 --
 
 INSERT INTO `news_categories` (`id`, `name`, `slug`, `description`, `created_at`, `updated_at`) VALUES
@@ -1615,14 +1656,14 @@ INSERT INTO `news_categories` (`id`, `name`, `slug`, `description`, `created_at`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `news_comments`
+-- Cấu trúc bảng cho bảng `news_comments`
 --
 
 CREATE TABLE `news_comments` (
   `id` bigint UNSIGNED NOT NULL,
   `news_id` bigint UNSIGNED NOT NULL,
   `user_id` bigint UNSIGNED NOT NULL,
-  `content` text COLLATE utf8mb4_general_ci NOT NULL,
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `likes` int DEFAULT '0',
   `parent_id` bigint UNSIGNED DEFAULT NULL,
@@ -1630,7 +1671,7 @@ CREATE TABLE `news_comments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `news_comments`
+-- Đang đổ dữ liệu cho bảng `news_comments`
 --
 
 INSERT INTO `news_comments` (`id`, `news_id`, `user_id`, `content`, `created_at`, `likes`, `parent_id`, `updated_at`) VALUES
@@ -1639,7 +1680,7 @@ INSERT INTO `news_comments` (`id`, `news_id`, `user_id`, `content`, `created_at`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `news_user_actions`
+-- Cấu trúc bảng cho bảng `news_user_actions`
 --
 
 CREATE TABLE `news_user_actions` (
@@ -1654,16 +1695,17 @@ CREATE TABLE `news_user_actions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `news_user_actions`
+-- Đang đổ dữ liệu cho bảng `news_user_actions`
 --
 
 INSERT INTO `news_user_actions` (`id`, `news_id`, `user_id`, `is_liked`, `is_bookmarked`, `rating`, `created_at`, `updated_at`) VALUES
-(1, 3, 1, 0, 0, 5, '2025-08-16 09:57:08', '2025-08-16 10:01:18');
+(1, 3, 1, 0, 0, 5, '2025-08-16 09:57:08', '2025-08-16 10:01:18'),
+(2, 7, 1, 0, 0, 5, '2025-08-17 05:17:43', '2025-08-17 05:17:43');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `notifications`
+-- Cấu trúc bảng cho bảng `notifications`
 --
 
 CREATE TABLE `notifications` (
@@ -1680,7 +1722,7 @@ CREATE TABLE `notifications` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `payment`
+-- Cấu trúc bảng cho bảng `payment`
 --
 
 CREATE TABLE `payment` (
@@ -1695,7 +1737,7 @@ CREATE TABLE `payment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin thanh toán';
 
 --
--- Dumping data for table `payment`
+-- Đang đổ dữ liệu cho bảng `payment`
 --
 
 INSERT INTO `payment` (`payment_id`, `booking_id`, `amount_vnd`, `payment_type`, `status`, `transaction_id`, `created_at`, `updated_at`) VALUES
@@ -1821,21 +1863,22 @@ INSERT INTO `payment` (`payment_id`, `booking_id`, `amount_vnd`, `payment_type`,
 (133, 170, 132000.00, 'vietqr', 'pending', NULL, '2025-08-13 16:05:19', '2025-08-13 16:05:19'),
 (134, 171, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:13:43', '2025-08-16 09:13:43'),
 (135, 172, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:14:40', '2025-08-16 09:14:40'),
-(136, 173, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:15:04', '2025-08-16 09:15:04');
+(136, 173, 250000.00, 'vietqr', 'pending', NULL, '2025-08-16 09:15:04', '2025-08-16 09:15:04'),
+(137, 174, 1060000.00, 'vietqr', 'completed', 'CPAY_LVS174083722_1755481079', '2025-08-18 01:37:22', '2025-08-18 01:38:05');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `payment_settings`
+-- Cấu trúc bảng cho bảng `payment_settings`
 --
 
 CREATE TABLE `payment_settings` (
   `id` bigint UNSIGNED NOT NULL,
-  `key` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `value` text COLLATE utf8mb4_unicode_ci,
-  `type` enum('string','number','boolean','json') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'string',
-  `group_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` text COLLATE utf8mb4_unicode_ci,
+  `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `type` enum('string','number','boolean','json') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'string',
+  `group_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `is_encrypted` tinyint(1) NOT NULL DEFAULT '0',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1843,7 +1886,7 @@ CREATE TABLE `payment_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `payment_settings`
+-- Đang đổ dữ liệu cho bảng `payment_settings`
 --
 
 INSERT INTO `payment_settings` (`id`, `key`, `value`, `type`, `group_name`, `description`, `is_encrypted`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1866,7 +1909,7 @@ INSERT INTO `payment_settings` (`id`, `key`, `value`, `type`, `group_name`, `des
 -- --------------------------------------------------------
 
 --
--- Table structure for table `permissions`
+-- Cấu trúc bảng cho bảng `permissions`
 --
 
 CREATE TABLE `permissions` (
@@ -1879,7 +1922,7 @@ CREATE TABLE `permissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `permissions`
+-- Đang đổ dữ liệu cho bảng `permissions`
 --
 
 INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_at`, `parent_id`) VALUES
@@ -1906,7 +1949,7 @@ INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_a
 -- --------------------------------------------------------
 
 --
--- Table structure for table `permission_role`
+-- Cấu trúc bảng cho bảng `permission_role`
 --
 
 CREATE TABLE `permission_role` (
@@ -1915,7 +1958,7 @@ CREATE TABLE `permission_role` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `permission_role`
+-- Đang đổ dữ liệu cho bảng `permission_role`
 --
 
 INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
@@ -1942,7 +1985,7 @@ INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `personal_access_tokens`
+-- Cấu trúc bảng cho bảng `personal_access_tokens`
 --
 
 CREATE TABLE `personal_access_tokens` (
@@ -1959,19 +2002,21 @@ CREATE TABLE `personal_access_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `personal_access_tokens`
+-- Đang đổ dữ liệu cho bảng `personal_access_tokens`
 --
 
 INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `expires_at`, `created_at`, `updated_at`) VALUES
 (3, 'App\\Models\\User', 5, 'auth_token', 'cd118426368c486572eb14b9ca92e9453134a0df511a9b1de5a85a82e602d3a3', '[\"*\"]', NULL, NULL, '2025-07-08 21:54:40', '2025-07-08 21:54:40'),
 (6, 'App\\Models\\User', 5, 'auth_token', 'b286cf3d87c084d1e0d292089de64ac1004cfed69b04f508a4b5a478b580ce84', '[\"*\"]', NULL, NULL, '2025-07-09 00:05:13', '2025-07-09 00:05:13'),
 (14, 'App\\Models\\User', 5, 'auth_token', 'a7dce83486592a96856608a098572e0311c9ba83ed782dbb426e4f692e924e29', '[\"*\"]', NULL, NULL, '2025-07-20 22:09:02', '2025-07-20 22:09:02'),
-(15, 'App\\Models\\User', 1, 'auth_token', 'bd90ae824dd8bb49e942ac7c7ea67cf04cbe98b88cfdce57585ac1c8334aec20', '[\"*\"]', '2025-08-15 08:29:58', NULL, '2025-08-15 08:29:48', '2025-08-15 08:29:58');
+(15, 'App\\Models\\User', 1, 'auth_token', 'bd90ae824dd8bb49e942ac7c7ea67cf04cbe98b88cfdce57585ac1c8334aec20', '[\"*\"]', '2025-08-15 08:29:58', NULL, '2025-08-15 08:29:48', '2025-08-15 08:29:58'),
+(16, 'App\\Models\\User', 5, 'auth_token', '602d049d762997e9c8f747b82c083b6dbae60ee9830e7b1de9e85884c6fca3d3', '[\"*\"]', '2025-08-19 01:39:25', NULL, '2025-08-18 10:23:01', '2025-08-19 01:39:25'),
+(17, 'App\\Models\\User', 1, 'test-notification', '085e0ee113924ec2f51b1c43a207499e9a9376cc0306eeb0409edcb5d4ee6acf', '[\"*\"]', '2025-08-18 10:32:28', NULL, '2025-08-18 10:31:03', '2025-08-18 10:32:28');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `policy_applications`
+-- Cấu trúc bảng cho bảng `policy_applications`
 --
 
 CREATE TABLE `policy_applications` (
@@ -1992,7 +2037,7 @@ CREATE TABLE `policy_applications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Ánh xạ chính sách theo điều kiện áp dụng như loại phòng, ngày lễ, occupancy, ngày cụ thể';
 
 --
--- Dumping data for table `policy_applications`
+-- Đang đổ dữ liệu cho bảng `policy_applications`
 --
 
 INSERT INTO `policy_applications` (`id`, `room_type_id`, `policy_type`, `policy_id`, `applies_to_holiday`, `min_occupancy_percent`, `max_occupancy_percent`, `min_days_before_checkin`, `date_from`, `date_to`, `priority`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -2008,7 +2053,7 @@ INSERT INTO `policy_applications` (`id`, `room_type_id`, `policy_type`, `policy_
 -- --------------------------------------------------------
 
 --
--- Table structure for table `pricing_config`
+-- Cấu trúc bảng cho bảng `pricing_config`
 --
 
 CREATE TABLE `pricing_config` (
@@ -2022,7 +2067,7 @@ CREATE TABLE `pricing_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `pricing_config`
+-- Đang đổ dữ liệu cho bảng `pricing_config`
 --
 
 INSERT INTO `pricing_config` (`config_id`, `max_price_increase_percentage`, `max_absolute_price_vnd`, `use_exclusive_rule`, `exclusive_rule_type`, `created_at`, `updated_at`) VALUES
@@ -2031,7 +2076,7 @@ INSERT INTO `pricing_config` (`config_id`, `max_price_increase_percentage`, `max
 -- --------------------------------------------------------
 
 --
--- Table structure for table `representatives`
+-- Cấu trúc bảng cho bảng `representatives`
 --
 
 CREATE TABLE `representatives` (
@@ -2049,7 +2094,7 @@ CREATE TABLE `representatives` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `representatives`
+-- Đang đổ dữ liệu cho bảng `representatives`
 --
 
 INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `full_name`, `phone_number`, `email`, `id_card`, `created_at`, `updated_at`, `user_id`) VALUES
@@ -2130,12 +2175,13 @@ INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `f
 (116, 144, 'LVS144031538', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-18 20:16:34', '2025-07-18 20:16:34', NULL),
 (117, 151, 'LVS151023546', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:36:12', '2025-07-19 19:36:12', NULL),
 (118, 152, 'LVS152023648', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:37:20', '2025-07-19 19:37:20', NULL),
-(119, 153, 'LVS153025209', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:53:06', '2025-07-19 19:53:06', NULL);
+(119, 153, 'LVS153025209', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-07-19 19:53:06', '2025-07-19 19:53:06', NULL),
+(120, 174, 'LVS174083722', NULL, '明心', '0335920306', 'quyenjpn@gmail.com', '', '2025-08-18 01:37:59', '2025-08-18 01:37:59', NULL);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `reschedule_policies`
+-- Cấu trúc bảng cho bảng `reschedule_policies`
 --
 
 CREATE TABLE `reschedule_policies` (
@@ -2154,7 +2200,7 @@ CREATE TABLE `reschedule_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `reschedule_policies`
+-- Đang đổ dữ liệu cho bảng `reschedule_policies`
 --
 
 INSERT INTO `reschedule_policies` (`policy_id`, `name`, `description`, `room_type_id`, `min_days_before_checkin`, `reschedule_fee_vnd`, `reschedule_fee_percentage`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -2169,7 +2215,7 @@ INSERT INTO `reschedule_policies` (`policy_id`, `name`, `description`, `room_typ
 -- --------------------------------------------------------
 
 --
--- Table structure for table `reviews`
+-- Cấu trúc bảng cho bảng `reviews`
 --
 
 CREATE TABLE `reviews` (
@@ -2196,7 +2242,7 @@ CREATE TABLE `reviews` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Đánh giá gắn với booking';
 
 --
--- Dumping data for table `reviews`
+-- Đang đổ dữ liệu cho bảng `reviews`
 --
 
 INSERT INTO `reviews` (`review_id`, `booking_id`, `rating`, `title`, `comment`, `review_date`, `helpful`, `not_helpful`, `travel_type`, `admin_reply_content`, `admin_reply_date`, `admin_name`, `created_at`, `updated_at`, `score_cleanliness`, `score_location`, `score_facilities`, `score_service`, `score_value`, `status`) VALUES
@@ -2205,7 +2251,7 @@ INSERT INTO `reviews` (`review_id`, `booking_id`, `rating`, `title`, `comment`, 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `roles`
+-- Cấu trúc bảng cho bảng `roles`
 --
 
 CREATE TABLE `roles` (
@@ -2217,7 +2263,7 @@ CREATE TABLE `roles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `roles`
+-- Đang đổ dữ liệu cho bảng `roles`
 --
 
 INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
@@ -2230,7 +2276,7 @@ INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 -- --------------------------------------------------------
 
 --
--- Table structure for table `role_user`
+-- Cấu trúc bảng cho bảng `role_user`
 --
 
 CREATE TABLE `role_user` (
@@ -2239,7 +2285,7 @@ CREATE TABLE `role_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `role_user`
+-- Đang đổ dữ liệu cho bảng `role_user`
 --
 
 INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
@@ -2250,7 +2296,7 @@ INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room`
+-- Cấu trúc bảng cho bảng `room`
 --
 
 CREATE TABLE `room` (
@@ -2268,7 +2314,7 @@ CREATE TABLE `room` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin phòng';
 
 --
--- Dumping data for table `room`
+-- Đang đổ dữ liệu cho bảng `room`
 --
 
 INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed_type_fixed`, `status`, `description`, `last_cleaned`, `created_at`, `updated_at`) VALUES
@@ -2571,7 +2617,7 @@ INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_bed_types`
+-- Cấu trúc bảng cho bảng `room_bed_types`
 --
 
 CREATE TABLE `room_bed_types` (
@@ -2586,7 +2632,7 @@ CREATE TABLE `room_bed_types` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_meal_types`
+-- Cấu trúc bảng cho bảng `room_meal_types`
 --
 
 CREATE TABLE `room_meal_types` (
@@ -2600,7 +2646,7 @@ CREATE TABLE `room_meal_types` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_occupancy`
+-- Cấu trúc bảng cho bảng `room_occupancy`
 --
 
 CREATE TABLE `room_occupancy` (
@@ -2615,7 +2661,7 @@ CREATE TABLE `room_occupancy` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_occupancy`
+-- Đang đổ dữ liệu cho bảng `room_occupancy`
 --
 
 INSERT INTO `room_occupancy` (`occupancy_id`, `room_type_id`, `date`, `total_rooms`, `booked_rooms`, `created_at`, `updated_at`) VALUES
@@ -2630,7 +2676,7 @@ INSERT INTO `room_occupancy` (`occupancy_id`, `room_type_id`, `date`, `total_roo
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_option`
+-- Cấu trúc bảng cho bảng `room_option`
 --
 
 CREATE TABLE `room_option` (
@@ -2659,7 +2705,7 @@ CREATE TABLE `room_option` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu tùy chọn giá và dịch vụ của phòng';
 
 --
--- Dumping data for table `room_option`
+-- Đang đổ dữ liệu cho bảng `room_option`
 --
 
 INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_policy_id`, `check_out_policy_id`, `policy_applied_reason`, `policy_applied_date`, `policy_snapshot_json`, `cancellation_policy_id`, `package_id`, `adjusted_price`, `created_at`, `updated_at`) VALUES
@@ -2699,6 +2745,7 @@ INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`
 ('BOOK-LVS152023648-R1-2', NULL, 'Premium Package', 1006000.00, 4, 2, NULL, 1, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 8, 1006000.00, NULL, NULL),
 ('BOOK-LVS153025209-R1-1', NULL, 'Standard Package', 11000.00, 6, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
 ('BOOK-LVS153025209-R1-2', NULL, 'Standard Package', 11000.00, 4, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
+('BOOK-LVS174083722', NULL, 'Premium Package', 1060000.00, 1, 1, NULL, 1, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-08-18', '{\"deposit\": {\"name\": \"Đặt cọc 20%\", \"policy_id\": 10, \"description\": \"Đặt cọc 20% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"20.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": null, \"policy_id\": 4, \"description\": null, \"applies_to_holiday\": null, \"applies_to_weekend\": null, \"late_check_out_fee_vnd\": null, \"early_check_out_fee_vnd\": null, \"standard_check_out_time\": null, \"late_check_out_max_hours\": null, \"early_check_out_max_hours\": null}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 8, 1060000.00, '2025-08-18', '2025-08-18'),
 ('BOOK-LVS60104819-R1-1', 1, 'Standard Package', 1440000.00, 5, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
 ('BOOK-LVS60104819-R1-2', 1, 'Standard Package', 1440000.00, 6, 4, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
 ('BOOK-LVS60104819-R1-3', 1, 'Standard Package', 1440000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1440000.00, NULL, NULL),
@@ -2721,9 +2768,9 @@ INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`
 ('BOOK-LVS79072153-R7-1', 7, 'Presidential Package', 6200000.00, 2, 2, NULL, 0, 0, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 7, 6200000.00, NULL, NULL),
 ('BOOK-LVS80072418-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
 ('BOOK-LVS88094850-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, 5, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
-('BOOK-LVS92105428-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
-('BOOK-LVS93105832-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL);
+('BOOK-LVS92105428-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL);
 INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_policy_id`, `check_out_policy_id`, `policy_applied_reason`, `policy_applied_date`, `policy_snapshot_json`, `cancellation_policy_id`, `package_id`, `adjusted_price`, `created_at`, `updated_at`) VALUES
+('BOOK-LVS93105832-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng từ API tìm kiếm phòng với PolicySelectorService', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
 ('BOOK-LVS94111645-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
 ('BOOK-LVS95112222-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
 ('BOOK-LVS96112503-R1-1', 1, 'Standard Package', 11000.00, 2, 2, NULL, 0, 1, NULL, NULL, NULL, 10, NULL, 'Áp dụng sau khi thanh toán thành công', '2025-07-13', '{\"deposit\": {\"name\": \"Đặt cọc 30%\", \"policy_id\": 10, \"description\": \"Đặt cọc 30% giá trị booking\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"deposit_percentage\": \"30.00\", \"min_days_before_checkin\": null, \"deposit_fixed_amount_vnd\": \"0.00\"}, \"check_out\": {\"name\": \"Check-out tiêu chuẩn\", \"policy_id\": 4, \"description\": \"Check-out tiêu chuẩn 12:00\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"late_check_out_fee_vnd\": \"500000.00\", \"early_check_out_fee_vnd\": \"0.00\", \"standard_check_out_time\": \"12:00:00\", \"late_check_out_max_hours\": 2, \"early_check_out_max_hours\": 4}, \"cancellation\": {\"name\": \"Hủy miễn phí 7 ngày\", \"policy_id\": 10, \"description\": \"Hủy miễn phí nếu trước 7 ngày, sau đó phạt 200k\", \"applies_to_holiday\": 0, \"applies_to_weekend\": 0, \"penalty_percentage\": \"0.00\", \"free_cancellation_days\": 7, \"penalty_fixed_amount_vnd\": \"200000.00\"}}', 10, 1, 11000.00, NULL, NULL),
@@ -2743,7 +2790,7 @@ INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_option_promotion`
+-- Cấu trúc bảng cho bảng `room_option_promotion`
 --
 
 CREATE TABLE `room_option_promotion` (
@@ -2757,7 +2804,7 @@ CREATE TABLE `room_option_promotion` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_price_history`
+-- Cấu trúc bảng cho bảng `room_price_history`
 --
 
 CREATE TABLE `room_price_history` (
@@ -2772,7 +2819,7 @@ CREATE TABLE `room_price_history` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_price_history`
+-- Đang đổ dữ liệu cho bảng `room_price_history`
 --
 
 INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
@@ -2936,11 +2983,11 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (157, 6, '2025-07-19', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 00:25:36', '2025-07-18 00:25:36'),
 (158, 7, '2025-07-19', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 00:25:36', '2025-07-18 00:25:36'),
 (159, 1, '2025-08-18', 50000.00, 60000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-15 08:55:17'),
-(160, 2, '2025-08-18', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
-(161, 3, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
-(162, 4, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 20:37:38'),
-(163, 5, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
-(164, 6, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-07-18 03:53:17'),
+(160, 2, '2025-08-18', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-17 06:57:26'),
+(161, 3, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-17 06:57:28'),
+(162, 4, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-17 06:57:28'),
+(163, 5, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-17 06:57:28'),
+(164, 6, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-07-18 03:53:17', '2025-08-17 06:57:28'),
 (165, 1, '2025-07-20', 5000.00, 6500.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-07-18 18:46:30', '2025-07-20 19:18:20'),
 (166, 2, '2025-07-20', 1500000.00, 2100000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-06-01T00:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-31T00:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":3,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"80.00\\\",\\\"current_occupancy\\\":83}}]\"', '2025-07-18 18:46:30', '2025-07-20 19:18:20');
 INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
@@ -3089,12 +3136,19 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 (308, 4, '2025-08-17', 1000000.00, 1370000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}},{\\\"rule_id\\\":5,\\\"type\\\":\\\"dynamic\\\",\\\"rule_type\\\":\\\"occupancy\\\",\\\"price_adjustment\\\":\\\"7.00\\\",\\\"details\\\":{\\\"occupancy_threshold\\\":\\\"70.00\\\",\\\"current_occupancy\\\":84}}]\"', '2025-08-16 09:09:18', '2025-08-16 10:05:27'),
 (309, 5, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18'),
 (310, 6, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18'),
-(311, 7, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18');
+(311, 7, '2025-08-17', 1000000.00, 1300000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}},{\\\"rule_id\\\":12,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"weekend\\\",\\\"price_adjustment\\\":\\\"10.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"weekend\\\",\\\"days_of_week\\\":[\\\"Saturday\\\",\\\"Sunday\\\"]}}]\"', '2025-08-16 09:09:18', '2025-08-16 09:09:18'),
+(312, 7, '2025-08-18', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-17 06:57:28', '2025-08-17 06:57:28'),
+(313, 2, '2025-08-19', 1500000.00, 1800000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-18 03:03:47', '2025-08-18 03:03:47'),
+(314, 3, '2025-08-19', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-18 03:03:47', '2025-08-18 03:03:47'),
+(315, 4, '2025-08-19', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-18 03:03:47', '2025-08-18 03:03:47'),
+(316, 5, '2025-08-19', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-18 03:03:47', '2025-08-18 03:03:47'),
+(317, 6, '2025-08-19', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-18 03:03:47', '2025-08-18 03:03:47'),
+(318, 7, '2025-08-19', 1000000.00, 1200000.00, '\"[{\\\"rule_id\\\":5,\\\"type\\\":\\\"flexible\\\",\\\"rule_type\\\":\\\"season\\\",\\\"price_adjustment\\\":\\\"20.00\\\",\\\"details\\\":{\\\"rule_type\\\":\\\"season\\\",\\\"season_name\\\":\\\"M\\\\u00f9a cao \\\\u0111i\\\\u1ec3m\\\",\\\"season_dates\\\":{\\\"start_date\\\":\\\"2025-05-31T17:00:00.000000Z\\\",\\\"end_date\\\":\\\"2025-08-30T17:00:00.000000Z\\\"}}}]\"', '2025-08-18 03:03:47', '2025-08-18 03:03:47');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_transfers`
+-- Cấu trúc bảng cho bảng `room_transfers`
 --
 
 CREATE TABLE `room_transfers` (
@@ -3114,7 +3168,7 @@ CREATE TABLE `room_transfers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_transfers`
+-- Đang đổ dữ liệu cho bảng `room_transfers`
 --
 
 INSERT INTO `room_transfers` (`transfer_id`, `booking_id`, `old_room_id`, `new_room_id`, `new_option_id`, `transfer_policy_id`, `status`, `price_difference_vnd`, `payment_id`, `processed_by`, `reason`, `created_at`, `updated_at`) VALUES
@@ -3132,7 +3186,7 @@ INSERT INTO `room_transfers` (`transfer_id`, `booking_id`, `old_room_id`, `new_r
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_transfer_policies`
+-- Cấu trúc bảng cho bảng `room_transfer_policies`
 --
 
 CREATE TABLE `room_transfer_policies` (
@@ -3154,7 +3208,7 @@ CREATE TABLE `room_transfer_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Chính sách chuyển phòng';
 
 --
--- Dumping data for table `room_transfer_policies`
+-- Đang đổ dữ liệu cho bảng `room_transfer_policies`
 --
 
 INSERT INTO `room_transfer_policies` (`policy_id`, `name`, `description`, `transfer_fee_vnd`, `transfer_fee_percentage`, `min_days_before_check_in`, `applies_to_holiday`, `applies_to_weekend`, `requires_guest_confirmation`, `room_type_id`, `is_active`, `created_at`, `updated_at`, `deleted_at`, `applies_to_package_change`) VALUES
@@ -3171,7 +3225,7 @@ INSERT INTO `room_transfer_policies` (`policy_id`, `name`, `description`, `trans
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_types`
+-- Cấu trúc bảng cho bảng `room_types`
 --
 
 CREATE TABLE `room_types` (
@@ -3189,7 +3243,7 @@ CREATE TABLE `room_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_types`
+-- Đang đổ dữ liệu cho bảng `room_types`
 --
 
 INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `total_room`, `base_price`, `room_area`, `view`, `rating`, `max_guests`, `is_active`) VALUES
@@ -3204,7 +3258,7 @@ INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `t
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_amenity`
+-- Cấu trúc bảng cho bảng `room_type_amenity`
 --
 
 CREATE TABLE `room_type_amenity` (
@@ -3216,7 +3270,7 @@ CREATE TABLE `room_type_amenity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_type_amenity`
+-- Đang đổ dữ liệu cho bảng `room_type_amenity`
 --
 
 INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`, `created_at`, `updated_at`) VALUES
@@ -3441,7 +3495,7 @@ INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`,
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_image`
+-- Cấu trúc bảng cho bảng `room_type_image`
 --
 
 CREATE TABLE `room_type_image` (
@@ -3456,7 +3510,7 @@ CREATE TABLE `room_type_image` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ảnh của phòng';
 
 --
--- Dumping data for table `room_type_image`
+-- Đang đổ dữ liệu cho bảng `room_type_image`
 --
 
 INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_path`, `image_url`, `is_main`, `created_at`, `updated_at`) VALUES
@@ -3521,7 +3575,7 @@ INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_pa
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_package`
+-- Cấu trúc bảng cho bảng `room_type_package`
 --
 
 CREATE TABLE `room_type_package` (
@@ -3537,7 +3591,7 @@ CREATE TABLE `room_type_package` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_type_package`
+-- Đang đổ dữ liệu cho bảng `room_type_package`
 --
 
 INSERT INTO `room_type_package` (`package_id`, `room_type_id`, `name`, `price_modifier_vnd`, `include_all_services`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -3553,7 +3607,7 @@ INSERT INTO `room_type_package` (`package_id`, `room_type_id`, `name`, `price_mo
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_package_services`
+-- Cấu trúc bảng cho bảng `room_type_package_services`
 --
 
 CREATE TABLE `room_type_package_services` (
@@ -3565,7 +3619,7 @@ CREATE TABLE `room_type_package_services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_type_package_services`
+-- Đang đổ dữ liệu cho bảng `room_type_package_services`
 --
 
 INSERT INTO `room_type_package_services` (`id`, `package_id`, `service_id`, `created_at`, `updated_at`) VALUES
@@ -3575,7 +3629,7 @@ INSERT INTO `room_type_package_services` (`id`, `package_id`, `service_id`, `cre
 -- --------------------------------------------------------
 
 --
--- Table structure for table `room_type_service`
+-- Cấu trúc bảng cho bảng `room_type_service`
 --
 
 CREATE TABLE `room_type_service` (
@@ -3587,7 +3641,7 @@ CREATE TABLE `room_type_service` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `room_type_service`
+-- Đang đổ dữ liệu cho bảng `room_type_service`
 --
 
 INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at`, `updated_at`) VALUES
@@ -3596,7 +3650,7 @@ INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at
 -- --------------------------------------------------------
 
 --
--- Table structure for table `services`
+-- Cấu trúc bảng cho bảng `services`
 --
 
 CREATE TABLE `services` (
@@ -3612,7 +3666,7 @@ CREATE TABLE `services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `services`
+-- Đang đổ dữ liệu cho bảng `services`
 --
 
 INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`, `included_services`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -3631,7 +3685,7 @@ INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `sessions`
+-- Cấu trúc bảng cho bảng `sessions`
 --
 
 CREATE TABLE `sessions` (
@@ -3644,7 +3698,7 @@ CREATE TABLE `sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `sessions`
+-- Đang đổ dữ liệu cho bảng `sessions`
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
@@ -3663,7 +3717,7 @@ INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `table_translation`
+-- Cấu trúc bảng cho bảng `table_translation`
 --
 
 CREATE TABLE `table_translation` (
@@ -3676,7 +3730,7 @@ CREATE TABLE `table_translation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `table_translation`
+-- Đang đổ dữ liệu cho bảng `table_translation`
 --
 
 INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -3686,7 +3740,7 @@ INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`
 -- --------------------------------------------------------
 
 --
--- Table structure for table `translation`
+-- Cấu trúc bảng cho bảng `translation`
 --
 
 CREATE TABLE `translation` (
@@ -3701,7 +3755,7 @@ CREATE TABLE `translation` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `users`
+-- Cấu trúc bảng cho bảng `users`
 --
 
 CREATE TABLE `users` (
@@ -3727,7 +3781,7 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `users`
+-- Đang đổ dữ liệu cho bảng `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `google_id`, `avatar`, `email_verified_at`, `password`, `phone`, `address`, `identity_code`, `role`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `current_team_id`, `profile_photo_path`, `created_at`, `updated_at`) VALUES
@@ -3743,7 +3797,37 @@ INSERT INTO `users` (`id`, `name`, `email`, `google_id`, `avatar`, `email_verifi
 -- --------------------------------------------------------
 
 --
--- Table structure for table `weekend_days`
+-- Cấu trúc bảng cho bảng `user_notifications`
+--
+
+CREATE TABLE `user_notifications` (
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notifiable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notifiable_id` bigint UNSIGNED NOT NULL,
+  `data` json NOT NULL,
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `user_notifications`
+--
+
+INSERT INTO `user_notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `data`, `read_at`, `created_at`, `updated_at`) VALUES
+('11111111-1111-1111-1111-111111111111', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 123, '{\"url\": \"/review-booking?booking=121\", \"message\": \"Cảm ơn bạn đã lưu trú — vui lòng đánh giá trải nghiệm\", \"booking_id\": 121}', NULL, '2025-08-18 01:00:00', '2025-08-18 01:00:00'),
+('22222222-2222-2222-2222-222222222222', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 123, '{\"url\": \"/review-booking?booking=160\", \"message\": \"Bạn đã checkout thành công — cho chúng tôi biết cảm nhận nhé\", \"booking_id\": 160}', '2025-08-18 02:00:00', '2025-08-18 02:00:00', '2025-08-18 02:00:00'),
+('33333333-3333-3333-3333-333333333333', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 5, '{\"url\": \"/review-booking?booking=160\", \"message\": \"Bạn đã checkout thành công — cho chúng tôi biết cảm nhận nhé\", \"booking_id\": 160}', '2025-08-18 10:39:38', '2025-08-18 10:30:33', '2025-08-18 10:39:38'),
+('5a754ec5-411f-493c-86c2-53062829f0af', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 1, '\"{\\\"booking_id\\\":888,\\\"message\\\":\\\"Manual test notification\\\",\\\"url\\\":\\\"\\\\/review-booking?booking=888\\\",\\\"booking_code\\\":\\\"MANUAL123\\\"}\"', NULL, '2025-08-18 05:44:50', '2025-08-18 05:44:50'),
+('79e13f74-1ce4-41e6-879c-b7ee21ce4fc6', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 1, '{\"url\": \"/review-booking?booking=999\", \"message\": \"Test notification - Cảm ơn bạn đã lưu trú\", \"booking_id\": 999, \"booking_code\": \"TEST123\"}', NULL, '2025-08-18 05:19:25', '2025-08-18 05:19:25'),
+('d941e608-aabf-4e72-b917-9c1809de2f7a', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 1, '{\"url\": \"/review-booking?booking=999\", \"message\": \"Cảm ơn bạn đã lưu trú — vui lòng đánh giá trải nghiệm\", \"booking_id\": 999, \"booking_code\": \"TEST123\"}', NULL, '2025-08-18 05:22:00', '2025-08-18 05:22:00'),
+('f8dc1f0f-0fb5-47e5-bc50-0dacdd57ecc8', 'App\\Notifications\\CheckoutCompletedNotification', 'App\\Models\\User', 1, '{\"url\": \"/review-booking?booking=999\", \"message\": \"Cảm ơn bạn đã lưu trú — vui lòng đánh giá trải nghiệm\", \"booking_id\": 999, \"booking_code\": \"TEST123\"}', NULL, '2025-08-18 05:44:36', '2025-08-18 05:44:36');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `weekend_days`
 --
 
 CREATE TABLE `weekend_days` (
@@ -3755,7 +3839,7 @@ CREATE TABLE `weekend_days` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `weekend_days`
+-- Đang đổ dữ liệu cho bảng `weekend_days`
 --
 
 INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -3768,17 +3852,17 @@ INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `upd
 (9, 'Sunday', 1, '2025-06-14 02:38:18', '2025-06-23 00:42:49');
 
 --
--- Indexes for dumped tables
+-- Chỉ mục cho các bảng đã đổ
 --
 
 --
--- Indexes for table `amenities`
+-- Chỉ mục cho bảng `amenities`
 --
 ALTER TABLE `amenities`
   ADD PRIMARY KEY (`amenity_id`);
 
 --
--- Indexes for table `audit_logs`
+-- Chỉ mục cho bảng `audit_logs`
 --
 ALTER TABLE `audit_logs`
   ADD PRIMARY KEY (`audit_id`),
@@ -3790,13 +3874,13 @@ ALTER TABLE `audit_logs`
   ADD KEY `idx_ip` (`ip_address`);
 
 --
--- Indexes for table `bed_types`
+-- Chỉ mục cho bảng `bed_types`
 --
 ALTER TABLE `bed_types`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `booking`
+-- Chỉ mục cho bảng `booking`
 --
 ALTER TABLE `booking`
   ADD PRIMARY KEY (`booking_id`),
@@ -3806,14 +3890,14 @@ ALTER TABLE `booking`
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Indexes for table `booking_extensions`
+-- Chỉ mục cho bảng `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   ADD PRIMARY KEY (`extension_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `booking_reschedules`
+-- Chỉ mục cho bảng `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   ADD PRIMARY KEY (`reschedule_id`),
@@ -3825,7 +3909,7 @@ ALTER TABLE `booking_reschedules`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Indexes for table `booking_rooms`
+-- Chỉ mục cho bảng `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
   ADD PRIMARY KEY (`id`),
@@ -3835,13 +3919,13 @@ ALTER TABLE `booking_rooms`
   ADD KEY `booking_rooms_option_id_foreign` (`option_id`);
 
 --
--- Indexes for table `booking_room_children`
+-- Chỉ mục cho bảng `booking_room_children`
 --
 ALTER TABLE `booking_room_children`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `booking_services`
+-- Chỉ mục cho bảng `booking_services`
 --
 ALTER TABLE `booking_services`
   ADD PRIMARY KEY (`id`),
@@ -3849,13 +3933,13 @@ ALTER TABLE `booking_services`
   ADD KEY `service_id` (`service_id`);
 
 --
--- Indexes for table `cancellation_policies`
+-- Chỉ mục cho bảng `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `cancellation_requests`
+-- Chỉ mục cho bảng `cancellation_requests`
 --
 ALTER TABLE `cancellation_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -3864,13 +3948,13 @@ ALTER TABLE `cancellation_requests`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Indexes for table `check_in_policies`
+-- Chỉ mục cho bảng `check_in_policies`
 --
 ALTER TABLE `check_in_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `check_in_requests`
+-- Chỉ mục cho bảng `check_in_requests`
 --
 ALTER TABLE `check_in_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -3878,13 +3962,13 @@ ALTER TABLE `check_in_requests`
   ADD KEY `policy_id` (`policy_id`);
 
 --
--- Indexes for table `check_out_policies`
+-- Chỉ mục cho bảng `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `check_out_requests`
+-- Chỉ mục cho bảng `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -3892,20 +3976,20 @@ ALTER TABLE `check_out_requests`
   ADD KEY `policy_id` (`policy_id`);
 
 --
--- Indexes for table `children_surcharges`
+-- Chỉ mục cho bảng `children_surcharges`
 --
 ALTER TABLE `children_surcharges`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `compensation_policies`
+-- Chỉ mục cho bảng `compensation_policies`
 --
 ALTER TABLE `compensation_policies`
   ADD PRIMARY KEY (`compensation_policy_id`),
   ADD KEY `applies_to_room_type_id` (`applies_to_room_type_id`);
 
 --
--- Indexes for table `compensation_requests`
+-- Chỉ mục cho bảng `compensation_requests`
 --
 ALTER TABLE `compensation_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -3915,7 +3999,7 @@ ALTER TABLE `compensation_requests`
   ADD KEY `approved_by` (`approved_by`);
 
 --
--- Indexes for table `conversations`
+-- Chỉ mục cho bảng `conversations`
 --
 ALTER TABLE `conversations`
   ADD PRIMARY KEY (`id`),
@@ -3924,25 +4008,25 @@ ALTER TABLE `conversations`
   ADD KEY `conversations_handover_to_user_id_foreign` (`handover_to_user_id`);
 
 --
--- Indexes for table `currency`
+-- Chỉ mục cho bảng `currency`
 --
 ALTER TABLE `currency`
   ADD PRIMARY KEY (`currency_code`);
 
 --
--- Indexes for table `datafeeds`
+-- Chỉ mục cho bảng `datafeeds`
 --
 ALTER TABLE `datafeeds`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `deposit_policies`
+-- Chỉ mục cho bảng `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `dynamic_pricing_rules`
+-- Chỉ mục cho bảng `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD PRIMARY KEY (`rule_id`),
@@ -3950,19 +4034,19 @@ ALTER TABLE `dynamic_pricing_rules`
   ADD KEY `idx_dynamic_priority` (`priority`,`is_exclusive`);
 
 --
--- Indexes for table `events`
+-- Chỉ mục cho bảng `events`
 --
 ALTER TABLE `events`
   ADD PRIMARY KEY (`event_id`);
 
 --
--- Indexes for table `extension_policies`
+-- Chỉ mục cho bảng `extension_policies`
 --
 ALTER TABLE `extension_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Indexes for table `extension_requests`
+-- Chỉ mục cho bảng `extension_requests`
 --
 ALTER TABLE `extension_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -3971,20 +4055,20 @@ ALTER TABLE `extension_requests`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Indexes for table `failed_jobs`
+-- Chỉ mục cho bảng `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
 
 --
--- Indexes for table `faqs`
+-- Chỉ mục cho bảng `faqs`
 --
 ALTER TABLE `faqs`
   ADD PRIMARY KEY (`faq_id`);
 
 --
--- Indexes for table `flexible_pricing_rules`
+-- Chỉ mục cho bảng `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   ADD PRIMARY KEY (`rule_id`),
@@ -3994,65 +4078,65 @@ ALTER TABLE `flexible_pricing_rules`
   ADD KEY `idx_priority` (`priority`,`is_exclusive`);
 
 --
--- Indexes for table `floors`
+-- Chỉ mục cho bảng `floors`
 --
 ALTER TABLE `floors`
   ADD PRIMARY KEY (`floor_id`),
   ADD UNIQUE KEY `floor_number` (`floor_number`);
 
 --
--- Indexes for table `holidays`
+-- Chỉ mục cho bảng `holidays`
 --
 ALTER TABLE `holidays`
   ADD PRIMARY KEY (`holiday_id`);
 
 --
--- Indexes for table `hotel`
+-- Chỉ mục cho bảng `hotel`
 --
 ALTER TABLE `hotel`
   ADD PRIMARY KEY (`hotel_id`),
   ADD KEY `idx_hotel_id` (`hotel_id`);
 
 --
--- Indexes for table `invoices`
+-- Chỉ mục cho bảng `invoices`
 --
 ALTER TABLE `invoices`
   ADD PRIMARY KEY (`invoice_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `language`
+-- Chỉ mục cho bảng `language`
 --
 ALTER TABLE `language`
   ADD PRIMARY KEY (`language_code`);
 
 --
--- Indexes for table `meal_types`
+-- Chỉ mục cho bảng `meal_types`
 --
 ALTER TABLE `meal_types`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `media_files`
+-- Chỉ mục cho bảng `media_files`
 --
 ALTER TABLE `media_files`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `messages`
+-- Chỉ mục cho bảng `messages`
 --
 ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `messages_conversation_id_foreign` (`conversation_id`);
 
 --
--- Indexes for table `migrations`
+-- Chỉ mục cho bảng `migrations`
 --
 ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `news`
+-- Chỉ mục cho bảng `news`
 --
 ALTER TABLE `news`
   ADD PRIMARY KEY (`id`),
@@ -4062,7 +4146,7 @@ ALTER TABLE `news`
   ADD KEY `category_id` (`category_id`);
 
 --
--- Indexes for table `news1`
+-- Chỉ mục cho bảng `news1`
 --
 ALTER TABLE `news1`
   ADD PRIMARY KEY (`id`),
@@ -4072,14 +4156,14 @@ ALTER TABLE `news1`
   ADD KEY `category_id` (`category_id`);
 
 --
--- Indexes for table `news_categories`
+-- Chỉ mục cho bảng `news_categories`
 --
 ALTER TABLE `news_categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `slug` (`slug`);
 
 --
--- Indexes for table `news_comments`
+-- Chỉ mục cho bảng `news_comments`
 --
 ALTER TABLE `news_comments`
   ADD PRIMARY KEY (`id`),
@@ -4088,7 +4172,7 @@ ALTER TABLE `news_comments`
   ADD KEY `parent_id` (`parent_id`);
 
 --
--- Indexes for table `news_user_actions`
+-- Chỉ mục cho bảng `news_user_actions`
 --
 ALTER TABLE `news_user_actions`
   ADD PRIMARY KEY (`id`),
@@ -4096,7 +4180,7 @@ ALTER TABLE `news_user_actions`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `notifications`
+-- Chỉ mục cho bảng `notifications`
 --
 ALTER TABLE `notifications`
   ADD PRIMARY KEY (`notification_id`),
@@ -4104,21 +4188,21 @@ ALTER TABLE `notifications`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexes for table `payment`
+-- Chỉ mục cho bảng `payment`
 --
 ALTER TABLE `payment`
   ADD PRIMARY KEY (`payment_id`),
   ADD KEY `idx_booking_status` (`booking_id`,`status`);
 
 --
--- Indexes for table `payment_settings`
+-- Chỉ mục cho bảng `payment_settings`
 --
 ALTER TABLE `payment_settings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `payment_settings_key_unique` (`key`);
 
 --
--- Indexes for table `permissions`
+-- Chỉ mục cho bảng `permissions`
 --
 ALTER TABLE `permissions`
   ADD PRIMARY KEY (`id`),
@@ -4126,14 +4210,14 @@ ALTER TABLE `permissions`
   ADD KEY `idx_permissions_parent_id` (`parent_id`);
 
 --
--- Indexes for table `permission_role`
+-- Chỉ mục cho bảng `permission_role`
 --
 ALTER TABLE `permission_role`
   ADD PRIMARY KEY (`permission_id`,`role_id`),
   ADD KEY `role_id` (`role_id`);
 
 --
--- Indexes for table `personal_access_tokens`
+-- Chỉ mục cho bảng `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
   ADD PRIMARY KEY (`id`),
@@ -4141,20 +4225,20 @@ ALTER TABLE `personal_access_tokens`
   ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`);
 
 --
--- Indexes for table `policy_applications`
+-- Chỉ mục cho bảng `policy_applications`
 --
 ALTER TABLE `policy_applications`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_policy_match` (`room_type_id`,`policy_type`,`applies_to_holiday`);
 
 --
--- Indexes for table `pricing_config`
+-- Chỉ mục cho bảng `pricing_config`
 --
 ALTER TABLE `pricing_config`
   ADD PRIMARY KEY (`config_id`);
 
 --
--- Indexes for table `representatives`
+-- Chỉ mục cho bảng `representatives`
 --
 ALTER TABLE `representatives`
   ADD PRIMARY KEY (`id`),
@@ -4163,28 +4247,28 @@ ALTER TABLE `representatives`
   ADD KEY `fk_representative_user` (`user_id`);
 
 --
--- Indexes for table `reschedule_policies`
+-- Chỉ mục cho bảng `reschedule_policies`
 --
 ALTER TABLE `reschedule_policies`
   ADD PRIMARY KEY (`policy_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Indexes for table `reviews`
+-- Chỉ mục cho bảng `reviews`
 --
 ALTER TABLE `reviews`
   ADD PRIMARY KEY (`review_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Indexes for table `roles`
+-- Chỉ mục cho bảng `roles`
 --
 ALTER TABLE `roles`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Indexes for table `role_user`
+-- Chỉ mục cho bảng `role_user`
 --
 ALTER TABLE `role_user`
   ADD PRIMARY KEY (`user_id`,`role_id`),
@@ -4192,7 +4276,7 @@ ALTER TABLE `role_user`
   ADD KEY `role_id` (`role_id`);
 
 --
--- Indexes for table `room`
+-- Chỉ mục cho bảng `room`
 --
 ALTER TABLE `room`
   ADD PRIMARY KEY (`room_id`),
@@ -4201,7 +4285,7 @@ ALTER TABLE `room`
   ADD KEY `floor_id` (`floor_id`);
 
 --
--- Indexes for table `room_bed_types`
+-- Chỉ mục cho bảng `room_bed_types`
 --
 ALTER TABLE `room_bed_types`
   ADD PRIMARY KEY (`room_id`),
@@ -4209,7 +4293,7 @@ ALTER TABLE `room_bed_types`
   ADD KEY `idx_bed_type_id` (`bed_type_id`);
 
 --
--- Indexes for table `room_meal_types`
+-- Chỉ mục cho bảng `room_meal_types`
 --
 ALTER TABLE `room_meal_types`
   ADD PRIMARY KEY (`room_id`),
@@ -4217,14 +4301,14 @@ ALTER TABLE `room_meal_types`
   ADD KEY `idx_meal_type_id` (`meal_type_id`);
 
 --
--- Indexes for table `room_occupancy`
+-- Chỉ mục cho bảng `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   ADD PRIMARY KEY (`occupancy_id`),
   ADD UNIQUE KEY `idx_room_type_date` (`room_type_id`,`date`);
 
 --
--- Indexes for table `room_option`
+-- Chỉ mục cho bảng `room_option`
 --
 ALTER TABLE `room_option`
   ADD PRIMARY KEY (`option_id`),
@@ -4237,21 +4321,21 @@ ALTER TABLE `room_option`
   ADD KEY `check_out_policy_id` (`check_out_policy_id`);
 
 --
--- Indexes for table `room_option_promotion`
+-- Chỉ mục cho bảng `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   ADD PRIMARY KEY (`promotion_id`),
   ADD KEY `option_id` (`option_id`);
 
 --
--- Indexes for table `room_price_history`
+-- Chỉ mục cho bảng `room_price_history`
 --
 ALTER TABLE `room_price_history`
   ADD PRIMARY KEY (`price_history_id`),
   ADD UNIQUE KEY `idx_room_type_date` (`room_type_id`,`date`);
 
 --
--- Indexes for table `room_transfers`
+-- Chỉ mục cho bảng `room_transfers`
 --
 ALTER TABLE `room_transfers`
   ADD PRIMARY KEY (`transfer_id`),
@@ -4264,41 +4348,41 @@ ALTER TABLE `room_transfers`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Indexes for table `room_transfer_policies`
+-- Chỉ mục cho bảng `room_transfer_policies`
 --
 ALTER TABLE `room_transfer_policies`
   ADD PRIMARY KEY (`policy_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Indexes for table `room_types`
+-- Chỉ mục cho bảng `room_types`
 --
 ALTER TABLE `room_types`
   ADD PRIMARY KEY (`room_type_id`);
 
 --
--- Indexes for table `room_type_amenity`
+-- Chỉ mục cho bảng `room_type_amenity`
 --
 ALTER TABLE `room_type_amenity`
   ADD PRIMARY KEY (`room_type_id`,`amenity_id`),
   ADD KEY `amenity_id` (`amenity_id`);
 
 --
--- Indexes for table `room_type_image`
+-- Chỉ mục cho bảng `room_type_image`
 --
 ALTER TABLE `room_type_image`
   ADD PRIMARY KEY (`image_id`),
   ADD KEY `room_image_ibfk_1` (`room_type_id`);
 
 --
--- Indexes for table `room_type_package`
+-- Chỉ mục cho bảng `room_type_package`
 --
 ALTER TABLE `room_type_package`
   ADD PRIMARY KEY (`package_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Indexes for table `room_type_package_services`
+-- Chỉ mục cho bảng `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
   ADD PRIMARY KEY (`id`),
@@ -4306,7 +4390,7 @@ ALTER TABLE `room_type_package_services`
   ADD KEY `service_id` (`service_id`);
 
 --
--- Indexes for table `room_type_service`
+-- Chỉ mục cho bảng `room_type_service`
 --
 ALTER TABLE `room_type_service`
   ADD PRIMARY KEY (`id`),
@@ -4314,13 +4398,13 @@ ALTER TABLE `room_type_service`
   ADD KEY `service_id` (`service_id`);
 
 --
--- Indexes for table `services`
+-- Chỉ mục cho bảng `services`
 --
 ALTER TABLE `services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Indexes for table `sessions`
+-- Chỉ mục cho bảng `sessions`
 --
 ALTER TABLE `sessions`
   ADD PRIMARY KEY (`id`),
@@ -4328,14 +4412,14 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
--- Indexes for table `table_translation`
+-- Chỉ mục cho bảng `table_translation`
 --
 ALTER TABLE `table_translation`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `table_translation_table_name_unique` (`table_name`);
 
 --
--- Indexes for table `translation`
+-- Chỉ mục cho bảng `translation`
 --
 ALTER TABLE `translation`
   ADD PRIMARY KEY (`translation_id`),
@@ -4343,7 +4427,7 @@ ALTER TABLE `translation`
   ADD KEY `language_code` (`language_code`);
 
 --
--- Indexes for table `users`
+-- Chỉ mục cho bảng `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
@@ -4351,423 +4435,431 @@ ALTER TABLE `users`
   ADD KEY `users_google_id_index` (`google_id`);
 
 --
--- Indexes for table `weekend_days`
+-- Chỉ mục cho bảng `user_notifications`
+--
+ALTER TABLE `user_notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`),
+  ADD KEY `user_notifications_read_at_index` (`read_at`);
+
+--
+-- Chỉ mục cho bảng `weekend_days`
 --
 ALTER TABLE `weekend_days`
   ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT cho các bảng đã đổ
 --
 
 --
--- AUTO_INCREMENT for table `amenities`
+-- AUTO_INCREMENT cho bảng `amenities`
 --
 ALTER TABLE `amenities`
   MODIFY `amenity_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
--- AUTO_INCREMENT for table `audit_logs`
+-- AUTO_INCREMENT cho bảng `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `audit_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
+  MODIFY `audit_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
 
 --
--- AUTO_INCREMENT for table `bed_types`
+-- AUTO_INCREMENT cho bảng `bed_types`
 --
 ALTER TABLE `bed_types`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính', AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `booking`
+-- AUTO_INCREMENT cho bảng `booking`
 --
 ALTER TABLE `booking`
-  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=174;
+  MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=175;
 
 --
--- AUTO_INCREMENT for table `booking_extensions`
+-- AUTO_INCREMENT cho bảng `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   MODIFY `extension_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `booking_reschedules`
+-- AUTO_INCREMENT cho bảng `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   MODIFY `reschedule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT for table `booking_rooms`
+-- AUTO_INCREMENT cho bảng `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=150;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
 
 --
--- AUTO_INCREMENT for table `booking_room_children`
+-- AUTO_INCREMENT cho bảng `booking_room_children`
 --
 ALTER TABLE `booking_room_children`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
--- AUTO_INCREMENT for table `booking_services`
+-- AUTO_INCREMENT cho bảng `booking_services`
 --
 ALTER TABLE `booking_services`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `cancellation_policies`
+-- AUTO_INCREMENT cho bảng `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- AUTO_INCREMENT for table `cancellation_requests`
+-- AUTO_INCREMENT cho bảng `cancellation_requests`
 --
 ALTER TABLE `cancellation_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã yêu cầu hủy';
 
 --
--- AUTO_INCREMENT for table `check_in_policies`
+-- AUTO_INCREMENT cho bảng `check_in_policies`
 --
 ALTER TABLE `check_in_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã chính sách nhận phòng', AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT for table `check_in_requests`
+-- AUTO_INCREMENT cho bảng `check_in_requests`
 --
 ALTER TABLE `check_in_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, tự động tăng';
 
 --
--- AUTO_INCREMENT for table `check_out_policies`
+-- AUTO_INCREMENT cho bảng `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT for table `check_out_requests`
+-- AUTO_INCREMENT cho bảng `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, tự động tăng', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `children_surcharges`
+-- AUTO_INCREMENT cho bảng `children_surcharges`
 --
 ALTER TABLE `children_surcharges`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT for table `compensation_policies`
+-- AUTO_INCREMENT cho bảng `compensation_policies`
 --
 ALTER TABLE `compensation_policies`
   MODIFY `compensation_policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `compensation_requests`
+-- AUTO_INCREMENT cho bảng `compensation_requests`
 --
 ALTER TABLE `compensation_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'ID yêu cầu bồi thường', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `conversations`
+-- AUTO_INCREMENT cho bảng `conversations`
 --
 ALTER TABLE `conversations`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT for table `datafeeds`
+-- AUTO_INCREMENT cho bảng `datafeeds`
 --
 ALTER TABLE `datafeeds`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `deposit_policies`
+-- AUTO_INCREMENT cho bảng `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- AUTO_INCREMENT for table `dynamic_pricing_rules`
+-- AUTO_INCREMENT cho bảng `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT for table `events`
+-- AUTO_INCREMENT cho bảng `events`
 --
 ALTER TABLE `events`
   MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT for table `extension_policies`
+-- AUTO_INCREMENT cho bảng `extension_policies`
 --
 ALTER TABLE `extension_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã chính sách gia hạn', AUTO_INCREMENT=14;
 
 --
--- AUTO_INCREMENT for table `extension_requests`
+-- AUTO_INCREMENT cho bảng `extension_requests`
 --
 ALTER TABLE `extension_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã yêu cầu gia hạn', AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `failed_jobs`
+-- AUTO_INCREMENT cho bảng `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `faqs`
+-- AUTO_INCREMENT cho bảng `faqs`
 --
 ALTER TABLE `faqs`
   MODIFY `faq_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `flexible_pricing_rules`
+-- AUTO_INCREMENT cho bảng `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
--- AUTO_INCREMENT for table `floors`
+-- AUTO_INCREMENT cho bảng `floors`
 --
 ALTER TABLE `floors`
   MODIFY `floor_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã tầng', AUTO_INCREMENT=35;
 
 --
--- AUTO_INCREMENT for table `holidays`
+-- AUTO_INCREMENT cho bảng `holidays`
 --
 ALTER TABLE `holidays`
   MODIFY `holiday_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `hotel`
+-- AUTO_INCREMENT cho bảng `hotel`
 --
 ALTER TABLE `hotel`
   MODIFY `hotel_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khách sạn', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `invoices`
+-- AUTO_INCREMENT cho bảng `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `invoice_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `invoice_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `meal_types`
+-- AUTO_INCREMENT cho bảng `meal_types`
 --
 ALTER TABLE `meal_types`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `media_files`
+-- AUTO_INCREMENT cho bảng `media_files`
 --
 ALTER TABLE `media_files`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính của file ảnh/media', AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT for table `messages`
+-- AUTO_INCREMENT cho bảng `messages`
 --
 ALTER TABLE `messages`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
--- AUTO_INCREMENT for table `migrations`
+-- AUTO_INCREMENT cho bảng `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
--- AUTO_INCREMENT for table `news`
+-- AUTO_INCREMENT cho bảng `news`
 --
 ALTER TABLE `news`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bài viết', AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT for table `news1`
+-- AUTO_INCREMENT cho bảng `news1`
 --
 ALTER TABLE `news1`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, định danh bài viết', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `news_categories`
+-- AUTO_INCREMENT cho bảng `news_categories`
 --
 ALTER TABLE `news_categories`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính chuyên mục', AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `news_comments`
+-- AUTO_INCREMENT cho bảng `news_comments`
 --
 ALTER TABLE `news_comments`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `news_user_actions`
+-- AUTO_INCREMENT cho bảng `news_user_actions`
 --
 ALTER TABLE `news_user_actions`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `notifications`
+-- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
   MODIFY `notification_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `payment`
+-- AUTO_INCREMENT cho bảng `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `payment_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã thanh toán', AUTO_INCREMENT=137;
+  MODIFY `payment_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã thanh toán', AUTO_INCREMENT=138;
 
 --
--- AUTO_INCREMENT for table `payment_settings`
+-- AUTO_INCREMENT cho bảng `payment_settings`
 --
 ALTER TABLE `payment_settings`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT for table `personal_access_tokens`
+-- AUTO_INCREMENT cho bảng `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
--- AUTO_INCREMENT for table `policy_applications`
+-- AUTO_INCREMENT cho bảng `policy_applications`
 --
 ALTER TABLE `policy_applications`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID auto increment', AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT for table `pricing_config`
+-- AUTO_INCREMENT cho bảng `pricing_config`
 --
 ALTER TABLE `pricing_config`
   MODIFY `config_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `representatives`
+-- AUTO_INCREMENT cho bảng `representatives`
 --
 ALTER TABLE `representatives`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
 
 --
--- AUTO_INCREMENT for table `reschedule_policies`
+-- AUTO_INCREMENT cho bảng `reschedule_policies`
 --
 ALTER TABLE `reschedule_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `reviews`
+-- AUTO_INCREMENT cho bảng `reviews`
 --
 ALTER TABLE `reviews`
   MODIFY `review_id` int NOT NULL AUTO_INCREMENT COMMENT 'Mã đánh giá', AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT for table `room`
+-- AUTO_INCREMENT cho bảng `room`
 --
 ALTER TABLE `room`
   MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=296;
 
 --
--- AUTO_INCREMENT for table `room_occupancy`
+-- AUTO_INCREMENT cho bảng `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   MODIFY `occupancy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
--- AUTO_INCREMENT for table `room_option_promotion`
+-- AUTO_INCREMENT cho bảng `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   MODIFY `promotion_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khuyến mãi';
 
 --
--- AUTO_INCREMENT for table `room_price_history`
+-- AUTO_INCREMENT cho bảng `room_price_history`
 --
 ALTER TABLE `room_price_history`
-  MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=312;
+  MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=319;
 
 --
--- AUTO_INCREMENT for table `room_transfers`
+-- AUTO_INCREMENT cho bảng `room_transfers`
 --
 ALTER TABLE `room_transfers`
   MODIFY `transfer_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT for table `room_transfer_policies`
+-- AUTO_INCREMENT cho bảng `room_transfer_policies`
 --
 ALTER TABLE `room_transfer_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT for table `room_types`
+-- AUTO_INCREMENT cho bảng `room_types`
 --
 ALTER TABLE `room_types`
   MODIFY `room_type_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT for table `room_type_image`
+-- AUTO_INCREMENT cho bảng `room_type_image`
 --
 ALTER TABLE `room_type_image`
   MODIFY `image_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã ảnh', AUTO_INCREMENT=86;
 
 --
--- AUTO_INCREMENT for table `room_type_package`
+-- AUTO_INCREMENT cho bảng `room_type_package`
 --
 ALTER TABLE `room_type_package`
   MODIFY `package_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT for table `room_type_package_services`
+-- AUTO_INCREMENT cho bảng `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `room_type_service`
+-- AUTO_INCREMENT cho bảng `room_type_service`
 --
 ALTER TABLE `room_type_service`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `services`
+-- AUTO_INCREMENT cho bảng `services`
 --
 ALTER TABLE `services`
   MODIFY `service_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- AUTO_INCREMENT for table `table_translation`
+-- AUTO_INCREMENT cho bảng `table_translation`
 --
 ALTER TABLE `table_translation`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `translation`
+-- AUTO_INCREMENT cho bảng `translation`
 --
 ALTER TABLE `translation`
   MODIFY `translation_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bản dịch', AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `users`
+-- AUTO_INCREMENT cho bảng `users`
 --
 ALTER TABLE `users`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT for table `weekend_days`
+-- AUTO_INCREMENT cho bảng `weekend_days`
 --
 ALTER TABLE `weekend_days`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- Constraints for dumped tables
+-- Ràng buộc đối với các bảng kết xuất
 --
 
 --
--- Constraints for table `audit_logs`
+-- Ràng buộc cho bảng `audit_logs`
 --
 ALTER TABLE `audit_logs`
   ADD CONSTRAINT `audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `booking`
+-- Ràng buộc cho bảng `booking`
 --
 ALTER TABLE `booking`
   ADD CONSTRAINT `booking_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE RESTRICT,
@@ -4775,13 +4867,13 @@ ALTER TABLE `booking`
   ADD CONSTRAINT `fk_booking_room` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `booking_extensions`
+-- Ràng buộc cho bảng `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   ADD CONSTRAINT `booking_extensions_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `booking_reschedules`
+-- Ràng buộc cho bảng `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   ADD CONSTRAINT `booking_reschedules_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -4792,7 +4884,7 @@ ALTER TABLE `booking_reschedules`
   ADD CONSTRAINT `booking_reschedules_ibfk_6` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `booking_rooms`
+-- Ràng buộc cho bảng `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
   ADD CONSTRAINT `booking_rooms_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
@@ -4801,14 +4893,14 @@ ALTER TABLE `booking_rooms`
   ADD CONSTRAINT `booking_rooms_option_id_foreign` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `booking_services`
+-- Ràng buộc cho bảng `booking_services`
 --
 ALTER TABLE `booking_services`
   ADD CONSTRAINT `booking_services_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `booking_services_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE RESTRICT;
 
 --
--- Constraints for table `cancellation_requests`
+-- Ràng buộc cho bảng `cancellation_requests`
 --
 ALTER TABLE `cancellation_requests`
   ADD CONSTRAINT `cancellation_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -4816,14 +4908,14 @@ ALTER TABLE `cancellation_requests`
   ADD CONSTRAINT `cancellation_requests_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `check_in_requests`
+-- Ràng buộc cho bảng `check_in_requests`
 --
 ALTER TABLE `check_in_requests`
   ADD CONSTRAINT `check_in_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `check_in_requests_ibfk_2` FOREIGN KEY (`policy_id`) REFERENCES `check_in_policies` (`policy_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `check_out_requests`
+-- Ràng buộc cho bảng `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   ADD CONSTRAINT `check_out_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -4831,13 +4923,13 @@ ALTER TABLE `check_out_requests`
   ADD CONSTRAINT `check_out_requests_ibfk_3` FOREIGN KEY (`policy_id`) REFERENCES `check_out_policies` (`policy_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `compensation_policies`
+-- Ràng buộc cho bảng `compensation_policies`
 --
 ALTER TABLE `compensation_policies`
   ADD CONSTRAINT `compensation_policies_ibfk_1` FOREIGN KEY (`applies_to_room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `compensation_requests`
+-- Ràng buộc cho bảng `compensation_requests`
 --
 ALTER TABLE `compensation_requests`
   ADD CONSTRAINT `compensation_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -4846,20 +4938,20 @@ ALTER TABLE `compensation_requests`
   ADD CONSTRAINT `compensation_requests_ibfk_4` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `conversations`
+-- Ràng buộc cho bảng `conversations`
 --
 ALTER TABLE `conversations`
   ADD CONSTRAINT `conversations_handover_to_user_id_foreign` FOREIGN KEY (`handover_to_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `conversations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `dynamic_pricing_rules`
+-- Ràng buộc cho bảng `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD CONSTRAINT `dynamic_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `extension_requests`
+-- Ràng buộc cho bảng `extension_requests`
 --
 ALTER TABLE `extension_requests`
   ADD CONSTRAINT `extension_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -4867,7 +4959,7 @@ ALTER TABLE `extension_requests`
   ADD CONSTRAINT `extension_requests_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `flexible_pricing_rules`
+-- Ràng buộc cho bảng `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL,
@@ -4875,19 +4967,19 @@ ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_3` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `invoices`
+-- Ràng buộc cho bảng `invoices`
 --
 ALTER TABLE `invoices`
   ADD CONSTRAINT `invoices_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `messages`
+-- Ràng buộc cho bảng `messages`
 --
 ALTER TABLE `messages`
   ADD CONSTRAINT `messages_conversation_id_foreign` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `news`
+-- Ràng buộc cho bảng `news`
 --
 ALTER TABLE `news`
   ADD CONSTRAINT `news_ibfk_1` FOREIGN KEY (`thumbnail_id`) REFERENCES `media_files` (`id`),
@@ -4895,7 +4987,7 @@ ALTER TABLE `news`
   ADD CONSTRAINT `news_ibfk_3` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`);
 
 --
--- Constraints for table `news1`
+-- Ràng buộc cho bảng `news1`
 --
 ALTER TABLE `news1`
   ADD CONSTRAINT `fk_news_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
@@ -4903,7 +4995,7 @@ ALTER TABLE `news1`
   ADD CONSTRAINT `news1_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `news_comments`
+-- Ràng buộc cho bảng `news_comments`
 --
 ALTER TABLE `news_comments`
   ADD CONSTRAINT `news_comments_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`),
@@ -4911,34 +5003,34 @@ ALTER TABLE `news_comments`
   ADD CONSTRAINT `news_comments_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `news_comments` (`id`);
 
 --
--- Constraints for table `news_user_actions`
+-- Ràng buộc cho bảng `news_user_actions`
 --
 ALTER TABLE `news_user_actions`
   ADD CONSTRAINT `news_user_actions_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`),
   ADD CONSTRAINT `news_user_actions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
--- Constraints for table `notifications`
+-- Ràng buộc cho bảng `notifications`
 --
 ALTER TABLE `notifications`
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `notifications_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `payment`
+-- Ràng buộc cho bảng `payment`
 --
 ALTER TABLE `payment`
   ADD CONSTRAINT `payment_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `permission_role`
+-- Ràng buộc cho bảng `permission_role`
 --
 ALTER TABLE `permission_role`
   ADD CONSTRAINT `permission_role_ibfk_1` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `permission_role_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `representatives`
+-- Ràng buộc cho bảng `representatives`
 --
 ALTER TABLE `representatives`
   ADD CONSTRAINT `fk_representative_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
@@ -4946,26 +5038,26 @@ ALTER TABLE `representatives`
   ADD CONSTRAINT `representatives_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`);
 
 --
--- Constraints for table `reschedule_policies`
+-- Ràng buộc cho bảng `reschedule_policies`
 --
 ALTER TABLE `reschedule_policies`
   ADD CONSTRAINT `reschedule_policies_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `reviews`
+-- Ràng buộc cho bảng `reviews`
 --
 ALTER TABLE `reviews`
   ADD CONSTRAINT `fk_reviews_booking` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `role_user`
+-- Ràng buộc cho bảng `role_user`
 --
 ALTER TABLE `role_user`
   ADD CONSTRAINT `role_user_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `role_user_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room`
+-- Ràng buộc cho bảng `room`
 --
 ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_2` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
@@ -4973,27 +5065,27 @@ ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_4` FOREIGN KEY (`floor_id`) REFERENCES `floors` (`floor_number`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_bed_types`
+-- Ràng buộc cho bảng `room_bed_types`
 --
 ALTER TABLE `room_bed_types`
   ADD CONSTRAINT `fk_room_bed_type` FOREIGN KEY (`bed_type_id`) REFERENCES `bed_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_bed_types_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_meal_types`
+-- Ràng buộc cho bảng `room_meal_types`
 --
 ALTER TABLE `room_meal_types`
   ADD CONSTRAINT `fk_room_meal_type` FOREIGN KEY (`meal_type_id`) REFERENCES `meal_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_meal_types_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_occupancy`
+-- Ràng buộc cho bảng `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   ADD CONSTRAINT `room_occupancy_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_option`
+-- Ràng buộc cho bảng `room_option`
 --
 ALTER TABLE `room_option`
   ADD CONSTRAINT `fk_room_option_cancellation_policy` FOREIGN KEY (`cancellation_policy_id`) REFERENCES `cancellation_policies` (`policy_id`) ON DELETE SET NULL,
@@ -5005,19 +5097,19 @@ ALTER TABLE `room_option`
   ADD CONSTRAINT `room_option_ibfk_5` FOREIGN KEY (`check_out_policy_id`) REFERENCES `check_out_policies` (`policy_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_option_promotion`
+-- Ràng buộc cho bảng `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   ADD CONSTRAINT `room_option_promotion_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_price_history`
+-- Ràng buộc cho bảng `room_price_history`
 --
 ALTER TABLE `room_price_history`
   ADD CONSTRAINT `room_price_history_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_transfers`
+-- Ràng buộc cho bảng `room_transfers`
 --
 ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5029,40 +5121,40 @@ ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_7` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `room_transfer_policies`
+-- Ràng buộc cho bảng `room_transfer_policies`
 --
 ALTER TABLE `room_transfer_policies`
   ADD CONSTRAINT `room_transfer_policies_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `room_type_amenity`
+-- Ràng buộc cho bảng `room_type_amenity`
 --
 ALTER TABLE `room_type_amenity`
   ADD CONSTRAINT `room_type_amenity_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `room_type_amenity_ibfk_2` FOREIGN KEY (`amenity_id`) REFERENCES `amenities` (`amenity_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Constraints for table `room_type_package`
+-- Ràng buộc cho bảng `room_type_package`
 --
 ALTER TABLE `room_type_package`
   ADD CONSTRAINT `room_type_package_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `room_type_package_services`
+-- Ràng buộc cho bảng `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
   ADD CONSTRAINT `room_type_package_services_ibfk_1` FOREIGN KEY (`package_id`) REFERENCES `room_type_package` (`package_id`),
   ADD CONSTRAINT `room_type_package_services_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`);
 
 --
--- Constraints for table `room_type_service`
+-- Ràng buộc cho bảng `room_type_service`
 --
 ALTER TABLE `room_type_service`
   ADD CONSTRAINT `room_type_service_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_type_service_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `translation`
+-- Ràng buộc cho bảng `translation`
 --
 ALTER TABLE `translation`
   ADD CONSTRAINT `translation_ibfk_1` FOREIGN KEY (`language_code`) REFERENCES `language` (`language_code`) ON DELETE CASCADE;

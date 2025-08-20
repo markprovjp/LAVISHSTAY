@@ -184,26 +184,26 @@ const CheckoutInfoModal: React.FC<Props> = ({ visible, bookingId, initialData, o
                                 dataSource={data.booking_services?.services || []}
                                 renderItem={(item: any) => (
                                     <List.Item>
-                                        <Row style={{ width: '100%' }} align="middle">
-                                            <Col span={12}>
-                                                <Text>{item.service_name}</Text>
-                                                <div><Text type="secondary">{item.service_description}</Text></div>
-                                            </Col>
-                                            <Col span={6} style={{ textAlign: 'right' }}>
+                                        <List.Item.Meta
+                                            title={<Text strong>{item.service_name}</Text>}
+                                            description={<Text type="secondary">{item.service_description}</Text>}
+                                        />
+                                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                            <div style={{ minWidth: 120, textAlign: 'right' }}>
                                                 <Text>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.unit_price_vnd ? Number(item.unit_price_vnd) : 0)}</Text>
-                                            </Col>
-                                            <Col span={4} style={{ textAlign: 'right' }}>
-                                                <InputNumber min={1} value={editingQuantities[item.service_id]} onChange={(v) => handleQuantityChange(item.service_id, Number(v || 0))} />
-                                            </Col>
-                                            <Col span={2} style={{ textAlign: 'right' }}>
-                                                <Space>
-                                                    <Button size="small" type="primary" onClick={() => handleUpdateService(item.service_id)}>Cập nhật</Button>
-                                                    <Popconfirm title="Xóa dịch vụ này?" onConfirm={() => handleRemoveService(item.service_id)} okText="Xóa" cancelText="Hủy">
-                                                        <Button danger size="small">Xóa</Button>
-                                                    </Popconfirm>
-                                                </Space>
-                                            </Col>
-                                        </Row>
+                                            </div>
+
+                                            <div>
+                                                <InputNumber size="middle" style={{ width: 96 }} min={1} value={editingQuantities[item.service_id]} onChange={(v) => handleQuantityChange(item.service_id, Number(v || 0))} />
+                                            </div>
+
+                                            <Space>
+                                                <Button size="small" type="primary" onClick={() => handleUpdateService(item.service_id)}>Cập nhật</Button>
+                                                <Popconfirm title="Xóa dịch vụ này?" onConfirm={() => handleRemoveService(item.service_id)} okText="Xóa" cancelText="Hủy">
+                                                    <Button danger size="small">Xóa</Button>
+                                                </Popconfirm>
+                                            </Space>
+                                        </div>
                                     </List.Item>
                                 )}
                             />

@@ -1,5 +1,4 @@
 import axiosInstance from '../config/axios';
-import { User } from './authService';
 
 export interface BookingRoom {
     id?: number;
@@ -193,6 +192,19 @@ const bookingService = {
             return response.data;
         } catch (error: any) {
             if (error.response?.data) {
+                throw error.response.data;
+            }
+            throw error;
+        }
+    },
+    // Check review eligibility for a booking (public endpoint)
+    getReviewEligibility: async (bookingId: number | string): Promise<any> => {
+        try {
+            const response = await axiosInstance.get(`/public/bookings/${bookingId}/review-eligibility`);
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.data) {
+                // propagate server-provided details (e.g. reason)
                 throw error.response.data;
             }
             throw error;

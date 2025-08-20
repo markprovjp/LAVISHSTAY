@@ -8,6 +8,7 @@ import QueryProvider from "./providers/QueryProvider";
 import GoogleAuthProviderWrapper from "./providers/GoogleAuthProvider";
 import { SearchProvider } from "./contexts/SearchContext";
 import { RoomTypesProvider } from "./contexts/RoomTypesContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { createAntdTheme } from "./styles/theme";
 
 // Import i18n configuration
@@ -32,6 +33,7 @@ import RoomTypesDetailsPage from "./pages/RoomTypesDetailsPage";
 import BookingConfirmation from "./pages/BookingConfirmation"
 import RoomTypesDemo from "./pages/RoomTypesDemo";
 import ReviewBooking from "./pages/ReviewBooking";
+import LookupBookingByPhone from "./pages/booking/LookupBookingByPhone";
 // Import reception components
 import ReceptionLayout from "./components/reception/ReceptionLayout";
 import ReceptionDashboard from "./pages/reception/ReceptionDashboard";
@@ -79,7 +81,8 @@ import "./styles/theme-transitions.css";
 import "./styles/global.css";
 import "./styles/performance-optimizations.css";
 import News from "./pages/News";
-
+import NotificationsPage from "./pages/NotificationsPage";
+import TheLevelPage from "./pages/reception/the-level/TheLevelPage-Final";
 
 const { Content } = Layout;
 
@@ -117,73 +120,78 @@ const App: React.FC = React.memo(() => {
   return (
     <ProviderWrapper>
       <Router>
-        <ScrollToTop />
-        <Header />
-        <Breadcrumb />
-        <Content
-          style={{
+        <NotificationProvider>
+          <ScrollToTop />
+          <Header />
+          <Breadcrumb />
+          <Content
+            style={{
 
-            background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
+              background: currentTheme.token?.colorBgBase, // Sử dụng mã thông báo chủ đề cho nền
 
-          }}
-        >
-          <Routes>            {/* Main Pages */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* Thêm dòng này */}
-            <Route path="/booking/confirmation" element={<BookingConfirmation />} />
-            <Route path="/room-types-demo" element={<RoomTypesDemo />} />
-            <Route path="/review-booking" element={<ReviewBooking />} />
+            }}
+          >
+            <Routes>            {/* Main Pages */}
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/room-types/:id" element={<RoomTypesDetailsPage />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/news/:slug" element={<NewsDetailPage />} /> {/* Thêm dòng này */}
+              <Route path="/the-level" element={<TheLevelPage />} />
+              <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+              <Route path="/booking/lookup" element={<LookupBookingByPhone />} />
+              <Route path="/room-types-demo" element={<RoomTypesDemo />} />
+              <Route path="/review-booking" element={<ReviewBooking />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
 
-            {/* Auth Routes */}
-            <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
+              {/* Auth Routes */}
+              <Route path="/auth/google/callback" element={<GoogleOAuthCallback />} />
 
-            {/* Profile Routes with nested routing */}
-            <Route path="/profile" element={<ProfileLayout />}>
-              <Route index element={<PersonalInfo />} />
-              <Route path="personal-info" element={<PersonalInfo />} />
-              <Route path="bookings" element={<BookingManagement />} />
-              <Route path="wishlist" element={<Wishlist />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
-              <Route path="change-password" element={<ChangePassword />} />
-            </Route>                    {/* Standalone routes */}
+              {/* Profile Routes with nested routing */}
+              <Route path="/profile" element={<ProfileLayout />}>
+                <Route index element={<PersonalInfo />} />
+                <Route path="personal-info" element={<PersonalInfo />} />
+                <Route path="bookings" element={<BookingManagement />} />
+                <Route path="wishlist" element={<Wishlist />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="change-password" element={<ChangePassword />} />
+              </Route>                    {/* Standalone routes */}
 
-            {/* Legacy routes for backward compatibility */}            {/* Reception Routes with nested routing */}
-            <Route path="/reception" element={<ReceptionLayout />}>
+              {/* Legacy routes for backward compatibility */}            {/* Reception Routes with nested routing */}
+              <Route path="/reception" element={<ReceptionLayout />}>
 
-              <Route index element={<ReceptionDashboard />} />
-              <Route path="dashboard" element={<ReceptionDashboard />} />
-              <Route path="room-management-list" element={<RoomManagementDashboard />} />
-              <Route path="booking-management" element={<BookingManagementPage />} />
-              <Route path="confirm-representative-payment" element={<ConfirmRepresentativePayment />} />
-              <Route path="payment-booking" element={<PaymentBookingReception />} />
-              <Route path="room-management/today" element={<RoomManagementDashboard />} />
-              <Route path="payment-success" element={<PaymentSuccess />} />
-            </Route>
-            {/* Other routes */}
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/destinations" element={<Destinations />} />
-            <Route path="/payment" element={<Payment />} />
-            <Route path="/admin/payment" element={<AdminPayment />} />
+                <Route index element={<ReceptionDashboard />} />
+                <Route path="dashboard" element={<ReceptionDashboard />} />
+                <Route path="room-management-list" element={<RoomManagementDashboard />} />
+                <Route path="booking-management" element={<BookingManagementPage />} />
+                <Route path="confirm-representative-payment" element={<ConfirmRepresentativePayment />} />
+                <Route path="payment-booking" element={<PaymentBookingReception />} />
+                <Route path="room-management/today" element={<RoomManagementDashboard />} />
+                <Route path="payment-success" element={<PaymentSuccess />} />
+              </Route>
+              {/* Other routes */}
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/destinations" element={<Destinations />} />
+              <Route path="/payment" element={<Payment />} />
+              <Route path="/admin/payment" element={<AdminPayment />} />
 
-            {/* 404 Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <ContactFloatButton
-            phoneNumber="+84123456789"
-            facebookUrl="https://www.facebook.com/yourhotel"
-            zaloUrl="https://zalo.me/yourphonenumber"
-            emailAddress="contact@lavishstay.com"
-          />
-          <ChatBot />
-          <FloatButton.BackTop />
-        </Content>
-        <Footer />
+              {/* 404 Route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <ContactFloatButton
+              phoneNumber="+84123456789"
+              facebookUrl="https://www.facebook.com/yourhotel"
+              zaloUrl="https://zalo.me/yourphonenumber"
+              emailAddress="contact@lavishstay.com"
+            />
+            <ChatBot />
+            <FloatButton.BackTop />
+          </Content>
+          <Footer />
+        </NotificationProvider>
       </Router>
     </ProviderWrapper>
   );

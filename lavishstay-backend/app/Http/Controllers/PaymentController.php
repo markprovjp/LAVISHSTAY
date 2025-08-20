@@ -1863,6 +1863,9 @@ class PaymentController extends Controller
                 }
             }
 
+            // Biến để track occupancy updates
+            $occupancyUpdates = [];
+            $successfulBookingRooms = [];
             // Xử lý từng phòng
             foreach ($rooms as $roomIndex => $roomData) {
                 Log::info("[completeBookingAfterPayment] Room {$roomIndex} data for booking {$bookingCode}:", $roomData);
@@ -1921,6 +1924,18 @@ class PaymentController extends Controller
                         'booking_room_id' => $bookingRoomId,
                         'option_id' => $finalOptionId
                     ]);
+                    // Track successful booking room for occupancy update
+                    $successfulBookingRooms[] = [
+                        'booking_room_id' => $bookingRoomId,
+                        'room_type_id' => $room->room_type_id,
+                        'room_id' => $roomData['room_id']
+                    ];
+
+                    // Track occupancy updates by room_type_id
+                    if (!isset($occupancyUpdates[$room->room_type_id])) {
+                        $occupancyUpdates[$room->room_type_id] = 0;
+                    }
+                    $occupancyUpdates[$room->room_type_id]++;
                 } catch (\Exception $e) {
                     Log::error("[completeBookingAfterPayment] Error creating booking_room:", [
                         'error' => $e->getMessage(),
@@ -1956,6 +1971,60 @@ class PaymentController extends Controller
             //     'room_id' => NULL
             // ]);
 
+            // ===== CẬP NHẬT OCCUPANCY CHO SAME-DAY BOOKING =====
+            // Chỉ cập nhật nếu check-in date là hôm nay hoặc trong tương lai gần
+            $checkInCarbon = Carbon::parse($checkInDate);
+            $today = Carbon::today();
+            
+            if ($checkInCarbon->isSameDay($today) || $checkInCarbon->isFuture()) {
+                try {
+                    $occupancyService = new \App\Services\RoomOccupancyService();
+                    
+                    foreach ($occupancyUpdates as $roomTypeId => $roomsCount) {
+                        $updateSuccess = $occupancyService->updateOccupancyForSameDayBooking(
+                            $roomTypeId, 
+                            $roomsCount, 
+                            $checkInDate
+                        );
+                        
+                        if ($updateSuccess) {
+                            Log::info("[completeBookingAfterPayment] Successfully updated occupancy for same-day booking:", [
+                                'booking_code' => $bookingCode,
+                                'room_type_id' => $roomTypeId,
+                                'rooms_count' => $roomsCount,
+                                'check_in_date' => $checkInDate
+                            ]);
+                        } else {
+                            Log::warning("[completeBookingAfterPayment] Failed to update occupancy for same-day booking:", [
+                                'booking_code' => $bookingCode,
+                                'room_type_id' => $roomTypeId,
+                                'rooms_count' => $roomsCount,
+                                'check_in_date' => $checkInDate
+                            ]);
+                        }
+                    }
+                    
+                    Log::info("[completeBookingAfterPayment] Occupancy update completed for booking:", [
+                        'booking_code' => $bookingCode,
+                        'total_room_types_updated' => count($occupancyUpdates),
+                        'occupancy_updates' => $occupancyUpdates
+                    ]);
+                    
+                } catch (\Exception $e) {
+                    // Log error but don't fail the entire booking process
+                    Log::error("[completeBookingAfterPayment] Error updating occupancy for same-day booking:", [
+                        'booking_code' => $bookingCode,
+                        'error' => $e->getMessage(),
+                        'occupancy_updates' => $occupancyUpdates
+                    ]);
+                }
+            } else {
+                Log::info("[completeBookingAfterPayment] Skipping occupancy update - not same-day booking:", [
+                    'booking_code' => $bookingCode,
+                    'check_in_date' => $checkInDate,
+                    'today' => $today->toDateString()
+                ]);
+            }
             // Xóa cache data vì đã xử lý xong
             cache()->forget("booking_rooms_data_{$bookingCode}");
 
