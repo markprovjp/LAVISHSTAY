@@ -274,7 +274,7 @@
                                 href="#0" @click.prevent="open = !open; sidebarExpanded = true">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(2), ['users'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
+                                        <svg class="shrink-0 fill-current transition-colors duration-200 @if (in_array(Request::segment(2), ['users', 'staffs', 'customers'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif"
                                             width="20px" height="20px" xmlns="http://www.w3.org/2000/svg"
                                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                                             class="size-6">
