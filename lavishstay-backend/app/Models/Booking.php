@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Booking extends Model
 {
+    use HasFactory;
     protected $table = 'booking';
     protected $primaryKey = 'booking_id'; // Auto-increment integer ID
     public $incrementing = true; // Đảm bảo sử dụng auto-increment
@@ -69,6 +71,14 @@ class Booking extends Model
     public function bookingRooms()
     {
         return $this->hasMany(BookingRoom::class, 'booking_code', 'booking_code');
+    }
+    
+    /**
+     * Backward-compatible alias so callers can use ->rooms()
+     */
+    public function rooms()
+    {
+        return $this->bookingRooms();
     }
     
     public function representatives()
@@ -139,6 +149,7 @@ class Booking extends Model
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'booking_id', 'id');
+    // Booking primary key is `booking_id`, ensure we use it as the local key
+    return $this->hasMany(Review::class, 'booking_id', 'booking_id');
     }
 }

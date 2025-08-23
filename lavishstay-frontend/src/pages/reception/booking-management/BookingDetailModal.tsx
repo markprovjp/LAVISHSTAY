@@ -30,18 +30,19 @@ import {
     Collapse
 } from 'antd';
 import { HomeOutlined, EditOutlined, SaveOutlined, CloseOutlined, MoreOutlined, UserOutlined, PhoneOutlined, MailOutlined, DollarOutlined, TeamOutlined, CreditCardOutlined, SwapOutlined, CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, ExclamationCircleOutlined, CalendarOutlined, FileTextOutlined } from '@ant-design/icons';
-import { BedDouble, CalendarDays, UserRound, Pencil, DoorOpen, LogOut, XCircle, Ban, ArrowRightLeft } from 'lucide-react';
+import { BedDouble, CalendarDays, UserRound, Pencil, DoorOpen, LogOut, XCircle, Ban, ArrowRightLeft, DollarSign } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { receptionAPI } from '../../../utils/api';
 import RoomSelectionModal from './RoomSelectionModal';
 import {
+    BookedDetailsTab,
     ChangeRoomTab,
     ExtendStayTab,
     RescheduleTab,
-    BookedDetailsTab,
     LateCheckOutTab,
-    EarlyCheckOutTab
+    EarlyCheckOutTab,
+    CouponTab
 } from './components';
 
 const { Text } = Typography;
@@ -178,6 +179,32 @@ interface BookingDetail {
     payment_type: string;
     total_amount: number;
     booking_status: string;
+    // Coupon fields
+    coupon_applied?: boolean;
+    coupon?: {
+        redemption_id: number;
+        coupon_id: number;
+        code: string;
+        amount_saved_vnd: number;
+        applied_amount_vnd: number;
+        applied_at: string;
+        meta: {
+            original_total: number;
+            discount_calculation: {
+                original_amount: number;
+                discount_amount: number;
+                new_total: number;
+                discount_type: string;
+                discount_value: string;
+            };
+            applied_at: string;
+            coupon_snapshot: {
+                code: string;
+                type: string;
+                value: string;
+            };
+        };
+    } | null;
 }
 
 interface BookingDetailModalProps {
@@ -756,13 +783,7 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                 >
                                     Xuất hoá đơn
                                 </Button>
-                                <Button
-                                    type="primary"
-                                    icon={<EditOutlined />}
-                                    onClick={() => setIsEditing(true)}
-                                >
-                                    Chỉnh sửa
-                                </Button>
+
                             </>
                         )}
                     </Space>
@@ -777,128 +798,6 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
             <Spin spinning={loading}>
                 {bookingDetail && (
                     <>
-                        <Card
-                            title="Thông tin đặt phòng"
-                            style={{ marginBottom: 24 }}
-                        >
-                            <Form
-                                form={form}
-                                layout="vertical"
-                                onFinish={handleSubmit}
-                                disabled={!isEditing}
-                            >
-                                <Row gutter={[16, 16]}>
-                                    <Col span={8}>
-                                        <Form.Item
-                                            label="Tên khách hàng"
-                                            name="guest_name"
-                                            rules={[{ required: true, message: 'Vui lòng nhập tên khách hàng' }]}
-                                        >
-                                            <Input prefix={<UserOutlined />} />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                        <Form.Item
-                                            label="Số điện thoại"
-                                            name="guest_phone"
-                                            rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
-                                        >
-                                            <Input prefix={<PhoneOutlined />} />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                        <Form.Item
-                                            label="Email"
-                                            name="guest_email"
-                                            rules={[{ type: 'email', message: 'Email không hợp lệ' }]}
-                                        >
-                                            <Input prefix={<MailOutlined />} />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            label="Ngày nhận phòng"
-                                            name="check_in_date"
-                                            rules={[{ required: true, message: 'Vui lòng chọn ngày nhận phòng' }]}
-                                        >
-                                            <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            label="Ngày trả phòng"
-                                            name="check_out_date"
-                                            rules={[{ required: true, message: 'Vui lòng chọn ngày trả phòng' }]}
-                                        >
-                                            <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item
-                                            label="Số khách"
-                                            name="guest_count"
-                                            rules={[{ required: true, message: 'Vui lòng nhập số khách' }]}
-                                        >
-                                            <InputNumber
-                                                style={{ width: '100%' }}
-                                                min={1}
-                                                prefix={<TeamOutlined />}
-                                            />
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                        <Form.Item label="Tổng tiền">
-                                            <div style={{ display: 'flex', alignItems: 'center', height: 32 }}>
-                                                <DollarOutlined style={{ marginRight: 8, color: '#f50' }} />
-                                                <Text strong style={{ color: '#f50', fontSize: 16 }}>
-                                                    {new Intl.NumberFormat('vi-VN').format(bookingDetail.total_price_vnd)} ₫
-                                                </Text>
-                                            </div>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                        <Form.Item
-                                            label="Trạng thái đặt phòng"
-                                            name="status"
-                                        >
-                                            <Select>
-                                                <Option value="pending">Chờ xác nhận</Option>
-                                                <Option value="confirmed">Đã xác nhận</Option>
-                                                <Option value="completed">Đã hoàn thành</Option>
-                                                <Option value="cancelled">Đã hủy</Option>
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                        <Form.Item
-                                            label="Trạng thái thanh toán"
-                                            name="payment_status"
-                                        >
-                                            <Select>
-                                                <Option value="pending">Chờ thanh toán</Option>
-                                                <Option value="completed">Đã thanh toán</Option>
-                                                <Option value="failed">Thanh toán thất bại</Option>
-                                                <Option value="refunded">Đã hoàn tiền</Option>
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
-                                    <Col span={8}>
-                                        <Form.Item
-                                            label="Hình thức thanh toán"
-                                            name="payment_type"
-                                        >
-                                            <Select>
-                                                <Option value="deposit">Cọc trước</Option>
-                                                <Option value="full">Thanh toán đầy đủ</Option>
-                                                <Option value="qr_code">QR Code</Option>
-                                                <Option value="at_hotel">Tại khách sạn</Option>
-                                                <Option value="pay_now_with_vietQR">VietQR</Option>
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
-                                </Row>
-                            </Form>
-                        </Card>
 
                         <Tabs
                             defaultActiveKey="rooms"
@@ -1191,13 +1090,6 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     )}
                                 </Card>
                             </TabPane>
-                            <TabPane tab="Hóa đơn" key="invoice">
-                                <Card>
-                                    <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                        <Text type="secondary">Tính năng hóa đơn sẽ được phát triển trong phiên bản tiếp theo</Text>
-                                    </div>
-                                </Card>
-                            </TabPane>
                             <TabPane tab="Dịch vụ phát sinh" key="services">
                                 <Card>
                                     <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1252,6 +1144,21 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                         ]}
                                     />
                                 </Card>
+                            </TabPane>
+                            <TabPane
+                                tab={
+                                    <span>
+                                        <DollarSign className="inline-block mr-2" size={16} />
+                                        Mã giảm giá
+                                    </span>
+                                }
+                                key="coupon"
+                            >
+                                <CouponTab
+                                    couponApplied={bookingDetail.coupon_applied}
+                                    coupon={bookingDetail.coupon}
+                                    originalTotal={bookingDetail.total_price_vnd}
+                                />
                             </TabPane>
                             <TabPane tab="Gia hạn" key="extend">
                                 <ExtendStayTab />

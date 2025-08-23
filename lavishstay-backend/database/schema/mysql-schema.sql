@@ -407,7 +407,7 @@ CREATE TABLE `compensation_requests` (
   `status` enum('pending','approved','rejected','applied') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'pending' COMMENT 'Trạng thái xử lý',
   `requested_amount` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền lễ tân đề xuất bồi thường (nếu có)',
   `approved_amount` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền quản lý duyệt cuối cùng',
-  `approved_by` bigint unsigned NOT NULL COMMENT 'ID người duyệt (users.id)',
+  `approved_by` bigint unsigned DEFAULT NULL COMMENT 'ID người duyệt (users.id)',
   `approved_at` timestamp NULL DEFAULT NULL COMMENT 'Thời gian duyệt',
   `attachments` json DEFAULT NULL COMMENT 'Danh sách file đính kèm (ảnh/video)',
   `admin_note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Ghi chú của quản lý khi duyệt hoặc từ chối',

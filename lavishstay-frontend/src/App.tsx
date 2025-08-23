@@ -1,6 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ConfigProvider, FloatButton, App as AntApp, Layout } from "antd";
+// Antd Vietnamese locale
+import viVN from 'antd/locale/vi_VN';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
 import { useSelector } from "react-redux";
 import { RootState } from "./store";
 import ThemeProvider from "./providers/ThemeProvider";
@@ -92,12 +96,15 @@ const App: React.FC = React.memo(() => {
   // Sử dụng hàm helper để tạo theme dựa trên isDarkMode
   const currentTheme = createAntdTheme(isDarkMode);
 
+  // Set global locale for dayjs (dates) to Vietnamese
+  dayjs.locale('vi');
+
   // Memoize provider wrapper to reduce re-renders
   const ProviderWrapper: React.FC<{ children: React.ReactNode }> = React.useMemo(
     () =>
       ({ children }) => (
         <GoogleAuthProviderWrapper>
-          <ConfigProvider theme={currentTheme}>
+          <ConfigProvider theme={currentTheme} locale={viVN}>
             <ThemeProvider>
               <QueryProvider>
                 <SearchProvider>

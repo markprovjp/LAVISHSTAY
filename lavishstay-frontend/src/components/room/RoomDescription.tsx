@@ -23,6 +23,8 @@ const RoomDescription: React.FC<RoomDescriptionProps> = ({
     room,
     className = ''
 }) => {
+    // Defensive: if room isn't provided yet, don't render the component
+    if (!room) return null;
     const [isExpanded, setIsExpanded] = useState(false);
     const [activeSection, setActiveSection] = useState<'description' | 'specifications'>('description');
 
@@ -31,20 +33,22 @@ const RoomDescription: React.FC<RoomDescriptionProps> = ({
     };
 
     const formatDescription = (text: string) => {
-        return text.split('\n').map((paragraph, index) => (
+        const source = String(text ?? room.description ?? '');
+        return source.split('\n').map((paragraph, index) => (
             <p key={index} className="mb-4 last:mb-0 leading-relaxed">
                 {paragraph.trim()}
             </p>
         ));
     };
 
-    const groupedSpecs = room.specifications.reduce((acc, spec) => {
+    const specifications = room.specifications ?? [];
+    const groupedSpecs = specifications.reduce((acc, spec) => {
         if (!acc[spec.category]) {
             acc[spec.category] = [];
         }
         acc[spec.category].push(spec);
         return acc;
-    }, {} as Record<string, typeof room.specifications>);
+    }, {} as Record<string, typeof specifications>);
 
     const specCategoryNames = {
         room: 'Thông tin phòng',

@@ -1,0 +1,13 @@
+{
+  "valid": true,
+  "coupon": {
+    "code": "WELCOME2024",
+    "type": "percent",
+    "value": 15,
+    "description": "Chào mừng khách hàng mới - Giảm 15% cho lần đặt phòng đầu tiên",
+    "min_booking_amount_vnd": 500000
+  },
+  "discount_vnd": 150000,
+  "new_total_vnd": 1000000,
+  "message": "Coupon validated successfully"
+}

@@ -70,16 +70,16 @@ class RoomType extends Model
     }
 
     public function reviews()
-{
-    return $this->hasManyThrough(
-        Review::class,
-        Room::class,
-        'room_type_id', // Foreign key trên bảng rooms
-        'room_id',      // Foreign key trên bảng reviews
-        'room_type_id', // Local key trên RoomType
-        'room_id'       // Local key trên Room
-    )->whereHas('booking'); // Đảm bảo chỉ lấy reviews có booking
-}
+    {
+        return $this->hasManyThrough(
+            Review::class,
+            Booking::class,
+            'room_type_id',     // Foreign key trên bảng booking
+            'booking_id',       // Foreign key trên bảng reviews
+            'room_type_id',     // Local key trên RoomType
+            'booking_id'        // Local key trên Booking
+        )->where('reviews.status', 'approved');
+    }
 
     public function dynamicPricingRules()
     {

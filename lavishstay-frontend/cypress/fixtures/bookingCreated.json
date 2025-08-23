@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "booking_code": "BK12345678",
+  "message": "Booking created successfully",
+  "booking": {
+    "id": 123,
+    "booking_code": "BK12345678",
+    "customer_name": "John Doe",
+    "customer_email": "john@example.com",
+    "total_price": 1000000,
+    "discount_amount": 150000,
+    "final_total": 850000,
+    "coupon_applied": {
+      "code": "WELCOME2024",
+      "discount_amount": 150000
+    }
+  }
+}

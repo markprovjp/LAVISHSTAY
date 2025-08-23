@@ -1,0 +1,10 @@
+{
+  "exists": true,
+  "coupon": {
+    "code": "WELCOME2024",
+    "type": "percent",
+    "value": 15,
+    "description": "Chào mừng khách hàng mới - Giảm 15% cho lần đặt phòng đầu tiên"
+  },
+  "message": "Mã giảm giá hợp lệ"
+}

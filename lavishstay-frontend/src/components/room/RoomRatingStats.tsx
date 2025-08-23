@@ -41,12 +41,16 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
         valueForMoney: <TrendingUp size={16} />
     };
 
+    // Defensive defaults
+    const ratingDistribution: Record<string | number, number> = (stats && (stats as any).ratingDistribution) ? (stats as any).ratingDistribution : {};
+    const totalReviews = (stats && ((stats as any).totalReviews ?? (stats as any).total ?? (stats as any).count)) ? ((stats as any).totalReviews ?? (stats as any).total ?? (stats as any).count) : 0;
+
     // Prepare data for distribution chart
-    const distributionData = Object.entries(stats.ratingDistribution)
+    const distributionData = Object.entries(ratingDistribution)
         .map(([rating, count]) => ({
             rating: `${rating} sao`,
-            count,
-            percentage: stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0
+            count: Number(count) || 0,
+            percentage: totalReviews > 0 ? (Number(count) / totalReviews) * 100 : 0
         }))
         .reverse(); // Show 5 stars first
 
@@ -140,17 +144,17 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
                                 Thống kê đánh giá
                             </h2>
                             <p className="text-gray-600 dark:text-gray-400 mt-1">
-                                Dựa trên {stats.totalReviews} đánh giá từ khách hàng
+                                Dựa trên {totalReviews} đánh giá từ khách hàng
                             </p>
                         </div>
 
                         <div className="flex items-center gap-4">
                             <div className="text-center">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <Rate disabled value={stats.overall} allowHalf className="text-2xl" />
+                                    <Rate disabled value={(stats && (stats as any).overall) ?? (stats && (stats as any).average) ?? 0} allowHalf className="text-2xl" />
                                 </div>
                                 <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                    {stats.overall.toFixed(1)}
+                                    {(((stats && (stats as any).overall) ?? (stats && (stats as any).average) ?? 0)).toFixed(1)}
                                 </div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                     Điểm trung bình
@@ -163,7 +167,7 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
                             <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
-                                {Math.round((stats.ratingDistribution[5] || 0) / stats.totalReviews * 100)}%
+                                {Math.round(((ratingDistribution[5] || ratingDistribution['5'] || 0) / Math.max(1, totalReviews)) * 100)}%
                             </div>
                             <div className="text-sm text-green-700 dark:text-green-300">
                                 Đánh giá 5 sao
@@ -172,7 +176,7 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
 
                         <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
                             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                {Math.round(((stats.ratingDistribution[5] || 0) + (stats.ratingDistribution[4] || 0)) / stats.totalReviews * 100)}%
+                                {Math.round((((ratingDistribution[5] || ratingDistribution['5'] || 0) + (ratingDistribution[4] || ratingDistribution['4'] || 0)) / Math.max(1, totalReviews)) * 100)}%
                             </div>
                             <div className="text-sm text-blue-700 dark:text-blue-300">
                                 Hài lòng (4-5 sao)
@@ -181,7 +185,7 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
 
                         <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl">
                             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                                {stats.totalReviews}
+                                {totalReviews}
                             </div>
                             <div className="text-sm text-purple-700 dark:text-purple-300">
                                 Tổng đánh giá
@@ -201,7 +205,7 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
                                     <CategoryRating
                                         key={category}
                                         category={category}
-                                        value={stats[category]}
+                                        value={(stats && (stats as any)[category]) ?? 0}
                                         index={index}
                                     />
                                 ))
@@ -214,7 +218,7 @@ const RoomRatingStatsComponent: React.FC<RoomRatingStatsProps> = ({
                     {/* Rating Distribution */}
                     <div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                            Phân bố đánh giá 
+                            Phân bố đánh giá
                         </h3>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
