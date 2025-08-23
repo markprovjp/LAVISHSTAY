@@ -97,6 +97,17 @@ interface BookingTableData {
     room_id?: number | null;
     room_name?: string;
     room_id_display?: number | null;
+    // Coupon fields
+    coupon_applied?: boolean;
+    coupon?: {
+        redemption_id: number;
+        coupon_id: number;
+        code: string;
+        amount_saved_vnd: number;
+        applied_amount_vnd: number;
+        applied_at: string;
+        meta: any;
+    } | null;
 }
 
 const BookingManagement: React.FC = () => {
@@ -181,6 +192,9 @@ const BookingManagement: React.FC = () => {
                 room_name: String(roomNames.split(',')[0] || ''),
                 room_id_display: booking.room_id ? Number(booking.room_id) : null,
                 booking_status: String(booking.status || 'pending'),
+                // Coupon fields
+                coupon_applied: booking.coupon_applied || false,
+                coupon: booking.coupon || null,
             };
         });
     }, [bookingsData]);
@@ -314,6 +328,27 @@ const BookingManagement: React.FC = () => {
             align: 'right',
             sorter: (a, b) => a.total_price_vnd - b.total_price_vnd,
             render: (price) => <Text strong style={{ color: '#f5222d' }}>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price as number)}</Text>,
+        },
+        {
+            title: 'Mã giảm giá',
+            key: 'coupon_info',
+            width: 140,
+            align: 'center',
+            render: (_, record) => {
+                if (record.coupon_applied && record.coupon) {
+                    return (
+                        <Flex vertical align="center">
+                            <Text strong style={{ color: '#52c41a', fontSize: '12px' }}>
+                                {record.coupon.code}
+                            </Text>
+                            <Text style={{ color: '#f5222d', fontSize: '11px' }}>
+                                -{new Intl.NumberFormat('vi-VN').format(record.coupon.amount_saved_vnd)} ₫
+                            </Text>
+                        </Flex>
+                    );
+                }
+                return <Text type="secondary" style={{ fontSize: '11px' }}>-</Text>;
+            },
         },
         {
             title: 'Trạng Thái',

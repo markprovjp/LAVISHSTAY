@@ -6,9 +6,52 @@
 
 ![Logo LavishStay](./public/logo192.png)
 
+## Tính Năng Mới: Hệ Thống Mã Giảm Giá
+
+### Coupon/Discount System Integration
+
+Hệ thống mã giảm giá đã được tích hợp đầy đủ vào flow đặt phòng với các tính năng:
+
+#### Frontend Components:
+
+- **CouponInput**: Component nhập và validate mã giảm giá với UI/UX tối ưu
+- **Real-time validation**: Kiểm tra mã giảm giá theo thời gian thực với debounce
+- **Error handling**: Xử lý lỗi thân thiện với người dùng (Tiếng Việt)
+- **Auto-apply**: Tự động áp dụng mã hợp lệ vào booking
+
+#### API Integration:
+
+- `POST /api/coupons/check-code` - Kiểm tra mã tồn tại
+- `POST /api/coupons/validate` - Validate mã với booking preview
+- `POST /api/payments/create-booking` - Tạo booking với coupon_code
+
+#### Testing Coverage:
+
+- **Unit Tests**: 12 test cases cover các scenario chính (valid/invalid/expired/network errors)
+- **E2E Tests**: 8 Cypress specs test complete booking flow với coupon
+- **Error Scenarios**: Rate limiting, server errors, coupon rejection
+
+#### Environment Requirements:
+
+```bash
+# Backend API URL (required)
+VITE_API_URL=http://localhost:8888/api
+
+# For local development
+VITE_API_BASE_URL=http://localhost:8888
+```
+
+#### Sample Coupons for Testing:
+
+- `WELCOME2024` - 15% discount, min 500k VND
+- `VIP300K` - 300k VND fixed discount, min 2M VND
+- `WEEKEND10` - 10% weekend special
+- `EXPIRED10` - Expired coupon (for error testing)
+
 ## Công Nghệ Sử Dụng
 
 ### Các Công Nghệ Chính
+
 - **Frontend Framework**: React 18 - Thư viện JavaScript phổ biến nhất để xây dựng giao diện người dùng
 - **Ngôn Ngữ**: TypeScript - Mang lại tính an toàn về kiểu dữ liệu và hỗ trợ phát triển tốt hơn
 - **Build Tool**: Vite - Công cụ build nhanh và hiệu quả, giúp thời gian phát triển nhanh hơn nhiều lần
@@ -16,7 +59,8 @@
 - **CSS Framework**: Tailwind CSS - Framework CSS tiện lợi cho phép styling nhanh chóng
 
 ### Quản Lý State và Data
-- **State Management**: 
+
+- **State Management**:
   - Redux Toolkit - Quản lý state toàn cục của ứng dụng
   - Zustand - Thư viện state management nhẹ và dễ sử dụng
 - **API Client**: Axios - Thư viện HTTP client mạnh mẽ để giao tiếp với backend
@@ -24,6 +68,7 @@
 - **Routing**: React Router v7 - Thư viện routing mới nhất cho React
 
 ### Công Cụ Phát Triển
+
 - **Linting**: ESLint - Kiểm tra lỗi code và đảm bảo chất lượng
 - **Testing**: Vitest và React Testing Library - Công cụ test hiện đại
 - **Type Checking**: TypeScript - Kiểm tra kiểu dữ liệu tĩnh
@@ -133,7 +178,9 @@ src/
 ## Chức Năng Chính Của Ứng Dụng
 
 ### Trang Công Khai
+
 1. **Trang Chủ**
+
    - Hero banner với hình ảnh thu hút
    - Form tìm kiếm phòng/khách sạn
    - Hiển thị các khách sạn được đề xuất
@@ -142,12 +189,14 @@ src/
    - Form đăng ký nhận bản tin
 
 2. **Trang Giới Thiệu**
+
    - Thông tin về LavishStay
    - Lịch sử và sứ mệnh
    - Thống kê về hệ thống (số lượng khách sạn, khách hàng...)
    - Đội ngũ phát triển
 
 3. **Trang Tìm Kiếm & Danh Sách Khách Sạn**
+
    - Bộ lọc tìm kiếm nâng cao
    - Hiển thị danh sách khách sạn theo tiêu chí
    - Sắp xếp theo giá, đánh giá, phổ biến
@@ -161,13 +210,16 @@ src/
    - Hệ thống đặt phòng
 
 ### Khu Vực Người Dùng
+
 1. **Đăng Nhập / Đăng Ký**
+
    - Đăng nhập bằng email/password
    - Đăng nhập qua mạng xã hội
    - Đăng ký tài khoản mới
    - Khôi phục mật khẩu
 
 2. **Dashboard Người Dùng**
+
    - Trang tổng quan
    - Quản lý hồ sơ cá nhân
    - Lịch sử đặt phòng
@@ -181,15 +233,19 @@ src/
    - Thanh toán
 
 ### Tính Năng Giao Diện
+
 1. **Đa Ngôn Ngữ**
+
    - Hỗ trợ tiếng Việt và tiếng Anh
    - Dễ dàng mở rộng thêm ngôn ngữ
 
 2. **Theme Sáng/Tối**
+
    - Chuyển đổi giữa chế độ sáng và tối
    - Tự động nhận diện chế độ hệ thống
 
 3. **Responsive**
+
    - Tương thích với tất cả thiết bị
    - Tối ưu hóa cho di động, tablet và desktop
 
@@ -203,23 +259,27 @@ src/
 Dự án sử dụng REST API từ phần backend Laravel để giao tiếp. Dưới đây là các nhóm API chính:
 
 1. **Authentication API**
+
    - Đăng nhập, đăng xuất
    - Đăng ký
    - Quên mật khẩu
    - Refresh token
 
 2. **User API**
+
    - Xem và cập nhật thông tin cá nhân
    - Quản lý mật khẩu
    - Quản lý thông báo
 
 3. **Property API**
+
    - Tìm kiếm khách sạn/phòng
    - Xem chi tiết khách sạn
    - Lấy danh sách đề xuất
    - Xếp hạng và đánh giá
 
 4. **Booking API**
+
    - Tạo đặt phòng mới
    - Xem trạng thái đặt phòng
    - Hủy đặt phòng
@@ -255,25 +315,30 @@ npm run lint
 ## Công Nghệ Nổi Bật
 
 ### State Management
+
 - **Redux Toolkit**: Quản lý global state phức tạp như authentication, theme...
 - **Zustand**: Quản lý state đơn giản như filters, UI states...
 
 ### Data Fetching
+
 - **React Query**: Quản lý data fetching, caching, và synchronization với server
 - **Axios Interceptors**: Xử lý authentication, refresh token và error handling
 
 ### UI/UX
+
 - **Ant Design**: Cung cấp các components phức tạp như DatePicker, Table, Modal...
 - **Tailwind CSS**: Styling nhanh chóng và responsive
 - **Styled Components**: Custom components với CSS-in-JS
 
 ### Routing
+
 - **React Router v7**: Quản lý routes và navigation trong ứng dụng
 - **Protected Routes**: Bảo vệ các routes cần authentication
 
 ## Hướng Dẫn Phát Triển
 
 1. **Clone dự án và cài đặt dependencies**
+
    ```bash
    git clone <repository-url>
    cd lavishstay-frontend
@@ -281,10 +346,12 @@ npm run lint
    ```
 
 2. **Cấu hình môi trường**
+
    - Tạo file `.env.local` từ `.env.example`
    - Cập nhật các biến môi trường cần thiết
 
 3. **Khởi động ứng dụng**
+
    ```bash
    npm start
    ```
@@ -312,4 +379,3 @@ Dự án được phát triển cho mục đích học tập và giảng dạy.
 ---
 
 © 2025 LavishStay - Nền tảng đặt phòng cao cấp
-

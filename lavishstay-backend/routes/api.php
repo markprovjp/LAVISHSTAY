@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\FAQController;
 use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\RoomAvailabilityController;
 use App\Http\Controllers\Api\RoomTypeController;
+use App\Http\Controllers\Api\RoomTypeDetailController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReceptionController;
 use App\Http\Controllers\Api\ChartReceptionController;
@@ -32,9 +33,13 @@ use App\Http\Controllers\Api\BookingTransferController;
 use App\Http\Controllers\Api\NewsCommentController;
 use App\Http\Controllers\Api\NewsAPICategoryController;
 use App\Http\Controllers\Api\NewsUserActionController;
-use App\Http\Controllers\Api\PaymentSettingsController;
+use App\Http\Controllers\Api\BookingServicePaymentController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Api\PaymentSettingsController;
+use App\Http\Controllers\Api\RoomTypeOverviewController;
+use App\Http\Controllers\CouponController;
+use App\Http\Controllers\AdminCouponController;
 
 /*
 |--------------------------------------------------------------------------
@@ -142,6 +147,14 @@ Route::apiResource('rooms', \App\Http\Controllers\Api\RoomController::class);
 Route::get('/rooms/type/{roomTypeId}', [\App\Http\Controllers\Api\RoomController::class, 'roomsByType']);
 Route::get('/rooms/type-slug/{slug}', [\App\Http\Controllers\Api\RoomController::class, 'roomsByTypeSlug']);
 Route::get('/rooms/{roomId}/calendar', [\App\Http\Controllers\Api\RoomController::class, 'getCalendarData']);
+
+// Room Types Overview API (for homepage)
+Route::get('/room-types/overview', [\App\Http\Controllers\Api\RoomTypeOverviewController::class, 'overview']);
+Route::post('/room-types/overview/clear-cache', [\App\Http\Controllers\Api\RoomTypeOverviewController::class, 'clearCache']);
+
+// Room Type Detail API
+Route::get('/room-types/{slug}', [\App\Http\Controllers\Api\RoomTypeDetailController::class, 'show']);
+Route::post('/room-types/clear-cache', [\App\Http\Controllers\Api\RoomTypeDetailController::class, 'clearCache']);
 
 // Reviews API
 Route::get('/reviews/list', [ReviewController::class, 'apiReviewsList']);
@@ -274,6 +287,12 @@ Route::post('/bookings/{id}/checkout/compensation', [BookingCheckoutController::
     Route::post('/bookings/{id}/services', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'addBookingService']);
     Route::put('/bookings/{id}/services/{serviceId}', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'updateBookingService']);
     Route::delete('/bookings/{id}/services/{serviceId}', [\App\Http\Controllers\Api\BookingCheckoutController::class, 'removeBookingService']);
+
+    // Service Payment Management - VietQR + CPay integration
+    Route::get('/bookings/{bookingId}/services/payment-info', [BookingServicePaymentController::class, 'getServicePaymentInfo']);
+    Route::post('/bookings/{bookingId}/services/payment/qr', [BookingServicePaymentController::class, 'generateServicePaymentQR']);
+    Route::post('/bookings/services/payment/check', [BookingServicePaymentController::class, 'checkServicePayment']);
+    Route::get('/bookings/{bookingId}/services/payment-history', [BookingServicePaymentController::class, 'getServicePaymentHistory']);
 
     // Notifications (with auth middleware)
     Route::middleware(['auth:sanctum'])->group(function () {
@@ -512,6 +531,33 @@ Route::prefix('notifications/public')->group(function () {
     
     // Maintenance announcements
     Route::get('/maintenance', [NotificationController::class, 'getMaintenanceAnnouncements'])->name('notifications.maintenance');
+});
+
+// ================== COUPON ROUTES ==================
+// Public coupon endpoints
+Route::prefix('coupons')->group(function () {
+    Route::post('/validate', [CouponController::class, 'validateCoupon'])->name('coupons.validate');
+    Route::post('/check-code', [CouponController::class, 'checkCode'])->name('coupons.check');
+    
+    // Authenticated routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/my-redemptions', [CouponController::class, 'userRedemptions'])->name('coupons.my-redemptions');
+    });
+});
+
+// Apply coupon to booking
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/bookings/{booking}/apply-coupon', [CouponController::class, 'applyToBooking'])->name('bookings.apply-coupon');
+});
+
+// Admin coupon management
+Route::middleware(['auth:sanctum'])->prefix('admin/coupons')->group(function () {
+    Route::get('/', [AdminCouponController::class, 'index'])->name('admin.coupons.index');
+    Route::post('/', [AdminCouponController::class, 'store'])->name('admin.coupons.store');
+    Route::get('/statistics', [AdminCouponController::class, 'statistics'])->name('admin.coupons.statistics');
+    Route::get('/{coupon}', [AdminCouponController::class, 'show'])->name('admin.coupons.show');
+    Route::put('/{coupon}', [AdminCouponController::class, 'update'])->name('admin.coupons.update');
+    Route::delete('/{coupon}', [AdminCouponController::class, 'destroy'])->name('admin.coupons.destroy');
 });
 
 // Real-time notification testing endpoints (development only)

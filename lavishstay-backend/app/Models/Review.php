@@ -39,7 +39,8 @@ class Review extends Model
 
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+    // Booking primary key is `booking_id`
+    return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
 
     public function reviewMedia()
@@ -52,7 +53,8 @@ class Review extends Model
         return $this->hasOneThrough(
             User::class,
             Booking::class,
-            'id',
+            // foreign key on Bookings table, owner key on Users table
+            'booking_id',
             'id',
             'booking_id',
             'user_id'
@@ -65,10 +67,11 @@ class Review extends Model
         return $this->hasOneThrough(
             RoomOption::class,
             Booking::class,
-            'id', // Khóa ngoại trên booking
-            'option_id',  // Khóa chính của room_options
-            'booking_id', // Khóa chính của reviews
-            'option_id'   // Khóa ngoại trên booking
+            // Map via booking's booking_id -> room_options.option_id
+            'booking_id', // foreign key on Booking referencing this Review
+            'option_id',  // local key on RoomOption
+            'booking_id', // local key on Review
+            'option_id'   // foreign key on Booking
         );
     }
 }

@@ -38,7 +38,11 @@ const RoomRelated: React.FC<RoomRelatedProps> = ({
         navigate(`/room-types/${roomSlug}`);
     };
 
-    const filteredRooms = rooms.filter(room => room.id !== currentRoomId);
+    // ensure rooms array and currentRoomId types align (id may be number)
+    const safeRooms = rooms ?? [];
+    const filteredRooms = safeRooms.filter(r => String(r.id) !== String(currentRoomId ?? ''));
+
+    const placeholder = 'https://via.placeholder.com/400x260?text=No+Image';
 
     const RoomCard: React.FC<{ room: RelatedRoomType; index: number }> = ({
         room,
@@ -71,7 +75,7 @@ const RoomRelated: React.FC<RoomRelatedProps> = ({
                         {/* Image */}
                         <div className="relative overflow-hidden rounded-lg">
                             <img
-                                src={room.mainImage}
+                                src={(room.mainImage && room.mainImage.length) ? room.mainImage : placeholder}
                                 alt={room.name}
                                 className="h-32 w-full object-cover transition-transform duration-500 group-hover:scale-105 rounded-lg"
                             />
@@ -146,19 +150,32 @@ const RoomRelated: React.FC<RoomRelatedProps> = ({
 
                             {/* Main Amenities */}
                             <div className="flex flex-wrap gap-1">
-                                {room.mainAmenities.slice(0, 3).map((amenity, idx) => (
-                                    <Tag
-                                        key={idx}
-                                        className="text-[11px] px-1 py-0 border-blue-200 bg-blue-50 text-blue-700 rounded-full"
-                                    >
-                                        {amenity}
-                                    </Tag>
-                                ))}
-                                {room.mainAmenities.length > 3 && (
-                                    <Tag className="text-[11px] px-1 py-0 border-gray-200 bg-gray-50 text-gray-600 rounded-full">
-                                        +{room.mainAmenities.length - 3}
-                                    </Tag>
-                                )}
+                                {/* Normalize mainAmenities to an array to avoid runtime errors when it's undefined or not an array */}
+                                {(() => {
+                                    const mainAmenitiesArr = Array.isArray(room.mainAmenities)
+                                        ? room.mainAmenities
+                                        : room.mainAmenities
+                                            ? [String(room.mainAmenities)]
+                                            : [];
+
+                                    return (
+                                        <>
+                                            {mainAmenitiesArr.slice(0, 3).map((amenity, idx) => (
+                                                <Tag
+                                                    key={idx}
+                                                    className="text-[11px] px-1 py-0 border-blue-200 bg-blue-50 text-blue-700 rounded-full"
+                                                >
+                                                    {amenity}
+                                                </Tag>
+                                            ))}
+                                            {mainAmenitiesArr.length > 3 && (
+                                                <Tag className="text-[11px] px-1 py-0 border-gray-200 bg-gray-50 text-gray-600 rounded-full">
+                                                    +{mainAmenitiesArr.length - 3}
+                                                </Tag>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </div>
 
                             {/* Pricing - vertical, right aligned, small font */}
@@ -260,21 +277,7 @@ const RoomRelated: React.FC<RoomRelatedProps> = ({
                         />
                     )}
 
-                    {/* View All Button */}
-                    {filteredRooms.length > 0 && (
-                        <div className="text-center pt-6 border-t border-gray-100 dark:border-gray-700">
-                            <Button
-                                type="primary"
-                                ghost
-                                size="large"
-                                icon={<Eye size={18} />}
-                                className="px-8"
-                                onClick={() => navigate('/room-types')}
-                            >
-                                Xem tất cả loại phòng
-                            </Button>
-                        </div>
-                    )}
+                   
                 </div>
             </Card>
 
