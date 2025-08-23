@@ -670,6 +670,39 @@ class BookingCheckinController extends Controller
                 }
             }
 
+            // Fallback: resolve via Eloquent relations if direct join fails
+            if (!$hotelInfo) {
+                try {
+                    if (method_exists($booking, 'bookingRooms')) {
+                        foreach ($booking->bookingRooms as $br) {
+                            $roomId = $br->room_id ?? null;
+                            if ($roomId) {
+                                $room = \App\Models\Room::where('room_id', $roomId)->first();
+                                if ($room && method_exists($room, 'hotel')) {
+                                    $hotel = $room->hotel()->first();
+                                    if ($hotel) {
+                                        $hotelInfo = $hotel;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!$hotelInfo && property_exists($booking, 'room_id') && $booking->room_id) {
+                        $room = \App\Models\Room::where('room_id', $booking->room_id)->first();
+                        if ($room && method_exists($room, 'hotel')) {
+                            $hotel = $room->hotel()->first();
+                            if ($hotel) {
+                                $hotelInfo = $hotel;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Eloquent hotel relation fallback failed: " . $e->getMessage());
+                }
+            }
+
             if ($hotelInfo) {
                 return [
                     'hotel_id' => $hotelInfo->hotel_id,

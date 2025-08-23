@@ -166,7 +166,7 @@ class User extends Authenticatable
      */
     public function unreadNotifications()
     {
-        return $this->morphMany(\App\Models\Notification::class, 'notifiable')
+        return $this->morphMany(UserNotification::class, 'notifiable')
             ->whereNull('read_at')
             ->orderBy('created_at', 'desc');
     }
@@ -176,7 +176,7 @@ class User extends Authenticatable
      */
     public function readNotifications()
     {
-        return $this->morphMany(\App\Models\Notification::class, 'notifiable')
+        return $this->morphMany(UserNotification::class, 'notifiable')
             ->whereNotNull('read_at')
             ->orderBy('read_at', 'desc');
     }

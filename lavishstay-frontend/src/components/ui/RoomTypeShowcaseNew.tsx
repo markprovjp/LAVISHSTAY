@@ -166,7 +166,7 @@ const RoomTypeShowcase: React.FC<RoomTypeShowcaseProps> = ({ searchResult }) => 
             </span>
         ));
     };
-
+console.log("Room types:", roomTypes);
     return (
         <motion.div
             className="room-type-showcase"

@@ -14,12 +14,16 @@ class BookingService extends Model
         'booking_id',
         'service_id',
         'quantity',
-        'price_vnd'
+        'price_vnd',
+        'paid_amount_vnd',
+        'payment_status',
+        'last_payment_id'
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'price_vnd' => 'decimal:2',
+        'paid_amount_vnd' => 'decimal:2',
         'created_at' => 'datetime'
     ];
 
@@ -69,6 +73,39 @@ class BookingService extends Model
     public function scopeForService($query, $serviceId)
     {
         return $query->where('service_id', $serviceId);
+    }
+
+    /**
+     * Get outstanding amount for this booking service
+     */
+    public function getOutstandingAmountAttribute()
+    {
+        return max(0, $this->total_price - $this->paid_amount_vnd);
+    }
+
+    /**
+     * Get payment completion percentage
+     */
+    public function getPaymentPercentageAttribute()
+    {
+        if ($this->total_price <= 0) return 100;
+        return min(100, round(($this->paid_amount_vnd / $this->total_price) * 100, 2));
+    }
+
+    /**
+     * Check if this service is fully paid
+     */
+    public function isFullyPaid()
+    {
+        return $this->paid_amount_vnd >= $this->total_price;
+    }
+
+    /**
+     * Check if this service has partial payment
+     */
+    public function isPartiallyPaid()
+    {
+        return $this->paid_amount_vnd > 0 && $this->paid_amount_vnd < $this->total_price;
     }
 
     /**

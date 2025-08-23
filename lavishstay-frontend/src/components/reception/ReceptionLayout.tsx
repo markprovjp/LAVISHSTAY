@@ -49,21 +49,21 @@ const ReceptionLayout: React.FC = () => {
 
             ]
         },
-        {
-            key: '/reception/guests',
-            icon: <TeamOutlined />,
-            label: 'Quản lý khách',
-            children: [
-                {
-                    key: '/reception/guests/list',
-                    label: <Link to="/reception/guests/list">Danh sách khách</Link>,
-                },
-                {
-                    key: '/reception/guests/history',
-                    label: <Link to="/reception/guests/history">Lịch sử lưu trú</Link>,
-                }
-            ]
-        },
+        // {
+        //     key: '/reception/guests',
+        //     icon: <TeamOutlined />,
+        //     label: 'Quản lý khách',
+        //     children: [
+        //         {
+        //             key: '/reception/guests/list',
+        //             label: <Link to="/reception/guests/list">Danh sách khách</Link>,
+        //         },
+        //         {
+        //             key: '/reception/guests/history',
+        //             label: <Link to="/reception/guests/history">Lịch sử lưu trú</Link>,
+        //         }
+        //     ]
+        // },
 
     ];
 

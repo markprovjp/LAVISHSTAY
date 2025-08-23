@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Form, Input, Row, Col, Button, Checkbox, Typography, Divider, Collapse } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { selectSelectedRoomsSummary } from '../../store/slices/bookingSlice';
 import { Phone } from 'lucide-react';
+import CouponInput from './CouponInput';
+import { AppliedCoupon } from '../../services/couponService';
 
 const { TextArea } = Input;
 const { Title } = Typography;
@@ -15,6 +17,16 @@ interface BookingInfoStepProps {
     isProcessing: boolean;
     disabled?: boolean;
     selectedPaymentMethod?: string;
+    // Coupon related props
+    appliedCoupon?: AppliedCoupon | null;
+    onCouponChange?: (coupon: AppliedCoupon | null) => void;
+    totals?: {
+        roomsTotal: number;
+        serviceFee: number;
+        taxAmount: number;
+        finalTotal: number;
+    };
+    formatVND?: (amount: number) => string;
 }
 
 const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
@@ -22,6 +34,15 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     onSubmit,
     isProcessing,
     disabled = false,
+    appliedCoupon,
+    onCouponChange,
+    totals,
+    formatVND = (amount: number) => new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount),
 }) => {
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
     const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
@@ -33,7 +54,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                 fullName: user.name,
                 email: user.email,
                 phone: user.phone || '',
-                
+
             });
         }
     }, [isAuthenticated, user, form]);
@@ -125,6 +146,22 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                 <Form.Item name="specialRequests" label="Yêu cầu đặc biệt (tùy chọn)">
                     <TextArea rows={3} placeholder="Ví dụ: phòng không hút thuốc, tầng cao..." />
                 </Form.Item>
+
+                {/* Coupon Input Section */}
+                {totals && onCouponChange && (
+                    <CouponInput
+                        bookingPreview={{
+                            base_price_vnd: totals.roomsTotal + totals.serviceFee + totals.taxAmount,
+                            taxes_vnd: totals.taxAmount,
+                            fees_vnd: totals.serviceFee,
+                            room_type_id: Number(selectedRoomsSummary[0]?.room?.room_type_id || selectedRoomsSummary[0]?.room?.id || 1)
+                        }}
+                        appliedCoupon={appliedCoupon}
+                        onCouponChange={onCouponChange}
+                        formatVND={formatVND}
+                        disabled={disabled || isProcessing}
+                    />
+                )}
 
                 <Form.Item
                     name="termsAgreement"
