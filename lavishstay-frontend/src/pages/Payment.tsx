@@ -51,6 +51,9 @@ const Payment: React.FC = () => {
     const [customerInfo, setCustomerInfo] = useState<any>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(''); // Will be set from settings
 
+    // Coupon state
+    const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+
     // Redux state
     const bookingState = useSelector(selectBookingState);
     const searchData = useSelector(selectSearchData);
@@ -81,7 +84,7 @@ const Payment: React.FC = () => {
             if (!selectedPaymentMethod) {
                 setSelectedPaymentMethod(paymentSettings.general.default_payment_method);
             }
-            
+
             // Set countdown from settings
             setCountdown(paymentSettings.general.payment_timeout);
         }
@@ -342,7 +345,7 @@ const Payment: React.FC = () => {
                 total_price: totals.finalTotal,
                 payment_method: selectedPaymentMethod,
                 notes: values.specialRequests,
-                room_type_id: roomsPayload[0].room_type_id,
+                room_type_id: roomsPayload[0].room_type_id || roomsPayload[0].room_id,
                 rooms: roomsPayload,
                 totals: {
                     roomsTotal: totals.roomsTotal,
@@ -353,11 +356,13 @@ const Payment: React.FC = () => {
                     finalTotal: totals.finalTotal,
                     nights: nights,
                 },
-                user_id: userId
+                user_id: userId,
+                // Include coupon if applied
+                coupon_code: appliedCoupon?.code || null
             };
 
             console.log('Submitting booking to backend:', JSON.stringify(bookingPayload, null, 2));
-            
+
             // Use retry mechanism for better reliability
             const result = await createBookingWithRetry(bookingPayload);
 
@@ -522,23 +527,28 @@ const Payment: React.FC = () => {
                 0
             );
 
-            const calculatedTotal = calculatedRoomsTotal +
+            let baseTotal = calculatedRoomsTotal +
                 (storeTotals.breakfastTotal || 0) +
                 (storeTotals.serviceFee || 0) +
-                (storeTotals.taxAmount || 0) -
-                (storeTotals.discountAmount || 0);
+                (storeTotals.taxAmount || 0);
 
-            if (Math.abs(calculatedTotal - storeTotals.finalTotal) > 1) {
-                const updatedTotals = {
-                    ...storeTotals,
-                    roomsTotal: calculatedRoomsTotal,
-                    finalTotal: calculatedTotal,
-                    nights: nights
-                };
-
-                dispatch(setTotals(updatedTotals));
-                return updatedTotals;
+            // Apply coupon discount if available
+            let discountAmount = storeTotals.discountAmount || 0;
+            if (appliedCoupon) {
+                discountAmount = appliedCoupon.discount_vnd;
             }
+
+            const finalTotal = baseTotal - discountAmount;
+
+            const updatedTotals = {
+                ...storeTotals,
+                roomsTotal: calculatedRoomsTotal,
+                discountAmount: discountAmount,
+                finalTotal: finalTotal,
+                nights: nights
+            };
+
+            return updatedTotals;
         }
 
         const updatedTotals = {
@@ -547,7 +557,7 @@ const Payment: React.FC = () => {
         };
 
         return updatedTotals;
-    }, [bookingState.totals, nights, selectedRoomsSummary, dispatch]);
+    }, [bookingState.totals, nights, selectedRoomsSummary, appliedCoupon]);
 
     // Handle navigation functions
     const handleViewBookings = () => {
@@ -575,8 +585,10 @@ const Payment: React.FC = () => {
                                 isProcessing={isProcessing || paymentProcessing}
                                 disabled={!canProceed || cooldownInfo.inCooldown}
                                 selectedPaymentMethod={selectedPaymentMethod}
-                                availablePaymentMethods={getAvailablePaymentMethods()}
-                                onPaymentMethodChange={setSelectedPaymentMethod}
+                                appliedCoupon={appliedCoupon}
+                                onCouponChange={setAppliedCoupon}
+                                totals={totals}
+                                formatVND={formatVND}
                             />
                         </Col>
                         <Col span={8}>

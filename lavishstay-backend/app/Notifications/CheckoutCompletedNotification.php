@@ -39,11 +39,13 @@ class CheckoutCompletedNotification extends Notification implements ShouldQueue
      */
     public function toDatabase(object $notifiable): array
     {
+        $bookingId = $this->booking->booking_id ?? $this->booking->id ?? ($this->booking->getKey() ?? null);
+        $bookingCode = $this->booking->booking_code ?? '';
         return [
-            'booking_id' => $this->booking->id,
-            'message' => 'Cảm ơn bạn đã lưu trú — vui lòng đánh giá trải nghiệm',
-            'url' => '/review-booking?booking=' . $this->booking->id,
-            'booking_code' => $this->booking->booking_code ?? '',
+            'booking_id' => $bookingId,
+            'message' => 'Cảm ơn bạn đã lưu trú tại LavishStay — mã đặt phòng: ' . ($bookingCode ?: ($bookingId ?? '')) . '. Vui lòng đánh giá trải nghiệm của bạn.',
+            'url' => '/review-booking?booking=' . ($bookingId ?? '') . ($bookingCode && !$bookingId ? '&code=' . $bookingCode : ''),
+            'booking_code' => $bookingCode,
         ];
     }
 
@@ -52,11 +54,13 @@ class CheckoutCompletedNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
+        $bookingId = $this->booking->booking_id ?? $this->booking->id ?? ($this->booking->getKey() ?? null);
+        $bookingCode = $this->booking->booking_code ?? '';
         return new BroadcastMessage([
-            'booking_id' => $this->booking->id,
+            'booking_id' => $bookingId,
             'message' => 'Cảm ơn bạn đã lưu trú — vui lòng đánh giá trải nghiệm',
-            'url' => '/review-booking?booking=' . $this->booking->id,
-            'booking_code' => $this->booking->booking_code ?? '',
+            'url' => '/review-booking?booking=' . ($bookingId ?? '') . ($bookingCode && !$bookingId ? '&code=' . $bookingCode : ''),
+            'booking_code' => $bookingCode,
         ]);
     }
 
@@ -67,11 +71,13 @@ class CheckoutCompletedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $bookingId = $this->booking->booking_id ?? $this->booking->id ?? ($this->booking->getKey() ?? null);
+        $bookingCode = $this->booking->booking_code ?? '';
         return [
-            'booking_id' => $this->booking->id,
+            'booking_id' => $bookingId,
             'message' => 'Cảm ơn bạn đã lưu trú — vui lòng đánh giá trải nghiệm',
-            'url' => '/review-booking?booking=' . $this->booking->id,
-            'booking_code' => $this->booking->booking_code ?? '',
+            'url' => '/review-booking?booking=' . ($bookingId ?? '') . ($bookingCode && !$bookingId ? '&code=' . $bookingCode : ''),
+            'booking_code' => $bookingCode,
         ];
     }
 }

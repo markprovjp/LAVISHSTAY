@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { notification as antdNotification } from 'antd';
-import { useNavigate } from 'react-router-dom';
+// ...existing code...
 import { RootState } from '../store';
-import echo, { NotificationData } from '../utils/echo';
+import { NotificationData } from '../utils/echo';
 import notificationService from '../services/notificationService';
 
 interface NotificationContextType {
@@ -35,7 +34,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-    const navigate = useNavigate();
+    // ...existing code...
     const pollRef = useRef<number | null>(null);
 
     // Debug: log tokens and Echo env on mount for troubleshooting
@@ -121,118 +120,27 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         }
     }, []);
 
-    // Handle new notification from broadcast
-    const handleNewNotification = useCallback((event: any) => {
-        const newNotification: NotificationData = {
-            id: event.id || `temp-${Date.now()}`,
-            type: event.type || 'App\\Notifications\\CheckoutCompletedNotification',
-            notifiable_type: 'App\\Models\\User',
-            notifiable_id: user?.id || 0,
-            data: event.data || event,
-            created_at: new Date().toISOString(),
-            read_at: null,
-        };
+    // (No real-time handler needed in polling-only mode)
 
-        // Add to notifications list
-        setNotifications(prev => [newNotification, ...prev]);
-        setUnreadCount(prev => prev + 1);
-
-        // Show toast notification
-        antdNotification.open({
-            message: 'Thông báo mới',
-            description: newNotification.data.message,
-            placement: 'topRight',
-            duration: 5,
-            onClick: () => {
-                if (newNotification.data.url) {
-                    navigate(newNotification.data.url);
-                    markAsRead(newNotification.id);
-                }
-            },
-        });
-    }, [user?.id, navigate, markAsRead]);
-
-    // Setup Echo listener
+    // Polling-only notifications (no real-time websocket)
     useEffect(() => {
         if (!isAuthenticated || !user?.id) return;
-        // Try to subscribe to Echo private channel. If it fails (no server/key), fall back to polling.
-        try {
-            const channel = echo.private(`user.${user.id}`);
-            channel.listen('CheckoutCompleted', handleNewNotification);
 
-            // Bind to pusher connection events if available to toggle polling
-            try {
-                const pusher = (echo as any).connector?.pusher;
-                if (pusher && pusher.connection) {
-                    // If not connected shortly after init, start polling
-                    try {
-                        const state = pusher.connection.state;
-                        if (state !== 'connected') {
-                            console.warn('Pusher not connected (state=', state, '), starting polling fallback');
-                            if (!pollRef.current) {
-                                pollRef.current = window.setInterval(() => {
-                                    fetchNotifications(1);
-                                    refreshUnreadCount();
-                                }, 15000);
-                            }
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
-
-                    pusher.connection.bind('error', (err: any) => {
-                        console.error('Pusher connection error:', err);
-                        if (!pollRef.current) {
-                            pollRef.current = window.setInterval(() => {
-                                fetchNotifications(1);
-                                refreshUnreadCount();
-                            }, 15000);
-                        }
-                    });
-
-                    pusher.connection.bind('connected', () => {
-                        if (pollRef.current) {
-                            clearInterval(pollRef.current);
-                            pollRef.current = null;
-                        }
-                    });
-
-                    pusher.connection.bind('disconnected', () => {
-                        if (!pollRef.current) {
-                            pollRef.current = window.setInterval(() => {
-                                fetchNotifications(1);
-                                refreshUnreadCount();
-                            }, 15000);
-                        }
-                    });
-                }
-            } catch (err) {
-                console.warn('Unable to bind pusher connection events:', err);
-            }
-
-            return () => {
-                try {
-                    channel.stopListening('CheckoutCompleted');
-                } catch (e) {
-                    // ignore
-                }
-                if (pollRef.current) {
-                    clearInterval(pollRef.current);
-                    pollRef.current = null;
-                }
-            };
-        } catch (err) {
-            console.error('Echo subscribe failed, falling back to polling:', err);
-            const intervalId = window.setInterval(() => {
+        // Start a polling interval to refresh notifications and unread count
+        if (!pollRef.current) {
+            pollRef.current = window.setInterval(() => {
                 fetchNotifications(1);
                 refreshUnreadCount();
             }, 15000);
-
-            return () => {
-                clearInterval(intervalId);
-            };
         }
-    }, [isAuthenticated, user?.id, handleNewNotification, fetchNotifications, refreshUnreadCount]);
+
+        return () => {
+            if (pollRef.current) {
+                clearInterval(pollRef.current);
+                pollRef.current = null;
+            }
+        };
+    }, [isAuthenticated, user?.id, fetchNotifications, refreshUnreadCount]);
 
     // Initial fetch when user logs in
     useEffect(() => {

@@ -226,6 +226,36 @@ class BookingCheckoutController extends Controller
             Log::info('Booking ID: ' . $bookingId);
             Log::info('Request data: ', $request->all());
 
+            // Require authenticated user to create a compensation request.
+            // If standard Auth is not populated, try to resolve a Sanctum personal access token
+            if (!Auth::check()) {
+                $bearer = $request->bearerToken();
+                if ($bearer) {
+                    try {
+                        // Use fully-qualified class name to avoid import issues
+                        $patClass = '\\Laravel\\Sanctum\\PersonalAccessToken';
+                        if (class_exists($patClass)) {
+                            $pat = $patClass::findToken($bearer);
+                            if ($pat && $pat->tokenable) {
+                                // Set the current user on the auth guard
+                                auth()->setUser($pat->tokenable);
+                                Log::info('Authenticated request via Sanctum token', ['user_id' => auth()->id()]);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Error resolving Sanctum token for compensation request', ['error' => $e->getMessage()]);
+                    }
+                }
+
+                if (!Auth::check()) {
+                    Log::warning('Unauthorized attempt to create compensation request', ['booking_id' => $bookingId]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized'
+                    ], 401);
+                }
+            }
+
             // Validate input
             $validated = $request->validate([
                 'checkout_time' => 'nullable|date_format:H:i',
@@ -482,6 +512,7 @@ class BookingCheckoutController extends Controller
                 'policy_id' => 'nullable|integer|exists:compensation_policies,compensation_policy_id',
                 'custom_reason' => 'nullable|string|max:2000',
                 'requested_amount' => 'nullable|numeric|min:0',
+                'requested_by' => 'nullable|integer|exists:users,id',
                 'attachments' => 'nullable|array|max:5',
                 'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120', // 5MB max per file
             ]);
@@ -514,19 +545,40 @@ class BookingCheckoutController extends Controller
             // Handle file uploads
             $attachmentPaths = [];
             if (!empty($validated['attachments'])) {
+                $targetDir = public_path('compensation_attachments');
+                if (!is_dir($targetDir)) {
+                    try {
+                        mkdir($targetDir, 0755, true);
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to create compensation attachments directory', ['dir' => $targetDir, 'error' => $e->getMessage()]);
+                    }
+                }
+
                 foreach ($validated['attachments'] as $index => $file) {
-                    $fileName = time() . '_' . $index . '_' . $file->getClientOriginalName();
+                    // Capture metadata before moving the uploaded file
+                    $originalName = $file->getClientOriginalName();
+                    $fileSize = $file->getSize();
+                    $mimeType = $file->getMimeType();
+
+                    $fileName = time() . '_' . $index . '_' . $originalName;
                     $filePath = 'compensation_attachments/' . $fileName;
-                    
-                    // Move file to public directory
-                    $file->move(public_path('compensation_attachments'), $fileName);
-                    
+
+                    try {
+                        // Move file to public directory
+                        $file->move($targetDir, $fileName);
+                    } catch (\Exception $e) {
+                        // Log and continue; record a failed-upload marker
+                        Log::error('Failed to move uploaded compensation attachment', ['error' => $e->getMessage(), 'original_name' => $originalName]);
+                        // Optionally, you may throw here to abort the whole request
+                        throw $e;
+                    }
+
                     $attachmentPaths[] = [
-                        'original_name' => $file->getClientOriginalName(),
+                        'original_name' => $originalName,
                         'file_name' => $fileName,
                         'file_path' => $filePath,
-                        'file_size' => $file->getSize(),
-                        'mime_type' => $file->getMimeType(),
+                        'file_size' => $fileSize,
+                        'mime_type' => $mimeType,
                         'uploaded_at' => Carbon::now()->toDateTimeString()
                     ];
                 }
@@ -553,9 +605,12 @@ class BookingCheckoutController extends Controller
             // Create compensation request within transaction
             $compensationRequest = null;
             DB::transaction(function () use ($booking, $validated, $attachmentPaths, $calculatedAmount, &$compensationRequest) {
+                // Use validated requested_by when provided (fallback) to support CLI/testing flows
+                $requestedBy = $validated['requested_by'] ?? Auth::id();
+
                 $compensationRequest = CompensationRequest::create([
                     'booking_id' => $booking->booking_id,
-                    'requested_by' => Auth::id(),
+                    'requested_by' => $requestedBy,
                     'policy_id' => $validated['policy_id'] ?? null,
                     'custom_reason' => $validated['custom_reason'] ?? null,
                     'status' => 'pending',
@@ -564,16 +619,16 @@ class BookingCheckoutController extends Controller
                     'created_at' => Carbon::now(),
                 ]);
 
-                // Create audit log
-                DB::table('audit_logs')->insert([
-                    'user_id' => Auth::id(),
-                    'action' => 'Create Compensation Request',
-                    'table_name' => 'compensation_requests',
-                    'record_id' => $compensationRequest->request_id,
-                    'description' => "Created compensation request for booking {$booking->booking_code}. " . 
-                                   ($validated['policy_id'] ? "Policy ID: {$validated['policy_id']}" : "Custom reason provided"),
-                    'created_at' => Carbon::now(),
-                ]);
+                // Create audit log (record the acting user or provided requested_by)
+                    DB::table('audit_logs')->insert([
+                        'user_id' => $requestedBy,
+                        'action' => 'create',
+                        'model' => 'CompensationRequest',
+                        'model_id' => $compensationRequest->request_id,
+                        'description' => "Created compensation request for booking {$booking->booking_code}. " . 
+                                       ($validated['policy_id'] ? "Policy ID: {$validated['policy_id']}" : "Custom reason provided"),
+                        'created_at' => Carbon::now(),
+                    ]);
             });
 
             // Prepare response data
@@ -590,7 +645,8 @@ class BookingCheckoutController extends Controller
                     'requested_amount' => $compensationRequest->requested_amount,
                     'formatted_requested_amount' => $compensationRequest->formatted_requested_amount,
                     'attachments' => $compensationRequest->attachments,
-                    'requested_by' => Auth::user()->name,
+                    // Auth::user() may be null when token resolution differs; fallback to stored requested_by name
+                    'requested_by' => (Auth::user() ? Auth::user()->name : (\App\Models\User::find($compensationRequest->requested_by)?->name ?? null)),
                     'created_at' => $compensationRequest->created_at
                 ],
                 'next_steps' => [
@@ -1164,6 +1220,41 @@ class BookingCheckoutController extends Controller
                 }
             }
 
+            // Fallback: try resolving via Eloquent relations when schema doesn't have r.hotel_id
+            if (!$hotelInfo) {
+                try {
+                    // If booking has bookingRooms relation, try each room's hotel relation
+                    if (method_exists($booking, 'bookingRooms')) {
+                        foreach ($booking->bookingRooms as $br) {
+                            $roomId = $br->room_id ?? ($br->room_id ?? null);
+                            if ($roomId) {
+                                $room = \App\Models\Room::where('room_id', $roomId)->first();
+                                if ($room && method_exists($room, 'hotel')) {
+                                    $hotel = $room->hotel()->first();
+                                    if ($hotel) {
+                                        $hotelInfo = $hotel;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Last resort: try booking->room_id via Room model
+                    if (!$hotelInfo && property_exists($booking, 'room_id') && $booking->room_id) {
+                        $room = \App\Models\Room::where('room_id', $booking->room_id)->first();
+                        if ($room && method_exists($room, 'hotel')) {
+                            $hotel = $room->hotel()->first();
+                            if ($hotel) {
+                                $hotelInfo = $hotel;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Eloquent hotel relation fallback failed: " . $e->getMessage());
+                }
+            }
+
             if ($hotelInfo) {
                 return [
                     'hotel_id' => $hotelInfo->hotel_id,
@@ -1198,13 +1289,38 @@ class BookingCheckoutController extends Controller
      */
     private function getGuestInformation($booking)
     {
+        // Ensure adults/children are populated even when stored at booking_rooms level
+        $adults = $booking->adults;
+        $children = $booking->children;
+
+        // If booking.adults is null, try summing booking rooms' adults
+        if ($adults === null) {
+            try {
+                $sumAdults = $booking->bookingRooms()->sum('adults');
+                // treat 0 as null if guest_count doesn't match
+                $adults = $sumAdults > 0 ? (int) $sumAdults : null;
+            } catch (\Exception $e) {
+                $adults = null;
+            }
+        }
+
+        // If booking.children is null, try summing booking rooms' children
+        if ($children === null) {
+            try {
+                $sumChildren = $booking->bookingRooms()->sum('children');
+                $children = $sumChildren > 0 ? (int) $sumChildren : null;
+            } catch (\Exception $e) {
+                $children = null;
+            }
+        }
+
         return [
             'guest_name' => $booking->guest_name,
             'guest_email' => $booking->guest_email,
             'guest_phone' => $booking->guest_phone,
             'guest_count' => $booking->guest_count,
-            'adults' => $booking->adults,
-            'children' => $booking->children,
+            'adults' => $adults,
+            'children' => $children,
             'children_age' => $booking->children_age
         ];
     }

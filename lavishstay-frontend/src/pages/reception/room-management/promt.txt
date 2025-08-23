@@ -1,67 +1,71 @@
-Tôi là developer của app quản lý khách sạn (Laravel backend + React TypeScript frontend + Ant Design). Cần triển khai chức năng xuất hoá đơn PDF cho booking. Hãy CHỌN và TRIỂN KHAI ngay bằng barryvdh/laravel-dompdf (đã quyết định).
+Task: Thiết kế lại UI/UX cho trang "Lịch sử đặt phòng" trong profile user, giữ nguyên chức năng backend hiện có nhưng thay giao diện cho đẹp, dễ dùng, responsive, và bổ sung chi tiết booking giống file `src/pages/booking/LookupBookingByPhone.tsx`.
 
-THÔNG TIN HỆ THỐNG:
-- Backend: Laravel, có sẵn ReceptionController, routes/api.php
-- Frontend: React + TypeScript + Ant Design, có BookingDetailModal.tsx
-- Database: booking, booking_rooms, booking_services tables
-- Endpoint hiện tại: GET /api/reception/bookings/{id} trả booking details
+Context / Files of interest:
+- Current profile booking page component: src/components/profile/BookingManagement.tsx
+- Good example with full booking info: src/pages/booking/LookupBookingByPhone.tsx
+- Antd theme: src/styles/theme.ts and root provider in src/App.tsx
+- API helper: src/utils/api (axiosInstance)
+- Store: src/store (use existing auth/user state to get current user)
 
-YÊU CÂU THỰC HIỆN:
-1. Cài đặt: composer require barryvdh/laravel-dompdf và publish config
-2. Tạo route: GET /api/reception/bookings/{bookingId}/invoice → trả PDF
-3. Tạo controller method trong ReceptionController::generateInvoice()
-4. Tạo Blade template: resources/views/invoice/booking.blade.php (layout đẹp, tiếng Việt, VND format)
-5. Frontend: thêm nút "Xuất hoá đơn" trong BookingDetailModal, gọi API download blob
+Goals:
+1. Refactor `BookingManagement.tsx` to a modern, compact, mobile-first layout:
+   - Top: header + search bar (search by booking code or phone) + filters (status dropdown) + CTA "Tải hóa đơn" / "Liên hệ lễ tân".
+   - Main: Table (Antd `Table`) showing bookings for current user with columns:
+     - Mã booking (button link, primary) — shows copy icon to copy code.
+     - Ngày nhận/trả (stacked, small calendar icon; nights badge)
+     - Tổng tiền (formatted vi-VN with ₫)
+     - Trạng thái (Tag with VN label and color)
+     - Số khách / phòng (compact)
+     - Hành động: Chi tiết (open Drawer), Tải hóa đơn (if available)
+   - Table behavior: server-side pagination, sort by check_in desc, search + filters call existing API endpoints (reuse current service calls).
+   - Default: show most recent bookings; empty state friendly; loading skeletons while fetching.
 
-LAYOUT HOÁ ĐƠN (A4, đơn giản):
-- Header: Logo + tên khách sạn + thông tin liên hệ
-- Invoice Info: Số hoá đơn, ngày, khách hàng
-- Table 1: Chi tiết phòng (tên gói, check-in/out, số đêm, giá/đêm, thành tiền)
-- Table 2: Dịch vụ phát sinh (tên, số lượng, đơn giá, thành tiền)
-- Footer: Tổng cộng, VAT (nếu có), ghi chú, chữ ký
+2. Drawer detail (right side, width ~720) — reuse and adapt UI from `LookupBookingByPhone.tsx`:
+   - Header: Icon + "Chi tiết booking: <booking_code>" + Copy button + small status Tag.
+   - Sections:
+     - Thông tin cơ bản: booking_code, status, tên khách (or chủ booking), masked phone/email (click to reveal if current user owns booking), check_in, check_out, nights badge, guest_count, total_price (highlight).
+     - Phòng: list cards (Card) per room with Descriptions: room_name, room_type, floor, option, adults, children, price/night, nights, total.
+     - Người đại diện: nếu có (map of reps).
+     - Thanh toán: list of payments with amount formatted, method, status tag, timestamp.
+     - Ghi chú & Timestamps (created/updated).
+   - Actions in drawer: Cancel booking (if allowed), Request change (open small Modal), Download invoice.
 
-OUTPUT YÊU CẦU - CUNG CẤP CODE ĐẦY ĐỦ:
+3. Accessibility & UX details:
+   - All buttons have aria-labels.
+   - Keyboard focus on open drawer; Esc closes.
+   - Table rows clickable by keyboard.
+   - Use consistent spacing and font sizes per project theme tokens.
+   - Mobile: collapse columns; show key info and "Chi tiết" button.
 
-1. COMPOSER COMMAND:
-```bash
-composer require barryvdh/laravel-dompdf
-php artisan vendor:publish --provider="Barryvdh\DomPDF\ServiceProvider"
-```
+4. Security & Privacy:
+   - In table list, mask phone as 0901****567 or show only last 4 digits; full phone/email displayed in Drawer only if current user is owner.
+   - Do not leak other users' PII.
 
-2. ROUTE (thêm vào routes/api.php):
-```php
-// Đường dẫn Route::group reception prefix
-```
+5. i18n:
+   - Use `t('profile.bookings...')` keys for all strings; update `src/locales/vi/translation.json` with new keys.
 
-3. CONTROLLER METHOD (thêm vào ReceptionController.php):
-```php
-public function generateInvoice($bookingId)
-{
-    // Code đầy đủ: query booking + rooms + services, pass to view, return PDF response
-}
-```
+6. Tests:
+   - Add unit/feature tests in src/__tests__ or existing test folder:
+     - Render BookingManagement, mock API to return 2 bookings; assert table rows render.
+     - Open detail drawer for a booking; assert detail sections visible.
 
-4. BLADE TEMPLATE (tạo resources/views/invoice/booking.blade.php):
-```html
-<!DOCTYPE html>
-<html>
-<!-- Template HTML/CSS đầy đủ, responsive, tiếng Việt, format VND -->
-</html>
-```
+Implementation notes for AI/coder:
+- Edit only `src/components/profile/BookingManagement.tsx` (replace content) and add i18n keys into `src/locales/vi/translation.json`.
+- Reuse API calls: call endpoint used by profile bookings (if none, use `/user/bookings` or adapt to existing code).
+- Keep business logic: calls to cancel / download invoice must call existing API endpoints or return a TODO comment if unknown.
+- Keep imports consistent with project style (TypeScript + React + Antd). Use existing helper formatters (Intl.NumberFormat('vi-VN')) and date helpers.
+- Keep CSS minimal inline or use existing classNames / theme tokens.
 
-5. FRONTEND API FUNCTION (thêm vào utils/api.ts):
-```typescript
-// receptionAPI.generateInvoice function
-```
+Acceptance criteria (how to verify):
+- Manual: run frontend and log in as a user; open Profile -> Bookings; table shows bookings in Vietnamese, responsive; click "Chi tiết" opens drawer with full data as in LookupBookingByPhone; copy booking code works; masked fields behave correctly.
+- Automated: tests added pass (`npm test` or `pnpm test` depending on repo).
+- Lint/Typecheck: no TypeScript errors.
 
-6. FRONTEND BUTTON (thêm vào BookingDetailModal.tsx):
-```tsx
-// Button component với loading state, download blob
-```
+Dev tasks & commit message:
+- Files to change: `src/components/profile/BookingManagement.tsx`, `src/locales/vi/translation.json` (add keys).
+- Commit message: "feat(profile): redesign BookingManagement UI — compact table + detailed drawer (vi) and add i18n keys"
+- PR description: "Refactor profile booking history UI to match LookupBookingByPhone detail layout, keep backend contracts, improve mobile UX, privacy masking, and add basic tests."
 
-7. CSS STYLES cho PDF (inline trong blade):
-```css
-/* Styles cho print A4, fonts, tables, Vietnamese */
-```
+If any backend endpoints differ, fallback rule: keep API call abstracted in `axiosInstance.get('/user/bookings')` and document TODO for backend route mapping.
 
-BẮT ĐẦU NGAY - cung cấp từng file code hoàn chỉnh, ready để copy/paste. Ưu tiên code chạy được ngay, xử lý lỗi cơ bản, format tiền VND đúng.
+Deliverable: updated `BookingManagement.tsx` component implementing the above.

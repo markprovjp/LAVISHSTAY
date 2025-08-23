@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class ChartReceptionController extends Controller
 {
@@ -414,6 +415,12 @@ class ChartReceptionController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            // Log full exception for debugging (message + stack trace)
+            Log::error('ChartReceptionController@getNotifications error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi lấy thông báo',

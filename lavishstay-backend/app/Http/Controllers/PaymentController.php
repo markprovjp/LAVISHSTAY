@@ -8,6 +8,8 @@ use App\Models\BookingRoom;
 use App\Models\BookingRoomChildren;
 use App\Models\Payment;
 use App\Models\Room;
+use App\Services\CouponService;
+use App\Services\SmartRoomAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -416,9 +418,9 @@ class PaymentController extends Controller
         'rooms' => 'required|array|min:1',
         'rooms.*.room_id' => 'required|integer',
         'rooms.*.room_type_id' => 'required|integer',
-
         'rooms.*.adults' => 'required|integer|min:1',
         'rooms.*.children' => 'integer|min:0',
+        'coupon_code' => 'nullable|string|max:50', // Thêm validation cho coupon_code
     ]);
 
     if ($validator->fails()) {
@@ -430,11 +432,60 @@ class PaymentController extends Controller
         ], 422);
     }
 
-    DB::beginTransaction();
+        DB::beginTransaction();
     try {
         $checkInDate = Carbon::parse($request->input('check_in'));
         $checkOutDate = Carbon::parse($request->input('check_out'));
         $nights = $checkInDate->diffInDays($checkOutDate);
+        // Recalculate rooms total on server side from rooms payload to avoid FE/BE mismatch
+        $calculatedRoomsTotal = 0;
+        $roomsPayload = $request->input('rooms', []);
+        // Detect if this is a package booking where package_id is present and same for all rooms
+        $allHaveSamePackage = false;
+        $firstPackageId = null;
+        if (!empty($roomsPayload)) {
+            $firstPackageId = $roomsPayload[0]['package_id'] ?? null;
+            $allHaveSamePackage = $firstPackageId !== null;
+            if ($allHaveSamePackage) {
+                foreach ($roomsPayload as $r) {
+                    if (($r['package_id'] ?? null) != $firstPackageId) {
+                        $allHaveSamePackage = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($allHaveSamePackage && $firstPackageId) {
+            // For package bookings assume frontend provided total_price is authoritative for the package
+            // Use provided total_price if available, otherwise fall back to the first room_price
+            $providedTotalPrice = (float)$request->input('total_price');
+            if ($providedTotalPrice > 0) {
+                $calculatedRoomsTotal = $providedTotalPrice;
+            } else {
+                $firstRoom = $roomsPayload[0] ?? null;
+                $calculatedRoomsTotal = $firstRoom ? (float)($firstRoom['room_price'] ?? 0) : 0;
+            }
+        } else {
+            // Normal booking: sum per-room (room_price + option_price) * nights
+            foreach ($roomsPayload as $roomData) {
+                $roomPrice = isset($roomData['room_price']) ? (float)$roomData['room_price'] : 0;
+                $optionPrice = isset($roomData['option_price']) ? (float)$roomData['option_price'] : 0;
+                $calculatedRoomsTotal += ($roomPrice + $optionPrice) * $nights;
+            }
+        }
+
+        $providedTotalPrice = (float)$request->input('total_price');
+        if ($calculatedRoomsTotal > 0 && abs($calculatedRoomsTotal - $providedTotalPrice) > 1) {
+            Log::warning('Client provided total_price differs from server-calculated rooms total', [
+                'provided_total' => $providedTotalPrice,
+                'calculated_rooms_total' => $calculatedRoomsTotal
+            ]);
+        }
+
+        // Use server-calculated rooms total as canonical original total when available
+        $originalTotalPrice = $calculatedRoomsTotal > 0 ? $calculatedRoomsTotal : $providedTotalPrice;
+        $finalTotalPrice = $originalTotalPrice;
 
         // 1. Kiểm tra tính khả dụng phòng (giữ nguyên logic kiểm tra)
         $requestedRoomTypes = [];
@@ -452,7 +503,8 @@ class PaymentController extends Controller
         }
 
         Log::info('Booking notes:', ['notes' => $request->input('notes')]);
-        // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
+        
+    // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
         $userId = null;
         // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
         if ($request->user()) {
@@ -473,7 +525,7 @@ class PaymentController extends Controller
             'check_in_date' => $checkInDate,
             'check_out_date' => $checkOutDate,
             'guest_count' => $request->input('total_guests'),
-            'total_price_vnd' => $request->input('total_price'),
+            'total_price_vnd' => $finalTotalPrice, // Sẽ được cập nhật sau khi áp dụng coupon
             'status' => 'pending', // Vẫn pending cho đến khi thanh toán
             'notes' => $request->input('notes'),
             'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
@@ -507,18 +559,99 @@ class PaymentController extends Controller
             }
         }
 
-        Log::info('Booking notes:', ['notes' => $request->input('notes')]);
+        // ==== THÊM PHẦN XỬ LÝ COUPON ====
+        $couponApplied = null;
+        $couponDiscount = 0;
         
-        // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
-        $userId = null;
-        // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
-        if ($request->user()) {
-            $userId = $request->user()->id;
-        } elseif ($request->has('user_id')) {
-            $userId = $request->input('user_id');
+        // Xử lý mã giảm giá nếu có
+        if ($request->filled('coupon_code')) {
+            $couponService = app(CouponService::class);
+            $user = $request->user();
+
+            // Extract totals robustly (support different naming styles from frontend)
+            $totalsInput = $request->input('totals', $request->input('Totals', []));
+            $roomsTotalCandidate = null;
+            if (is_array($totalsInput)) {
+                $roomsTotalCandidate = $totalsInput['roomsTotal'] ?? $totalsInput['rooms_total'] ?? null;
+            }
+            $roomsTotalCandidate = $roomsTotalCandidate ?? $request->input('roomsTotal') ?? $request->input('rooms_total') ?? null;
+
+            // If frontend provides rooms total, prefer that as the base amount; otherwise fall back
+            $baseAmount = $roomsTotalCandidate ?? $originalTotalPrice;
+
+            Log::info('Applying coupon: using base amount for calculation', [
+                'rooms_total_candidate' => $roomsTotalCandidate,
+                'base_amount' => $baseAmount,
+                'original_total_price_from_request' => $originalTotalPrice,
+                'booking_total_before' => $booking->total_price_vnd,
+                'coupon_code' => $request->input('coupon_code')
+            ]);
+
+            // If frontend already applied coupon (roomsTotal provided and matches calculation), avoid re-applying
+            $couponModel = \App\Models\Coupon::where('code', strtoupper($request->input('coupon_code')))->first();
+            if ($couponModel && $roomsTotalCandidate !== null) {
+                $expected = $couponModel->applyToAmount((float)$roomsTotalCandidate);
+                // Allow small rounding variance (1 VND)
+                if (abs($expected['new_total'] - (float)$originalTotalPrice) <= 1) {
+                    Log::info('Frontend appears to have already applied coupon; creating redemption using provided totals', [
+                        'rooms_total' => $roomsTotalCandidate,
+                        'expected_new_total' => $expected['new_total'],
+                        'provided_final_total' => $originalTotalPrice,
+                    ]);
+
+                    // Ensure booking has the raw base amount so the service creates a correct redemption
+                    $booking->total_price_vnd = $roomsTotalCandidate;
+
+                    $couponResult = $couponService->applyCouponToBooking(
+                        $booking,
+                        $request->input('coupon_code'),
+                        $user
+                    );
+                } else {
+                    // Normal path: use baseAmount and apply
+                    $booking->total_price_vnd = $baseAmount;
+                    $couponResult = $couponService->applyCouponToBooking(
+                        $booking,
+                        $request->input('coupon_code'),
+                        $user
+                    );
+                }
+            } else {
+                // No coupon model or no rooms total provided, apply normally using baseAmount
+                $booking->total_price_vnd = $baseAmount;
+                $couponResult = $couponService->applyCouponToBooking(
+                    $booking,
+                    $request->input('coupon_code'),
+                    $user
+                );
+            }
+            
+            if (!$couponResult['success']) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => $couponResult['message'],
+                    'error_type' => 'coupon_error'
+                ], 422);
+            }
+            
+            $couponApplied = $couponResult['redemption'];
+            $couponDiscount = $couponResult['discount_amount'];
+            $finalTotalPrice = $couponResult['new_total'];
+            
+            // Cập nhật booking với total price mới (đã được cập nhật tự động trong CouponService)
+            $booking = $booking->fresh(); // Reload booking data
+            
+            Log::info('Coupon applied successfully', [
+                'coupon_code' => $request->input('coupon_code'),
+                'original_price' => $originalTotalPrice,
+                'discount' => $couponDiscount,
+                'final_price' => $finalTotalPrice
+            ]);
         }
 
-
+        Log::info('Booking notes:', ['notes' => $request->input('notes')]);
+        
         // Generate booking code
         $bookingCode = 'LVS' . $booking->booking_id . now()->format('His');
         $booking->booking_code = $bookingCode;
@@ -535,7 +668,12 @@ class PaymentController extends Controller
             'customer_id_card' => $request->input('customer_id_card', ''),
             'payment_method' => $request->input('payment_method'),
             'nights' => $nights,
-            'option_id' => $optionId // Lưu option_id để dùng sau khi thanh toán
+            'option_id' => $optionId, // Lưu option_id để dùng sau khi thanh toán
+            'coupon_applied' => $couponApplied ? [
+                'id' => $couponApplied->id,
+                'coupon_code' => $couponApplied->coupon->code,
+                'discount_amount' => $couponDiscount
+            ] : null // Lưu thông tin coupon để hiển thị
         ];
         Log::info('Rooms data cached with option_id:', ['option_id' => $optionId, 'booking_code' => $bookingCode]);
         // Lưu vào cache với key là booking_code để xử lý sau
@@ -544,7 +682,7 @@ class PaymentController extends Controller
  
         $payment = Payment::create([
             'booking_id' => $booking->booking_id,
-            'amount_vnd' => $booking->total_price_vnd,
+            'amount_vnd' => $booking->total_price_vnd, // Sử dụng giá đã giảm
             'payment_type' => $request->input('payment_method'), // Lưu đúng giá trị FE gửi lên
             'status' => 'pending',
         ]);
@@ -560,15 +698,32 @@ class PaymentController extends Controller
             'booking_code' => $bookingCode,
             'booking_id' => $booking->booking_id,
             'payment_method' => $request->input('payment_method'),
-            'rooms_cached' => count($request->input('rooms'))
+            'rooms_cached' => count($request->input('rooms')),
+            'coupon_applied' => $couponApplied ? $couponApplied->coupon->code : null,
+            'original_price' => $originalTotalPrice,
+            'final_price' => $booking->total_price_vnd
         ]);
 
-        return response()->json([
+        $responseData = [
             'success' => true,
             'message' => 'Đặt phòng thành công!',
             'booking_code' => $bookingCode,
             'booking_id' => $booking->booking_id,
-        ], 201);
+            'total_price' => $booking->total_price_vnd,
+        ];
+
+        // Thêm thông tin coupon vào response nếu có
+        if ($couponApplied) {
+            $responseData['coupon'] = [
+                'code' => $couponApplied->coupon->code,
+                'discount_amount' => $couponDiscount,
+                'original_total' => $originalTotalPrice,
+                'final_total' => $booking->total_price_vnd,
+                'savings' => $couponDiscount
+            ];
+        }
+
+        return response()->json($responseData, 201);
     } catch (\Exception $e) {
         DB::rollBack();
         Log::error('Error creating booking: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in file ' . $e->getFile());
@@ -1701,6 +1856,10 @@ class PaymentController extends Controller
         try {
             Log::info("Completing booking creation after payment for: {$bookingCode}");
 
+            // Ensure flags are initialized to avoid undefined variable errors in logs
+            $usedSmartAssignment = false;
+
+
             // Lấy thông tin booking
             $booking = Booking::where('booking_code', $bookingCode)->first();
             if (!$booking) {
@@ -1863,17 +2022,62 @@ class PaymentController extends Controller
                 }
             }
 
+            // ===== SMART ROOM ASSIGNMENT =====
+            // Gán phòng thông minh dựa trên yêu cầu của khách
+            $smartRoomService = new SmartRoomAssignmentService();
+            $specialRequests = [];
+            
+            // Lấy special requests từ booking notes hoặc room data
+            if (!empty($booking->notes)) {
+                $specialRequests[] = $booking->notes;
+            }
+            
+            // Phân tích từ room data để tìm yêu cầu đặc biệt
+            foreach ($rooms as $roomData) {
+                if (isset($roomData['special_requests'])) {
+                    $specialRequests[] = $roomData['special_requests'];
+                }
+            }
+
+            // Thực hiện smart assignment
+            $assignedRoomIds = $smartRoomService->assignRoomsSmartly(
+                $rooms,
+                $checkInDate->format('Y-m-d'),
+                $checkOutDate->format('Y-m-d'),
+                $specialRequests,
+                // pass booking total if available so assignment can use it for VIP detection
+                isset($booking->total_price_vnd) ? (float)$booking->total_price_vnd : null
+            );
+
+            // Flag to indicate whether smart assignment actually assigned any rooms
+            $usedSmartAssignment = false;
+
+            Log::info("[completeBookingAfterPayment] Smart room assignment result:", [
+                'booking_code' => $bookingCode,
+                'assigned_rooms' => $assignedRoomIds,
+                'total_requested' => count($rooms),
+                'total_assigned' => count($assignedRoomIds)
+            ]);
+
             // Biến để track occupancy updates
             $occupancyUpdates = [];
             $successfulBookingRooms = [];
-            // Xử lý từng phòng
+            
+            // Xử lý từng phòng với smart assignment
             foreach ($rooms as $roomIndex => $roomData) {
                 Log::info("[completeBookingAfterPayment] Room {$roomIndex} data for booking {$bookingCode}:", $roomData);
 
-                // Không insert room_option trong từng phòng nữa
-                $room = Room::find($roomData['room_id']);
+                // Sử dụng room_id từ smart assignment nếu có, fallback về room_id gốc
+                $assignedRoomId = $assignedRoomIds[$roomIndex] ?? $roomData['room_id'] ?? null;
+                
+                if (!$assignedRoomId) {
+                    Log::warning("[completeBookingAfterPayment] No room assigned for room index {$roomIndex}");
+                    continue;
+                }
+
+                $room = Room::find($assignedRoomId);
                 if (!$room) {
-                    Log::error("[completeBookingAfterPayment] Invalid room ID provided: " . $roomData['room_id']);
+                    Log::error("[completeBookingAfterPayment] Invalid assigned room ID: " . $assignedRoomId);
                     continue; // Skip invalid room instead of throwing exception
                 }
 
@@ -1885,7 +2089,7 @@ class PaymentController extends Controller
                     $representativeId = DB::table('representatives')->insertGetId([
                         'booking_id' => $booking->booking_id,
                         'booking_code' => $bookingCode,
-                        'room_id' => $roomData['room_id'],
+                        'room_id' => $assignedRoomId, // Sử dụng assigned room ID
                         'full_name' => $roomData['guest_name'],
                         'phone_number' => $roomData['guest_phone'] ?? $booking->guest_phone,
                         'email' => $roomData['guest_email'] ?? $booking->guest_email,
@@ -1895,23 +2099,44 @@ class PaymentController extends Controller
                     ]);
                 }
 
-                // Tạo booking_room record, sử dụng finalOptionId (có thể là NULL nếu room_option insert thất bại)
-                Log::info("[completeBookingAfterPayment] Creating booking_room with finalOptionId: " . ($finalOptionId ?? 'NULL'));
-                
+                // Tạo booking_room record với assigned room ID
+                Log::info("[completeBookingAfterPayment] Creating booking_room with assigned room ID: " . $assignedRoomId);
+                // Compute option/total correctly when booking used a package shared across rooms
+                $roomsCount = count($rooms);
+                $firstRoomOptionTotal = $this->extractPrice($firstRoom['option_price'] ?? $firstRoom['room_price'] ?? 0);
+                $isPackageShared = $packageId !== null && collect($rooms)->every(function ($r) use ($packageId) {
+                    return isset($r['package_id']) && $r['package_id'] == $packageId;
+                });
+
+                $basePricePerNight = $this->extractPrice($roomData['room_price'] ?? 0);
+
+                if ($isPackageShared) {
+                    // split the package option total evenly across rooms
+                    $perRoomOptionPrice = $roomsCount > 0 ? ($firstRoomOptionTotal / $roomsCount) : 0;
+                    $optionPriceForThisRoom = round($perRoomOptionPrice, 2);
+                } else {
+                    $optionPriceForThisRoom = $this->extractPrice($roomData['option_price'] ?? 0);
+                }
+
+                $pricePerNight = $basePricePerNight;
+                $totalPriceForThisRoom = ($pricePerNight + $optionPriceForThisRoom) * $nights;
+
                 $bookingRoomData = [
                     'booking_id' => $booking->booking_id,
                     'booking_code' => $bookingCode,
-                    'room_id' => NULL,
-                    'option_id' => $finalOptionId, // Sử dụng finalOptionId thay vì optionId
+                    'room_id' => $assignedRoomId, // Gán room_id ngay khi tạo
+                    'assigned_by' => isset($assignedRoomIds[$roomIndex]) ? 'auto' : 'manual',
+                    'auto_assigned' => isset($assignedRoomIds[$roomIndex]) ? 1 : 0,
+                    'option_id' => $finalOptionId,
                     'option_name' => $roomData['option_name'] ?? 'Custom Package',
-                    'option_price' => $this->extractPrice($roomData['option_price'] ?? $roomData['room_price'] ?? 0),
+                    'option_price' => $optionPriceForThisRoom,
                     'representative_id' => $representativeId,
                     'adults' => $roomData['adults'] ?? 1,
                     'children' => $roomData['children'] ?? 0,
                     'children_age' => null,
-                    'price_per_night' => $roomData['room_price'] ?? 0,
+                    'price_per_night' => $pricePerNight,
                     'nights' => $nights,
-                    'total_price' => ($roomData['room_price'] ?? 0) * $nights,
+                    'total_price' => $totalPriceForThisRoom,
                     'check_in_date' => $checkInDate,
                     'check_out_date' => $checkOutDate,
                     'created_at' => now(),
@@ -1920,16 +2145,26 @@ class PaymentController extends Controller
                 
                 try {
                     $bookingRoomId = DB::table('booking_rooms')->insertGetId($bookingRoomData);
-                    Log::info("[completeBookingAfterPayment] Successfully created booking_room:", [
+                    Log::info("[completeBookingAfterPayment] Successfully created booking_room with smart assignment:", [
                         'booking_room_id' => $bookingRoomId,
+                        'assigned_room_id' => $assignedRoomId,
+                        'original_room_id' => $roomData['room_id'] ?? 'not_provided',
+                        'smart_assigned' => isset($assignedRoomIds[$roomIndex]),
                         'option_id' => $finalOptionId
                     ]);
+                    
                     // Track successful booking room for occupancy update
                     $successfulBookingRooms[] = [
                         'booking_room_id' => $bookingRoomId,
                         'room_type_id' => $room->room_type_id,
-                        'room_id' => $roomData['room_id']
+                        'room_id' => $assignedRoomId,
+                        'smart_assigned' => isset($assignedRoomIds[$roomIndex])
                     ];
+
+                    // mark that smart assignment was used for at least one room
+                    if (isset($assignedRoomIds[$roomIndex])) {
+                        $usedSmartAssignment = true;
+                    }
 
                     // Track occupancy updates by room_type_id
                     if (!isset($occupancyUpdates[$room->room_type_id])) {
@@ -1937,8 +2172,9 @@ class PaymentController extends Controller
                     }
                     $occupancyUpdates[$room->room_type_id]++;
                 } catch (\Exception $e) {
-                    Log::error("[completeBookingAfterPayment] Error creating booking_room:", [
+                    Log::error("[completeBookingAfterPayment] Error creating booking_room with smart assignment:", [
                         'error' => $e->getMessage(),
+                        'assigned_room_id' => $assignedRoomId,
                         'booking_room_data' => $bookingRoomData,
                         'sql_state' => $e->getCode()
                     ]);
@@ -2031,7 +2267,17 @@ class PaymentController extends Controller
             // Gửi email xác nhận
             $this->sendBookingConfirmationEmail($booking->booking_id);
 
-            Log::info("Successfully completed booking creation for: {$bookingCode}");
+            Log::info("Successfully completed booking creation with smart room assignment for: {$bookingCode}", [
+                'total_rooms_assigned' => count($assignedRoomIds),
+                'smart_assignment_used' => $usedSmartAssignment,
+                'special_requests_analyzed' => !empty($specialRequests),
+                'successful_booking_rooms' => array_map(function($room) {
+                    return [
+                        'room_id' => $room['room_id'],
+                        'smart_assigned' => $room['smart_assigned'] ?? false
+                    ];
+                }, $successfulBookingRooms)
+            ]);
 
         } catch (\Exception $e) {
             Log::error("Error completing booking after payment for {$bookingCode}: " . $e->getMessage());
