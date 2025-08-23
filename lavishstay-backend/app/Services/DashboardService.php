@@ -1,12 +1,13 @@
 <?php
-
-namespace App\Http\Controllers;
+namespace App\Services;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
-class DashboardController extends Controller
+class DashboardService extends Controller
 {
     public function index()
     {
