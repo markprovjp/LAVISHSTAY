@@ -445,8 +445,6 @@ Route::prefix('payment')->name('api.payment.')->group(function () {
     Route::post('/pay-at-hotel', [PaymentController::class, 'processPayAtHotel'])->name('pay-at-hotel');
 });
 
-<<<<<<< HEAD
-=======
 // Notification routes - require authentication and notification permissions
 Route::middleware(['auth:sanctum', 'notification.owner'])->prefix('notifications')->group(function () {
     // Basic notification endpoints
@@ -525,4 +523,4 @@ if (app()->environment(['local', 'staging'])) {
         Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('notifications.dev.fake');
     });
 }
->>>>>>> b45ee7e59a74e164f2ead4727a619a56e9139a8d
+
