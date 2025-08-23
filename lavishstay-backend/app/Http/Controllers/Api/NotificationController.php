@@ -16,13 +16,13 @@ class NotificationController extends Controller
     {
         try {
             // Debug incoming auth for troubleshooting
-            Log::debug('NotificationController@index incoming auth', [
-                'auth_header' => $request->header('Authorization'),
-                'bearer' => $request->bearerToken(),
-                'cookies' => $request->cookies->all(),
-            ]);
+            // Log::debug('NotificationController@index incoming auth', [
+            //     'auth_header' => $request->header('Authorization'),
+            //     'bearer' => $request->bearerToken(),
+            //     'cookies' => $request->cookies->all(),
+            // ]);
             $user = Auth::user();
-            Log::debug('NotificationController@index Auth::user()', ['user' => $user ? $user->id : null]);
+            // Log::debug('NotificationController@index Auth::user()', ['user' => $user ? $user->id : null]);
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -65,18 +65,18 @@ class NotificationController extends Controller
     {
         try {
             // Debug log để test
-            \Log::info('NotificationController@unreadCount called at ' . now());
+            // \Log::info('NotificationController@unreadCount called at ' . now());
             
             // Debug incoming auth for troubleshooting
-            Log::debug('NotificationController@unreadCount incoming auth', [
-                'auth_header' => request()->header('Authorization'),
-                'bearer' => request()->bearerToken(),
-                'cookies' => request()->cookies->all(),
-            ]);
+            // Log::debug('NotificationController@unreadCount incoming auth', [
+            //     'auth_header' => request()->header('Authorization'),
+            //     'bearer' => request()->bearerToken(),
+            //     'cookies' => request()->cookies->all(),
+            // ]);
             $user = Auth::user();
-            Log::debug('NotificationController@unreadCount Auth::user()', ['user' => $user ? $user->id : null]);
+            // Log::debug('NotificationController@unreadCount Auth::user()', ['user' => $user ? $user->id : null]);
             if (!$user) {
-                \Log::warning('NotificationController@unreadCount: No authenticated user');
+                // \Log::warning('NotificationController@unreadCount: No authenticated user');
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized'

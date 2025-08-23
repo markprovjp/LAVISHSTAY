@@ -1,5 +1,4 @@
 import React from "react";
-import { Spin } from "antd";
 import { useTranslation } from "react-i18next";
 
 // Import custom components
@@ -8,26 +7,12 @@ import SearchForm from "../components/SearchForm";
 import SectionHeader from "../components/SectionHeader";
 import Testimonial from "../components/Testimonial";
 import Newsletter from "../components/Newsletter";
-import RoomTypeShowcase from '../components/ui/RoomTypeShowcaseNew';
+import RoomTypesOverview from '../components/ui/RoomTypesOverview';
 import Awards from "../components/ui/Awards";
 import HotelActivities from "../components/ui/HotelActivities";
 
-// Import API hooks for backend integration
-import { useGetRoomTypes } from "../hooks/useRoomTypes";
-import { useRoomTypes } from "../contexts/RoomTypesContext";
-
 const Home: React.FC = () => {
   const { t } = useTranslation();
-  const { setRoomTypes } = useRoomTypes();
-
-  // Fetch room types for display using backend API
-  const { data: roomTypesData, isLoading: isRoomTypesLoading } = useGetRoomTypes();
-
-  React.useEffect(() => {
-    if (roomTypesData?.data) {
-      setRoomTypes(roomTypesData.data);
-    }
-  }, [roomTypesData, setRoomTypes]);
 
   // Process rooms with discounts for the sale section (commented out for now)
   // const saleRooms = useMemo(() => {
@@ -115,17 +100,7 @@ const Home: React.FC = () => {
           withDivider
         />
         <div className="mt-8">
-          {isRoomTypesLoading ? (
-            <div className="text-center py-10">
-              <Spin size="large" tip="Đang tải loại phòng..." />
-            </div>
-          ) : roomTypesData?.data?.length ? (
-            <RoomTypeShowcase searchResult={roomTypesData} />
-          ) : (
-            <div className="text-center py-10">
-              <p>Không có loại phòng nào vào thời điểm hiện tại</p>
-            </div>
-          )}
+          <RoomTypesOverview />
         </div>
       </div>
 

@@ -1,0 +1,107 @@
+/* Room Types Overview Styles */
+.room-type-overview-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.room-type-overview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.room-type-overview-card .ant-card-cover {
+  overflow: hidden;
+}
+
+.room-type-overview-card .ant-card-cover img {
+  transition: transform 0.3s ease;
+}
+
+.room-type-overview-card:hover .ant-card-cover img {
+  transform: scale(1.05);
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  .room-type-overview-card {
+    border-color: #374151;
+  }
+  
+  .room-type-overview-card:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .room-type-overview-card {
+    margin-bottom: 16px;
+  }
+}
+
+/* Gallery modal styles */
+.gallery-modal .ant-modal-content {
+  background: #000;
+}
+
+.gallery-modal .ant-carousel .slick-prev,
+.gallery-modal .ant-carousel .slick-next {
+  z-index: 2;
+  color: white;
+  font-size: 24px;
+}
+
+.gallery-modal .ant-carousel .slick-prev {
+  left: 20px;
+}
+
+.gallery-modal .ant-carousel .slick-next {
+  right: 20px;
+}
+
+/* Text truncation utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Loading skeleton */
+.room-type-skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Badge and tag styles */
+.room-type-overview-card .ant-tag {
+  border-radius: 16px;
+  font-size: 11px;
+  padding: 2px 8px;
+  margin: 2px;
+}
+
+.room-type-overview-card .ant-badge {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

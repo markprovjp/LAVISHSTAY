@@ -306,6 +306,21 @@ class BookingTransferController extends Controller
             if (property_exists($newRooms->first(), 'hotel_id') && $newRooms->first()->hotel_id) {
                 $hotel = DB::table('hotel')->where('hotel_id', $newRooms->first()->hotel_id)->first();
             }
+
+            // Fallback: try resolving via Room model relation if hotel not found
+            if (!$hotel) {
+                try {
+                    $firstRoomId = $newRooms->first()->room_id ?? null;
+                    if ($firstRoomId) {
+                        $room = \App\Models\Room::where('room_id', $firstRoomId)->first();
+                        if ($room && method_exists($room, 'hotel')) {
+                            $hotel = $room->hotel()->first();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("BookingTransferController hotel fallback failed: " . $e->getMessage());
+                }
+            }
             $hotelInfo = [
                 'hotel_name' => $hotel ? ($hotel->name ?? 'Không xác định') : 'Không xác định',
                 'hotel_address' => $hotel ? ($hotel->address ?? 'Không xác định') : 'Không xác định',

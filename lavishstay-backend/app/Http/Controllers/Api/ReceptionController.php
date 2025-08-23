@@ -1036,8 +1036,46 @@ $bookings = $query->paginate($request->get('per_page', 500));
                     'total_amount' => (float) $booking->total_price_vnd,
                     'booking_status' => $booking->booking_status,
                 ];
+
+                // Get coupon redemption info if exists
+                $couponRedemption = DB::table('coupon_redemptions as cr')
+                    ->leftJoin('coupons as c', 'cr.coupon_id', '=', 'c.id')
+                    ->where('cr.booking_id', $booking->booking_id)
+                    ->select([
+                        'cr.id as redemption_id',
+                        'cr.coupon_id',
+                        'c.code as coupon_code',
+                        'cr.amount_saved_vnd',
+                        'cr.applied_amount_vnd',
+                        'cr.created_at as applied_at',
+                        'cr.meta'
+                    ])
+                    ->first();
+
+                if ($couponRedemption) {
+                    $transformedBookings[count($transformedBookings) - 1]['coupon_applied'] = true;
+                    $transformedBookings[count($transformedBookings) - 1]['coupon'] = [
+                        'redemption_id' => $couponRedemption->redemption_id,
+                        'coupon_id' => $couponRedemption->coupon_id,
+                        'code' => $couponRedemption->coupon_code,
+                        'amount_saved_vnd' => (float) $couponRedemption->amount_saved_vnd,
+                        'applied_amount_vnd' => (float) $couponRedemption->applied_amount_vnd,
+                        'applied_at' => $couponRedemption->applied_at,
+                        'meta' => json_decode($couponRedemption->meta, true)
+                    ];
+                    
+                    // Log khi trả booking có coupon
+                    Log::info('Booking with coupon returned', [
+                        'booking_id' => $booking->booking_id,
+                        'coupon_code' => $couponRedemption->coupon_code,
+                        'amount_saved_vnd' => $couponRedemption->amount_saved_vnd
+                    ]);
+                } else {
+                    $transformedBookings[count($transformedBookings) - 1]['coupon_applied'] = false;
+                    $transformedBookings[count($transformedBookings) - 1]['coupon'] = null;
+                }
             }
-            Log::info('Bookings retrieved successfully', ['data' => $transformedBookings]);
+            Log::info('Bookings retrieved successfully', ['total_count' => count($transformedBookings)]);
             return response()->json([
                 'success' => true,
                 'message' => 'Bookings retrieved successfully',
@@ -1444,7 +1482,45 @@ $allChildrenAges = DB::table('booking_room_children')
                 'payment_type' => $paymentInfo ? $paymentInfo->payment_type : null,
                 'total_amount' => (float) $booking->total_price_vnd,
                 'booking_status' => $booking->status
-            ];  
+            ];
+            
+            // Get coupon redemption info if exists
+            $couponRedemption = DB::table('coupon_redemptions as cr')
+                ->leftJoin('coupons as c', 'cr.coupon_id', '=', 'c.id')
+                ->where('cr.booking_id', $bookingId)
+                ->select([
+                    'cr.id as redemption_id',
+                    'cr.coupon_id',
+                    'c.code as coupon_code',
+                    'cr.amount_saved_vnd',
+                    'cr.applied_amount_vnd',
+                    'cr.created_at as applied_at',
+                    'cr.meta'
+                ])
+                ->first();
+
+            if ($couponRedemption) {
+                $bookingDetails['coupon_applied'] = true;
+                $bookingDetails['coupon'] = [
+                    'redemption_id' => $couponRedemption->redemption_id,
+                    'coupon_id' => $couponRedemption->coupon_id,
+                    'code' => $couponRedemption->coupon_code,
+                    'amount_saved_vnd' => (float) $couponRedemption->amount_saved_vnd,
+                    'applied_amount_vnd' => (float) $couponRedemption->applied_amount_vnd,
+                    'applied_at' => $couponRedemption->applied_at,
+                    'meta' => json_decode($couponRedemption->meta, true)
+                ];
+                
+                // Log khi trả booking detail có coupon
+                Log::info('Booking detail with coupon returned', [
+                    'booking_id' => $bookingId,
+                    'coupon_code' => $couponRedemption->coupon_code,
+                    'amount_saved_vnd' => $couponRedemption->amount_saved_vnd
+                ]);
+            } else {
+                $bookingDetails['coupon_applied'] = false;
+                $bookingDetails['coupon'] = null;
+            }  
             
             // Trả về mảng chứa một phần tử duy nhất thay vì object
             $responseData = [$bookingDetails];
