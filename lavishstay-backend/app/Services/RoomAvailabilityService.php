@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\Booking;
 
 class RoomAvailabilityService
 {
@@ -180,10 +181,12 @@ class RoomAvailabilityService
             }
 
             // Kiểm tra xem phòng có bị đặt trong khoảng thời gian không
+            $blocking = Booking::getBlockingStatusesLower();
+            // Use case-insensitive check
             $conflictingBookings = DB::table('booking_rooms as br')
                 ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
                 ->where('br.room_id', $room->id)
-                ->whereIn('b.status', ['pending', 'confirmed'])
+                ->whereRaw('LOWER(b.status) IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')', $blocking)
                 ->where('br.check_in_date', '<', $checkOut->format('Y-m-d'))
                 ->where('br.check_out_date', '>', $checkIn->format('Y-m-d'))
                 ->count();

@@ -159,12 +159,14 @@ class RoomAvailabilityController extends Controller
                 Log::info("Added room_type_id filter: $roomTypeId");
             }
 
-            // Exclude booked rooms
+            // Exclude rooms that have overlapping bookings in statuses that should block availability.
+            // We perform a case-insensitive check because booking.status values in DB may vary in case.
             $query->whereNotIn('r.' . $roomIdColumn, function($subQuery) use ($checkInDate, $checkOutDate) {
                 $subQuery->select('br.room_id')
                     ->from('booking_rooms as br')
                     ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
-                    ->whereIn('b.status', ['pending', 'confirmed'])
+                    // Block these booking statuses from being considered available: Pending, Confirmed, Operational, Cleaning
+                    ->whereRaw('LOWER(b.status) IN (?,?,?,?)', ['pending', 'confirmed', 'operational', 'cleaning'])
                     ->where('br.check_in_date', '<', $checkOutDate)
                     ->where('br.check_out_date', '>', $checkInDate)
                     ->whereNotNull('br.room_id');
