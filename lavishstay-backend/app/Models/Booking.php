@@ -91,6 +91,26 @@ class Booking extends Model
         return $this->belongsTo(RoomType::class, 'room_type_id');
     }
 
+    /**
+     * Booking statuses that should block room availability.
+     * Keep values in the canonical case as stored in DB.
+     */
+    public const BLOCKING_STATUSES = [
+        'Pending',
+        'Confirmed',
+        'Operational',
+        'Cleaning'
+    ];
+
+    /**
+     * Return blocking statuses normalized to lowercase for case-insensitive DB checks.
+     * @return array
+     */
+    public static function getBlockingStatusesLower(): array
+    {
+        return array_map('strtolower', self::BLOCKING_STATUSES);
+    }
+
     public function invoices()
     {
         return $this->hasMany(Invoice::class, 'booking_id', 'booking_id');

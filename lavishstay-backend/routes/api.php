@@ -311,6 +311,7 @@ Route::post('/bookings/{id}/checkout/compensation', [BookingCheckoutController::
     // Chart & Dashboard APIs
     Route::prefix('chart')->group(function () {
         Route::get('/revenue-by-month', [ChartReceptionController::class, 'getRevenueByMonth']);
+    Route::get('/revenue-by-day', [ChartReceptionController::class, 'getDailyRevenueByMonth']);
         Route::get('/revenue-by-category', [ChartReceptionController::class, 'getRevenueByCategory']);
         Route::get('/activity-rate', [ChartReceptionController::class, 'getActivityRate']);
         Route::get('/today-schedule', [ChartReceptionController::class, 'getTodaySchedule']);

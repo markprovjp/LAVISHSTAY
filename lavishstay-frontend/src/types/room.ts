@@ -65,6 +65,17 @@ export type RoomStatus = 'occupied' | 'available' | 'empty' | 'cleaning' | 'main
 
 export type BookingStatus = 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
 
+// Full booking status enum (matches backend booking.status values).
+export type BookingStatusFull =
+    | 'Pending'
+    | 'Confirmed'
+    | 'Operational'
+    | 'Completed'
+    | 'Cancelled'
+    | 'Cancelled With Penalty'
+    | 'Unsuccessful'
+    | 'Cleaning';
+
 export type ViewMode = 'grid' | 'timeline';
 
 export interface RoomFilters {
@@ -73,6 +84,12 @@ export interface RoomFilters {
     roomNumber?: string;
     roomType?: string;
     roomStatus?: RoomStatus;
+    // Optional: filter by booking status (single or multiple). Matches backend booking.status values.
+    booking_status?: BookingStatusFull | BookingStatusFull[];
+    // Optional: number of guests filter used in some UIs
+    guestRooms?: number;
+    // Optional: friendly room name search (e.g., '0804')
+    roomName?: string;
 }
 
 export interface FullCalendarEvent {

@@ -29,7 +29,10 @@ import {
     StopOutlined,
     ToolOutlined,
     InfoCircleOutlined,
-    CheckOutlined
+    CheckOutlined,
+    RestOutlined,
+    StarOutlined,
+    CoffeeOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
@@ -54,6 +57,8 @@ interface RoomInfo {
         guest_name?: string;
         guest_count?: number;
         representative_name?: string;
+        // optional status coming from backend booking (preferred source of truth for booked/occupied/cleaning)
+        status?: string;
     };
     maintenance_reason?: string;
     last_cleaned?: string;
@@ -68,6 +73,8 @@ interface RoomCardGridProps {
     onFloorSelect?: (floorId: string, roomIds: string[], selected: boolean) => void;
     onViewDetails?: (roomId: string) => void;
     onModeChange?: (mode: 'view' | 'select') => void;
+    // When provided, this set contains room ids that are available for the selected date range.
+    availableRoomIds?: Set<string> | null;
 }
 
 // Memoized Room Card Component để tối ưu hiệu năng
@@ -95,7 +102,7 @@ const RoomCard = memo(({
             ribbonColor: string;
         }> = {
             available: {
-                color: '#52c41a',
+                color: '#73d13d',
                 bgColor: '#f6ffed',
                 borderColor: '#b7eb8f',
                 icon: <CheckCircleOutlined />,
@@ -103,7 +110,7 @@ const RoomCard = memo(({
                 ribbonColor: 'green'
             },
             booked: {
-                color: '#faad14',
+                color: '#ffc53d',
                 bgColor: '#fffbe6',
                 borderColor: '#ffe58f',
                 icon: <CalendarOutlined />,
@@ -111,15 +118,23 @@ const RoomCard = memo(({
                 ribbonColor: 'gold'
             },
             occupied: {
-                color: '#1890ff',
+                color: '#40a9ff',
                 bgColor: '#e6f7ff',
                 borderColor: '#91d5ff',
-                icon: <UserOutlined />,
+                icon: <TeamOutlined />, // Changed icon to differentiate from cleaning
                 text: 'Đang ở',
                 ribbonColor: 'blue'
             },
+            cleaning: {
+                color: '#36cfc9',
+                bgColor: '#e6fffb',
+                borderColor: '#87e8de',
+                icon: <RestOutlined />, // Use RestOutlined for cleaning status
+                text: 'Đang dọn',
+                ribbonColor: 'cyan'
+            },
             out_of_service: {
-                color: '#ff4d4f',
+                color: '#ff7875',
                 bgColor: '#fff2f0',
                 borderColor: '#ffccc7',
                 icon: <StopOutlined />,
@@ -127,20 +142,12 @@ const RoomCard = memo(({
                 ribbonColor: 'red'
             },
             maintenance: {
-                color: '#722ed1',
+                color: '#b37feb',
                 bgColor: '#f9f0ff',
                 borderColor: '#d3adf7',
                 icon: <ToolOutlined />,
                 text: 'Bảo trì',
                 ribbonColor: 'purple'
-            },
-            cleaning: {
-                color: '#13c2c2',
-                bgColor: '#e6fffb',
-                borderColor: '#87e8de',
-                icon: <ClockCircleOutlined />,
-                text: 'Đang dọn',
-                ribbonColor: 'cyan'
             }
         };
         return configs[status] || configs.available;
@@ -166,7 +173,34 @@ const RoomCard = memo(({
         }
     };
 
-    const statusConfig = getStatusConfig(room.status);
+    // Treat `room.status` as a simple usable flag (usable vs not-usable).
+    // Use `booking_info.status` (if provided) as the authoritative booking state.
+    const effectiveStatus = (() => {
+        const notUsableStates = ['maintenance', 'out_of_service'];
+        const isUsable = !notUsableStates.includes(room.status);
+
+        if (room.booking_info) {
+            const bStatus = (room.booking_info as any).status?.toString?.().toLowerCase?.();
+            if (bStatus) {
+                // Normalize common enum values from backend
+                // Backend enums: 'Pending', 'Confirmed', 'Operational', 'Completed', 'Cancelled', 'Cancelled With Penalty', 'Unsuccessful', 'Cleaning'
+                const bs = bStatus.toLowerCase();
+                if (bs === 'operational') return 'occupied';
+                if (bs === 'cleaning') return 'cleaning';
+                if (bs === 'confirmed' || bs === 'pending') return 'booked';
+                if (bs === 'completed' || bs.startsWith('cancel') || bs === 'unsuccessful') return 'available';
+                // fallback for unknown booking statuses: treat as occupied to avoid double-booking UI
+                return 'occupied';
+            }
+            // booking_info exists but no explicit status -> assume occupied (current booking)
+            return 'occupied';
+        }
+
+        // No booking: if room is usable, it's available; otherwise keep room's non-usable state
+        return isUsable ? 'available' : (room.status || 'out_of_service');
+    })();
+
+    const statusConfig = getStatusConfig(effectiveStatus);
     const icons = getRoomTypeIcons(room.room_type?.name || '');
 
     const handleCardClick = useCallback(() => {
@@ -177,7 +211,7 @@ const RoomCard = memo(({
         }
     }, [mode, isSelected, onSelect, onViewDetails]);
 
-    // Render thông tin booking hoặc lý do bảo trì
+    // Render booking info (if any) or maintenance reason when room is not usable
     const renderCardContent = () => {
         if (room.booking_info) {
             return (
@@ -194,20 +228,33 @@ const RoomCard = memo(({
                             </Text>
                         </div>
                     )}
+                    {/* Optional: show booking status if backend sent it */}
+                    {(room.booking_info as any).status && (
+                        <div className="flex items-center space-x-1">
+                            <InfoCircleOutlined style={{ color: '#fff', fontSize: 12 }} />
+                            <Text style={{ color: '#fff', fontSize: 11 }}>
+                                {(room.booking_info as any).status}
+                            </Text>
+                        </div>
+                    )}
                 </div>
             );
-        } else if (room.status === 'maintenance' || room.status === 'out_of_service') {
+        }
+
+        const notUsableStates = ['maintenance', 'out_of_service'];
+        if (notUsableStates.includes(room.status)) {
             return (
                 <div className="space-y-1">
                     <div className="flex items-center space-x-1">
                         <ToolOutlined style={{ color: '#fff', fontSize: 12 }} />
                         <Text style={{ color: '#fff', fontSize: 11 }}>
-                            {room.maintenance_reason || 'Bảo trì'}
+                            {room.maintenance_reason || 'Không sử dụng'}
                         </Text>
                     </div>
                 </div>
             );
         }
+
         return null;
     };
 
@@ -224,7 +271,7 @@ const RoomCard = memo(({
                     checked={isSelected && mode === 'select'}
                     onChange={mode === 'select' ? onSelect : undefined}
                     onClick={handleCardClick}
-                    disabled={room.status === 'out_of_service'}
+                    disabled={effectiveStatus === 'out_of_service'}
                     className={`
                         transition-all duration-300 cursor-pointer
                         hover:shadow-lg hover:-translate-y-1
@@ -302,7 +349,8 @@ const FloorSection = memo(({
     mode,
     onRoomSelect,
     onFloorSelect,
-    onViewDetails
+    onViewDetails,
+    availableRoomIds = null
 }: {
     floor: string;
     rooms: RoomInfo[];
@@ -311,13 +359,36 @@ const FloorSection = memo(({
     onRoomSelect: (roomId: string, selected: boolean) => void;
     onFloorSelect: (floorId: string, roomIds: string[], selected: boolean) => void;
     onViewDetails: (roomId: string) => void;
+    availableRoomIds?: Set<string> | null;
 }) => {
     // Tính toán thống kê tầng
     const floorStats = useMemo(() => {
         const total = rooms.length;
-        const available = rooms.filter(r => r.status === 'available').length;
-        const occupied = rooms.filter(r => r.status === 'occupied').length;
-        const booked = rooms.filter(r => r.status === 'booked').length;
+
+        // compute effective status for each room: booking_info.status (preferred) -> occupied/booked/cleaning
+        const computeEffective = (r: RoomInfo) => {
+            const notUsable = ['maintenance', 'out_of_service'];
+            const isUsable = !notUsable.includes(r.status);
+            if (r.booking_info) {
+                const bStatus = (r.booking_info as any).status?.toString?.().toLowerCase?.();
+                if (bStatus) {
+                    const bs = bStatus;
+                    if (bs === 'operational') return 'occupied';
+                    if (bs === 'cleaning') return 'cleaning';
+                    if (bs === 'confirmed' || bs === 'pending') return 'booked';
+                    if (bs === 'completed' || bs.startsWith('cancel') || bs === 'unsuccessful') return 'available';
+                    return 'occupied';
+                }
+                return 'occupied';
+            }
+            return isUsable ? 'available' : (r.status || 'out_of_service');
+        };
+
+        // If availableRoomIds provided by parent, use it to compute available count.
+        const available = availableRoomIds ? rooms.filter(r => availableRoomIds.has((r.id ?? '').toString())).length : rooms.filter(r => computeEffective(r) === 'available').length;
+        const occupied = rooms.filter(r => computeEffective(r) === 'occupied').length;
+        const booked = rooms.filter(r => computeEffective(r) === 'booked').length;
+        const cleaning = rooms.filter(r => computeEffective(r) === 'cleaning').length;
         const maintenance = rooms.filter(r => ['maintenance', 'out_of_service'].includes(r.status)).length;
         const roomIds = rooms.map(r => r.id);
         const selectedCount = roomIds.filter(id => selectedRooms.has(id)).length;
@@ -329,13 +400,14 @@ const FloorSection = memo(({
             available,
             occupied,
             booked,
+            cleaning,
             maintenance,
             roomIds,
             selectedCount,
             allSelected,
             indeterminate
         };
-    }, [rooms, selectedRooms]);
+    }, [rooms, selectedRooms, availableRoomIds]);
 
     const handleFloorCheckboxChange = useCallback((checked: boolean) => {
         onFloorSelect(floor, floorStats.roomIds, checked);
@@ -364,17 +436,22 @@ const FloorSection = memo(({
 
                     {/* Floor Statistics */}
                     <Space size="small">
-                        <Tag color="green" icon={<CheckCircleOutlined />}>
+                        <Tag color="#73d13d" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f', color: '#389e0d' }} icon={<CheckCircleOutlined />}>
                             Trống: {floorStats.available}
                         </Tag>
-                        <Tag color="blue" icon={<UserOutlined />}>
+                        <Tag color="#40a9ff" style={{ backgroundColor: '#e6f7ff', borderColor: '#91d5ff', color: '#096dd9' }} icon={<TeamOutlined />}>
                             Đang ở: {floorStats.occupied}
                         </Tag>
-                        <Tag color="gold" icon={<CalendarOutlined />}>
+                        <Tag color="#ffc53d" style={{ backgroundColor: '#fffbe6', borderColor: '#ffe58f', color: '#d48806' }} icon={<CalendarOutlined />}>
                             Đã đặt: {floorStats.booked}
                         </Tag>
+                        {floorStats.cleaning > 0 && (
+                            <Tag color="#36cfc9" style={{ backgroundColor: '#e6fffb', borderColor: '#87e8de', color: '#08979c' }} icon={<RestOutlined />}>
+                                Đang dọn: {floorStats.cleaning}
+                            </Tag>
+                        )}
                         {floorStats.maintenance > 0 && (
-                            <Tag color="red" icon={<ToolOutlined />}>
+                            <Tag color="#ff7875" style={{ backgroundColor: '#fff2f0', borderColor: '#ffccc7', color: '#cf1322' }} icon={<ToolOutlined />}>
                                 Bảo trì: {floorStats.maintenance}
                             </Tag>
                         )}
@@ -421,8 +498,7 @@ const RoomCardGrid: React.FC<RoomCardGridProps> = ({
     onModeChange
 }) => {
     const [currentMode, setCurrentMode] = useState<'view' | 'select'>(propMode);
-    const [roomDetailModalVisible, setRoomDetailModalVisible] = useState(false);
-    const [selectedRoomForDetail, setSelectedRoomForDetail] = useState<RoomInfo | null>(null);
+    // detail modal state is unused in this component; higher-level page handles details
 
     // Group rooms by floor
     const roomsByFloor = useMemo(() => {
@@ -452,12 +528,8 @@ const RoomCardGrid: React.FC<RoomCardGridProps> = ({
 
     // Handle view details
     const handleViewDetails = useCallback((roomId: string) => {
-        const room = rooms.find(r => r.id === roomId);
-        if (room) {
-            setSelectedRoomForDetail(room);
-            setRoomDetailModalVisible(true);
-            onViewDetails?.(roomId);
-        }
+        // Details handled by parent via onViewDetails; keep this lightweight
+        onViewDetails?.(roomId);
     }, [rooms, onViewDetails]);
 
     // Handle room selection
@@ -562,60 +634,7 @@ const RoomCardGrid: React.FC<RoomCardGridProps> = ({
     );
 };
 
-// Helper function moved outside component để tránh re-render
-const getStatusConfig = (status: string) => {
-    const configs: Record<string, {
-        color: string;
-        bgColor: string;
-        borderColor: string;
-        text: string;
-        ribbonColor: string;
-    }> = {
-        available: {
-            color: '#52c41a',
-            bgColor: '#f6ffed',
-            borderColor: '#b7eb8f',
-            text: 'Trống',
-            ribbonColor: 'green'
-        },
-        booked: {
-            color: '#faad14',
-            bgColor: '#fffbe6',
-            borderColor: '#ffe58f',
-            text: 'Đã đặt',
-            ribbonColor: 'gold'
-        },
-        occupied: {
-            color: '#1890ff',
-            bgColor: '#e6f7ff',
-            borderColor: '#91d5ff',
-            text: 'Đang ở',
-            ribbonColor: 'blue'
-        },
-        out_of_service: {
-            color: '#ff4d4f',
-            bgColor: '#fff2f0',
-            borderColor: '#ffccc7',
-            text: 'Ngưng hoạt động',
-            ribbonColor: 'red'
-        },
-        maintenance: {
-            color: '#722ed1',
-            bgColor: '#f9f0ff',
-            borderColor: '#d3adf7',
-            text: 'Bảo trì',
-            ribbonColor: 'purple'
-        },
-        cleaning: {
-            color: '#13c2c2',
-            bgColor: '#e6fffb',
-            borderColor: '#87e8de',
-            text: 'Đang dọn',
-            ribbonColor: 'cyan'
-        }
-    };
-    return configs[status] || configs.available;
-};
+// note: visual status config is defined inline in RoomCard; no global helper needed
 
 export default RoomCardGrid;
 export type { RoomInfo, RoomCardGridProps };
