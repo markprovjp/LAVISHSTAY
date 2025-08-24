@@ -12,7 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use function Psy\debug;
 
@@ -95,6 +96,34 @@ class RoomTypeController extends Controller
         return view('admin.room-types.show', compact('roomType'));
     }
 
+    public function getList(Request $request)
+    {
+        try {
+            $roomTypes = DB::table('room_types')
+                ->where('is_active', '1')
+                ->orderBy('name', 'asc')
+                ->select([
+                    'room_type_id',
+                    'name',
+                    'base_price',
+                    'max_guests',
+                    'description'
+                ])
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'room_types' => $roomTypes
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting room types list: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi tải danh sách loại phòng'
+            ], 500);
+        }
+    }
     public function edit($roomTypeId)
     {
         $roomType = RoomType::findOrFail($roomTypeId);

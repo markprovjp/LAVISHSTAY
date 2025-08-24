@@ -2,7 +2,12 @@
 
 namespace App\Events;
 
+use App\Models\Room;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -13,31 +18,56 @@ class RoomMaintenanceRequired
     public $room;
     public $issue;
     public $priority;
-    public $reportedBy;
 
-    public function __construct($room, $issue, $priority = 'normal', $reportedBy = null)
+    public function __construct(Room $room, $issue, $priority = 'normal')
     {
         $this->room = $room;
         $this->issue = $issue;
         $this->priority = $priority;
-        $this->reportedBy = $reportedBy;
+    }
+
+    public function broadcastOn()
+    {
+        return new PrivateChannel('rooms');
     }
 }
 
-class UrgentCleaningRequired
+class RoomCleaningRequired
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $room;
-    public $deadline;
-    public $reason;
-    public $requestedBy;
+    public $urgency;
 
-    public function __construct($room, $deadline, $reason = null, $requestedBy = null)
+    public function __construct(Room $room, $urgency = 'normal')
     {
         $this->room = $room;
-        $this->deadline = $deadline;
-        $this->reason = $reason;
-        $this->requestedBy = $requestedBy;
+        $this->urgency = $urgency;
+    }
+
+    public function broadcastOn()
+    {
+        return new PrivateChannel('rooms');
+    }
+}
+
+class RoomStatusChanged
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $room;
+    public $oldStatus;
+    public $newStatus;
+
+    public function __construct(Room $room, $oldStatus, $newStatus)
+    {
+        $this->room = $room;
+        $this->oldStatus = $oldStatus;
+        $this->newStatus = $newStatus;
+    }
+
+    public function broadcastOn()
+    {
+        return new PrivateChannel('rooms');
     }
 }

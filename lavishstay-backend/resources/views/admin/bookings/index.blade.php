@@ -1,4 +1,12 @@
 <x-app-layout>
+     <!-- Add CSRF token meta tag at the top -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        .modal-overlay {
+            /* z-index: 50; */
+            background-color: rgba(0, 0, 0, 0.621);
+        }
+    </style>
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
@@ -777,7 +785,7 @@
     </div>
 
     <!-- Booking Detail Modal -->
-    <div id="booking-detail-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div id="booking-detail-modal" class="fixed inset-0 modal-overlay hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -798,7 +806,7 @@
     </div>
 
     <!-- Room Selection Modal -->
-    <div id="room-selection-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div id="room-selection-modal" class="fixed inset-0 modal-overlay hidden z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -845,6 +853,27 @@
                     <button onclick="closeBulkActions()" class="btn bg-gray-300 text-gray-700 hover:bg-gray-400">
                         Đóng
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Booking Modal -->
+    <div id="new-booking-modal" class="fixed inset-0 modal-overlay hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tạo đặt phòng mới</h3>
+                    <button onclick="closeNewBookingModal()"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="new-booking-content" class="p-6">
+                    <!-- Content will be loaded here -->
                 </div>
             </div>
         </div>
@@ -953,35 +982,348 @@
                     showNotification('Có lỗi xảy ra khi tải thông tin', 'error');
                 });
         };
+// Hàm chính để chọn phòng cho booking đã tồn tại
+window.selectRoom = function(bookingId) {
+    showLoading('Đang tải danh sách phòng có sẵn...');
 
-        window.selectRoom = function(bookingId) {
-            showLoading('Đang tải danh sách phòng...');
+    fetch(`{{ url('admin/bookings') }}/${bookingId}/available-rooms`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        console.log('Available rooms response:', data);
+        
+        if (data.success) {
+            const rooms = data.data?.available_rooms || [];
+            const bookingInfo = data.data || {};
+            
+            // Sử dụng modal room-selection-modal có sẵn
+            document.getElementById('room-selection-content').innerHTML = 
+                generateRoomSelectionHTML(rooms, bookingId, bookingInfo);
+            document.getElementById('room-selection-modal').classList.remove('hidden');
+        } else {
+            showNotification('Không thể tải danh sách phòng: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error loading available rooms:', error);
+        showNotification('Có lỗi xảy ra khi tải danh sách phòng: ' + error.message, 'error');
+    });
+};
 
-            fetch(`{{ url('admin/bookings') }}/${bookingId}/available-rooms`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    hideLoading();
-                    if (data.success) {
-                        document.getElementById('room-selection-content').innerHTML = generateRoomSelectionHTML(data
-                            .rooms, bookingId);
-                        document.getElementById('room-selection-modal').classList.remove('hidden');
-                    } else {
-                        showNotification('Không thể tải danh sách phòng', 'error');
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error('Error loading available rooms:', error);
-                    showNotification('Có lỗi xảy ra khi tải danh sách phòng', 'error');
-                });
-        };
+       window.selectRoomForExistingBooking = function(bookingId) {
+    showLoading('Đang tải danh sách phòng có sẵn...');
 
+    // Sử dụng API riêng cho booking có sẵn
+    fetch(`{{ url('admin/bookings') }}/${bookingId}/available-rooms`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        console.log('Available rooms for existing booking:', data);
+        
+        if (data.success) {
+            const rooms = data.data?.available_rooms || [];
+            const bookingInfo = data.data || {};
+            
+            // Sử dụng modal riêng cho gán phòng
+            document.getElementById('room-assignment-content').innerHTML = 
+                generateRoomAssignmentHTML(rooms, bookingId, bookingInfo);
+            document.getElementById('room-assignment-modal').classList.remove('hidden');
+        } else {
+            showNotification('Không thể tải danh sách phòng: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error loading available rooms for existing booking:', error);
+        showNotification('Có lỗi xảy ra khi tải danh sách phòng: ' + error.message, 'error');
+    });
+};
+function generateRoomAssignmentHTML(rooms, bookingId, bookingInfo = {}) {
+    selectedRooms = []; // Reset selected rooms
+    
+    return `
+        <div class="mb-4">
+            <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Gán phòng cho đặt phòng #${bookingId}
+            </h4>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                <p><strong>Khách:</strong> ${bookingInfo.guest_name || 'N/A'}</p>
+                <p><strong>Thời gian:</strong> ${bookingInfo.check_in_date || 'N/A'} → ${bookingInfo.check_out_date || 'N/A'}</p>
+                <p><strong>Loại phòng:</strong> ${bookingInfo.room_type_name || 'N/A'}</p>
+                <p><strong>Số phòng cần gán:</strong> <span class="font-medium text-blue-600">${bookingInfo.rooms_needed || 1}</span></p>
+            </div>
+        </div>
+        
+        <!-- Selection Summary for Assignment -->
+        <div id="assignment-summary" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800" style="display: none;">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-blue-700 dark:text-blue-300">
+                    <span class="font-medium">Đã chọn: </span>
+                    <span id="assigned-count">0</span> phòng
+                </div>
+                <button onclick="clearAllAssignments()" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800">
+                    Bỏ chọn tất cả
+                </button>
+            </div>
+            <div id="assigned-rooms-list" class="mt-2 text-xs text-blue-600 dark:text-blue-400"></div>
+        </div>
+        
+        <div class="max-h-96 overflow-y-auto">
+            ${rooms.length === 0 ? `
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <div class="text-gray-500 dark:text-gray-400">Không có phòng trống</div>
+                    <div class="text-sm text-gray-400 dark:text-gray-500 mt-1">Tất cả phòng cùng loại đã được đặt trong thời gian này</div>
+                </div>
+            ` : `
+                <div class="mb-3 flex items-center justify-between">
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Tìm thấy ${rooms.length} phòng trống cùng loại
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="selectAllForAssignment(${JSON.stringify(rooms).replace(/"/g, '&quot;')})" 
+                                class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800">
+                            Chọn tất cả
+                        </button>
+                    </div>
+                </div>
+                
+                ${generateRoomsByFloorForAssignment(rooms, bookingId)}
+            `}
+        </div>
+        
+        <div class="mt-6 flex justify-between items-center">
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+                <span id="assignment-info">Chọn phòng để gán cho booking này</span>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeRoomAssignment()" 
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Hủy
+                </button>
+                <button id="assign-rooms-btn" onclick="assignSelectedRoomsToBooking(${bookingId})" 
+                        class="px-4 py-2 text-white rounded-lg  bg-violet-500 hover:bg-violet-600 disabled:bg-gray-300 disabled:cursor-not-allowed" 
+                        disabled>
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Gán phòng đã chọn
+                    </span>
+                </button>
+            </div>
+        </div>
+    `;
+}
+function generateRoomsByFloorForAssignment(rooms, bookingId) {
+    // Group rooms by floor
+    const roomsByFloor = rooms.reduce((acc, room) => {
+        const floor = room.floor || 'N/A';
+        if (!acc[floor]) acc[floor] = [];
+        acc[floor].push(room);
+        return acc;
+    }, {});
+
+    // Sort floors
+    const sortedFloors = Object.keys(roomsByFloor).sort((a, b) => {
+        if (a === 'N/A') return 1;
+        if (b === 'N/A') return -1;
+        return parseInt(a) - parseInt(b);
+    });
+
+    return sortedFloors.map(floor => `
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Tầng ${floor} (${roomsByFloor[floor].length} phòng)
+                </h5>
+                <button onclick="selectFloorRoomsForAssignment('${floor}', ${JSON.stringify(roomsByFloor[floor]).replace(/"/g, '&quot;')})" 
+                        class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">
+                    Chọn tầng này
+                </button>
+            </div>
+            <div class="grid gap-2">
+                ${roomsByFloor[floor].map(room => `
+                    <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 room-option-assignment transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700" 
+                         id="assignment-room-${room.id}">
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   id="assignment-checkbox-${room.id}" 
+                                   class="room-assignment-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
+                                   onchange="toggleRoomAssignment(${room.id}, '${room.name}', ${room.floor || 'null'})"
+                                   value="${room.id}">
+                            <label for="assignment-checkbox-${room.id}" class="ml-3 flex-1 cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="font-semibold text-gray-900 dark:text-gray-100">${room.name}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-500">ID: ${room.id}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold ${room.status === 'available' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">
+                                            ${room.status === 'available' ? 'Có sẵn' : room.status}
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+function assignSelectedRoomsToBooking(bookingId) {
+    if (selectedRooms.length === 0) {
+        showNotification('Vui lòng chọn ít nhất một phòng', 'warning');
+        return;
+    }
+
+    showLoading(`Đang gán ${selectedRooms.length} phòng...`);
+    
+    const roomIds = selectedRooms.map(room => room.id);
+    
+    fetch(`{{ url('admin/bookings') }}/${bookingId}/assign-multiple-rooms`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            room_ids: roomIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showNotification(`Đã gán thành công ${selectedRooms.length} phòng`, 'success');
+            closeRoomAssignment();
+            location.reload(); // Refresh to show updated booking
+        } else {
+            showNotification('Không thể gán phòng: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error assigning rooms to booking:', error);
+        showNotification('Có lỗi xảy ra khi gán phòng', 'error');
+    });
+}
+window.loadAvailableRoomsForNewBooking = function() {
+    const form = document.getElementById('new-booking-form');
+    if (!form) {
+        console.error('New booking form not found');
+        return;
+    }
+
+    const checkIn = form.querySelector('input[name="check_in_date"]')?.value;
+    const checkOut = form.querySelector('input[name="check_out_date"]')?.value;
+    const roomTypeId = form.querySelector('select[name="room_type_id"]')?.value;
+    const roomsCount = parseInt(form.querySelector('input[name="rooms_count"]')?.value) || 1;
+
+    if (!checkIn || !checkOut || !roomTypeId) {
+        document.getElementById('room-preview-section')?.classList.add('hidden');
+        return;
+    }
+
+    const roomsList = document.getElementById('available-rooms-list');
+    if (!roomsList) {
+        console.error('Available rooms list element not found');
+        return;
+    }
+
+    roomsList.innerHTML = `
+        <div class="text-center py-4">
+            <div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+            <div class="text-sm text-gray-500 mt-2">Đang tải phòng...</div>
+        </div>
+    `;
+    document.getElementById('room-preview-section')?.classList.remove('hidden');
+
+    // API riêng cho tạo booking mới
+    fetch(`{{ url('admin/rooms/available-for-dates') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            check_in_date: checkIn,
+            check_out_date: checkOut,
+            room_type_id: roomTypeId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Available rooms for new booking:', data);
+        
+        if (data.success && data.data && data.data.available_rooms) {
+            const rooms = data.data.available_rooms;
+            
+            if (rooms.length > 0) {
+                roomsList.innerHTML = generateNewBookingRoomSelectionHTML(rooms, roomsCount);
+            } else {
+                roomsList.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="text-yellow-600 dark:text-yellow-400 mb-2">Không có phòng trống</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Vui lòng chọn ngày khác hoặc loại phòng khác</div>
+                    </div>
+                `;
+            }
+        } else {
+            roomsList.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="text-red-600 dark:text-red-400 mb-2">Không thể tải danh sách phòng</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">${data.message || 'Lỗi không xác định'}</div>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading available rooms for new booking:', error);
+        roomsList.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-red-600 dark:text-red-400 mb-2">Lỗi khi tải danh sách phòng</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Vui lòng thử lại sau</div>
+            </div>
+        `;
+    });
+};
         window.confirmBooking = function(bookingId) {
             if (!confirm('Bạn có chắc chắn muốn xác nhận đặt phòng này?')) {
                 return;
@@ -1054,9 +1396,959 @@
         };
 
         window.showNewBookingModal = function() {
-            // Implement new booking modal functionality
-            showNotification('Chức năng đặt phòng mới đang được phát triển', 'info');
+            document.getElementById('new-booking-content').innerHTML = generateNewBookingFormHTML();
+            document.getElementById('new-booking-modal').classList.remove('hidden');
+            
+            // Initialize form
+            initializeNewBookingForm();
         };
+
+        function generateNewBookingFormHTML() {
+    return `
+        <form id="new-booking-form" class="space-y-6">
+            <!-- Guest Information Section -->
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    Thông tin khách hàng
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tên khách hàng <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="guest_name" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Nhập tên khách hàng">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Số điện thoại <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" name="guest_phone" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Nhập số điện thoại">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Email <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email" name="guest_email" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Nhập địa chỉ email">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Details Section -->
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Chi tiết đặt phòng
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Ngày nhận phòng <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="check_in_date" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="${new Date().toISOString().split('T')[0]}">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Ngày trả phòng <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="check_out_date" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Room Type and Package Selection -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Loại phòng <span class="text-red-500">*</span>
+                        </label>
+                        <select name="room_type_id" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Chọn loại phòng</option>
+                            <!-- Options will be loaded dynamically -->
+                        </select>
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Gói phòng <span class="text-red-500">*</span>
+                        </label>
+                        <select name="package_id" required disabled
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed">
+                            <option value="">Chọn loại phòng trước</option>
+                        </select>
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Số người lớn <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="adults" min="1" max="10" value="1" required
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Số trẻ em
+                        </label>
+                        <input type="number" name="children" min="0" max="5" value="0"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Số phòng
+                        </label>
+                        <input type="number" name="rooms_count" min="1" max="5" value="1"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="error-message text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Children Ages (shown when children > 0) -->
+                <div id="children-ages-section" class="mt-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tuổi của trẻ em
+                    </label>
+                    <div id="children-ages-inputs" class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <!-- Dynamic inputs will be added here -->
+                    </div>
+                </div>
+
+                <!-- Package Details Display -->
+                <div id="package-details" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 hidden">
+                    <h5 class="font-medium text-blue-900 dark:text-blue-100 mb-2">Chi tiết gói phòng</h5>
+                    <div id="package-info" class="text-sm text-blue-700 dark:text-blue-300">
+                        <!-- Package details will be shown here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Selection Preview -->
+            <div id="room-preview-section" class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 hidden">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    Phòng có sẵn
+                    <button type="button" onclick="refreshAvailableRoomsForNewBooking()" class="ml-2 text-blue-600 hover:text-blue-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    </button>
+                </h4>
+                <div id="available-rooms-list">
+                    <!-- Available rooms will be shown here -->
+                </div>
+            </div>
+
+            <!-- Pricing Summary -->
+            <div id="pricing-summary" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 hidden">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                    Tổng kết giá
+                </h4>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Số đêm:</span>
+                        <span id="nights-count" class="font-medium">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Giá mỗi đêm:</span>
+                        <span id="price-per-night" class="font-medium">0₫</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">Số phòng:</span>
+                        <span id="rooms-count-display" class="font-medium">1</span>
+                    </div>
+                    <div class="border-t border-blue-200 dark:border-blue-700 pt-2 mt-2">
+                        <div class="flex justify-between text-lg font-semibold">
+                            <span class="text-gray-900 dark:text-gray-100">Tổng cộng:</span>
+                            <span id="total-price" class="text-blue-600 dark:text-blue-400">0₫</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Requests -->
+            <div class="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1l-4 4z"></path>
+                    </svg>
+                    Yêu cầu đặc biệt
+                </h4>
+                <textarea name="notes" rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Nhập yêu cầu đặc biệt (tùy chọn)"></textarea>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button type="button" onclick="closeNewBookingModal()"
+                    class="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    Hủy
+                </button>
+                <button type="submit" id="create-booking-btn"
+                    class="px-6 py-2 text-white rounded-lg  bg-violet-500 hover:bg-violet-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Tạo đặt phòng
+                    </span>
+                </button>
+            </div>
+        </form>
+    `;
+}
+let isBookingInProgress = false;
+let hasUnsavedChanges = false;
+
+// Prevent page reload when booking is in progress
+window.addEventListener('beforeunload', function(e) {
+    if (isBookingInProgress || hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'Bạn đang trong quá trình đặt phòng. Bạn có chắc muốn rời khỏi trang?';
+        return e.returnValue;
+    }
+});
+function initializeNewBookingForm() {
+    const form = document.getElementById('new-booking-form');
+    const checkInInput = form.querySelector('input[name="check_in_date"]');
+    const checkOutInput = form.querySelector('input[name="check_out_date"]');
+    const childrenInput = form.querySelector('input[name="children"]');
+    const roomTypeSelect = form.querySelector('select[name="room_type_id"]');
+    const packageSelect = form.querySelector('select[name="package_id"]');
+    const roomsCountInput = form.querySelector('input[name="rooms_count"]');
+
+    // Load room types
+    loadRoomTypes();
+
+    // Set minimum dates
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.min = today;
+    checkInInput.value = today;
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    checkOutInput.min = tomorrow.toISOString().split('T')[0];
+    checkOutInput.value = tomorrow.toISOString().split('T')[0];
+
+    // Event listeners
+    checkInInput.addEventListener('change', function() {
+        const checkInDate = new Date(this.value);
+        const nextDay = new Date(checkInDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        
+        checkOutInput.min = nextDay.toISOString().split('T')[0];
+        if (checkOutInput.value <= this.value) {
+            checkOutInput.value = nextDay.toISOString().split('T')[0];
+        }
+        
+        updatePricingAndRooms();
+    });
+
+    checkOutInput.addEventListener('change', updatePricingAndRooms);
+
+    // SỬA LỖI: Thêm logic load packages khi chọn room type
+    roomTypeSelect.addEventListener('change', function() {
+        const roomTypeId = this.value;
+        
+        if (roomTypeId) {
+            // Load packages cho room type này
+            loadPackagesByRoomType(roomTypeId);
+        } else {
+            // Reset package select
+            packageSelect.disabled = true;
+            packageSelect.innerHTML = '<option value="">Chọn loại phòng trước</option>';
+            document.getElementById('package-details').classList.add('hidden');
+            document.getElementById('room-preview-section').classList.add('hidden');
+            document.getElementById('pricing-summary').classList.add('hidden');
+        }
+    });
+
+    // SỬA LỖI: Thêm event listener cho package select
+    packageSelect.addEventListener('change', function() {
+        const packageId = this.value;
+        
+        if (packageId) {
+            const selectedOption = this.options[this.selectedIndex];
+            const description = selectedOption.dataset.description || '';
+            const includes = selectedOption.dataset.includes || '';
+            const duration = selectedOption.dataset.duration || '';
+            const price = selectedOption.dataset.price || '';
+            
+            // Show package details
+            const packageInfo = document.getElementById('package-info');
+            packageInfo.innerHTML = `
+                <div class="space-y-1">
+                    <div><strong>Mô tả:</strong> ${description}</div>
+                    ${includes ? `<div><strong>Bao gồm:</strong> ${includes}</div>` : ''}
+                    <div><strong>Thời gian gói:</strong> ${duration} đêm</div>
+                    <div><strong>Giá gói:</strong> ${formatCurrency(price)}₫</div>
+                </div>
+            `;
+            document.getElementById('package-details').classList.remove('hidden');
+        } else {
+            document.getElementById('package-details').classList.add('hidden');
+        }
+        
+        updatePricingAndRooms();
+    });
+
+    roomsCountInput.addEventListener('change', updatePricingAndRooms);
+
+    childrenInput.addEventListener('change', function() {
+        const childrenCount = parseInt(this.value) || 0;
+        const agesSection = document.getElementById('children-ages-section');
+        const agesInputs = document.getElementById('children-ages-inputs');
+        
+        if (childrenCount > 0) {
+            agesSection.classList.remove('hidden');
+            agesInputs.innerHTML = '';
+            
+            for (let i = 0; i < childrenCount; i++) {
+                const ageInput = document.createElement('div');
+                ageInput.innerHTML = `
+                    <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Trẻ ${i + 1}</label>
+                    <input type="number" name="children_ages[]" min="0" max="17" 
+                           class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                           placeholder="Tuổi">
+                `;
+                agesInputs.appendChild(ageInput);
+            }
+        } else {
+            agesSection.classList.add('hidden');
+        }
+    });
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitNewBooking();
+    });
+
+    // Initial pricing update
+    updatePricingAndRooms();
+}
+
+function loadRoomTypes() {
+    fetch('{{ url("admin/room-types/list") }}', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const select = document.querySelector('select[name="room_type_id"]');
+        select.innerHTML = '<option value="">Chọn loại phòng</option>';
+        
+        if (data.success && data.room_types) {
+            data.room_types.forEach(roomType => {
+                const option = document.createElement('option');
+                option.value = roomType.room_type_id;
+                option.textContent = `${roomType.name} - ${formatCurrency(roomType.base_price)}₫/đêm`;
+                option.dataset.price = roomType.base_price;
+                select.appendChild(option);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error loading room types:', error);
+        showNotification('Không thể tải danh sách loại phòng', 'error');
+    });
+}
+// Load packages by room type
+function loadPackagesByRoomType(roomTypeId) {
+    const packageSelect = document.querySelector('select[name="package_id"]');
+    packageSelect.disabled = true;
+    packageSelect.innerHTML = '<option value="">Đang tải...</option>';
+
+    fetch(`/admin/room-types/${roomTypeId}/packages`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Packages response:', data); // Debug log
+        
+        packageSelect.innerHTML = '<option value="">Chọn gói phòng</option>';
+        
+        if (data.success && data.packages && data.packages.length > 0) {
+            data.packages.forEach(pkg => {
+                const option = document.createElement('option');
+                option.value = pkg.package_id;
+                
+                // Hiển thị modifier price, không phải final price
+                const modifierText = pkg.price_modifier_vnd > 0 ? 
+                    `+${formatCurrency(pkg.price_modifier_vnd)}₫` : 
+                    pkg.price_modifier_vnd < 0 ? 
+                    `-${formatCurrency(Math.abs(pkg.price_modifier_vnd))}₫` : 
+                    'Không phụ phí';
+                
+                option.textContent = `${pkg.name} (${modifierText})`;
+                option.dataset.price = pkg.price_modifier_vnd; // Store modifier
+                option.dataset.description = pkg.description || '';
+                option.dataset.includeAllServices = pkg.include_all_services ? '1' : '0';
+                packageSelect.appendChild(option);
+            });
+            packageSelect.disabled = false;
+        } else {
+            packageSelect.innerHTML = '<option value="">Không có gói phòng</option>';
+            packageSelect.disabled = true;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading packages:', error);
+        packageSelect.innerHTML = '<option value="">Lỗi tải gói phòng</option>';
+        packageSelect.disabled = true;
+        showNotification('Không thể tải danh sách gói phòng: ' + error.message, 'error');
+    });
+}
+function updatePricingAndRooms() {
+    const form = document.getElementById('new-booking-form');
+    const checkIn = form.querySelector('input[name="check_in_date"]').value;
+    const checkOut = form.querySelector('input[name="check_out_date"]').value;
+    const roomTypeId = form.querySelector('select[name="room_type_id"]').value;
+    const packageId = form.querySelector('select[name="package_id"]').value;
+    const roomsCount = parseInt(form.querySelector('input[name="rooms_count"]').value) || 1;
+
+    // Calculate nights
+    if (checkIn && checkOut) {
+        const nights = calculateNights(checkIn, checkOut);
+        document.getElementById('nights-count').textContent = nights + ' đêm';
+        
+        // Update pricing based on package or room type
+        if (packageId && roomTypeId) {
+            // Use package pricing = room type base price + package modifier
+            const selectedRoomType = form.querySelector(`select[name="room_type_id"] option[value="${roomTypeId}"]`);
+            const selectedPackage = form.querySelector(`select[name="package_id"] option[value="${packageId}"]`);
+            
+            const roomTypeBasePrice = parseInt(selectedRoomType.dataset.price) || 0;
+            const packageModifier = parseInt(selectedPackage.dataset.price) || 0; // price_modifier_vnd
+            
+            // Tính giá cuối cùng = base price + modifier
+            const finalPricePerNight = roomTypeBasePrice + packageModifier;
+            const totalPrice = finalPricePerNight * nights * roomsCount;
+            
+            document.getElementById('price-per-night').textContent = formatCurrency(finalPricePerNight) + '₫';
+            document.getElementById('rooms-count-display').textContent = roomsCount + ' phòng';
+            document.getElementById('total-price').textContent = formatCurrency(totalPrice) + '₫';
+            document.getElementById('pricing-summary').classList.remove('hidden');
+            
+            // Update package details display
+            const description = selectedPackage.dataset.description || '';
+            const includeAllServices = selectedPackage.dataset.includeAllServices === '1' ? 'Có' : 'Không';
+            
+            const packageInfo = document.getElementById('package-info');
+            packageInfo.innerHTML = `
+                <div class="space-y-2">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Giá cơ bản:</strong> ${formatCurrency(roomTypeBasePrice)}₫/đêm</div>
+                        <div><strong>Phụ phí gói:</strong> ${formatCurrency(packageModifier)}₫/đêm</div>
+                    </div>
+                    <div class="pt-2 border-t border-blue-200 dark:border-blue-700">
+                        <div><strong>Giá cuối cùng:</strong> ${formatCurrency(finalPricePerNight)}₫/đêm</div>
+                    </div>
+                    ${description ? `<div><strong>Mô tả:</strong> ${description}</div>` : ''}
+                    <div><strong>Bao gồm tất cả dịch vụ:</strong> ${includeAllServices}</div>
+                </div>
+            `;
+            document.getElementById('package-details').classList.remove('hidden');
+            
+            // Load available rooms
+            loadAvailableRoomsForBooking();
+            
+        } else if (roomTypeId) {
+            // Use room type base pricing only
+            const selectedRoomType = form.querySelector(`select[name="room_type_id"] option[value="${roomTypeId}"]`);
+            const pricePerNight = parseInt(selectedRoomType.dataset.price) || 0;
+            const totalPrice = pricePerNight * nights * roomsCount;
+            
+            document.getElementById('price-per-night').textContent = formatCurrency(pricePerNight) + '₫';
+            document.getElementById('rooms-count-display').textContent = roomsCount + ' phòng';
+            document.getElementById('total-price').textContent = formatCurrency(totalPrice) + '₫';
+            document.getElementById('pricing-summary').classList.remove('hidden');
+            
+            // Hide package details
+            document.getElementById('package-details').classList.add('hidden');
+            
+            // Load available rooms
+            loadAvailableRoomsForBooking();
+        } else {
+            document.getElementById('pricing-summary').classList.add('hidden');
+            document.getElementById('package-details').classList.add('hidden');
+            document.getElementById('room-preview-section').classList.add('hidden');
+        }
+    }
+}
+let selectedRoomsForNewBooking = [];
+function loadAvailableRoomsForBooking() {
+    const form = document.getElementById('new-booking-form');
+    const checkIn = form.querySelector('input[name="check_in_date"]').value;
+    const checkOut = form.querySelector('input[name="check_out_date"]').value;
+    const roomTypeId = form.querySelector('select[name="room_type_id"]').value;
+    const roomsCount = parseInt(form.querySelector('input[name="rooms_count"]').value) || 1;
+
+    if (!checkIn || !checkOut || !roomTypeId) {
+        document.getElementById('room-preview-section').classList.add('hidden');
+        return;
+    }
+
+    const roomsList = document.getElementById('available-rooms-list');
+    roomsList.innerHTML = '<div class="text-center py-4"><div class="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto"></div><div class="text-sm text-gray-500 mt-2">Đang tải phòng...</div></div>';
+    document.getElementById('room-preview-section').classList.remove('hidden');
+
+    fetch('/admin/rooms/available-for-dates', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            check_in_date: checkIn,
+            check_out_date: checkOut,
+            room_type_id: roomTypeId
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Available rooms response:', data);
+        
+        if (data.success && data.data && data.data.available_rooms) {
+            const rooms = data.data.available_rooms;
+            
+            if (rooms.length > 0) {
+                // Group rooms by floor
+                const roomsByFloor = rooms.reduce((acc, room) => {
+                    const floor = room.floor || 'N/A';
+                    if (!acc[floor]) acc[floor] = [];
+                    acc[floor].push(room);
+                    return acc;
+                }, {});
+
+                // Sort floors
+                const sortedFloors = Object.keys(roomsByFloor).sort((a, b) => {
+                    if (a === 'N/A') return 1;
+                    if (b === 'N/A') return -1;
+                    return parseInt(a) - parseInt(b);
+                });
+
+                roomsList.innerHTML = `
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-sm">
+                                <span class="text-green-600 dark:text-green-400 font-medium">
+                                    Tìm thấy ${rooms.length} phòng trống
+                                </span>
+                                <span class="text-gray-500 dark:text-gray-400 ml-2">
+                                    - Cần chọn ${roomsCount} phòng
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="selectOptimalRooms(${JSON.stringify(rooms).replace(/"/g, '&quot;')}, ${roomsCount})" 
+                                        class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                    Chọn tự động ${roomsCount} phòng
+                                </button>
+                                <span class="text-gray-300">|</span>
+                                <button type="button" onclick="clearAllSelectedRooms()" 
+                                        class="text-xs text-red-600 dark:text-red-400 hover:text-red-800">
+                                    Bỏ chọn tất cả
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Rooms Summary -->
+                        <div id="selected-rooms-summary" class="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800" style="display: none;">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-blue-700 dark:text-blue-300">
+                                    <span class="font-medium">Phòng đã chọn: </span>
+                                    <span id="selected-rooms-count">0</span>/${roomsCount}
+                                    <span class="ml-2 text-xs ${roomsCount > selectedRoomsForNewBooking.length ? 'text-orange-600' : 'text-green-600'}">
+                                        ${roomsCount > selectedRoomsForNewBooking.length ? 
+                                            `(Còn thiếu ${roomsCount - selectedRoomsForNewBooking.length} phòng)` : 
+                                            '(Đủ số lượng)'}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-blue-600 dark:text-blue-400">
+                                    ${selectedRoomsForNewBooking.length > roomsCount ? 
+                                        `⚠️ Đã chọn quá ${selectedRoomsForNewBooking.length - roomsCount} phòng` : ''}
+                                </div>
+                            </div>
+                            <div id="selected-rooms-list" class="mt-2 text-xs text-blue-600 dark:text-blue-400"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4 max-h-80 overflow-y-auto">
+                        ${sortedFloors.map(floor => `
+                            <div class="border border-gray-200 dark:border-gray-600 rounded-lg">
+                                <div class="bg-gray-50 dark:bg-gray-800 px-3 py-2 border-b border-gray-200 dark:border-gray-600">
+                                    <div class="flex items-center justify-between">
+                                        <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Tầng ${floor} (${roomsByFloor[floor].length} phòng)
+                                        </h5>
+                                        <button type="button" onclick="selectFloorRoomsForNewBooking('${floor}', ${JSON.stringify(roomsByFloor[floor]).replace(/"/g, '&quot;')}, ${roomsCount})" 
+                                                class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                            Chọn tầng này
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        ${roomsByFloor[floor].map(room => `
+                                            <div class="border border-gray-200 dark:border-gray-600 rounded p-3 room-option-new-booking transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700" 
+                                                 id="new-booking-room-${room.id}">
+                                                <label class="flex items-center cursor-pointer">
+                                                    <input type="checkbox" 
+                                                           id="new-booking-checkbox-${room.id}" 
+                                                           class="room-selection-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
+                                                           value="${room.id}"
+                                                           onchange="toggleRoomSelectionForNewBooking(${room.id}, '${room.name}', ${room.floor || 'null'}, ${roomsCount})">
+                                                    <div class="ml-3 flex-1">
+                                                        <div class="flex items-center justify-between">
+                                                            <div>
+                                                                <div class="font-medium text-gray-900 dark:text-gray-100">${room.name}</div>
+                                                                <div class="text-xs text-gray-500 dark:text-gray-500">ID: ${room.id}</div>
+                                                            </div>
+                                                            <div class="text-right">
+                                                                <div class="text-sm font-semibold ${room.status === 'available' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">
+                                                                    ${room.status === 'available' ? 'Có sẵn' : room.status}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                roomsList.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="text-yellow-600 dark:text-yellow-400 mb-2">Không có phòng trống</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Vui lòng chọn ngày khác hoặc loại phòng khác</div>
+                    </div>
+                `;
+            }
+        } else {
+            roomsList.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="text-red-600 dark:text-red-400 mb-2">Không thể tải danh sách phòng</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">${data.message || 'Lỗi không xác định'}</div>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading available rooms:', error);
+        roomsList.innerHTML = `
+            <div class="text-center py-4">
+                <div class="text-red-600 dark:text-red-400 mb-2">Lỗi khi tải danh sách phòng</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Vui lòng thử lại sau</div>
+            </div>
+        `;
+    });
+}
+// Toggle room selection for new booking
+function toggleRoomSelectionForNewBooking(roomId, roomName, floor, maxRooms) {
+    const checkbox = document.getElementById(`new-booking-checkbox-${roomId}`);
+    const roomElement = document.getElementById(`new-booking-room-${roomId}`);
+    
+    // Đánh dấu có thay đổi chưa lưu
+    hasUnsavedChanges = true;
+    
+    if (checkbox.checked) {
+        // Kiểm tra nếu đã chọn quá số lượng cho phép
+        if (selectedRoomsForNewBooking.length >= maxRooms) {
+            // Cho phép chọn quá nhưng cảnh báo
+            if (selectedRoomsForNewBooking.length >= maxRooms + 0) {
+                checkbox.checked = false;
+                showNotification(`Không nên chọn quá ${maxRooms + 0} phòng cho ${maxRooms} phòng cần đặt`, 'warning');
+                return;
+            }
+        }
+        
+        // Thêm vào danh sách đã chọn
+        selectedRoomsForNewBooking.push({ 
+            id: roomId, 
+            name: roomName, 
+            floor: floor === null ? 'N/A' : floor 
+        });
+        roomElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-700');
+        
+        // Thêm hiệu ứng khi chọn
+        roomElement.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            roomElement.style.transform = 'scale(1)';
+        }, 150);
+        
+    } else {
+        // Xóa khỏi danh sách đã chọn
+        selectedRoomsForNewBooking = selectedRoomsForNewBooking.filter(room => room.id !== roomId);
+        roomElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-700');
+    }
+    
+    updateSelectedRoomsDisplay();
+}
+
+// Update selected rooms display
+function updateSelectedRoomsDisplay() {
+    const summaryElement = document.getElementById('selected-rooms-summary');
+    const countElement = document.getElementById('selected-rooms-count');
+    const listElement = document.getElementById('selected-rooms-list');
+    
+    if (selectedRoomsForNewBooking.length > 0) {
+        summaryElement.style.display = 'block';
+        countElement.textContent = selectedRoomsForNewBooking.length;
+        listElement.innerHTML = selectedRoomsForNewBooking
+            .map(room => `${room.name} (Tầng ${room.floor})`)
+            .join(', ');
+    } else {
+        summaryElement.style.display = 'none';
+    }
+}
+
+// Select all available rooms (up to max limit)
+function selectAllAvailableRooms(rooms, maxRooms) {
+    // Clear current selection
+    clearAllSelectedRooms();
+    
+    // Select up to maxRooms
+    const roomsToSelect = rooms.slice(0, maxRooms);
+    
+    roomsToSelect.forEach(room => {
+        const checkbox = document.getElementById(`new-booking-checkbox-${room.id}`);
+        if (checkbox && !checkbox.checked) {
+            checkbox.checked = true;
+            toggleRoomSelectionForNewBooking(room.id, room.name, room.floor, maxRooms);
+        }
+    });
+}
+
+// Select rooms from a specific floor
+function selectFloorRoomsForNewBooking(floor, floorRooms, maxRooms) {
+    // Check how many more rooms we can select
+    const remainingSlots = maxRooms - selectedRoomsForNewBooking.length;
+    
+    if (remainingSlots <= 0) {
+        showNotification(`Đã chọn đủ ${maxRooms} phòng`, 'warning');
+        return;
+    }
+    
+    // Select rooms from this floor up to remaining slots
+    const roomsToSelect = floorRooms.slice(0, remainingSlots);
+    
+    roomsToSelect.forEach(room => {
+        const checkbox = document.getElementById(`new-booking-checkbox-${room.id}`);
+        if (checkbox && !checkbox.checked) {
+            checkbox.checked = true;
+            toggleRoomSelectionForNewBooking(room.id, room.name, room.floor, maxRooms);
+        }
+    });
+}
+
+// Clear all selected rooms
+function clearAllSelectedRooms() {
+    selectedRoomsForNewBooking.forEach(room => {
+        const checkbox = document.getElementById(`new-booking-checkbox-${room.id}`);
+        const roomElement = document.getElementById(`new-booking-room-${room.id}`);
+        if (checkbox) checkbox.checked = false;
+        if (roomElement) {
+            roomElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-700');
+        }
+    });
+    selectedRoomsForNewBooking = [];
+    updateSelectedRoomsDisplay();
+}
+// Thêm hàm refresh để có thể gọi từ nút refresh
+function refreshAvailableRoomsForNewBooking() {
+    loadAvailableRoomsForBooking();
+}
+
+function submitNewBooking() {
+    const form = document.getElementById('new-booking-form');
+    const formData = new FormData(form);
+    const submitBtn = document.getElementById('create-booking-btn');
+    
+    // Set booking in progress
+    isBookingInProgress = true;
+    
+    // Clear previous errors
+    form.querySelectorAll('.error-message').forEach(error => {
+        error.classList.add('hidden');
+        error.textContent = '';
+    });
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `
+        <span class="flex items-center">
+            <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Đang tạo...
+        </span>
+    `;
+
+    // Collect children ages
+    const childrenAges = Array.from(form.querySelectorAll('input[name="children_ages[]"]'))
+        .map(input => parseInt(input.value))
+        .filter(age => !isNaN(age));
+
+    // Get package_id from form - this was missing!
+    const packageId = formData.get('package_id');
+    
+    // Validate required fields before sending
+    if (!packageId) {
+        const packageSelect = form.querySelector('select[name="package_id"]');
+        const errorDiv = packageSelect.parentElement.querySelector('.error-message');
+        if (errorDiv) {
+            errorDiv.textContent = 'Vui lòng chọn gói phòng';
+            errorDiv.classList.remove('hidden');
+        }
+        
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+            <span class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Tạo đặt phòng
+            </span>
+        `;
+        
+        isBookingInProgress = false;
+        showNotification('Vui lòng chọn gói phòng', 'error');
+        return;
+    }
+
+    // Prepare data - now including package_id
+    const bookingData = {
+        guest_name: formData.get('guest_name'),
+        guest_phone: formData.get('guest_phone'),
+        guest_email: formData.get('guest_email'),
+        check_in_date: formData.get('check_in_date'),
+        check_out_date: formData.get('check_out_date'),
+        room_type_id: formData.get('room_type_id'),
+        package_id: packageId, // Add this field
+        adults: formData.get('adults'),
+        children: formData.get('children'),
+        children_ages: childrenAges,
+        rooms_count: formData.get('rooms_count'),
+        special_requests: formData.get('special_requests'),
+        // Include selected rooms if any
+        selected_room_ids: selectedRoomsForNewBooking.map(room => room.id)
+    };
+
+    fetch('{{ url("admin/bookings/create") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(bookingData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Đã tạo đặt phòng thành công!', 'success');
+            closeNewBookingModal();
+            
+            // Clear unsaved changes flag
+            hasUnsavedChanges = false;
+            
+            // Refresh the bookings table
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            // Show validation errors
+            if (data.errors) {
+                Object.keys(data.errors).forEach(field => {
+                    const input = form.querySelector(`[name="${field}"]`);
+                    if (input) {
+                        const errorDiv = input.parentElement.querySelector('.error-message');
+                        if (errorDiv) {
+                            errorDiv.textContent = data.errors[field][0];
+                            errorDiv.classList.remove('hidden');
+                        }
+                    }
+                });
+            }
+            showNotification(data.message || 'Có lỗi xảy ra khi tạo đặt phòng', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error creating booking:', error);
+        showNotification('Có lỗi xảy ra khi tạo đặt phòng', 'error');
+    })
+    .finally(() => {
+        // Reset booking in progress flag
+        isBookingInProgress = false;
+        
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+            <span class="flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Tạo đặt phòng
+            </span>
+        `;
+    });
+}
+function closeNewBookingModal() {
+    document.getElementById('new-booking-modal').classList.add('hidden');
+}
 
         window.exportBookings = function() {
             const form = document.getElementById('filter-form');
@@ -1342,7 +2634,7 @@
                                 </button>
                             ` : ''}
             <button onclick="window.printBooking(${booking.booking_id || booking.id})" 
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    class="px-4 py-2 btn bg-violet-500 hover:bg-violet-600 text-white">
                 In hóa đơn
             </button>
         </div>
@@ -1353,54 +2645,265 @@
             document.getElementById('booking-detail-modal').classList.add('hidden');
         }
 
-        function generateRoomSelectionHTML(rooms, bookingId) {
-            return `
+        let selectedRooms = [];
+
+function generateRoomSelectionHTML(rooms, bookingId, bookingInfo = {}) {
+    // Reset selected rooms when opening modal
+    selectedRooms = [];
+    
+    return `
         <div class="mb-4">
             <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Chọn phòng cho đặt phòng #${bookingId}</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Danh sách phòng có sẵn trong thời gian lưu trú</p>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <p>Khách: <span class="font-medium">${bookingInfo.guest_name || 'N/A'}</span></p>
+                <p>Thời gian: ${bookingInfo.check_in_date || 'N/A'} → ${bookingInfo.check_out_date || 'N/A'}</p>
+                <p>Loại phòng: <span class="font-medium">${bookingInfo.room_type_name || 'N/A'}</span></p>
+                <p>Số phòng cần: <span class="font-medium text-blue-600">${bookingInfo.rooms_needed || 1}</span></p>
+            </div>
+        </div>
+        
+        <!-- Selection Summary -->
+        <div id="selection-summary" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800" style="display: none;">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-blue-700 dark:text-blue-300">
+                    <span class="font-medium">Đã chọn: </span>
+                    <span id="selected-count">0</span> phòng
+                </div>
+                <button onclick="clearAllSelections()" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">
+                    Bỏ chọn tất cả
+                </button>
+            </div>
+            <div id="selected-rooms-list" class="mt-2 text-xs text-blue-600 dark:text-blue-400"></div>
         </div>
         
         <div class="max-h-96 overflow-y-auto modal-content">
             ${rooms.length === 0 ? `
-                                <div class="text-center py-8">
-                                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                    </svg>
-                                    <div class="text-gray-500 dark:text-gray-400">Không có phòng trống</div>
-                                </div>
-                            ` : `
-                                <div class="grid gap-3">
-                                    ${rooms.map(room => `
-                        <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer room-option transition-colors duration-200" 
-                             onclick="assignRoom(${bookingId}, ${room.id})">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <div class="font-semibold text-gray-900 dark:text-gray-100">${room.name}</div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-400">${room.room_type_name}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-500">Tối đa ${room.max_guests} khách</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm font-semibold ${room.status === 'available' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">
-                                        ${room.status === 'available' ? 'Có sẵn' : 'Đang bảo trì'}
-                                    </div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-500">Phòng ${room.room_number}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                                </div>
-                            `}
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <div class="text-gray-500 dark:text-gray-400">Không có phòng trống</div>
+                    <div class="text-sm text-gray-400 dark:text-gray-500 mt-1">Tất cả phòng cùng loại đã được đặt trong thời gian này</div>
+                </div>
+            ` : `
+                <div class="mb-3 flex items-center justify-between">
+                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Tìm thấy ${rooms.length} phòng trống cùng loại
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="selectAllRooms(${JSON.stringify(rooms).replace(/"/g, '&quot;')})" 
+                                class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">
+                            Chọn tất cả
+                        </button>
+                        <span class="text-gray-300">|</span>
+                        <button onclick="selectByFloor(${JSON.stringify(rooms).replace(/"/g, '&quot;')})" 
+                                class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200">
+                            Chọn theo tầng
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Group rooms by floor -->
+                ${generateRoomsByFloor(rooms, bookingId)}
+            `}
         </div>
         
-        <div class="mt-6 flex justify-end space-x-3">
-            <button onclick="closeRoomSelection()" 
-                    class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
-                Hủy
-            </button>
+        <div class="mt-6 flex justify-between items-center">
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+                <span id="selection-info">Chọn phòng để gán cho booking này</span>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeRoomSelection()" 
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Hủy
+                </button>
+                <button id="assign-selected-btn" onclick="assignSelectedRooms(${bookingId})" 
+                        class="px-4 py-2 text-white rounded-lg  bg-violet-500 hover:bg-violet-600 disabled:bg-gray-300 disabled:cursor-not-allowed" 
+                        disabled>
+                    <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Gán phòng đã chọn
+                    </span>
+                </button>
+            </div>
         </div>
     `;
-        }
+}
 
+function generateRoomsByFloor(rooms, bookingId) {
+    // Group rooms by floor
+    const roomsByFloor = rooms.reduce((acc, room) => {
+        const floor = room.floor || 'N/A';
+        if (!acc[floor]) acc[floor] = [];
+        acc[floor].push(room);
+        return acc;
+    }, {});
+
+    // Sort floors
+    const sortedFloors = Object.keys(roomsByFloor).sort((a, b) => {
+        if (a === 'N/A') return 1;
+        if (b === 'N/A') return -1;
+        return parseInt(a) - parseInt(b);
+    });
+
+    return sortedFloors.map(floor => `
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Tầng ${floor} (${roomsByFloor[floor].length} phòng)
+                </h5>
+                <button onclick="selectFloorRooms(${floor}, ${JSON.stringify(roomsByFloor[floor]).replace(/"/g, '&quot;')})" 
+                        class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800">
+                    Chọn tầng này
+                </button>
+            </div>
+            <div class="grid gap-2">
+                ${roomsByFloor[floor].map(room => `
+                    <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-3 room-option transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700" 
+                         id="room-${room.id}">
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   id="checkbox-${room.id}" 
+                                   class="room-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" 
+                                   onchange="toggleRoomSelection(${room.id}, '${room.name}', ${room.floor})"
+                                   value="${room.id}">
+                            <label for="checkbox-${room.id}" class="ml-3 flex-1 cursor-pointer">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="font-semibold text-gray-900 dark:text-gray-100">${room.name}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-500">ID: ${room.id}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-semibold ${room.status === 'available' ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}">
+                                            ${room.status === 'available' ? 'Có sẵn' : room.status}
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+// Room selection functions
+function toggleRoomSelection(roomId, roomName, floor) {
+    const checkbox = document.getElementById(`checkbox-${roomId}`);
+    const roomElement = document.getElementById(`room-${roomId}`);
+    
+    if (checkbox.checked) {
+        // Add to selected rooms
+        selectedRooms.push({ id: roomId, name: roomName, floor: floor });
+        roomElement.classList.add('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-700');
+    } else {
+        // Remove from selected rooms
+        selectedRooms = selectedRooms.filter(room => room.id !== roomId);
+        roomElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-700');
+    }
+    
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const summaryElement = document.getElementById('selection-summary');
+    const countElement = document.getElementById('selected-count');
+    const listElement = document.getElementById('selected-rooms-list');
+    const assignBtn = document.getElementById('assign-selected-btn');
+    const infoElement = document.getElementById('selection-info');
+    
+    if (selectedRooms.length > 0) {
+        summaryElement.style.display = 'block';
+        countElement.textContent = selectedRooms.length;
+        listElement.innerHTML = selectedRooms.map(room => `${room.name} (Tầng ${room.floor})`).join(', ');
+        assignBtn.disabled = false;
+        infoElement.textContent = `${selectedRooms.length} phòng đã được chọn`;
+    } else {
+        summaryElement.style.display = 'none';
+        assignBtn.disabled = true;
+        infoElement.textContent = 'Chọn phòng để gán cho booking này';
+    }
+}
+
+function selectAllRooms(rooms) {
+    rooms.forEach(room => {
+        const checkbox = document.getElementById(`checkbox-${room.id}`);
+        if (checkbox && !checkbox.checked) {
+            checkbox.checked = true;
+            toggleRoomSelection(room.id, room.name, room.floor);
+        }
+    });
+}
+
+function selectFloorRooms(floor, floorRooms) {
+    floorRooms.forEach(room => {
+        const checkbox = document.getElementById(`checkbox-${room.id}`);
+        if (checkbox && !checkbox.checked) {
+            checkbox.checked = true;
+            toggleRoomSelection(room.id, room.name, room.floor);
+        }
+    });
+}
+
+function clearAllSelections() {
+    selectedRooms.forEach(room => {
+        const checkbox = document.getElementById(`checkbox-${room.id}`);
+        const roomElement = document.getElementById(`room-${room.id}`);
+        if (checkbox) checkbox.checked = false;
+        if (roomElement) {
+            roomElement.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'border-blue-300', 'dark:border-blue-700');
+        }
+    });
+    selectedRooms = [];
+    updateSelectionUI();
+}
+
+// Assign multiple rooms
+function assignSelectedRooms(bookingId) {
+    if (selectedRooms.length === 0) {
+        showNotification('Vui lòng chọn ít nhất một phòng', 'warning');
+        return;
+    }
+
+    showLoading(`Đang gán ${selectedRooms.length} phòng...`);
+    
+    const roomIds = selectedRooms.map(room => room.id);
+    
+    fetch(`{{ url('admin/bookings') }}/${bookingId}/assign-multiple-rooms`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            room_ids: roomIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showNotification(`Đã gán thành công ${selectedRooms.length} phòng`, 'success');
+            closeRoomSelection();
+            // Refresh the bookings table
+            if (typeof refreshBookings === 'function') {
+                refreshBookings();
+            } else {
+                location.reload();
+            }
+        } else {
+            showNotification('Không thể gán phòng: ' + (data.message || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error assigning rooms:', error);
+        showNotification('Có lỗi xảy ra khi gán phòng', 'error');
+    });
+}
         function assignRoom(bookingId, roomId) {
             if (!confirm('Bạn có chắc chắn muốn gán phòng này cho đặt phòng?')) {
                 return;
@@ -1625,7 +3128,7 @@
             if (!loadingOverlay) {
                 loadingOverlay = document.createElement('div');
                 loadingOverlay.id = 'loading-overlay';
-                loadingOverlay.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center';
+                loadingOverlay.className = 'fixed inset-0 modal-overlay flex items-center justify-center';
                 loadingOverlay.innerHTML = `
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
                 <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
