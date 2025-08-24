@@ -87,6 +87,10 @@ export const receptionChartApi = {
             summary: { total_revenue: number; total_bookings: number; year: number };
         }>('reception/chart/revenue-by-month', { params }),
 
+    // API doanh thu theo ngày trong tháng (nếu backend hỗ trợ)
+    getDailyRevenueByMonth: (month: number, params?: { year?: number }) =>
+        request.get<any>('reception/chart/revenue-by-day', { params: { month, ...(params || {}) } }),
+
     // API phân loại doanh thu
     getRevenueByCategory: (params?: { period?: 'month' | 'quarter' | 'year'; date?: string }) =>
         request.get<{
