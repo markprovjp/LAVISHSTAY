@@ -593,8 +593,7 @@ class RoomController extends Controller
         }
     }
 
-    public function destroyMultiple(Request $request, $room_type_id)
-    {
+    public function destroyMultiple(Request $request, $room_type_id){
         $roomIds = $request->input('room_ids', []);
         \Log::info('Received room_ids for destroyMultiple: ', ['room_ids' => $roomIds]);
 
@@ -610,18 +609,41 @@ class RoomController extends Controller
             $totalRooms = Room::where('room_type_id', $room_type_id)->count();
             $deletedCount = 0;
             $failedRooms = [];
+            $imagesToDelete = []; // Lưu trữ đường dẫn ảnh cần xóa
 
-            // Kiểm tra và xóa từng phòng
+            // Kiểm tra và chuẩn bị xóa từng phòng
             foreach ($roomIds as $roomId) {
                 $room = Room::find($roomId);
-                if ($room && !$room->hasActiveBookings()) {
-                    if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
-                        Storage::disk('public')->delete(str_replace('/storage/', '', $room->image));
+                if ($room) {
+                    // Kiểm tra xem phòng có booking active không
+                    if (!$room->hasActiveBookings()) {
+                        // Nếu phòng có ảnh, lưu đường dẫn để xóa sau
+                        if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
+                            $imagesToDelete[] = str_replace('/storage/', '', $room->image);
+                        }
+                        
+                        // Xóa bản ghi khỏi database
+                        $room->delete();
+                        $deletedCount++;
+                    } else {
+                        $failedRooms[] = $room->name;
                     }
-                    $room->delete();
-                    $deletedCount++;
                 } else {
-                    $failedRooms[] = $room ? $room->name : "Phòng ID $roomId";
+                    $failedRooms[] = "Phòng ID $roomId (không tồn tại)";
+                }
+            }
+
+            // Commit transaction trước khi xóa file
+            DB::commit();
+
+            // Chỉ xóa file sau khi transaction đã commit thành công
+            foreach ($imagesToDelete as $imagePath) {
+                try {
+                    Storage::disk('public')->delete($imagePath);
+                    \Log::info('Deleted image: ' . $imagePath);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to delete image: ' . $imagePath . ' - ' . $e->getMessage());
+                    // Không throw lỗi vì database đã commit thành công
                 }
             }
 
@@ -636,8 +658,6 @@ class RoomController extends Controller
             } else {
                 $newPage = 1;
             }
-
-            DB::commit();
 
             if (!empty($failedRooms)) {
                 return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id, 'page' => $newPage])
