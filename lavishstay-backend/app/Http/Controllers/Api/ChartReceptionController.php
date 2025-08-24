@@ -20,9 +20,10 @@ class ChartReceptionController extends Controller
     public function getRevenueByMonth(Request $request)
     {
         $year = $request->get('year', Carbon::now()->year);
+        $currentMonth = $request->get('current_month_only', true); // Only show current month by default
         
         try {
-            $monthlyRevenue = DB::table('booking')
+            $query = DB::table('booking')
                 ->select(
                     DB::raw('MONTH(created_at) as month'),
                     DB::raw('MONTHNAME(created_at) as month_name'),
@@ -30,23 +31,57 @@ class ChartReceptionController extends Controller
                     DB::raw('COUNT(*) as booking_count')
                 )
                 ->whereYear('created_at', $year)
-                ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut'])
+                ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut']);
+
+            // If current_month_only is true, filter to current month only
+            if ($currentMonth) {
+                $query->whereMonth('created_at', Carbon::now()->month);
+            }
+
+            $monthlyRevenue = $query
                 ->groupBy(DB::raw('MONTH(created_at)'), DB::raw('MONTHNAME(created_at)'))
                 ->orderBy(DB::raw('MONTH(created_at)'))
                 ->get();
 
-            // Format data for charts (fill missing months with 0)
+            // Format data for charts
             $chartData = [];
-            for ($month = 1; $month <= 12; $month++) {
-                $monthData = $monthlyRevenue->firstWhere('month', $month);
-                $chartData[] = [
-                    'date' => (string)$month,
-                    'month' => $month,
-                    'month_name' => Carbon::create()->month($month)->format('M'),
-                    'price' => $monthData ? (float)$monthData->total_revenue : 0,
-                    'total_revenue' => $monthData ? (float)$monthData->total_revenue : 0,
-                    'booking_count' => $monthData ? (int)$monthData->booking_count : 0
-                ];
+            
+            if ($currentMonth) {
+                // Only current month data
+                $currentMonthData = $monthlyRevenue->first();
+                if ($currentMonthData) {
+                    $chartData[] = [
+                        'date' => (string)$currentMonthData->month,
+                        'month' => $currentMonthData->month,
+                        'month_name' => 'Tháng ' . $currentMonthData->month,
+                        'price' => (float)$currentMonthData->total_revenue,
+                        'total_revenue' => (float)$currentMonthData->total_revenue,
+                        'booking_count' => (int)$currentMonthData->booking_count
+                    ];
+                } else {
+                    // No data for current month
+                    $chartData[] = [
+                        'date' => (string)Carbon::now()->month,
+                        'month' => Carbon::now()->month,
+                        'month_name' => 'Tháng ' . Carbon::now()->month,
+                        'price' => 0,
+                        'total_revenue' => 0,
+                        'booking_count' => 0
+                    ];
+                }
+            } else {
+                // All months in year (fill missing months with 0)
+                for ($month = 1; $month <= 12; $month++) {
+                    $monthData = $monthlyRevenue->firstWhere('month', $month);
+                    $chartData[] = [
+                        'date' => (string)$month,
+                        'month' => $month,
+                        'month_name' => 'Tháng ' . $month,
+                        'price' => $monthData ? (float)$monthData->total_revenue : 0,
+                        'total_revenue' => $monthData ? (float)$monthData->total_revenue : 0,
+                        'booking_count' => $monthData ? (int)$monthData->booking_count : 0
+                    ];
+                }
             }
 
             return response()->json([
@@ -55,13 +90,73 @@ class ChartReceptionController extends Controller
                 'summary' => [
                     'total_revenue' => $monthlyRevenue->sum('total_revenue'),
                     'total_bookings' => $monthlyRevenue->sum('booking_count'),
-                    'year' => $year
+                    'year' => $year,
+                    'current_month_only' => $currentMonth,
+                    'period' => $currentMonth ? 'Tháng hiện tại' : 'Cả năm'
                 ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi khi lấy dữ liệu doanh thu theo tháng',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API doanh thu theo ngày trong tháng
+     * GET /api/reception/chart/revenue-by-day
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getDailyRevenueByMonth(Request $request)
+    {
+        $month = (int)$request->get('month', Carbon::now()->month);
+        $year = (int)$request->get('year', Carbon::now()->year);
+
+        try {
+            $startOfMonth = Carbon::createFromDate($year, $month, 1);
+            $daysInMonth = $startOfMonth->daysInMonth;
+
+            $daily = DB::table('booking')
+                ->select(
+                    DB::raw('DAY(created_at) as day'),
+                    DB::raw('SUM(total_price_vnd) as total_revenue'),
+                    DB::raw('COUNT(*) as booking_count')
+                )
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut'])
+                ->groupBy(DB::raw('DAY(created_at)'))
+                ->orderBy(DB::raw('DAY(created_at)'))
+                ->get();
+
+            $chartData = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $row = $daily->firstWhere('day', $d);
+                $chartData[] = [
+                    'day' => $d,
+                    'date' => $startOfMonth->copy()->day($d)->format('Y-m-d'),
+                    'total_revenue' => $row ? (float)$row->total_revenue : 0,
+                    'booking_count' => $row ? (int)$row->booking_count : 0
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $chartData,
+                'summary' => [
+                    'month' => $month,
+                    'year' => $year,
+                    'days' => $daysInMonth
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi lấy doanh thu theo ngày trong tháng',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -265,18 +360,25 @@ class ChartReceptionController extends Controller
                 ->orderBy('booking.check_out_date')
                 ->get();
 
-            // Format timeline data
+            // Format timeline data with better structure
             $timeline = [];
             
             foreach ($checkIns as $booking) {
                 $timeline[] = [
                     'type' => 'checkin',
                     'time' => '14:00', // Default check-in time
-                    'title' => 'Check-in',
+                    'title' => 'Nhận phòng',
                     'description' => "{$booking->guest_name} - {$booking->booking_code}",
                     'booking_id' => $booking->booking_id,
+                    'booking_code' => $booking->booking_code,
+                    'customer_name' => $booking->guest_name,
+                    'guest_name' => $booking->guest_name,
+                    'room_number' => $booking->room_type,
+                    'room' => $booking->room_type,
                     'room_type' => $booking->room_type,
-                    'status' => 'pending'
+                    'status' => 'pending',
+                    'action_type' => 'Check-in',
+                    'priority' => 'high'
                 ];
             }
 
@@ -284,13 +386,31 @@ class ChartReceptionController extends Controller
                 $timeline[] = [
                     'type' => 'checkout',
                     'time' => '12:00', // Default check-out time
-                    'title' => 'Check-out',
+                    'title' => 'Trả phòng',
                     'description' => "{$booking->guest_name} - {$booking->booking_code}",
                     'booking_id' => $booking->booking_id,
+                    'booking_code' => $booking->booking_code,
+                    'customer_name' => $booking->guest_name,
+                    'guest_name' => $booking->guest_name,
+                    'room_number' => $booking->room_type,
+                    'room' => $booking->room_type,
                     'room_type' => $booking->room_type,
-                    'status' => 'active'
+                    'status' => 'active',
+                    'action_type' => 'Check-out',
+                    'priority' => 'medium'
                 ];
             }
+
+            // Sort timeline by time and priority
+            usort($timeline, function($a, $b) {
+                $timeA = strtotime($a['time']);
+                $timeB = strtotime($b['time']);
+                if ($timeA == $timeB) {
+                    $priorityOrder = ['high' => 1, 'medium' => 2, 'low' => 3];
+                    return $priorityOrder[$a['priority']] - $priorityOrder[$b['priority']];
+                }
+                return $timeA - $timeB;
+            });
 
             return response()->json([
                 'success' => true,
@@ -539,36 +659,84 @@ class ChartReceptionController extends Controller
     public function getDashboardStats(Request $request)
     {
         try {
+            $currentMonth = Carbon::now()->month;
+            $currentYear = Carbon::now()->year;
+            $today = Carbon::today();
+
             // Total bookings this month
             $totalBookings = DB::table('booking')
-                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
                 ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut'])
                 ->count();
 
             // Total revenue this month
             $totalRevenue = DB::table('booking')
-                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
                 ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut'])
                 ->sum('total_price_vnd');
 
-            // Visits trend (mock data)
-            $visitsTrend = [1200, 1400, 1100, 1600, 1300, 1700, 1500];
+            // Daily revenue today
+            $dailyRevenue = DB::table('booking')
+                ->whereDate('created_at', $today)
+                ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut'])
+                ->sum('total_price_vnd');
 
-            // Payments trend (mock data)
-            $paymentsTrend = [300, 400, 350, 500, 420, 480, 390];
+            // Monthly visits (mock data - can be replaced with actual analytics)
+            $totalVisits = DB::table('booking')
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->count() * 3; // Estimate visits as 3x bookings
 
-            // Activity rate
+            // Daily visits (mock data)
+            $dailyVisits = DB::table('booking')
+                ->whereDate('created_at', $today)
+                ->count() * 3;
+
+            // Activity rate (occupancy rate)
             $activityResponse = $this->getActivityRate($request);
-            $activityRate = $activityResponse->getData()->data->activity_rate ?? 78;
+            $activityData = $activityResponse->getData();
+            $activityRate = $activityData->success ? $activityData->data->activity_rate : 0;
+
+            // Visits trend (last 7 days booking count * 3)
+            $visitsTrend = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i);
+                $dailyBookings = DB::table('booking')
+                    ->whereDate('created_at', $date)
+                    ->count();
+                $visitsTrend[] = $dailyBookings * 3; // Estimate
+            }
+
+            // Payments trend (last 7 days successful payments)
+            $paymentsTrend = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i);
+                $dailyPayments = DB::table('booking')
+                    ->whereDate('created_at', $date)
+                    ->whereIn('status', ['Confirmed', 'Operational', 'CheckedOut'])
+                    ->count();
+                $paymentsTrend[] = $dailyPayments;
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'total_bookings' => $totalBookings,
                     'total_revenue' => $totalRevenue,
+                    'total_visits' => $totalVisits,
+                    'performance_rate' => $activityRate,
+                    'daily_revenue' => $dailyRevenue,
+                    'daily_visits' => $dailyVisits,
                     'visits_trend' => $visitsTrend,
-                    'payments_trend' => $paymentsTrend,
-                    'activity_rate' => $activityRate
+                    'payments_trend' => $paymentsTrend
+                ],
+                'summary' => [
+                    'period' => 'Tháng hiện tại',
+                    'month' => $currentMonth,
+                    'year' => $currentYear,
+                    'last_updated' => Carbon::now()->format('Y-m-d H:i:s')
                 ]
             ]);
         } catch (\Exception $e) {

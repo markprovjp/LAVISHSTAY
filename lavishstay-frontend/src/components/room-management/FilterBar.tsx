@@ -43,6 +43,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             roomType: filters.roomType || undefined,
             roomName: filters.roomName || undefined,
             floor: filters.floor || undefined,
+            booking_status: filters.booking_status || undefined,
         });
         if (filters.guestRooms) {
             setGuestRooms(filters.guestRooms);
@@ -58,6 +59,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             roomType: values.roomType || undefined,
             roomName: values.roomName || undefined,
             floor: values.floor || undefined,
+            booking_status: values.booking_status || undefined,
             guestRooms: guestRooms,
             adults: guestRooms.reduce((sum, room) => sum + room.adults, 0),
             children: guestRooms.flatMap(room => room.children),
@@ -182,16 +184,16 @@ const FilterBar: React.FC<FilterBarProps> = ({
                     </Col> */}
                     <Col xs={24} sm={24} md={24} lg={24} xl={3}>
                         <Form.Item label=" ">
-                                <Space>
-                                    <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} loading={loading}>Tìm</Button>
-                                    <Button icon={<ReloadOutlined />} onClick={handleReset}>Reset</Button>
-                                </Space>
+                            <Space>
+                                <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch} loading={loading}>Tìm</Button>
+                                <Button icon={<ReloadOutlined />} onClick={handleReset}>Reset</Button>
+                            </Space>
                         </Form.Item>
                     </Col>
                 </Row>
-                 <Row>
+                <Row>
                     <Col span={24} style={{ textAlign: 'right' }}>
-                         <Badge count={selectedRoomsCount} showZero={false}>
+                        <Badge count={selectedRoomsCount} showZero={false}>
                             <Button type="primary" ghost disabled={selectedRoomsCount === 0} icon={<ArrowRightOutlined />} onClick={onProceedToBooking}>
                                 Tiến hành đặt ({selectedRoomsCount})
                             </Button>

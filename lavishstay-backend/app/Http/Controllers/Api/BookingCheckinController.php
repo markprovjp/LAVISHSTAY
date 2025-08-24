@@ -635,24 +635,34 @@ class BookingCheckinController extends Controller
             
             // Try multiple table structures
             try {
-                $hotelInfo = DB::table('booking_rooms as br')
-                    ->join('room as r', 'br.room_id', '=', 'r.room_id')
-                    ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
-                    ->where('br.booking_id', $booking->booking_id)
-                    ->select('h.*')
-                    ->first();
+                $hotelTableExists = DB::select("SHOW TABLES LIKE 'hotel'");
+                $bookingRoomsTableExists = DB::select("SHOW TABLES LIKE 'booking_rooms'");
+                $roomHasHotelId = DB::select("SHOW COLUMNS FROM room LIKE 'hotel_id'");
+
+                if (!empty($hotelTableExists) && !empty($bookingRoomsTableExists) && !empty($roomHasHotelId)) {
+                    $hotelInfo = DB::table('booking_rooms as br')
+                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                        ->where('br.booking_id', $booking->booking_id)
+                        ->select('h.*')
+                        ->first();
+                }
             } catch (\Exception $e) {
                 Log::warning("booking_rooms hotel query failed: " . $e->getMessage());
             }
             
             if (!$hotelInfo) {
                 try {
-                    $hotelInfo = DB::table('booking_room as br')
-                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
-                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
-                        ->where('br.booking_id', $booking->booking_id)
-                        ->select('h.*')
-                        ->first();
+                    $bookingRoomTableExists = DB::select("SHOW TABLES LIKE 'booking_room'");
+                    $roomHasHotelId = DB::select("SHOW COLUMNS FROM room LIKE 'hotel_id'");
+                    if (!empty($hotelTableExists) && !empty($bookingRoomTableExists) && !empty($roomHasHotelId)) {
+                        $hotelInfo = DB::table('booking_room as br')
+                            ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                            ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                            ->where('br.booking_id', $booking->booking_id)
+                            ->select('h.*')
+                            ->first();
+                    }
                 } catch (\Exception $e) {
                     Log::warning("booking_room hotel query failed: " . $e->getMessage());
                 }
@@ -660,11 +670,14 @@ class BookingCheckinController extends Controller
             
             if (!$hotelInfo && $booking->room_id) {
                 try {
-                    $hotelInfo = DB::table('room as r')
-                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
-                        ->where('r.room_id', $booking->room_id)
-                        ->select('h.*')
-                        ->first();
+                    $roomHasHotelId = DB::select("SHOW COLUMNS FROM room LIKE 'hotel_id'");
+                    if (!empty($hotelTableExists) && !empty($roomHasHotelId)) {
+                        $hotelInfo = DB::table('room as r')
+                            ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                            ->where('r.room_id', $booking->room_id)
+                            ->select('h.*')
+                            ->first();
+                    }
                 } catch (\Exception $e) {
                     Log::warning("Direct hotel query failed: " . $e->getMessage());
                 }
