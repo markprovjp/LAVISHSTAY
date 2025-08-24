@@ -1,5 +1,7 @@
 
 <?php
+
+use App\Http\Controllers\CompensationPolicyController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ChatSupportController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -519,9 +521,17 @@ Route::get('/admin/special-requests/stream', [SpecialRequestController::class, '
     Route::get('/admin/children-surcharge/{childrenSurcharge}/edit', [ChildPolicyController::class, 'edit'])->name('admin.children-surcharge.edit');
     Route::put('/admin/children-surcharge/{childrenSurcharge}', [ChildPolicyController::class, 'update'])->name('admin.children-surcharge.update');
     Route::delete('/admin/children-surcharge/{childrenSurcharge}', [ChildPolicyController::class, 'destroy'])->name('admin.children-surcharge.destroy');
-    
 
 
+    // Chính sách bồi thường
+    Route::get('/admin/compensation-policies', [CompensationPolicyController::class, 'index'])->name('admin.compensation-policies');
+    Route::get('/admin/compensation-policies/create', [CompensationPolicyController::class, 'create'])->name('admin.compensation-policies.create');
+    Route::post('/admin/compensation-policies', [CompensationPolicyController::class, 'store'])->name('admin.compensation-policies.store');
+    Route::get('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'show'])->name('admin.compensation-policies.show');
+    Route::get('/admin/compensation-policies/{id}/edit', [CompensationPolicyController::class, 'edit'])->name('admin.compensation-policies.edit');
+    Route::put('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'update'])->name('admin.compensation-policies.update');
+    Route::delete('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'destroy'])->name('admin.compensation-policies.destroy');
+    Route::patch('/admin/compensation-policies/{id}/toggle-status', [CompensationPolicyController::class, 'toggleStatus'])->name('admin.compensation-policies.toggle-status');
 
 
 
