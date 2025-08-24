@@ -1046,7 +1046,7 @@ const LookupBookingByPhone: React.FC = () => {
                                             </Space>
                                         );
                                     }
-                                    return <Text type="secondary">Không có coupon adsda</Text>;
+                                    return <Text type="secondary">Không có coupon</Text>;
                                 })()}
                             </Item>
                         </Descriptions>

@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Máy chủ: 127.0.0.1:3306
--- Thời gian đã tạo: Th8 23, 2025 lúc 05:34 AM
--- Phiên bản máy phục vụ: 8.0.30
--- Phiên bản PHP: 8.1.10
+-- Host: localhost:3306
+-- Generation Time: Aug 24, 2025 at 06:46 AM
+-- Server version: 8.0.30
+-- PHP Version: 8.1.10
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Cơ sở dữ liệu: `datn_build_basic`
+-- Database: `datn_build_basic`
 --
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `amenities`
+-- Table structure for table `amenities`
 --
 
 CREATE TABLE `amenities` (
@@ -40,7 +40,7 @@ CREATE TABLE `amenities` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `amenities`
+-- Dumping data for table `amenities`
 --
 
 INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -94,7 +94,7 @@ INSERT INTO `amenities` (`amenity_id`, `name`, `icon`, `icon_lib`, `category`, `
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `audit_logs`
+-- Table structure for table `audit_logs`
 --
 
 CREATE TABLE `audit_logs` (
@@ -118,7 +118,7 @@ CREATE TABLE `audit_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ lịch sử thay đổi dữ liệu hệ thống';
 
 --
--- Đang đổ dữ liệu cho bảng `audit_logs`
+-- Dumping data for table `audit_logs`
 --
 
 INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`, `model_id`, `old_values`, `new_values`, `changes_summary`, `description`, `ip_address`, `user_agent`, `url`, `method`, `metadata`, `is_sensitive`, `created_at`) VALUES
@@ -582,7 +582,7 @@ INSERT INTO `audit_logs` (`audit_id`, `user_id`, `session_id`, `action`, `model`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `bed_types`
+-- Table structure for table `bed_types`
 --
 
 CREATE TABLE `bed_types` (
@@ -595,7 +595,7 @@ CREATE TABLE `bed_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách các loại giường';
 
 --
--- Đang đổ dữ liệu cho bảng `bed_types`
+-- Dumping data for table `bed_types`
 --
 
 INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -605,7 +605,7 @@ INSERT INTO `bed_types` (`id`, `type_name`, `description`, `is_active`, `created
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `booking`
+-- Table structure for table `booking`
 --
 
 CREATE TABLE `booking` (
@@ -635,7 +635,7 @@ CREATE TABLE `booking` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin đặt phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `booking`
+-- Dumping data for table `booking`
 --
 
 INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `check_in_date`, `check_out_date`, `total_price_vnd`, `guest_count`, `status`, `booking_source`, `notes`, `quantity`, `payment_policy`, `room_type_id`, `created_at`, `updated_at`, `guest_name`, `guest_email`, `guest_phone`, `room_id`, `children`, `children_age`, `is_document_verified`) VALUES
@@ -792,7 +792,7 @@ INSERT INTO `booking` (`booking_id`, `booking_code`, `user_id`, `option_id`, `ch
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `booking_extensions`
+-- Table structure for table `booking_extensions`
 --
 
 CREATE TABLE `booking_extensions` (
@@ -809,7 +809,7 @@ CREATE TABLE `booking_extensions` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `booking_reschedules`
+-- Table structure for table `booking_reschedules`
 --
 
 CREATE TABLE `booking_reschedules` (
@@ -831,7 +831,7 @@ CREATE TABLE `booking_reschedules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `booking_reschedules`
+-- Dumping data for table `booking_reschedules`
 --
 
 INSERT INTO `booking_reschedules` (`reschedule_id`, `booking_id`, `new_check_in_date`, `new_check_out_date`, `new_room_id`, `new_option_id`, `reschedule_policy_id`, `price_difference_vnd`, `payment_id`, `status`, `reason`, `suggested_rooms`, `created_at`, `updated_at`, `processed_by`) VALUES
@@ -846,7 +846,7 @@ INSERT INTO `booking_reschedules` (`reschedule_id`, `booking_id`, `new_check_in_
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `booking_rooms`
+-- Table structure for table `booking_rooms`
 --
 
 CREATE TABLE `booking_rooms` (
@@ -854,7 +854,7 @@ CREATE TABLE `booking_rooms` (
   `booking_id` int NOT NULL,
   `booking_code` varchar(55) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `room_id` int DEFAULT NULL,
-  `assigned_by` varchar(32) COLLATE utf8mb4_general_ci DEFAULT 'manual' COMMENT 'auto or manual',
+  `assigned_by` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'manual' COMMENT 'auto or manual',
   `auto_assigned` tinyint NOT NULL DEFAULT '0' COMMENT '1 if auto assigned',
   `option_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `option_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
@@ -873,7 +873,7 @@ CREATE TABLE `booking_rooms` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `booking_rooms`
+-- Dumping data for table `booking_rooms`
 --
 
 INSERT INTO `booking_rooms` (`id`, `booking_id`, `booking_code`, `room_id`, `assigned_by`, `auto_assigned`, `option_id`, `option_name`, `option_price`, `representative_id`, `adults`, `children`, `children_age`, `price_per_night`, `nights`, `total_price`, `check_in_date`, `check_out_date`, `created_at`, `updated_at`) VALUES
@@ -1036,7 +1036,7 @@ INSERT INTO `booking_rooms` (`id`, `booking_id`, `booking_code`, `room_id`, `ass
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `booking_room_children`
+-- Table structure for table `booking_room_children`
 --
 
 CREATE TABLE `booking_room_children` (
@@ -1049,7 +1049,7 @@ CREATE TABLE `booking_room_children` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `booking_room_children`
+-- Dumping data for table `booking_room_children`
 --
 
 INSERT INTO `booking_room_children` (`id`, `booking_room_id`, `age`, `child_index`, `created_at`, `updated_at`) VALUES
@@ -1144,7 +1144,7 @@ INSERT INTO `booking_room_children` (`id`, `booking_room_id`, `age`, `child_inde
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `booking_services`
+-- Table structure for table `booking_services`
 --
 
 CREATE TABLE `booking_services` (
@@ -1161,7 +1161,7 @@ CREATE TABLE `booking_services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin dịch vụ phát sinh cho mỗi booking';
 
 --
--- Đang đổ dữ liệu cho bảng `booking_services`
+-- Dumping data for table `booking_services`
 --
 
 INSERT INTO `booking_services` (`id`, `booking_id`, `service_id`, `quantity`, `price_vnd`, `paid_amount_vnd`, `payment_status`, `last_payment_id`, `created_at`, `updated_at`) VALUES
@@ -1181,7 +1181,7 @@ INSERT INTO `booking_services` (`id`, `booking_id`, `service_id`, `quantity`, `p
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `cancellation_policies`
+-- Table structure for table `cancellation_policies`
 --
 
 CREATE TABLE `cancellation_policies` (
@@ -1204,7 +1204,7 @@ CREATE TABLE `cancellation_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `cancellation_policies`
+-- Dumping data for table `cancellation_policies`
 --
 
 INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_days`, `penalty_days`, `penalty_percentage`, `penalty_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_booking_amount`, `max_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1215,7 +1215,7 @@ INSERT INTO `cancellation_policies` (`policy_id`, `name`, `free_cancellation_day
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `cancellation_requests`
+-- Table structure for table `cancellation_requests`
 --
 
 CREATE TABLE `cancellation_requests` (
@@ -1239,7 +1239,7 @@ CREATE TABLE `cancellation_requests` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `check_in_policies`
+-- Table structure for table `check_in_policies`
 --
 
 CREATE TABLE `check_in_policies` (
@@ -1262,7 +1262,7 @@ CREATE TABLE `check_in_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách chính sách nhận phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `check_in_policies`
+-- Dumping data for table `check_in_policies`
 --
 
 INSERT INTO `check_in_policies` (`policy_id`, `name`, `description`, `standard_check_in_time`, `early_check_in_fee_vnd`, `early_check_in_max_hours`, `late_check_in_fee_vnd`, `late_check_in_max_hours`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`, `conditions`, `action`, `priority`) VALUES
@@ -1281,7 +1281,7 @@ INSERT INTO `check_in_policies` (`policy_id`, `name`, `description`, `standard_c
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `check_in_requests`
+-- Table structure for table `check_in_requests`
 --
 
 CREATE TABLE `check_in_requests` (
@@ -1301,7 +1301,7 @@ CREATE TABLE `check_in_requests` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `check_out_policies`
+-- Table structure for table `check_out_policies`
 --
 
 CREATE TABLE `check_out_policies` (
@@ -1324,7 +1324,7 @@ CREATE TABLE `check_out_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `check_out_policies`
+-- Dumping data for table `check_out_policies`
 --
 
 INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`, `late_check_out_fee_vnd`, `late_check_out_max_hours`, `early_check_out_max_hours`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `standard_check_out_time`, `is_active`, `created_at`, `updated_at`, `action`) VALUES
@@ -1340,7 +1340,7 @@ INSERT INTO `check_out_policies` (`policy_id`, `name`, `early_check_out_fee_vnd`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `check_out_requests`
+-- Table structure for table `check_out_requests`
 --
 
 CREATE TABLE `check_out_requests` (
@@ -1358,7 +1358,7 @@ CREATE TABLE `check_out_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `check_out_requests`
+-- Dumping data for table `check_out_requests`
 --
 
 INSERT INTO `check_out_requests` (`request_id`, `booking_id`, `type`, `requested_check_out_time`, `fee_vnd`, `status`, `created_at`, `updated_at`, `policy_id`, `special_requests`, `total_amount_vnd`) VALUES
@@ -1367,7 +1367,7 @@ INSERT INTO `check_out_requests` (`request_id`, `booking_id`, `type`, `requested
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `children_surcharges`
+-- Table structure for table `children_surcharges`
 --
 
 CREATE TABLE `children_surcharges` (
@@ -1384,7 +1384,7 @@ CREATE TABLE `children_surcharges` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `children_surcharges`
+-- Dumping data for table `children_surcharges`
 --
 
 INSERT INTO `children_surcharges` (`id`, `min_age`, `max_age`, `is_free`, `count_as_adult`, `requires_extra_bed`, `surcharge_amount_vnd`, `created_at`, `updated_at`, `booking_id`) VALUES
@@ -1394,7 +1394,7 @@ INSERT INTO `children_surcharges` (`id`, `min_age`, `max_age`, `is_free`, `count
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `compensation_policies`
+-- Table structure for table `compensation_policies`
 --
 
 CREATE TABLE `compensation_policies` (
@@ -1412,7 +1412,7 @@ CREATE TABLE `compensation_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `compensation_policies`
+-- Dumping data for table `compensation_policies`
 --
 
 INSERT INTO `compensation_policies` (`compensation_policy_id`, `name`, `description`, `applies_to_room_type_id`, `condition_type`, `discount_type`, `discount_value`, `max_compensation_amount`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1427,7 +1427,7 @@ INSERT INTO `compensation_policies` (`compensation_policy_id`, `name`, `descript
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `compensation_requests`
+-- Table structure for table `compensation_requests`
 --
 
 CREATE TABLE `compensation_requests` (
@@ -1448,7 +1448,7 @@ CREATE TABLE `compensation_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `compensation_requests`
+-- Dumping data for table `compensation_requests`
 --
 
 INSERT INTO `compensation_requests` (`request_id`, `booking_id`, `requested_by`, `policy_id`, `custom_reason`, `status`, `requested_amount`, `approved_amount`, `approved_by`, `approved_at`, `attachments`, `admin_note`, `created_at`, `updated_at`) VALUES
@@ -1462,7 +1462,7 @@ INSERT INTO `compensation_requests` (`request_id`, `booking_id`, `requested_by`,
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `conversations`
+-- Table structure for table `conversations`
 --
 
 CREATE TABLE `conversations` (
@@ -1477,7 +1477,7 @@ CREATE TABLE `conversations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `conversations`
+-- Dumping data for table `conversations`
 --
 
 INSERT INTO `conversations` (`id`, `user_id`, `client_token`, `is_bot_only`, `handover_to_user_id`, `status`, `created_at`, `updated_at`) VALUES
@@ -1489,16 +1489,16 @@ INSERT INTO `conversations` (`id`, `user_id`, `client_token`, `is_bot_only`, `ha
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `coupons`
+-- Table structure for table `coupons`
 --
 
 CREATE TABLE `coupons` (
   `id` bigint UNSIGNED NOT NULL,
-  `code` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã giảm giá (uppercase)',
-  `type` enum('percent','fixed') COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại giảm giá: phần trăm hoặc số tiền cố định',
+  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã giảm giá (uppercase)',
+  `type` enum('percent','fixed') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại giảm giá: phần trăm hoặc số tiền cố định',
   `value` decimal(10,2) NOT NULL COMMENT 'Giá trị giảm (% hoặc VND)',
-  `currency` varchar(3) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'VND' COMMENT 'Đơn vị tiền tệ',
-  `description` text COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả mã giảm giá',
+  `currency` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'VND' COMMENT 'Đơn vị tiền tệ',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả mã giảm giá',
   `start_at` timestamp NOT NULL COMMENT 'Thời gian bắt đầu có hiệu lực',
   `end_at` timestamp NOT NULL COMMENT 'Thời gian hết hiệu lực',
   `usage_limit` int DEFAULT NULL COMMENT 'Giới hạn số lần sử dụng toàn cục',
@@ -1515,7 +1515,7 @@ CREATE TABLE `coupons` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `coupons`
+-- Dumping data for table `coupons`
 --
 
 INSERT INTO `coupons` (`id`, `code`, `type`, `value`, `currency`, `description`, `start_at`, `end_at`, `usage_limit`, `per_user_limit`, `min_booking_amount_vnd`, `applicable_room_type_ids`, `stackable`, `combinable_with`, `active`, `created_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
@@ -1530,7 +1530,7 @@ INSERT INTO `coupons` (`id`, `code`, `type`, `value`, `currency`, `description`,
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `coupon_redemptions`
+-- Table structure for table `coupon_redemptions`
 --
 
 CREATE TABLE `coupon_redemptions` (
@@ -1547,7 +1547,7 @@ CREATE TABLE `coupon_redemptions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `coupon_redemptions`
+-- Dumping data for table `coupon_redemptions`
 --
 
 INSERT INTO `coupon_redemptions` (`id`, `coupon_id`, `user_id`, `booking_id`, `amount_saved_vnd`, `applied_amount_vnd`, `meta`, `redeemed_at`, `created_at`, `updated_at`) VALUES
@@ -1558,7 +1558,7 @@ INSERT INTO `coupon_redemptions` (`id`, `coupon_id`, `user_id`, `booking_id`, `a
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `currency`
+-- Table structure for table `currency`
 --
 
 CREATE TABLE `currency` (
@@ -1570,7 +1570,7 @@ CREATE TABLE `currency` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin tiền tệ và tỷ giá';
 
 --
--- Đang đổ dữ liệu cho bảng `currency`
+-- Dumping data for table `currency`
 --
 
 INSERT INTO `currency` (`currency_code`, `name`, `exchange_rate`, `symbol`, `format`) VALUES
@@ -1580,7 +1580,7 @@ INSERT INTO `currency` (`currency_code`, `name`, `exchange_rate`, `symbol`, `for
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `datafeeds`
+-- Table structure for table `datafeeds`
 --
 
 CREATE TABLE `datafeeds` (
@@ -1596,7 +1596,7 @@ CREATE TABLE `datafeeds` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `deposit_policies`
+-- Table structure for table `deposit_policies`
 --
 
 CREATE TABLE `deposit_policies` (
@@ -1617,7 +1617,7 @@ CREATE TABLE `deposit_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `deposit_policies`
+-- Dumping data for table `deposit_policies`
 --
 
 INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `deposit_fixed_amount_vnd`, `description`, `priority`, `conditions`, `applies_to_weekend`, `applies_to_holiday`, `min_days_before_checkin`, `min_booking_amount`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1628,7 +1628,7 @@ INSERT INTO `deposit_policies` (`policy_id`, `name`, `deposit_percentage`, `depo
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `dynamic_pricing_rules`
+-- Table structure for table `dynamic_pricing_rules`
 --
 
 CREATE TABLE `dynamic_pricing_rules` (
@@ -1644,7 +1644,7 @@ CREATE TABLE `dynamic_pricing_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `dynamic_pricing_rules`
+-- Dumping data for table `dynamic_pricing_rules`
 --
 
 INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_threshold`, `price_adjustment`, `is_active`, `created_at`, `updated_at`, `priority`, `is_exclusive`) VALUES
@@ -1657,7 +1657,7 @@ INSERT INTO `dynamic_pricing_rules` (`rule_id`, `room_type_id`, `occupancy_thres
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `events`
+-- Table structure for table `events`
 --
 
 CREATE TABLE `events` (
@@ -1672,7 +1672,7 @@ CREATE TABLE `events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `events`
+-- Dumping data for table `events`
 --
 
 INSERT INTO `events` (`event_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1683,7 +1683,7 @@ INSERT INTO `events` (`event_id`, `name`, `start_date`, `end_date`, `description
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `extension_policies`
+-- Table structure for table `extension_policies`
 --
 
 CREATE TABLE `extension_policies` (
@@ -1702,7 +1702,7 @@ CREATE TABLE `extension_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách chính sách gia hạn đặt phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `extension_policies`
+-- Dumping data for table `extension_policies`
 --
 
 INSERT INTO `extension_policies` (`policy_id`, `name`, `description`, `max_extension_days`, `extension_fee_vnd`, `extension_percentage`, `min_days_before_checkout`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1722,7 +1722,7 @@ INSERT INTO `extension_policies` (`policy_id`, `name`, `description`, `max_exten
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `extension_requests`
+-- Table structure for table `extension_requests`
 --
 
 CREATE TABLE `extension_requests` (
@@ -1740,7 +1740,7 @@ CREATE TABLE `extension_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu trữ yêu cầu gia hạn đặt phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `extension_requests`
+-- Dumping data for table `extension_requests`
 --
 
 INSERT INTO `extension_requests` (`request_id`, `booking_id`, `extension_policy_id`, `new_check_out_date`, `extension_days`, `extension_fee_vnd`, `status`, `processed_by`, `notes`, `created_at`, `updated_at`) VALUES
@@ -1751,7 +1751,7 @@ INSERT INTO `extension_requests` (`request_id`, `booking_id`, `extension_policy_
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `failed_jobs`
+-- Table structure for table `failed_jobs`
 --
 
 CREATE TABLE `failed_jobs` (
@@ -1767,7 +1767,7 @@ CREATE TABLE `failed_jobs` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `faqs`
+-- Table structure for table `faqs`
 --
 
 CREATE TABLE `faqs` (
@@ -1784,7 +1784,7 @@ CREATE TABLE `faqs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ câu hỏi thường gặp và câu trả lời';
 
 --
--- Đang đổ dữ liệu cho bảng `faqs`
+-- Dumping data for table `faqs`
 --
 
 INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer_vi`, `sort_order`, `is_active`, `priority`, `created_at`, `updated_at`) VALUES
@@ -1797,7 +1797,7 @@ INSERT INTO `faqs` (`faq_id`, `question_en`, `question_vi`, `answer_en`, `answer
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `flexible_pricing_rules`
+-- Table structure for table `flexible_pricing_rules`
 --
 
 CREATE TABLE `flexible_pricing_rules` (
@@ -1819,7 +1819,7 @@ CREATE TABLE `flexible_pricing_rules` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Quy tắc giá linh động cho cuối tuần, sự kiện, ngày lễ, mùa';
 
 --
--- Đang đổ dữ liệu cho bảng `flexible_pricing_rules`
+-- Dumping data for table `flexible_pricing_rules`
 --
 
 INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `days_of_week`, `event_id`, `holiday_id`, `season_name`, `start_date`, `end_date`, `price_adjustment`, `is_active`, `created_at`, `updated_at`, `priority`, `is_exclusive`) VALUES
@@ -1831,7 +1831,7 @@ INSERT INTO `flexible_pricing_rules` (`rule_id`, `room_type_id`, `rule_type`, `d
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `floors`
+-- Table structure for table `floors`
 --
 
 CREATE TABLE `floors` (
@@ -1847,7 +1847,7 @@ CREATE TABLE `floors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý các tầng của khách sạn';
 
 --
--- Đang đổ dữ liệu cho bảng `floors`
+-- Dumping data for table `floors`
 --
 
 INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `description`, `facilities`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1889,7 +1889,7 @@ INSERT INTO `floors` (`floor_id`, `floor_number`, `floor_name`, `floor_type`, `d
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `holidays`
+-- Table structure for table `holidays`
 --
 
 CREATE TABLE `holidays` (
@@ -1904,7 +1904,7 @@ CREATE TABLE `holidays` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `holidays`
+-- Dumping data for table `holidays`
 --
 
 INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -1914,7 +1914,7 @@ INSERT INTO `holidays` (`holiday_id`, `name`, `start_date`, `end_date`, `descrip
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `hotel`
+-- Table structure for table `hotel`
 --
 
 CREATE TABLE `hotel` (
@@ -1925,7 +1925,7 @@ CREATE TABLE `hotel` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin khách sạn';
 
 --
--- Đang đổ dữ liệu cho bảng `hotel`
+-- Dumping data for table `hotel`
 --
 
 INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
@@ -1934,7 +1934,7 @@ INSERT INTO `hotel` (`hotel_id`, `name`, `address`, `description`) VALUES
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `invoices`
+-- Table structure for table `invoices`
 --
 
 CREATE TABLE `invoices` (
@@ -1948,7 +1948,7 @@ CREATE TABLE `invoices` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin hóa đơn';
 
 --
--- Đang đổ dữ liệu cho bảng `invoices`
+-- Dumping data for table `invoices`
 --
 
 INSERT INTO `invoices` (`invoice_id`, `booking_id`, `total_amount_vnd`, `issued_at`, `status`, `created_at`, `updated_at`) VALUES
@@ -1965,7 +1965,7 @@ INSERT INTO `invoices` (`invoice_id`, `booking_id`, `total_amount_vnd`, `issued_
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `language`
+-- Table structure for table `language`
 --
 
 CREATE TABLE `language` (
@@ -1974,7 +1974,7 @@ CREATE TABLE `language` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ngôn ngữ hỗ trợ';
 
 --
--- Đang đổ dữ liệu cho bảng `language`
+-- Dumping data for table `language`
 --
 
 INSERT INTO `language` (`language_code`, `name`) VALUES
@@ -1984,7 +1984,7 @@ INSERT INTO `language` (`language_code`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `meal_types`
+-- Table structure for table `meal_types`
 --
 
 CREATE TABLE `meal_types` (
@@ -1998,7 +1998,7 @@ CREATE TABLE `meal_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Danh sách các loại bữa ăn';
 
 --
--- Đang đổ dữ liệu cho bảng `meal_types`
+-- Dumping data for table `meal_types`
 --
 
 INSERT INTO `meal_types` (`id`, `type_name`, `description`, `base_price_vnd`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -2007,7 +2007,7 @@ INSERT INTO `meal_types` (`id`, `type_name`, `description`, `base_price_vnd`, `i
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `media_files`
+-- Table structure for table `media_files`
 --
 
 CREATE TABLE `media_files` (
@@ -2024,7 +2024,7 @@ CREATE TABLE `media_files` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý file media (ảnh đại diện, ảnh nội dung...) hỗ trợ SEO hình ảnh';
 
 --
--- Đang đổ dữ liệu cho bảng `media_files`
+-- Dumping data for table `media_files`
 --
 
 INSERT INTO `media_files` (`id`, `filename`, `filepath`, `alt_text`, `title`, `type`, `size`, `used_in`, `created_at`, `updated_at`) VALUES
@@ -2044,7 +2044,7 @@ INSERT INTO `media_files` (`id`, `filename`, `filepath`, `alt_text`, `title`, `t
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `messages`
+-- Table structure for table `messages`
 --
 
 CREATE TABLE `messages` (
@@ -2062,7 +2062,7 @@ CREATE TABLE `messages` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `messages`
+-- Dumping data for table `messages`
 --
 
 INSERT INTO `messages` (`id`, `conversation_id`, `sender_type`, `sender_id`, `message`, `is_from_bot`, `created_at`, `updated_at`, `is_read`, `message_type`, `metadata`) VALUES
@@ -2094,7 +2094,7 @@ INSERT INTO `messages` (`id`, `conversation_id`, `sender_type`, `sender_id`, `me
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `migrations`
+-- Table structure for table `migrations`
 --
 
 CREATE TABLE `migrations` (
@@ -2104,7 +2104,7 @@ CREATE TABLE `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `migrations`
+-- Dumping data for table `migrations`
 --
 
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
@@ -2138,12 +2138,17 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (29, '2025_08_23_100001_create_coupon_redemptions_table', 20),
 (30, '2025_08_23_110000_add_applied_amount_and_meta_to_coupon_redemptions', 21),
 (31, '2025_08_23_120000_make_user_id_nullable_in_coupon_redemptions', 22),
-(32, '2025_08_23_000000_add_assigned_by_to_booking_rooms', 23);
+(32, '2025_08_23_000000_add_assigned_by_to_booking_rooms', 23),
+(33, '2025_08_18_110300_create_notifications_table', 24),
+(34, '2025_08_18_233915_create_notification_types_table', 24),
+(35, '2025_08_18_234028_create_notifications_table', 24),
+(36, '2025_08_18_234051_create_user_notification_settings_table', 24),
+(37, '2025_08_19_154429_fix_notification_type_id_nullable', 24);
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `news`
+-- Table structure for table `news`
 --
 
 CREATE TABLE `news` (
@@ -2170,7 +2175,7 @@ CREATE TABLE `news` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `news`
+-- Dumping data for table `news`
 --
 
 INSERT INTO `news` (`id`, `slug`, `title`, `summary`, `content`, `tags`, `thumbnail_id`, `author_id`, `category_id`, `meta_title`, `meta_description`, `meta_keywords`, `canonical_url`, `schema_json`, `views`, `status`, `is_featured`, `published_at`, `created_at`, `updated_at`) VALUES
@@ -2185,32 +2190,7 @@ INSERT INTO `news` (`id`, `slug`, `title`, `summary`, `content`, `tags`, `thumbn
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `news1`
---
-
-CREATE TABLE `news1` (
-  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính, định danh bài viết',
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Slug URL thân thiện SEO – không dấu, không trùng',
-  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Nội dung đầy đủ bài viết (có thể chứa HTML, ảnh...)',
-  `thumbnail_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID ảnh đại diện – liên kết đến bảng media_files',
-  `author_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID người tạo bài viết – liên kết bảng users',
-  `meta_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Thẻ <title> tùy chỉnh cho SEO (nếu không để trống thì dùng thay title)',
-  `meta_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả bài viết hiển thị trong kết quả tìm kiếm Google',
-  `meta_keywords` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Từ khóa SEO cách nhau bằng dấu phẩy (,)',
-  `canonical_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'URL chuẩn để tránh trùng lặp nội dung',
-  `schema_json` json DEFAULT NULL COMMENT 'Dữ liệu Schema.org ở dạng JSON-LD để Google hiểu nội dung',
-  `views` int DEFAULT '0' COMMENT 'Số lượt xem bài viết',
-  `status` tinyint DEFAULT '1' COMMENT '1: Hiển thị, 0: Ẩn bài viết',
-  `published_at` datetime DEFAULT NULL COMMENT 'Ngày giờ bài viết được xuất bản',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật',
-  `category_id` bigint UNSIGNED DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu bài viết tin tức chuẩn SEO cho website khách sạn có phân quyền người viết';
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `news_categories`
+-- Table structure for table `news_categories`
 --
 
 CREATE TABLE `news_categories` (
@@ -2223,7 +2203,7 @@ CREATE TABLE `news_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục tin tức phân loại nội dung';
 
 --
--- Đang đổ dữ liệu cho bảng `news_categories`
+-- Dumping data for table `news_categories`
 --
 
 INSERT INTO `news_categories` (`id`, `name`, `slug`, `description`, `created_at`, `updated_at`) VALUES
@@ -2237,7 +2217,7 @@ INSERT INTO `news_categories` (`id`, `name`, `slug`, `description`, `created_at`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `news_comments`
+-- Table structure for table `news_comments`
 --
 
 CREATE TABLE `news_comments` (
@@ -2252,7 +2232,7 @@ CREATE TABLE `news_comments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `news_comments`
+-- Dumping data for table `news_comments`
 --
 
 INSERT INTO `news_comments` (`id`, `news_id`, `user_id`, `content`, `created_at`, `likes`, `parent_id`, `updated_at`) VALUES
@@ -2261,7 +2241,7 @@ INSERT INTO `news_comments` (`id`, `news_id`, `user_id`, `content`, `created_at`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `news_user_actions`
+-- Table structure for table `news_user_actions`
 --
 
 CREATE TABLE `news_user_actions` (
@@ -2276,7 +2256,7 @@ CREATE TABLE `news_user_actions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `news_user_actions`
+-- Dumping data for table `news_user_actions`
 --
 
 INSERT INTO `news_user_actions` (`id`, `news_id`, `user_id`, `is_liked`, `is_bookmarked`, `rating`, `created_at`, `updated_at`) VALUES
@@ -2287,24 +2267,72 @@ INSERT INTO `news_user_actions` (`id`, `news_id`, `user_id`, `is_liked`, `is_boo
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `notifications`
+-- Table structure for table `notifications`
 --
 
 CREATE TABLE `notifications` (
-  `notification_id` int NOT NULL,
-  `booking_id` int DEFAULT NULL,
-  `user_id` bigint UNSIGNED DEFAULT NULL,
-  `type` enum('cancellation','extension','reschedule','transfer','check_out') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `status` enum('pending','sent','failed') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notification_type_id` bigint UNSIGNED DEFAULT NULL,
+  `notifiable_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `notifiable_id` bigint UNSIGNED NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `data` json DEFAULT NULL,
+  `priority` enum('low','normal','high','urgent') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal',
+  `icon` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '?',
+  `color` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#3B82F6',
+  `url` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#',
+  `read_at` timestamp NULL DEFAULT NULL,
+  `status` enum('pending','sent','failed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `payment`
+-- Table structure for table `notification_types`
+--
+
+CREATE TABLE `notification_types` (
+  `id` bigint UNSIGNED NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message_template` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `priority` enum('low','normal','high','urgent') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal',
+  `icon` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '?',
+  `color` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '#3B82F6',
+  `target_roles` json NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `notification_types`
+--
+
+INSERT INTO `notification_types` (`id`, `name`, `title`, `message_template`, `priority`, `icon`, `color`, `target_roles`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'booking_new', 'Đặt phòng mới', 'Có đặt phòng mới #{booking_id} từ khách hàng {customer_name}. Phòng: {room_number}, Check-in: {checkin_date}', 'high', '🏨', '#10B981', '[\"admin\", \"hotel_manager\", \"receptionist\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(2, 'booking_cancelled', 'Hủy đặt phòng', 'Đặt phòng #{booking_id} đã bị hủy bởi {customer_name}. Lý do: {reason}', 'normal', '❌', '#EF4444', '[\"admin\", \"hotel_manager\", \"receptionist\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(3, 'booking_modified', 'Thay đổi đặt phòng', 'Đặt phòng #{booking_id} đã được thay đổi. Khách hàng: {customer_name}', 'normal', '✏️', '#F59E0B', '[\"admin\", \"hotel_manager\", \"receptionist\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(4, 'checkin_reminder', 'Nhắc nhở check-in', 'Khách hàng {customer_name} sẽ check-in hôm nay. Phòng: {room_number}', 'normal', '🔔', '#3B82F6', '[\"receptionist\", \"housekeeping\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(5, 'checkout_completed', 'Hoàn tất check-out', 'Khách hàng {customer_name} đã check-out khỏi phòng {room_number}', 'normal', '🚪', '#6B7280', '[\"receptionist\", \"housekeeping\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(6, 'payment_success', 'Thanh toán thành công', 'Thanh toán thành công {amount} VND cho đặt phòng #{booking_id}', 'normal', '💰', '#10B981', '[\"admin\", \"hotel_manager\", \"finance\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(7, 'payment_failed', 'Thanh toán thất bại', 'Thanh toán thất bại cho đặt phòng #{booking_id}. Số tiền: {amount} VND. Lý do: {reason}', 'high', '❗', '#EF4444', '[\"admin\", \"finance\", \"receptionist\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(8, 'refund_requested', 'Yêu cầu hoàn tiền', 'Khách hàng {customer_name} yêu cầu hoàn tiền {amount} VND cho đặt phòng #{booking_id}', 'high', '💸', '#F59E0B', '[\"admin\", \"hotel_manager\", \"finance\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(9, 'room_maintenance', 'Bảo trì phòng', 'Phòng {room_number} cần bảo trì. Vấn đề: {issue}', 'high', '🔧', '#F59E0B', '[\"admin\", \"hotel_manager\", \"housekeeping\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(10, 'room_cleaning_urgent', 'Dọn phòng khẩn cấp', 'Phòng {room_number} cần dọn dẹp khẩn cấp trước {time}', 'urgent', '🧹', '#EF4444', '[\"housekeeping\", \"receptionist\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(11, 'review_new', 'Đánh giá mới', 'Có đánh giá mới từ khách hàng {customer_name}. Rating: {rating}/5', 'normal', '⭐', '#F59E0B', '[\"marketing\", \"hotel_manager\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(12, 'review_negative', 'Đánh giá tiêu cực', 'Đánh giá tiêu cực ({rating}/5) từ khách hàng {customer_name}. Cần xử lý ngay!', 'urgent', '😞', '#EF4444', '[\"admin\", \"hotel_manager\", \"marketing\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(13, 'system_error', 'Lỗi hệ thống', 'Phát hiện lỗi hệ thống: {error_message}', 'urgent', '🚨', '#EF4444', '[\"admin\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(14, 'system_maintenance', 'Bảo trì hệ thống', 'Hệ thống sẽ bảo trì từ {start_time} đến {end_time}', 'high', '⚙️', '#6B7280', '[\"admin\", \"hotel_manager\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42'),
+(15, 'staff_shift_reminder', 'Nhắc nhở ca làm việc', 'Ca làm việc của bạn sẽ bắt đầu trong {minutes} phút', 'normal', '⏰', '#3B82F6', '[\"receptionist\", \"housekeeping\"]', 1, '2025-08-23 15:52:42', '2025-08-23 15:52:42');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payment`
 --
 
 CREATE TABLE `payment` (
@@ -2319,7 +2347,7 @@ CREATE TABLE `payment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin thanh toán';
 
 --
--- Đang đổ dữ liệu cho bảng `payment`
+-- Dumping data for table `payment`
 --
 
 INSERT INTO `payment` (`payment_id`, `booking_id`, `amount_vnd`, `payment_type`, `status`, `transaction_id`, `created_at`, `updated_at`) VALUES
@@ -2482,7 +2510,7 @@ INSERT INTO `payment` (`payment_id`, `booking_id`, `amount_vnd`, `payment_type`,
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `payment_settings`
+-- Table structure for table `payment_settings`
 --
 
 CREATE TABLE `payment_settings` (
@@ -2499,7 +2527,7 @@ CREATE TABLE `payment_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `payment_settings`
+-- Dumping data for table `payment_settings`
 --
 
 INSERT INTO `payment_settings` (`id`, `key`, `value`, `type`, `group_name`, `description`, `is_encrypted`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -2522,7 +2550,7 @@ INSERT INTO `payment_settings` (`id`, `key`, `value`, `type`, `group_name`, `des
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `permissions`
+-- Table structure for table `permissions`
 --
 
 CREATE TABLE `permissions` (
@@ -2535,7 +2563,7 @@ CREATE TABLE `permissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `permissions`
+-- Dumping data for table `permissions`
 --
 
 INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_at`, `parent_id`) VALUES
@@ -2562,7 +2590,7 @@ INSERT INTO `permissions` (`id`, `name`, `description`, `created_at`, `updated_a
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `permission_role`
+-- Table structure for table `permission_role`
 --
 
 CREATE TABLE `permission_role` (
@@ -2571,7 +2599,7 @@ CREATE TABLE `permission_role` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `permission_role`
+-- Dumping data for table `permission_role`
 --
 
 INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
@@ -2598,7 +2626,7 @@ INSERT INTO `permission_role` (`permission_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `personal_access_tokens`
+-- Table structure for table `personal_access_tokens`
 --
 
 CREATE TABLE `personal_access_tokens` (
@@ -2615,7 +2643,7 @@ CREATE TABLE `personal_access_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `personal_access_tokens`
+-- Dumping data for table `personal_access_tokens`
 --
 
 INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `name`, `token`, `abilities`, `last_used_at`, `expires_at`, `created_at`, `updated_at`) VALUES
@@ -2636,7 +2664,7 @@ INSERT INTO `personal_access_tokens` (`id`, `tokenable_type`, `tokenable_id`, `n
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `policy_applications`
+-- Table structure for table `policy_applications`
 --
 
 CREATE TABLE `policy_applications` (
@@ -2657,7 +2685,7 @@ CREATE TABLE `policy_applications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Ánh xạ chính sách theo điều kiện áp dụng như loại phòng, ngày lễ, occupancy, ngày cụ thể';
 
 --
--- Đang đổ dữ liệu cho bảng `policy_applications`
+-- Dumping data for table `policy_applications`
 --
 
 INSERT INTO `policy_applications` (`id`, `room_type_id`, `policy_type`, `policy_id`, `applies_to_holiday`, `min_occupancy_percent`, `max_occupancy_percent`, `min_days_before_checkin`, `date_from`, `date_to`, `priority`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -2673,7 +2701,7 @@ INSERT INTO `policy_applications` (`id`, `room_type_id`, `policy_type`, `policy_
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `pricing_config`
+-- Table structure for table `pricing_config`
 --
 
 CREATE TABLE `pricing_config` (
@@ -2687,7 +2715,7 @@ CREATE TABLE `pricing_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `pricing_config`
+-- Dumping data for table `pricing_config`
 --
 
 INSERT INTO `pricing_config` (`config_id`, `max_price_increase_percentage`, `max_absolute_price_vnd`, `use_exclusive_rule`, `exclusive_rule_type`, `created_at`, `updated_at`) VALUES
@@ -2696,7 +2724,7 @@ INSERT INTO `pricing_config` (`config_id`, `max_price_increase_percentage`, `max
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `representatives`
+-- Table structure for table `representatives`
 --
 
 CREATE TABLE `representatives` (
@@ -2714,7 +2742,7 @@ CREATE TABLE `representatives` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `representatives`
+-- Dumping data for table `representatives`
 --
 
 INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `full_name`, `phone_number`, `email`, `id_card`, `created_at`, `updated_at`, `user_id`) VALUES
@@ -2823,7 +2851,7 @@ INSERT INTO `representatives` (`id`, `booking_id`, `booking_code`, `room_id`, `f
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `reschedule_policies`
+-- Table structure for table `reschedule_policies`
 --
 
 CREATE TABLE `reschedule_policies` (
@@ -2842,7 +2870,7 @@ CREATE TABLE `reschedule_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `reschedule_policies`
+-- Dumping data for table `reschedule_policies`
 --
 
 INSERT INTO `reschedule_policies` (`policy_id`, `name`, `description`, `room_type_id`, `min_days_before_checkin`, `reschedule_fee_vnd`, `reschedule_fee_percentage`, `applies_to_holiday`, `applies_to_weekend`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -2857,7 +2885,7 @@ INSERT INTO `reschedule_policies` (`policy_id`, `name`, `description`, `room_typ
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `reviews`
+-- Table structure for table `reviews`
 --
 
 CREATE TABLE `reviews` (
@@ -2879,7 +2907,7 @@ CREATE TABLE `reviews` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `reviews`
+-- Dumping data for table `reviews`
 --
 
 INSERT INTO `reviews` (`review_id`, `booking_id`, `rating`, `title`, `comment`, `detailed_scores`, `pros`, `cons`, `travel_type`, `review_date`, `status`, `admin_note`, `helpful_count`, `created_at`, `updated_at`) VALUES
@@ -2890,43 +2918,7 @@ INSERT INTO `reviews` (`review_id`, `booking_id`, `rating`, `title`, `comment`, 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `reviews1`
---
-
-CREATE TABLE `reviews1` (
-  `review_id` int NOT NULL COMMENT 'Mã đánh giá',
-  `booking_id` int NOT NULL COMMENT 'Liên kết đến booking',
-  `rating` decimal(2,1) NOT NULL COMMENT 'Điểm đánh giá (0.0 – 5.0)',
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `review_date` date NOT NULL,
-  `helpful` int UNSIGNED DEFAULT '0',
-  `not_helpful` int UNSIGNED DEFAULT '0',
-  `travel_type` enum('business','couple','solo','family_young','group') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `admin_reply_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-  `admin_reply_date` date DEFAULT NULL,
-  `admin_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `score_cleanliness` decimal(2,1) DEFAULT NULL COMMENT 'Độ sạch sẽ',
-  `score_location` decimal(2,1) DEFAULT NULL COMMENT 'Vị trí',
-  `score_facilities` decimal(2,1) DEFAULT NULL COMMENT 'Cơ sở vật chất',
-  `score_service` decimal(2,1) DEFAULT NULL COMMENT 'Dịch vụ',
-  `score_value` decimal(2,1) DEFAULT NULL COMMENT 'Đáng giá tiền',
-  `status` enum('pending','approved','rejected') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'pending'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Đánh giá gắn với booking';
-
---
--- Đang đổ dữ liệu cho bảng `reviews1`
---
-
-INSERT INTO `reviews1` (`review_id`, `booking_id`, `rating`, `title`, `comment`, `review_date`, `helpful`, `not_helpful`, `travel_type`, `admin_reply_content`, `admin_reply_date`, `admin_name`, `created_at`, `updated_at`, `score_cleanliness`, `score_location`, `score_facilities`, `score_service`, `score_value`, `status`) VALUES
-(5, 23, 5.0, 'Chất lượng tuyệt vời', 'Chất lượng tuyệt vời', '2025-07-25', 1, 0, 'solo', NULL, NULL, NULL, '2025-07-25 03:20:12', '2025-07-24 20:21:20', NULL, NULL, NULL, NULL, NULL, 'approved');
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `review_media`
+-- Table structure for table `review_media`
 --
 
 CREATE TABLE `review_media` (
@@ -2939,7 +2931,7 @@ CREATE TABLE `review_media` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `review_media`
+-- Dumping data for table `review_media`
 --
 
 INSERT INTO `review_media` (`id`, `review_id`, `file_url`, `file_type`, `meta`, `created_at`) VALUES
@@ -2952,7 +2944,7 @@ INSERT INTO `review_media` (`id`, `review_id`, `file_url`, `file_type`, `meta`, 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `roles`
+-- Table structure for table `roles`
 --
 
 CREATE TABLE `roles` (
@@ -2964,7 +2956,7 @@ CREATE TABLE `roles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `roles`
+-- Dumping data for table `roles`
 --
 
 INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
@@ -2977,7 +2969,7 @@ INSERT INTO `roles` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `role_user`
+-- Table structure for table `role_user`
 --
 
 CREATE TABLE `role_user` (
@@ -2986,7 +2978,7 @@ CREATE TABLE `role_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `role_user`
+-- Dumping data for table `role_user`
 --
 
 INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
@@ -2997,7 +2989,7 @@ INSERT INTO `role_user` (`user_id`, `role_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room`
+-- Table structure for table `room`
 --
 
 CREATE TABLE `room` (
@@ -3015,7 +3007,7 @@ CREATE TABLE `room` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu thông tin phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `room`
+-- Dumping data for table `room`
 --
 
 INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed_type_fixed`, `status`, `description`, `last_cleaned`, `created_at`, `updated_at`) VALUES
@@ -3318,7 +3310,7 @@ INSERT INTO `room` (`room_id`, `room_type_id`, `name`, `image`, `floor_id`, `bed
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_bed_types`
+-- Table structure for table `room_bed_types`
 --
 
 CREATE TABLE `room_bed_types` (
@@ -3333,7 +3325,7 @@ CREATE TABLE `room_bed_types` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_meal_types`
+-- Table structure for table `room_meal_types`
 --
 
 CREATE TABLE `room_meal_types` (
@@ -3347,7 +3339,7 @@ CREATE TABLE `room_meal_types` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_occupancy`
+-- Table structure for table `room_occupancy`
 --
 
 CREATE TABLE `room_occupancy` (
@@ -3362,7 +3354,7 @@ CREATE TABLE `room_occupancy` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_occupancy`
+-- Dumping data for table `room_occupancy`
 --
 
 INSERT INTO `room_occupancy` (`occupancy_id`, `room_type_id`, `date`, `total_rooms`, `booked_rooms`, `created_at`, `updated_at`) VALUES
@@ -3382,7 +3374,7 @@ INSERT INTO `room_occupancy` (`occupancy_id`, `room_type_id`, `date`, `total_roo
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_option`
+-- Table structure for table `room_option`
 --
 
 CREATE TABLE `room_option` (
@@ -3411,7 +3403,7 @@ CREATE TABLE `room_option` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu tùy chọn giá và dịch vụ của phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `room_option`
+-- Dumping data for table `room_option`
 --
 
 INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`, `max_guests`, `min_guests`, `urgency_message`, `most_popular`, `recommended`, `meal_type`, `bed_type`, `recommendation_score`, `deposit_policy_id`, `check_out_policy_id`, `policy_applied_reason`, `policy_applied_date`, `policy_snapshot_json`, `cancellation_policy_id`, `package_id`, `adjusted_price`, `created_at`, `updated_at`) VALUES
@@ -3518,7 +3510,7 @@ INSERT INTO `room_option` (`option_id`, `room_id`, `name`, `price_per_night_vnd`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_option_promotion`
+-- Table structure for table `room_option_promotion`
 --
 
 CREATE TABLE `room_option_promotion` (
@@ -3532,7 +3524,7 @@ CREATE TABLE `room_option_promotion` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_price_history`
+-- Table structure for table `room_price_history`
 --
 
 CREATE TABLE `room_price_history` (
@@ -3547,7 +3539,7 @@ CREATE TABLE `room_price_history` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_price_history`
+-- Dumping data for table `room_price_history`
 --
 
 INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `base_price`, `adjusted_price`, `applied_rules`, `created_at`, `updated_at`) VALUES
@@ -3910,7 +3902,7 @@ INSERT INTO `room_price_history` (`price_history_id`, `room_type_id`, `date`, `b
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_transfers`
+-- Table structure for table `room_transfers`
 --
 
 CREATE TABLE `room_transfers` (
@@ -3930,7 +3922,7 @@ CREATE TABLE `room_transfers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_transfers`
+-- Dumping data for table `room_transfers`
 --
 
 INSERT INTO `room_transfers` (`transfer_id`, `booking_id`, `old_room_id`, `new_room_id`, `new_option_id`, `transfer_policy_id`, `status`, `price_difference_vnd`, `payment_id`, `processed_by`, `reason`, `created_at`, `updated_at`) VALUES
@@ -3948,7 +3940,7 @@ INSERT INTO `room_transfers` (`transfer_id`, `booking_id`, `old_room_id`, `new_r
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_transfer_policies`
+-- Table structure for table `room_transfer_policies`
 --
 
 CREATE TABLE `room_transfer_policies` (
@@ -3970,7 +3962,7 @@ CREATE TABLE `room_transfer_policies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Chính sách chuyển phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `room_transfer_policies`
+-- Dumping data for table `room_transfer_policies`
 --
 
 INSERT INTO `room_transfer_policies` (`policy_id`, `name`, `description`, `transfer_fee_vnd`, `transfer_fee_percentage`, `min_days_before_check_in`, `applies_to_holiday`, `applies_to_weekend`, `requires_guest_confirmation`, `room_type_id`, `is_active`, `created_at`, `updated_at`, `deleted_at`, `applies_to_package_change`) VALUES
@@ -3987,7 +3979,7 @@ INSERT INTO `room_transfer_policies` (`policy_id`, `name`, `description`, `trans
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_types`
+-- Table structure for table `room_types`
 --
 
 CREATE TABLE `room_types` (
@@ -4005,7 +3997,7 @@ CREATE TABLE `room_types` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_types`
+-- Dumping data for table `room_types`
 --
 
 INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `total_room`, `base_price`, `room_area`, `view`, `rating`, `max_guests`, `is_active`) VALUES
@@ -4020,7 +4012,7 @@ INSERT INTO `room_types` (`room_type_id`, `room_code`, `name`, `description`, `t
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_type_amenity`
+-- Table structure for table `room_type_amenity`
 --
 
 CREATE TABLE `room_type_amenity` (
@@ -4032,7 +4024,7 @@ CREATE TABLE `room_type_amenity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_type_amenity`
+-- Dumping data for table `room_type_amenity`
 --
 
 INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`, `created_at`, `updated_at`) VALUES
@@ -4257,7 +4249,7 @@ INSERT INTO `room_type_amenity` (`room_type_id`, `amenity_id`, `is_highlighted`,
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_type_image`
+-- Table structure for table `room_type_image`
 --
 
 CREATE TABLE `room_type_image` (
@@ -4272,7 +4264,7 @@ CREATE TABLE `room_type_image` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Lưu danh sách ảnh của phòng';
 
 --
--- Đang đổ dữ liệu cho bảng `room_type_image`
+-- Dumping data for table `room_type_image`
 --
 
 INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_path`, `image_url`, `is_main`, `created_at`, `updated_at`) VALUES
@@ -4337,7 +4329,7 @@ INSERT INTO `room_type_image` (`image_id`, `room_type_id`, `alt_text`, `image_pa
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_type_package`
+-- Table structure for table `room_type_package`
 --
 
 CREATE TABLE `room_type_package` (
@@ -4353,7 +4345,7 @@ CREATE TABLE `room_type_package` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_type_package`
+-- Dumping data for table `room_type_package`
 --
 
 INSERT INTO `room_type_package` (`package_id`, `room_type_id`, `name`, `price_modifier_vnd`, `include_all_services`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -4369,7 +4361,7 @@ INSERT INTO `room_type_package` (`package_id`, `room_type_id`, `name`, `price_mo
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_type_package_services`
+-- Table structure for table `room_type_package_services`
 --
 
 CREATE TABLE `room_type_package_services` (
@@ -4381,7 +4373,7 @@ CREATE TABLE `room_type_package_services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_type_package_services`
+-- Dumping data for table `room_type_package_services`
 --
 
 INSERT INTO `room_type_package_services` (`id`, `package_id`, `service_id`, `created_at`, `updated_at`) VALUES
@@ -4391,7 +4383,7 @@ INSERT INTO `room_type_package_services` (`id`, `package_id`, `service_id`, `cre
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `room_type_service`
+-- Table structure for table `room_type_service`
 --
 
 CREATE TABLE `room_type_service` (
@@ -4403,7 +4395,7 @@ CREATE TABLE `room_type_service` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `room_type_service`
+-- Dumping data for table `room_type_service`
 --
 
 INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at`, `updated_at`) VALUES
@@ -4412,7 +4404,7 @@ INSERT INTO `room_type_service` (`id`, `room_type_id`, `service_id`, `created_at
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `services`
+-- Table structure for table `services`
 --
 
 CREATE TABLE `services` (
@@ -4428,7 +4420,7 @@ CREATE TABLE `services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `services`
+-- Dumping data for table `services`
 --
 
 INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`, `included_services`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -4450,7 +4442,7 @@ INSERT INTO `services` (`service_id`, `name`, `description`, `price_vnd`, `unit`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `sessions`
+-- Table structure for table `sessions`
 --
 
 CREATE TABLE `sessions` (
@@ -4463,7 +4455,7 @@ CREATE TABLE `sessions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `sessions`
+-- Dumping data for table `sessions`
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
@@ -4482,7 +4474,7 @@ INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, 
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `table_translation`
+-- Table structure for table `table_translation`
 --
 
 CREATE TABLE `table_translation` (
@@ -4495,7 +4487,7 @@ CREATE TABLE `table_translation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `table_translation`
+-- Dumping data for table `table_translation`
 --
 
 INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -4505,7 +4497,7 @@ INSERT INTO `table_translation` (`id`, `table_name`, `display_name`, `is_active`
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `translation`
+-- Table structure for table `translation`
 --
 
 CREATE TABLE `translation` (
@@ -4520,7 +4512,7 @@ CREATE TABLE `translation` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `users`
+-- Table structure for table `users`
 --
 
 CREATE TABLE `users` (
@@ -4546,7 +4538,7 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `users`
+-- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `google_id`, `avatar`, `email_verified_at`, `password`, `phone`, `address`, `identity_code`, `role`, `two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`, `remember_token`, `current_team_id`, `profile_photo_path`, `created_at`, `updated_at`) VALUES
@@ -4564,7 +4556,7 @@ INSERT INTO `users` (`id`, `name`, `email`, `google_id`, `avatar`, `email_verifi
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `user_notifications`
+-- Table structure for table `user_notifications`
 --
 
 CREATE TABLE `user_notifications` (
@@ -4579,7 +4571,7 @@ CREATE TABLE `user_notifications` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `user_notifications`
+-- Dumping data for table `user_notifications`
 --
 
 INSERT INTO `user_notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `data`, `read_at`, `created_at`, `updated_at`) VALUES
@@ -4600,7 +4592,24 @@ INSERT INTO `user_notifications` (`id`, `type`, `notifiable_type`, `notifiable_i
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `weekend_days`
+-- Table structure for table `user_notification_settings`
+--
+
+CREATE TABLE `user_notification_settings` (
+  `id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED NOT NULL,
+  `notification_type_id` bigint UNSIGNED NOT NULL,
+  `is_enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `email_enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `push_enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `weekend_days`
 --
 
 CREATE TABLE `weekend_days` (
@@ -4612,7 +4621,7 @@ CREATE TABLE `weekend_days` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Đang đổ dữ liệu cho bảng `weekend_days`
+-- Dumping data for table `weekend_days`
 --
 
 INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -4625,17 +4634,17 @@ INSERT INTO `weekend_days` (`id`, `day_of_week`, `is_active`, `created_at`, `upd
 (9, 'Sunday', 1, '2025-06-14 02:38:18', '2025-06-23 00:42:49');
 
 --
--- Chỉ mục cho các bảng đã đổ
+-- Indexes for dumped tables
 --
 
 --
--- Chỉ mục cho bảng `amenities`
+-- Indexes for table `amenities`
 --
 ALTER TABLE `amenities`
   ADD PRIMARY KEY (`amenity_id`);
 
 --
--- Chỉ mục cho bảng `audit_logs`
+-- Indexes for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
   ADD PRIMARY KEY (`audit_id`),
@@ -4647,13 +4656,13 @@ ALTER TABLE `audit_logs`
   ADD KEY `idx_ip` (`ip_address`);
 
 --
--- Chỉ mục cho bảng `bed_types`
+-- Indexes for table `bed_types`
 --
 ALTER TABLE `bed_types`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `booking`
+-- Indexes for table `booking`
 --
 ALTER TABLE `booking`
   ADD PRIMARY KEY (`booking_id`),
@@ -4663,14 +4672,14 @@ ALTER TABLE `booking`
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Chỉ mục cho bảng `booking_extensions`
+-- Indexes for table `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   ADD PRIMARY KEY (`extension_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Chỉ mục cho bảng `booking_reschedules`
+-- Indexes for table `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   ADD PRIMARY KEY (`reschedule_id`),
@@ -4682,7 +4691,7 @@ ALTER TABLE `booking_reschedules`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Chỉ mục cho bảng `booking_rooms`
+-- Indexes for table `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
   ADD PRIMARY KEY (`id`),
@@ -4692,13 +4701,13 @@ ALTER TABLE `booking_rooms`
   ADD KEY `booking_rooms_option_id_foreign` (`option_id`);
 
 --
--- Chỉ mục cho bảng `booking_room_children`
+-- Indexes for table `booking_room_children`
 --
 ALTER TABLE `booking_room_children`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `booking_services`
+-- Indexes for table `booking_services`
 --
 ALTER TABLE `booking_services`
   ADD PRIMARY KEY (`id`),
@@ -4708,13 +4717,13 @@ ALTER TABLE `booking_services`
   ADD KEY `idx_payment_status` (`payment_status`);
 
 --
--- Chỉ mục cho bảng `cancellation_policies`
+-- Indexes for table `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Chỉ mục cho bảng `cancellation_requests`
+-- Indexes for table `cancellation_requests`
 --
 ALTER TABLE `cancellation_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -4723,13 +4732,13 @@ ALTER TABLE `cancellation_requests`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Chỉ mục cho bảng `check_in_policies`
+-- Indexes for table `check_in_policies`
 --
 ALTER TABLE `check_in_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Chỉ mục cho bảng `check_in_requests`
+-- Indexes for table `check_in_requests`
 --
 ALTER TABLE `check_in_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -4737,13 +4746,13 @@ ALTER TABLE `check_in_requests`
   ADD KEY `policy_id` (`policy_id`);
 
 --
--- Chỉ mục cho bảng `check_out_policies`
+-- Indexes for table `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Chỉ mục cho bảng `check_out_requests`
+-- Indexes for table `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -4751,20 +4760,20 @@ ALTER TABLE `check_out_requests`
   ADD KEY `policy_id` (`policy_id`);
 
 --
--- Chỉ mục cho bảng `children_surcharges`
+-- Indexes for table `children_surcharges`
 --
 ALTER TABLE `children_surcharges`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `compensation_policies`
+-- Indexes for table `compensation_policies`
 --
 ALTER TABLE `compensation_policies`
   ADD PRIMARY KEY (`compensation_policy_id`),
   ADD KEY `applies_to_room_type_id` (`applies_to_room_type_id`);
 
 --
--- Chỉ mục cho bảng `compensation_requests`
+-- Indexes for table `compensation_requests`
 --
 ALTER TABLE `compensation_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -4774,7 +4783,7 @@ ALTER TABLE `compensation_requests`
   ADD KEY `approved_by` (`approved_by`);
 
 --
--- Chỉ mục cho bảng `conversations`
+-- Indexes for table `conversations`
 --
 ALTER TABLE `conversations`
   ADD PRIMARY KEY (`id`),
@@ -4783,7 +4792,7 @@ ALTER TABLE `conversations`
   ADD KEY `conversations_handover_to_user_id_foreign` (`handover_to_user_id`);
 
 --
--- Chỉ mục cho bảng `coupons`
+-- Indexes for table `coupons`
 --
 ALTER TABLE `coupons`
   ADD PRIMARY KEY (`id`),
@@ -4794,7 +4803,7 @@ ALTER TABLE `coupons`
   ADD KEY `coupons_created_by_foreign` (`created_by`);
 
 --
--- Chỉ mục cho bảng `coupon_redemptions`
+-- Indexes for table `coupon_redemptions`
 --
 ALTER TABLE `coupon_redemptions`
   ADD PRIMARY KEY (`id`),
@@ -4804,25 +4813,25 @@ ALTER TABLE `coupon_redemptions`
   ADD KEY `coupon_redemptions_redeemed_at_index` (`redeemed_at`);
 
 --
--- Chỉ mục cho bảng `currency`
+-- Indexes for table `currency`
 --
 ALTER TABLE `currency`
   ADD PRIMARY KEY (`currency_code`);
 
 --
--- Chỉ mục cho bảng `datafeeds`
+-- Indexes for table `datafeeds`
 --
 ALTER TABLE `datafeeds`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `deposit_policies`
+-- Indexes for table `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Chỉ mục cho bảng `dynamic_pricing_rules`
+-- Indexes for table `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD PRIMARY KEY (`rule_id`),
@@ -4830,19 +4839,19 @@ ALTER TABLE `dynamic_pricing_rules`
   ADD KEY `idx_dynamic_priority` (`priority`,`is_exclusive`);
 
 --
--- Chỉ mục cho bảng `events`
+-- Indexes for table `events`
 --
 ALTER TABLE `events`
   ADD PRIMARY KEY (`event_id`);
 
 --
--- Chỉ mục cho bảng `extension_policies`
+-- Indexes for table `extension_policies`
 --
 ALTER TABLE `extension_policies`
   ADD PRIMARY KEY (`policy_id`);
 
 --
--- Chỉ mục cho bảng `extension_requests`
+-- Indexes for table `extension_requests`
 --
 ALTER TABLE `extension_requests`
   ADD PRIMARY KEY (`request_id`),
@@ -4851,20 +4860,20 @@ ALTER TABLE `extension_requests`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Chỉ mục cho bảng `failed_jobs`
+-- Indexes for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`);
 
 --
--- Chỉ mục cho bảng `faqs`
+-- Indexes for table `faqs`
 --
 ALTER TABLE `faqs`
   ADD PRIMARY KEY (`faq_id`);
 
 --
--- Chỉ mục cho bảng `flexible_pricing_rules`
+-- Indexes for table `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   ADD PRIMARY KEY (`rule_id`),
@@ -4874,65 +4883,65 @@ ALTER TABLE `flexible_pricing_rules`
   ADD KEY `idx_priority` (`priority`,`is_exclusive`);
 
 --
--- Chỉ mục cho bảng `floors`
+-- Indexes for table `floors`
 --
 ALTER TABLE `floors`
   ADD PRIMARY KEY (`floor_id`),
   ADD UNIQUE KEY `floor_number` (`floor_number`);
 
 --
--- Chỉ mục cho bảng `holidays`
+-- Indexes for table `holidays`
 --
 ALTER TABLE `holidays`
   ADD PRIMARY KEY (`holiday_id`);
 
 --
--- Chỉ mục cho bảng `hotel`
+-- Indexes for table `hotel`
 --
 ALTER TABLE `hotel`
   ADD PRIMARY KEY (`hotel_id`),
   ADD KEY `idx_hotel_id` (`hotel_id`);
 
 --
--- Chỉ mục cho bảng `invoices`
+-- Indexes for table `invoices`
 --
 ALTER TABLE `invoices`
   ADD PRIMARY KEY (`invoice_id`),
   ADD KEY `booking_id` (`booking_id`);
 
 --
--- Chỉ mục cho bảng `language`
+-- Indexes for table `language`
 --
 ALTER TABLE `language`
   ADD PRIMARY KEY (`language_code`);
 
 --
--- Chỉ mục cho bảng `meal_types`
+-- Indexes for table `meal_types`
 --
 ALTER TABLE `meal_types`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `media_files`
+-- Indexes for table `media_files`
 --
 ALTER TABLE `media_files`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `messages`
+-- Indexes for table `messages`
 --
 ALTER TABLE `messages`
   ADD PRIMARY KEY (`id`),
   ADD KEY `messages_conversation_id_foreign` (`conversation_id`);
 
 --
--- Chỉ mục cho bảng `migrations`
+-- Indexes for table `migrations`
 --
 ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`);
 
 --
--- Chỉ mục cho bảng `news`
+-- Indexes for table `news`
 --
 ALTER TABLE `news`
   ADD PRIMARY KEY (`id`),
@@ -4942,24 +4951,14 @@ ALTER TABLE `news`
   ADD KEY `category_id` (`category_id`);
 
 --
--- Chỉ mục cho bảng `news1`
---
-ALTER TABLE `news1`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `fk_news_thumbnail` (`thumbnail_id`),
-  ADD KEY `fk_news_author` (`author_id`),
-  ADD KEY `category_id` (`category_id`);
-
---
--- Chỉ mục cho bảng `news_categories`
+-- Indexes for table `news_categories`
 --
 ALTER TABLE `news_categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `slug` (`slug`);
 
 --
--- Chỉ mục cho bảng `news_comments`
+-- Indexes for table `news_comments`
 --
 ALTER TABLE `news_comments`
   ADD PRIMARY KEY (`id`),
@@ -4968,7 +4967,7 @@ ALTER TABLE `news_comments`
   ADD KEY `parent_id` (`parent_id`);
 
 --
--- Chỉ mục cho bảng `news_user_actions`
+-- Indexes for table `news_user_actions`
 --
 ALTER TABLE `news_user_actions`
   ADD PRIMARY KEY (`id`),
@@ -4976,29 +4975,38 @@ ALTER TABLE `news_user_actions`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Chỉ mục cho bảng `notifications`
+-- Indexes for table `notifications`
 --
 ALTER TABLE `notifications`
-  ADD PRIMARY KEY (`notification_id`),
-  ADD KEY `booking_id` (`booking_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`),
+  ADD KEY `notifications_read_at_index` (`read_at`),
+  ADD KEY `notifications_created_at_index` (`created_at`),
+  ADD KEY `notifications_notification_type_id_foreign` (`notification_type_id`);
 
 --
--- Chỉ mục cho bảng `payment`
+-- Indexes for table `notification_types`
+--
+ALTER TABLE `notification_types`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `notification_types_name_unique` (`name`);
+
+--
+-- Indexes for table `payment`
 --
 ALTER TABLE `payment`
   ADD PRIMARY KEY (`payment_id`),
   ADD KEY `idx_booking_status` (`booking_id`,`status`);
 
 --
--- Chỉ mục cho bảng `payment_settings`
+-- Indexes for table `payment_settings`
 --
 ALTER TABLE `payment_settings`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `payment_settings_key_unique` (`key`);
 
 --
--- Chỉ mục cho bảng `permissions`
+-- Indexes for table `permissions`
 --
 ALTER TABLE `permissions`
   ADD PRIMARY KEY (`id`),
@@ -5006,14 +5014,14 @@ ALTER TABLE `permissions`
   ADD KEY `idx_permissions_parent_id` (`parent_id`);
 
 --
--- Chỉ mục cho bảng `permission_role`
+-- Indexes for table `permission_role`
 --
 ALTER TABLE `permission_role`
   ADD PRIMARY KEY (`permission_id`,`role_id`),
   ADD KEY `role_id` (`role_id`);
 
 --
--- Chỉ mục cho bảng `personal_access_tokens`
+-- Indexes for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
   ADD PRIMARY KEY (`id`),
@@ -5021,20 +5029,20 @@ ALTER TABLE `personal_access_tokens`
   ADD KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`);
 
 --
--- Chỉ mục cho bảng `policy_applications`
+-- Indexes for table `policy_applications`
 --
 ALTER TABLE `policy_applications`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_policy_match` (`room_type_id`,`policy_type`,`applies_to_holiday`);
 
 --
--- Chỉ mục cho bảng `pricing_config`
+-- Indexes for table `pricing_config`
 --
 ALTER TABLE `pricing_config`
   ADD PRIMARY KEY (`config_id`);
 
 --
--- Chỉ mục cho bảng `representatives`
+-- Indexes for table `representatives`
 --
 ALTER TABLE `representatives`
   ADD PRIMARY KEY (`id`),
@@ -5043,42 +5051,35 @@ ALTER TABLE `representatives`
   ADD KEY `fk_representative_user` (`user_id`);
 
 --
--- Chỉ mục cho bảng `reschedule_policies`
+-- Indexes for table `reschedule_policies`
 --
 ALTER TABLE `reschedule_policies`
   ADD PRIMARY KEY (`policy_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Chỉ mục cho bảng `reviews`
+-- Indexes for table `reviews`
 --
 ALTER TABLE `reviews`
   ADD PRIMARY KEY (`review_id`),
   ADD KEY `reviews_booking_id_index` (`booking_id`);
 
 --
--- Chỉ mục cho bảng `reviews1`
---
-ALTER TABLE `reviews1`
-  ADD PRIMARY KEY (`review_id`),
-  ADD KEY `booking_id` (`booking_id`);
-
---
--- Chỉ mục cho bảng `review_media`
+-- Indexes for table `review_media`
 --
 ALTER TABLE `review_media`
   ADD PRIMARY KEY (`id`),
   ADD KEY `review_media_review_id_index` (`review_id`);
 
 --
--- Chỉ mục cho bảng `roles`
+-- Indexes for table `roles`
 --
 ALTER TABLE `roles`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
 
 --
--- Chỉ mục cho bảng `role_user`
+-- Indexes for table `role_user`
 --
 ALTER TABLE `role_user`
   ADD PRIMARY KEY (`user_id`,`role_id`),
@@ -5086,7 +5087,7 @@ ALTER TABLE `role_user`
   ADD KEY `role_id` (`role_id`);
 
 --
--- Chỉ mục cho bảng `room`
+-- Indexes for table `room`
 --
 ALTER TABLE `room`
   ADD PRIMARY KEY (`room_id`),
@@ -5095,7 +5096,7 @@ ALTER TABLE `room`
   ADD KEY `floor_id` (`floor_id`);
 
 --
--- Chỉ mục cho bảng `room_bed_types`
+-- Indexes for table `room_bed_types`
 --
 ALTER TABLE `room_bed_types`
   ADD PRIMARY KEY (`room_id`),
@@ -5103,7 +5104,7 @@ ALTER TABLE `room_bed_types`
   ADD KEY `idx_bed_type_id` (`bed_type_id`);
 
 --
--- Chỉ mục cho bảng `room_meal_types`
+-- Indexes for table `room_meal_types`
 --
 ALTER TABLE `room_meal_types`
   ADD PRIMARY KEY (`room_id`),
@@ -5111,14 +5112,14 @@ ALTER TABLE `room_meal_types`
   ADD KEY `idx_meal_type_id` (`meal_type_id`);
 
 --
--- Chỉ mục cho bảng `room_occupancy`
+-- Indexes for table `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   ADD PRIMARY KEY (`occupancy_id`),
   ADD UNIQUE KEY `idx_room_type_date` (`room_type_id`,`date`);
 
 --
--- Chỉ mục cho bảng `room_option`
+-- Indexes for table `room_option`
 --
 ALTER TABLE `room_option`
   ADD PRIMARY KEY (`option_id`),
@@ -5131,21 +5132,21 @@ ALTER TABLE `room_option`
   ADD KEY `check_out_policy_id` (`check_out_policy_id`);
 
 --
--- Chỉ mục cho bảng `room_option_promotion`
+-- Indexes for table `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   ADD PRIMARY KEY (`promotion_id`),
   ADD KEY `option_id` (`option_id`);
 
 --
--- Chỉ mục cho bảng `room_price_history`
+-- Indexes for table `room_price_history`
 --
 ALTER TABLE `room_price_history`
   ADD PRIMARY KEY (`price_history_id`),
   ADD UNIQUE KEY `idx_room_type_date` (`room_type_id`,`date`);
 
 --
--- Chỉ mục cho bảng `room_transfers`
+-- Indexes for table `room_transfers`
 --
 ALTER TABLE `room_transfers`
   ADD PRIMARY KEY (`transfer_id`),
@@ -5158,41 +5159,41 @@ ALTER TABLE `room_transfers`
   ADD KEY `processed_by` (`processed_by`);
 
 --
--- Chỉ mục cho bảng `room_transfer_policies`
+-- Indexes for table `room_transfer_policies`
 --
 ALTER TABLE `room_transfer_policies`
   ADD PRIMARY KEY (`policy_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Chỉ mục cho bảng `room_types`
+-- Indexes for table `room_types`
 --
 ALTER TABLE `room_types`
   ADD PRIMARY KEY (`room_type_id`);
 
 --
--- Chỉ mục cho bảng `room_type_amenity`
+-- Indexes for table `room_type_amenity`
 --
 ALTER TABLE `room_type_amenity`
   ADD PRIMARY KEY (`room_type_id`,`amenity_id`),
   ADD KEY `amenity_id` (`amenity_id`);
 
 --
--- Chỉ mục cho bảng `room_type_image`
+-- Indexes for table `room_type_image`
 --
 ALTER TABLE `room_type_image`
   ADD PRIMARY KEY (`image_id`),
   ADD KEY `room_image_ibfk_1` (`room_type_id`);
 
 --
--- Chỉ mục cho bảng `room_type_package`
+-- Indexes for table `room_type_package`
 --
 ALTER TABLE `room_type_package`
   ADD PRIMARY KEY (`package_id`),
   ADD KEY `room_type_id` (`room_type_id`);
 
 --
--- Chỉ mục cho bảng `room_type_package_services`
+-- Indexes for table `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
   ADD PRIMARY KEY (`id`),
@@ -5200,7 +5201,7 @@ ALTER TABLE `room_type_package_services`
   ADD KEY `service_id` (`service_id`);
 
 --
--- Chỉ mục cho bảng `room_type_service`
+-- Indexes for table `room_type_service`
 --
 ALTER TABLE `room_type_service`
   ADD PRIMARY KEY (`id`),
@@ -5208,13 +5209,13 @@ ALTER TABLE `room_type_service`
   ADD KEY `service_id` (`service_id`);
 
 --
--- Chỉ mục cho bảng `services`
+-- Indexes for table `services`
 --
 ALTER TABLE `services`
   ADD PRIMARY KEY (`service_id`);
 
 --
--- Chỉ mục cho bảng `sessions`
+-- Indexes for table `sessions`
 --
 ALTER TABLE `sessions`
   ADD PRIMARY KEY (`id`),
@@ -5222,14 +5223,14 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
--- Chỉ mục cho bảng `table_translation`
+-- Indexes for table `table_translation`
 --
 ALTER TABLE `table_translation`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `table_translation_table_name_unique` (`table_name`);
 
 --
--- Chỉ mục cho bảng `translation`
+-- Indexes for table `translation`
 --
 ALTER TABLE `translation`
   ADD PRIMARY KEY (`translation_id`),
@@ -5237,7 +5238,7 @@ ALTER TABLE `translation`
   ADD KEY `language_code` (`language_code`);
 
 --
--- Chỉ mục cho bảng `users`
+-- Indexes for table `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
@@ -5245,7 +5246,7 @@ ALTER TABLE `users`
   ADD KEY `users_google_id_index` (`google_id`);
 
 --
--- Chỉ mục cho bảng `user_notifications`
+-- Indexes for table `user_notifications`
 --
 ALTER TABLE `user_notifications`
   ADD PRIMARY KEY (`id`),
@@ -5253,447 +5254,449 @@ ALTER TABLE `user_notifications`
   ADD KEY `user_notifications_read_at_index` (`read_at`);
 
 --
--- Chỉ mục cho bảng `weekend_days`
+-- Indexes for table `user_notification_settings`
+--
+ALTER TABLE `user_notification_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_notification_settings_user_id_notification_type_id_unique` (`user_id`,`notification_type_id`),
+  ADD KEY `user_notification_settings_notification_type_id_foreign` (`notification_type_id`);
+
+--
+-- Indexes for table `weekend_days`
 --
 ALTER TABLE `weekend_days`
   ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT cho các bảng đã đổ
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT cho bảng `amenities`
+-- AUTO_INCREMENT for table `amenities`
 --
 ALTER TABLE `amenities`
   MODIFY `amenity_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
--- AUTO_INCREMENT cho bảng `audit_logs`
+-- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
   MODIFY `audit_id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=450;
 
 --
--- AUTO_INCREMENT cho bảng `bed_types`
+-- AUTO_INCREMENT for table `bed_types`
 --
 ALTER TABLE `bed_types`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính', AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT cho bảng `booking`
+-- AUTO_INCREMENT for table `booking`
 --
 ALTER TABLE `booking`
   MODIFY `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng', AUTO_INCREMENT=199;
 
 --
--- AUTO_INCREMENT cho bảng `booking_extensions`
+-- AUTO_INCREMENT for table `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   MODIFY `extension_id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT cho bảng `booking_reschedules`
+-- AUTO_INCREMENT for table `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   MODIFY `reschedule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT cho bảng `booking_rooms`
+-- AUTO_INCREMENT for table `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
 
 --
--- AUTO_INCREMENT cho bảng `booking_room_children`
+-- AUTO_INCREMENT for table `booking_room_children`
 --
 ALTER TABLE `booking_room_children`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
 
 --
--- AUTO_INCREMENT cho bảng `booking_services`
+-- AUTO_INCREMENT for table `booking_services`
 --
 ALTER TABLE `booking_services`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
--- AUTO_INCREMENT cho bảng `cancellation_policies`
+-- AUTO_INCREMENT for table `cancellation_policies`
 --
 ALTER TABLE `cancellation_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- AUTO_INCREMENT cho bảng `cancellation_requests`
+-- AUTO_INCREMENT for table `cancellation_requests`
 --
 ALTER TABLE `cancellation_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã yêu cầu hủy';
 
 --
--- AUTO_INCREMENT cho bảng `check_in_policies`
+-- AUTO_INCREMENT for table `check_in_policies`
 --
 ALTER TABLE `check_in_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã chính sách nhận phòng', AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT cho bảng `check_in_requests`
+-- AUTO_INCREMENT for table `check_in_requests`
 --
 ALTER TABLE `check_in_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, tự động tăng';
 
 --
--- AUTO_INCREMENT cho bảng `check_out_policies`
+-- AUTO_INCREMENT for table `check_out_policies`
 --
 ALTER TABLE `check_out_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT cho bảng `check_out_requests`
+-- AUTO_INCREMENT for table `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, tự động tăng', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT cho bảng `children_surcharges`
+-- AUTO_INCREMENT for table `children_surcharges`
 --
 ALTER TABLE `children_surcharges`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT cho bảng `compensation_policies`
+-- AUTO_INCREMENT for table `compensation_policies`
 --
 ALTER TABLE `compensation_policies`
   MODIFY `compensation_policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT cho bảng `compensation_requests`
+-- AUTO_INCREMENT for table `compensation_requests`
 --
 ALTER TABLE `compensation_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'ID yêu cầu bồi thường', AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT cho bảng `conversations`
+-- AUTO_INCREMENT for table `conversations`
 --
 ALTER TABLE `conversations`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT cho bảng `coupons`
+-- AUTO_INCREMENT for table `coupons`
 --
 ALTER TABLE `coupons`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT cho bảng `coupon_redemptions`
+-- AUTO_INCREMENT for table `coupon_redemptions`
 --
 ALTER TABLE `coupon_redemptions`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT cho bảng `datafeeds`
+-- AUTO_INCREMENT for table `datafeeds`
 --
 ALTER TABLE `datafeeds`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT cho bảng `deposit_policies`
+-- AUTO_INCREMENT for table `deposit_policies`
 --
 ALTER TABLE `deposit_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
--- AUTO_INCREMENT cho bảng `dynamic_pricing_rules`
+-- AUTO_INCREMENT for table `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT cho bảng `events`
+-- AUTO_INCREMENT for table `events`
 --
 ALTER TABLE `events`
   MODIFY `event_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT cho bảng `extension_policies`
+-- AUTO_INCREMENT for table `extension_policies`
 --
 ALTER TABLE `extension_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã chính sách gia hạn', AUTO_INCREMENT=14;
 
 --
--- AUTO_INCREMENT cho bảng `extension_requests`
+-- AUTO_INCREMENT for table `extension_requests`
 --
 ALTER TABLE `extension_requests`
   MODIFY `request_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã yêu cầu gia hạn', AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT cho bảng `failed_jobs`
+-- AUTO_INCREMENT for table `failed_jobs`
 --
 ALTER TABLE `failed_jobs`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT cho bảng `faqs`
+-- AUTO_INCREMENT for table `faqs`
 --
 ALTER TABLE `faqs`
   MODIFY `faq_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT cho bảng `flexible_pricing_rules`
+-- AUTO_INCREMENT for table `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   MODIFY `rule_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
--- AUTO_INCREMENT cho bảng `floors`
+-- AUTO_INCREMENT for table `floors`
 --
 ALTER TABLE `floors`
   MODIFY `floor_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã tầng', AUTO_INCREMENT=35;
 
 --
--- AUTO_INCREMENT cho bảng `holidays`
+-- AUTO_INCREMENT for table `holidays`
 --
 ALTER TABLE `holidays`
   MODIFY `holiday_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT cho bảng `hotel`
+-- AUTO_INCREMENT for table `hotel`
 --
 ALTER TABLE `hotel`
   MODIFY `hotel_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khách sạn', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT cho bảng `invoices`
+-- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
   MODIFY `invoice_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT cho bảng `meal_types`
+-- AUTO_INCREMENT for table `meal_types`
 --
 ALTER TABLE `meal_types`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính', AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT cho bảng `media_files`
+-- AUTO_INCREMENT for table `media_files`
 --
 ALTER TABLE `media_files`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính của file ảnh/media', AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT cho bảng `messages`
+-- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
--- AUTO_INCREMENT cho bảng `migrations`
+-- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
--- AUTO_INCREMENT cho bảng `news`
+-- AUTO_INCREMENT for table `news`
 --
 ALTER TABLE `news`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bài viết', AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT cho bảng `news1`
---
-ALTER TABLE `news1`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, định danh bài viết', AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT cho bảng `news_categories`
+-- AUTO_INCREMENT for table `news_categories`
 --
 ALTER TABLE `news_categories`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính chuyên mục', AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT cho bảng `news_comments`
+-- AUTO_INCREMENT for table `news_comments`
 --
 ALTER TABLE `news_comments`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT cho bảng `news_user_actions`
+-- AUTO_INCREMENT for table `news_user_actions`
 --
 ALTER TABLE `news_user_actions`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT cho bảng `notifications`
+-- AUTO_INCREMENT for table `notification_types`
 --
-ALTER TABLE `notifications`
-  MODIFY `notification_id` int NOT NULL AUTO_INCREMENT;
+ALTER TABLE `notification_types`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT cho bảng `payment`
+-- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
   MODIFY `payment_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã thanh toán', AUTO_INCREMENT=169;
 
 --
--- AUTO_INCREMENT cho bảng `payment_settings`
+-- AUTO_INCREMENT for table `payment_settings`
 --
 ALTER TABLE `payment_settings`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT cho bảng `personal_access_tokens`
+-- AUTO_INCREMENT for table `personal_access_tokens`
 --
 ALTER TABLE `personal_access_tokens`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
--- AUTO_INCREMENT cho bảng `policy_applications`
+-- AUTO_INCREMENT for table `policy_applications`
 --
 ALTER TABLE `policy_applications`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'ID auto increment', AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT cho bảng `pricing_config`
+-- AUTO_INCREMENT for table `pricing_config`
 --
 ALTER TABLE `pricing_config`
   MODIFY `config_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT cho bảng `representatives`
+-- AUTO_INCREMENT for table `representatives`
 --
 ALTER TABLE `representatives`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
 
 --
--- AUTO_INCREMENT cho bảng `reschedule_policies`
+-- AUTO_INCREMENT for table `reschedule_policies`
 --
 ALTER TABLE `reschedule_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT cho bảng `reviews`
+-- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
   MODIFY `review_id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT cho bảng `reviews1`
---
-ALTER TABLE `reviews1`
-  MODIFY `review_id` int NOT NULL AUTO_INCREMENT COMMENT 'Mã đánh giá', AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT cho bảng `review_media`
+-- AUTO_INCREMENT for table `review_media`
 --
 ALTER TABLE `review_media`
   MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT cho bảng `room`
+-- AUTO_INCREMENT for table `room`
 --
 ALTER TABLE `room`
   MODIFY `room_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã phòng', AUTO_INCREMENT=296;
 
 --
--- AUTO_INCREMENT cho bảng `room_occupancy`
+-- AUTO_INCREMENT for table `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   MODIFY `occupancy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
--- AUTO_INCREMENT cho bảng `room_option_promotion`
+-- AUTO_INCREMENT for table `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   MODIFY `promotion_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã khuyến mãi';
 
 --
--- AUTO_INCREMENT cho bảng `room_price_history`
+-- AUTO_INCREMENT for table `room_price_history`
 --
 ALTER TABLE `room_price_history`
   MODIFY `price_history_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=352;
 
 --
--- AUTO_INCREMENT cho bảng `room_transfers`
+-- AUTO_INCREMENT for table `room_transfers`
 --
 ALTER TABLE `room_transfers`
   MODIFY `transfer_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT cho bảng `room_transfer_policies`
+-- AUTO_INCREMENT for table `room_transfer_policies`
 --
 ALTER TABLE `room_transfer_policies`
   MODIFY `policy_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT cho bảng `room_types`
+-- AUTO_INCREMENT for table `room_types`
 --
 ALTER TABLE `room_types`
   MODIFY `room_type_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT cho bảng `room_type_image`
+-- AUTO_INCREMENT for table `room_type_image`
 --
 ALTER TABLE `room_type_image`
   MODIFY `image_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã ảnh', AUTO_INCREMENT=86;
 
 --
--- AUTO_INCREMENT cho bảng `room_type_package`
+-- AUTO_INCREMENT for table `room_type_package`
 --
 ALTER TABLE `room_type_package`
   MODIFY `package_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
--- AUTO_INCREMENT cho bảng `room_type_package_services`
+-- AUTO_INCREMENT for table `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT cho bảng `room_type_service`
+-- AUTO_INCREMENT for table `room_type_service`
 --
 ALTER TABLE `room_type_service`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT cho bảng `services`
+-- AUTO_INCREMENT for table `services`
 --
 ALTER TABLE `services`
   MODIFY `service_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
--- AUTO_INCREMENT cho bảng `table_translation`
+-- AUTO_INCREMENT for table `table_translation`
 --
 ALTER TABLE `table_translation`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT cho bảng `translation`
+-- AUTO_INCREMENT for table `translation`
 --
 ALTER TABLE `translation`
   MODIFY `translation_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã bản dịch', AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT cho bảng `users`
+-- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
   MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT cho bảng `weekend_days`
+-- AUTO_INCREMENT for table `user_notification_settings`
+--
+ALTER TABLE `user_notification_settings`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `weekend_days`
 --
 ALTER TABLE `weekend_days`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- Ràng buộc đối với các bảng kết xuất
+-- Constraints for dumped tables
 --
 
 --
--- Ràng buộc cho bảng `audit_logs`
+-- Constraints for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
   ADD CONSTRAINT `audit_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `booking`
+-- Constraints for table `booking`
 --
 ALTER TABLE `booking`
   ADD CONSTRAINT `booking_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE RESTRICT,
@@ -5701,13 +5704,13 @@ ALTER TABLE `booking`
   ADD CONSTRAINT `fk_booking_room` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `booking_extensions`
+-- Constraints for table `booking_extensions`
 --
 ALTER TABLE `booking_extensions`
   ADD CONSTRAINT `booking_extensions_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `booking_reschedules`
+-- Constraints for table `booking_reschedules`
 --
 ALTER TABLE `booking_reschedules`
   ADD CONSTRAINT `booking_reschedules_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5718,7 +5721,7 @@ ALTER TABLE `booking_reschedules`
   ADD CONSTRAINT `booking_reschedules_ibfk_6` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `booking_rooms`
+-- Constraints for table `booking_rooms`
 --
 ALTER TABLE `booking_rooms`
   ADD CONSTRAINT `booking_rooms_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
@@ -5727,14 +5730,14 @@ ALTER TABLE `booking_rooms`
   ADD CONSTRAINT `booking_rooms_option_id_foreign` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `booking_services`
+-- Constraints for table `booking_services`
 --
 ALTER TABLE `booking_services`
   ADD CONSTRAINT `booking_services_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `booking_services_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE RESTRICT;
 
 --
--- Ràng buộc cho bảng `cancellation_requests`
+-- Constraints for table `cancellation_requests`
 --
 ALTER TABLE `cancellation_requests`
   ADD CONSTRAINT `cancellation_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5742,14 +5745,14 @@ ALTER TABLE `cancellation_requests`
   ADD CONSTRAINT `cancellation_requests_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `check_in_requests`
+-- Constraints for table `check_in_requests`
 --
 ALTER TABLE `check_in_requests`
   ADD CONSTRAINT `check_in_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `check_in_requests_ibfk_2` FOREIGN KEY (`policy_id`) REFERENCES `check_in_policies` (`policy_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `check_out_requests`
+-- Constraints for table `check_out_requests`
 --
 ALTER TABLE `check_out_requests`
   ADD CONSTRAINT `check_out_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5757,13 +5760,13 @@ ALTER TABLE `check_out_requests`
   ADD CONSTRAINT `check_out_requests_ibfk_3` FOREIGN KEY (`policy_id`) REFERENCES `check_out_policies` (`policy_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `compensation_policies`
+-- Constraints for table `compensation_policies`
 --
 ALTER TABLE `compensation_policies`
   ADD CONSTRAINT `compensation_policies_ibfk_1` FOREIGN KEY (`applies_to_room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `compensation_requests`
+-- Constraints for table `compensation_requests`
 --
 ALTER TABLE `compensation_requests`
   ADD CONSTRAINT `compensation_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5772,20 +5775,20 @@ ALTER TABLE `compensation_requests`
   ADD CONSTRAINT `compensation_requests_ibfk_4` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Ràng buộc cho bảng `conversations`
+-- Constraints for table `conversations`
 --
 ALTER TABLE `conversations`
   ADD CONSTRAINT `conversations_handover_to_user_id_foreign` FOREIGN KEY (`handover_to_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `conversations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `coupons`
+-- Constraints for table `coupons`
 --
 ALTER TABLE `coupons`
   ADD CONSTRAINT `coupons_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `coupon_redemptions`
+-- Constraints for table `coupon_redemptions`
 --
 ALTER TABLE `coupon_redemptions`
   ADD CONSTRAINT `coupon_redemptions_booking_id_foreign` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5793,13 +5796,13 @@ ALTER TABLE `coupon_redemptions`
   ADD CONSTRAINT `coupon_redemptions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `dynamic_pricing_rules`
+-- Constraints for table `dynamic_pricing_rules`
 --
 ALTER TABLE `dynamic_pricing_rules`
   ADD CONSTRAINT `dynamic_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `extension_requests`
+-- Constraints for table `extension_requests`
 --
 ALTER TABLE `extension_requests`
   ADD CONSTRAINT `extension_requests_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5807,7 +5810,7 @@ ALTER TABLE `extension_requests`
   ADD CONSTRAINT `extension_requests_ibfk_3` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `flexible_pricing_rules`
+-- Constraints for table `flexible_pricing_rules`
 --
 ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL,
@@ -5815,19 +5818,19 @@ ALTER TABLE `flexible_pricing_rules`
   ADD CONSTRAINT `flexible_pricing_rules_ibfk_3` FOREIGN KEY (`holiday_id`) REFERENCES `holidays` (`holiday_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `invoices`
+-- Constraints for table `invoices`
 --
 ALTER TABLE `invoices`
   ADD CONSTRAINT `invoices_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `messages`
+-- Constraints for table `messages`
 --
 ALTER TABLE `messages`
   ADD CONSTRAINT `messages_conversation_id_foreign` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `news`
+-- Constraints for table `news`
 --
 ALTER TABLE `news`
   ADD CONSTRAINT `news_ibfk_1` FOREIGN KEY (`thumbnail_id`) REFERENCES `media_files` (`id`),
@@ -5835,15 +5838,7 @@ ALTER TABLE `news`
   ADD CONSTRAINT `news_ibfk_3` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`);
 
 --
--- Ràng buộc cho bảng `news1`
---
-ALTER TABLE `news1`
-  ADD CONSTRAINT `fk_news_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_news_thumbnail` FOREIGN KEY (`thumbnail_id`) REFERENCES `media_files` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `news1_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `news_categories` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
-
---
--- Ràng buộc cho bảng `news_comments`
+-- Constraints for table `news_comments`
 --
 ALTER TABLE `news_comments`
   ADD CONSTRAINT `news_comments_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`),
@@ -5851,34 +5846,33 @@ ALTER TABLE `news_comments`
   ADD CONSTRAINT `news_comments_ibfk_3` FOREIGN KEY (`parent_id`) REFERENCES `news_comments` (`id`);
 
 --
--- Ràng buộc cho bảng `news_user_actions`
+-- Constraints for table `news_user_actions`
 --
 ALTER TABLE `news_user_actions`
   ADD CONSTRAINT `news_user_actions_ibfk_1` FOREIGN KEY (`news_id`) REFERENCES `news` (`id`),
   ADD CONSTRAINT `news_user_actions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
--- Ràng buộc cho bảng `notifications`
+-- Constraints for table `notifications`
 --
 ALTER TABLE `notifications`
-  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `notifications_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `notifications_notification_type_id_foreign` FOREIGN KEY (`notification_type_id`) REFERENCES `notification_types` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `payment`
+-- Constraints for table `payment`
 --
 ALTER TABLE `payment`
   ADD CONSTRAINT `payment_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `permission_role`
+-- Constraints for table `permission_role`
 --
 ALTER TABLE `permission_role`
   ADD CONSTRAINT `permission_role_ibfk_1` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `permission_role_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `representatives`
+-- Constraints for table `representatives`
 --
 ALTER TABLE `representatives`
   ADD CONSTRAINT `fk_representative_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
@@ -5886,32 +5880,26 @@ ALTER TABLE `representatives`
   ADD CONSTRAINT `representatives_ibfk_2` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`);
 
 --
--- Ràng buộc cho bảng `reschedule_policies`
+-- Constraints for table `reschedule_policies`
 --
 ALTER TABLE `reschedule_policies`
   ADD CONSTRAINT `reschedule_policies_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `reviews1`
---
-ALTER TABLE `reviews1`
-  ADD CONSTRAINT `fk_reviews_booking` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE;
-
---
--- Ràng buộc cho bảng `review_media`
+-- Constraints for table `review_media`
 --
 ALTER TABLE `review_media`
   ADD CONSTRAINT `review_media_review_id_foreign` FOREIGN KEY (`review_id`) REFERENCES `reviews` (`review_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `role_user`
+-- Constraints for table `role_user`
 --
 ALTER TABLE `role_user`
   ADD CONSTRAINT `role_user_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `role_user_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `room`
+-- Constraints for table `room`
 --
 ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_2` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
@@ -5919,27 +5907,27 @@ ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_4` FOREIGN KEY (`floor_id`) REFERENCES `floors` (`floor_number`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Ràng buộc cho bảng `room_bed_types`
+-- Constraints for table `room_bed_types`
 --
 ALTER TABLE `room_bed_types`
   ADD CONSTRAINT `fk_room_bed_type` FOREIGN KEY (`bed_type_id`) REFERENCES `bed_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_bed_types_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Ràng buộc cho bảng `room_meal_types`
+-- Constraints for table `room_meal_types`
 --
 ALTER TABLE `room_meal_types`
   ADD CONSTRAINT `fk_room_meal_type` FOREIGN KEY (`meal_type_id`) REFERENCES `meal_types` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_meal_types_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `room` (`room_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Ràng buộc cho bảng `room_occupancy`
+-- Constraints for table `room_occupancy`
 --
 ALTER TABLE `room_occupancy`
   ADD CONSTRAINT `room_occupancy_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `room_option`
+-- Constraints for table `room_option`
 --
 ALTER TABLE `room_option`
   ADD CONSTRAINT `fk_room_option_cancellation_policy` FOREIGN KEY (`cancellation_policy_id`) REFERENCES `cancellation_policies` (`policy_id`) ON DELETE SET NULL,
@@ -5951,19 +5939,19 @@ ALTER TABLE `room_option`
   ADD CONSTRAINT `room_option_ibfk_5` FOREIGN KEY (`check_out_policy_id`) REFERENCES `check_out_policies` (`policy_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Ràng buộc cho bảng `room_option_promotion`
+-- Constraints for table `room_option_promotion`
 --
 ALTER TABLE `room_option_promotion`
   ADD CONSTRAINT `room_option_promotion_ibfk_1` FOREIGN KEY (`option_id`) REFERENCES `room_option` (`option_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `room_price_history`
+-- Constraints for table `room_price_history`
 --
 ALTER TABLE `room_price_history`
   ADD CONSTRAINT `room_price_history_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `room_transfers`
+-- Constraints for table `room_transfers`
 --
 ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_1` FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`) ON DELETE CASCADE,
@@ -5975,43 +5963,50 @@ ALTER TABLE `room_transfers`
   ADD CONSTRAINT `room_transfers_ibfk_7` FOREIGN KEY (`processed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `room_transfer_policies`
+-- Constraints for table `room_transfer_policies`
 --
 ALTER TABLE `room_transfer_policies`
   ADD CONSTRAINT `room_transfer_policies_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE SET NULL;
 
 --
--- Ràng buộc cho bảng `room_type_amenity`
+-- Constraints for table `room_type_amenity`
 --
 ALTER TABLE `room_type_amenity`
   ADD CONSTRAINT `room_type_amenity_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   ADD CONSTRAINT `room_type_amenity_ibfk_2` FOREIGN KEY (`amenity_id`) REFERENCES `amenities` (`amenity_id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
--- Ràng buộc cho bảng `room_type_package`
+-- Constraints for table `room_type_package`
 --
 ALTER TABLE `room_type_package`
   ADD CONSTRAINT `room_type_package_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `room_type_package_services`
+-- Constraints for table `room_type_package_services`
 --
 ALTER TABLE `room_type_package_services`
   ADD CONSTRAINT `room_type_package_services_ibfk_1` FOREIGN KEY (`package_id`) REFERENCES `room_type_package` (`package_id`),
   ADD CONSTRAINT `room_type_package_services_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`);
 
 --
--- Ràng buộc cho bảng `room_type_service`
+-- Constraints for table `room_type_service`
 --
 ALTER TABLE `room_type_service`
   ADD CONSTRAINT `room_type_service_ibfk_1` FOREIGN KEY (`room_type_id`) REFERENCES `room_types` (`room_type_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `room_type_service_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE CASCADE;
 
 --
--- Ràng buộc cho bảng `translation`
+-- Constraints for table `translation`
 --
 ALTER TABLE `translation`
   ADD CONSTRAINT `translation_ibfk_1` FOREIGN KEY (`language_code`) REFERENCES `language` (`language_code`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_notification_settings`
+--
+ALTER TABLE `user_notification_settings`
+  ADD CONSTRAINT `user_notification_settings_notification_type_id_foreign` FOREIGN KEY (`notification_type_id`) REFERENCES `notification_types` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_notification_settings_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

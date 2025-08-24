@@ -362,6 +362,17 @@ class RoomAvailabilityController extends Controller
 
             usort($result, fn($a, $b) => $a['cheapest_package_price'] <=> $b['cheapest_package_price']);
 
+            // Log số lượng phòng từng loại cho API rooms/available
+            foreach ($result as $roomType) {
+                \Log::info("Room Availability Log for Available Rooms API", [
+                    'room_type_id' => $roomType['room_type_id'],
+                    'room_type_name' => $roomType['room_type_name'],
+                    'available_room_count' => $roomType['available_room_count'],
+                    'check_in_date' => $checkInDate,
+                    'check_out_date' => $checkOutDate
+                ]);
+            }
+
             Log::info('=== RoomAvailabilityController@getAvailableRooms SUCCESS ===');
 
             return response()->json([
@@ -1205,6 +1216,7 @@ class RoomAvailabilityController extends Controller
     private function getAvailableRoomTypesForPackages($checkInDate, $checkOutDate, $roomsNeeded)
     {
         try {
+            // Sử dụng cùng logic với getAvailableRooms để đảm bảo consistency
             $roomTableExists = DB::select("SHOW TABLES LIKE 'room'");
             if (empty($roomTableExists)) {
                 $roomTableExists = DB::select("SHOW TABLES LIKE 'rooms'");
@@ -1218,48 +1230,67 @@ class RoomAvailabilityController extends Controller
                 $roomIdColumn = 'room_id';
             }
 
-            // Build the query using raw SQL similar to your provided query
+            // Sử dụng cùng logic SQL như API rooms/available
             $sql = "
-            WITH booking_summary AS (
-                SELECT 
-                    room_type_id,
-                    SUM(quantity) AS booked_quantity
-                FROM booking
-                WHERE 
-                    status IN ('pending', 'confirmed')
-                    AND check_in_date < ?
-                    AND check_out_date > ?
-                GROUP BY room_type_id
-            ),
-            available_rooms AS (
-                SELECT 
-                    rt.room_type_id,
-                    rt.name AS room_type_name,
-                    rt.room_code,
-                    rt.description,
-                    rt.base_price,
-                    rt.room_area as size,
-                    rt.max_guests,
-                    rt.rating,
-                    COUNT(r.{$roomIdColumn}) AS total_rooms,
-                    COALESCE(bs.booked_quantity, 0) AS booked_rooms,
-                    COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) AS available_rooms,
-                    GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
-                FROM room_types rt
-                JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
-                LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
-                LEFT JOIN booking_summary bs ON rt.room_type_id = bs.room_type_id
-                WHERE rt.is_active = 1
-                GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating, bs.booked_quantity
-                HAVING COUNT(r.{$roomIdColumn}) - COALESCE(bs.booked_quantity, 0) >= ?
-            )
-            SELECT * FROM available_rooms
+            SELECT DISTINCT 
+                rt.room_type_id,
+                rt.name AS room_type_name,
+                rt.room_code,
+                rt.description,
+                rt.base_price,
+                rt.room_area as size,
+                rt.max_guests,
+                rt.rating,
+                COUNT(r.{$roomIdColumn}) AS total_rooms,
+                0 AS booked_rooms,
+                COUNT(r.{$roomIdColumn}) AS available_rooms,
+                GROUP_CONCAT(DISTINCT bt.type_name ORDER BY bt.type_name SEPARATOR ', ') AS bed_type_names
+            FROM room_types rt
+            JOIN {$roomTable} r ON r.room_type_id = rt.room_type_id AND r.status = 'available'
+            LEFT JOIN bed_types bt ON bt.id = r.bed_type_fixed
+            WHERE rt.is_active = 1
+              AND r.{$roomIdColumn} NOT IN (
+                SELECT br.room_id
+                FROM booking_rooms br
+                INNER JOIN booking b ON br.booking_id = b.booking_id
+                WHERE b.status IN ('pending', 'confirmed')
+                  AND br.check_in_date < ?
+                  AND br.check_out_date > ?
+                  AND br.room_id IS NOT NULL
+              )
+            GROUP BY rt.room_type_id, rt.name, rt.room_code, rt.description, rt.base_price, rt.room_area, rt.max_guests, rt.rating
+            HAVING COUNT(r.{$roomIdColumn}) >= ?
             ORDER BY room_type_id
             ";
 
             $availableRoomTypes = DB::select($sql, [$checkOutDate, $checkInDate, $roomsNeeded]);
 
-            return collect($availableRoomTypes);
+            // Log số lượng phòng từng loại
+            foreach ($availableRoomTypes as $roomType) {
+                \Log::info("Room Availability Log for Packages (Updated)", [
+                    'room_type_id' => $roomType->room_type_id,
+                    'room_type_name' => $roomType->room_type_name,
+                    'total_rooms' => $roomType->total_rooms,
+                    'available_rooms' => $roomType->available_rooms,
+                    'check_in_date' => $checkInDate,
+                    'check_out_date' => $checkOutDate,
+                    'rooms_needed' => $roomsNeeded
+                ]);
+            }
+
+            // Lọc ra những loại phòng có số lượng > 0 
+            $filteredResults = array_filter($availableRoomTypes, function($room) {
+                return $room->available_rooms > 0;
+            });
+
+            \Log::info("Filtered room types count for packages (Updated)", [
+                'total_room_types_before_filter' => count($availableRoomTypes),
+                'total_room_types_after_filter' => count($filteredResults),
+                'check_in_date' => $checkInDate,
+                'check_out_date' => $checkOutDate
+            ]);
+
+            return collect($filteredResults);
         } catch (\Exception $e) {
             Log::error('Error getting available room types for packages: ' . $e->getMessage());
             throw $e;

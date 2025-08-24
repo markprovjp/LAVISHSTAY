@@ -216,7 +216,16 @@ export const searchService = {
 
     // Transform room package data to frontend format
     transformRoomPackageData(roomPackages: RoomPackageData[], summary: any): any[] {
-        return roomPackages.map(packageData => {
+        // Lọc ra những loại phòng có số lượng phòng trống > 0
+        const availableRoomPackages = roomPackages.filter(packageData => {
+            const availableRooms = parseInt(packageData.available_rooms) || 0;
+            console.log(`Room type ${packageData.room_type_name} has ${availableRooms} available rooms`);
+            return availableRooms > 0;
+        });
+
+        console.log(`Filtered ${roomPackages.length} room types down to ${availableRoomPackages.length} available room types`);
+
+        return availableRoomPackages.map(packageData => {
             // Get main image
             const mainImage = packageData.main_image?.image_url || packageData.images?.[0]?.image_url;
 

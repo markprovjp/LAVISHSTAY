@@ -13,6 +13,8 @@ use App\Services\SmartRoomAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Mail\BookingConfirmation;
@@ -503,8 +505,33 @@ class PaymentController extends Controller
         }
 
         Log::info('Booking notes:', ['notes' => $request->input('notes')]);
-        
-    // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
+        // Validate per-room guest counts against room type capacity to avoid impossible single-room requests
+        foreach ($request->input('rooms') as $idx => $roomData) {
+            $adults = isset($roomData['adults']) ? intval($roomData['adults']) : 1;
+            $children = isset($roomData['children']) ? intval($roomData['children']) : 0;
+            $requestedGuests = $adults + $children;
+
+            $room = Room::with('roomType')->find($roomData['room_id']);
+            $maxGuests = null;
+            if ($room && isset($room->roomType) && isset($room->roomType->max_guests)) {
+                $maxGuests = intval($room->roomType->max_guests);
+            } elseif (isset($roomData['room_type_id'])) {
+                $rt = \App\Models\RoomType::find($roomData['room_type_id']);
+                if ($rt && isset($rt->max_guests)) $maxGuests = intval($rt->max_guests);
+            }
+
+            if ($maxGuests !== null && $requestedGuests > $maxGuests) {
+                DB::rollBack();
+                Log::warning('Requested guests exceed room type capacity', ['room_index' => $idx, 'requested' => $requestedGuests, 'max' => $maxGuests, 'room_data' => $roomData]);
+                return response()->json([
+                    'success' => false,
+                    'message' => "Số khách cho một phòng vượt quá sức chứa tối đa cho loại phòng (yêu cầu: {$requestedGuests}, tối đa: {$maxGuests}).",
+                    'errors' => ["rooms.{$idx}" => ["Requested guests ({$requestedGuests}) exceed max guests ({$maxGuests}) for this room type."]]
+                ], 422);
+            }
+        }
+
+        // 3. Tạo booking record tối thiểu (chỉ thông tin cơ bản)
         $userId = null;
         // Nếu đã đăng nhập, lấy user id từ request (middleware hoặc FE truyền lên)
         if ($request->user()) {
@@ -514,7 +541,39 @@ class PaymentController extends Controller
             $userId = $request->input('user_id');
             Log::info('User_id received from request input', ['user_id' => $userId]);
         } else {
-            Log::info('No user_id found, booking will be guest booking');
+            // If not authenticated, try to find existing user by email or create a guest user
+            $email = $request->input('customer_email');
+            $name = $request->input('customer_name');
+            $phone = $request->input('customer_phone');
+
+            if ($email) {
+                $existingUser = \App\Models\User::where('email', $email)->first();
+                if ($existingUser) {
+                    $userId = $existingUser->id;
+                    Log::info('Found existing user by email for booking', ['email' => $email, 'user_id' => $userId]);
+                } else {
+                    // Create a guest user with random password and assign 'guest' role
+                    $randomPassword = Str::random(12);
+                    $newUser = \App\Models\User::create([
+                        'name' => $name ?? 'Khách hàng',
+                        'email' => $email,
+                        'phone' => $phone,
+                        'password' => Hash::make($randomPassword),
+                    ]);
+                    if ($newUser) {
+                        try {
+                            $newUser->assignRole('guest');
+                        } catch (\Exception $e) {
+                            // If role assignment fails, log but continue
+                            Log::warning('Failed to assign guest role to new user: ' . $e->getMessage(), ['user_id' => $newUser->id]);
+                        }
+                        $userId = $newUser->id;
+                        Log::info('Created guest user for booking', ['email' => $email, 'user_id' => $userId]);
+                    }
+                }
+            } else {
+                Log::info('No user email provided, booking will remain guest without user account');
+            }
         }
 
         $booking = Booking::create([
@@ -680,10 +739,24 @@ class PaymentController extends Controller
         cache()->put("booking_rooms_data_{$bookingCode}", $roomsData, now()->addHours(24));
 
  
+        // Normalize payment method from frontend to DB enum values
+        $rawMethod = $request->input('payment_method');
+        $methodMap = [
+            'pay_at_hotel' => 'at_hotel',
+            'vietqr' => 'vietqr',
+            'vnpay' => 'vnpay',
+            'qr' => 'qr_code',
+            'deposit' => 'deposit',
+            'full' => 'full'
+        ];
+
+        $normalizedPaymentType = $methodMap[$rawMethod] ?? $rawMethod;
+        Log::info('Normalized payment method for DB insert', ['raw' => $rawMethod, 'normalized' => $normalizedPaymentType]);
+
         $payment = Payment::create([
             'booking_id' => $booking->booking_id,
             'amount_vnd' => $booking->total_price_vnd, // Sử dụng giá đã giảm
-            'payment_type' => $request->input('payment_method'), // Lưu đúng giá trị FE gửi lên
+            'payment_type' => $normalizedPaymentType,
             'status' => 'pending',
         ]);
 
@@ -1370,6 +1443,7 @@ class PaymentController extends Controller
     public function getBookingWithRooms($bookingCode)
     {
         try {
+            Log::info('getBookingWithRooms called', ['booking_code' => $bookingCode]);
             // Lấy thông tin booking chính
             $booking = Booking::where('booking_code', $bookingCode)->first();
 
@@ -1392,8 +1466,9 @@ class PaymentController extends Controller
                     'r.description as room_description',
                     'ro.name as selected_option_name',
                     'ro.price_per_night_vnd as selected_option_price',
-                    'ro.cancellation_policy_type',
-                    'ro.payment_policy_type',
+                    // use existing policy id fields from room_option model (avoid selecting non-existent columns)
+                    'ro.cancellation_policy_id as cancellation_policy_id',
+                    'ro.deposit_policy_id as deposit_policy_id',
                     'rep.full_name as representative_name',
                     'rep.phone_number as representative_phone',
                     'rep.email as representative_email'

@@ -1,61 +1,42 @@
-Mục tiêu chính
-
-Chuyển trang LookupBookingByPhone.tsx thành trang “Tra cứu & Lịch sử đặt phòng của user” (kết hợp lookup công khai + lịch sử user).
-Sửa lỗi  filter ngày & loại phòng.
-Lấy và hiển thị thông tin coupon phù hợp cho từng booking, theo tài liệu COUPON_API_DOCUMENTATION.md.
-Những thay đổi cần thực hiện (chi tiết kỹ thuật)
-
-Data source / API
-Khi trang load mặc định: gọi endpoint được xác thực để lấy tất cả booking của user hiện tại. Sử dụng /bookings/user hoặc endpoint tương đương (có sẵn trong api.ts là bookingsAPI.getByUser()); truyền query params hỗ trợ: page, per_page, status, from, to, room_type, search.
-Khi user chủ động tìm kiếm (form submit hoặc thay đổi filter): dùng cùng endpoint authenticated /bookings/user (không dùng public search) và gửi params: search, status (tab), from, to, room_type, page, per_page. Điều này đảm bảo kết quả giới hạn trong user.
-Nếu API backend không hỗ trợ filter trên /bookings/user, fallback: gọi /public/bookings/search nhưng kèm user identifier từ token (nếu backend hỗ trợ) — nếu không có cách an toàn, yêu cầu backend thêm filter user_only=true hoặc endpoint /bookings/user/search. (Prompt cho BE change nếu cần.)
-Room types
-Lấy danh sách loại phòng từ GET /reception/room-types (sử dụng helper roomTypesAPI.getAll() trong api.ts), map sang { id, name } và populate Select options.
-Khi người dùng chọn room_type, gửi room_type (id hoặc slug theo BE contract) trong query params của /bookings/user.
-Date range filter
-RangePicker trả về dayjs; chuyển sang string format YYYY-MM-DD (hoặc format backend mong muốn) và gửi from/to trong query params.
-Quy ước: gửi from = startOf('day'), to = endOf('day') nếu backend expects inclusive range (document in PR if backend expects otherwise).
-Coupon hiển thị
-Theo COUPON_API_DOCUMENTATION.md: sử dụng GET /api/coupons/my-redemptions để lấy danh sách coupon đã dùng của user (field booking_code có trong response).
-Khi load danh sách booking hoặc detail: merge coupon data bằng booking_code (hoặc booking_id) và hiển thị tóm tắt coupon trên hàng table (ví dụ: badge "VIP300K: -300.000₫") và phần chi tiết coupon trong Drawer (code, description, amount_saved, redeemed_at).
-Nếu booking detail từ backend đã bao gồm coupon info, ưu tiên dùng field đó; nếu không, gọi /api/coupons/my-redemptions một lần và cache map booking_code -> couponEntry.
-Ngữ cảnh bảo mật
-Trang này chỉ trả data của user hiện đăng nhập. Không dùng public search để xem booking người khác.
-Đảm bảo tất cả các request quan trọng dùng axios instance có Authorization header (dùng api/axiosInstance hiện có).
-Xử lý ngày ISO microseconds
-Trước khi parse với dayjs, strip microseconds bằng regex (ví dụ: replace(/.\d+Z$/, 'Z')) hoặc dùng dayjs plugin nếu backend đồng nhất.
-UI / UX
-Mặc định khi vào trang: hiển thị paginated table của tất cả booking của user (tab All), có tabs theo status.
-Search vẫn tồn tại (SĐT, mã booking), nhưng nếu tìm mã/SĐT không thuộc user thì hiển thị “Không tìm thấy”.
-Hiển thị coupon tóm tắt trong table và chi tiết coupon trong Drawer.
-Giữ các nút hành động (cancel/extend/reschedule/review) như hiện tại, nhưng mọi thao tác phải xác thực và chỉ áp dụng trên booking của user.
-Tests & Validation
-Thêm unit/smoke tests (vitest/jest) hoặc at least manual test steps:
-Default load: /bookings/user được gọi; table hiển thị only user bookings.
-Search by date-range: chọn ngày, backend request includes from/to formatted; results correct.
-Room-type select is populated and selecting it sends room_type param.
-Coupon mapping: after calling /api/coupons/my-redemptions, verify that booking rows show coupon info.
-
-Contract / example requests & responses to implement
-
-GET /bookings/user?search=...&status=...&from=YYYY-MM-DD&to=YYYY-MM-DD&room_type=...&page=1&per_page=20
-Response: same shape as SearchResponse (data[], meta) but only for the authenticated user. If backend returns plain array, adapt accordingly.
-GET /reception/room-types -> response.data (array) -> map to options
-GET /api/coupons/my-redemptions -> Response (see COUPON_API_DOCUMENTATION.md) with booking_code, amount_saved, redeemed_at -> merge by booking_code.
-Acceptance criteria (done = PR ready)
-
-Default page loads authenticated user's bookings only.
-Date-range filter correctly sends from and to and results update.
-Room-type Select is populated and filter works.
-Coupon info shown per booking (table + drawer); if none, show “Không có coupon”.
-ISO microseconds timestamps render correctly.
-Tests/manual verification steps included in PR description.
-No regression: booking lookup by code still works but limited to current user.
-Implementation notes for AI/code author
-
-Edit only these files (primary): LookupBookingByPhone.tsx. Minor helper additions allowed in api.ts if necessary.
-Reuse existing helpers where possible: roomTypesAPI.getAll(), bookingsAPI.getByUser() (see api.ts).
-Cache coupon redemptions per session to avoid repeated calls.
-Add clear error/permission handling: if authenticated endpoint returns 403, show message “Bạn không có quyền xem booking này”.
-Update component-level unit tests or add a simple integration test to assert the main flows.
-sửa các nút action hiển thị đẹp hơn theo kiểu đơn giản mà đẹp của antd
+Mục tiêu: Thiết kế lại file React + TypeScript CompletionStep.tsx để hiển thị trang hoàn tất đặt phòng. Giao diện phải đẹp, minimal, responsive, chỉ dùng Ant Design components chuẩn (Card, Descriptions, List, Row, Col, Tag, Statistic, Image, Space, Button, Divider, Typography, Tooltip, Collapse). Tránh tạo file CSS mới — dùng props AntD, spacing className tiện dụng và inline style tối thiểu (chỉ khi bắt buộc cho print). Giữ component self-contained và dễ test.
+Dữ liệu (shape) — dùng để bind UI / test: { success: true, data: { booking: { booking_code: string, booking_id?: number, created_at: string, status: 'pending'|'confirmed'|'cancelled', payment_status: 'pending'|'completed'|'failed', guest_name: string, guest_email?: string, guest_phone?: string, check_in_date: string, check_out_date: string, total_price_vnd: number }, rooms: [{ room_name: string, selected_option_name?: string, selected_option_price?: number, adults?: number, children?: number, representative_name?: string, representative_phone?: string }], payment: { payment_method?: string, payment_url?: string, qr_code_url?: string }, summary: { total_rooms?: number, total_guests?: number, total_amount?: number } } }
+UI/UX rules (concrete)
+Header: AntD Result hoặc Space + CheckCircleOutlined + Title (message success). Dưới title hiển thị booking_code lớn (Typography.Title) có nút copy (Tooltip + Button with copy icon). Mã phải là visual anchor (màu chủ đạo AntD).
+Layout: dùng Row/Col để tạo 2 cột trên desktop (left: Thông tin khách; right: Thông tin booking & thanh toán). Trên width nhỏ (xs), chuyển thành 1 cột.
+Booking summary: dùng Descriptions (bordered, size="small") cho thông tin chung (check-in/out, nights, booking date, status as Tag).
+Rooms: dùng List với Card type="inner" cho từng phòng; trái: optional Image (AntD Image) hoặc Avatar; phải: Descriptions nhỏ + giá (Statistic hoặc Typography.Text). Hiển thị subtotal = price × nights. Nếu có nhiều phòng, cho collapse/accordion khi >4 để rút gọn.
+Payment summary: sử dụng Card hoặc Descriptions nhỏ ở bên phải/dưới, show final total lớn (Typography.Title/Statistic) màu khác (green). Nếu tồn tại qr_code_url show <Image src=... /> và thêm nút "Đã thanh toán" (verify).
+Action bar: Space (horizontal) gồm: Copy code, Download Invoice, Print (window.print), Resend Email, View bookings, New booking. Đặt ở top và bottom; ẩn khi in (print). Buttons có aria-labels.
+Accessibility: mọi button phải có aria-label; copy action nên focusable; trạng thái hiển thị text + Tag.
+Print: minimal inline style for print (e.g., hide action buttons). Nếu bắt buộc, hướng dẫn dùng @media print inline style (tiny snippet).
+Behavior / data fetching
+Component nhận prop bookingCode string; fetch GET /api/payment/booking-details/{bookingCode} (fallback to /api/booking-details/{bookingCode} if needed).
+10s timeout, spinner (Spin) while loading, show friendly Result with retry button on error.
+Retry uses exponential backoff up to 3 attempts (document only).
+For payment verification: if booking.payment_status === 'pending' and payment.payment_method === 'vietqr' then show "Đã thanh toán" button which calls POST /api/payment/verify-vietqr with { booking_code }, on success re-fetch and show success toast.
+Types & Tests
+Provide TypeScript interfaces (as above) in same file or types.ts.
+Add 2 unit tests (jest + @testing-library/react):
+Happy path: mock fetch returning full booking JSON; assert booking code displayed, at least one room card shown, totals rendered.
+Payment verify path: mock booking with payment pending + qr_code; simulate clicking "Đã thanh toán" and mock verify success; assert status updated.
+Tests should mock global.fetch and use waitFor to await UI updates; keep tests simple and fast.
+Implementation constraints
+No new CSS files — prefer AntD props and inline minimal styles.
+Keep component focused; do not modify parent routing or global state.
+Export default CompletionStep.
+Deliverables expected from AI
+Updated CompletionStep.tsx (React + TypeScript) using AntD components per spec.
+Inline TypeScript types.
+__tests__/CompletionStep.test.tsx (2 tests).
+Short README note at top of file about API endpoint and sample response (as JSON).
+Acceptance criteria (what I will check)
+CompletionStep loads booking data and displays booking_code prominently.
+Uses AntD components listed (Descriptions, Card, List, Row/Col, Tag, Button, Image).
+Buttons have aria-labels and copy functionality works (clipboard API).
+Payment verify flow triggers POST and refreshes data.
+Tests pass locally (mocked fetch).
+Extra hints for AI implementer
+Use AntD Space for compact action group.
+For mobile spacing rely on Row/Col responsive props (xs, sm, md).
+For numeric formatting use Intl.NumberFormat('vi-VN').
+Use notification.useNotification() for success/error messages.

@@ -946,7 +946,8 @@ class ReceptionController extends Controller
                     DB::raw('COALESCE(SUM(br.children), 0) as total_children'),
                     // hiển thị tên gói option_name của booking_rooms
                     DB::raw('GROUP_CONCAT(DISTINCT br.option_name ORDER BY br.option_name SEPARATOR ", ") as option_names'),
-                    
+                     // Whether any booking_room for this booking was auto-assigned
+                    DB::raw('MAX(COALESCE(br.auto_assigned, 0)) as has_auto_assigned'),
                     'rep.full_name as representative_name',
                     'rep.phone_number as representative_phone',
                     'rep.email as representative_email'
@@ -1031,10 +1032,42 @@ $bookings = $query->paginate($request->get('per_page', 500));
                     'representative_phone' => $booking->representative_phone,
                     'representative_email' => $booking->representative_email,
                     'option_names' => $booking->option_names, // Hiển thị tên gói option_name của booking_rooms
+                    // Whether any booking_room for this booking was auto-assigned
+                    'has_auto_assigned' => (int) ($booking->has_auto_assigned ?? 0),
+                    // legacy/compatibility field
+                    'auto_assigned' => (int) ($booking->has_auto_assigned ?? 0),
                     // Compatibility fields for frontend
                     'id' => $booking->booking_id,
                     'total_amount' => (float) $booking->total_price_vnd,
                     'booking_status' => $booking->booking_status,
+                        // Include detailed booking_rooms for frontend (id, booking_id, booking_code, room_id, assigned_by, auto_assigned, etc.)
+                        'booking_rooms' => DB::table('booking_rooms as br')
+                            ->leftJoin('room as r', 'br.room_id', '=', 'r.room_id')
+                            ->where('br.booking_id', $booking->booking_id)
+                            ->select([
+                                'br.id',
+                                'br.booking_id',
+                                'br.booking_code',
+                                'br.room_id',
+                                'br.assigned_by',
+                                'br.auto_assigned',
+                                'br.option_id',
+                                'br.option_name',
+                                'br.option_price',
+                                'br.representative_id',
+                                'br.adults',
+                                'br.children',
+                                'br.children_age',
+                                'br.price_per_night',
+                                'br.nights',
+                                'br.total_price',
+                                'br.check_in_date',
+                                'br.check_out_date',
+                                'br.created_at',
+                                'br.updated_at',
+                                'r.name as room_name'
+                            ])
+                            ->get(),
                 ];
 
                 // Get coupon redemption info if exists
@@ -1557,13 +1590,18 @@ $allChildrenAges = DB::table('booking_room_children')
             // Lấy danh sách booking_rooms của booking này
             $bookingRooms = DB::table('booking_rooms')
                 ->where('booking_id', $bookingId)
-                ->select(['id', 'room_id', 'option_name'])
+                ->select(['id', 'room_id', 'option_name', 'auto_assigned'])
                 ->get();
+            
             // Kiểm tra xem có booking_rooms nào không
             Log::info('Booking rooms for booking ID ' . $bookingId, ['booking_rooms' => $bookingRooms]);
             if ($bookingRooms->isEmpty()) {
                 return response()->json(['success' => false, 'message' => 'No rooms associated with this booking.'], 404);
             }
+            
+            // Check if any room is auto-assigned
+            $hasAutoAssigned = $bookingRooms->contains('auto_assigned', 1);
+            
             Log::error('error in getAssignmentPreview for booking ID ' . $bookingId, ['booking' => $booking]);
             $roomTypeId = $booking->room_type_id;
             $assignmentPreview = [];
@@ -1617,6 +1655,7 @@ $allChildrenAges = DB::table('booking_room_children')
                     'booking_id' => $bookingId,
                     'check_in_date' => $checkInDate,
                     'check_out_date' => $checkOutDate,
+                    'has_auto_assigned' => $hasAutoAssigned,
                     'assignment_options' => $assignmentPreview,
                 ]
             ]);
@@ -1658,6 +1697,8 @@ $allChildrenAges = DB::table('booking_room_children')
                     ->where('id', $assignment['booking_room_id'])
                     ->update([
                         'room_id' => $assignment['room_id'],
+                        'assigned_by' => 'manual',
+                        'auto_assigned' => 0,
                         'updated_at' => Carbon::now()
                     ]);
                 

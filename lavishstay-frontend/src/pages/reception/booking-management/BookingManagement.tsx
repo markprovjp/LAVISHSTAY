@@ -97,6 +97,7 @@ interface BookingTableData {
     room_id?: number | null;
     room_name?: string;
     room_id_display?: number | null;
+    auto_assigned?: boolean;
     // Coupon fields
     coupon_applied?: boolean;
     coupon?: {
@@ -123,7 +124,6 @@ const BookingManagement: React.FC = () => {
     const [servicesBookingId, setServicesBookingId] = useState<number | null>(null);
     const [isCheckoutDrawerVisible, setIsCheckoutDrawerVisible] = useState(false);
     const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
-    const [checkoutInfo, setCheckoutInfo] = useState<any>(null);
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -195,6 +195,8 @@ const BookingManagement: React.FC = () => {
                 // Coupon fields
                 coupon_applied: booking.coupon_applied || false,
                 coupon: booking.coupon || null,
+                // Auto assignment flag from backend (booking-level)
+                auto_assigned: booking.has_auto_assigned || booking.auto_assigned || false,
             };
         });
     }, [bookingsData]);
@@ -307,18 +309,70 @@ const BookingManagement: React.FC = () => {
             },
         },
         {
-            title: 'Phòng & Gói',
-            key: 'room_option',
-            width: 220,
-            render: (_, record) => (
-                <Flex vertical>
-                    <Flex align="center" gap={6}>
-                        <HomeOutlined style={{ color: '#52c41a' }} />
-                        <Text strong>{record.room_names || 'Chưa gán phòng'}</Text>
+            title: 'Phòng & Gán',
+            key: 'room_assignment',
+            width: 280,
+            render: (_, record) => {
+                const hasRooms = record.room_names && !record.room_names.includes('null');
+                const isAutoAssigned = record.auto_assigned;
+
+                return (
+                    <Flex vertical gap={8}>
+                        <Flex align="center" gap={8}>
+                            <HomeOutlined style={{ color: hasRooms ? '#52c41a' : '#d9d9d9' }} />
+                            <Flex vertical flex={1}>
+                                <Text strong style={{ color: hasRooms ? 'inherit' : '#999' }}>
+                                    {hasRooms ? record.room_names : 'Chưa gán phòng'}
+                                </Text>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    {record.option_names || 'Không có gói'}
+                                </Text>
+                            </Flex>
+                        </Flex>
+
+                        {/* Assignment Status Tags */}
+                        <Flex gap={4} wrap="wrap">
+                            {isAutoAssigned ? (
+                                <Tag
+                                    color="cyan"
+                                    icon={<SyncOutlined />}
+                                    style={{ fontSize: 11, margin: 0 }}
+                                >
+                                    Gán tự động
+                                </Tag>
+                            ) : hasRooms ? (
+                                <Tag
+                                    color="blue"
+                                    icon={<UserOutlined />}
+                                    style={{ fontSize: 11, margin: 0 }}
+                                >
+                                    Gán thủ công
+                                </Tag>
+                            ) : (
+                                <Tag
+                                    color="orange"
+                                    icon={<ClockCircleOutlined />}
+                                    style={{ fontSize: 11, margin: 0 }}
+                                >
+                                    Chờ gán phòng
+                                </Tag>
+                            )}
+
+                            {/* Show reassignment option for auto-assigned rooms */}
+                            {isAutoAssigned && hasRooms && (
+                                <Tooltip title="Có thể gán lại phòng thủ công">
+                                    <Tag
+                                        color="green"
+                                        style={{ fontSize: 11, margin: 0, cursor: 'help' }}
+                                    >
+                                        Có thể gán lại
+                                    </Tag>
+                                </Tooltip>
+                            )}
+                        </Flex>
                     </Flex>
-                    <Text type="secondary">{record.option_names || 'Không có gói'}</Text>
-                </Flex>
-            ),
+                );
+            },
         },
         {
             title: 'Tổng Tiền',
@@ -384,10 +438,9 @@ const BookingManagement: React.FC = () => {
                         setCheckinBookingId(record.booking_id);
                         setIsCheckinModalVisible(true);
                     } else if (key === 'checkout') {
-                        // Try to fetch checkout info first. If services already selected, show checkout summary.
+                        // If fetching checkout-info fails (e.g., none selected yet), open services modal
                         try {
-                            const info = await receptionAPI.getCheckoutInfo(record.booking_id);
-                            setCheckoutInfo(info);
+                            await receptionAPI.getCheckoutInfo(record.booking_id);
                             setCheckoutBookingId(record.booking_id);
                             setIsCheckoutDrawerVisible(true);
                         } catch (err) {
@@ -400,8 +453,10 @@ const BookingManagement: React.FC = () => {
                 const menu = (
                     <Menu onClick={handleMenuClick}>
                         <Menu.Item key="view" icon={<EyeOutlined />}>Xem Chi Tiết</Menu.Item>
-                        {(!record.room_names || record.room_names.includes('null')) && (
-                            <Menu.Item key="assign" icon={<HomeOutlined />}>Gán Phòng</Menu.Item>
+                        {((!record.room_names || record.room_names.includes('null')) || record.auto_assigned) && (
+                            <Menu.Item key="assign" icon={<HomeOutlined />}>
+                                {record.auto_assigned ? 'Gán Lại Phòng' : 'Gán Phòng'}
+                            </Menu.Item>
                         )}
                         {(record.status.toLowerCase() === 'pending' || record.status.toLowerCase() === 'confirmed') && (
                             <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>Hủy Đặt Phòng</Menu.Item>
@@ -450,14 +505,12 @@ const BookingManagement: React.FC = () => {
                 <CheckoutInfoModal
                     visible={isCheckoutDrawerVisible}
                     bookingId={checkoutBookingId}
-                    initialData={checkoutInfo}
-                    onClose={() => { setIsCheckoutDrawerVisible(false); setCheckoutInfo(null); setCheckoutBookingId(null); }}
+                    onClose={() => { setIsCheckoutDrawerVisible(false); setCheckoutBookingId(null); }}
                     onAddServicesRequest={() => {
                         setIsCheckoutDrawerVisible(false);
                         setIsServicesModalVisible(true);
                         setServicesBookingId(checkoutBookingId);
                     }}
-                    onUpdated={() => { refetch(); }}
                 />
 
                 <Card style={{ borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
@@ -526,7 +579,6 @@ const BookingManagement: React.FC = () => {
                         refetch();
                         message.success('Dịch vụ đã được thêm.');
                         if (checkoutInfo) {
-                            setCheckoutInfo(checkoutInfo);
                             setCheckoutBookingId(servicesBookingId);
                             setIsCheckoutDrawerVisible(true);
                         } else {

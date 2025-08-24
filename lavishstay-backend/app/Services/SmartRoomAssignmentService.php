@@ -257,25 +257,96 @@ class SmartRoomAssignmentService
                     'available_rooms' => $floorRooms->count(),
                     'needed_rooms' => $remainingRequests
                 ]);
+                // Try adjacency/contiguous assignment first if group requests prefer adjacency
+                $preferAdjacent = false;
+                foreach ($roomsRequests as $r) {
+                    if (!empty($r['prefer_adjacent'])) { $preferAdjacent = true; break; }
+                }
 
-                // Assign rooms systematically - one request at a time, removing used rooms
-                foreach ($roomsRequests as $index => $roomRequest) {
-                    if (isset($assigned[$index])) continue;
-                    
-                    $bestRoom = $this->findBestRoomForRequest($roomRequest, $floorRooms, $preferences);
-                    if ($bestRoom) {
-                        $assigned[$index] = $bestRoom->room_id;
-                        Log::info("Assigned room {$bestRoom->room_id} ({$bestRoom->name}) to request {$index}");
-                        
-                        // Remove assigned room from both the floor subset and the global available pool
-                        $floorRooms = $floorRooms->reject(function($room) use ($bestRoom) {
-                            return $room->room_id === $bestRoom->room_id;
-                        });
-                        $globalAvailable = $globalAvailable->reject(function($room) use ($bestRoom) {
-                            return $room->room_id === $bestRoom->room_id;
-                        });
+                if ($preferAdjacent) {
+                    Log::info('Attempting contiguous block assignment for group (adjacency requested)', [
+                        'floor_id' => $floorId,
+                        'needed_rooms' => $remainingRequests
+                    ]);
+
+                    $block = $this->findContiguousBlock($floorRooms, $remainingRequests, $roomsRequests);
+                    if ($block && $block->count() >= $remainingRequests) {
+                        // Assign block rooms to requests. Match larger requests to larger-capacity rooms.
+                        $blockRooms = $block->values();
+
+                        // Sort requests by total guests desc but keep original index mapping
+                        $reqsWithIndex = [];
+                        foreach ($roomsRequests as $i => $rr) {
+                            $reqsWithIndex[] = ['index' => $i, 'guests' => ($rr['adults'] ?? 1) + ($rr['children'] ?? 0), 'request' => $rr];
+                        }
+                        usort($reqsWithIndex, function($a,$b){ return $b['guests'] - $a['guests']; });
+
+                        // Sort block rooms by capacity desc
+                        $sortedBlock = $blockRooms->sortByDesc(function($room) {
+                            return isset($room->roomType) ? ($room->roomType->max_guests ?? ($room->max_guests ?? 2)) : ($room->max_guests ?? 2);
+                        })->values();
+
+                        // Attempt assignment
+                        $tempAssigned = [];
+                        $usedRoomIds = [];
+                        foreach ($reqsWithIndex as $idxReq => $ri) {
+                            $assignedThis = false;
+                            foreach ($sortedBlock as $bi => $roomCandidate) {
+                                $rid = $roomCandidate->room_id ?? $roomCandidate->id;
+                                if (in_array($rid, $usedRoomIds)) continue;
+                                $cap = isset($roomCandidate->roomType) ? ($roomCandidate->roomType->max_guests ?? ($roomCandidate->max_guests ?? 2)) : ($roomCandidate->max_guests ?? 2);
+                                if ($cap >= $ri['guests']) {
+                                    $tempAssigned[$ri['index']] = $rid;
+                                    $usedRoomIds[] = $rid;
+                                    $assignedThis = true;
+                                    break;
+                                }
+                            }
+                            if (!$assignedThis) {
+                                // contiguous block cannot satisfy capacity constraints
+                                $tempAssigned = [];
+                                break;
+                            }
+                        }
+
+                        if (!empty($tempAssigned) && count($tempAssigned) >= $remainingRequests) {
+                            // Commit the temporary assignments into $assigned and remove rooms from pools
+                            foreach ($tempAssigned as $reqIndex => $rid) {
+                                $assigned[$reqIndex] = $rid;
+                                Log::info('Assigned contiguous room to request', ['request_index' => $reqIndex, 'room_id' => $rid, 'floor_id' => $floorId]);
+                                $globalAvailable = $globalAvailable->reject(function($room) use ($rid) { return ($room->room_id ?? $room->id) == $rid; });
+                                $floorRooms = $floorRooms->reject(function($room) use ($rid) { return ($room->room_id ?? $room->id) == $rid; });
+                            }
+                            break; // done for this floor
+                        } else {
+                            Log::info('Contiguous block found but could not satisfy capacities, falling back to per-request assignment on this floor', ['floor_id' => $floorId]);
+                        }
                     } else {
-                        Log::warning("Could not find suitable room for request {$index} on floor {$floorId}");
+                        Log::info('No contiguous block available on floor', ['floor_id' => $floorId]);
+                    }
+                }
+
+                // If not assigned by contiguous block, fall back to per-request assignment
+                if (count($assigned) < count($roomsRequests)) {
+                    // Assign rooms systematically - one request at a time, removing used rooms
+                    foreach ($roomsRequests as $index => $roomRequest) {
+                        if (isset($assigned[$index])) continue;
+                        
+                        $bestRoom = $this->findBestRoomForRequest($roomRequest, $floorRooms, $preferences);
+                        if ($bestRoom) {
+                            $assigned[$index] = $bestRoom->room_id;
+                            Log::info("Assigned room {$bestRoom->room_id} ({$bestRoom->name}) to request {$index}");
+                            
+                            // Remove assigned room from both the floor subset and the global available pool
+                            $floorRooms = $floorRooms->reject(function($room) use ($bestRoom) {
+                                return $room->room_id === $bestRoom->room_id;
+                            });
+                            $globalAvailable = $globalAvailable->reject(function($room) use ($bestRoom) {
+                                return $room->room_id === $bestRoom->room_id;
+                            });
+                        } else {
+                            Log::warning("Could not find suitable room for request {$index} on floor {$floorId}");
+                        }
                     }
                 }
                 break; // Đã gán xong trên 1 tầng
@@ -329,15 +400,48 @@ class SmartRoomAssignmentService
             'available_rooms_count' => $availableRooms->count()
         ]);
 
+        // Defensive helper to extract room_type_id and max_guests from different shapes
+        $extractRoomTypeId = function($room) {
+            if (isset($room->room_type_id)) return $room->room_type_id;
+            if (isset($room->roomType) && isset($room->roomType->room_type_id)) return $room->roomType->room_type_id;
+            if (isset($room->roomType) && isset($room->roomType->id)) return $room->roomType->id;
+            if (isset($room->roomType_id)) return $room->roomType_id;
+            if (isset($room->id) && isset($room->room_type)) return $room->room_type;
+            return null;
+        };
+
+        $extractMaxGuests = function($room) {
+            if (isset($room->roomType) && isset($room->roomType->max_guests)) return intval($room->roomType->max_guests);
+            if (isset($room->max_guests)) return intval($room->max_guests);
+            if (isset($room->capacity)) return intval($room->capacity);
+            return 2; // default fallback
+        };
+
+        // Log a small sample of available rooms to help diagnose shape/content issues
+        try {
+            $sample = $availableRooms->take(10)->map(function($r) use ($extractRoomTypeId, $extractMaxGuests) {
+                return [
+                    'room_id' => $r->room_id ?? $r->id ?? null,
+                    'room_type_id' => $extractRoomTypeId($r),
+                    'max_guests' => $extractMaxGuests($r),
+                    'name' => $r->name ?? null,
+                    'floor_id' => $r->floor_id ?? null,
+                ];
+            })->toArray();
+
+            Log::debug('Available rooms sample for request', ['sample' => $sample]);
+        } catch (\Exception $e) {
+            Log::debug('Failed to build available rooms sample', ['error' => $e->getMessage()]);
+        }
+
         // Filter phòng theo room_type - prefer exact match first
-        $suitableRooms = $availableRooms->filter(function($room) use ($roomTypeId, $totalGuests) {
-            // Some availableRooms are stdClass (from queries) or Eloquent models; handle both
-            $rtId = isset($room->room_type_id) ? $room->room_type_id : ($room->roomType->room_type_id ?? null);
-            $maxGuests = isset($room->roomType) ? ($room->roomType->max_guests ?? 2) : ($room->max_guests ?? 2);
-            
+        $suitableRooms = $availableRooms->filter(function($room) use ($roomTypeId, $totalGuests, $extractRoomTypeId, $extractMaxGuests) {
+            $rtId = $extractRoomTypeId($room);
+            $maxGuests = $extractMaxGuests($room);
+
             $typeMatch = $rtId == $roomTypeId;
             $capacityMatch = $maxGuests >= $totalGuests;
-            
+
             return $typeMatch && $capacityMatch;
         });
 
@@ -434,6 +538,58 @@ class SmartRoomAssignmentService
         }
 
         return $assigned;
+    }
+
+    /**
+     * Tìm một block các phòng liền kề trên cùng một tầng có độ dài >= $needed
+     * Trả về collection các phòng theo thứ tự liền kề nếu tìm thấy, null nếu không
+     */
+    private function findContiguousBlock($floorRooms, int $needed, array $roomsRequests)
+    {
+        // Build an ordered map by parsed room numbers
+        $roomsByNumber = $floorRooms->mapWithKeys(function($room) {
+            $num = $this->parseRoomNumber($room->name ?? '0');
+            $key = $num !== null ? $num : intval($room->room_id ?? $room->id ?? 0);
+            return [$key => $room];
+        })->sortKeys();
+
+        $numbers = $roomsByNumber->keys()->toArray();
+        if (empty($numbers)) return null;
+
+        // Sliding window to find contiguous integer sequences of length >= needed
+        $count = count($numbers);
+        for ($i = 0; $i <= $count - $needed; $i++) {
+            $expected = $numbers[$i];
+            $block = [];
+            $j = $i;
+            while ($j < $count && count($block) < $needed) {
+                if ($numbers[$j] === $expected) {
+                    $block[] = $roomsByNumber->get($numbers[$j]);
+                    $expected++;
+                    $j++;
+                } else {
+                    break; // non-contiguous
+                }
+            }
+            if (count($block) >= $needed) {
+                return collect($block);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse integer from room name, fall back to null if not parsable
+     */
+    private function parseRoomNumber(?string $name)
+    {
+        if (empty($name)) return null;
+        // Extract the first integer sequence from the room name
+        if (preg_match('/(\d+)/', $name, $m)) {
+            return intval($m[1]);
+        }
+        return null;
     }
 
     /**
