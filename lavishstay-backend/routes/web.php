@@ -142,6 +142,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/admin/customers/destroy/{id}', [CustomerController::class, 'destroy'])->name('admin.users.customers.destroy');
         // Route::put('/admin/customers/change-password/{id}', [CustomerController::class, 'changePassword'])->name('admin.users.customers.change-password');
         Route::put('/admin/customers/reset-password/{id}', [CustomerController::class, 'resetPassword'])->name('admin.users.customers.reset-password');
+        Route::get('/admin/customers/activities/{id}', [CustomerController::class, 'activities'])->name('admin.users.customers.activities');
     });
 
     //Staffs//////////////////////////////////Route::middleware(['auth', 'permission:quan_ly_user'])->group(function () {

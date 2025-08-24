@@ -55,4 +55,9 @@ class BookingRoom extends Model
     {
         return $this->hasMany(BookingRoomChildren::class, 'booking_room_id', 'id')->orderBy('child_index');
     }
+
+    public function option()
+    {
+        return $this->belongsTo(RoomOption::class, 'option_id', 'option_id');
+    }
 }
