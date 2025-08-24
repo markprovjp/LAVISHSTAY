@@ -121,8 +121,11 @@ export const bookingsAPI = {
     return api.post('/bookings', bookingData);
   },
 
-  getByUser: async () => {
-    return api.get('/bookings/user');
+  getByUser: async (params?: any) => {
+    // Backend route is registered as /user/bookings (auth:sanctum)
+    // Return the full axios response so callers can read .data/.data.data as needed
+    const response = await api.get('/user/bookings', { params });
+    return response;
   },
 
   getById: async (id: number) => {
@@ -616,6 +619,32 @@ export const fetchRooms = async () => {
     { id: 2, number: '102', type: 'Deluxe', status: 'Occupied' },
     { id: 3, number: '201', type: 'Suite', status: 'Available' },
   ]);
+};
+
+// Coupon API Functions
+export const couponAPI = {
+  getMyRedemptions: async (params?: any) => {
+    const response = await api.get('/coupons/my-redemptions', { params });
+    return response.data;
+  },
+
+  validateCoupon: async (code: string, bookingPreview: any) => {
+    const response = await api.post('/coupons/validate', {
+      code,
+      booking_preview: bookingPreview
+    });
+    return response.data;
+  },
+
+  checkCode: async (code: string) => {
+    const response = await api.post('/coupons/check-code', { code });
+    return response.data;
+  },
+
+  applyToBooking: async (bookingId: number, code: string) => {
+    const response = await api.post(`/bookings/${bookingId}/apply-coupon`, { code });
+    return response.data;
+  }
 };
 
 export default api;

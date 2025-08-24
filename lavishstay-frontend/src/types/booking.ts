@@ -20,7 +20,7 @@ export interface Booking {
     guest_phone?: string;
     room_id?: number;
     room?: Room;
-    
+
     // Compatibility fields (map to actual schema fields)
     id?: number; // Map to booking_id
     total_amount?: number; // Map to total_price_vnd
@@ -121,4 +121,160 @@ export interface BookingStatistics {
     total_revenue: number;
     pending_revenue: number;
     confirmed_revenue: number;
+}
+
+// Additional types for LookupBookingByPhone enhancement
+export interface RoomDetail {
+    id: number;
+    room_name: string;
+    room_type: string;
+    floor?: string;
+    option_name?: string;
+    adults?: number;
+    children?: number;
+    nights?: number;
+    quantity: number;
+    price_per_night: number;
+    total_price: number;
+}
+
+export interface PaymentRecord {
+    id: number;
+    payment_id: number;
+    method?: string;
+    payment_type?: string;
+    amount: number;
+    amount_vnd?: string;
+    status: string;
+    created_at: string;
+}
+
+export interface Representative {
+    id?: number;
+    full_name?: string;
+    phone_number?: string;
+    email?: string;
+    id_card?: string;
+    // Legacy format for compatibility
+    name?: string;
+    phone?: string;
+}
+
+export interface BookingSummary {
+    booking_id: number;
+    booking_code: string;
+    guest_name: string;
+    guest_phone: string;
+    guest_email?: string;
+    check_in_date: string;
+    check_out_date: string;
+    nights?: number;
+    total_price_vnd: number | string;
+    total_price_formatted?: string;
+    total_price_raw?: number;
+    status: string;
+    guest_count?: number;
+    created_at: string;
+    room_id?: number;
+    room_name?: string;
+    room_type?: string;
+    room_type_images?: Array<{
+        image_id: number;
+        image_path: string;
+        alt_text: string;
+        is_main: number;
+    }>;
+    // Fields to be enriched from detail endpoint
+    rooms?: Array<{
+        room_id: number;
+        room_name: string;
+        room_type: string;
+        option_name: string;
+        adults: number;
+        children: number;
+        total_price: string;
+    }>;
+    rooms_detail?: RoomDetail[];
+    booking_rooms?: Array<{
+        id?: number;
+        room_id?: number;
+        room_name?: string;
+        room_type?: string;
+        option_name?: string;
+        quantity?: number;
+        price_per_night?: number;
+        total_price?: number;
+    }>;
+    payments?: PaymentRecord[];
+    representatives?: Representative[];
+    notes?: string;
+    updated_at?: string;
+    total_paid?: number;
+}
+
+export interface BookingDetail extends BookingSummary {
+    id: number;
+    total_amount?: number;
+    representatives: Representative[];
+    rooms_detail: RoomDetail[];
+    booking_rooms: Array<{
+        id: number;
+        room_type: string;
+        room_name?: string;
+        quantity: number;
+        price_per_night: number;
+        total_price: number;
+    }>;
+    payments: PaymentRecord[];
+    notes?: string;
+    updated_at: string;
+}
+
+export interface SearchResponse {
+    success: boolean;
+    data: BookingSummary[];
+    meta: {
+        total: number;
+        page: number;
+        per_page: number;
+        last_page: number;
+        search_type: string;
+        search_term: string;
+        // Optional filter counts
+        status_counts?: Record<string, number>;
+    };
+}
+
+export interface SearchFilters {
+    search?: string;
+    status?: string;
+    from?: string;
+    to?: string;
+    room_type?: string;
+    page?: number;
+    per_page?: number;
+}
+
+// Coupon related types
+export interface CouponRedemption {
+    coupon_code: string;
+    amount_saved: number;
+    booking_code: string;
+    redeemed_at: string;
+    coupon?: {
+        code: string;
+        description: string;
+        type: 'percent' | 'fixed';
+        value: number;
+    };
+}
+
+export interface CouponRedemptionsResponse {
+    success: boolean;
+    data: CouponRedemption[];
+    pagination: {
+        current_page: number;
+        per_page: number;
+        total: number;
+    };
 }
