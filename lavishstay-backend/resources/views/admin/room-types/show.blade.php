@@ -608,16 +608,13 @@
                                                             <!-- Divider -->
                                                             <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                                                             <!-- Delete -->
-                                                            <form action="{{ route('admin.room-types.packages.destroy', [$roomType->room_type_id, $package->package_id]) }}" method="POST" class="inline"
-                                                                onsubmit="return confirmDeletePackage(this, '{{ $package->name }}');">
+                                                            <form action="{{ route('admin.room-types.packages.destroy', [$roomType->room_type_id, $package->package_id]) }}" method="POST" class="inline" data-package-name="{{ $package->name }}"
+                                                                onsubmit="return false;">
                                                                 @csrf
                                                                 @method('DELETE')
-                                                                <button type="submit"
-                                                                        class="delete-btn flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
-                                                                        role="menuitem">
+                                                                <button type="submit" class="delete-btn flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150" role="menuitem">
                                                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                                     </svg>
                                                                     Xóa
                                                                 </button>
@@ -746,8 +743,7 @@
                         <div class="space-y-3">
                             <button onclick="viewRoomsList({{ $roomType->room_type_id }})"
                                 class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20"
-                                    width="24" height="24">
+                                <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 20 20" width="24" height="24">
                                     <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path>
                                     <path fill-rule="evenodd"
                                         d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110-2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
@@ -796,10 +792,10 @@
                                 @endforeach
 
                                 @if ($roomType->rooms->count() > 3)
-                                    <button onclick="viewRoomsList({{ $roomType->room_type_id }})"
+                                    <a href="{{ route('admin.rooms.by-type', $roomType->room_type_id) }}"
                                         class="w-full text-center py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                                         Xem thêm {{ $roomType->rooms->count() - 3 }} phòng khác
-                                    </button>
+                                    </a>
                                 @endif
                             </div>
                         </div>
@@ -920,25 +916,52 @@
 
     <!-- Scripts -->
     <script>
-        // SweetAlert2 confirm delete
-        function confirmDeletePackage(form, packageName = '') {
-            event.preventDefault();
-            Swal.fire({
-                title: 'Bạn có chắc muốn xóa????    ?',
-                text: packageName ? `Xóa gói: ${packageName}` : "Bạn sẽ không thể hoàn tác thao tác này!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Xóa',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+        // Xử lý xóa gói dịch vụ bằng AJAX
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const form = this.closest('form');
+                const packageName = form.dataset.packageName || '';
+
+                Swal.fire({
+                    title: 'Bạn có chắc muốn xóa?',
+                    text: packageName ? `Xóa gói: ${packageName}` : 'Bạn sẽ không thể hoàn tác thao tác này!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Xóa',
+                    cancelButtonText: 'Hủy'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(form.action, {
+                            method: 'POST', // Laravel sử dụng POST với _method=DELETE
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Accept': 'application/json'
+                            },
+                            body: new FormData(form)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Thành công!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    timer: 1200,
+                                    showConfirmButton: false
+                                });
+                                setTimeout(() => location.reload(), 1200);
+                            } else {
+                                Swal.fire('Lỗi', data.message || 'Không thể xóa gói dịch vụ.', 'error');
+                            }
+                        })
+                        .catch(() => Swal.fire('Lỗi', 'Không thể kết nối tới server.', 'error'));
+                    }
+                });
             });
-            return false;
-        }
+        });
 
         // Image gallery logic
         let currentImageIndex = 0;
@@ -1019,12 +1042,8 @@
             alert(`Chức năng quản lý ảnh cho loại phòng ID: ${roomTypeId} đang được phát triển!`);
         }
 
-        // Thêm function hiển thị loading overlay
+        // Hàm showLoadingOverlay (để đảm bảo hoàn chỉnh)
         function showLoadingOverlay(message = 'Đang tải...') {
-            // Tạo overlay nếu chưa có
-
-
-
             let overlay = document.getElementById('pageLoadingOverlay');
             if (!overlay) {
                 overlay = document.createElement('div');
@@ -1038,7 +1057,6 @@
                 `;
                 document.body.appendChild(overlay);
             }
-
             overlay.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -1055,8 +1073,10 @@
 
         // Room Management Functions
         function viewRoomsList(roomTypeId) {
-            // TODO: Navigate to rooms list filtered by room type
-            window.location.href = `/admin/rooms?room_type_id=${roomTypeId}`;
+            showLoadingOverlay('Đang chuyển đến danh sách phòng...');
+            setTimeout(() => {
+                window.location.href = `{{ route('admin.rooms.by-type', ':id') }}`.replace(':id', roomTypeId);
+            }, 500);
         }
 
         function duplicateRoomType(roomTypeId) {
@@ -1467,5 +1487,3 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-app-layout>
-
-

@@ -27,18 +27,18 @@
 
         <!-- Notifications -->
         @if (session('success'))
-            <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            <div id="success-notification" class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded notification">
                 {{ session('success') }}
             </div>
         @endif
         @if (session('error'))
-            <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <div id="error-notification" class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded notification">
                 {{ session('error') }}
             </div>
         @endif
 
         <!-- Two-Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {{-- <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"> --}}
             <!-- Left Column -->
             <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Danh sách quyền</h2>
@@ -58,7 +58,7 @@
                     </div>
                     <div class="mt-6">
                         <button type="submit"
-                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-500 font-semibold transition-colors duration-150">
+                            class="bg-violet-600 text-white px-4 py-2 rounded hover:bg-violet-700 dark:hover:bg-violet-500 font-semibold transition-colors duration-150 cursor-pointer">
                             Cập nhật quyền
                         </button>
                     </div>
@@ -66,58 +66,80 @@
             </div>
 
             <!-- Right Column -->
-          <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
-    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Hướng dẫn phân quyền</h2>
-    <div class="space-y-4 text-gray-600 dark:text-gray-300 text-sm">
-        
-        <!-- 1. Giới thiệu -->
-        <div>
-            <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Tổng quan</h3>
-            <p>
-                Danh sách quyền được trình bày theo dạng **cây phân cấp**, gồm các **quyền cha** (nhóm chính) và **quyền con** (chức năng cụ thể). 
-                Bạn có thể phân quyền cho vai trò <span class="font-semibold text-violet-600 dark:text-violet-400">{{ $role->name }}</span> bằng cách chọn các ô kiểm tương ứng.
-            </p>
-        </div>
+            {{-- <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Hướng dẫn phân quyền</h2>
+                <div class="space-y-4 text-gray-600 dark:text-gray-300 text-sm">
+                    <!-- 1. Giới thiệu -->
+                    <div>
+                        <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Tổng quan</h3>
+                        <p>
+                            Danh sách quyền được trình bày theo dạng **cây phân cấp**, gồm các **quyền cha** (nhóm chính) và **quyền con** (chức năng cụ thể). 
+                            Bạn có thể phân quyền cho vai trò <span class="font-semibold text-violet-600 dark:text-violet-400">{{ $role->name }}</span> bằng cách chọn các ô kiểm tương ứng.
+                        </p>
+                    </div>
 
-        <!-- 2. Hướng dẫn sử dụng -->
-        <div>
-            <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Cách thao tác</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li>Nhấn vào nút <strong>+</strong> để mở rộng danh sách quyền con, hoặc <strong>−</strong> để thu gọn.</li>
-                <li>Nhấp vào ô <strong>checkbox</strong> để bật hoặc tắt quyền tương ứng.</li>
-                <li>Chọn một quyền **cha** sẽ tự động chọn tất cả quyền **con** bên dưới.</li>
-                <li>Bỏ chọn một quyền **con** sẽ làm quyền **cha** trở thành trạng thái chọn một phần.</li>
-            </ul>
-        </div>
+                    <!-- 2. Hướng dẫn sử dụng -->
+                    <div>
+                        <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Cách thao tác</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Nhấn vào nút <strong>+</strong> để mở rộng danh sách quyền con, hoặc <strong>−</strong> để thu gọn.</li>
+                            <li>Nhấp vào ô <strong>checkbox</strong> để bật hoặc tắt quyền tương ứng.</li>
+                            <li>Chọn một quyền **cha** sẽ tự động chọn tất cả quyền **con** bên dưới.</li>
+                            <li>Bỏ chọn một quyền **con** sẽ làm quyền **cha** trở thành trạng thái chọn một phần.</li>
+                        </ul>
+                    </div>
 
-        <!-- 3. Màu sắc -->
-        <div>
-            <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Ý nghĩa màu sắc</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li><span class="text-blue-600 dark:text-blue-400 font-semibold">Xanh đậm</span>: Quyền cha và toàn bộ quyền con đều được chọn.</li>
-                <li><span class="text-blue-400 dark:text-blue-300 font-semibold">Xanh nhạt</span>: Quyền cha chỉ được chọn một phần (một số quyền con).</li>
-                <li><span class="text-gray-800 dark:text-gray-200">Xám</span>: Quyền chưa được chọn.</li>
-            </ul>
-        </div>
+                    <!-- 3. Màu sắc -->
+                    <div>
+                        <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Ý nghĩa màu sắc</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li><span class="text-violet-600 dark:text-violet-400 font-semibold">Xanh đậm</span>: Quyền cha và toàn bộ quyền con đều được chọn.</li>
+                            <li><span class="text-violet-400 dark:text-violet-300 font-semibold">Xanh nhạt</span>: Quyền cha chỉ được chọn một phần (một số quyền con).</li>
+                            <li><span class="text-gray-800 dark:text-gray-200">Xám</span>: Quyền chưa được chọn.</li>
+                        </ul>
+                    </div>
 
-        <!-- 4. Ghi chú -->
-        <div>
-            <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Lưu ý</h3>
-            <ul class="list-disc pl-5 space-y-1">
-                <li>Danh sách quyền có thể cuộn dọc nếu quá dài.</li>
-                <li>Sau khi chọn xong, nhấn nút <strong>"Cập nhật quyền"</strong> để lưu lại thay đổi.</li>
-                <li>Nếu không có thay đổi nào, hệ thống sẽ thông báo và không gửi dữ liệu lên.</li>
-                <li>Hãy kiểm tra kỹ các quyền được chọn để tránh cấp quyền sai.</li>
-            </ul>
-        </div>
+                    <!-- 4. Ghi chú -->
+                    <div>
+                        <h3 class="font-medium text-gray-800 dark:text-gray-100 mb-2">Lưu ý</h3>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Danh sách quyền có thể cuộn dọc nếu quá dài.</li>
+                            <li>Sau khi chọn xong, nhấn nút <strong>"Cập nhật quyền"</strong> để lưu lại thay đổi.</li>
+                            <li>Nếu không có thay đổi nào, hệ thống sẽ thông báo và không gửi dữ liệu lên.</li>
+                            <li>Hãy kiểm tra kỹ các quyền được chọn để tránh cấp quyền sai.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div> --}}
+        {{-- </div> --}}
     </div>
-</div>
 
-        </div>
-    </div>
+    <!-- Styles for Fade-Out Animation -->
+    <style>
+        .notification {
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .notification.fade-out {
+            opacity: 0;
+        }
+    </style>
 
     <!-- Script -->
     <script>
+        // Auto-hide notifications after 3 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+            const notifications = document.querySelectorAll('.notification');
+            notifications.forEach(notification => {
+                setTimeout(() => {
+                    notification.classList.add('fade-out');
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 500); // Match transition duration
+                }, 3000); // Show for 3 seconds
+            });
+        });
+
         function permissionTree(initialPermissions) {
             return {
                 checkedPermissions: [...initialPermissions],
