@@ -12,7 +12,7 @@
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
                             <path d="M9 12l-7-7 1.41-1.41L9 9.17l5.59-5.58L14 4z" />
                         </svg>
-                        <span class="max-xs:sr-only">Quay lại</span>
+                        <span class="max-xs:sr-only cursor-pointer">Quay lại</span>
                     </button>
                 </a>
             </div>
@@ -98,7 +98,7 @@
                                 <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Hoạt động</span>
                             </div>
                             <div>
-                                <button type="submit" class="w-full bg-violet-500 text-white py-2 px-4 rounded-md hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500">
+                                <button type="submit" class="w-full bg-violet-500 text-white py-2 px-4 rounded-md hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 cursor-pointer">
                                     Tạo Chính Sách
                                 </button>
                             </div>

@@ -531,7 +531,7 @@ Route::get('/admin/special-requests/stream', [SpecialRequestController::class, '
     Route::get('/admin/compensation-policies/{id}/edit', [CompensationPolicyController::class, 'edit'])->name('admin.compensation-policies.edit');
     Route::put('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'update'])->name('admin.compensation-policies.update');
     Route::delete('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'destroy'])->name('admin.compensation-policies.destroy');
-    Route::patch('/admin/compensation-policies/{id}/toggle-status', [CompensationPolicyController::class, 'toggleStatus'])->name('admin.compensation-policies.toggle-status');
+    Route::patch('/admin/compensation-policies/toggle-status/{id}', [CompensationPolicyController::class, 'toggleStatus'])->name('admin.compensation-policies.toggle-status');
 
 
 

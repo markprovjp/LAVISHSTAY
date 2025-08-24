@@ -19,7 +19,7 @@
                         <path
                             d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
                     </svg>
-                    <span class="max-xs:sr-only">Thêm chính sách</span>
+                    <span class="max-xs:sr-only cursor-pointer">Thêm chính sách</span>
                 </a>
             </div>
         </div>

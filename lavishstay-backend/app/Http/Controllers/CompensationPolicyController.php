@@ -83,7 +83,7 @@ class CompensationPolicyController extends Controller
             'discount_type' => 'required|in:percentage,fixed_amount',
             'discount_value' => 'required|numeric|min:0',
             'max_compensation_amount' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active' => 'required|boolean', // Bắt buộc và kiểm tra boolean
         ], [
             'name.required' => 'Tên chính sách là bắt buộc.',
             'name.unique' => 'Tên chính sách đã tồn tại.',
@@ -95,24 +95,21 @@ class CompensationPolicyController extends Controller
             'discount_value.required' => 'Giá trị giảm giá là bắt buộc.',
             'discount_value.min' => 'Giá trị giảm giá không được âm.',
             'max_compensation_amount.min' => 'Mức bồi thường tối đa không được âm.',
+            'is_active.required' => 'Trạng thái là bắt buộc.',
         ]);
 
-        // Convert checkbox values
-        $validated['is_active'] = $request->has('is_active');
+        // Ép kiểu thành 0/1 rõ ràng
+        $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
         try {
             DB::beginTransaction();
-
             CompensationPolicy::create($validated);
-
             DB::commit();
-
             return redirect()
                 ->route('admin.compensation-policies')
                 ->with('success', 'Chính sách bồi thường đã được tạo thành công.');
         } catch (\Exception $e) {
             DB::rollBack();
-
             return redirect()
                 ->back()
                 ->withInput()
@@ -159,7 +156,7 @@ class CompensationPolicyController extends Controller
             'discount_type' => 'required|in:percentage,fixed_amount',
             'discount_value' => 'required|numeric|min:0',
             'max_compensation_amount' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active' => 'required|boolean', // Bắt buộc và kiểm tra boolean
         ], [
             'name.required' => 'Tên chính sách là bắt buộc.',
             'name.unique' => 'Tên chính sách đã tồn tại.',
@@ -171,24 +168,21 @@ class CompensationPolicyController extends Controller
             'discount_value.required' => 'Giá trị giảm giá là bắt buộc.',
             'discount_value.min' => 'Giá trị giảm giá không được âm.',
             'max_compensation_amount.min' => 'Mức bồi thường tối đa không được âm.',
+            'is_active.required' => 'Trạng thái là bắt buộc.',
         ]);
 
-        // Convert checkbox values
-        $validated['is_active'] = $request->has('is_active');
+        // Lấy giá trị is_active trực tiếp từ input, đảm bảo 0 hoặc 1
+        $validated['is_active'] = $request->input('is_active') == '1' ? 1 : 0;
 
         try {
             DB::beginTransaction();
-
             $policy->update($validated);
-
             DB::commit();
-
             return redirect()
                 ->route('admin.compensation-policies')
                 ->with('success', 'Chính sách bồi thường đã được cập nhật thành công.');
         } catch (\Exception $e) {
             DB::rollBack();
-
             return redirect()
                 ->back()
                 ->withInput()
@@ -233,18 +227,17 @@ class CompensationPolicyController extends Controller
 
             DB::beginTransaction();
 
-            $policy->update([
-                'is_active' => !$policy->is_active
-            ]);
+            $newStatus = $policy->is_active == 1 ? 0 : 1; // Toggle rõ ràng giữa 0 và 1
+            $policy->update(['is_active' => $newStatus]);
 
             DB::commit();
 
-            $status = $policy->is_active ? 'kích hoạt' : 'vô hiệu hóa';
+            $status = $newStatus == 1 ? 'kích hoạt' : 'vô hiệu hóa';
 
             return response()->json([
                 'success' => true,
                 'message' => "Chính sách đã được {$status} thành công.",
-                'is_active' => $policy->is_active
+                'is_active' => $newStatus
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
