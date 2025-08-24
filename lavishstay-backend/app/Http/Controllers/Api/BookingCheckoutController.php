@@ -127,7 +127,7 @@ class BookingCheckoutController extends Controller
                         'approved_amount' => $request->approved_amount,
                         'formatted_approved_amount' => $request->formatted_approved_amount,
                         'requested_by' => $request->requestedBy ? $request->requestedBy->name : null,
-                        'approved_by' => $request->approvedBy ? $request->approvedBy->name : null,
+                        'approved_by' => 1,
                         'approved_at' => $request->approved_at,
                         'admin_note' => $request->admin_note,
                         'attachments' => $request->attachments,
@@ -555,7 +555,7 @@ class BookingCheckoutController extends Controller
             DB::transaction(function () use ($booking, $validated, $attachmentPaths, $calculatedAmount, &$compensationRequest) {
                 $compensationRequest = CompensationRequest::create([
                     'booking_id' => $booking->booking_id,
-                    'requested_by' => Auth::id(),
+                    'requested_by' => 6,
                     'policy_id' => $validated['policy_id'] ?? null,
                     'custom_reason' => $validated['custom_reason'] ?? null,
                     'status' => 'pending',

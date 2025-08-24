@@ -41,7 +41,10 @@
             <li>
                 <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1 px-3" href="{{ route('admin.audit.index') }}" @click="open = false" @focus="open = true" @focusout="open = false">Lịch sử sửa đổi</a>
             </li>
-            @if(Auth()->user()?->hasAnyRole(['admin']))
+            <li>
+                <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1 px-3" href="{{ route('admin.notifications.index') }}" @click="open = false" @focus="open = true" @focusout="open = false">Thông báo</a>
+            </li>
+            @if(Auth()->user()?->hasAnyRole(['system_admin']))
                 <li>
                     <a class="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1 px-3" href="{{ route('admin.roles.index', Auth::user()->role_id) }}" @click="open = false" @focus="open = true" @focusout="open = false">Vai trò & Phân quyền</a>
                 </li>
