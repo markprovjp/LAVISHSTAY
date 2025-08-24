@@ -53,6 +53,17 @@ class AuthController extends Controller
                 'phone' => $request->phone,
             ]);
 
+            // Assign default 'guest' role if exists
+            try {
+                $guestRole = \App\Models\Role::where('name', 'guest')->first();
+                if ($guestRole) {
+                    $user->roles()->attach($guestRole->id);
+                }
+            } catch (\Exception $e) {
+                // don't block registration if role assignment fails
+                \Log::warning('Failed to assign guest role on registration: ' . $e->getMessage());
+            }
+
             // Tạo token
             $token = $user->createToken('auth_token')->plainTextToken;
 

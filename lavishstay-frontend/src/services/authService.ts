@@ -93,21 +93,23 @@ const authService = {
 
         return { user, token };
       } else {
-        throw new Error(response.data.message || 'Đăng ký thất bại');
+        // Preserve server response so callers can inspect validation errors
+        const err: any = new Error(response.data.message || 'Đăng ký thất bại');
+        err.response = response;
+        throw err;
       }
     } catch (error: any) {
-      // Xử lý validation errors từ Laravel
-      if (error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors;
-        const firstError = Object.values(validationErrors)[0] as string[];
-        throw new Error(firstError[0]);
-      } else if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      } else if (error.message) {
-        throw new Error(error.message);
-      } else {
-        throw new Error('Không thể kết nối đến server. Vui lòng thử lại.');
+      // If axios provided a response, rethrow the original error so callers
+      // can inspect error.response.data (validation messages, etc.).
+      if (error && error.response) {
+        throw error;
       }
+
+      // Fallbacks for non-axios errors
+      if (error?.message) {
+        throw new Error(error.message);
+      }
+      throw new Error('Không thể kết nối đến server. Vui lòng thử lại.');
     }
   },
 

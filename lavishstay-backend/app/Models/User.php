@@ -257,20 +257,25 @@ class User extends Authenticatable
      */
     public function createDefaultNotificationSettings()
     {
-        $notificationTypes = \App\Models\NotificationType::where('is_active', true)->get();
-        
-        foreach ($notificationTypes as $type) {
-            if (!$this->canReceiveNotificationType($type)) {
-                continue;
-            }
+        try {
+            $notificationTypes = \App\Models\NotificationType::where('is_active', true)->get();
+            
+            foreach ($notificationTypes as $type) {
+                if (!$this->canReceiveNotificationType($type)) {
+                    continue;
+                }
 
-            $this->notificationSettings()->firstOrCreate([
-                'notification_type_id' => $type->id,
-            ], [
-                'is_enabled' => true,
-                'email_enabled' => in_array($type->priority, ['high', 'urgent']),
-                'push_enabled' => true,
-            ]);
+                $this->notificationSettings()->firstOrCreate([
+                    'notification_type_id' => $type->id,
+                ], [
+                    'is_enabled' => true,
+                    'email_enabled' => in_array($type->priority, ['high', 'urgent']),
+                    'push_enabled' => true,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't block user creation
+            \Log::warning('Failed to create default notification settings for user ' . $this->id . ': ' . $e->getMessage());
         }
     }
 
