@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, Button, Alert, Progress, Typography, Space, Timeline, message } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { paymentService, PaymentTransaction } from '../../services/paymentService';
@@ -11,6 +11,7 @@ interface PaymentCheckProps {
     onPaymentConfirmed: (transaction: PaymentTransaction) => void;
     onCancel: () => void;
     isVisible: boolean;
+    autoStartImmediate?: boolean;
 }
 
 export const PaymentCheck: React.FC<PaymentCheckProps> = ({
@@ -19,6 +20,7 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
     onPaymentConfirmed,
     onCancel,
     isVisible
+    , autoStartImmediate
 }) => {
     const [isChecking, setIsChecking] = useState(false);
     const [checkProgress, setCheckProgress] = useState(0);
@@ -29,6 +31,10 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
         status: 'checking' | 'not_found' | 'found' | 'error';
         message: string;
     }>>([]);
+    const [isAutoChecking, setIsAutoChecking] = useState(false);
+    const autoIntervalRef = useRef<number | null>(null);
+    const autoTimeoutRef = useRef<number | null>(null);
+    const checkingNowRef = useRef(false);
 
     const formatVND = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -47,58 +53,97 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
         setCheckHistory(prev => [newEntry, ...prev.slice(0, 4)]); // Keep only last 5 entries
     };
 
-    const checkPayment = async () => {
-        if (isChecking) return;
-
-        setIsChecking(true);
-        setCheckProgress(0);
-        setCurrentAttempt(0);
-        setCheckHistory([]);
-
-        addToHistory('checking', 'Bắt đầu kiểm tra thanh toán...');
-
+    // Single check operation used by both manual and auto check
+    const performSingleCheck = async () => {
+        if (checkingNowRef.current) return null;
+        checkingNowRef.current = true;
         try {
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                setCurrentAttempt(attempt);
-                setCheckProgress((attempt / maxAttempts) * 100);
-
-                addToHistory('checking', `Lần kiểm tra ${attempt}/${maxAttempts}...`);
-
-                const result = await paymentService.findPaymentByBookingCode(bookingCode, expectedAmount);
-
-                console.log(`🔍 PaymentCheck attempt ${attempt}: result =`, result);
-
-                if (result.found && result.transaction) {
-                    addToHistory('found', 'Đã tìm thấy giao dịch thanh toán!');
-                    message.success('Thanh toán đã được xác nhận!');
-                    console.log('🎉 PaymentCheck: Payment found, calling onPaymentConfirmed with:', result.transaction);
-                    onPaymentConfirmed(result.transaction);
-                    setIsChecking(false);
-                    return;
-                } else {
-                    console.log(`❌ PaymentCheck attempt ${attempt}: Payment not found`, result);
-                    addToHistory('not_found', result.message);
-                }
-
-                // Wait 10 seconds before next check (except for last attempt)
-                if (attempt < maxAttempts) {
-                    for (let i = 10; i > 0; i--) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        if (!isChecking) return; // Stop if cancelled
-                    }
-                }
+            addToHistory('checking', 'Đang kiểm tra giao dịch...');
+            const result = await paymentService.findPaymentByBookingCode(bookingCode, expectedAmount);
+            console.log('🔍 PaymentCheck single check result:', result);
+            if (result.found && result.transaction) {
+                addToHistory('found', 'Đã tìm thấy giao dịch thanh toán!');
+                message.success('Thanh toán đã được xác nhận!');
+                onPaymentConfirmed(result.transaction);
+                return { found: true, transaction: result.transaction };
+            } else {
+                addToHistory('not_found', result.message || 'Không tìm thấy giao dịch');
+                return { found: false };
             }
-
-            addToHistory('not_found', 'Không tìm thấy giao dịch thanh toán sau tất cả các lần kiểm tra');
-            message.warning('Không tìm thấy giao dịch thanh toán. Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ.');
-
         } catch (error) {
             console.error('Payment check error:', error);
             addToHistory('error', 'Lỗi khi kiểm tra thanh toán');
-            message.error('Lỗi khi kiểm tra thanh toán. Vui lòng thử lại.');
+            return { found: false };
+        } finally {
+            checkingNowRef.current = false;
+        }
+    };
+
+    const checkPayment = async () => {
+        // Manual immediate check
+        if (isChecking) return;
+        setIsChecking(true);
+        setCheckProgress(0);
+        setCurrentAttempt(prev => prev + 1);
+        try {
+            const r = await performSingleCheck();
+            if (r?.found) {
+                // stop auto if running
+                stopAutoChecking();
+            }
         } finally {
             setIsChecking(false);
             setCheckProgress(100);
+        }
+    };
+
+    const startAutoChecking = (immediate: boolean = false) => {
+        // clear any existing
+        stopAutoChecking();
+        if (immediate) {
+            // start immediately and then poll every 5s
+            setIsAutoChecking(true);
+            performSingleCheck().then(res => {
+                if (res?.found) {
+                    stopAutoChecking();
+                }
+            });
+            autoIntervalRef.current = window.setInterval(async () => {
+                const res = await performSingleCheck();
+                if (res?.found) {
+                    stopAutoChecking();
+                }
+            }, 5000);
+            return;
+        }
+
+        // initial delay 10s then every 5s
+        autoTimeoutRef.current = window.setTimeout(() => {
+            setIsAutoChecking(true);
+            // perform immediate check after initial delay
+            performSingleCheck().then(res => {
+                if (res?.found) {
+                    stopAutoChecking();
+                }
+            });
+            autoIntervalRef.current = window.setInterval(async () => {
+                const res = await performSingleCheck();
+                if (res?.found) {
+                    stopAutoChecking();
+                }
+            }, 5000);
+        }, 10000);
+    };
+
+    const stopAutoChecking = () => {
+        setIsAutoChecking(false);
+        if (autoIntervalRef.current) {
+            window.clearInterval(autoIntervalRef.current);
+            autoIntervalRef.current = null;
+        }
+        if (autoTimeoutRef.current) {
+            window.clearTimeout(autoTimeoutRef.current);
+            autoTimeoutRef.current = null;
         }
     };
 
@@ -109,14 +154,26 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
 
     useEffect(() => {
         if (isVisible) {
-            // Auto start checking when component becomes visible
-            checkPayment();
+            // Auto start checking when component becomes visible: respect autoStartImmediate flag
+            startAutoChecking(Boolean(autoStartImmediate));
+        } else {
+            // stop when hidden
+            stopAutoChecking();
         }
 
         return () => {
+            // cleanup any timers
+            stopAutoChecking();
             setIsChecking(false);
         };
-    }, [isVisible]);
+    }, [isVisible, autoStartImmediate]);
+
+    // If parent asked for immediate start via prop, start immediately when visible
+    useEffect(() => {
+        if (isVisible && autoStartImmediate) {
+            startAutoChecking(true);
+        }
+    }, [autoStartImmediate]);
 
     if (!isVisible) return null;
 
@@ -152,6 +209,15 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
                     >
                         Kiểm tra lại
                     </Button>
+                    {!isAutoChecking ? (
+                        <Button size="small" type="default" onClick={() => startAutoChecking(false)}>
+                            Bắt đầu tự động
+                        </Button>
+                    ) : (
+                        <Button size="small" danger onClick={() => stopAutoChecking()}>
+                            Dừng tự động
+                        </Button>
+                    )}
                 </Space>
             }
         >
@@ -168,6 +234,12 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
                     type="info"
                     showIcon
                 />
+
+                {isAutoChecking ? (
+                    <Text style={{ color: '#389e0d', fontWeight: 600 }}>Đang tự động kiểm tra (mỗi 5s)</Text>
+                ) : (
+                    <Text type="secondary">Chưa bật tự động kiểm tra</Text>
+                )}
 
                 {isChecking && (
                     <div>

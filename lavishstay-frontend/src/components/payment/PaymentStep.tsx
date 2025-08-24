@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Radio, Space, Row, Col, Alert, Button, Divider, Descriptions, Typography, Image } from 'antd';
 import { QrcodeOutlined, BankOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { PaymentCheck } from './PaymentCheck';
+import { paymentService } from '../../services/paymentService';
 import { PaymentTransaction } from '../../services/paymentService';
 import { usePaymentSettings } from '../../hooks/usePaymentSetting';
 
@@ -66,13 +67,31 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     generateVietQRUrl
 }) => {
     const [showPaymentCheck, setShowPaymentCheck] = useState(false);
+    const [autoStartImmediate, setAutoStartImmediate] = useState(false);
 
     // Get payment settings from hook
     const { settings, loading: settingsLoading, error: settingsError } = usePaymentSettings();
 
     const handleConfirmPayment = () => {
         if (selectedPaymentMethod === 'vietqr') {
+            // show payment check UI and attempt an immediate check once
+            setAutoStartImmediate(true);
             setShowPaymentCheck(true);
+
+            (async () => {
+                try {
+                    const res = await paymentService.findPaymentByBookingCode(bookingCode, totalAmount);
+                    if (res?.found && res.transaction) {
+                        // payment already found, confirm immediately
+                        handlePaymentConfirmed(res.transaction);
+                        return;
+                    }
+                    // else leave PaymentCheck open which will auto-start polling
+                } catch (err) {
+                    // ignore and let PaymentCheck handle polling
+                    console.warn('Immediate payment check failed, will rely on auto polling', err);
+                }
+            })();
         } else {
             onConfirmPayment();
         }
@@ -81,11 +100,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     const handlePaymentConfirmed = (transaction: PaymentTransaction) => {
         console.log('💰 PaymentStep: Payment confirmed, calling parent callback with:', transaction);
         setShowPaymentCheck(false);
+        setAutoStartImmediate(false);
         onConfirmPayment(transaction);
     };
 
     const handleCancelCheck = () => {
         setShowPaymentCheck(false);
+        setAutoStartImmediate(false);
     };
 
     const paymentMethods: PaymentMethod[] = [];
@@ -264,7 +285,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                                             {bookingCode}
                                         </Text>
                                     </div>
-                                </div>                                
+                                </div>
                                 <Alert
                                     message={`Thời gian còn lại: ${formatTime(countdown)}`}
                                     description="Vui lòng hoàn tất thanh toán trong thời gian quy định"
@@ -297,6 +318,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                         onPaymentConfirmed={handlePaymentConfirmed}
                         onCancel={handleCancelCheck}
                         isVisible={showPaymentCheck}
+                        autoStartImmediate={autoStartImmediate}
                     />
                 </Card>
             )}

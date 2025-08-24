@@ -213,7 +213,6 @@ class BookingController extends Controller {
             ->leftJoin('representatives as rep', function($join) {
                 $join->on('rep.booking_id', '=', 'b.booking_id');
             })
-            ->leftJoin('payment as p', 'b.booking_id', '=', 'p.booking_id')
             ->where('b.user_id', $userId)
             ->select([
                 'b.booking_id',
@@ -227,35 +226,20 @@ class BookingController extends Controller {
                 'b.guest_name',
                 'b.guest_email',
                 'b.guest_phone',
-                DB::raw('COALESCE(rt.name, rt2.name) as room_type'),
-                'r.name as room_name',
-                'r.image as room_image',
-                'r.room_id',
-                'r.status as room_status',
-                'br.option_id',
-                'br.option_name',
-                'br.price_per_night',
-                'br.nights',
-                'br.total_price',
-                'br.adults',
-                'br.children',
-                'br.children_age',
-                'rep.id as representative_id',
-                'rep.full_name as representative_name',
-                'rep.phone_number as representative_phone',
-                'rep.email as representative_email',
-                'rep.id_card as representative_id_card',
-                'p.amount_vnd as payment_amount',
-                'p.status as payment_status',
-                'p.payment_type',
-                'p.transaction_id',
-                DB::raw('(SELECT JSON_ARRAYAGG(JSON_OBJECT(
+                DB::raw('ANY_VALUE(COALESCE(rt.name, rt2.name)) as room_type'),
+                // Room-level details are fetched separately (booking_rooms). Use ANY_VALUE for representative fields to satisfy ONLY_FULL_GROUP_BY
+                DB::raw('ANY_VALUE(rep.id) as representative_id'),
+                DB::raw('ANY_VALUE(rep.full_name) as representative_name'),
+                DB::raw('ANY_VALUE(rep.phone_number) as representative_phone'),
+                DB::raw('ANY_VALUE(rep.email) as representative_email'),
+                DB::raw('ANY_VALUE(rep.id_card) as representative_id_card'),
+                DB::raw('ANY_VALUE((SELECT JSON_ARRAYAGG(JSON_OBJECT(
                     "image_id", rti.image_id,
                     "image_path", rti.image_path,
                     "alt_text", rti.alt_text,
                     "is_main", rti.is_main
-                )) FROM room_type_image rti WHERE rti.room_type_id = COALESCE(rt.room_type_id, b.room_type_id)) as room_type_images'),
-                DB::raw('(SELECT JSON_ARRAYAGG(JSON_OBJECT(
+                )) FROM room_type_image rti WHERE rti.room_type_id = COALESCE(rt.room_type_id, b.room_type_id))) as room_type_images'),
+                DB::raw('ANY_VALUE((SELECT JSON_ARRAYAGG(JSON_OBJECT(
                     "amenity_id", a.amenity_id,
                     "name", a.name,
                     "icon", a.icon,
@@ -265,8 +249,9 @@ class BookingController extends Controller {
                     "is_highlighted", rta.is_highlighted
                 )) FROM room_type_amenity rta
                 JOIN amenities a ON rta.amenity_id = a.amenity_id
-                WHERE rta.room_type_id = COALESCE(rt.room_type_id, b.room_type_id)) as room_type_amenities')
+                WHERE rta.room_type_id = COALESCE(rt.room_type_id, b.room_type_id))) as room_type_amenities')
             ])
+            ->groupBy('b.booking_id')
             ->orderBy('b.created_at', 'desc')
             ->get();
 

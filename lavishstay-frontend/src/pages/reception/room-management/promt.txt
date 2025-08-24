@@ -1,71 +1,61 @@
-Task: Thiết kế lại UI/UX cho trang "Lịch sử đặt phòng" trong profile user, giữ nguyên chức năng backend hiện có nhưng thay giao diện cho đẹp, dễ dùng, responsive, và bổ sung chi tiết booking giống file `src/pages/booking/LookupBookingByPhone.tsx`.
+Mục tiêu chính
 
-Context / Files of interest:
-- Current profile booking page component: src/components/profile/BookingManagement.tsx
-- Good example with full booking info: src/pages/booking/LookupBookingByPhone.tsx
-- Antd theme: src/styles/theme.ts and root provider in src/App.tsx
-- API helper: src/utils/api (axiosInstance)
-- Store: src/store (use existing auth/user state to get current user)
+Chuyển trang LookupBookingByPhone.tsx thành trang “Tra cứu & Lịch sử đặt phòng của user” (kết hợp lookup công khai + lịch sử user).
+Sửa lỗi  filter ngày & loại phòng.
+Lấy và hiển thị thông tin coupon phù hợp cho từng booking, theo tài liệu COUPON_API_DOCUMENTATION.md.
+Những thay đổi cần thực hiện (chi tiết kỹ thuật)
 
-Goals:
-1. Refactor `BookingManagement.tsx` to a modern, compact, mobile-first layout:
-   - Top: header + search bar (search by booking code or phone) + filters (status dropdown) + CTA "Tải hóa đơn" / "Liên hệ lễ tân".
-   - Main: Table (Antd `Table`) showing bookings for current user with columns:
-     - Mã booking (button link, primary) — shows copy icon to copy code.
-     - Ngày nhận/trả (stacked, small calendar icon; nights badge)
-     - Tổng tiền (formatted vi-VN with ₫)
-     - Trạng thái (Tag with VN label and color)
-     - Số khách / phòng (compact)
-     - Hành động: Chi tiết (open Drawer), Tải hóa đơn (if available)
-   - Table behavior: server-side pagination, sort by check_in desc, search + filters call existing API endpoints (reuse current service calls).
-   - Default: show most recent bookings; empty state friendly; loading skeletons while fetching.
+Data source / API
+Khi trang load mặc định: gọi endpoint được xác thực để lấy tất cả booking của user hiện tại. Sử dụng /bookings/user hoặc endpoint tương đương (có sẵn trong api.ts là bookingsAPI.getByUser()); truyền query params hỗ trợ: page, per_page, status, from, to, room_type, search.
+Khi user chủ động tìm kiếm (form submit hoặc thay đổi filter): dùng cùng endpoint authenticated /bookings/user (không dùng public search) và gửi params: search, status (tab), from, to, room_type, page, per_page. Điều này đảm bảo kết quả giới hạn trong user.
+Nếu API backend không hỗ trợ filter trên /bookings/user, fallback: gọi /public/bookings/search nhưng kèm user identifier từ token (nếu backend hỗ trợ) — nếu không có cách an toàn, yêu cầu backend thêm filter user_only=true hoặc endpoint /bookings/user/search. (Prompt cho BE change nếu cần.)
+Room types
+Lấy danh sách loại phòng từ GET /reception/room-types (sử dụng helper roomTypesAPI.getAll() trong api.ts), map sang { id, name } và populate Select options.
+Khi người dùng chọn room_type, gửi room_type (id hoặc slug theo BE contract) trong query params của /bookings/user.
+Date range filter
+RangePicker trả về dayjs; chuyển sang string format YYYY-MM-DD (hoặc format backend mong muốn) và gửi from/to trong query params.
+Quy ước: gửi from = startOf('day'), to = endOf('day') nếu backend expects inclusive range (document in PR if backend expects otherwise).
+Coupon hiển thị
+Theo COUPON_API_DOCUMENTATION.md: sử dụng GET /api/coupons/my-redemptions để lấy danh sách coupon đã dùng của user (field booking_code có trong response).
+Khi load danh sách booking hoặc detail: merge coupon data bằng booking_code (hoặc booking_id) và hiển thị tóm tắt coupon trên hàng table (ví dụ: badge "VIP300K: -300.000₫") và phần chi tiết coupon trong Drawer (code, description, amount_saved, redeemed_at).
+Nếu booking detail từ backend đã bao gồm coupon info, ưu tiên dùng field đó; nếu không, gọi /api/coupons/my-redemptions một lần và cache map booking_code -> couponEntry.
+Ngữ cảnh bảo mật
+Trang này chỉ trả data của user hiện đăng nhập. Không dùng public search để xem booking người khác.
+Đảm bảo tất cả các request quan trọng dùng axios instance có Authorization header (dùng api/axiosInstance hiện có).
+Xử lý ngày ISO microseconds
+Trước khi parse với dayjs, strip microseconds bằng regex (ví dụ: replace(/.\d+Z$/, 'Z')) hoặc dùng dayjs plugin nếu backend đồng nhất.
+UI / UX
+Mặc định khi vào trang: hiển thị paginated table của tất cả booking của user (tab All), có tabs theo status.
+Search vẫn tồn tại (SĐT, mã booking), nhưng nếu tìm mã/SĐT không thuộc user thì hiển thị “Không tìm thấy”.
+Hiển thị coupon tóm tắt trong table và chi tiết coupon trong Drawer.
+Giữ các nút hành động (cancel/extend/reschedule/review) như hiện tại, nhưng mọi thao tác phải xác thực và chỉ áp dụng trên booking của user.
+Tests & Validation
+Thêm unit/smoke tests (vitest/jest) hoặc at least manual test steps:
+Default load: /bookings/user được gọi; table hiển thị only user bookings.
+Search by date-range: chọn ngày, backend request includes from/to formatted; results correct.
+Room-type select is populated and selecting it sends room_type param.
+Coupon mapping: after calling /api/coupons/my-redemptions, verify that booking rows show coupon info.
 
-2. Drawer detail (right side, width ~720) — reuse and adapt UI from `LookupBookingByPhone.tsx`:
-   - Header: Icon + "Chi tiết booking: <booking_code>" + Copy button + small status Tag.
-   - Sections:
-     - Thông tin cơ bản: booking_code, status, tên khách (or chủ booking), masked phone/email (click to reveal if current user owns booking), check_in, check_out, nights badge, guest_count, total_price (highlight).
-     - Phòng: list cards (Card) per room with Descriptions: room_name, room_type, floor, option, adults, children, price/night, nights, total.
-     - Người đại diện: nếu có (map of reps).
-     - Thanh toán: list of payments with amount formatted, method, status tag, timestamp.
-     - Ghi chú & Timestamps (created/updated).
-   - Actions in drawer: Cancel booking (if allowed), Request change (open small Modal), Download invoice.
+Contract / example requests & responses to implement
 
-3. Accessibility & UX details:
-   - All buttons have aria-labels.
-   - Keyboard focus on open drawer; Esc closes.
-   - Table rows clickable by keyboard.
-   - Use consistent spacing and font sizes per project theme tokens.
-   - Mobile: collapse columns; show key info and "Chi tiết" button.
+GET /bookings/user?search=...&status=...&from=YYYY-MM-DD&to=YYYY-MM-DD&room_type=...&page=1&per_page=20
+Response: same shape as SearchResponse (data[], meta) but only for the authenticated user. If backend returns plain array, adapt accordingly.
+GET /reception/room-types -> response.data (array) -> map to options
+GET /api/coupons/my-redemptions -> Response (see COUPON_API_DOCUMENTATION.md) with booking_code, amount_saved, redeemed_at -> merge by booking_code.
+Acceptance criteria (done = PR ready)
 
-4. Security & Privacy:
-   - In table list, mask phone as 0901****567 or show only last 4 digits; full phone/email displayed in Drawer only if current user is owner.
-   - Do not leak other users' PII.
+Default page loads authenticated user's bookings only.
+Date-range filter correctly sends from and to and results update.
+Room-type Select is populated and filter works.
+Coupon info shown per booking (table + drawer); if none, show “Không có coupon”.
+ISO microseconds timestamps render correctly.
+Tests/manual verification steps included in PR description.
+No regression: booking lookup by code still works but limited to current user.
+Implementation notes for AI/code author
 
-5. i18n:
-   - Use `t('profile.bookings...')` keys for all strings; update `src/locales/vi/translation.json` with new keys.
-
-6. Tests:
-   - Add unit/feature tests in src/__tests__ or existing test folder:
-     - Render BookingManagement, mock API to return 2 bookings; assert table rows render.
-     - Open detail drawer for a booking; assert detail sections visible.
-
-Implementation notes for AI/coder:
-- Edit only `src/components/profile/BookingManagement.tsx` (replace content) and add i18n keys into `src/locales/vi/translation.json`.
-- Reuse API calls: call endpoint used by profile bookings (if none, use `/user/bookings` or adapt to existing code).
-- Keep business logic: calls to cancel / download invoice must call existing API endpoints or return a TODO comment if unknown.
-- Keep imports consistent with project style (TypeScript + React + Antd). Use existing helper formatters (Intl.NumberFormat('vi-VN')) and date helpers.
-- Keep CSS minimal inline or use existing classNames / theme tokens.
-
-Acceptance criteria (how to verify):
-- Manual: run frontend and log in as a user; open Profile -> Bookings; table shows bookings in Vietnamese, responsive; click "Chi tiết" opens drawer with full data as in LookupBookingByPhone; copy booking code works; masked fields behave correctly.
-- Automated: tests added pass (`npm test` or `pnpm test` depending on repo).
-- Lint/Typecheck: no TypeScript errors.
-
-Dev tasks & commit message:
-- Files to change: `src/components/profile/BookingManagement.tsx`, `src/locales/vi/translation.json` (add keys).
-- Commit message: "feat(profile): redesign BookingManagement UI — compact table + detailed drawer (vi) and add i18n keys"
-- PR description: "Refactor profile booking history UI to match LookupBookingByPhone detail layout, keep backend contracts, improve mobile UX, privacy masking, and add basic tests."
-
-If any backend endpoints differ, fallback rule: keep API call abstracted in `axiosInstance.get('/user/bookings')` and document TODO for backend route mapping.
-
-Deliverable: updated `BookingManagement.tsx` component implementing the above.
+Edit only these files (primary): LookupBookingByPhone.tsx. Minor helper additions allowed in api.ts if necessary.
+Reuse existing helpers where possible: roomTypesAPI.getAll(), bookingsAPI.getByUser() (see api.ts).
+Cache coupon redemptions per session to avoid repeated calls.
+Add clear error/permission handling: if authenticated endpoint returns 403, show message “Bạn không có quyền xem booking này”.
+Update component-level unit tests or add a simple integration test to assert the main flows.
+sửa các nút action hiển thị đẹp hơn theo kiểu đơn giản mà đẹp của antd
