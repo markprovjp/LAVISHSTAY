@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class Notification extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     /**
      * Indicates if the model's ID is auto-incrementing.
@@ -91,6 +91,14 @@ class Notification extends Model
     }
 
     /**
+     * Get the user that owns the notification.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'notifiable_id');
+    }
+
+    /**
      * Scope a query to only include unread notifications.
      */
     public function scopeUnread($query)
@@ -130,6 +138,38 @@ class Notification extends Model
         return $query->whereHas('notificationType', function ($q) use ($typeName) {
             $q->where('name', $typeName);
         });
+    }
+
+    /**
+     * Scope a query to only include recent notifications.
+     */
+    public function scopeRecent($query, $days = 30)
+    {
+        return $query->where('created_at', '>=', now()->subDays($days));
+    }
+
+    /**
+     * Scope a query to filter by priority level.
+     */
+    public function scopeByPriority($query, $priority)
+    {
+        return $query->where('priority', $priority);
+    }
+
+    /**
+     * Check if notification is read
+     */
+    public function isRead(): bool
+    {
+        return !is_null($this->read_at);
+    }
+
+    /**
+     * Check if notification is unread
+     */
+    public function isUnread(): bool
+    {
+        return is_null($this->read_at);
     }
 
     /**
@@ -217,6 +257,20 @@ class Notification extends Model
             'normal' => '🔔',
             'low' => '📢',
             default => '🔔'
+        };
+    }
+
+    /**
+     * Get priority badge class for UI
+     */
+    public function getPriorityBadgeAttribute(): string
+    {
+        return match($this->priority) {
+            'urgent' => 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+            'high' => 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300',
+            'normal' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
+            'low' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+            default => 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
         };
     }
 

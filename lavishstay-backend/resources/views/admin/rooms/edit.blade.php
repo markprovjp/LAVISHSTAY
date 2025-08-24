@@ -21,14 +21,15 @@
             <script>
                 function closeNotificationError() {
                     const notification = document.getElementById('notification-error');
-                    notification.classList.add('opacity-0', 'scale-95');
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 300);
+                    if (notification) {
+                        notification.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 300);
+                    }
                 }
             </script>
         @endif
-
 
         <!-- Page header -->
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
@@ -104,21 +105,21 @@
 
         <!-- Form -->
         <form action="{{ route('admin.rooms.update', $room->room_id) }}" method="POST" enctype="multipart/form-data"
-            onsubmit="return confirmSubmit()">
+            onsubmit="return confirmSubmit()" class="w-full">
             @csrf
             @method('PUT')
 
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="space-y-6 w-full">
 
                 <!-- Main Content -->
-                <div class="xl:col-span-2 space-y-6">
+                <div class="w-full">
 
                     <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
                         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
                             <h2 class="font-semibold text-gray-800 dark:text-gray-100">Thông tin cơ bản</h2>
                         </div>
                         <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                                 <!-- Room Name -->
                                 <div>
                                     <div>
@@ -143,8 +144,8 @@
                                     </label>
                                     <select name="floor_id"
                                         class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
- dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
- w-full @error('floor_id') border-red-500 @enderror">
+                                        dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                                        w-full @error('floor_id') border-red-500 @enderror">
                                         @foreach ($floors as $floor)
                                             <option value="{{ $floor->floor_id }}"
                                                 {{ old('floor_id', $room->floor_id) == $floor->floor_id ? 'selected' : '' }}>
@@ -164,12 +165,12 @@
                                     </label>
                                     <select name="bed_type_fixed"
                                         class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
- dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
- w-full @error('bed_type_fixed') border-red-500 @enderror">
+                                        dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                                        w-full @error('bed_type_fixed') border-red-500 @enderror">
                                         @foreach ($bedTypes as $bedType)
                                             <option value="{{ $bedType->id }}"
                                                 {{ old('bed_type_fixed', $room->bed_type_fixed) == $bedType->id ? 'selected' : '' }}>
-                                                {{ $bedType->type_name }} <!-- Sử dụng type_name thay vì name -->
+                                                {{ $bedType->type_name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -185,9 +186,9 @@
                                     </label>
                                     <select name="status"
                                         class="border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 
- dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
- w-full @error('status') border-red-500 @enderror">
-                                        @foreach (['available' => 'Trống', 'occupied' => 'Đang sử dụng', 'maintenance' => 'Đang bảo trì', 'cleaning' => 'Đang dọn dẹp'] as $value => $label)
+                                        dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                                        w-full @error('status') border-red-500 @enderror">
+                                        @foreach (['available' => 'Sẵn sàng', 'out_of_service' => 'Ngừng phục vụ'] as $value => $label)
                                             <option value="{{ $value }}"
                                                 {{ old('status', $room->status) == $value ? 'selected' : '' }}>
                                                 {{ $label }}
@@ -206,8 +207,8 @@
                                     </label>
                                     <textarea name="description" rows="4"
                                         class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
- placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
- @error('description') border-red-500 @enderror"
+                                        placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500
+                                        @error('description') border-red-500 @enderror"
                                         placeholder="Mô tả chi tiết về phòng, tiện nghi, đặc điểm nổi bật...">{{ old('description', $room->description) }}</textarea>
                                     @error('description')
                                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -218,7 +219,7 @@
                     </div>
 
                     <!-- Image Section -->
-                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl">
+                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl mt-6">
                         <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
                             <h2 class="font-semibold text-gray-800 dark:text-gray-100">Hình ảnh phòng</h2>
                         </div>
@@ -290,41 +291,42 @@
                         </div>
                     </div>
 
+                    <!-- Action Buttons -->
+                    <div class="flex items-center justify-end space-x-4 mt-6">
+                        <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                            <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16"
+                                height="16">
+                                <path
+                                    d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z" />
+                            </svg>
+                            Cập nhật phòng
+                        </button>
+                    </div>
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="flex items-center justify-end space-x-4 mt-6">
-                    <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
-                        <svg class="w-4 h-4 fill-current shrink-0 mr-2" viewBox="0 0 16 16" width="16"
-                            height="16">
-                            <path
-                                d="M11.7.3c-.4-.4-1-.4-1.4 0l-10 10c-.2.2-.3.4-.3.7v4c0 .6.4 1 1 1h4c.3 0 .5-.1.7-.3l10-10c.4-.4.4-1 0-1.4l-4-4zM4.6 14H2v-2.6l6-6L10.6 8l-6 6zM12 6.6L9.4 4 11 2.4 13.6 5 12 6.6z" />
-                        </svg>
-                        Cập nhật phòng
-                    </button>
-                </div>
+            </div>
         </form>
 
     </div>
 
     <!-- JavaScript -->
-
     <script>
-        // Animation khi hiển thị
-        document.getElementById('notification').classList.add('translate-y-0', 'opacity-100');
-        document.getElementById('notification').classList.remove('-translate-y-full', 'opacity-0');
-
-        // Tự động ẩn sau 5 giây
-        setTimeout(() => {
-            closeNotification();
-        }, 5000);
-
-        function closeNotification() {
-            const notification = document.getElementById('notification');
-            notification.classList.add('opacity-0', 'scale-95');
+        // Animation khi hiển thị thông báo lỗi
+        if (document.getElementById('notification-error')) {
+            document.getElementById('notification-error').classList.add('translate-y-0', 'opacity-100');
+            document.getElementById('notification-error').classList.remove('-translate-y-full', 'opacity-0');
             setTimeout(() => {
-                notification.remove();
-            }, 300);
+                closeNotificationError();
+            }, 5000);
+        }
+
+        function closeNotificationError() {
+            const notification = document.getElementById('notification-error');
+            if (notification) {
+                notification.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }
         }
     </script>
     <script>
@@ -348,13 +350,5 @@
         function confirmSubmit() {
             return confirm('Bạn có chắc muốn cập nhật thông tin phòng {{ $room->name }}?');
         }
-
-        // Format price input
-        document.querySelector('input[name="base_price_vnd"]').addEventListener('input', function() {
-            let value = this.value.replace(/\D/g, '');
-            if (value) {
-                this.value = parseInt(value);
-            }
-        });
     </script>
 </x-app-layout>

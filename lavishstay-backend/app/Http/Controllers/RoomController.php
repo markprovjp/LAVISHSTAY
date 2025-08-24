@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
@@ -127,10 +129,8 @@ class RoomController extends Controller
         $rooms = $query->paginate(12)->withQueryString();
 
         $statusOptions = [
-            'available' => 'Trống',
-            'occupied' => 'Đang sử dụng', 
-            'maintenance' => 'Đang bảo trì',
-            'cleaning' => 'Đang dọn dẹp'
+            'available' => 'Sẵn sàng',
+            'out_of_service' => 'Ngừng phục vụ'
         ];
 
         return view('admin.rooms.rooms', compact('rooms', 'roomType', 'statusOptions'));
@@ -141,39 +141,42 @@ class RoomController extends Controller
         $room = Room::with(['roomType.amenities'])
             ->where('room_id', $roomId)
             ->firstOrFail();
+
+            $statusOptions = [
+            'available' => 'Sẵn sàng',
+            'out_of_service' => 'Ngừng phục vụ',
+        ];
             
-        return view('admin.rooms.show', compact('room'));
+        return view('admin.rooms.show', compact('room', 'statusOptions'));
     }
 
     public function create(RoomType $roomType){
         try {
             $statusOptions = [
-                'available' => 'Sẵn sàng',
-                'occupied' => 'Đã đặt',
-                'maintenance' => 'Bảo trì',
-                'cleaning' => 'Đang dọn dẹp'
-            ];
-
+            'available' => 'Sẵn sàng',
+            'out_of_service' => 'Ngừng phục vụ'
+        ];
+        
             $floors = Floor::all();
             $bedTypes = BedType::active()->get();
 
             return view('admin.rooms.create', compact('roomType', 'statusOptions', 'floors', 'bedTypes'));
         } catch (\Exception $e) {
-            \Log::error('Error in create method: ' . $e->getMessage());
+            Log::error('Error in create method: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
 
     public function store(Request $request, RoomType $roomType){
         try {
-            \Log::info('Store method called', ['room_type_id' => $roomType->room_type_id, 'request' => $request->all()]);
+            Log::info('Store method called', ['room_type_id' => $roomType->room_type_id, 'request' => $request->all()]);
 
             $rules = [
                 'name' => ['required', 'string', 'max:100', 'unique:room,name'], // Sửa từ 'rooms' thành 'room'
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'floor_id' => 'required|exists:floors,floor_id',
                 'bed_type_fixed' => 'required|exists:bed_types,id',
-                'status' => 'required|in:available,occupied,maintenance,cleaning',
+                'status' => 'required|in:available,out_of_service',
                 'description' => 'nullable|string',
                 'last_cleaned' => 'nullable|date',
             ];
@@ -185,7 +188,7 @@ class RoomController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Validation failed', ['errors' => $validator->errors()->toArray()]);
+                Log::error('Validation failed', ['errors' => $validator->errors()->toArray()]);
                 return redirect()->back()
                     ->withErrors($validator)
                     ->withInput()
@@ -194,7 +197,7 @@ class RoomController extends Controller
 
             $imagePath = null;
             if ($request->hasFile('image')) {
-                \Log::info('New image uploaded');
+                Log::info('New image uploaded');
                 $imagePath = $request->file('image')->store('rooms', 'public');
                 $imagePath = Storage::url($imagePath);
             }
@@ -212,13 +215,13 @@ class RoomController extends Controller
 
             $room = Room::create($data);
 
-            \Log::info('Room created successfully', ['room_id' => $room->room_id]);
+            Log::info('Room created successfully', ['room_id' => $room->room_id]);
 
             return redirect()
                 ->route('admin.rooms.show', $room->room_id)
                 ->with('success', "Đã tạo phòng {$room->name} thành công!");
         } catch (\Exception $e) {
-            \Log::error('Error creating room: ' . $e->getMessage(), [
+            Log::error('Error creating room: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all()
             ]);
@@ -229,24 +232,24 @@ class RoomController extends Controller
     }
 
     public function importExcel(Request $request, $room_type_id){
-        \Log::info('Import Excel route hit', ['room_type_id' => $room_type_id]);
+        Log::info('Import Excel route hit', ['room_type_id' => $room_type_id]);
 
         $request->validate([
             'excel_file' => 'required|mimes:xls,xlsx|max:2048',
         ]);
 
         if (!$request->hasFile('excel_file')) {
-            \Log::error('No file uploaded');
+            Log::error('No file uploaded');
             return redirect()->back()->with('error', 'Vui lòng chọn file Excel!');
         }
 
         $file = $request->file('excel_file');
-        \Log::info('File received', ['name' => $file->getClientOriginalName(), 'size' => $file->getSize()]);
+        Log::info('File received', ['name' => $file->getClientOriginalName(), 'size' => $file->getSize()]);
 
         $roomType = RoomType::findOrFail($room_type_id);
         $currentCount = $roomType->rooms()->count();
         if ($currentCount >= $roomType->total_room) {
-            \Log::warning('Room limit reached', ['current' => $currentCount, 'total' => $roomType->total_room]);
+            Log::warning('Room limit reached', ['current' => $currentCount, 'total' => $roomType->total_room]);
             return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'Đã đạt giới hạn tối đa phòng của loại!');
         }
 
@@ -255,9 +258,9 @@ class RoomController extends Controller
             $sheet = $spreadsheet->getActiveSheet();
             $dataRows = $sheet->toArray();
 
-            \Log::info('Excel data loaded', ['row_count' => count($dataRows)]);
+            Log::info('Excel data loaded', ['row_count' => count($dataRows)]);
             if (empty($dataRows)) {
-                \Log::error('Empty Excel file');
+                Log::error('Empty Excel file');
                 return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'File Excel trống!');
             }
 
@@ -269,14 +272,14 @@ class RoomController extends Controller
 
             // Kiểm tra số cột
             if ($headerCount !== $expectedCount) {
-                \Log::error('Invalid column count', ['expected' => $expectedCount, 'got' => $headerCount]);
+                Log::error('Invalid column count', ['expected' => $expectedCount, 'got' => $headerCount]);
                 return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'Số cột trong file Excel không đúng. Vui lòng sử dụng đúng ' . $expectedCount . ' cột: ' . implode(', ', $expectedColumns) . '.');
             }
 
             // Kiểm tra tên cột
             $columnMatch = array_intersect($headerRow, $expectedColumns);
             if (count($columnMatch) !== $expectedCount) {
-                \Log::error('Column names do not match', ['expected' => $expectedColumns, 'got' => $headerRow]);
+                Log::error('Column names do not match', ['expected' => $expectedColumns, 'got' => $headerRow]);
                 return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'Tên cột trong file Excel không khớp. Vui lòng sử dụng các cột: ' . implode(', ', $expectedColumns) . '.');
             }
 
@@ -285,13 +288,13 @@ class RoomController extends Controller
 
             $remainingRooms = $roomType->total_room - $currentCount;
             $countToAdd = min(count($dataRows), $remainingRooms);
-            \Log::info('Import details', [
+            Log::info('Import details', [
                 'remaining_rooms' => $remainingRooms,
                 'count_to_add' => $countToAdd
             ]);
 
             if ($countToAdd <= 0) {
-                \Log::warning('No rooms to add');
+                Log::warning('No rooms to add');
                 return redirect()->route('admin.rooms.by-type', $room_type_id)->with('warning', 'Không còn phòng nào để thêm!');
             }
 
@@ -306,7 +309,7 @@ class RoomController extends Controller
             }
 
             if (!empty($duplicateRows)) {
-                \Log::error('Duplicate names detected', ['duplicate_rows' => $duplicateRows]);
+                Log::error('Duplicate names detected', ['duplicate_rows' => $duplicateRows]);
                 return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'Tên phòng đã tồn tại ở các hàng: ' . implode('; ', $duplicateRows) . '. Vui lòng chỉnh sửa file Excel và thử lại.');
             }
 
@@ -328,7 +331,7 @@ class RoomController extends Controller
 
             return redirect()->route('import.preview');
         } catch (\Exception $e) {
-            \Log::error('Error processing Excel: ' . $e->getMessage(), [
+            Log::error('Error processing Excel: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'Có lỗi xảy ra khi xử lý file Excel: ' . $e->getMessage());
@@ -361,7 +364,7 @@ class RoomController extends Controller
             foreach ($importDetails['data_rows'] as $i => $row) {
                 if ($i >= $countToAdd) break;
 
-                \Log::info('Processing row from preview', [
+                Log::info('Processing row from preview', [
                     'row_number' => ($i + 2),
                     'data' => $row,
                 ]);
@@ -371,7 +374,7 @@ class RoomController extends Controller
                     'image' => 'nullable|url',
                     'floor_id' => 'required|exists:floors,floor_id',
                     'bed_type_fixed' => 'required|exists:bed_types,id',
-                    'status' => 'required|in:available,occupied,maintenance,cleaning',
+                    'status' => 'required|in:available,out_of_service',
                     'description' => 'nullable|string',
                     'last_cleaned' => 'nullable|date',
                 ];
@@ -388,14 +391,14 @@ class RoomController extends Controller
 
                 $validator = Validator::make($rowData, $rules);
                 if ($validator->fails()) {
-                    \Log::error('Validation failed for row ' . ($i + 2), ['errors' => $validator->errors()]);
+                    Log::error('Validation failed for row ' . ($i + 2), ['errors' => $validator->errors()]);
                     $failedRows[] = "Hàng " . ($i + 2) . ": " . implode(', ', $validator->errors()->all());
                     continue;
                 }
 
                 // Kiểm tra trùng tên ngay trước khi thêm
                 if (in_array($rowData['name'], $existingNames)) {
-                    \Log::error('Duplicate name detected for row ' . ($i + 2), ['name' => $rowData['name']]);
+                    Log::error('Duplicate name detected for row ' . ($i + 2), ['name' => $rowData['name']]);
                     $failedRows[] = "Hàng " . ($i + 2) . ": Tên phòng đã tồn tại";
                     continue; // Bỏ qua hàng này nếu trùng tên
                 }
@@ -408,7 +411,7 @@ class RoomController extends Controller
                         Storage::disk('public')->put($imageName, $imageContent);
                         $imagePath = Storage::url($imageName);
                     } catch (\Exception $e) {
-                        \Log::error('Error downloading image for row ' . ($i + 2) . ': ' . $e->getMessage());
+                        Log::error('Error downloading image for row ' . ($i + 2) . ': ' . $e->getMessage());
                     }
                 }
 
@@ -424,7 +427,7 @@ class RoomController extends Controller
                 ];
 
                 Room::create($insertData);
-                \Log::info('Imported room successfully', [
+                Log::info('Imported room successfully', [
                     'row' => ($i + 2),
                     'data' => $insertData
                 ]);
@@ -437,7 +440,7 @@ class RoomController extends Controller
             }
             return redirect()->route('admin.rooms.by-type', $room_type_id)->with('success', "Đã nhập thành công $countToAdd phòng!");
         } catch (\Exception $e) {
-            \Log::error('Error processing Excel confirmation: ' . $e->getMessage(), [
+            Log::error('Error processing Excel confirmation: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->route('admin.rooms.by-type', $room_type_id)->with('error', 'Có lỗi xảy ra khi xác nhận nhập: ' . $e->getMessage());
@@ -447,11 +450,9 @@ class RoomController extends Controller
     public function edit(Room $room){
         try {
             $statusOptions = [
-                'available' => 'Có sẵn',
-                'occupied' => 'Đã đặt',
-                'maintenance' => 'Bảo trì',
-                'cleaning' => 'Đang dọn dẹp'
-            ];
+            'available' => 'Sẵn sàng',
+            'out_of_service' => 'Ngừng phục vụ'
+        ];
 
             $roomType = $room->roomType;
             $floors = Floor::all(); // Lấy danh sách tất cả tầng
@@ -459,21 +460,21 @@ class RoomController extends Controller
 
             return view('admin.rooms.edit', compact('room', 'roomType', 'statusOptions', 'floors', 'bedTypes'));
         } catch (\Exception $e) {
-            \Log::error('Error in edit method: ' . $e->getMessage());
+            Log::error('Error in edit method: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
 
     public function update(Request $request, Room $room){
         try {
-            \Log::info('Update method called', ['room_id' => $room->room_id, 'request' => $request->all()]);
+            Log::info('Update method called', ['room_id' => $room->room_id, 'request' => $request->all()]);
 
             $rules = [
-                'name' => ['required', 'string', 'max:100', 'unique:room,name,' . $room->room_id. ',room_id'], // Sửa từ 'rooms' thành 'room'
+                'name' => ['required', 'string', 'max:100', 'unique:room,name,' . $room->room_id. ',room_id'], 
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'floor_id' => 'required|exists:floors,floor_id',        
                 'bed_type_fixed' => 'required|exists:bed_types,id',
-                'status' => 'required|in:available,occupied,maintenance,cleaning',
+                'status' => 'required|in:available,out_of_service',
                 'description' => 'nullable|string',
                 'last_cleaned' => 'nullable|date',
             ];
@@ -485,7 +486,7 @@ class RoomController extends Controller
             ]);
 
             if ($validator->fails()) {
-                \Log::error('Validation failed', ['errors' => $validator->errors()->toArray()]);
+                Log::error('Validation failed', ['errors' => $validator->errors()->toArray()]);
                 return redirect()->back()
                     ->withErrors($validator)
                     ->withInput()
@@ -494,7 +495,7 @@ class RoomController extends Controller
 
             $imagePath = $room->image;
             if ($request->hasFile('image')) {
-                \Log::info('New image uploaded');
+                Log::info('New image uploaded');
                 if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
                     Storage::disk('public')->delete(str_replace('/storage/', '', $room->image));
                 }
@@ -512,17 +513,17 @@ class RoomController extends Controller
                 'last_cleaned' => $request->last_cleaned,
             ];
 
-            \Log::info('Updating room with data', $data);
+            Log::info('Updating room with data', $data);
 
             $room->update($data);
 
-            \Log::info('Room updated successfully', ['room_id' => $room->room_id]);
+            Log::info('Room updated successfully', ['room_id' => $room->room_id]);
 
             return redirect()
                 ->route('admin.rooms.show', $room->room_id)
                 ->with('success', "Đã cập nhật phòng {$room->name} thành công!");
         } catch (\Exception $e) {
-            \Log::error('Error updating room: ' . $e->getMessage(), [
+            Log::error('Error updating room: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->all()
             ]);
@@ -532,73 +533,146 @@ class RoomController extends Controller
         }
     }
 
-    public function destroy(Room $room)
+   public function destroy(Room $room)
     {
         try {
-            \Log::info('Delete method called', ['room_id' => $room->room_id]);
+            Log::info('Delete method called', ['room_id' => $room->room_id, 'current_route' => request()->route()->getName(), 'referer' => request()->header('referer')]);
+
+            // Bắt đầu giao dịch
+            DB::beginTransaction();
+
+            // Kiểm tra xem phòng có bookings active không bằng phương thức trong mô hình
+            if ($room->hasActiveBookings()) {
+                Log::warning('Cannot delete room due to active bookings', ['room_id' => $room->room_id]);
+                $referer = request()->header('referer');
+                return redirect()->back()->with('error', 'Phòng đang được đặt, không thể xóa!');
+            }
 
             $roomName = $room->name;
             $roomTypeId = $room->room_type_id;
 
+            $room->delete();
+
+            // Xóa ảnh sau khi xóa phòng thành công
             if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $room->image));
             }
 
-            $room->delete();
+            DB::commit();
 
-            \Log::info('Room deleted successfully', ['room_name' => $roomName]);
+            Log::info('Room deleted successfully', ['room_name' => $roomName]);
 
             return redirect()
                 ->route('admin.rooms.by-type', $roomTypeId)
                 ->with('success', "Đã xóa phòng {$roomName} thành công!");
 
-        } catch (\Exception $e) {
-            \Log::error('Error deleting room: ' . $e->getMessage(), [
+        } catch (QueryException $e) {
+            DB::rollBack();
+            Log::error('Error deleting room due to foreign key constraint: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
-                'room_id' => $room->room_id
+                'room_id' => $room->room_id,
+                'current_route' => request()->route()->getName(),
+                'referer' => request()->header('referer')
+            ]);
+
+            // Kiểm tra mã lỗi SQL 23000 (vi phạm khóa ngoại)
+            if ($e->getCode() == '23000') {
+                return redirect()->back()->with('error', 'Phòng đang được đặt, không thể xóa!');
+            }
+
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting room: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'room_id' => $room->room_id,
+                'current_route' => request()->route()->getName(),
+                'referer' => request()->header('referer')
             ]);
             
-            return redirect()->back()
-                ->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
         }
     }
 
     public function destroyMultiple(Request $request, $room_type_id)
-{
-    $roomIds = $request->input('room_ids', []);
-    \Log::info('Received room_ids for destroyMultiple: ', ['room_ids' => $roomIds]);
+    {
+        $roomIds = $request->input('room_ids', []);
+        Log::info('Received room_ids for destroyMultiple: ', ['room_ids' => $roomIds]);
 
-    if (empty($roomIds)) {
-        return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])->with('error', 'Vui lòng chọn ít nhất một phòng để xóa!');
-    }
-
-    try {
-        $currentPage = $request->input('page', 1);
-        $perPage = 12;
-        $totalRooms = Room::where('room_type_id', $room_type_id)->count();
-        $deletedCount = count($roomIds);
-
-        Room::whereIn('room_id', $roomIds)->delete();
-
-        $remainingRooms = $totalRooms - $deletedCount;
-        $newPage = $currentPage;
-
-        if ($remainingRooms > 0) {
-            $lastPage = ceil($remainingRooms / $perPage);
-            if ($currentPage > $lastPage) {
-                $newPage = $lastPage;
-            }
-        } else {
-            $newPage = 1;
+        if (empty($roomIds)) {
+            return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])->with('error', 'Vui lòng chọn ít nhất một phòng để xóa!');
         }
 
-        // Redirect đơn giản với page mới
-        return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id, 'page' => $newPage])->with('success', 'Đã xóa thành công ' . $deletedCount . ' phòng!');
-    } catch (\Exception $e) {
-        \Log::error('Error deleting multiple rooms: ' . $e->getMessage());
-        return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
+        try {
+            DB::beginTransaction();
+
+            $currentPage = $request->input('page', 1);
+            $perPage = 12;
+            $totalRooms = Room::where('room_type_id', $room_type_id)->count();
+            $deletedCount = 0;
+            $failedRooms = [];
+
+            // Kiểm tra và xóa từng phòng
+            foreach ($roomIds as $roomId) {
+                $room = Room::find($roomId);
+                if ($room && !$room->hasActiveBookings()) {
+                    if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
+                        Storage::disk('public')->delete(str_replace('/storage/', '', $room->image));
+                    }
+                    $room->delete();
+                    $deletedCount++;
+                } else {
+                    $failedRooms[] = $room ? $room->name : "Phòng ID $roomId";
+                }
+            }
+
+            $remainingRooms = $totalRooms - $deletedCount;
+            $newPage = $currentPage;
+
+            if ($remainingRooms > 0) {
+                $lastPage = ceil($remainingRooms / $perPage);
+                if ($currentPage > $lastPage) {
+                    $newPage = $lastPage;
+                }
+            } else {
+                $newPage = 1;
+            }
+
+            DB::commit();
+
+            if (!empty($failedRooms)) {
+                return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id, 'page' => $newPage])
+                    ->with('error', 'Không thể xóa ' . implode(', ', $failedRooms) . ' vì phòng đang được đặt. Đã xóa thành công ' . $deletedCount . ' phòng khác!');
+            }
+
+            return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id, 'page' => $newPage])
+                ->with('success', 'Đã xóa thành công ' . $deletedCount . ' phòng!');
+
+        } catch (QueryException $e) {
+            DB::rollBack();
+            Log::error('Error deleting multiple rooms due to foreign key constraint: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'room_ids' => $roomIds
+            ]);
+
+            if ($e->getCode() == '23000') {
+                return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])
+                    ->with('error', 'Một hoặc nhiều phòng đang được đặt, không thể xóa!');
+            }
+
+            return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])
+                ->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting multiple rooms: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'room_ids' => $roomIds
+            ]);
+            return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])
+                ->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
+        }
     }
-}
+
 
     public function getCalendarData($roomId)
     {
@@ -615,7 +689,7 @@ class RoomController extends Controller
             $startDate = now()->startOfMonth()->subMonth();
             $endDate = now()->addMonths(2)->endOfMonth();
             
-            \Log::info('Calendar date range:', [
+            Log::info('Calendar date range:', [
                 'start' => $startDate->format('Y-m-d'),
                 'end' => $endDate->format('Y-m-d')
             ]);
@@ -652,7 +726,7 @@ class RoomController extends Controller
                 'summary' => $summary
             ];
 
-            \Log::info('Calendar response:', [
+            Log::info('Calendar response:', [
                 'room_id' => $response['room']['id'],
                 'data_count' => count($response['calendar_data']),
                 'date_range' => $response['date_range']
@@ -661,7 +735,7 @@ class RoomController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
-            \Log::error('Calendar error: ' . $e->getMessage());
+            Log::error('Calendar error: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
