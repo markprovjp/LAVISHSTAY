@@ -32,9 +32,7 @@ class Room extends Model
 
     // Status constants
     const STATUS_AVAILABLE = 'available';
-    const STATUS_OCCUPIED = 'occupied';
-    const STATUS_MAINTENANCE = 'maintenance';
-    const STATUS_CLEANING = 'cleaning';
+    const STATUS_OUT_OF_SERVICE = 'out_of_service';
 
     public function translations()
     {
@@ -65,10 +63,11 @@ class Room extends Model
     public function getStatusLabelAttribute()
     {
         $statusLabels = [
-            'available' => 'Trống',
+            self::STATUS_AVAILABLE => 'Trống',
             'occupied' => 'Đang sử dụng',
             'maintenance' => 'Đang bảo trì',
             'cleaning' => 'Đang dọn dẹp',
+            self::STATUS_OUT_OF_SERVICE => 'Ngừng phục vụ',
         ];
         return $statusLabels[$this->status] ?? $this->status;
     }
@@ -76,10 +75,11 @@ class Room extends Model
     public function getStatusColorAttribute()
     {
         $colors = [
-            'available' => 'green',
+            self::STATUS_AVAILABLE => 'green',
             'occupied' => 'red',
             'maintenance' => 'yellow',
-            'cleaning' => 'blue'
+            'cleaning' => 'blue',
+            self::STATUS_OUT_OF_SERVICE => 'gray',
         ];
 
         return $colors[$this->status] ?? 'gray';
@@ -117,18 +117,8 @@ class Room extends Model
         return $this->hasMany(RoomTransfer::class, 'new_room_id', 'room_id');
     }
 
-    // public function bedTypes()
-    // {
-    //     return $this->belongsToMany(
-    //         BedType::class,
-    //         'room_bed_types',
-    //         'room_id',
-    //         'id'
-    //     )->withPivot('quantity', 'is_default')
-    //       ->withTimestamps();
-    // }
-
-    public function bedType(){
+    public function bedType()
+    {
         return $this->belongsTo(BedType::class, 'bed_type_fixed', 'id');
     }
 
@@ -156,5 +146,19 @@ class Room extends Model
     public function scopeByType($query, $roomTypeId)
     {
         return $query->where('room_type_id', $roomTypeId);
+    }
+
+    /**
+     * Kiểm tra xem phòng có bookings active không
+     *
+     * @return bool
+     */
+    public function hasActiveBookings()
+    {
+        return $this->bookings()
+            ->where('status', 'confirmed')
+            ->where('check_in_date', '<=', now())
+            ->where('check_out_date', '>=', now())
+            ->exists();
     }
 }

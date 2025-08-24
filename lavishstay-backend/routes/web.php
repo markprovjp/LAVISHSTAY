@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AccommodationHistoryController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ChatSupportController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\NotificationManagementController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\StaffController;
@@ -82,9 +84,40 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/settings/account', function () {
         return view('pages/settings/account');
     })->name('account');
-    Route::get('/settings/notifications', function () {
-        return view('pages/settings/notifications');
-    })->name('notifications');
+    // Route::get('/settings/notifications', function () {
+    //     return view('admin.notifications.index');
+    // })->name('admin.notifications.index');
+
+    Route::middleware(['auth', 'role:system_admin'])->prefix('admin/notifications')->name('admin.notifications.')->group(function () {
+    
+        // Dashboard
+        Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
+        
+        // Notifications List
+        Route::get('/list', [NotificationManagementController::class, 'notifications'])->name('list');
+        
+        // Notification Types Management
+        Route::get('/types', [NotificationManagementController::class, 'types'])->name('types');
+        Route::get('/types/{notificationType}', [NotificationManagementController::class, 'getType'])->name('types.show');
+        Route::post('/types', [NotificationManagementController::class, 'createType'])->name('types.create');
+        Route::put('/types/{notificationType}', [NotificationManagementController::class, 'updateType'])->name('types.update');
+        Route::delete('/types/{notificationType}', [NotificationManagementController::class, 'deleteType'])->name('types.delete');
+        
+        // Send Custom Notifications
+        Route::post('/send-custom', [NotificationManagementController::class, 'sendCustom'])->name('send.custom');
+        
+        // Bulk Operations
+        Route::post('/bulk-action', [NotificationManagementController::class, 'bulkAction'])->name('bulk.action');
+        
+        // Statistics
+        Route::get('/statistics', [NotificationManagementController::class, 'statistics'])->name('statistics');
+        
+        // Testing
+        Route::post('/test', [NotificationManagementController::class, 'test'])->name('test');
+        
+        // Cleanup
+        Route::post('/cleanup', [NotificationManagementController::class, 'cleanup'])->name('cleanup');
+    });
 
     
 
@@ -105,7 +138,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     //Roles//////////////////////////////////
-    Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::prefix('admin')->middleware(['auth', 'role:system_admin'])->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
         Route::get('/roles/edit/{id}', [RoleController::class, 'edit'])->name('admin.roles.edit');
         Route::put('/roles/update/{id}', [RoleController::class, 'update'])->name('admin.roles.update');
@@ -142,6 +175,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::delete('/admin/customers/destroy/{id}', [CustomerController::class, 'destroy'])->name('admin.users.customers.destroy');
         // Route::put('/admin/customers/change-password/{id}', [CustomerController::class, 'changePassword'])->name('admin.users.customers.change-password');
         Route::put('/admin/customers/reset-password/{id}', [CustomerController::class, 'resetPassword'])->name('admin.users.customers.reset-password');
+        Route::get('/admin/customers/activities/{id}', [CustomerController::class, 'activities'])->name('admin.users.customers.activities');
     });
 
     //Staffs//////////////////////////////////Route::middleware(['auth', 'permission:quan_ly_user'])->group(function () {
@@ -333,13 +367,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     //////////////// Bookings/////////////////////////////////////////////////////////////////
     Route::get('/bookings', [BookingController::class, 'index'])->name('admin.bookings');
-    Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('admin.bookings.show');
-    Route::get('/bookings/{id}/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('admin.bookings.available-rooms');
-    Route::post('/bookings/{id}/assign-room', [BookingController::class, 'assignRoom'])->name('admin.bookings.assign-room');
-    Route::post('/bookings/{id}/confirm', [BookingController::class, 'confirm'])->name('admin.bookings.confirm');
-    Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('admin.bookings.cancel');
-    Route::get('/bookings/{id}/print', [BookingController::class, 'print'])->name('admin.bookings.print');
-    Route::post('/bookings/{id}/send-email', [BookingController::class, 'sendConfirmationEmail'])->name('admin.bookings.send-email');
+    Route::get('admin/bookings/{id}', [BookingController::class, 'show'])->name('admin.bookings.show');
+    Route::get('admin/bookings/{id}/available-rooms', [BookingController::class, 'getAvailableRooms'])->name('admin.bookings.available-rooms');
+    Route::post('admin/rooms/available-for-dates', [BookingController::class, 'getAvailableRoomsForDates'])->name('admin.rooms.available-for-dates'); //Lấy phòng theo loại để đặt phòng
+    Route::get('admin/room-types/{roomTypeId}/packages', [BookingController::class, 'getPackagesByRoomType'])->name('admin.room-types.packages');// API lấy packages theo room type
+    Route::post('admin/bookings/create', [BookingController::class, 'createNewBooking'])->name('admin.bookings.create');// API tạo booking mới
+    Route::post('admin/bookings/{id}/assign-room', [BookingController::class, 'assignRoom'])->name('admin.bookings.assign-room');
+    Route::get('admin/room-types/list', [RoomTypeController::class, 'getList'])->name('admin.room-types.list');
+    Route::post('admin/bookings/{id}/confirm', [BookingController::class, 'confirm'])->name('admin.bookings.confirm');
+    Route::post('admin/bookings/{id}/cancel', [BookingController::class, 'cancel'])->name('admin.bookings.cancel');
+    Route::get('admin/bookings/{id}/print', [BookingController::class, 'print'])->name('admin.bookings.print');
+    Route::post('admin/bookings/{id}/send-email', [BookingController::class, 'sendConfirmationEmail'])->name('admin.bookings.send-email');
 
     // Bulk operations
     Route::post('/bookings/bulk-confirm', [BookingController::class, 'bulkConfirm'])->name('admin.bookings.bulk-confirm');
@@ -401,29 +439,23 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/admin/check_out_requests/store', [CheckoutRequestController::class, 'store'])->name('admin.check_out_requests.store');
 
 
-    // Special Request Management Routes
 
-    // Special Requests Dashboard
-    Route::get('/admin/special-requests', [SpecialRequestController::class, 'index'])
-        ->name('admin.special-requests');
-    
-    // Get request details for modal
-    Route::get('/admin/special-requests/{type}/{id}', [SpecialRequestController::class, 'show'])
-        ->name('admin.special-requests.show');
-    
-    // Approve request
-    Route::post('/admin/special-requests/{type}/{id}/approve', [SpecialRequestController::class, 'approve'])
-        ->name('admin.special-requests.approve');
+    // Special Requests Dashboard. Yêu cầu bồi thường
+    Route::get('/admin/special-requests', [SpecialRequestController::class, 'index'])->name('admin.special-requests');
+    Route::get('/admin/special-requests/{type}/{id}', [SpecialRequestController::class, 'show'])->name('admin.special-requests.show');// Get request details for modal
+    Route::post('/admin/special-requests/{type}/{id}/approve', [SpecialRequestController::class, 'approve'])->name('admin.special-requests.approve');// Approve request
+    Route::post('/admin/special-requests/{type}/{id}/reject', [SpecialRequestController::class, 'reject'])->name('admin.special-requests.reject');// Reject request
+    Route::get('/admin/special-requests/statistics', [SpecialRequestController::class, 'getStatistics'])->name('admin.special-requests.statistics'); // Get statistics (AJAX)
+    Route::get('/admin/special-requests/stream', [SpecialRequestController::class, 'stream']);
 
-    // Reject request
-    Route::post('/admin/special-requests/{type}/{id}/reject', [SpecialRequestController::class, 'reject'])
-        ->name('admin.special-requests.reject');
 
-    // Get statistics (AJAX)
-    Route::get('/admin/special-requests/statistics', [SpecialRequestController::class, 'getStatistics'])
-        ->name('admin.special-requests.statistics');
 
-Route::get('/admin/special-requests/stream', [SpecialRequestController::class, 'stream']);
+
+    // Lịch sử lưu trú//////////
+    Route::get('/admin/accommodation-history', [AccommodationHistoryController::class, 'index'])->name('admin.accommodation-history');
+    Route::get('/admin/accommodation-history/export', [AccommodationHistoryController::class, 'export'])->name('admin.accommodation-history.export');
+
+
 
     ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
 
@@ -736,14 +768,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 
 
-
-    //Audit log
-    // Route::get('/admin/audit', [AuditController::class, 'index'])->name('admin.audit.index');
-    // Route::get('/admin/audit/export', [AuditController::class, 'export'])->name('admin.audit.export');
-    // Route::get('/admin/audit/cleanup', [AuditController::class, 'cleanup'])->name('admin.audit.cleanup');
-    // Route::get('/admin/audit/restore', [AuditController::class, 'restore'])->name('admin.audit.restore');
-    // Route::get('/admin/audit/show', [AuditController::class, 'show'])->name('admin.audit.show');
-
     // Audit Log Routes
     Route::prefix('admin/audit')->name('admin.audit.')->group(function () {
         // Main audit log page
@@ -793,7 +817,7 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->gr
 });
 
 // Admin-only notification management routes
-Route::middleware(['auth', 'role:admin'])->prefix('notifications/admin')->name('notifications.admin.')->group(function () {
+Route::middleware(['auth', 'role:system_admin'])->prefix('notifications/admin')->name('notifications.admin.')->group(function () {
     // Notification types management
     Route::get('/types', [NotificationController::class, 'getTypes'])->name('types');
     
@@ -812,7 +836,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('notifications/admin')->name('
 });
 
 // Manager-level notification sending routes
-Route::middleware(['auth', 'role:admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {
+Route::middleware(['auth', 'role:system_admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {
     // Send notifications to specific users or roles
     Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('users');
     Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('roles');
@@ -821,7 +845,7 @@ Route::middleware(['auth', 'role:admin|hotel_manager'])->prefix('notifications/s
 
 // Development/Testing endpoints
 if (app()->environment(['local', 'staging'])) {
-    Route::middleware(['auth', 'role:admin'])->prefix('notifications/dev')->name('notifications.dev.')->group(function () {
+    Route::middleware(['auth', 'role:system_admin'])->prefix('notifications/dev')->name('notifications.dev.')->group(function () {
         Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('trigger');
         Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('pusher');
         Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('fake');
