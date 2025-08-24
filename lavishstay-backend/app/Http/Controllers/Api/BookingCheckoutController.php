@@ -127,7 +127,7 @@ class BookingCheckoutController extends Controller
                         'approved_amount' => $request->approved_amount,
                         'formatted_approved_amount' => $request->formatted_approved_amount,
                         'requested_by' => $request->requestedBy ? $request->requestedBy->name : null,
-                        'approved_by' => $request->approvedBy ? $request->approvedBy->name : null,
+                        'approved_by' => 1,
                         'approved_at' => $request->approved_at,
                         'admin_note' => $request->admin_note,
                         'attachments' => $request->attachments,
