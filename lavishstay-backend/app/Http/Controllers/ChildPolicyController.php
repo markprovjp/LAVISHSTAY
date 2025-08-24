@@ -15,17 +15,17 @@ class ChildPolicyController extends Controller
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('min_age', 'like', "%{$search}%")
-                  ->orWhere('max_age', 'like', "%{$search}%")
-                  ->orWhere('surcharge_amount_vnd', 'like', "%{$search}%");
+                    ->orWhere('max_age', 'like', "%{$search}%")
+                    ->orWhere('surcharge_amount_vnd', 'like', "%{$search}%");
             });
         }
 
         // Sort functionality
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
-        
+
         $allowedSortFields = ['created_at', 'min_age', 'max_age', 'surcharge_amount_vnd', 'requires_extra_bed'];
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortOrder);
@@ -67,13 +67,13 @@ class ChildPolicyController extends Controller
         }
 
         // Check for overlapping age ranges
-        $overlapping = ChildrenSurcharge::where(function($query) use ($request) {
+        $overlapping = ChildrenSurcharge::where(function ($query) use ($request) {
             $query->whereBetween('min_age', [$request->min_age, $request->max_age])
-                  ->orWhereBetween('max_age', [$request->min_age, $request->max_age])
-                  ->orWhere(function($q) use ($request) {
-                      $q->where('min_age', '<=', $request->min_age)
+                ->orWhereBetween('max_age', [$request->min_age, $request->max_age])
+                ->orWhere(function ($q) use ($request) {
+                    $q->where('min_age', '<=', $request->min_age)
                         ->where('max_age', '>=', $request->max_age);
-                  });
+                });
         })->exists();
 
         if ($overlapping) {
@@ -83,7 +83,7 @@ class ChildPolicyController extends Controller
         ChildrenSurcharge::create($request->all());
 
         return redirect()->route('admin.children-surcharge')
-                        ->with('success', 'Chính sách phụ thu trẻ em đã được tạo thành công!');
+            ->with('success', 'Chính sách phụ thu trẻ em đã được tạo thành công!');
     }
 
     public function show(ChildrenSurcharge $childrenSurcharge)
@@ -123,13 +123,13 @@ class ChildPolicyController extends Controller
 
         // Check for overlapping age ranges (exclude current record)
         $overlapping = ChildrenSurcharge::where('id', '!=', $childrenSurcharge->id)
-            ->where(function($query) use ($request) {
+            ->where(function ($query) use ($request) {
                 $query->whereBetween('min_age', [$request->min_age, $request->max_age])
-                      ->orWhereBetween('max_age', [$request->min_age, $request->max_age])
-                      ->orWhere(function($q) use ($request) {
-                          $q->where('min_age', '<=', $request->min_age)
+                    ->orWhereBetween('max_age', [$request->min_age, $request->max_age])
+                    ->orWhere(function ($q) use ($request) {
+                        $q->where('min_age', '<=', $request->min_age)
                             ->where('max_age', '>=', $request->max_age);
-                      });
+                    });
             })->exists();
 
         if ($overlapping) {
@@ -139,7 +139,7 @@ class ChildPolicyController extends Controller
         $childrenSurcharge->update($request->all());
 
         return redirect()->route('admin.children-surcharge')
-                        ->with('success', 'Chính sách phụ thu trẻ em đã được cập nhật thành công!');
+            ->with('success', 'Chính sách phụ thu trẻ em đã được cập nhật thành công!');
     }
 
     public function destroy(ChildrenSurcharge $childrenSurcharge)
@@ -147,6 +147,6 @@ class ChildPolicyController extends Controller
         $childrenSurcharge->delete();
 
         return redirect()->route('admin.children-surcharge')
-                        ->with('success', 'Chính sách phụ thu trẻ em đã được xóa thành công!');
+            ->with('success', 'Chính sách phụ thu trẻ em đã được xóa thành công!');
     }
 }
