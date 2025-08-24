@@ -609,41 +609,79 @@ class RoomController extends Controller
             $totalRooms = Room::where('room_type_id', $room_type_id)->count();
             $deletedCount = 0;
             $failedRooms = [];
-            $imagesToDelete = []; // Lưu trữ đường dẫn ảnh cần xóa
+            $successfullyDeletedRooms = []; // Chỉ lưu những phòng đã xóa thành công
 
-            // Kiểm tra và chuẩn bị xóa từng phòng
+            // Kiểm tra và xóa từng phòng
             foreach ($roomIds as $roomId) {
                 $room = Room::find($roomId);
                 if ($room) {
                     // Kiểm tra xem phòng có booking active không
                     if (!$room->hasActiveBookings()) {
-                        // Nếu phòng có ảnh, lưu đường dẫn để xóa sau
-                        if ($room->image && Storage::disk('public')->exists(str_replace('/storage/', '', $room->image))) {
-                            $imagesToDelete[] = str_replace('/storage/', '', $room->image);
-                        }
+                        // Lưu thông tin phòng trước khi xóa (bao gồm cả đường dẫn ảnh)
+                        $roomData = [
+                            'id' => $room->room_id,
+                            'name' => $room->name,
+                            'image' => $room->image
+                        ];
                         
                         // Xóa bản ghi khỏi database
                         $room->delete();
                         $deletedCount++;
+                        
+                        // Chỉ thêm vào danh sách sau khi xóa thành công
+                        $successfullyDeletedRooms[] = $roomData;
+                        
+                        \Log::info('Successfully deleted room from database', [
+                            'room_id' => $roomData['id'], 
+                            'room_name' => $roomData['name']
+                        ]);
                     } else {
                         $failedRooms[] = $room->name;
+                        \Log::info('Room has active bookings, cannot delete', [
+                            'room_id' => $room->room_id,
+                            'room_name' => $room->name
+                        ]);
                     }
                 } else {
                     $failedRooms[] = "Phòng ID $roomId (không tồn tại)";
+                    \Log::warning('Room not found', ['room_id' => $roomId]);
                 }
             }
 
             // Commit transaction trước khi xóa file
             DB::commit();
+            \Log::info('Database transaction committed successfully', [
+                'deleted_count' => $deletedCount,
+                'failed_count' => count($failedRooms)
+            ]);
 
-            // Chỉ xóa file sau khi transaction đã commit thành công
-            foreach ($imagesToDelete as $imagePath) {
-                try {
-                    Storage::disk('public')->delete($imagePath);
-                    \Log::info('Deleted image: ' . $imagePath);
-                } catch (\Exception $e) {
-                    \Log::warning('Failed to delete image: ' . $imagePath . ' - ' . $e->getMessage());
-                    // Không throw lỗi vì database đã commit thành công
+            // Chỉ xóa file của những phòng đã xóa thành công khỏi database
+            foreach ($successfullyDeletedRooms as $roomData) {
+                if ($roomData['image']) {
+                    $imagePath = str_replace('/storage/', '', $roomData['image']);
+                    if (Storage::disk('public')->exists($imagePath)) {
+                        try {
+                            Storage::disk('public')->delete($imagePath);
+                            \Log::info('Successfully deleted image file', [
+                                'room_id' => $roomData['id'],
+                                'room_name' => $roomData['name'],
+                                'image_path' => $imagePath
+                            ]);
+                        } catch (\Exception $e) {
+                            \Log::warning('Failed to delete image file', [
+                                'room_id' => $roomData['id'],
+                                'room_name' => $roomData['name'],
+                                'image_path' => $imagePath,
+                                'error' => $e->getMessage()
+                            ]);
+                            // Không throw exception vì database đã commit thành công
+                        }
+                    } else {
+                        \Log::info('Image file does not exist', [
+                            'room_id' => $roomData['id'],
+                            'image_path' => $imagePath
+                        ]);
+                    }
                 }
             }
 
@@ -669,9 +707,11 @@ class RoomController extends Controller
 
         } catch (QueryException $e) {
             DB::rollBack();
-            \Log::error('Error deleting multiple rooms due to foreign key constraint: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'room_ids' => $roomIds
+            \Log::error('Database error during multiple room deletion', [
+                'error_message' => $e->getMessage(),
+                'error_code' => $e->getCode(),
+                'room_ids' => $roomIds,
+                'trace' => $e->getTraceAsString()
             ]);
 
             if ($e->getCode() == '23000') {
@@ -683,83 +723,14 @@ class RoomController extends Controller
                 ->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error deleting multiple rooms: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'room_ids' => $roomIds
+            \Log::error('Unexpected error during multiple room deletion', [
+                'error_message' => $e->getMessage(),
+                'room_ids' => $roomIds,
+                'trace' => $e->getTraceAsString()
             ]);
+            
             return redirect()->route('admin.rooms.by-type', ['room_type_id' => $room_type_id])
                 ->with('error', 'Có lỗi xảy ra khi xóa phòng: ' . $e->getMessage());
-        }
-    }
-
-
-    public function getCalendarData($roomId)
-    {
-        try {
-            $room = Room::with('roomType')->where('room_id', $roomId)->first();
-            
-            if (!$room) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Không tìm thấy phòng với ID: ' . $roomId
-                ], 404);
-            }
-
-            $startDate = now()->startOfMonth()->subMonth();
-            $endDate = now()->addMonths(2)->endOfMonth();
-            
-            \Log::info('Calendar date range:', [
-                'start' => $startDate->format('Y-m-d'),
-                'end' => $endDate->format('Y-m-d')
-            ]);
-
-            $calendarData = [];
-            $current = $startDate->copy();
-            
-            while ($current <= $endDate) {
-                $dateStr = $current->format('Y-m-d');
-                $realData = $this->getRealBookingData($roomId, $dateStr);
-                
-                if (!$realData) {
-                    $realData = $this->generateSampleData($dateStr);
-                }
-                
-                $calendarData[] = $realData;
-                $current->addDay();
-            }
-
-            $summary = $this->calculateSummary($calendarData);
-
-            $response = [
-                'success' => true,
-                'room' => [
-                    'id' => $room->room_id,
-                    'name' => $room->name,
-                    'type' => $room->roomType->name ?? 'Standard Room'
-                ],
-                'date_range' => [
-                    'start' => $startDate->format('Y-m-d'),
-                    'end' => $endDate->format('Y-m-d')
-                ],
-                'calendar_data' => $calendarData,
-                'summary' => $summary
-            ];
-
-            \Log::info('Calendar response:', [
-                'room_id' => $response['room']['id'],
-                'data_count' => count($response['calendar_data']),
-                'date_range' => $response['date_range']
-            ]);
-
-            return response()->json($response);
-
-        } catch (\Exception $e) {
-            \Log::error('Calendar error: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi server: ' . $e->getMessage()
-            ], 500);
         }
     }
 
