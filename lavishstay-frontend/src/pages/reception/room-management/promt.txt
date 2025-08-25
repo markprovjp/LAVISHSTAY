@@ -1,0 +1,93 @@
+Mục tiêu
+Triển khai nhanh (fast-win) theo phương án A: giữ flow hiện tại — tạo booking record với status = 'Pending' khi user bắt đầu thanh toán — nhưng tự động xóa (hard-delete) các booking Pending không hoàn tất sau 15 phút để tránh đầy bản ghi.
+
+Quy tắc nghiệp vụ chính
+- Check-in mặc định: 14:00; Check-out mặc định: 12:00 (server chuẩn hóa từ ngày).
+- Booking statuses: enum('Pending','Confirmed','Operational','Completed','Cancelled','Cancelled With Penalty','Unsuccessful','Cleaning').
+- Pending TTL: 15 phút — booking vẫn được tạo (Pending) khi KH bắt đầu thanh toán; nếu không hoàn tất thanh toán trong 15 phút thì scheduler sẽ hard-delete booking và các bản ghi liên quan (booking_rooms, payment_intents, invoices, v.v.).
+- Dọn dẹp phòng: giữ trên `rooms` các cột cleaning_started_at và cleaning_ends_at; sau checkout set cleaning_ends_at = checkout + 2 giờ; trong thời gian đó room được xem là đang dọn (is_cleaning) và không available.
+- Không cho đặt theo giờ — server luôn lưu giờ cố định cho check-in/check-out.
+
+Yêu cầu cho AI/dev (deliverables)
+1) Backend (Laravel)
+  - Migration: thêm cột vào `rooms`:
+    * `cleaning_started_at` TIMESTAMP NULL
+    * `cleaning_ends_at` TIMESTAMP NULL
+    * `cleaning_by` BIGINT NULL (optional)
+    * `cleaning_note` TEXT NULL (optional)
+
+  - Config: `config/hotel.php` với:
+    * pending_ttl_minutes = 15
+    * cleaning_duration_minutes = 120
+    * pending_retention_days = 7 (optional, nếu muốn purge old unsuccessful later)
+
+  - Scheduler job (Artisan command) `expire:pending-bookings`:
+    * Schedule: every 1 minute (or 5 minutes if lower frequency desired).
+    * Action: find bookings WHERE status = 'Pending' AND created_at < now() - pending_ttl_minutes.
+    * For each matching booking, perform within DB transaction:
+      - Delete related rows: booking_rooms, payment_intents (temp), provisional invoices, deposit records created for that booking.
+      - Delete the booking row itself (hard-delete).
+    * Log deletion (info level) with booking id, user_id, created_at for traceability in logs. (Note: this approach intentionally removes DB record; logs preserve minimal audit.)
+
+  - Checkout handling:
+    * When booking transitions from Operational -> Completed (checkout), for each room in the booking set:
+      - rooms.cleaning_started_at = booking.check_out_at (or now())
+      - rooms.cleaning_ends_at = cleaning_started_at + cleaning_duration_minutes
+    * Do not create a separate cleaning table per your request; keep fields on `rooms`.
+
+  - Availability endpoint changes (`GET /api/reception/rooms` or existing availability routes): include for each room:
+    {
+      id,
+      name,
+      status, // available/out_of_service/maintenance
+      cleaning_ends_at, // nullable
+      is_cleaning: boolean, // cleaning_ends_at != null && cleaning_ends_at > now()
+      booking_info?: {...},
+      booking_status?: string
+    }
+
+  - Indexes & performance:
+    * Create index on bookings(status, created_at) to make the expired-search efficient.
+    * Optionally index rooms(cleaning_ends_at) if you scan rooms by cleaning status often.
+
+2) Frontend (React)
+  - No hold mechanism required.
+  - Flow remains:
+    * User selects rooms/dates, starts payment → frontend creates booking via POST /api/bookings with status='Pending'.
+    * UI shows pending state and countdown (optional client-side), but primary enforcement is server-side TTL.
+    * If payment completes, backend updates status -> 'Confirmed'. If not, scheduler will delete it after 15 minutes.
+  - Availability UI uses `is_cleaning` and `booking_info.booking_status` to show badges (Đang dọn, Đang ở, Đã đặt, etc.).
+
+3) Tests
+  - Unit test: create booking with status Pending; fast-forward time beyond 15 minutes (or mock time) → run `expire:pending-bookings` → assert booking and booking_rooms removed.
+  - Integration: ensure Confirmed bookings are not deleted by scheduler even if older than 15m.
+  - Checkout test: after checkout, rooms.cleaning_ends_at set correctly and availability API returns is_cleaning true until end.
+
+4) Ops & consequences (important)
+  - Pros: fastest implementation, reduces DB bloat quickly, simple to reason about.
+  - Cons: you lose full DB audit of short-lived Pending bookings (hard-delete). Preserve logs (application log) if accounting requires trace.
+  - Recommend adding structured logging (booking id, user id, timestamp, reason='auto-expired') whenever scheduler deletes booking so you can reconstruct events from logs if necessary.
+
+5) Edge cases & race conditions
+  - Payment webhook arriving simultaneously with scheduler: implement idempotency in payment handling (use unique payment provider id) and ensure scheduler checks latest booking status before delete — i.e., only delete if still status == 'Pending'.
+  - Concurrency: when creating bookings, check for overlapping Confirmed/Operational bookings; if booking creation returns success but immediately deleted by scheduler due to TTL, frontend should re-run availability flow.
+
+6) Implementation notes for developer
+  - Use DB transactions when deleting booking and its related rows.
+  - Scheduler should be resilient: batch deletes, bounded per run to avoid long locks on large number of pendings.
+  - Add metrics: count of expired bookings per minute, retention spikes.
+
+Deliverables (ready for AI coder)
+- Migration file to add cleaning columns to `rooms`.
+- `config/hotel.php` with default values described above.
+- Artisan command `ExpirePendingBookings` implementing the hard-delete TTL behavior and logging deletions.
+- Update checkout controller to set rooms.cleaning_ends_at.
+- API changes for availability response (include cleaning fields and derived is_cleaning).
+- Frontend snippet explaining POST /api/bookings (Pending flow) and how to handle deletion race (re-query availability on errors).
+- Unit/integration test descriptions and one PHPUnit skeleton for the expire command.
+
+Tone & constraints
+- Keep prompt concise and precise: AI should produce migration, artisan command, controller updates, and small frontend note — no payment gateway integration code.
+- Explicitly add structured log entry when auto-deleting pending bookings for later traceability.
+
+If you want, I can now generate the migration + artisan command + test skeleton (server-side only). Start from those three artifacts and I'll implement them.

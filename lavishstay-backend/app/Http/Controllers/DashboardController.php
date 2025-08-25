@@ -672,9 +672,9 @@ class DashboardController extends Controller
             'pending_bookings' => DB::table('booking')
                 ->where('status', 'pending')
                 ->count(),
-            'rooms_need_cleaning' => DB::table('room')
-                ->where('status', 'cleaning')
-                ->count(),
+                'rooms_need_cleaning' => DB::table('room')
+                    ->where('cleaning_ends_at', '>', Carbon::now())
+                    ->count(),
             'rooms_maintenance' => DB::table('room')
                 ->where('status', 'maintenance')
                 ->count()
@@ -727,7 +727,7 @@ class DashboardController extends Controller
 
         return [
             'rooms_need_cleaning' => DB::table('room')
-                ->where('status', 'cleaning')
+                ->where('cleaning_ends_at', '>', Carbon::now())
                 ->count(),
             'overdue_payments' => DB::table('payment')
                 ->where('status', 'pending')

@@ -13,6 +13,8 @@ class Kernel extends ConsoleKernel
         Commands\CleanupPendingBookings::class,
         Commands\AutoBookingCleanup::class,
         Commands\NotifyBookingReminders::class,
+        Commands\ExpirePendingBookings::class,
+    Commands\SchedulerDaemon::class,
         \App\Console\Commands\NotificationDebugCommand::class
     ];
 
@@ -34,6 +36,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('room-occupancy:daily-update')->daily();
         // Auto cleanup booking: xoá pending quá 15 phút, chuyển completed khi qua ngày checkout
         $schedule->command('booking:auto-cleanup')->everyMinute();
+        
+        // Expire pending bookings every minute (new implementation)
+        $schedule->command('expire:pending-bookings')
+                 ->everyMinute()
+                 ->withoutOverlapping()
+                 ->runInBackground();
         
         // Send booking reminders (check-in and check-out) every hour
         $schedule->command('notify:booking-reminders')

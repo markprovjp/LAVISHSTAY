@@ -112,10 +112,13 @@ class SmartRoomAssignmentService
      */
     private function getAvailableRooms(Carbon $checkIn, Carbon $checkOut)
     {
-        // Use the same logic as ReceptionController: only exclude rooms from 'confirmed' and 'operational' bookings
+        // Use the same logic as ReceptionController: exclude rooms with blocking bookings
+        $blocking = Booking::getBlockingStatusesLower();
+        $placeholders = implode(',', array_fill(0, count($blocking), '?'));
+
         $conflictingRoomIds = DB::table('booking_rooms as br')
             ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
-            ->whereRaw("LOWER(b.status) IN ('confirmed','operational')")
+            ->whereRaw('LOWER(b.status) IN (' . $placeholders . ')', $blocking)
             ->whereNotNull('br.room_id')
             ->where(function ($query) use ($checkIn, $checkOut) {
                 $query->where('br.check_in_date', '<', $checkOut->format('Y-m-d'))
