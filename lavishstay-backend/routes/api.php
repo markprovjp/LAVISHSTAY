@@ -228,6 +228,9 @@ Route::prefix('payment')->group(function () {
 });
 Route::post('/test-cpay-payment', [PaymentController::class, 'testCPayPayment']);
 
+// Expose bookings export via API (authenticated) so frontend can download CSV with Bearer token
+Route::middleware('auth:sanctum')->get('/bookings/export', [\App\Http\Controllers\BookingController::class, 'export']);
+
 // Pricing API Routes - Enhanced
 Route::prefix('pricing')->group(function () {
     // Public pricing endpoints (for booking system)

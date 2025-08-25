@@ -345,6 +345,12 @@ export const receptionAPI = {
     return response.data;
   },
 
+  // Export bookings report (CSV) via API route (requires auth)
+  exportBookings: async (params?: any) => {
+    const response = await api.get('/bookings/export', { params, responseType: 'blob' });
+    return response;
+  },
+
   getAssignmentPreview: async (bookingId: number) => {
     const response = await api.get(`/reception/bookings/${bookingId}/assignment-preview`);
     return response.data;

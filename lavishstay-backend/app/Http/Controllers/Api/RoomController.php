@@ -49,7 +49,9 @@ class RoomController extends Controller
                     'rt.description',
                     'rt.base_price',
                     'rt.room_area as size',
-                    'rt.max_guests'
+                    'rt.max_guests',
+                    // include bed type name for frontend display
+                    'rt.bed_type as bed_type_name'
                 ])
                 ->paginate(15);
 
@@ -58,23 +60,26 @@ class RoomController extends Controller
             $roomIds = array_map(function ($r) { return $r->id; }, $roomItems);
 
             if (!empty($roomIds)) {
-                // Find bookings that overlap the status_date
-        $bookings = DB::table('booking_rooms as br')
-                    ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
-                    ->whereIn('br.room_id', $roomIds)
-                    ->where('br.check_in_date', '<=', $statusDate)
-                    ->where('br.check_out_date', '>', $statusDate)
-                    ->whereNotNull('br.room_id')
-                    ->select([
-            'br.room_id',
-            'b.booking_id',
-            'b.booking_code',
-            'b.status as booking_status',
-            'br.check_in_date',
-            'br.check_out_date'
-                    ])
-                    ->orderBy('br.created_at', 'desc')
-                    ->get();
+        // Find bookings that overlap the status_date (use blocking statuses)
+    $blocking = \App\Models\Booking::getBlockingStatusesLower();
+    $placeholders = implode(',', array_fill(0, count($blocking), '?'));
+    $bookings = DB::table('booking_rooms as br')
+            ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+            ->whereIn('br.room_id', $roomIds)
+            ->whereRaw('LOWER(b.status) IN (' . $placeholders . ')', $blocking)
+            ->where('br.check_in_date', '<=', $statusDate)
+            ->where('br.check_out_date', '>', $statusDate)
+            ->whereNotNull('br.room_id')
+            ->select([
+        'br.room_id',
+        'b.booking_id',
+        'b.booking_code',
+        'b.status as booking_status',
+        'br.check_in_date',
+        'br.check_out_date'
+            ])
+            ->orderBy('br.created_at', 'desc')
+            ->get();
 
                 $bookingMap = [];
                 foreach ($bookings as $bk) {

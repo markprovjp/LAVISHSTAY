@@ -110,15 +110,17 @@ const RoomManagementDashboard: React.FC = () => {
         return ids;
     }, [availableRoomsData]);
 
+    // If a date range is selected and server returns available rooms, show only those available rooms.
+    // Otherwise fallback to full master list so the UI can display booking-derived statuses.
     const filteredRoomsToDisplay = useMemo(() => {
-        // If user selected a date range, prefer the availableRoomsData (server-provided) to filter master list.
-        // availableRoomsData contains available_rooms with `room_id` numbers; masterRoomList items use `id`.
-        if (hasDateRange && availableRoomIdSet) {
-            return masterRoomList.filter((room: any) => availableRoomIdSet.has((room.id ?? room.room_id ?? '').toString()));
+        if (hasDateRange && availableRoomIdSet && availableRoomIdSet.size > 0) {
+            return masterRoomList.filter((room: any) => {
+                const id = room.id !== undefined ? room.id.toString() : (room.room_id !== undefined ? room.room_id.toString() : '');
+                return id && availableRoomIdSet.has(id);
+            });
         }
-        // Fallback: return full master list
         return masterRoomList;
-    }, [masterRoomList, hasDateRange, availableRoomIdSet]);
+    }, [masterRoomList, availableRoomIdSet, hasDateRange]);
 
     const isLoading = isLoadingRooms;
 
@@ -152,6 +154,16 @@ const RoomManagementDashboard: React.FC = () => {
             return newSet;
         });
     }, []);
+
+    const handleFloorSelect = useCallback((floorId: string, roomIds: string[], select: boolean) => {
+        if (floorId === 'all') {
+            // Clear all selections
+            setSelectedRoomIds(new Set());
+        } else {
+            // Handle individual floor selection
+            handleBulkRoomSelect(roomIds, select);
+        }
+    }, [handleBulkRoomSelect]);
 
     const handleProceedToBooking = () => {
         if (selectedRoomIds.size === 0) {
@@ -659,16 +671,7 @@ const RoomManagementDashboard: React.FC = () => {
                             selectedRooms={selectedRoomIds}
                             availableRoomIds={availableRoomIdSet}
                             onRoomSelect={handleRoomSelect}
-                            onFloorSelect={(floorId, roomIds, selected) => {
-                                setSelectedRoomIds(prev => {
-                                    const newSet = new Set(prev);
-                                    roomIds.forEach(id => {
-                                        if (selected) newSet.add(id);
-                                        else newSet.delete(id);
-                                    });
-                                    return newSet;
-                                });
-                            }}
+                            onFloorSelect={handleFloorSelect}
                             onViewDetails={handleViewDetails}
                             onModeChange={() => { }}
                         />

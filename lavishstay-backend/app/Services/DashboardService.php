@@ -117,7 +117,8 @@ class DashboardController extends Controller
     private function getAlerts()
     {
         return [
-            'rooms_need_cleaning' => DB::table('room')->where('status', 'cleaning')->count(),
+            // Count rooms where cleaning_ends_at is in the future (rooms currently being cleaned)
+            'rooms_need_cleaning' => DB::table('room')->where('cleaning_ends_at', '>', Carbon::now())->count(),
             'overdue_payments' => DB::table('payment as p')
                 ->join('booking as b', 'p.booking_id', '=', 'b.booking_id')
                 ->where('p.status', 'pending')

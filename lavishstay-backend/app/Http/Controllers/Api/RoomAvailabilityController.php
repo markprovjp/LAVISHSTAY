@@ -121,6 +121,10 @@ class RoomAvailabilityController extends Controller
                     'r.name as room_name',
                     'r.room_type_id',
                     'r.status',
+                    'r.cleaning_started_at',
+                    'r.cleaning_ends_at',
+                    'r.cleaning_by',
+                    'r.cleaning_note',
                     'f.floor_number',
                     'rt.name as room_type_name',
                     'rt.description',
@@ -161,12 +165,15 @@ class RoomAvailabilityController extends Controller
 
             // Exclude rooms that have overlapping bookings in statuses that should block availability.
             // We perform a case-insensitive check because booking.status values in DB may vary in case.
-            $query->whereNotIn('r.' . $roomIdColumn, function($subQuery) use ($checkInDate, $checkOutDate) {
+            // Use canonical blocking statuses from Booking model to avoid mismatches and casing issues
+            $blocking = \App\Models\Booking::getBlockingStatusesLower();
+            $placeholders = implode(',', array_fill(0, count($blocking), '?'));
+            $query->whereNotIn('r.' . $roomIdColumn, function($subQuery) use ($checkInDate, $checkOutDate, $blocking, $placeholders) {
                 $subQuery->select('br.room_id')
                     ->from('booking_rooms as br')
                     ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
-                    // Block these booking statuses from being considered available: Pending, Confirmed, Operational, Cleaning
-                    ->whereRaw('LOWER(b.status) IN (?,?,?,?)', ['pending', 'confirmed', 'operational', 'cleaning'])
+                    // Block these booking statuses from being considered available
+                    ->whereRaw('LOWER(b.status) IN (' . $placeholders . ')', $blocking)
                     ->where('br.check_in_date', '<', $checkOutDate)
                     ->where('br.check_out_date', '>', $checkInDate)
                     ->whereNotNull('br.room_id');
@@ -351,11 +358,20 @@ class RoomAvailabilityController extends Controller
 
                 // Add room details
                 foreach ($rooms as $room) {
+                    // Calculate is_cleaning based on cleaning_ends_at
+                    $isCleaningValue = false;
+                    if ($room->cleaning_ends_at) {
+                        $isCleaningValue = Carbon::parse($room->cleaning_ends_at)->isFuture();
+                    }
+                    
                     $roomTypeData['available_rooms'][] = [
                         'room_id' => $room->room_id,
                         'room_name' => $room->room_name,
                         'floor_number' => $room->floor_number,
-                        'room_status' => $room->status
+                        'room_status' => $room->status,
+                        'cleaning_ends_at' => $room->cleaning_ends_at,
+                        'is_cleaning' => $isCleaningValue,
+                        'cleaning_note' => $room->cleaning_note
                     ];
                 }
 

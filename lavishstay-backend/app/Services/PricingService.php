@@ -535,28 +535,33 @@ class PricingService
     public function updateOccupancyData($roomTypeId, $date)
     {
         try {
-            // Get total rooms for this room type
-            $totalRooms = DB::table('room')
-                ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
-                ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
-                ->where('room.room_type_id', $roomTypeId)
-                ->where('room_availability.date', $date)
-                ->sum('room_availability.total_rooms');
+            // Derive total rooms and booked rooms from room/booking data
+            // Use RoomType.total_room when available, otherwise count actual rooms
+            $roomType = RoomType::find($roomTypeId);
+            $totalRooms = $roomType ? ($roomType->total_room ?? 0) : 0;
 
-            // If no rooms available, don't update occupancy to prevent division by zero in triggers
+            if ($totalRooms == 0) {
+                // Fallback to counting actual rooms if RoomType.total_room is not set
+                $totalRooms = DB::table('room')->where('room_type_id', $roomTypeId)->count();
+            }
+
+            // If still zero, skip update to avoid division by zero
             if ($totalRooms == 0) {
                 Log::info("Skipping occupancy update for room_type_id: {$roomTypeId} on date: {$date} because totalRooms is zero.");
                 return;
             }
 
-            $availableRooms = DB::table('room')
-                ->join('room_option', 'room.room_id', '=', 'room_option.room_id')
-                ->join('room_availability', 'room_option.option_id', '=', 'room_availability.option_id')
+            // Count booked rooms for the target date using bookings (same logic as RoomOccupancyService)
+            $bookedRooms = DB::table('booking')
+                ->join('booking_rooms', 'booking.booking_id', '=', 'booking_rooms.booking_id')
+                ->join('room', 'booking_rooms.room_id', '=', 'room.room_id')
                 ->where('room.room_type_id', $roomTypeId)
-                ->where('room_availability.date', $date)
-                ->sum('room_availability.available_rooms');
+                ->whereIn('booking.status', ['confirmed', 'operational'])
+                ->where('booking.check_in_date', '<=', $date)
+                ->where('booking.check_out_date', '>', $date)
+                ->count('booking_rooms.id');
 
-            $bookedRooms = $totalRooms - $availableRooms;
+            $availableRooms = max(0, $totalRooms - $bookedRooms);
 
             RoomOccupancy::updateOrCreate(
                 [

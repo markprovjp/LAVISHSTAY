@@ -1488,10 +1488,29 @@ class BookingCheckoutController extends Controller
             }
             
             if (!empty($roomIds)) {
+                // Get cleaning duration from config
+                $cleaningDurationMinutes = config('hotel.cleaning_duration_minutes', 120);
+                $cleaningStartsAt = Carbon::now();
+                $cleaningEndsAt = $cleaningStartsAt->copy()->addMinutes($cleaningDurationMinutes);
+                
+                // Update cleaning timestamps and metadata. Do NOT write a non-existent enum value to `status` column.
                 DB::table('room')
                     ->whereIn('room_id', $roomIds)
                     ->where('status', '!=', 'maintenance')
-                    ->update(['status' => 'cleaning']);
+                    ->update([
+                        // keep the existing `status` value to avoid enum truncation; rely on cleaning flags instead
+                        'cleaning_started_at' => $cleaningStartsAt,
+                        'cleaning_ends_at' => $cleaningEndsAt,
+                        'cleaning_by' => Auth::id(), // Current user who processed checkout
+                        'cleaning_note' => "Auto-set after checkout of booking {$booking->booking_code}"
+                    ]);
+                    
+                Log::info("Updated room cleaning status", [
+                    'room_ids' => $roomIds,
+                    'cleaning_starts_at' => $cleaningStartsAt->toDateTimeString(),
+                    'cleaning_ends_at' => $cleaningEndsAt->toDateTimeString(),
+                    'duration_minutes' => $cleaningDurationMinutes
+                ]);
             }
 
             return $roomIds;
@@ -1507,12 +1526,13 @@ class BookingCheckoutController extends Controller
     private function createAuditLog($booking, $checkoutTime, $amountCalculation, $validationResult)
     {
         try {
+            // Insert audit log using current `audit_logs` schema (columns: model, model_id, action enum values)
             DB::table('audit_logs')->insert([
                 'user_id' => Auth::id(),
-                'action' => 'Check-out',
-                'table_name' => 'booking',
-                'record_id' => $booking->booking_id,
-                'description' => "Check-out completed for booking {$booking->booking_code} at {$checkoutTime}. Total amount: " . number_format($amountCalculation['total_amount']) . " VND. Status changed to Cleaning. Validation: " . ($validationResult->canCheckout ? 'APPROVED' : 'FORCED') . " with " . count($validationResult->warnings) . " warnings.",
+                'action' => 'other', // use allowed enum value
+                'model' => 'booking',
+                'model_id' => $booking->booking_id,
+                'description' => "Check-out completed for booking {$booking->booking_code} at {$checkoutTime}. Total amount: " . number_format($amountCalculation['total_amount']) . " VND. Validation: " . ($validationResult->canCheckout ? 'APPROVED' : 'FORCED') . " with " . count($validationResult->warnings) . " warnings.",
                 'created_at' => Carbon::now(),
             ]);
         } catch (\Exception $e) {

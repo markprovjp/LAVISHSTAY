@@ -16,7 +16,9 @@ import {
     Dropdown,
     Menu,
     Flex,
-    message
+    message,
+    DatePicker,
+    Input
 } from 'antd';
 import CheckoutInfoModal from './CheckoutInfoModal';
 import { ProTable, type ProColumns } from '@ant-design/pro-components';
@@ -37,6 +39,7 @@ import {
     PhoneOutlined,
     ArrowRightOutlined,
     QuestionCircleOutlined,
+    RestOutlined,
     SmileOutlined
 } from '@ant-design/icons';
 import { useGetBookings, useGetBookingStatistics, useCancelBooking } from '../../../hooks/useReception';
@@ -45,7 +48,6 @@ import {
     BookingFilters
 } from '../../../types/booking';
 import BookingDetailModal from './BookingDetailModal';
-import BookingFilterBar from '../../../components/booking-management/BookingFilterBar';
 import ErrorBoundary from '../../../components/common/ErrorBoundary';
 import CheckinModal from './CheckinModal';
 import dayjs from 'dayjs';
@@ -57,14 +59,24 @@ dayjs.locale('vi');
 
 const { Content } = Layout;
 const { Title, Text, Link } = Typography;
+const { RangePicker } = DatePicker;
 
 const bookingStatusConfig = {
-    pending: { color: 'gold', text: 'Chờ thanh toán', icon: <ClockCircleOutlined /> },
-    confirmed: { color: 'blue', text: 'Đã thanh toán', icon: <CheckCircleOutlined /> },
-    cancelled: { color: 'red', text: 'Đã hủy', icon: <CloseCircleOutlined /> },
-    completed: { color: 'green', text: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-    processing: { color: 'purple', text: 'Đang xử lý', icon: <SyncOutlined spin /> },
+    pending: { color: 'gold', text: 'Pending', icon: <ClockCircleOutlined /> },
+    confirmed: { color: 'blue', text: 'Confirmed', icon: <CheckCircleOutlined /> },
+    operational: { color: 'cyan', text: 'Operational', icon: <SyncOutlined spin /> },
+    completed: { color: 'green', text: 'Completed', icon: <CheckCircleOutlined /> },
+    cancelled: { color: 'red', text: 'Cancelled', icon: <CloseCircleOutlined /> },
+    cancelled_with_penalty: { color: 'volcano', text: 'Cancelled With Penalty', icon: <CloseCircleOutlined /> },
+    unsuccessful: { color: 'magenta', text: 'Unsuccessful', icon: <QuestionCircleOutlined /> },
+    cleaning: { color: 'orange', text: 'Cleaning', icon: <SyncOutlined /> },
+    default: { color: 'default', text: 'Unknown', icon: <QuestionCircleOutlined /> },
 };
+
+// Helper to normalize backend status strings to keys defined above
+const statusKey = (status?: string) => (status ? status.toLowerCase().replace(/\s+/g, '_') : 'default');
+
+const { Text: AntText } = Typography;
 
 interface BookingTableData {
     key: React.Key;
@@ -109,6 +121,11 @@ interface BookingTableData {
         applied_at: string;
         meta: any;
     } | null;
+    guest_avatar?: string;
+    // Cleaning fields (optional)
+    is_cleaning?: boolean;
+    cleaning_ends_at?: string | null;
+    cleaning_note?: string | null;
 }
 
 const BookingManagement: React.FC = () => {
@@ -124,6 +141,9 @@ const BookingManagement: React.FC = () => {
     const [servicesBookingId, setServicesBookingId] = useState<number | null>(null);
     const [isCheckoutDrawerVisible, setIsCheckoutDrawerVisible] = useState(false);
     const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
+
+    // Table-level filters (used by column filterDropdowns)
+    const [tableFilters, setTableFilters] = useState<{ bookingCode?: string; guest?: string; dateRange?: [string, string] }>({});
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -191,7 +211,21 @@ const BookingManagement: React.FC = () => {
                 room_id: booking.room_id ? Number(booking.room_id) : null,
                 room_name: String(roomNames.split(',')[0] || ''),
                 room_id_display: booking.room_id ? Number(booking.room_id) : null,
+                guest_avatar: String(booking.avatar || booking.guest_avatar || booking.avatar_url || ''),
                 booking_status: String(booking.status || 'pending'),
+                // Pass through cleaning flags if API provided them at booking or room level
+                // If API omitted cleaning_ends_at but booking.status === 'Cleaning', fallback to updated_at + 120 minutes
+                ...(() => {
+                    const statusLower = String(booking.status || '').toLowerCase();
+                    const providedCleaningEndsAt = booking.cleaning_ends_at || booking.room?.cleaning_ends_at || null;
+                    const fallbackCleaningEndsAt = (!providedCleaningEndsAt && statusLower === 'cleaning' && booking.updated_at)
+                        ? dayjs(booking.updated_at).add(120, 'minute').toISOString()
+                        : providedCleaningEndsAt;
+                    return {
+                        is_cleaning: statusLower === 'cleaning' || !!(booking.is_cleaning || booking.room?.is_cleaning),
+                        cleaning_ends_at: fallbackCleaningEndsAt,
+                    };
+                })(),
                 // Coupon fields
                 coupon_applied: booking.coupon_applied || false,
                 coupon: booking.coupon || null,
@@ -200,6 +234,91 @@ const BookingManagement: React.FC = () => {
             };
         });
     }, [bookingsData]);
+
+    if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.debug('[BookingManagement] mapped bookings sample:', bookings.slice(0, 5).map((b: any) => ({ id: b.booking_id, is_cleaning: b.is_cleaning, cleaning_ends_at: b.cleaning_ends_at })));
+    }
+
+    // Bulk action handler for selected bookings in the table toolbar
+    const handleBulkAction = async (actionKey: string) => {
+        if (!selectedRowKeys || selectedRowKeys.length === 0) return;
+        const bookingIds = selectedRowKeys.map(k => Number(String(k).split('-')[1]));
+
+        if (actionKey === 'cancel') {
+            Modal.confirm({
+                title: `Xác nhận hủy ${bookingIds.length} mục đã chọn`,
+                content: 'Bạn có chắc chắn muốn hủy các đặt phòng chọn này không? Hành động này không thể hoàn tác.',
+                okText: 'Xác nhận hủy',
+                cancelText: 'Đóng',
+                okType: 'danger',
+                icon: <DeleteOutlined />,
+                onOk: async () => {
+                    try {
+                        for (const id of bookingIds) {
+                            // eslint-disable-next-line no-await-in-loop
+                            await cancelBookingMutation.mutateAsync(id);
+                        }
+                        refetch();
+                        setSelectedRowKeys([]);
+                        message.success('Hủy các đặt phòng đã chọn thành công.');
+                    } catch (error) {
+                        console.error('Bulk cancel error:', error);
+                        message.error('Có lỗi xảy ra khi hủy các mục đã chọn.');
+                    }
+                },
+            });
+        } else if (actionKey === 'assign') {
+            const first = bookingIds[0];
+            setRoomSelectionBookingId(first);
+            setIsRoomSelectionModalVisible(true);
+        } else if (actionKey === 'checkin') {
+            const first = bookingIds[0];
+            setCheckinBookingId(first);
+            setIsCheckinModalVisible(true);
+        } else if (actionKey === 'checkout') {
+            const first = bookingIds[0];
+            try {
+                await receptionAPI.getCheckoutInfo(first);
+                setCheckoutBookingId(first);
+                setIsCheckoutDrawerVisible(true);
+            } catch (err) {
+                setServicesBookingId(first);
+                setIsServicesModalVisible(true);
+            }
+        }
+    };
+
+    // Apply tableFilters (booking code, guest info, date range) to the bookings list shown in the table
+    const filteredBookings = React.useMemo(() => {
+        if (!bookings || bookings.length === 0) return [];
+        return bookings.filter((b: any) => {
+            // booking code filter
+            if (tableFilters.bookingCode) {
+                const code = String(tableFilters.bookingCode).toLowerCase();
+                if (!String(b.booking_code || '').toLowerCase().includes(code)) return false;
+            }
+            // guest filter (name / phone / email)
+            if (tableFilters.guest) {
+                const g = String(tableFilters.guest).toLowerCase();
+                const name = String(b.guest_name || '').toLowerCase();
+                const phone = String(b.guest_phone || '').toLowerCase();
+                const email = String(b.guest_email || '').toLowerCase();
+                if (!(name.includes(g) || phone.includes(g) || email.includes(g))) return false;
+            }
+            // date range overlap filter
+            if (tableFilters.dateRange && tableFilters.dateRange[0] && tableFilters.dateRange[1]) {
+                const start = dayjs(tableFilters.dateRange[0]);
+                const end = dayjs(tableFilters.dateRange[1]);
+                const checkIn = b.check_in_date ? dayjs(b.check_in_date) : null;
+                const checkOut = b.check_out_date ? dayjs(b.check_out_date) : null;
+                if (!checkIn || !checkOut) return false;
+                // overlap if checkIn < end && checkOut > start
+                if (!(checkIn.isBefore(end.add(1, 'day')) && checkOut.isAfter(start.subtract(1, 'day')))) return false;
+            }
+            return true;
+        });
+    }, [bookings, tableFilters]);
 
     const statistics = statisticsData?.data || {};
 
@@ -232,16 +351,47 @@ const BookingManagement: React.FC = () => {
             key: 'booking_code',
             width: 220,
             fixed: 'left',
-            sorter: (a, b) => a.booking_code.localeCompare(b.booking_code),
+            // Use column filter to restrict table rows to the entered booking code
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+                <div style={{ padding: 8 }}>
+                    <Input
+                        placeholder="Nhập mã đặt phòng"
+                        value={selectedKeys && selectedKeys[0] ? selectedKeys[0] : tableFilters.bookingCode || ''}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { const code = (selectedKeys && selectedKeys[0]) || (e.target as HTMLInputElement).value; setTableFilters(prev => ({ ...prev, bookingCode: code || undefined })); confirm(); } }}
+                        style={{ width: 200, marginRight: 8 }}
+                    />
+                    <Button type="primary" onClick={() => { const code = (selectedKeys && selectedKeys[0]) || ''; setTableFilters(prev => ({ ...prev, bookingCode: code || undefined })); confirm(); }}>Tìm</Button>
+                    <Button style={{ marginLeft: 8 }} onClick={() => { clearFilters(); setSelectedKeys([]); setTableFilters(prev => ({ ...prev, bookingCode: undefined })); }}>Xóa</Button>
+                </div>
+            ),
             render: (_, record) => <Link copyable style={{ fontWeight: 'bold', color: '#1890ff' }}>{record.booking_code}</Link>,
         },
         {
             title: 'Thông Tin Khách',
             key: 'guest',
             width: 280,
+            // Add a filter dropdown to search by guest name / phone / email
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+                <div style={{ padding: 8 }}>
+                    <Input
+                        placeholder="Tìm theo tên, số điện thoại, email"
+                        value={selectedKeys && selectedKeys[0] ? selectedKeys[0] : tableFilters.guest || ''}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { const val = (selectedKeys && selectedKeys[0]) || (e.target as HTMLInputElement).value; setTableFilters(prev => ({ ...prev, guest: val || undefined })); confirm(); } }}
+                        style={{ width: 260, marginRight: 8 }}
+                    />
+                    <Button type="primary" onClick={() => { const val = (selectedKeys && selectedKeys[0]) || ''; setTableFilters(prev => ({ ...prev, guest: val || undefined })); confirm(); }}>Tìm</Button>
+                    <Button style={{ marginLeft: 8 }} onClick={() => { clearFilters(); setSelectedKeys([]); setTableFilters(prev => ({ ...prev, guest: undefined })); }}>Xóa</Button>
+                </div>
+            ),
             render: (_, record) => (
                 <Flex align="center" gap="middle">
-                    <Avatar size={48} style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }} icon={<UserOutlined />} />
+                    {record.guest_avatar ? (
+                        <Avatar size={48} src={record.guest_avatar} />
+                    ) : (
+                        <Avatar size={48} style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }} icon={<UserOutlined />} />
+                    )}
                     <Flex vertical>
                         <Text strong>{record.guest_name}</Text>
                         <Space size={4}><PhoneOutlined /><Text type="secondary">{record.guest_phone}</Text></Space>
@@ -256,6 +406,33 @@ const BookingManagement: React.FC = () => {
             title: 'Thời Gian Lưu Trú',
             key: 'dates',
             width: 320,
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }: any) => (
+                <div style={{ padding: 8 }}>
+                    <RangePicker
+                        onChange={(vals) => {
+                            if (vals && vals[0] && vals[1]) {
+                                const s = vals[0].format('YYYY-MM-DD');
+                                const e = vals[1].format('YYYY-MM-DD');
+                                setSelectedKeys([`${s}|${e}`]);
+                            } else {
+                                setSelectedKeys([]);
+                            }
+                        }}
+                        value={tableFilters.dateRange ? [dayjs(tableFilters.dateRange[0]), dayjs(tableFilters.dateRange[1])] : undefined}
+                    />
+                    <div style={{ marginTop: 8 }}>
+                        <Button type="primary" onClick={() => {
+                            const sel = selectedKeys && selectedKeys[0] ? String(selectedKeys[0]) : '';
+                            if (sel && sel.includes('|')) {
+                                const [s, e] = sel.split('|');
+                                setTableFilters(prev => ({ ...prev, dateRange: [s, e] }));
+                            }
+                            confirm();
+                        }}>Áp dụng</Button>
+                        <Button style={{ marginLeft: 8 }} onClick={() => { clearFilters(); setSelectedKeys([]); setTableFilters(prev => ({ ...prev, dateRange: undefined })); }}>Xóa</Button>
+                    </div>
+                </div>
+            ),
             render: (_, record) => {
                 const checkIn = dayjs(record.check_in_date);
                 const checkOut = dayjs(record.check_out_date);
@@ -410,11 +587,31 @@ const BookingManagement: React.FC = () => {
             key: 'status',
             width: 150,
             align: 'center',
-            filters: Object.entries(bookingStatusConfig).map(([key, { text }]) => ({ text, value: key })),
+            filters: [
+                { text: 'Pending', value: 'Pending' },
+                { text: 'Confirmed', value: 'Confirmed' },
+                { text: 'Operational', value: 'Operational' },
+                { text: 'Completed', value: 'Completed' },
+                { text: 'Cancelled', value: 'Cancelled' },
+                { text: 'Cancelled With Penalty', value: 'Cancelled With Penalty' },
+                { text: 'Unsuccessful', value: 'Unsuccessful' },
+                { text: 'Cleaning', value: 'Cleaning' },
+            ],
             onFilter: (value, record) => record.status.toLowerCase() === String(value).toLowerCase(),
             render: (_, record) => {
-                const config = bookingStatusConfig[record.status.toLowerCase() as keyof typeof bookingStatusConfig] || { color: 'default', text: record.status, icon: <QuestionCircleOutlined /> };
-                return <Tag color={config.color} icon={config.icon}>{config.text}</Tag>;
+                const key = statusKey(record.status);
+                const config = (bookingStatusConfig as any)[key] || bookingStatusConfig.default;
+                const cleaningRemainingMinutes = record.cleaning_ends_at ? Math.max(0, Math.ceil(dayjs(record.cleaning_ends_at).diff(dayjs(), 'minute', true))) : 0;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+                        <Tag color={config.color} icon={config.icon}>{config.text}</Tag>
+                        {record.is_cleaning && record.cleaning_ends_at && (
+                            <Tag color="#36cfc9" icon={<SyncOutlined />}>
+                                Đang dọn • còn {cleaningRemainingMinutes} phút
+                            </Tag>
+                        )}
+                    </div>
+                );
             },
         },
         {
@@ -450,6 +647,7 @@ const BookingManagement: React.FC = () => {
                         }
                     }
                 };
+                const statusLower = (record.status || '').toLowerCase();
                 const menu = (
                     <Menu onClick={handleMenuClick}>
                         <Menu.Item key="view" icon={<EyeOutlined />}>Xem Chi Tiết</Menu.Item>
@@ -458,13 +656,15 @@ const BookingManagement: React.FC = () => {
                                 {record.auto_assigned ? 'Gán Lại Phòng' : 'Gán Phòng'}
                             </Menu.Item>
                         )}
-                        {(record.status.toLowerCase() === 'pending' || record.status.toLowerCase() === 'confirmed') && (
+                        {(statusLower === 'pending' || statusLower === 'confirmed') && (
                             <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>Hủy Đặt Phòng</Menu.Item>
                         )}
-                        {(record.status.toLowerCase() === 'confirmed' || record.status.toLowerCase() === 'operational') && (
+                        {/* Show check-in only when booking is Confirmed. Do not show check-in when already Operational. */}
+                        {(statusLower === 'confirmed') && (
                             <Menu.Item key="checkin" icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}>Check-in</Menu.Item>
                         )}
-                        {(record.status.toLowerCase() === 'operational') && (
+                        {/* Show check-out only when booking is Operational (checked-in). */}
+                        {(statusLower === 'operational') && (
                             <Menu.Item key="checkout" icon={<CheckCircleOutlined style={{ color: '#1890ff' }} />}>Check-out</Menu.Item>
                         )}
                     </Menu>
@@ -477,30 +677,49 @@ const BookingManagement: React.FC = () => {
     return (
         <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
             <Content style={{ padding: 24 }}>
-                <Card style={{ marginBottom: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
+                <Card style={{ marginTop: 24, marginBottom: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
                     <Flex justify="space-between" align="center">
                         <div>
                             <Title level={2} style={{ marginBottom: 0 }}>Quản lý Đặt Phòng</Title>
                             <Text type="secondary">Theo dõi và quản lý tất cả các đặt phòng.</Text>
                         </div>
                         <Space>
-                            <Button icon={<FilePdfOutlined />}>Xuất Báo Cáo</Button>
-                            <Button type="primary" icon={<PlusOutlined />}>Tạo Đặt Phòng Mới</Button>
+                            <Button icon={<FilePdfOutlined />} onClick={async () => {
+                                try {
+                                    // Build params from current tableFilters and top-level filters
+                                    const params: any = {};
+                                    if (tableFilters.bookingCode) params.booking_code = tableFilters.bookingCode;
+                                    if (tableFilters.guest) params.guest_name = tableFilters.guest;
+                                    if (tableFilters.dateRange && tableFilters.dateRange[0] && tableFilters.dateRange[1]) {
+                                        params.check_in_date = tableFilters.dateRange[0];
+                                        params.check_out_date = tableFilters.dateRange[1];
+                                    }
+                                    if ((filters as any).status) params.status = (filters as any).status;
+
+                                    const res = await receptionAPI.exportBookings(params);
+                                    const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    // backend returns filename; generate fallback
+                                    const filename = `bookings_export_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '_')}.csv`;
+                                    link.setAttribute('download', filename);
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                    message.success('Tải báo cáo thành công.');
+                                } catch (err) {
+                                    console.error('Export error', err);
+                                    message.error('Tải báo cáo thất bại.');
+                                }
+                            }}>Xuất Báo Cáo</Button>
                         </Space>
                     </Flex>
                 </Card>
 
-                <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-                    {Object.entries(statistics).map(([key, value]) => (
-                        <Col xs={24} sm={12} md={6} key={key}>
-                            <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-                                <Statistic title={key.replace(/_/g, ' ').toUpperCase()} value={value as number} />
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
 
-                <BookingFilterBar onSearch={handleSearch} loading={isLoading} />
+
 
                 <CheckoutInfoModal
                     visible={isCheckoutDrawerVisible}
@@ -517,7 +736,7 @@ const BookingManagement: React.FC = () => {
                     <ErrorBoundary fallback={<Alert message="Lỗi hiển thị bảng" type="error" showIcon />}>
                         <ProTable<BookingTableData>
                             columns={columns}
-                            dataSource={bookings}
+                            dataSource={filteredBookings}
                             loading={isLoading}
                             rowKey="key"
                             rowSelection={{
@@ -529,13 +748,18 @@ const BookingManagement: React.FC = () => {
                             options={{ density: true, reload: true, setting: true, fullScreen: true }}
                             headerTitle="Danh sách Đặt phòng"
                             toolBarRender={() => [
-                                <Button
-                                    danger
-                                    disabled={selectedRowKeys.length === 0}
-                                    onClick={() => selectedRowKeys.forEach(key => handleCancelBooking(Number(String(key).split('-')[1])))}
+                                <Dropdown
+                                    overlay={
+                                        <Menu onClick={({ key }) => handleBulkAction(key)}>
+                                            <Menu.Item key="cancel" icon={<DeleteOutlined />} disabled={selectedRowKeys.length === 0}>Hủy {selectedRowKeys.length} mục</Menu.Item>
+                                            <Menu.Item key="assign" icon={<HomeOutlined />} disabled={selectedRowKeys.length === 0}>Gán phòng (mục đầu)</Menu.Item>
+                                            <Menu.Item key="checkin" icon={<CheckCircleOutlined />} disabled={selectedRowKeys.length === 0}>Mở Check-in (mục đầu)</Menu.Item>
+                                            <Menu.Item key="checkout" icon={<CheckCircleOutlined />} disabled={selectedRowKeys.length === 0}>Mở Check-out (mục đầu)</Menu.Item>
+                                        </Menu>
+                                    }
                                 >
-                                    Hủy {selectedRowKeys.length} mục đã chọn
-                                </Button>
+                                    <Button disabled={selectedRowKeys.length === 0}>Hành động hàng loạt ({selectedRowKeys.length})</Button>
+                                </Dropdown>
                             ]}
                         />
                     </ErrorBoundary>
@@ -587,6 +811,7 @@ const BookingManagement: React.FC = () => {
                     }}
                 />
             </Content>
+
         </Layout>
     );
 };

@@ -296,6 +296,10 @@ class ReceptionController extends Controller
                     'room.name',
                     'room.status',
                     'room.floor_id as floor',
+                    'room.cleaning_started_at',
+                    'room.cleaning_ends_at',
+                    'room.cleaning_by',
+                    'room.cleaning_note',
                     'room.created_at',
                     'room.updated_at',
                     'room_types.room_type_id',
@@ -362,21 +366,19 @@ class ReceptionController extends Controller
                 });
             }
 
-            if ($checkInDate && $checkOutDate) {
-                // Nếu có dateRange, chỉ lấy phòng không có booking trong khoảng thời gian này
+            // Chỉ filter phòng available khi có dateRange và KHÔNG có booking_status filter
+            if ($checkInDate && $checkOutDate && !$bookingStatusFilter) {
+                // Nếu có dateRange, chỉ lấy phòng không có booking ACTIVE trong khoảng thời gian này
                 $baseRooms->whereNotExists(function ($query) use ($checkInDate, $checkOutDate) {
                     $query->select(DB::raw(1))
                           ->from('booking_rooms as br')
                           ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
                           ->whereRaw('br.room_id = room.room_id')
                           ->where(function ($q) use ($checkInDate, $checkOutDate) {
-                              $q->where(function ($q1) use ($checkInDate, $checkOutDate) {
-                                  // Booking starts before our period ends and ends after our period starts
-                                  $q1->where('b.check_in_date', '<', $checkOutDate)
-                                     ->where('b.check_out_date', '>', $checkInDate);
-                              });
+                              $q->where('br.check_in_date', '<', $checkOutDate)
+                                ->where('br.check_out_date', '>', $checkInDate);
                           })
-                          ->whereIn('b.status', ['confirmed', 'checked_in', 'pending']);
+                          ->whereIn('b.status', ['Pending', 'Confirmed', 'Operational', 'Cleaning']);
                 });
             }
 
@@ -428,12 +430,24 @@ class ReceptionController extends Controller
             $formattedRooms = $rooms->map(function ($room) use ($request, $bookingMap) {
                 $adjustedPrice = $this->calculateAdjustedPrice($room->room_type_id, $request);
                 $bookingInfo = $bookingMap[$room->id] ?? null;
+                
+                // Calculate is_cleaning based on cleaning_ends_at
+                $isCleaningValue = false;
+                if ($room->cleaning_ends_at) {
+                    $isCleaningValue = Carbon::parse($room->cleaning_ends_at)->isFuture();
+                }
+                
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
                     'status' => $room->status,
                     'floor' => $room->floor,
+                    'cleaning_ends_at' => $room->cleaning_ends_at,
+                    'is_cleaning' => $isCleaningValue,
+                    'cleaning_note' => $room->cleaning_note,
                     'booking_info' => $bookingInfo,
+                    // Add booking_status at room level for compatibility
+                    'booking_status' => $bookingInfo ? $bookingInfo['status'] : null,
                     'room_type' => [
                         'id' => $room->room_type_id,
                         'name' => $room->room_type_name,
@@ -443,7 +457,7 @@ class ReceptionController extends Controller
                         'room_area' => $room->room_area,
                         'max_guests' => $room->max_guests,
                     ],
-                    'bed_type_name' => $room->bed_type_name,
+                    'bed_type_name' => $room->bed_type_name, // Đã có trong SELECT
                     'created_at' => $room->created_at,
                     'updated_at' => $room->updated_at,
                 ];
@@ -486,34 +500,43 @@ class ReceptionController extends Controller
 
             // Total rooms and fixed room-status counts
             $totalRooms = DB::table('room')->count();
-            $cleaningRooms = DB::table('room')->where('status', 'cleaning')->count();
+            // Count rooms that are currently being cleaned by checking cleaning_ends_at
+            $cleaningRooms = DB::table('room')->where('cleaning_ends_at', '>', Carbon::now())->count();
             $maintenanceRooms = DB::table('room')->where('status', 'maintenance')->count();
             $outOfServiceRooms = DB::table('room')->where('status', 'out_of_service')->count();
 
-            // Determine booked/occupied rooms by checking bookings overlapping the requested date
+            // Determine booked/occupied/cleaning rooms by checking bookings overlapping the requested date
             $bookingsOnDate = DB::table('booking_rooms as br')
                 ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
                 ->join('room as r', 'br.room_id', '=', 'r.room_id')
-                ->where('b.check_in_date', '<=', $date)
-                ->where('b.check_out_date', '>=', $date)
-                ->whereIn('b.status', ['confirmed', 'checked_in', 'pending'])
+                ->where('br.check_in_date', '<=', $date)
+                ->where('br.check_out_date', '>', $date)
+                ->whereIn('b.status', ['Pending', 'Confirmed', 'Operational', 'Cleaning'])
                 ->select('br.room_id', 'b.status as booking_status', 'r.floor_id')
                 ->get();
 
-            $occupiedRoomIds = collect($bookingsOnDate)->where('booking_status', 'checked_in')->pluck('room_id')->unique()->values()->all();
-            $bookedRoomIds = collect($bookingsOnDate)->whereIn('booking_status', ['confirmed', 'pending'])->pluck('room_id')->unique()->values()->all();
+            // Group by booking status using proper enum values
+            $operationalRoomIds = collect($bookingsOnDate)->where('booking_status', 'Operational')->pluck('room_id')->unique()->values()->all();
+            $confirmedRoomIds = collect($bookingsOnDate)->where('booking_status', 'Confirmed')->pluck('room_id')->unique()->values()->all();
+            $pendingRoomIds = collect($bookingsOnDate)->where('booking_status', 'Pending')->pluck('room_id')->unique()->values()->all();
+            $cleaningBookingRoomIds = collect($bookingsOnDate)->where('booking_status', 'Cleaning')->pluck('room_id')->unique()->values()->all();
 
-            $occupiedRooms = count($occupiedRoomIds);
-            $bookedRooms = count(array_diff($bookedRoomIds, $occupiedRoomIds)); // exclude checked-in from booked count
+            // Combine confirmed and pending as "booked"
+            $bookedRoomIds = array_unique(array_merge($confirmedRoomIds, $pendingRoomIds));
+            
+            $operationalRooms = count($operationalRoomIds);
+            $bookedRooms = count($bookedRoomIds);
+            $cleaningBookingRooms = count($cleaningBookingRoomIds);
 
-            // Available rooms = total - (occupied + booked + non-available room states)
-            $availableRooms = $totalRooms - $occupiedRooms - $bookedRooms - $cleaningRooms - $maintenanceRooms - $outOfServiceRooms;
+            // Available rooms = total - (operational + booked + cleaning from booking + non-available room states)
+            $availableRooms = $totalRooms - $operationalRooms - $bookedRooms - $cleaningBookingRooms - $maintenanceRooms - $outOfServiceRooms;
             if ($availableRooms < 0) $availableRooms = 0;
 
-            $occupancyRate = $totalRooms > 0 ? (($occupiedRooms + $bookedRooms) / $totalRooms) * 100 : 0;
+            $occupancyRate = $totalRooms > 0 ? (($operationalRooms + $bookedRooms + $cleaningBookingRooms) / $totalRooms) * 100 : 0;
 
             // Build per-floor breakdown by iterating rooms and using booking sets
-            $allRooms = DB::table('room')->select('room_id', 'floor_id', 'status')->get();
+            // Include cleaning_ends_at so we can infer cleaning from timestamps (room.status does not include 'cleaning')
+            $allRooms = DB::table('room')->select('room_id', 'floor_id', 'status', 'cleaning_ends_at')->get();
             $floorStatsFormatted = [];
             foreach ($allRooms as $r) {
                 $floorId = $r->floor_id;
@@ -533,16 +556,24 @@ class ReceptionController extends Controller
 
                 $floorStatsFormatted[$floorId]['total'] += 1;
 
-                if (in_array($r->room_id, $occupiedRoomIds)) {
+                    // Check booking status first (priority: booking status > room status)
+                if (in_array($r->room_id, $operationalRoomIds)) {
                     $floorStatsFormatted[$floorId]['occupied'] += 1;
                 } elseif (in_array($r->room_id, $bookedRoomIds)) {
                     $floorStatsFormatted[$floorId]['booked'] += 1;
+                } elseif (in_array($r->room_id, $cleaningBookingRoomIds)) {
+                    $floorStatsFormatted[$floorId]['cleaning'] += 1;
                 } else {
-                    // if the room status indicates non-availability, count it appropriately
-                    if ($r->status === 'cleaning') $floorStatsFormatted[$floorId]['cleaning'] += 1;
-                    elseif ($r->status === 'maintenance') $floorStatsFormatted[$floorId]['maintenance'] += 1;
-                    elseif ($r->status === 'out_of_service') $floorStatsFormatted[$floorId]['out_of_service'] += 1;
-                    else $floorStatsFormatted[$floorId]['available'] += 1;
+                        // Check room-level indicators (use cleaning_ends_at instead of non-existent 'cleaning' enum)
+                        if (!empty($r->cleaning_ends_at) && Carbon::parse($r->cleaning_ends_at)->isFuture()) {
+                            $floorStatsFormatted[$floorId]['cleaning'] += 1;
+                        } elseif ($r->status === 'maintenance') {
+                            $floorStatsFormatted[$floorId]['maintenance'] += 1;
+                        } elseif ($r->status === 'out_of_service') {
+                            $floorStatsFormatted[$floorId]['out_of_service'] += 1;
+                        } else {
+                            $floorStatsFormatted[$floorId]['available'] += 1;
+                        }
                 }
             }
 
@@ -552,9 +583,9 @@ class ReceptionController extends Controller
                     'date' => $date,
                     'total_rooms' => $totalRooms,
                     'available_rooms' => $availableRooms,
-                    'occupied_rooms' => $occupiedRooms,
+                    'occupied_rooms' => $operationalRooms, // Use Operational booking status
                     'booked_rooms' => $bookedRooms,
-                    'cleaning_rooms' => $cleaningRooms,
+                    'cleaning_rooms' => $cleaningRooms + $cleaningBookingRooms, // Room status + booking status
                     'maintenance_rooms' => $maintenanceRooms,
                     'out_of_service_rooms' => $outOfServiceRooms,
                     'occupancy_rate' => round($occupancyRate, 2),
@@ -580,8 +611,9 @@ class ReceptionController extends Controller
     public function updateRoomStatus(Request $request, $roomId): JsonResponse
     {
         try {
+            // Room table supports only a small set of statuses; cleaning is a booking-level concept.
             $validator = Validator::make($request->all(), [
-                'status' => 'required|in:available,occupied,cleaning,maintenance,deposited,no_show,check_in,check_out'
+                'status' => 'required|in:available,out_of_service,maintenance'
             ]);
 
             if ($validator->fails()) {
