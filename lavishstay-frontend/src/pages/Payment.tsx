@@ -77,18 +77,15 @@ const Payment: React.FC = () => {
         cooldownInfo
     } = useBookingManager();
 
-    // Initialize settings-dependent state
+    // Initialize settings-dependent state (do NOT set a default payment method)
     useEffect(() => {
         if (!settingsLoading && paymentSettings) {
-            // Set default payment method from settings
-            if (!selectedPaymentMethod) {
-                setSelectedPaymentMethod(paymentSettings.general.default_payment_method);
-            }
-
-            // Set countdown from settings
+            // Intentionally do not set default payment method here.
+            // The user must choose the payment method in the UI and that choice
+            // will be sent to the backend as-is.
             setCountdown(paymentSettings.general.payment_timeout);
         }
-    }, [settingsLoading, paymentSettings, selectedPaymentMethod]);
+    }, [settingsLoading, paymentSettings]);
 
     // API Base URL from settings
     const API_BASE_URL = paymentSettings.general.api_base_url;
@@ -232,6 +229,8 @@ const Payment: React.FC = () => {
             specialRequests: values.specialRequests
         });
 
+        // Note: payment method is selected in PaymentStep; do not enforce here.
+
         setPaymentProcessing(true);
         try {
             // Create rooms payload (existing logic)
@@ -370,12 +369,9 @@ const Payment: React.FC = () => {
                 setBackendBookingCode(result.booking_code);
                 message.success('Đã tạo đơn đặt phòng thành công!');
 
-                // If pay_at_hotel, move to completion step
-                if (selectedPaymentMethod === 'pay_at_hotel') {
-                    setCurrentStep(2);
-                } else {
-                    setCurrentStep(1);
-                }
+                // Always move to payment step (step 1) for both online and pay_at_hotel
+                // Pay_at_hotel will show VietQR for 50% deposit
+                setCurrentStep(1);
             } else {
                 throw new Error(result.message || 'Không thể tạo đơn đặt phòng.');
             }
@@ -400,9 +396,32 @@ const Payment: React.FC = () => {
             }
 
             if (selectedPaymentMethod === 'pay_at_hotel') {
-                setCurrentStep(2);
-                message.success('Đặt phòng thành công! Bạn sẽ thanh toán tại khách sạn.');
-                return;
+                // For pay_at_hotel, create VietQR payment for 50% deposit
+                const depositAmount = Math.round(totals.finalTotal * 0.5);
+
+                const paymentResponse = await fetch(`${API_BASE_URL}/payment/create-vietqr`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        booking_code: backendBookingCode,
+                        amount: depositAmount,
+                        payment_type: 'deposit', // Specify this is a deposit payment
+                        description: `Cọc 50% đặt phòng ${backendBookingCode}`
+                    }),
+                });
+
+                const paymentResult = await paymentResponse.json();
+
+                if (paymentResult.success) {
+                    setCurrentStep(1); // Stay on payment step to show QR
+                    message.success(`QR thanh toán cọc đã được tạo. Số tiền cọc: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(depositAmount)}`);
+                    return;
+                } else {
+                    throw new Error(paymentResult.message || 'Không thể tạo mã QR thanh toán cọc.');
+                }
             }
 
             if (selectedPaymentMethod === 'vietqr') {
@@ -450,24 +469,64 @@ const Payment: React.FC = () => {
         }
     };
 
-    // Handle payment confirmation (for VietQR)
-    const handleConfirmPayment = async (transaction?: any) => {
-        console.log('🔄 handleConfirmPayment called with:', { transaction, selectedPaymentMethod });
+    // Handle payment confirmation (for VietQR and pay_at_hotel deposit)
+    const handleConfirmPayment = async (transactionOrResult?: any) => {
+        console.log('🔄 handleConfirmPayment called with:', { transactionOrResult, selectedPaymentMethod });
 
-        if (selectedPaymentMethod === 'vietqr') {
+        // Treat pay_at_hotel deposit like a VietQR payment for confirmation purposes
+        if (selectedPaymentMethod === 'vietqr' || selectedPaymentMethod === 'pay_at_hotel') {
             try {
                 setPaymentProcessing(true);
 
-                // If we have a transaction from PaymentCheck, use it directly
-                if (transaction) {
-                    console.log('✅ Payment confirmed via CPay auto-check:', transaction);
-                    message.success('Thanh toán thành công!');
-                    setCurrentStep(2);
-                    setPaymentProcessing(false);
-                    return;
+                // If we have a transaction or full result from PaymentCheck, use it directly
+                const checkResult = transactionOrResult;
+                if (checkResult) {
+                    // If parent passed a full result object (from PaymentCheck), it may include message/applied
+                    if (checkResult.applied === true || (checkResult.message || '').toString().toLowerCase().includes('áp dụng')) {
+                        message.success('Thanh toán đã được áp dụng tự động bởi hệ thống.');
+                        setCurrentStep(2);
+                        setPaymentProcessing(false);
+                        return;
+                    }
+
+                    // Otherwise extract transaction and call verify endpoint as before
+                    const tx = checkResult.transaction || checkResult;
+                    if (tx) {
+                        console.log('✅ Payment confirmed via CPay auto-check (needs verify):', tx);
+                        try {
+                            const verifyRes = await fetch(`${API_BASE_URL}/payment/verify-vietqr`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    booking_code: backendBookingCode,
+                                    transaction_id: tx.transaction_id || tx.transactionId || tx.id,
+                                    amount: Number(tx.amount)
+                                })
+                            });
+
+                            const verifyJson = await verifyRes.json();
+                            if (verifyJson.success) {
+                                message.success('Thanh toán đã được xác thực và cập nhật.');
+                                setCurrentStep(2);
+                                setPaymentProcessing(false);
+                                return;
+                            } else {
+                                console.warn('Verify endpoint returned:', verifyJson);
+                                message.warning('Giao dịch tìm thấy nhưng không thể xác thực tự động. Vui lòng thử lại.');
+                            }
+                        } catch (err) {
+                            console.error('Error calling verify endpoint after auto-check:', err);
+                            message.error('Lỗi khi xác thực giao dịch. Vui lòng thử lại.');
+                        }
+                    }
                 }
 
                 // Manual verification fallback
+                const amountToVerify = selectedPaymentMethod === 'pay_at_hotel' ? Math.round(totals.finalTotal * 0.5) : totals.finalTotal;
+
                 const verifyResponse = await fetch(`${API_BASE_URL}/payment/verify-vietqr`, {
                     method: 'POST',
                     headers: {
@@ -477,7 +536,7 @@ const Payment: React.FC = () => {
                     body: JSON.stringify({
                         booking_code: backendBookingCode,
                         transaction_id: 'TXN_' + Date.now(),
-                        amount: totals.finalTotal
+                        amount: amountToVerify
                     }),
                 });
 
@@ -585,6 +644,7 @@ const Payment: React.FC = () => {
                                 isProcessing={isProcessing || paymentProcessing}
                                 disabled={!canProceed || cooldownInfo.inCooldown}
                                 selectedPaymentMethod={selectedPaymentMethod}
+                                onPaymentMethodSelect={(m: string) => setSelectedPaymentMethod(m)}
                                 appliedCoupon={appliedCoupon}
                                 onCouponChange={setAppliedCoupon}
                                 totals={totals}
@@ -599,6 +659,9 @@ const Payment: React.FC = () => {
                                 nights={nights}
                                 totals={totals}
                                 formatVND={formatVND}
+                                selectedPaymentMethod={selectedPaymentMethod}
+                                depositAmount={selectedPaymentMethod === 'pay_at_hotel' ? Math.round(totals.finalTotal * 0.5) : undefined}
+                                remainingAmount={selectedPaymentMethod === 'pay_at_hotel' ? Math.round(totals.finalTotal * 0.5) : undefined}
                             />
                         </Col>
                     </Row>
@@ -614,7 +677,9 @@ const Payment: React.FC = () => {
                                 onConfirmPayment={handleConfirmPayment}
                                 isProcessing={paymentProcessing}
                                 bookingCode={backendBookingCode || bookingCode}
-                                totalAmount={totals.finalTotal}
+                                totalAmount={selectedPaymentMethod === 'pay_at_hotel' ? Math.round(totals.finalTotal * 0.5) : totals.finalTotal}
+                                isDepositMode={selectedPaymentMethod === 'pay_at_hotel'}
+                                fullAmount={totals.finalTotal}
                                 countdown={countdown}
                                 formatTime={formatTime}
                                 generateVietQRUrl={generateVietQRUrl}
@@ -629,6 +694,9 @@ const Payment: React.FC = () => {
                                 nights={nights}
                                 totals={totals}
                                 formatVND={formatVND}
+                                selectedPaymentMethod={selectedPaymentMethod}
+                                depositAmount={selectedPaymentMethod === 'pay_at_hotel' ? Math.round(totals.finalTotal * 0.5) : undefined}
+                                remainingAmount={selectedPaymentMethod === 'pay_at_hotel' ? Math.round(totals.finalTotal * 0.5) : undefined}
                             />
                         </Col>
                     </Row>

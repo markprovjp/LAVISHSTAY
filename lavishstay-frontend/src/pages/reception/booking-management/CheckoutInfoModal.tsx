@@ -12,6 +12,7 @@ import {
 import { receptionAPI } from '../../../utils/api';
 import CompensationRequestModal from '../../../components/CompensationRequestModal';
 import { ServicePaymentModal } from '../../../components/ServicePaymentModal';
+import { useProcessCheckOut } from '../../../hooks/useReception';
 
 const { Title, Text } = Typography;
 const { Panel } = Collapse;
@@ -178,10 +179,12 @@ const CheckoutInfoModal: React.FC<CheckoutInfoModalProps> = ({
 }) => {
     const [loading, setLoading] = useState(false);
     const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
-    const [processing, setProcessing] = useState(false);
     const [editingQuantities, setEditingQuantities] = useState<Record<number, number>>({});
     const [compModalVisible, setCompModalVisible] = useState(false);
     const [servicePaymentVisible, setServicePaymentVisible] = useState(false);
+
+    // Use the enhanced mutation with automatic query invalidation
+    const checkOutMutation = useProcessCheckOut();
 
     // Safe close handler: prefer onCancel, then onClose, else local fallback
     const handleClose = () => {
@@ -259,26 +262,18 @@ const CheckoutInfoModal: React.FC<CheckoutInfoModalProps> = ({
     const handleCheckout = async () => {
         if (!bookingId || !checkoutData) return;
 
-        setProcessing(true);
         try {
-            // Use receptionAPI.processCheckout so auth and server behavior are consistent
-            const resp = await receptionAPI.processCheckout(bookingId, {
-                send_invoice: true,
-                override_warnings: true
+            await checkOutMutation.mutateAsync({
+                bookingId,
+                payload: {
+                    send_invoice: true,
+                    override_warnings: true
+                }
             });
-
-            if (resp && resp.success) {
-                message.success('Check-out thành công!');
-                onCheckoutComplete?.();
-                handleClose();
-            } else {
-                message.error(resp?.message || 'Check-out thất bại');
-            }
+            onCheckoutComplete?.();
+            handleClose();
         } catch (error: any) {
             console.error('Error processing checkout:', error);
-            message.error(error?.response?.data?.message || error?.message || 'Check-out thất bại');
-        } finally {
-            setProcessing(false);
         }
     };
 
@@ -377,7 +372,7 @@ const CheckoutInfoModal: React.FC<CheckoutInfoModalProps> = ({
                         <Button onClick={() => setCompModalVisible(true)}>Tạo yêu cầu bồi thường</Button>
                         <Button
                             type="primary"
-                            loading={processing}
+                            loading={checkOutMutation.isPending}
                             disabled={!checkoutData.checkout_conditions.ready_for_checkout}
                             onClick={handleCheckout}
                             icon={<CheckCircleOutlined />}

@@ -7,7 +7,6 @@ import {
     Button,
     Checkbox,
     Spin,
-    message,
     Typography,
     Space,
     List,
@@ -32,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { receptionAPI } from '../../../utils/api';
+import { useProcessCheckIn } from '../../../hooks/useReception';
 
 const { Title, Text } = Typography;
 
@@ -123,10 +123,12 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
     onSuccess
 }) => {
     const [loading, setLoading] = useState(false);
-    const [processing, setProcessing] = useState(false);
     const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [earlyCheckinFeeAccepted, setEarlyCheckinFeeAccepted] = useState(false);
+
+    // Use the enhanced mutation with automatic query invalidation
+    const checkInMutation = useProcessCheckIn();
 
     useEffect(() => {
         if (visible && bookingId) {
@@ -157,30 +159,19 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
     const handleCheckin = async () => {
         if (!bookingId || !checkinInfo) return;
 
-        setProcessing(true);
+        const payload: any = {};
+
+        // Nếu có phí early check-in và user đã đồng ý
+        if (checkinInfo.early_checkin_info.has_fee && earlyCheckinFeeAccepted) {
+            payload.early_checkin_fee_accepted = true;
+        }
+
         try {
-            const payload: any = {};
-
-            // Nếu có phí early check-in và user đã đồng ý
-            if (checkinInfo.early_checkin_info.has_fee && earlyCheckinFeeAccepted) {
-                payload.early_checkin_fee_accepted = true;
-            }
-
-            const response = await receptionAPI.processCheckin(bookingId, payload);
-
-            if (response.success) {
-                message.success('Check-in thành công!');
-                onSuccess?.();
-                onClose();
-            } else {
-                message.error(response.message || 'Check-in thất bại');
-            }
+            await checkInMutation.mutateAsync({ bookingId, payload });
+            onSuccess?.();
+            onClose();
         } catch (err: any) {
             console.error('Error processing checkin:', err);
-            const errorMessage = err.response?.data?.error || err.message || 'Có lỗi xảy ra khi check-in';
-            message.error(errorMessage);
-        } finally {
-            setProcessing(false);
         }
     };
 
@@ -548,7 +539,7 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
                 <Button
                     key="checkin"
                     type="primary"
-                    loading={processing}
+                    loading={checkInMutation.isPending}
                     disabled={!canCheckin()}
                     onClick={handleCheckin}
                     icon={<CheckCircleOutlined />}

@@ -37,6 +37,10 @@ const ReceptionLayout: React.FC = () => {
                     key: '/reception/booking-management',
                     label: <Link to="/reception/booking-management">Quản lý đặt phòng</Link>,
                 },
+                {
+                    key: '/reception/room-management/cleanup',
+                    label: <Link to="/reception/room-management/cleanup">Quản lý Cleanup</Link>,
+                },
                 // {
                 //     key: '/reception/room-management/payment-booking',
                 //     label: <Link to="/reception/room-management/payment-booking">Thanh toán đặt phòng</Link>,
@@ -82,7 +86,7 @@ const ReceptionLayout: React.FC = () => {
                     position: 'fixed',
                     left: 0,
                     top: 80,
-               
+
                 }}
             >
                 <div className="p-4 border-b">

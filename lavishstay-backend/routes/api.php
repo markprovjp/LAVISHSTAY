@@ -56,6 +56,15 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Profile routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile/me', [\App\Http\Controllers\Api\ProfileController::class, 'me']);
+    Route::put('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'updateProfile']);
+    Route::post('/profile/avatar', [\App\Http\Controllers\Api\ProfileController::class, 'uploadAvatar']);
+    Route::delete('/profile/avatar', [\App\Http\Controllers\Api\ProfileController::class, 'deleteAvatar']);
+    Route::post('/profile/change-password', [\App\Http\Controllers\Api\ProfileController::class, 'changePassword']);
+});
+
 // Broadcasting routes for notifications
 Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::middleware('auth:sanctum')->get('/user/bookings', [BookingController::class, 'getUserBookings']);
@@ -91,6 +100,8 @@ Route::prefix('auth')->group(function () {
 
     Route::get('/room-types/{roomTypeId}/pricing', [SearchController::class, 'getRoomTypePricing']);
     Route::get('/pricing-rules', [SearchController::class, 'getPricingRules']);
+    // Return current authenticated user (including roles) for frontend
+    Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
 });
 
 
@@ -269,6 +280,10 @@ Route::prefix('reception')->group(function () {
     Route::put('/bookings/{bookingId}/status', [ReceptionController::class, 'updateBookingStatus']);
     Route::put('/bookings/{bookingId}/cancel', [ReceptionController::class, 'cancelBooking']);
     Route::post('/bookings/transfer', [ReceptionController::class, 'transferBooking']);
+    
+    // Cash payment management
+    Route::post('/mark-cash-paid', [ReceptionController::class, 'markCashPaid'])->middleware('auth:sanctum');
+    
     // Reception check-in: delegate to BookingCheckinController for check-in flows
     // API Routes cho Check-in///////////////////////////////////////////////////
     Route::prefix('checkin')->group(function () {
@@ -562,6 +577,23 @@ Route::middleware(['auth:sanctum'])->prefix('admin/coupons')->group(function () 
     Route::get('/{coupon}', [AdminCouponController::class, 'show'])->name('admin.coupons.show');
     Route::put('/{coupon}', [AdminCouponController::class, 'update'])->name('admin.coupons.update');
     Route::delete('/{coupon}', [AdminCouponController::class, 'destroy'])->name('admin.coupons.destroy');
+});
+
+// Admin cleanup operations
+Route::middleware(['auth:sanctum'])->prefix('admin/cleanup')->group(function () {
+    Route::get('/expire-pending/preview', [App\Http\Controllers\Api\Admin\CleanupController::class, 'previewExpirePending'])->name('admin.cleanup.expire-pending.preview');
+    Route::post('/expire-pending/execute', [App\Http\Controllers\Api\Admin\CleanupController::class, 'executeExpirePending'])->name('admin.cleanup.expire-pending.execute');
+    
+    Route::get('/complete-checkouts/preview', [App\Http\Controllers\Api\Admin\CleanupController::class, 'previewCompletePastCheckouts'])->name('admin.cleanup.complete-checkouts.preview');
+    Route::post('/complete-checkouts/execute', [App\Http\Controllers\Api\Admin\CleanupController::class, 'executeCompletePastCheckouts'])->name('admin.cleanup.complete-checkouts.execute');
+    
+    Route::get('/complete-cleaning/preview', [App\Http\Controllers\Api\Admin\CleanupController::class, 'previewCompleteCleaningBookings'])->name('admin.cleanup.complete-cleaning.preview');
+    Route::post('/complete-cleaning/execute', [App\Http\Controllers\Api\Admin\CleanupController::class, 'executeCompleteCleaningBookings'])->name('admin.cleanup.complete-cleaning.execute');
+    
+    Route::get('/run-all/preview', [App\Http\Controllers\Api\Admin\CleanupController::class, 'previewRunAll'])->name('admin.cleanup.run-all.preview');
+    Route::post('/run-all/execute', [App\Http\Controllers\Api\Admin\CleanupController::class, 'executeRunAll'])->name('admin.cleanup.run-all.execute');
+    
+    Route::post('/confirmation-code', [App\Http\Controllers\Api\Admin\CleanupController::class, 'getConfirmationCode'])->name('admin.cleanup.confirmation-code');
 });
 
 // Real-time notification testing endpoints (development only)

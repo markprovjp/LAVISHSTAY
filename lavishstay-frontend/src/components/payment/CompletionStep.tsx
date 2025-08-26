@@ -64,6 +64,20 @@ interface PaymentData {
     status: string;
     payment_url?: string;
     qr_code_url?: string;
+    deposit?: {
+        payment_id: number;
+        amount_vnd: number;
+        status: string;
+        transaction_id?: string;
+        qr_code_url?: string;
+    };
+    at_hotel?: {
+        payment_id: number;
+        amount_vnd: number;
+        cash_amount_vnd: number;
+        status: string;
+        transaction_id?: string;
+    };
 }
 
 interface BookingSummary {
@@ -71,6 +85,7 @@ interface BookingSummary {
     total_guests: number;
     total_amount: number;
     payment_status: string;
+    remaining_balance_vnd?: number;
 }
 
 interface BookingDetailsResponse {
@@ -170,20 +185,68 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
         try {
             setVerifyingPayment(true);
 
-            const response = await fetch(`${API_BASE_URL}/payment/verify-vietqr`, {
+            // Determine amount to check: deposit amount if available (pay_at_hotel), otherwise full booking total
+            const bookingCode = bookingDetails.data.booking.booking_code;
+            const depositAmount = bookingDetails.data.payment?.deposit?.amount_vnd;
+            const amountToCheck = depositAmount !== undefined && depositAmount !== null
+                ? Number(depositAmount)
+                : Number(bookingDetails.data.booking.total_price_vnd || 0);
+
+            // 1) Try check-cpay endpoint to get transaction details (preferred)
+            const checkRes = await fetch(`${API_BASE_URL}/payment/check-cpay`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    booking_code: bookingDetails.data.booking.booking_code
-                })
+                body: JSON.stringify({ booking_code: bookingCode, amount: amountToCheck })
             });
 
-            const result = await response.json();
+            const checkJson = await checkRes.json();
 
-            if (result.success) {
+            let verifyPayload: any = { booking_code: bookingCode };
+
+            if (checkJson.success && checkJson.transaction) {
+                // If the backend already applied the transaction (auto-apply), we don't need to call verify-vietqr.
+                // Some responses include a message indicating auto-application. Skip verify if that's the case.
+                const tx = checkJson.transaction;
+                const messageText = (checkJson.message || '').toString().toLowerCase();
+
+                if (messageText.includes('áp dụng') || messageText.includes('đã được áp dụng') || checkJson.applied === true) {
+                    // Treat as already applied
+                    api.success({
+                        message: 'Giao dịch đã được áp dụng tự động',
+                        description: 'Trạng thái thanh toán đã được cập nhật bởi hệ thống.',
+                        duration: 4
+                    });
+
+                    // Refresh booking details and return early
+                    await fetchBookingDetails();
+                    return;
+                }
+
+                // Use transaction returned by check-cpay for verify payload
+                verifyPayload.transaction_id = tx.transaction_id || tx.transactionId || tx.id || tx.transaction_id || tx.transactionId;
+                verifyPayload.amount = Number(tx.amount ?? amountToCheck);
+            } else {
+                // Fallback: send manual verify with generated transaction id and amount
+                verifyPayload.transaction_id = 'WEB_VERIFY_' + Date.now();
+                verifyPayload.amount = amountToCheck;
+            }
+
+            // 2) Call verify-vietqr with transaction_id and amount (backend validation requires these)
+            const verifyRes = await fetch(`${API_BASE_URL}/payment/verify-vietqr`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(verifyPayload)
+            });
+
+            const verifyJson = await verifyRes.json();
+
+            if (verifyJson.success) {
                 api.success({
                     message: 'Xác thực thanh toán thành công!',
                     description: 'Trạng thái thanh toán đã được cập nhật.',
@@ -193,7 +256,7 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                 // Refresh booking details
                 await fetchBookingDetails();
             } else {
-                throw new Error(result.message || 'Xác thực thất bại');
+                throw new Error(verifyJson.message || 'Xác thực thất bại');
             }
 
         } catch (err: any) {
@@ -560,6 +623,13 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
         }
     };
 
+    // Helper to check if booking has a deposit or pay_at_hotel requirement
+    const bookingHasDeposit = (): boolean => {
+        if (!bookingDetails || !bookingDetails.data) return false;
+        const p = bookingDetails.data.payment;
+        return !!(p && (p.deposit || p.payment_method === 'pay_at_hotel'));
+    };
+
     // Main success view with complete data
     return (
         <>
@@ -789,6 +859,57 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                                     <Descriptions.Item label="Ngày đặt">
                                         {new Date(booking.created_at).toLocaleDateString('vi-VN')}
                                     </Descriptions.Item>
+                                    {bookingHasDeposit() && (
+                                        <Descriptions.Item label="Thông tin thanh toán cọc">
+                                            {payment?.deposit ? (
+                                                <div className="space-y-2">
+                                                    <div>
+                                                        <span>Tiền cọc đã thanh toán: </span>
+                                                        <strong className="text-green-600">{formatVND(payment.deposit.amount_vnd)}</strong>
+                                                    </div>
+                                                    <div>
+                                                        <span>Trạng thái cọc: </span>
+                                                        <Tag color={payment.deposit.status === 'completed' ? 'green' : 'orange'}>
+                                                            {payment.deposit.status === 'completed' ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                                                        </Tag>
+                                                    </div>
+                                                    {bookingDetails.data.summary.remaining_balance_vnd !== undefined && bookingDetails.data.summary.remaining_balance_vnd > 0 && (
+                                                        <div>
+                                                            <span>Số tiền còn lại (thanh toán tại khách sạn): </span>
+                                                            <strong className="text-orange-600">
+                                                                {formatVND(bookingDetails.data.summary.remaining_balance_vnd)}
+                                                            </strong>
+                                                        </div>
+                                                    )}
+                                                    {payment.at_hotel && (
+                                                        <div className="mt-2 p-3 bg-gray-50 rounded">
+                                                            <div className="text-sm text-gray-600 mb-1">Thông tin thanh toán tại khách sạn:</div>
+                                                            <div>
+                                                                <span>Số tiền: </span>
+                                                                <strong>{formatVND(payment.at_hotel.amount_vnd)}</strong>
+                                                            </div>
+                                                            <div>
+                                                                <span>Đã thu (tiền mặt): </span>
+                                                                <strong className="text-green-600">
+                                                                    {formatVND(payment.at_hotel.cash_amount_vnd || 0)}
+                                                                </strong>
+                                                            </div>
+                                                            <div>
+                                                                <span>Trạng thái: </span>
+                                                                <Tag color={payment.at_hotel.status === 'completed' ? 'green' : 'orange'}>
+                                                                    {payment.at_hotel.status === 'completed' ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                                                                </Tag>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="text-orange-600">
+                                                    Yêu cầu đặt cọc 50% (thanh toán phần còn lại tại khách sạn)
+                                                </div>
+                                            )}
+                                        </Descriptions.Item>
+                                    )}
                                 </Descriptions>
                             </Card>
                         </Col>
@@ -932,6 +1053,17 @@ const CompletionStep: React.FC<CompletionStepProps> = ({
                                                         payment?.payment_method || selectedPaymentMethod || 'Chưa xác định'}
                                         </Tag>
                                     </Descriptions.Item>
+                                    {bookingHasDeposit() && bookingDetails.data.summary.remaining_balance_vnd !== undefined && (
+                                        <Descriptions.Item label="Số tiền còn lại cần thanh toán">
+                                            {bookingDetails.data.summary.remaining_balance_vnd > 0 ? (
+                                                <span style={{ color: '#ff4d4f', fontWeight: 'bold', fontSize: '16px' }}>
+                                                    {formatVND(bookingDetails.data.summary.remaining_balance_vnd)}
+                                                </span>
+                                            ) : (
+                                                <Tag color="green">Đã thanh toán đầy đủ</Tag>
+                                            )}
+                                        </Descriptions.Item>
+                                    )}
                                 </Descriptions>
 
                                 {payment?.qr_code_url && booking.payment_status === 'pending' && (

@@ -18,9 +18,14 @@ import {
     Flex,
     message,
     DatePicker,
-    Input
+    Input,
+    Form,
+    InputNumber,
+    Checkbox,
+    Image
 } from 'antd';
 import CheckoutInfoModal from './CheckoutInfoModal';
+import { HotelPaymentModal } from '../../../components/HotelPaymentModal';
 import { ProTable, type ProColumns } from '@ant-design/pro-components';
 import {
     EyeOutlined,
@@ -40,7 +45,10 @@ import {
     ArrowRightOutlined,
     QuestionCircleOutlined,
     RestOutlined,
-    SmileOutlined
+    SmileOutlined,
+    BankOutlined,
+    QrcodeOutlined,
+    PayCircleOutlined
 } from '@ant-design/icons';
 import { useGetBookings, useGetBookingStatistics, useCancelBooking } from '../../../hooks/useReception';
 import {
@@ -126,6 +134,9 @@ interface BookingTableData {
     is_cleaning?: boolean;
     cleaning_ends_at?: string | null;
     cleaning_note?: string | null;
+    // Remaining/collected fields (for reception actions)
+    remaining_balance_vnd?: number;
+    collected_cash_vnd?: number;
 }
 
 const BookingManagement: React.FC = () => {
@@ -141,6 +152,21 @@ const BookingManagement: React.FC = () => {
     const [servicesBookingId, setServicesBookingId] = useState<number | null>(null);
     const [isCheckoutDrawerVisible, setIsCheckoutDrawerVisible] = useState(false);
     const [checkoutBookingId, setCheckoutBookingId] = useState<number | null>(null);
+
+    // Cash collection handled via confirm dialog; modal/form removed
+    const [isSubmittingCash, setIsSubmittingCash] = useState(false);
+    const [allowIncompletePayment, setAllowIncompletePayment] = useState(false);
+
+    // VietQR for remaining payment states
+    const [isVietQRModalVisible, setIsVietQRModalVisible] = useState(false);
+    const [vietQRBooking, setVietQRBooking] = useState<BookingTableData | null>(null);
+    const [vietQRAmount, setVietQRAmount] = useState(0);
+    const [vietQRUrl, setVietQRUrl] = useState('');
+    const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+
+    // Hotel payment modal states
+    const [isHotelPaymentModalVisible, setIsHotelPaymentModalVisible] = useState(false);
+    const [hotelPaymentBooking, setHotelPaymentBooking] = useState<BookingTableData | null>(null);
 
     // Table-level filters (used by column filterDropdowns)
     const [tableFilters, setTableFilters] = useState<{ bookingCode?: string; guest?: string; dateRange?: [string, string] }>({});
@@ -165,15 +191,80 @@ const BookingManagement: React.FC = () => {
             }
             return acc;
         }, []);
-
+        // Do not noisily log every booking in production; keep a small debug sample below instead
         return uniqueBookings.map((booking: any, index: number) => {
             const bookingId = booking.booking_id || booking.id;
             const totalAmount = booking.total_price_vnd || booking.total_amount || 0;
             const roomNames = booking.room_names || '';
             const roomTypeNames = booking.room_type_names || '';
             const totalRooms = booking.total_rooms || 1;
-            let safeAdults = booking.adults ?? booking.guest_count ?? 1;
-            let safeChildren = booking.children ?? 0;
+            const rawChildren = Number(booking.children ?? 0) || 0;
+            // Prefer authoritative guest_count if present and compute adults from it.
+            // Only trust booking.adults when it's a positive number and not larger than the reported guest_count
+            const reportedGuestCount = Number(booking.guest_count ?? booking.total_guests ?? 0) || 0;
+            let safeAdults: number;
+
+            // If booking_rooms exists, compute totals from rooms (summing adults/children per room).
+            // This is authoritative when the backend returns per-room guest configs.
+            let roomSumAdults = 0;
+            let roomSumChildren = 0;
+            if (Array.isArray(booking.booking_rooms) && booking.booking_rooms.length > 0) {
+                try {
+                    for (const r of booking.booking_rooms) {
+                        const a = Number(r.adults ?? r.adult ?? 0) || 0;
+                        const c = Number(r.children ?? r.child_count ?? 0) || 0;
+                        roomSumAdults += a;
+                        roomSumChildren += c;
+                    }
+                } catch (e) {
+                    // ignore and fall back to booking-level fields
+                    roomSumAdults = 0;
+                    roomSumChildren = 0;
+                }
+            }
+
+            // If room sums look valid (non-zero) and are smaller than booking.adults, prefer them.
+            if (roomSumAdults > 0 && roomSumAdults <= (Number(booking.adults ?? 0) || Number(reportedGuestCount) || 0)) {
+                safeAdults = roomSumAdults;
+            } else if (typeof booking.adults === 'number' && Number(booking.adults) > 0 && reportedGuestCount > 0 && Number(booking.adults) <= reportedGuestCount) {
+                // backend-provided adults looks consistent with guest_count
+                safeAdults = Number(booking.adults);
+            } else if (reportedGuestCount > 0) {
+                // compute adults as guest_count minus children (safe fallback)
+                safeAdults = Math.max(1, reportedGuestCount - rawChildren);
+            } else {
+                // last-resort: use booking.adults if present or default to 1
+                safeAdults = Number(booking.adults ?? 1) || 1;
+            }
+
+            // Debug helper for a reported problematic booking (only in non-production)
+            if (process.env.NODE_ENV !== 'production' && (booking.booking_id === 306 || booking.id === 306)) {
+                // eslint-disable-next-line no-console
+                console.debug('[BookingManagement][DEBUG] booking_id=306 raw:', {
+                    booking_id: booking.booking_id || booking.id,
+                    booking_adults: booking.adults,
+                    booking_children: booking.children,
+                    guest_count: booking.guest_count || booking.total_guests,
+                    roomSumAdults,
+                    roomSumChildren,
+                });
+            }
+
+            // Derive safeChildren consistently: prefer room-level sum when available, then booking.children when consistent,
+            // otherwise compute as guest_count - adults (keeps totals consistent).
+            let safeChildrenFinal = 0;
+            if (roomSumChildren > 0 && (roomSumAdults + roomSumChildren) <= (Number(booking.adults ?? 0) + Number(booking.children ?? 0) || Number(reportedGuestCount) || 0)) {
+                safeChildrenFinal = roomSumChildren;
+            } else if (typeof booking.children === 'number' && Number(booking.children) >= 0 && reportedGuestCount > 0 && Number(booking.children) <= reportedGuestCount) {
+                safeChildrenFinal = Number(booking.children);
+            } else if (reportedGuestCount > 0) {
+                safeChildrenFinal = Math.max(0, reportedGuestCount - Number(safeAdults));
+            } else {
+                safeChildrenFinal = rawChildren || 0;
+            }
+
+            // If we have room sums, use them to compute guest_count for consistency
+            const totalGuestsFromRooms = (roomSumAdults || 0) + (roomSumChildren || 0);
 
             return {
                 booking_id: bookingId,
@@ -187,9 +278,9 @@ const BookingManagement: React.FC = () => {
                 check_out_date: String(booking.check_out_date || ''),
                 total_price_vnd: Number(totalAmount) || 0,
                 total_amount: Number(totalAmount) || 0,
-                guest_count: Number(booking.guest_count) || 1,
-                adults: safeAdults,
-                num_children: safeChildren,
+                guest_count: totalGuestsFromRooms > 0 ? totalGuestsFromRooms : (reportedGuestCount || 1),
+                adults: Number(safeAdults) || 1,
+                num_children: Number(safeChildrenFinal) || 0,
                 status: String(booking.status || 'pending'),
                 quantity: Number(booking.quantity) || totalRooms,
                 created_at: String(booking.created_at || ''),
@@ -231,6 +322,9 @@ const BookingManagement: React.FC = () => {
                 coupon: booking.coupon || null,
                 // Auto assignment flag from backend (booking-level)
                 auto_assigned: booking.has_auto_assigned || booking.auto_assigned || false,
+                // Financial fields used by reception actions
+                remaining_balance_vnd: Number(booking.remaining_balance_vnd || booking.remaining_balance || 0),
+                collected_cash_vnd: Number(booking.collected_cash_vnd || booking.collected_cash || 0),
             };
         });
     }, [bookingsData]);
@@ -270,6 +364,16 @@ const BookingManagement: React.FC = () => {
             });
         } else if (actionKey === 'assign') {
             const first = bookingIds[0];
+            // Ensure all selected bookings are in Confirmed or Operational
+            const invalid = bookingIds.find(id => {
+                const bookingObj = bookings.find((b: any) => Number(b.booking_id) === Number(id));
+                const status = String(bookingObj?.status || '').toLowerCase();
+                return !['confirmed', 'operational'].includes(status);
+            });
+            if (invalid) {
+                message.error('Chỉ các booking ở trạng thái Confirmed hoặc Operational mới được gán phòng.');
+                return;
+            }
             setRoomSelectionBookingId(first);
             setIsRoomSelectionModalVisible(true);
         } else if (actionKey === 'checkin') {
@@ -343,6 +447,28 @@ const BookingManagement: React.FC = () => {
             },
         });
     };
+
+    // Helper function to check if room assignment is allowed based on payment status
+    const isRoomAssignmentAllowed = (record: BookingTableData) => {
+        if (record.payment_type !== 'at_hotel' && record.payment_type !== 'deposit') return true; // Online payments are pre-authorized
+
+        const remaining = (record as any).remaining_balance_vnd || 0;
+        const isPaymentComplete = remaining <= 0 || record.payment_status === 'completed';
+
+        return isPaymentComplete || allowIncompletePayment;
+    };
+
+    // Helper function to check if checkout is allowed
+    const isCheckoutAllowed = (record: BookingTableData) => {
+        if (record.payment_type !== 'at_hotel' && record.payment_type !== 'deposit') return true; // Online payments are pre-authorized
+
+        const remaining = (record as any).remaining_balance_vnd || 0;
+        return remaining <= 0 || record.payment_status === 'completed';
+    };
+
+
+
+    // handleCollectCash removed; using collectCashConfirm instead
 
     const columns: ProColumns<BookingTableData>[] = [
         {
@@ -582,6 +708,47 @@ const BookingManagement: React.FC = () => {
             },
         },
         {
+            title: 'Thanh toán',
+            key: 'payment_info',
+            width: 180,
+            align: 'center',
+            render: (_, record) => {
+                const paymentType = record.payment_type || '';
+                const paymentStatus = String(record.payment_status || 'pending').toLowerCase();
+                const isCompleted = paymentStatus === 'completed';
+
+                // Compact display: show a single concise tag depending on method/status
+                // Build payment tag and action buttons when at hotel (or deposit)
+                const parts: React.ReactNode[] = [];
+                if (paymentType === 'deposit') {
+                    parts.push(<Tag key="deposit" color="gold" icon={<BankOutlined />}>Đã cọc </Tag>);
+                }
+                if (paymentType === 'vietqr') {
+                    parts.push(<Tag key="vietqr" color={isCompleted ? 'green' : 'blue'} icon={<QrcodeOutlined />}>{isCompleted ? 'Online ' : 'Online • Đang xử lý'}</Tag>);
+                }
+                if (parts.length === 0) parts.push(<Tag key="other" color="default">{paymentType || 'Khác'}</Tag>);
+
+
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {parts}
+                        </div>
+
+                        {/* Remaining amount display for deposit/at_hotel */}
+                        {(record.payment_type === 'deposit' || record.payment_type === 'at_hotel') && (
+                            <div style={{ textAlign: 'center' }}>
+                                <Text strong style={{ color: '#f5222d', fontSize: 14 }}>{new Intl.NumberFormat('vi-VN').format((record as any).remaining_balance_vnd || 0)} ₫</Text>
+                            </div>
+                        )}
+
+                   
+                    </div>
+                );
+            },
+        },
+        // 'Thu tiền' column removed; collection actions moved into 'Thanh toán' column
+        {
             title: 'Trạng Thái',
             dataIndex: 'status',
             key: 'status',
@@ -626,15 +793,95 @@ const BookingManagement: React.FC = () => {
                         setSelectedBooking(record as any);
                         setIsDetailModalVisible(true);
                     } else if (key === 'assign') {
+                        const statusLowerLocal = String(record.status || '').toLowerCase();
+                        if (statusLowerLocal === 'cleaning') {
+                            message.error('Không thể gán phòng: booking đang ở trạng thái Dọn (Cleaning).');
+                            return;
+                        }
+
+                        // Check payment status for at_hotel bookings
+                        if (!isRoomAssignmentAllowed(record)) {
+                            Modal.confirm({
+                                title: 'Khách chưa thanh toán đủ',
+                                content: (
+                                    <div>
+                                        <p>Khách hàng chưa thanh toán đủ tiền. Khách sạn 5 sao yêu cầu thanh toán 100% trước khi gán phòng.</p>
+                                        <p><strong>Còn thiếu:</strong> {new Intl.NumberFormat('vi-VN').format((record as any).remaining_balance_vnd || 0)} ₫</p>
+                                        <Checkbox
+                                            checked={allowIncompletePayment}
+                                            onChange={(e) => setAllowIncompletePayment(e.target.checked)}
+                                        >
+                                            Cho phép gán phòng dù chưa thanh toán đủ (quyền lễ tân)
+                                        </Checkbox>
+                                    </div>
+                                ),
+                                okText: 'Tiếp tục gán phòng',
+                                cancelText: 'Hủy',
+                                onOk: () => {
+                                    if (allowIncompletePayment) {
+                                        setRoomSelectionBookingId(record.booking_id);
+                                        setIsRoomSelectionModalVisible(true);
+                                    } else {
+                                        message.warning('Vui lòng chọn "Cho phép gán phòng" hoặc yêu cầu khách thanh toán đủ tiền.');
+                                    }
+                                }
+                            });
+                            return;
+                        }
+
                         setRoomSelectionBookingId(record.booking_id);
                         setIsRoomSelectionModalVisible(true);
                     } else if (key === 'cancel') {
                         handleCancelBooking(record.booking_id);
                     } else if (key === 'checkin') {
+                        // Check payment status for at_hotel bookings before check-in
+                        if (!isRoomAssignmentAllowed(record) && record.payment_type === 'at_hotel') {
+                            Modal.confirm({
+                                title: 'Khách chưa thanh toán đủ',
+                                content: (
+                                    <div>
+                                        <p>Khách hàng chưa thanh toán đủ tiền. Khách sạn 5 sao yêu cầu thanh toán 100% trước khi check-in.</p>
+                                        <p><strong>Còn thiếu:</strong> {new Intl.NumberFormat('vi-VN').format((record as any).remaining_balance_vnd || 0)} ₫</p>
+                                        <p>Bạn có muốn cho phép check-in dù chưa thanh toán đủ không?</p>
+                                    </div>
+                                ),
+                                okText: allowIncompletePayment ? 'Cho phép check-in' : 'Hủy',
+                                cancelText: 'Hủy',
+                                okButtonProps: { disabled: !allowIncompletePayment },
+                                onOk: () => {
+                                    if (allowIncompletePayment) {
+                                        setCheckinBookingId(record.booking_id);
+                                        setIsCheckinModalVisible(true);
+                                    }
+                                }
+                            });
+                            return;
+                        }
+
                         // Mở modal check-in với thông tin chi tiết
                         setCheckinBookingId(record.booking_id);
                         setIsCheckinModalVisible(true);
+                    } else if (key === 'hotel_payment') {
+                        // Open hotel payment modal for deposit bookings
+                        setHotelPaymentBooking(record);
+                        setIsHotelPaymentModalVisible(true);
                     } else if (key === 'checkout') {
+                        // Check payment completion for at_hotel bookings before checkout
+                        if (!isCheckoutAllowed(record)) {
+                            Modal.error({
+                                title: 'Không thể check-out',
+                                content: (
+                                    <div>
+                                        <p>Khách hàng chưa thanh toán đủ tiền. Phải thu đủ 100% trước khi check-out.</p>
+                                        <p><strong>Còn thiếu:</strong> {new Intl.NumberFormat('vi-VN').format((record as any).remaining_balance_vnd || 0)} ₫</p>
+                                        <p>Vui lòng thu tiền trước khi check-out.</p>
+                                    </div>
+                                ),
+                                okText: 'Đã hiểu'
+                            });
+                            return;
+                        }
+
                         // If fetching checkout-info fails (e.g., none selected yet), open services modal
                         try {
                             await receptionAPI.getCheckoutInfo(record.booking_id);
@@ -648,24 +895,47 @@ const BookingManagement: React.FC = () => {
                     }
                 };
                 const statusLower = (record.status || '').toLowerCase();
+                const hasRoomsForAction = record.room_names && !record.room_names.includes('null');
+                const isAutoAssignedForAction = record.auto_assigned;
+
+                // Check if this booking has deposit and needs remaining payment
+                const hasDeposit = record.payment_type === 'deposit';
+                const remainingBalance = (record as any).remaining_balance_vnd || 0;
+                const needsRemainingPayment = hasDeposit && remainingBalance > 0;
+
                 const menu = (
                     <Menu onClick={handleMenuClick}>
                         <Menu.Item key="view" icon={<EyeOutlined />}>Xem Chi Tiết</Menu.Item>
-                        {((!record.room_names || record.room_names.includes('null')) || record.auto_assigned) && (
+
+                        {(['Confirmed', 'Operational'].includes(String(record.status || '')) && (((!record.room_names || record.room_names.includes('null')) || record.auto_assigned || hasRoomsForAction))) && (
                             <Menu.Item key="assign" icon={<HomeOutlined />}>
-                                {record.auto_assigned ? 'Gán Lại Phòng' : 'Gán Phòng'}
+                                {isAutoAssignedForAction || hasRoomsForAction ? 'Gán Lại Phòng' : 'Gán Phòng'}
                             </Menu.Item>
                         )}
+
                         {(statusLower === 'pending' || statusLower === 'confirmed') && (
                             <Menu.Item key="cancel" icon={<DeleteOutlined />} danger>Hủy Đặt Phòng</Menu.Item>
                         )}
                         {/* Show check-in only when booking is Confirmed. Do not show check-in when already Operational. */}
                         {(statusLower === 'confirmed') && (
-                            <Menu.Item key="checkin" icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}>Check-in</Menu.Item>
+                            <Menu.Item
+                                key="checkin"
+                                icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                                disabled={!isRoomAssignmentAllowed(record) && record.payment_type === 'at_hotel'}
+                            >
+                                Check-in {!isRoomAssignmentAllowed(record) && record.payment_type === 'at_hotel' && '(Chưa đủ tiền)'}
+                            </Menu.Item>
                         )}
                         {/* Show check-out only when booking is Operational (checked-in). */}
                         {(statusLower === 'operational') && (
                             <Menu.Item key="checkout" icon={<CheckCircleOutlined style={{ color: '#1890ff' }} />}>Check-out</Menu.Item>
+                        )}
+
+                        {/* Show hotel payment for deposit bookings with remaining balance */}
+                        {needsRemainingPayment && (
+                            <Menu.Item key="hotel_payment" icon={<PayCircleOutlined style={{ color: '#f5a623' }} />}>
+                                Thanh Toán Tại Khách Sạn
+                            </Menu.Item>
                         )}
                     </Menu>
                 );
@@ -808,6 +1078,26 @@ const BookingManagement: React.FC = () => {
                         } else {
                             message.info('Vui lòng mở Check-out để xác nhận tổng tiền.');
                         }
+                    }}
+                />
+
+                {/* Cash collection handled via confirm dialog; modal removed */}
+
+
+
+                {/* Hotel Payment Modal */}
+                <HotelPaymentModal
+                    visible={isHotelPaymentModalVisible}
+                    onClose={() => {
+                        setIsHotelPaymentModalVisible(false);
+                        setHotelPaymentBooking(null);
+                    }}
+                    booking={hotelPaymentBooking}
+                    onSuccess={() => {
+                        setIsHotelPaymentModalVisible(false);
+                        setHotelPaymentBooking(null);
+                        // Refresh the booking data
+                        window.location.reload();
                     }}
                 />
             </Content>

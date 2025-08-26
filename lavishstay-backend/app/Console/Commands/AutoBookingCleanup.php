@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AutoBookingCleanup extends Command
 {
@@ -54,5 +55,49 @@ class AutoBookingCleanup extends Command
             ->update(['status' => 'Completed']);
 
         $this->info("Đã chuyển {$updated} booking sang trạng thái completed.");
+
+        // Chuyển booking ở trạng thái Cleaning sang Completed nếu thời gian dọn dẹp đã kết thúc
+        // Logic: tìm booking_id liên quan đến phòng có cleaning_ends_at <= now và booking.status = 'Cleaning'
+        $cleaningBookings = DB::table('booking as b')
+            ->join('booking_rooms as br', 'b.booking_id', '=', 'br.booking_id')
+            ->join('room as r', 'br.room_id', '=', 'r.room_id')
+            ->where('b.status', 'Cleaning')
+            ->whereNotNull('r.cleaning_ends_at')
+            ->where('r.cleaning_ends_at', '<=', $now)
+            ->distinct()
+            ->pluck('b.booking_id');
+
+        $cleaningUpdated = 0;
+        $roomsCleared = 0;
+        if ($cleaningBookings->count() > 0) {
+            DB::beginTransaction();
+            try {
+                // Update bookings to Completed
+                $cleaningUpdated = DB::table('booking')
+                    ->whereIn('booking_id', $cleaningBookings)
+                    ->update(['status' => 'Completed']);
+
+                // Clear room cleaning flags for related rooms
+                $roomsCleared = DB::table('room')
+                    ->whereIn('room_id', function ($query) use ($cleaningBookings) {
+                        $query->select('br.room_id')
+                            ->from('booking_rooms as br')
+                            ->whereIn('br.booking_id', $cleaningBookings);
+                    })
+                    ->update([
+                        'cleaning_started_at' => null,
+                        'cleaning_ends_at' => null,
+                        'cleaning_by' => null,
+                        'cleaning_note' => null,
+                    ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Failed to auto-complete cleaning bookings: ' . $e->getMessage());
+            }
+        }
+
+        $this->info("Đã chuyển {$cleaningUpdated} booking từ Cleaning sang Completed và cập nhật {$roomsCleared} phòng (clear cleaning flags).");
     }
 }

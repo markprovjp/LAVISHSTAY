@@ -814,6 +814,42 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                     Chi tiết phòng ({Array.isArray(bookingDetail.booking_rooms) ? bookingDetail.booking_rooms.length : 0})
                                 </span>
                             } key="rooms">
+                                {/* Booking-level summary: representatives & booking services */}
+                                <Card style={{ marginBottom: 16, borderRadius: 12 }}>
+                                    <Row gutter={16}>
+                                        <Col span={12}>
+                                            <Text strong>Người đại diện (toàn booking)</Text>
+                                            <div style={{ marginTop: 8 }}>
+                                                {Array.isArray(bookingDetail.representatives) && bookingDetail.representatives.length > 0 ? (
+                                                    bookingDetail.representatives.map((r) => (
+                                                        <div key={r.id} style={{ marginBottom: 8 }}>
+                                                            <div style={{ fontWeight: 600 }}>{r.full_name || r.name || '-'}</div>
+                                                            <div style={{ color: '#8c8c8c', fontSize: 12 }}>{r.phone_number || r.phone || '-'} • {r.email || '-'}</div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <Text type="secondary">Chưa chỉ định người đại diện</Text>
+                                                )}
+                                            </div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <Text strong>Dịch vụ phát sinh (tổng quan)</Text>
+                                            <div style={{ marginTop: 8 }}>
+                                                {bookingServices && bookingServices.length > 0 ? (
+                                                    bookingServices.map(s => (
+                                                        <div key={s.id || s.service_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                                                            <div style={{ color: '#262626' }}>{s.name}</div>
+                                                            <div style={{ color: '#8c8c8c' }}>{s.quantity} x {new Intl.NumberFormat('vi-VN').format(s.price_vnd || 0)} ₫</div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <Text type="secondary">Không có dịch vụ phát sinh</Text>
+                                                )}
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                </Card>
+
                                 <Collapse
                                     accordion
                                     style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px 0 rgba(0,0,0,0.04)', border: '1px solid #f0f0f0' }}
@@ -886,6 +922,33 @@ const BookingDetailModal: React.FC<BookingDetailModalProps> = ({
                                                         <Descriptions.Item label="Email">{room.representative?.email || '-'}</Descriptions.Item>
                                                         <Descriptions.Item label="CMND/CCCD">{room.representative?.identity_number || '-'}</Descriptions.Item>
                                                     </Descriptions>
+                                                    {/* Per-room services: attempt to find services linked to this booking_room */}
+                                                    {bookingServices && bookingServices.length > 0 && (
+                                                        (() => {
+                                                            const servicesForRoom = bookingServices.filter(s => {
+                                                                const raw = s.raw || {};
+                                                                return raw.booking_room_id === room.booking_room_id || raw.booking_room_id === room.booking_room_id || raw.booking_room === room.booking_room_id || raw.booking_room_id === room.booking_room_id;
+                                                            });
+                                                            return servicesForRoom.length > 0 ? (
+                                                                <div style={{ marginTop: 12 }}>
+                                                                    <Text strong>Dịch vụ liên quan tới suất này</Text>
+                                                                    <List
+                                                                        itemLayout="horizontal"
+                                                                        dataSource={servicesForRoom}
+                                                                        renderItem={(s: any) => (
+                                                                            <List.Item>
+                                                                                <List.Item.Meta
+                                                                                    title={s.name}
+                                                                                    description={<span>{s.quantity} x {new Intl.NumberFormat('vi-VN').format(s.price_vnd || 0)} ₫</span>}
+                                                                                />
+                                                                                <div style={{ fontWeight: 600 }}>{new Intl.NumberFormat('vi-VN').format(s.total_price_vnd || (s.quantity * (s.price_vnd || 0)))} ₫</div>
+                                                                            </List.Item>
+                                                                        )}
+                                                                    />
+                                                                </div>
+                                                            ) : null;
+                                                        })()
+                                                    )}
                                                     {/* <Divider style={{ margin: '12px 0' }} />
                                                     <Space wrap>
                                                         <Button icon={<ArrowRightLeft size={16} />} onClick={() => handleRoomAction('transfer', [room.booking_room_id])}>Đổi phòng</Button>
