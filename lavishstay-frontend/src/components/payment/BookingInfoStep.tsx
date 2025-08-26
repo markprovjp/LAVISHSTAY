@@ -27,6 +27,8 @@ interface BookingInfoStepProps {
         finalTotal: number;
     };
     formatVND?: (amount: number) => string;
+    onPaymentMethodSelect?: (method: string) => void;
+    // selectedPaymentMethod?: string;
 }
 
 const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
@@ -62,6 +64,7 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     return (
         <Card title="Thông tin khách hàng" className="mb-4">
             <Form form={form} layout="vertical" onFinish={onSubmit}>
+                {/* Payment method is selected in PaymentStep; no selector here */}
                 <Title level={5}>Thông tin người đại diện</Title>
                 <Row gutter={16}>
                     <Col span={24}>

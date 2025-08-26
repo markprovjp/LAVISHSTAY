@@ -24,7 +24,12 @@ export interface User {
   updated_at: string;
   role?: string;
   phone?: string;
+  address?: string;
   avatar?: string;
+  google_id?: string;
+  profile_photo_path?: string;
+  // Roles returned from backend (array of role names)
+  roles?: string[];
 }
 
 // Interface cho response đăng nhập từ Laravel
@@ -62,7 +67,14 @@ const authService = {
         // Lưu token ngay lập tức
         authService.setToken(token);
 
-        return { user, token };
+        // Fetch fresh user data (some backends return roles only on /me)
+        try {
+          const me = await authService.getCurrentUser();
+          return { user: me, token };
+        } catch (e) {
+          // fallback to returned user if /me fails or mock server
+          return { user, token };
+        }
       } else {
         throw new Error(response.data.message || 'Đăng nhập thất bại');
       }
@@ -91,7 +103,13 @@ const authService = {
         // Lưu token ngay lập tức
         authService.setToken(token);
 
-        return { user, token };
+        // Try to fetch /me to obtain roles
+        try {
+          const me = await authService.getCurrentUser();
+          return { user: me, token };
+        } catch (e) {
+          return { user, token };
+        }
       } else {
         // Preserve server response so callers can inspect validation errors
         const err: any = new Error(response.data.message || 'Đăng ký thất bại');
@@ -196,7 +214,11 @@ const authService = {
         // Lưu token ngay lập tức
         authService.setToken(token);
 
-        return { user, token };
+        // Some backends only expose roles on the /me endpoint; fetch it
+        // Always try to fetch a fresh /auth/me after setting the token so the client
+        // gets the authoritative user object (avatar, roles, profile_photo_path, ...)
+        const me = await authService.getCurrentUser().catch(() => null);
+        return { user: me || user, token };
       } else {
         throw new Error(response.data.message || 'Đăng nhập Google thất bại');
       }
