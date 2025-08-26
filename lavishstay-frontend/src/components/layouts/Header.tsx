@@ -31,7 +31,7 @@ import LanguageSwitcher from "../ui/LanguageSwitcher";
 import RainbowButton from "../ui/RainbowButton";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../store";
-import { logout } from "../../store/slices/authSlice";
+import { logout, updateUser } from "../../store/slices/authSlice";
 import authService from "../../services/authService";
 import { useTranslation } from "react-i18next";
 import logoLight from "../../assets/images/logo-light.png";
@@ -135,31 +135,43 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
     backdropFilter: scrolled ? "blur(12px)" : "none",
     borderBottom: scrolled ? `1px solid ${token.colorBorderSecondary}` : "none",
   };  // Navigation items
-  const menuItems: MenuItem[] = [
+  // Build menu items and conditionally include the Reception menu when the user has 'reception' role
+  const baseMenu: MenuItem[] = [
     { key: "/", label: t("header.home"), icon: <HomeOutlined /> },
     { key: "/about", label: "Về chúng tôi", icon: null },
-    // Reception menu with dropdown
-    {
-      key: "/reception",
-      label: "Lễ tân",
-      icon: null,
-    },
-    {
-      key: "/news",
-      label: "Tin tức",
-      icon: null,
-    },
-    {
-      key: "/the-level",
-      label: "The Level",
-      icon: null,
-    },
-    {
-      key: "/booking/lookup",
-      label: "Tra cứu booking",
-      icon: null,
-    }
+    { key: "/news", label: "Tin tức", icon: null },
+    { key: "/the-level", label: "The Level", icon: null },
+    { key: "/booking/lookup", label: "Tra cứu booking", icon: null },
   ];
+
+  const menuItems: MenuItem[] = [...baseMenu];
+
+  // user.roles comes from backend; TS model may not include it, cast to any safely
+  const userRoles: string[] = ((user as any)?.roles as string[]) || [];
+  const receptionAllowedNames = ['reception', 'receptionist', 'reception_staff', 'frontdesk'];
+  if (userRoles.some(r => receptionAllowedNames.includes(r))) {
+    // Add reception menu for authorized users
+    menuItems.splice(2, 0, { key: "/reception", label: "Lễ tân", icon: null });
+  }
+
+  // Ensure avatar/roles from localStorage are synced into Redux if missing (fallback)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('authUser');
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+
+      // If Redux user is missing avatar or roles but localStorage has them, update Redux
+      const needsUpdate = parsed && ((parsed.avatar && !user?.avatar) || (Array.isArray(parsed.roles) && parsed.roles.length > 0 && (!user?.roles || (user.roles as string[]).length === 0)));
+      if (needsUpdate) {
+        // dispatch updateUser to keep Redux state in sync
+        // import updateUser above
+        dispatch(updateUser(parsed));
+      }
+    } catch (e) {
+      // no-op
+    }
+  }, [user, dispatch]);
 
   // User menu dropdown
   const userMenu = (

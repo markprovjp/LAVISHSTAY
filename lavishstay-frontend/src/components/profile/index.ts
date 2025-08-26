@@ -6,4 +6,3 @@ export { default as Wishlist } from './Wishlist';
 export { default as ChangePassword } from './ChangePassword';
 export { default as ForgotPassword } from './ForgotPassword';
 export { default as Notifications } from './Notifications';
-export { default as Settings } from './Settings';

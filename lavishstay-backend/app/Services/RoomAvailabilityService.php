@@ -44,7 +44,8 @@ class RoomAvailabilityService
                     
                     return [
                         'room_id' => $room->id,
-                        'room_number' => $room->room_number,
+                        // DB uses `name` for the visible room code; use it as fallback when room_number is missing
+                        'room_number' => $room->room_number ?? $room->name,
                         'room_type' => [
                             'id' => $room->roomType->id,
                             'name' => $room->roomType->name,
@@ -458,7 +459,7 @@ class RoomAvailabilityService
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
                 ->select([
                     'r.room_id as id',
-                    'r.room_number',
+                    // `r.name` holds the visible room code in the DB; don't select r.room_number which doesn't exist
                     'r.room_type_id',
                     'rt.name',
                     'rt.description',
@@ -514,7 +515,8 @@ class RoomAvailabilityService
 
                 return (object) [
                     'id' => $room->id,
-                    'room_number' => $room->room_number,
+                    // Use name as fallback for room_code/room_number
+                    'room_number' => $room->room_number ?? $room->name,
                     'room_type_id' => $room->room_type_id,
                     'roomType' => (object) [
                         'id' => $room->room_type_id,

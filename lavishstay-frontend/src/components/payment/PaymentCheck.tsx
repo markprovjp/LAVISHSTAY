@@ -5,10 +5,18 @@ import { paymentService, PaymentTransaction } from '../../services/paymentServic
 
 const { Text, Title } = Typography;
 
+interface PaymentCheckResult {
+    found: boolean;
+    transaction?: PaymentTransaction;
+    message?: string;
+    applied?: boolean;
+}
+
 interface PaymentCheckProps {
     bookingCode: string;
     expectedAmount: number;
-    onPaymentConfirmed: (transaction: PaymentTransaction) => void;
+    // Pass the full result so callers can inspect message/applied flags
+    onPaymentConfirmed: (result: PaymentCheckResult) => void;
     onCancel: () => void;
     isVisible: boolean;
     autoStartImmediate?: boolean;
@@ -64,7 +72,8 @@ export const PaymentCheck: React.FC<PaymentCheckProps> = ({
             if (result.found && result.transaction) {
                 addToHistory('found', 'Đã tìm thấy giao dịch thanh toán!');
                 message.success('Thanh toán đã được xác nhận!');
-                onPaymentConfirmed(result.transaction);
+                // Pass full result (includes message/applied) to parent
+                onPaymentConfirmed({ found: true, transaction: result.transaction, message: result.message, applied: (result.applied ?? false) });
                 return { found: true, transaction: result.transaction };
             } else {
                 addToHistory('not_found', result.message || 'Không tìm thấy giao dịch');

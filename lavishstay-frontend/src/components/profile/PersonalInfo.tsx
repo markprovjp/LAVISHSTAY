@@ -1,478 +1,424 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Card,
-    Row,
-    Col,
-    Form,
-    Input,
-    Button,
-    Avatar,
-    Upload,
-    Typography,
-    Divider,
-    Space,
-    DatePicker,
-    message,
-    Spin
+  Card,
+  Form,
+  Input,
+  Button,
+  Avatar,
+  Upload,
+  message,
+  Tag,
+  Space,
+  Divider,
+  Modal,
+  Row,
+  Col,
+  Typography,
+  Spin,
 } from 'antd';
 import {
-    EditOutlined,
-    SaveOutlined,
-    CloseOutlined,
-    CameraOutlined,
-    UserOutlined,
-    PhoneOutlined,
-    MailOutlined,
-    CalendarOutlined,
-    EnvironmentOutlined,
-    IdcardOutlined,
-    BookOutlined,
-    StarOutlined,
-    ClockCircleOutlined,
-    ContactsOutlined
+  UserOutlined,
+  EditOutlined,
+  SaveOutlined,
+  CloseOutlined,
+  CameraOutlined,
+  DeleteOutlined,
+  LockOutlined,
+  PhoneOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
-import { type UserProfile } from '../../services/profileService';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
-import dayjs from 'dayjs';
+import { updateUser } from '../../store/slices/authSlice';
+import profileService from '../../services/profileService';
+import type { UserProfile, UpdateProfileData, ChangePasswordData } from '../../services/profileService';
 
 const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 const PersonalInfo: React.FC = () => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
-    const userData = useSelector((state: RootState) => state.auth.user) as UserProfile | null;
-    useEffect(() => {
-        if (userData) {
-            form.setFieldsValue({
-                ...userData,
-                dateOfBirth: userData.dateOfBirth ? dayjs(userData.dateOfBirth) : null
-            });
-        }
-    }, [form, userData]);
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.auth.user);
 
-    const handleEdit = () => {
-        setIsEditing(true);
-        if (userData) {
-            form.setFieldsValue({
-                ...userData,
-                dateOfBirth: userData.dateOfBirth ? dayjs(userData.dateOfBirth) : null
-            });
-        }
-    };
+  const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
 
-    const handleSave = async () => {
-        try {
-            setLoading(true);
-            const values = await form.validateFields();
+  const [form] = Form.useForm();
+  const [passwordForm] = Form.useForm();
 
-            // Convert dayjs to string for dateOfBirth
-            const updatedData = {
-                ...values,
-                dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format('YYYY-MM-DD') : ''
-            };
+  // Load profile data on mount
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+  // Update form when user data changes
+  useEffect(() => {
+    if (profileData) {
+      form.setFieldsValue({
+        name: profileData.name,
+        phone: profileData.phone || '',
+        address: profileData.address || '',
+      });
+    }
+  }, [profileData, form]);
 
-            setIsEditing(false);
-            message.success('Cập nhật thông tin thành công!');
-        } catch (error) {
-            console.error('Validation failed:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await profileService.getCurrentUser();
+      setProfileData(data);
+      // Update Redux store
+      dispatch(updateUser(data));
+    } catch (error: any) {
+      message.error(error.message || 'Không thể tải thông tin profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleCancel = () => {
-        setIsEditing(false);
-        form.resetFields();
-    };
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
 
-    const handleAvatarChange = (info: any) => {
-        if (info.file.status === 'done') {
-            message.success('Cập nhật ảnh đại diện thành công!');
-            // Handle avatar upload
-        }
-    };
+  const handleCancel = () => {
+    setIsEditing(false);
+    if (profileData) {
+      form.setFieldsValue({
+        name: profileData.name,
+        phone: profileData.phone || '',
+        address: profileData.address || '',
+      });
+    }
+  };
 
-    if (!userData) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '50px' }}>
-                <Spin size="large" />
-            </div>);
-    } return (
-        <div>
-            {/* Header Section */}
-            <div style={{ marginBottom: '32px' }}>
-                <Row align="middle" justify="space-between">
-                    <Col>
-                        <Title level={2} style={{
-                            margin: 0,
-                            color: '#262626',
-                            fontWeight: 500
-                        }}>
-                            <UserOutlined style={{ marginRight: '12px', color: '#8c8c8c' }} />
-                            Thông tin cá nhân
-                        </Title>
-                        <Text style={{
-                            fontSize: '16px',
-                            color: '#8c8c8c',
-                            marginTop: '8px',
-                            display: 'block'
-                        }}>
-                            Quản lý thông tin cá nhân của bạn tại LavishStay  Hotel
-                        </Text>
-                    </Col>
-                    <Col>                        {!isEditing ? (
-                        <Button
-                            type="default"
-                            icon={<EditOutlined />}
-                            onClick={handleEdit}
-                            size="large"
-                            style={{
-                                borderRadius: '8px',
-                                height: '44px',
-                                fontWeight: 500,
-                            }}
-                        >
-                            Chỉnh sửa
-                        </Button>
-                    ) : (
-                        <Space>
-                            <Button
-                                icon={<CloseOutlined />}
-                                onClick={handleCancel}
-                                size="large"
-                                style={{
-                                    borderRadius: '8px',
-                                    height: '44px',
-                                    borderColor: '#ff4d4f',
-                                    fontWeight: 500
-                                }}
-                            >
-                                Hủy
-                            </Button>
-                            <Button
-                                type="primary"
-                                icon={<SaveOutlined />}
-                                onClick={handleSave}
-                                loading={loading}
-                                size="large"
-                                style={{
-                                    borderRadius: '8px',
-                                    height: '44px',
-                                    borderColor: 'transparent',
-                                    fontWeight: 500,
-                                }}
-                            >
-                                Lưu
-                            </Button>
-                        </Space>
-                    )}
-                    </Col>
-                </Row>
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+
+      const updateData: UpdateProfileData = {
+        name: values.name,
+        phone: values.phone,
+        address: values.address,
+      };
+
+      const updatedUser = await profileService.updateProfile(updateData);
+
+      setProfileData(updatedUser);
+      dispatch(updateUser(updatedUser));
+      setIsEditing(false);
+      message.success('Cập nhật thông tin thành công!');
+    } catch (error: any) {
+      message.error(error.message || 'Không thể cập nhật thông tin');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      setUploadLoading(true);
+
+      const updatedUser = await profileService.uploadAvatar(file);
+
+      setProfileData(updatedUser);
+      dispatch(updateUser(updatedUser));
+      message.success('Cập nhật ảnh đại diện thành công!');
+
+      return false; // Prevent default upload behavior
+    } catch (error: any) {
+      message.error(error.message || 'Không thể tải lên ảnh đại diện');
+      return false;
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      setUploadLoading(true);
+
+      const updatedUser = await profileService.deleteAvatar();
+
+      setProfileData(updatedUser);
+      dispatch(updateUser(updatedUser));
+      message.success('Xóa ảnh đại diện thành công!');
+    } catch (error: any) {
+      message.error(error.message || 'Không thể xóa ảnh đại diện');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      const values = await passwordForm.validateFields();
+      setLoading(true);
+
+      const passwordData: ChangePasswordData = {
+        current_password: values.current_password,
+        new_password: values.new_password,
+        new_password_confirmation: values.new_password_confirmation,
+      };
+
+      await profileService.changePassword(passwordData);
+
+      message.success('Đổi mật khẩu thành công!');
+      setPasswordModalVisible(false);
+      passwordForm.resetFields();
+    } catch (error: any) {
+      message.error(error.message || 'Không thể đổi mật khẩu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadProps = {
+    beforeUpload: (file: File) => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('Chỉ có thể tải lên file hình ảnh!');
+        return false;
+      }
+
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        message.error('Kích thước file phải nhỏ hơn 2MB!');
+        return false;
+      }
+
+      return handleAvatarUpload(file);
+    },
+    showUploadList: false,
+  };
+
+  if (loading && !profileData) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '50px' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Card>
+        <Row gutter={[24, 24]}>
+          <Col xs={24} sm={8} style={{ textAlign: 'center' }}>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <Avatar
+                size={120}
+                src={profileData?.avatar}
+                icon={<UserOutlined />}
+                style={{ marginBottom: 16 }}
+              />
+              {uploadLoading && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    borderRadius: '50%',
+                    marginBottom: 16,
+                  }}
+                >
+                  <Spin />
+                </div>
+              )}
             </div>
 
-            <Row gutter={[32, 32]}>
-                {/* Profile Summary Card */}
-                <Col xs={24} lg={8}>                    <Card
-                    bordered={false}
-                    style={{
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                    }}
-                >
-                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                        <div style={{ position: 'relative', display: 'inline-block' }}>                                <Avatar
-                            size={100}
-                            src={userData.avatar}
-                            style={{
-                                border: '4px solid white',
-                                boxShadow: '0 6px 20px rgba(24, 144, 255, 0.3)',
-                                fontSize: '36px',
-                                fontWeight: 600
-                            }}
-                        >
-                            {userData.name?.charAt(0)}
-                        </Avatar>
+            <div>
+              <Space direction="vertical" size="small">
+                <Upload {...uploadProps}>
+                  <Button icon={<CameraOutlined />} size="small">
+                    Thay đổi ảnh
+                  </Button>
+                </Upload>
 
-                            {isEditing && (
-                                <Upload
-                                    showUploadList={false}
-                                    action="/api/upload-avatar"
-                                    onChange={handleAvatarChange}
-                                    style={{
-                                        position: 'absolute',
-                                        bottom: '0',
-                                        right: '0'
-                                    }}
-                                >
-                                    <Button
-                                        shape="circle"
-                                        icon={<CameraOutlined />}
-                                        size="small"
-                                        style={{
-                                            background: 'white',
-                                            border: '2px solid #f0f0f0'
-                                        }}
-                                    />
-                                </Upload>
-                            )}
-                        </div>                            <div style={{ marginTop: '20px' }}>
-                            <Title level={3} style={{
-                                margin: '0 0 8px 0',
-                                color: '#262626',
-                                fontWeight: 500
-                            }}>
-                                {userData.name}
-                            </Title>
-                        </div>
-                    </div>
+                {profileData?.avatar && (
+                  <Button
+                    icon={<DeleteOutlined />}
+                    size="small"
+                    danger
+                    onClick={handleDeleteAvatar}
+                    loading={uploadLoading}
+                  >
+                    Xóa ảnh
+                  </Button>
+                )}
+              </Space>
+            </div>
 
-                    <Divider style={{ margin: '24px 0', borderColor: '#e8e8e8' }} />                        {/* Stats */}
-                    <Row gutter={16} style={{ textAlign: 'center' }}>
-                        <Col span={12}>
-                            <div style={{
-                                padding: '16px 8px',
-                                borderRadius: '8px',
-                                marginBottom: '8px'
-                            }}>
-                                <BookOutlined style={{ fontSize: '20px', marginBottom: '8px' }} />
-                                <div style={{
-                                    fontSize: '24px',
-                                    fontWeight: 600,
-                                    marginBottom: '4px'
-                                }}>
-                                    {userData.totalBookings ? userData.totalBookings : 0}
-                                </div>
-                                <div style={{
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                    opacity: 0.9
-                                }}>
-                                    Lần đặt phòng
-                                </div>
-                            </div>
-                        </Col>
-                        <Col span={12}>
-                            <div style={{
-                                padding: '16px 8px',
-                                borderRadius: '8px',
-                                marginBottom: '8px'
-                            }}>
-                                <StarOutlined style={{ fontSize: '20px', marginBottom: '8px' }} />
-                                <div style={{
-                                    fontSize: '24px',
-                                    fontWeight: 600,
-                                    marginBottom: '4px'
-                                }}>
-                                    {typeof userData.avgRating === 'number' ? userData.avgRating.toFixed(1) : '0.0'}
-                                </div>
-                                <div style={{
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                    opacity: 0.9
-                                }}>
-                                    Đánh giá trung bình
-                                </div>
-                            </div>
-                        </Col>
-                    </Row>
+            <Divider />
 
-                    {/* Member Since */}
-                    <div style={{
-                        marginTop: '16px',
-                        padding: '12px',
-                        background: '#f0f2f5',
-                        borderRadius: '8px',
-                        textAlign: 'center'
-                    }}>
-                        <ClockCircleOutlined style={{
-                            color: '#1890ff',
-                            fontSize: '16px',
-                            marginRight: '8px'
-                        }} />
-                        <Text style={{ color: '#595959', fontSize: '14px' }}>
-                            Thành viên từ {dayjs(userData.memberSince).format('DD/MM/YYYY')}
-                        </Text>
-                    </div>
-                </Card>
-                </Col>
+            <div style={{ textAlign: 'left' }}>
+              <Text strong>Vai trò:</Text>
+              <div style={{ marginTop: 8 }}>
+                {profileData?.roles?.map((role: string) => (
+                  <Tag key={role} color="blue">
+                    {role === 'receptionist' ? 'Lễ tân' :
+                      role === 'admin' ? 'Quản trị viên' :
+                        role === 'manager' ? 'Quản lý' :
+                          role === 'guest' ? 'Khách hàng' : role}
+                  </Tag>
+                ))}
+              </div>
+            </div>
+          </Col>
 
-                {/* Personal Details Card */}
-                <Col xs={24} lg={16}>                    <Card
-                    title={
-                        <div style={{
-                            fontSize: '18px',
-                            fontWeight: 500,
-                            color: '#262626',
-                            padding: '8px 0'
-                        }}>
-                            <IdcardOutlined style={{
-                                marginRight: '12px',
-                                color: '#1890ff',
-                                fontSize: '20px'
-                            }} />
-                            Thông tin chi tiết
-                        </div>
-                    }
-                    bordered={false}
-                    style={{
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                    }}
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        disabled={!isEditing}
-                    >
-                        <Row gutter={[24, 24]}>                                <Col xs={24} sm={12}>
-                            <Form.Item
-                                label={
-                                    <span style={{
-                                        fontWeight: 500,
-                                        color: '#595959',
-                                        fontSize: '14px'
-                                    }}>
-                                        <UserOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
-                                        Họ và tên
-                                    </span>
-                                }
-                                name="name"
-                                rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
-                            >
-                                <Input
-                                    placeholder="Nhập họ và tên"
-                                    size="large"
-                                    style={{
-                                        borderRadius: '8px',
-                                        borderColor: '#d9d9d9',
-                                        boxShadow: 'none'
-                                    }}
-                                />
-                            </Form.Item>
-                        </Col>
+          <Col xs={24} sm={16}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <Title level={3} style={{ margin: 0 }}>
+                Thông tin cá nhân
+              </Title>
 
-                            <Col xs={24} sm={12}>
-                                <Form.Item
-                                    label={
-                                        <span style={{
-                                            fontWeight: 500,
-                                            color: '#595959',
-                                            fontSize: '14px'
-                                        }}>
-                                            <MailOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
-                                            Email
-                                        </span>
-                                    }
-                                    name="email"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập email!' },
-                                        { type: 'email', message: 'Email không hợp lệ!' }
-                                    ]}
-                                >
-                                    <Input
-                                        placeholder="email@example.com"
-                                        size="large"
-                                        style={{
-                                            borderRadius: '8px',
-                                            borderColor: '#d9d9d9',
-                                            boxShadow: 'none'
-                                        }}
-                                    />
-                                </Form.Item>
-                            </Col>
+              {!isEditing ? (
+                <Space>
+                  <Button icon={<EditOutlined />} onClick={handleEdit}>
+                    Chỉnh sửa
+                  </Button>
+                  <Button
+                    icon={<LockOutlined />}
+                    onClick={() => setPasswordModalVisible(true)}
+                  >
+                    Đổi mật khẩu
+                  </Button>
+                </Space>
+              ) : (
+                <Space>
+                  <Button
+                    icon={<SaveOutlined />}
+                    type="primary"
+                    onClick={handleSave}
+                    loading={loading}
+                  >
+                    Lưu
+                  </Button>
+                  <Button icon={<CloseOutlined />} onClick={handleCancel}>
+                    Hủy
+                  </Button>
+                </Space>
+              )}
+            </div>
 
-                            <Col xs={24} sm={12}>
-                                <Form.Item
-                                    label={
-                                        <span style={{
-                                            fontWeight: 500,
-                                            color: '#595959',
-                                            fontSize: '14px'
-                                        }}>
-                                            <PhoneOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
-                                            Số điện thoại
-                                        </span>
-                                    }
-                                    name="phone"
-                                    rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
-                                >
-                                    <Input
-                                        placeholder="+84 xxx xxx xxx"
-                                        size="large"
-                                        style={{
-                                            borderRadius: '8px',
-                                            borderColor: '#d9d9d9',
-                                            boxShadow: 'none'
-                                        }}
-                                    />
-                                </Form.Item>
-                            </Col>
+            <Form
+              form={form}
+              layout="vertical"
+              disabled={!isEditing}
+            >
+              <Form.Item
+                label="Tên"
+                name="name"
+                rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="Nhập tên của bạn" />
+              </Form.Item>
 
-                            <Col xs={24} sm={12}>
-                                <Form.Item
-                                    label={
-                                        <span style={{
-                                            fontWeight: 500,
-                                            color: '#595959',
-                                            fontSize: '14px'
-                                        }}>
-                                            <CalendarOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
-                                            Ngày sinh
-                                        </span>
-                                    }
-                                    name="dateOfBirth"
-                                >
-                                    <DatePicker
-                                        placeholder="Chọn ngày sinh"
-                                        format="DD/MM/YYYY"
-                                        size="large"
-                                        style={{
-                                            width: '100%',
-                                            borderRadius: '8px',
-                                            borderColor: '#d9d9d9',
-                                            boxShadow: 'none'
-                                        }}
-                                    />
-                                </Form.Item>
-                            </Col>
+              <Form.Item
+                label="Email"
+                name="email"
+                initialValue={profileData?.email}
+              >
+                <Input prefix={<MailOutlined />} disabled />
+              </Form.Item>
 
-                            <Col xs={24}>
-                                <Form.Item
-                                    label={
-                                        <span style={{
-                                            fontWeight: 500,
-                                            color: '#595959',
-                                            fontSize: '14px'
-                                        }}>
-                                            <EnvironmentOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
-                                            Địa chỉ
-                                        </span>
-                                    }
-                                    name="address"
-                                >
-                                    <Input
-                                        placeholder="Số nhà, tên đường, phường/xã"
-                                        size="large"
-                                        style={{
-                                            borderRadius: '8px',
-                                            borderColor: '#d9d9d9',
-                                            boxShadow: 'none'
-                                        }}
-                                    />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                    </Form>
-                </Card>
-                </Col>
-            </Row>
-        </div>
-    );
+              <Form.Item
+                label="Số điện thoại"
+                name="phone"
+              >
+                <Input prefix={<PhoneOutlined />} placeholder="Nhập số điện thoại" />
+              </Form.Item>
+
+              <Form.Item
+                label="Địa chỉ"
+                name="address"
+              >
+                <TextArea
+                  placeholder="Nhập địa chỉ"
+                  rows={3}
+                />
+              </Form.Item>
+            </Form>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Change Password Modal */}
+      <Modal
+        title="Đổi mật khẩu"
+        open={passwordModalVisible}
+        onCancel={() => {
+          setPasswordModalVisible(false);
+          passwordForm.resetFields();
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => setPasswordModalVisible(false)}>
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={loading}
+            onClick={handleChangePassword}
+          >
+            Đổi mật khẩu
+          </Button>,
+        ]}
+      >
+        <Form
+          form={passwordForm}
+          layout="vertical"
+        >
+          <Form.Item
+            label="Mật khẩu hiện tại"
+            name="current_password"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại!' }]}
+          >
+            <Input.Password placeholder="Nhập mật khẩu hiện tại" />
+          </Form.Item>
+
+          <Form.Item
+            label="Mật khẩu mới"
+            name="new_password"
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
+              { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự!' },
+            ]}
+          >
+            <Input.Password placeholder="Nhập mật khẩu mới" />
+          </Form.Item>
+
+          <Form.Item
+            label="Xác nhận mật khẩu mới"
+            name="new_password_confirmation"
+            dependencies={['new_password']}
+            rules={[
+              { required: true, message: 'Vui lòng xác nhận mật khẩu mới!' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('new_password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="Xác nhận mật khẩu mới" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
 };
 
 export default PersonalInfo;

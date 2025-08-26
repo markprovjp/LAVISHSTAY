@@ -319,14 +319,14 @@ class BookingRescheduleController extends Controller
                     DB::table('booking_rooms')->insert($bookingRoomsData);
 
                     // Create audit log
-                    DB::table('audit_logs')->insert([
-                        'user_id' => Auth::id(),
-                        'action' => 'Reschedule Booking',
-                        'table_name' => 'booking',
-                        'record_id' => $booking->booking_id,
-                        'description' => "Rescheduled booking from {$booking->check_in_date} to {$newCheckInDate->format('Y-m-d')} and {$booking->check_out_date} to {$newCheckOutDate->format('Y-m-d')}",
-                        'created_at' => Carbon::now(),
-                    ]);
+                                        DB::table('audit_logs')->insert([
+                                                'user_id' => Auth::id(),
+                                                'action' => 'Reschedule Booking',
+                                                'model' => 'booking',
+                                                'model_id' => $booking->booking_id,
+                                                'description' => "Rescheduled booking from {$booking->check_in_date} to {$newCheckInDate->format('Y-m-d')} and {$booking->check_out_date} to {$newCheckOutDate->format('Y-m-d')}",
+                                                'created_at' => Carbon::now(),
+                                        ]);
                 });
 
                 // Prepare response data

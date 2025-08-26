@@ -360,6 +360,23 @@ export const receptionAPI = {
     const response = await api.post('/reception/bookings/create', data);
     return response.data;
   },
+
+  // Mark cash as paid (reception endpoint)
+  markCashPaid: async (data: { booking_id: number; amount_vnd: number; receipt_number?: string; notes?: string }) => {
+    const response = await api.post('/reception/mark-cash-paid', data);
+    return response.data;
+  },
+
+  // VietQR and payment methods for reception
+  createVietQR: async (data: { booking_code: string; amount: number; payment_type?: string; description?: string }) => {
+    const response = await api.post('/payment/create-vietqr', data);
+    return response.data;
+  },
+
+  checkCPayPayment: async (data: { booking_code: string; amount: number }) => {
+    const response = await api.post('/payment/check-cpay', data);
+    return response.data;
+  },
   createBookingReception: async (data: any) => {
     const response = await api.post('/reception/bookings/createBookingReception', data);
     return response.data;
@@ -595,6 +612,14 @@ export const paymentAPI = {
   checkCPayPayment: async (bookingCode: string, amount: number) => {
     return api.post('/payment/check-cpay', { booking_code: bookingCode, amount: amount });
   },
+  createVietQR: async (data: { booking_code: string; amount: number; payment_type?: string; description?: string }) => {
+    const response = await api.post('/payment/create-vietqr', data);
+    return response.data;
+  },
+  verifyVietQRPayment: async (data: { booking_code: string; transaction_id?: string; amount: number }) => {
+    const response = await api.post('/payment/verify-vietqr', data);
+    return response.data;
+  },
 };
 
 export const processEarlyCheckOut = async (values: any) => {
@@ -649,6 +674,67 @@ export const couponAPI = {
 
   applyToBooking: async (bookingId: number, code: string) => {
     const response = await api.post(`/bookings/${bookingId}/apply-coupon`, { code });
+    return response.data;
+  }
+};
+
+export const cleanupAPI = {
+  // Preview operations
+  previewExpirePending: async () => {
+    const response = await api.get('/admin/cleanup/expire-pending/preview');
+    return response.data;
+  },
+
+  previewCompletePastCheckouts: async () => {
+    const response = await api.get('/admin/cleanup/complete-checkouts/preview');
+    return response.data;
+  },
+
+  previewCompleteCleaningBookings: async () => {
+    const response = await api.get('/admin/cleanup/complete-cleaning/preview');
+    return response.data;
+  },
+
+  previewRunAll: async () => {
+    const response = await api.get('/admin/cleanup/run-all/preview');
+    return response.data;
+  },
+
+  // Execute operations
+  executeExpirePending: async (confirmationCode?: string) => {
+    const response = await api.post('/admin/cleanup/expire-pending/execute', {
+      confirmation_code: confirmationCode
+    });
+    return response.data;
+  },
+
+  executeCompletePastCheckouts: async (confirmationCode?: string) => {
+    const response = await api.post('/admin/cleanup/complete-checkouts/execute', {
+      confirmation_code: confirmationCode
+    });
+    return response.data;
+  },
+
+  executeCompleteCleaningBookings: async (confirmationCode?: string) => {
+    const response = await api.post('/admin/cleanup/complete-cleaning/execute', {
+      confirmation_code: confirmationCode
+    });
+    return response.data;
+  },
+
+  executeRunAll: async (confirmationCode?: string) => {
+    const response = await api.post('/admin/cleanup/run-all/execute', {
+      confirmation_code: confirmationCode
+    });
+    return response.data;
+  },
+
+  // Get confirmation code
+  getConfirmationCode: async (operation: string, count: number) => {
+    const response = await api.post('/admin/cleanup/confirmation-code', {
+      operation,
+      count
+    });
     return response.data;
   }
 };

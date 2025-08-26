@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Typography, Descriptions, Image, Row, Col, Divider, Space, Tag, List, Badge, Statistic } from 'antd';
-import { CalendarOutlined, TeamOutlined, HomeOutlined, CopyOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { Card, Typography, Descriptions, Image, Row, Col, Divider, Space, Tag, List, Badge } from 'antd';
+import { CalendarOutlined, TeamOutlined, HomeOutlined, CopyOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Text, Title } = Typography;
@@ -46,6 +46,9 @@ interface PaymentSummaryProps {
         nights: number;
     };
     formatVND: (amount: number) => string;
+    selectedPaymentMethod?: string;
+    depositAmount?: number;
+    remainingAmount?: number;
 }
 
 const PaymentSummary: React.FC<PaymentSummaryProps> = ({
@@ -55,6 +58,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     nights,
     totals,
     formatVND
+    , selectedPaymentMethod, depositAmount, remainingAmount
 }) => {
     // Helper function to format dates safely
     const formatDate = (date: any): string => {
@@ -120,6 +124,24 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             bordered={false}
             style={{ borderRadius: '12px' }}
         >
+            {/* Payment quick info */}
+            {(selectedPaymentMethod || typeof depositAmount !== 'undefined') && (
+                <Card size="small" style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div>
+                            <Text type="secondary">Phương thức</Text>
+                            <div><Text strong>{selectedPaymentMethod ? (selectedPaymentMethod === 'pay_at_hotel' ? 'Thanh toán tại khách sạn' : selectedPaymentMethod.toUpperCase()) : '—'}</Text></div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <Text type="secondary">Tiền cọc đã tạo</Text>
+                            <div><Text strong>{depositAmount ? formatVND(depositAmount) : '—'}</Text></div>
+                            {typeof remainingAmount !== 'undefined' && (
+                                <div style={{ marginTop: 6 }}><Text type="secondary">Còn lại tại khách sạn</Text><div><Text strong>{formatVND(remainingAmount || 0)}</Text></div></div>
+                            )}
+                        </div>
+                    </div>
+                </Card>
+            )}
             <Space direction="vertical" className="w-full" size="large">
                 {/* Hotel Info */}
                 <Card size="small" style={{ backgroundColor: '#f8f9fa', border: 'none' }}>
@@ -188,7 +210,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
                     </Title>
                     <List
                         dataSource={selectedRoomsSummary}
-                        renderItem={(summary, index) => (
+                        renderItem={(summary) => (
                             <List.Item style={{ padding: 0, marginBottom: 12 }}>
                                 <Card
                                     size="small"
