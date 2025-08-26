@@ -16,7 +16,12 @@ class Payment extends Model
         'amount_vnd',
         'payment_type',
         'status',
-        'transaction_id'
+        'transaction_id',
+        'collected_by',
+        'collected_at',
+        'cash_amount_vnd',
+        'cash_receipt_number',
+        'collector_notes'
     ];
 
     protected $casts = [

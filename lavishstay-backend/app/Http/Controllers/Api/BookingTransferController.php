@@ -287,8 +287,8 @@ class BookingTransferController extends Controller
                 DB::table('audit_logs')->insert([
                     'user_id' => Auth::id(),
                     'action' => 'Room Transfer',
-                    'table_name' => 'booking',
-                    'record_id' => $booking->booking_id,
+                    'model' => 'booking',
+                    'model_id' => $booking->booking_id,
                     'description' => "Transferred from rooms " . implode(', ', $currentRooms) . " to rooms " . implode(', ', $validated['new_room_ids']),
                     'created_at' => Carbon::now(),
                 ]);

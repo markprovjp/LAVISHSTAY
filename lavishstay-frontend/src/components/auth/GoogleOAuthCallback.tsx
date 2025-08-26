@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { message, Spin } from 'antd';
 import { useDispatch } from 'react-redux';
-import { loginStart, loginSuccess, loginFailure } from '../../store/slices/authSlice';
+import { loginStart, loginSuccess, loginFailure, updateUser } from '../../store/slices/authSlice';
 import authService from '../../services/authService';
 
 const GoogleOAuthCallback: React.FC = () => {
@@ -47,10 +47,21 @@ const GoogleOAuthCallback: React.FC = () => {
                 console.log('👤 User data from backend:', JSON.stringify(response.user, null, 2));
                 console.log('🖼️ Avatar URL from backend:', response.user?.avatar);
 
+
                 dispatch(loginSuccess({
                     user: response.user,
                     token: response.token
                 }));
+
+                // Immediately fetch /auth/me to ensure roles and fresh data are stored
+                try {
+                    const me = await authService.getCurrentUser();
+                    // Update redux store with full user including roles
+                    dispatch(updateUser(me));
+                } catch (e) {
+                    // If /me fails, don't block the login flow; the initial user is already stored
+                    console.warn('Failed to fetch /auth/me after Google login:', e);
+                }
 
                 message.success(`Chào mừng ${response.user.name}! Đăng nhập Google thành công.`);
 

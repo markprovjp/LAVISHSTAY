@@ -1715,7 +1715,7 @@ public function assignRoom(Request $request, $id)
             ->select([
                 'r.room_id',
                 'r.name',
-                'r.room_number',
+                // `room_number` column does not exist in current schema; use `name` as the room code
                 'rt.name as room_type_name',
                 'r.max_guests',
                 'r.price_per_night'

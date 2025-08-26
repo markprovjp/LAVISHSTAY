@@ -2,7 +2,7 @@ import React from "react";
 import { Form, Input, Button, Divider, message } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../store";
-import { loginStart, loginSuccess, loginFailure } from "../../store/slices/authSlice";
+import { loginStart, loginSuccess, loginFailure, updateUser } from "../../store/slices/authSlice";
 import authService, { LoginCredentials } from "../../services/authService";
 import GoogleLoginButton from "./GoogleLoginButton";
 
@@ -35,6 +35,15 @@ const LoginForm: React.FC<LoginFormProps> = ({
                 user: response.user,
                 token: response.token
             }));
+
+            // Fetch /auth/me to get roles (some backends return roles only on /me)
+            try {
+                const me = await authService.getCurrentUser();
+                dispatch(updateUser(me));
+            } catch (e) {
+                // ignore if /me fails
+                console.warn('Failed to fetch /auth/me after login:', e);
+            }
 
             message.success(`Chào mừng ${response.user.name}! Đăng nhập thành công.`);
 

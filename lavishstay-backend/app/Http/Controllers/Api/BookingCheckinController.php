@@ -383,11 +383,12 @@ class BookingCheckinController extends Controller
                     ->pluck('room_id')
                     ->toArray();
 
-                // Create check-in request record with only existing columns
+                // Create check-in request record with columns that exist in DB schema
+                // `requested_check_in_time` is NOT NULL in the schema, so provide it when missing
                 $checkinRequestData = [
                     'booking_id' => $booking->booking_id,
                     'status' => 'approved',
-                    'notes' => $validated['notes'] ?? 'Check-in processed successfully',
+                    'requested_check_in_time' => $validated['requested_check_in_time'] ?? Carbon::now(),
                     'created_at' => Carbon::now(),
                 ];
 
@@ -436,11 +437,12 @@ class BookingCheckinController extends Controller
 
                 // Create audit log if audit_logs table exists
                 try {
+                    // Insert using `model` and `model_id` as per current audit_logs schema
                     DB::table('audit_logs')->insert([
                         'user_id' => Auth::id(),
                         'action' => 'Check-in',
-                        'table_name' => 'booking',
-                        'record_id' => $booking->booking_id,
+                        'model' => 'booking',
+                        'model_id' => $booking->booking_id,
                         'description' => "Check-in completed for booking {$booking->booking_code} at {$actualCheckinTime}" . 
                                        ($earlyCheckinInfo['has_fee'] ? " with early check-in fee: " . number_format($earlyCheckinInfo['fee_amount']) . " VND" : ""),
                         'created_at' => Carbon::now(),
@@ -841,7 +843,7 @@ class BookingCheckinController extends Controller
                     $roomDetails = DB::table('booking_rooms as br')
                         ->join('room as r', 'br.room_id', '=', 'r.room_id')
                         ->where('br.booking_id', $booking->booking_id)
-                        ->select('r.room_id', 'r.name', 'r.room_number', 'r.status')
+                        ->select('r.room_id', 'r.name', 'r.status')
                         ->get();
                 }
             } catch (\Exception $e) {
@@ -860,7 +862,7 @@ class BookingCheckinController extends Controller
                         $roomDetails = DB::table('booking_room as br')
                             ->join('room as r', 'br.room_id', '=', 'r.room_id')
                             ->where('br.booking_id', $booking->booking_id)
-                            ->select('r.room_id', 'r.name', 'r.room_number', 'r.status')
+                            ->select('r.room_id', 'r.name', 'r.status')
                             ->get();
                     }
                 } catch (\Exception $e) {
@@ -873,7 +875,7 @@ class BookingCheckinController extends Controller
                 try {
                     $roomDetails = DB::table('room as r')
                         ->where('r.room_id', $booking->room_id)
-                        ->select('r.room_id', 'r.name', 'r.room_number', 'r.status')
+                        ->select('r.room_id', 'r.name', 'r.status')
                         ->get();
                     
                     $assignedRooms = $roomDetails->count();
