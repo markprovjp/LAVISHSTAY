@@ -20,55 +20,54 @@ class Review extends Model
         'cons',
         'travel_type',
         'review_date',
-        'helpful',
-        'not_helpful',
-        'admin_reply_content',
-        'admin_reply_date',
-        'admin_name',
         'status',
+        'admin_note',
+        'helpful_count',
     ];
 
     protected $casts = [
         'rating' => 'decimal:1',
         'review_date' => 'date',
-        'admin_reply_date' => 'date',
         'detailed_scores' => 'array',
-        'helpful' => 'integer',
-        'not_helpful' => 'integer',
+        'helpful_count' => 'integer',
+        'status' => 'string', // enum: pending, approved, rejected
     ];
 
+    // Quan hệ với Booking
     public function booking()
     {
-        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
 
+    // Quan hệ với ReviewMedia
     public function reviewMedia()
     {
         return $this->hasMany(ReviewMedia::class, 'review_id', 'review_id');
     }
 
+    // Lấy User qua Booking
     public function user()
     {
         return $this->hasOneThrough(
             User::class,
             Booking::class,
-            'id',
-            'id',
-            'booking_id',
-            'user_id'
+            'booking_id', // Khóa chính trên bookings
+            'id',         // Khóa chính trên users
+            'booking_id', // Khóa ngoại trên reviews
+            'user_id'     // Khóa ngoại trên bookings
         );
     }
 
-    // Mối quan hệ gián tiếp qua Booking để lấy RoomOption
+    // Lấy RoomOption qua Booking
     public function roomOption()
     {
-        return $this->hasOneThrough(
+        return $this->hasOneThrough(    
             RoomOption::class,
             Booking::class,
-            'id', // Khóa ngoại trên booking
-            'option_id',  // Khóa chính của room_options
-            'booking_id', // Khóa chính của reviews
-            'option_id'   // Khóa ngoại trên booking
+            'booking_id', // Khóa chính trên bookings
+            'option_id',  // Khóa chính trên room_options
+            'booking_id', // Khóa ngoại trên reviews
+            'option_id'   // Khóa ngoại trên bookings
         );
     }
 }
