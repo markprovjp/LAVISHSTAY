@@ -210,6 +210,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::delete('/admin/reviews/destroy/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
     Route::patch('/admin/reviews/toggle-status/{id}', [ReviewController::class, 'toggleStatus'])->name('admin.reviews.toggle-status');
     Route::post('/admin/reviews/{id}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
+    Route::post('/admin/reviews/{id}/note', [ReviewController::class, 'note'])->name('admin.reviews.note');
 
     // Cách liiiiiiiiiiiiiiiiiiii
 

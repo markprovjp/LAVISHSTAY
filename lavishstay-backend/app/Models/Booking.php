@@ -139,6 +139,6 @@ class Booking extends Model
      */
     public function reviews()
     {
-        return $this->hasMany(Review::class, 'booking_id', 'id');
+        return $this->hasMany(Review::class, 'booking_id', 'booking_id');
     }
 }
