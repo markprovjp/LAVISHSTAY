@@ -144,7 +144,7 @@ export const useTransferBooking = () => {
 };
 
 // Check-in mutation
-export const useCheckIn = () => {
+export const useCheckInBooking = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -159,15 +159,67 @@ export const useCheckIn = () => {
             queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
             queryClient.invalidateQueries({ queryKey: ['reception', 'room-bookings'] });
             queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] }); // Add this for booking management
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] }); // Add this for stats
         },
         onError: (error: any) => {
-            message.error(`Lỗi nhận phòng: ${error.message}`);
+            message.error(`Lỗi nhận phòng: ${error.response?.data?.message || error.message}`);
+        },
+    });
+};
+
+// Process check-in mutation (for booking management)
+export const useProcessCheckIn = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (params: {
+            bookingId: number;
+            payload?: any;
+        }) => receptionAPI.processCheckin(params.bookingId, params.payload),
+        onSuccess: () => {
+            message.success('Check-in thành công!');
+            // Invalidate and refetch related queries
+            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'room-bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] }); // Add this for booking management
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] }); // Add this for stats
+        },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.error || error.message || 'Có lỗi xảy ra khi check-in';
+            message.error(errorMessage);
+        },
+    });
+};
+
+// Process check-out mutation (for booking management)
+export const useProcessCheckOut = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (params: {
+            bookingId: number;
+            payload?: any;
+        }) => receptionAPI.processCheckout(params.bookingId, params.payload),
+        onSuccess: () => {
+            message.success('Check-out thành công!');
+            // Invalidate and refetch related queries
+            queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'room-bookings'] });
+            queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] }); // Add this for booking management
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] }); // Add this for stats
+        },
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || error.message || 'Check-out thất bại';
+            message.error(errorMessage);
         },
     });
 };
 
 // Check-out mutation
-export const useCheckOut = () => {
+export const useCheckOutBooking = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -182,9 +234,11 @@ export const useCheckOut = () => {
             queryClient.invalidateQueries({ queryKey: ['reception', 'rooms'] });
             queryClient.invalidateQueries({ queryKey: ['reception', 'room-bookings'] });
             queryClient.invalidateQueries({ queryKey: ['reception', 'room-statistics'] });
+            queryClient.invalidateQueries({ queryKey: ['bookings'] }); // Add this for booking management
+            queryClient.invalidateQueries({ queryKey: ['booking-statistics'] }); // Add this for stats
         },
         onError: (error: any) => {
-            message.error(`Lỗi trả phòng: ${error.message}`);
+            message.error(`Lỗi trả phòng: ${error.response?.data?.message || error.message}`);
         },
     });
 };

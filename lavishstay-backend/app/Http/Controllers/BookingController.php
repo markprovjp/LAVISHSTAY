@@ -1504,10 +1504,14 @@ public function assignRoom(Request $request, $id)
 
         $filename = 'bookings_' . date('Y-m-d_H-i-s') . '.csv';
 
-        return response($csvContent)
+        // Prepend UTF-8 BOM so Excel on Windows recognizes UTF-8 and displays Vietnamese characters correctly
+        $bom = "\xEF\xBB\xBF";
+        $payload = $bom . $csvContent;
+
+        return response($payload)
             ->header('Content-Type', 'text/csv; charset=UTF-8')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-            ->header('Content-Length', strlen($csvContent));
+            ->header('Content-Length', strlen($payload));
     }
 
     /**
@@ -1770,7 +1774,7 @@ public function assignRoom(Request $request, $id)
             ->select([
                 'r.room_id',
                 'r.name',
-                'r.room_number',
+                // `room_number` column does not exist in current schema; use `name` as the room code
                 'rt.name as room_type_name',
                 'r.max_guests',
                 'r.price_per_night'

@@ -18,7 +18,7 @@ import { ProFormDigit, ProFormGroup } from '@ant-design/pro-components';
 import FilterBar from '../../../components/room-management/FilterBar';
 import RoomCardGrid from '../../../components/room-management/RoomCardGrid';
 import RoomTimelineView from '../../../components/room-management/RoomTimelineView';
-import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms, useGetRoomDetails } from '../../../hooks/useReception';
+import { useGetReceptionRooms, useGetReceptionRoomTypes, useGetAvailableRooms, useGetRoomDetails, useGetRoomStatistics } from '../../../hooks/useReception';
 import { statusOptions } from '../../../constants/roomStatus';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
@@ -63,7 +63,16 @@ const RoomManagementDashboard: React.FC = () => {
     const { data: roomTypesData } = useGetReceptionRoomTypes();
     const roomTypes = roomTypesData?.data || [];
 
-    const { data: allRoomsData, isLoading: isLoadingRooms } = useGetReceptionRooms({ ...currentFilters, include: 'room_type' });
+    const { data: roomStatsData } = useGetRoomStatistics();
+    const roomStats = roomStatsData?.data || {};
+
+    const { data: allRoomsData, isLoading: isLoadingRooms } = useGetReceptionRooms({
+        ...currentFilters,
+        include: 'room_type',
+        // Truyền dateRange để backend filter
+        'dateRange.0': currentFilters.dateRange?.[0],
+        'dateRange.1': currentFilters.dateRange?.[1],
+    });
     const masterRoomList = useMemo(() => allRoomsData?.data || [], [allRoomsData]);
 
     const hasDateRange = currentFilters.dateRange && currentFilters.dateRange.length === 2;
@@ -77,25 +86,43 @@ const RoomManagementDashboard: React.FC = () => {
         }
     );
 
-    const { data: roomDetailsData, isLoading: isDetailsLoading, error: detailsError } = useGetRoomDetails(selectedRoomId);
+    const { data: roomDetailsData, isLoading: isDetailsLoading, error: detailsError } = useGetRoomDetails(selectedRoomId ? parseInt(selectedRoomId) : 0);
 
     const availableRoomIdSet = useMemo(() => {
-        if (!hasDateRange || !availableRoomsData) return null;
+        if (!availableRoomsData || !availableRoomsData.data) return null;
         const ids = new Set<string>();
-        (availableRoomsData.data || []).forEach((roomType: any) => {
-            roomType.available_rooms?.forEach((room: any) => ids.add(room.room_id.toString()));
-        });
+        const data = availableRoomsData.data;
+        // If API returns grouped by room type (array of roomType objects)
+        if (Array.isArray(data) && data.length > 0 && data[0].available_rooms) {
+            (data as any[]).forEach((roomType: any) => {
+                (roomType.available_rooms || []).forEach((room: any) => {
+                    if (room?.room_id !== undefined) ids.add(room.room_id.toString());
+                    else if (room?.id !== undefined) ids.add(room.id.toString());
+                });
+            });
+        } else if (Array.isArray(data)) {
+            // If API returns flat list of rooms
+            (data as any[]).forEach((room: any) => {
+                if (room?.room_id !== undefined) ids.add(room.room_id.toString());
+                else if (room?.id !== undefined) ids.add(room.id.toString());
+            });
+        }
         return ids;
-    }, [hasDateRange, availableRoomsData]);
+    }, [availableRoomsData]);
 
+    // If a date range is selected and server returns available rooms, show only those available rooms.
+    // Otherwise fallback to full master list so the UI can display booking-derived statuses.
     const filteredRoomsToDisplay = useMemo(() => {
-        if (availableRoomIdSet) {
-            return masterRoomList.filter((room: any) => availableRoomIdSet.has(room.id.toString()));
+        if (hasDateRange && availableRoomIdSet && availableRoomIdSet.size > 0) {
+            return masterRoomList.filter((room: any) => {
+                const id = room.id !== undefined ? room.id.toString() : (room.room_id !== undefined ? room.room_id.toString() : '');
+                return id && availableRoomIdSet.has(id);
+            });
         }
         return masterRoomList;
-    }, [masterRoomList, availableRoomIdSet]);
+    }, [masterRoomList, availableRoomIdSet, hasDateRange]);
 
-    const isLoading = isLoadingRooms || (hasDateRange && isLoadingAvailable);
+    const isLoading = isLoadingRooms;
 
     const handleSearch = useCallback((searchFilters: RoomFilters) => {
         setCurrentFilters(searchFilters);
@@ -127,6 +154,16 @@ const RoomManagementDashboard: React.FC = () => {
             return newSet;
         });
     }, []);
+
+    const handleFloorSelect = useCallback((floorId: string, roomIds: string[], select: boolean) => {
+        if (floorId === 'all') {
+            // Clear all selections
+            setSelectedRoomIds(new Set());
+        } else {
+            // Handle individual floor selection
+            handleBulkRoomSelect(roomIds, select);
+        }
+    }, [handleBulkRoomSelect]);
 
     const handleProceedToBooking = () => {
         if (selectedRoomIds.size === 0) {
@@ -577,6 +614,44 @@ const RoomManagementDashboard: React.FC = () => {
                             Quản lý đặt phòng
                         </Button>
                     </Flex>
+
+                    {/* Room Statistics Overview */}
+                    <Row gutter={16} style={{ marginTop: 24 }}>
+                        <Col xs={12} sm={6}>
+                            <Statistic
+                                title="Tổng số phòng"
+                                value={roomStats.total_rooms || 0}
+                                prefix={<HomeOutlined />}
+                                valueStyle={{ color: '#1890ff' }}
+                            />
+                        </Col>
+                        <Col xs={12} sm={6}>
+                            <Statistic
+                                title="Phòng trống"
+                                value={roomStats.available_rooms || 0}
+                                prefix={<CheckCircleOutlined />}
+                                valueStyle={{ color: '#73d13d' }}
+                            />
+                        </Col>
+                        <Col xs={12} sm={6}>
+                            <Statistic
+                                title="Đang có khách"
+                                value={(roomStats.occupied_rooms || 0) + (roomStats.booked_rooms || 0)}
+                                prefix={<UserOutlined />}
+                                valueStyle={{ color: '#40a9ff' }}
+                            />
+                        </Col>
+                        <Col xs={12} sm={6}>
+                            <Statistic
+                                title="Tỷ lệ lấp đầy"
+                                value={roomStats.occupancy_rate || 0}
+                                precision={1}
+                                suffix="%"
+                                prefix={<WalletOutlined />}
+                                valueStyle={{ color: '#ffc53d' }}
+                            />
+                        </Col>
+                    </Row>
                 </Card>
 
                 <FilterBar
@@ -594,17 +669,9 @@ const RoomManagementDashboard: React.FC = () => {
                             loading={isLoading}
                             mode={viewMode === 'select' ? 'select' : 'view'}
                             selectedRooms={selectedRoomIds}
+                            availableRoomIds={availableRoomIdSet}
                             onRoomSelect={handleRoomSelect}
-                            onFloorSelect={(floorId, roomIds, selected) => {
-                                setSelectedRoomIds(prev => {
-                                    const newSet = new Set(prev);
-                                    roomIds.forEach(id => {
-                                        if (selected) newSet.add(id);
-                                        else newSet.delete(id);
-                                    });
-                                    return newSet;
-                                });
-                            }}
+                            onFloorSelect={handleFloorSelect}
                             onViewDetails={handleViewDetails}
                             onModeChange={() => { }}
                         />

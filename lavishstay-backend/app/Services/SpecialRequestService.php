@@ -354,8 +354,8 @@ class SpecialRequestService
             DB::table('audit_logs')->insert([
                 'user_id' => auth()->id(),
                 'action' => 'Approve Compensation Request',
-                'table_name' => 'compensation_requests',
-                'record_id' => $request->request_id,
+                'model' => 'compensation_requests',
+                'model_id' => $request->request_id,
                 'description' => "Approved compensation request for booking {$request->booking->booking_code}",
                 'created_at' => now(),
             ]);
@@ -378,8 +378,8 @@ class SpecialRequestService
             DB::table('audit_logs')->insert([
                 'user_id' => auth()->id(),
                 'action' => 'Reject Compensation Request',
-                'table_name' => 'compensation_requests',
-                'record_id' => $request->request_id,
+                'model' => 'compensation_requests',
+                'model_id' => $request->request_id,
                 'description' => "Rejected compensation request for booking {$request->booking->booking_code}",
                 'created_at' => now(),
             ]);

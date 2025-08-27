@@ -418,7 +418,6 @@ class PaymentController extends Controller
         'check_out' => 'required|date|after:check_in',
         'total_guests' => 'required|integer|min:1',
         'total_price' => 'required|numeric|min:0',
-        'payment_method' => 'required|string|in:vietqr,pay_at_hotel',
         'rooms' => 'required|array|min:1',
         'rooms.*.room_id' => 'required|integer',
         'rooms.*.room_type_id' => 'required|integer',
@@ -755,16 +754,60 @@ class PaymentController extends Controller
         $normalizedPaymentType = $methodMap[$rawMethod] ?? $rawMethod;
         Log::info('Normalized payment method for DB insert', ['raw' => $rawMethod, 'normalized' => $normalizedPaymentType]);
 
-        $payment = Payment::create([
-            'booking_id' => $booking->booking_id,
-            'amount_vnd' => $booking->total_price_vnd, // Sử dụng giá đã giảm
-            'payment_type' => $normalizedPaymentType,
-            'status' => 'pending',
-        ]);
+        // If frontend did not provide a payment_method, defer creating payment records
+        // The frontend will call create-vietqr or other payment endpoints later when the user selects a method.
+        if (empty($rawMethod)) {
+            Log::info('No payment_method provided in booking request; deferring payment creation', ['booking_code' => $bookingCode]);
+            $payment = null;
+        } else {
+            // Handle payment creation based on method
+            if ($request->input('payment_method') === 'pay_at_hotel') {
+            // For pay_at_hotel: create deposit payment (50%) that needs to be paid online first
+            $depositAmount = round($booking->total_price_vnd * 0.5);
+            $remainingAmount = $booking->total_price_vnd - $depositAmount;
+            
+            // Create deposit payment record (will be paid via VietQR)
+            $depositPayment = Payment::create([
+                'booking_id' => $booking->booking_id,
+                'amount_vnd' => $depositAmount,
+                'payment_type' => 'deposit',
+                'status' => 'pending',
+            ]);
+            
+            // Create remaining payment record (will be paid at hotel)
+            $remainingPayment = Payment::create([
+                'booking_id' => $booking->booking_id,
+                'amount_vnd' => $remainingAmount,
+                'payment_type' => 'at_hotel',
+                'status' => 'pending',
+            ]);
+            
+            Log::info("Pay_at_hotel booking created with deposit structure", [
+                'booking_code' => $bookingCode,
+                'total_amount' => $booking->total_price_vnd,
+                'deposit_amount' => $depositAmount,
+                'remaining_amount' => $remainingAmount,
+                'deposit_payment_id' => $depositPayment->payment_id,
+                'remaining_payment_id' => $remainingPayment->payment_id
+            ]);
+            
+            $payment = $depositPayment; // Use deposit payment for response
+            } else {
+                // For online payments: create full payment record
+                $payment = Payment::create([
+                    'booking_id' => $booking->booking_id,
+                    'amount_vnd' => $booking->total_price_vnd,
+                    'payment_type' => $normalizedPaymentType,
+                    'status' => 'pending',
+                ]);
+            }
+        }
 
-        // 6. Nếu là pay_at_hotel, tự động xử lý đầy đủ booking
+        // 6. Nếu là pay_at_hotel, KHÔNG tự động hoàn tất booking ở đây.
+        // Việc thu tiền sẽ do lễ tân/cashier thực hiện sau, thông qua endpoint markCashPaid.
         if ($request->input('payment_method') === 'pay_at_hotel') {
-            $this->completeBookingAfterPayment($bookingCode);
+            Log::info("Booking {$bookingCode} created with pay_at_hotel — deferring completion until cash is collected");
+            // ensure payment record remains in 'pending' state and payment_type set to 'at_hotel' (created above)
         }
 
         DB::commit();
@@ -785,7 +828,16 @@ class PaymentController extends Controller
             'booking_code' => $bookingCode,
             'booking_id' => $booking->booking_id,
             'total_price' => $booking->total_price_vnd,
+            'payment_id' => $payment ? $payment->payment_id : null,
         ];
+
+        // Add deposit information for pay_at_hotel
+        if ($request->input('payment_method') === 'pay_at_hotel' && $payment) {
+            $responseData['deposit_due'] = $payment->amount_vnd; // Deposit amount (50%)
+            $responseData['deposit_payment_id'] = $payment->payment_id;
+            $responseData['remaining_balance'] = $booking->total_price_vnd - $payment->amount_vnd;
+            $responseData['payment_method'] = 'pay_at_hotel';
+        }
 
         // Thêm thông tin coupon vào response nếu có
         if ($couponApplied) {
@@ -1167,36 +1219,97 @@ class PaymentController extends Controller
 
             Log::info("Updating payment method for booking: {$bookingCode} to {$paymentMethod}");
 
-            // Find booking by booking_code
-            $booking = DB::table('bookings')
-                ->where('booking_code', $bookingCode)
-                ->first();
+            // Find booking by booking_code using the Eloquent model (table name is 'booking')
+            $bookingModel = Booking::where('booking_code', $bookingCode)->first();
 
-            if (!$booking) {
+            if (!$bookingModel) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Booking not found'
                 ], 404);
             }
 
-            // Update payment method
-            DB::table('bookings')
-                ->where('booking_code', $bookingCode)
-                ->update([
-                    'payment_method' => $paymentMethod,
-                    'updated_at' => now()
-                ]);
+            // Note: `booking` table does not have a `payment_method` column (see DB schema).
+            // Persisting chosen method is handled in the `payment` table (payment.payment_type).
+            Log::info("Not storing payment_method on booking table (no column). Will update payment record instead if needed.", ['booking_code' => $bookingCode, 'payment_method' => $paymentMethod]);
 
-            // If payment method is pay_at_hotel, auto-approve the booking
-            if ($paymentMethod === 'pay_at_hotel') {
-                DB::table('bookings')
-                    ->where('booking_code', $bookingCode)
-                    ->update([
-                        'booking_status' => 'approved',
-                        'updated_at' => now()
+            // Update or create payment record to reflect the chosen method. For pay_at_hotel we will finalize it below.
+            try {
+                $payment = Payment::where('booking_id', $bookingModel->booking_id)->first();
+                if ($payment) {
+                    $payment->payment_type = ($paymentMethod === 'pay_at_hotel') ? 'at_hotel' : ($paymentMethod === 'vietqr' ? 'vietqr' : $payment->payment_type);
+                    $payment->updated_at = now();
+                    $payment->save();
+                    Log::info('Updated payment record to reflect chosen method', ['payment_id' => $payment->payment_id, 'payment_type' => $payment->payment_type]);
+                } else {
+                    // Create a pending payment record with the selected method
+                    $newType = ($paymentMethod === 'pay_at_hotel') ? 'at_hotel' : ($paymentMethod === 'vietqr' ? 'vietqr' : null);
+                    Payment::create([
+                        'booking_id' => $bookingModel->booking_id,
+                        'amount_vnd' => $bookingModel->total_price_vnd,
+                        'payment_type' => $newType ?? 'vietqr',
+                        'status' => 'pending'
                     ]);
+                    Log::info('Created missing payment record for booking', ['booking_id' => $bookingModel->booking_id, 'payment_type' => $newType]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error updating/creating payment record: ' . $e->getMessage());
+            }
 
-                Log::info("Booking {$bookingCode} auto-approved for pay_at_hotel method");
+            // If payment method is pay_at_hotel, auto-approve the booking (map to the 'status' column)
+            if ($paymentMethod === 'pay_at_hotel') {
+                // Use canonical status value used across the app ('confirmed')
+                $bookingModel->status = 'confirmed';
+                $bookingModel->updated_at = now();
+                $bookingModel->save();
+
+                    Log::info("Booking {$bookingCode} auto-approved for pay_at_hotel method");
+               // Try to mark payment record as completed and trigger post-payment completion
+               try {
+                   // Find booking model to get booking_id
+                   $bookingModel = Booking::where('booking_code', $bookingCode)->first();
+                   if ($bookingModel) {
+                       // Update payment record if exists
+                       $payment = Payment::where('booking_id', $bookingModel->booking_id)->first();
+                       if ($payment) {
+                           Log::info('Existing payment before update', [
+                               'payment_id' => $payment->payment_id ?? null,
+                               'booking_id' => $payment->booking_id ?? null,
+                               'payment_type' => $payment->payment_type ?? null,
+                               'status' => $payment->status ?? null,
+                           ]);
+
+                           $payment->update([
+                               'payment_type' => 'at_hotel',
+                               'status' => 'completed',
+                               'transaction_id' => 'pay_at_hotel_' . now()->format('YmdHis'),
+                               'payment_confirmed_at' => now(),
+                               'updated_at' => now()
+                           ]);
+
+                           // Refresh and log after update
+                           $payment = $payment->fresh();
+                           Log::info('Payment after update', [
+                               'payment_id' => $payment->payment_id ?? null,
+                               'payment_type' => $payment->payment_type ?? null,
+                               'status' => $payment->status ?? null,
+                               'transaction_id' => $payment->transaction_id ?? null,
+                           ]);
+                       } else {
+                           Log::info('No payment record found to update for booking', ['booking_id' => $bookingModel->booking_id]);
+                       }
+
+                       // Trigger completion logic to create booking_rooms, representatives, etc.
+                       try {
+                           $this->completeBookingAfterPayment($bookingCode);
+                           Log::info("Triggered completeBookingAfterPayment for {$bookingCode} after pay_at_hotel update");
+                       } catch (\Exception $e) {
+                           Log::error('Error running completeBookingAfterPayment after updatePaymentMethod: ' . $e->getMessage());
+                       }
+                   }
+               } catch (\Exception $e) {
+                   Log::error('Error while finalizing pay_at_hotel flow: ' . $e->getMessage());
+               }
             }
 
             return response()->json([
@@ -1287,11 +1400,14 @@ class PaymentController extends Controller
             $request->validate([
                 'booking_code' => 'required|string',
                 'amount' => 'required|numeric|min:1000',
+                'payment_type' => 'nullable|string|in:deposit,full',
+                'description' => 'nullable|string'
             ]);
 
             Log::info("Creating VietQR payment for booking", [
                 'booking_code' => $request->booking_code,
-                'amount' => $request->amount
+                'amount' => $request->amount,
+                'payment_type' => $request->payment_type ?? 'full'
             ]);
 
             // Find booking by booking_code
@@ -1304,30 +1420,63 @@ class PaymentController extends Controller
                 ], 404);
             }
 
-            // Generate QR code data
+            // Determine payment type and description
+            $paymentType = $request->payment_type ?? 'full';
+            $description = $request->description ?? ($paymentType === 'deposit' 
+                ? "Coc 50% dat phong {$request->booking_code}" 
+                : "Thanh toan dat phong {$request->booking_code}");
+
+            // Generate QR code data using payment settings
             $qrData = [
-                'bank_id' => 'VCB', // Vietcombank
-                'account_no' => '1234567890', // Tài khoản ngân hàng của khách sạn
-                'template' => 'compact',
+                'bank_id' => PaymentSetting::get('vietqr.bank_id', 'VCB'),
+                'account_no' => PaymentSetting::get('vietqr.account_no', '0335920306'),
+                'template' => PaymentSetting::get('vietqr.template', 'compact'),
                 'amount' => $request->amount,
-                'description' => 'Thanh toan dat phong ' . $request->booking_code,
-                'account_name' => 'LAVISHSTAY HOTEL'
+                'description' => $description,
+                'account_name' => PaymentSetting::get('vietqr.account_name', 'NGUYEN VAN QUYEN')
             ];
 
             // Create VietQR URL
             $vietQRUrl = $this->generateVietQRUrl($qrData);
 
-            // Update booking payment method
-            $booking->update([
-                'payment_method' => 'vietqr',
-                'updated_at' => now()
-            ]);
+            // Find the appropriate payment record to update
+            if ($paymentType === 'deposit') {
+                // Prefer existing pending deposit payment record
+                $payment = Payment::where('booking_id', $booking->booking_id)
+                    ->where('payment_type', 'deposit')
+                    ->where('status', 'pending')
+                    ->first();
 
-            // Update payment record
-            $payment = Payment::where('booking_id', $booking->booking_id)->first();
+                if (!$payment) {
+                    // If no deposit record exists, create one using the requested amount.
+                    // This makes the endpoint more resilient to frontend/backfill issues
+                    Log::warning('Deposit payment record not found; creating one on-the-fly', [
+                        'booking_id' => $booking->booking_id,
+                        'booking_code' => $booking->booking_code,
+                        'requested_amount' => $request->amount
+                    ]);
+
+                    $payment = Payment::create([
+                        'booking_id' => $booking->booking_id,
+                        'amount_vnd' => (int)$request->amount,
+                        'payment_type' => 'deposit',
+                        'status' => 'pending'
+                    ]);
+                }
+            } else {
+                // Find or create full/vietqr payment record
+                $payment = Payment::where('booking_id', $booking->booking_id)
+                    ->where('payment_type', 'vietqr')
+                    ->first();
+
+                if (!$payment) {
+                    $payment = Payment::where('booking_id', $booking->booking_id)->first();
+                }
+            }
+
             if ($payment) {
                 $payment->update([
-                    'payment_type' => 'vietqr',
+                    'payment_type' => $paymentType === 'deposit' ? 'deposit' : 'vietqr',
                     'status' => 'pending',
                     'updated_at' => now()
                 ]);
@@ -1335,6 +1484,8 @@ class PaymentController extends Controller
 
             Log::info("VietQR payment created successfully", [
                 'booking_code' => $request->booking_code,
+                'payment_type' => $paymentType,
+                'amount' => $request->amount,
                 'vietqr_url' => $vietQRUrl
             ]);
 
@@ -1343,7 +1494,9 @@ class PaymentController extends Controller
                 'vietqr_url' => $vietQRUrl,
                 'qr_data' => $qrData,
                 'booking_code' => $request->booking_code,
-                'amount' => $request->amount
+                'amount' => $request->amount,
+                'payment_type' => $paymentType,
+                'payment_id' => $payment->payment_id ?? null
             ]);
 
         } catch (\Exception $e) {
@@ -1383,10 +1536,17 @@ class PaymentController extends Controller
                 'amount' => 'required|numeric'
             ]);
 
-            DB::beginTransaction();
+            $bookingCode = $request->booking_code;
+            $amount = $request->amount;
+
+            Log::info('Verify VietQR payment requested', [
+                'booking_code' => $bookingCode,
+                'transaction_id' => $request->transaction_id,
+                'amount' => $amount
+            ]);
 
             // Find booking
-            $booking = Booking::where('booking_code', $request->booking_code)->first();
+            $booking = Booking::where('booking_code', $bookingCode)->first();
 
             if (!$booking) {
                 return response()->json([
@@ -1395,29 +1555,119 @@ class PaymentController extends Controller
                 ], 404);
             }
 
-            // Kiểm tra và hoàn thành tạo booking nếu có cached data
-            $roomsData = cache()->get("booking_rooms_data_{$request->booking_code}");
-            
-            if ($roomsData) {
-                // Có cached data, hoàn thành tạo booking (tạo tất cả data cần thiết)
-                $this->completeBookingAfterPayment($request->booking_code);
-            } else {
-                Log::warning("No cached rooms data found for booking: {$request->booking_code}, skip completing booking");
+            // Check CPay/VietQR backend for matching transaction
+            $cPayTransaction = $this->checkCPayAPI($bookingCode, $amount);
+
+            if (!$cPayTransaction) {
+                Log::info('No matching VietQR/CPay transaction found', ['booking_code' => $bookingCode, 'amount' => $amount]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy giao dịch tương ứng. Vui lòng chờ hệ thống xử lý hoặc liên hệ hỗ trợ.'
+                ], 404);
             }
 
-            // Update booking status
-            $booking->update([
-                'status' => 'confirmed',
-                'updated_at' => now()
-            ]);
+            DB::beginTransaction();
 
-            // Update payment status
-            $payment = Payment::where('booking_id', $booking->booking_id)->first();
+            // Find the appropriate payment record to update.
+            // Prefer a pending deposit payment (pay_at_hotel flow) to avoid marking the wrong record
+            $payment = null;
+
+            $depositPayment = Payment::where('booking_id', $booking->booking_id)
+                ->where('payment_type', 'deposit')
+                ->where('status', 'pending')
+                ->first();
+
+            // If a pending deposit exists, prefer it when the requested amount matches or when
+            // the external transaction amount covers at least the deposit (some providers return full booking amount)
+            if ($depositPayment) {
+                $cPayAmount = $cPayTransaction['amount'] ?? null;
+                if ((float)$depositPayment->amount_vnd === (float)$amount) {
+                    $payment = $depositPayment;
+                } elseif ($cPayAmount !== null && (float)$cPayAmount >= (float)$depositPayment->amount_vnd) {
+                    Log::info('External transaction amount covers deposit; applying to deposit payment', ['booking_code' => $bookingCode, 'deposit_amount' => $depositPayment->amount_vnd, 'cPay_amount' => $cPayAmount]);
+                    $payment = $depositPayment;
+                }
+            }
+
+            // If still no payment chosen, try exact amount match among pending payments
+            if (!$payment) {
+                $payment = Payment::where('booking_id', $booking->booking_id)
+                    ->where('amount_vnd', $amount)
+                    ->where('status', 'pending')
+                    ->first();
+            }
+
+            // As a last resort, prefer pending online-type payments (vietqr/qr_code/full/deposit) in newest-first order
+            if (!$payment) {
+                $payment = Payment::where('booking_id', $booking->booking_id)
+                    ->whereIn('payment_type', ['vietqr','qr_code','full','deposit'])
+                    ->where('status', 'pending')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            }
+
+            if (!$payment) {
+                Log::warning('No matching pending payment record found to update', ['booking_code' => $bookingCode, 'requested_amount' => $amount]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No pending payment record found for this booking and amount'
+                ], 404);
+            }
+
             if ($payment) {
+                $transactionId = $cPayTransaction['transaction_id'] ?? $request->transaction_id;
+                
                 $payment->update([
                     'status' => 'completed',
-                    'transaction_id' => $request->transaction_id,
+                    'transaction_id' => $transactionId,
                     'updated_at' => now()
+                ]);
+
+                Log::info('Payment updated successfully', [
+                    'payment_id' => $payment->payment_id,
+                    'payment_type' => $payment->payment_type,
+                    'amount' => $payment->amount_vnd,
+                    'transaction_id' => $transactionId
+                ]);
+
+                // Check if this is a deposit payment for pay_at_hotel
+                if ($payment->payment_type === 'deposit') {
+                    // This is a deposit payment, confirm booking and assign rooms
+                    $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
+                    if ($roomsData) {
+                        $this->completeBookingAfterPayment($bookingCode);
+                    }
+                    
+                    $booking->update([
+                        'status' => 'Confirmed', // Booking confirmed after deposit
+                        'updated_at' => now()
+                    ]);
+
+                    Log::info('Deposit payment completed, booking confirmed and rooms assigned', [
+                        'booking_code' => $bookingCode,
+                        'deposit_amount' => $amount
+                    ]);
+                } else {
+                    // This is a full payment, complete booking normally
+                    $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
+                    if ($roomsData) {
+                        $this->completeBookingAfterPayment($bookingCode);
+                    }
+                    
+                    $booking->update([
+                        'status' => 'Confirmed',
+                        'updated_at' => now()
+                    ]);
+
+                    Log::info('Full payment completed, booking confirmed', [
+                        'booking_code' => $bookingCode,
+                        'full_amount' => $amount
+                    ]);
+                }
+            } else {
+                Log::warning('No matching payment record found', [
+                    'booking_id' => $booking->booking_id,
+                    'amount' => $amount
                 ]);
             }
 
@@ -1426,19 +1676,19 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Payment verified successfully',
-                'booking_code' => $request->booking_code
+                'booking_code' => $bookingCode,
+                'payment_type' => $payment ? $payment->payment_type : 'unknown'
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error verifying VietQR payment: ' . $e->getMessage());
+            Log::error('Error while verifying VietQR payment: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error verifying payment'
+                'message' => 'Lỗi khi xác nhận giao dịch: ' . $e->getMessage()
             ], 500);
         }
     }
-
     /**
      * Get booking details with rooms and options
      */
@@ -1477,20 +1727,61 @@ class PaymentController extends Controller
                 ])
                 ->get();
 
-            // Lấy thông tin payment
-            $payment = Payment::where('booking_id', $booking->booking_id)->first();
+            // Lấy tất cả payment liên quan tới booking (deposit + at_hotel + online)
+            $payments = Payment::where('booking_id', $booking->booking_id)->get();
+
+            $depositPayment = $payments->firstWhere('payment_type', 'deposit');
+            $atHotelPayment = $payments->firstWhere('payment_type', 'at_hotel');
+            $latestPayment = $payments->sortByDesc('created_at')->first();
+
+            // Compute collected amounts and remaining balance
+            $collectedDeposit = $depositPayment ? floatval($depositPayment->amount_vnd) * ($depositPayment->status === 'completed' ? 1 : 0) : 0.0;
+            $collectedCash = $atHotelPayment ? floatval($atHotelPayment->cash_amount_vnd ?? 0) : 0.0;
+
+            // Remaining balance = booking total - (collected deposit + collected cash). Use booking->total_price_vnd as source of truth
+            $bookingTotal = floatval($booking->total_price_vnd ?? $booking->total_price ?? 0);
+            $remainingBalance = max(0, $bookingTotal - ($collectedDeposit + $collectedCash));
+
+            // Build payment section for frontend to render
+            $paymentPayload = [
+                'payment_method' => $booking->payment_method ?? ($depositPayment ? 'pay_at_hotel' : ($latestPayment->payment_type ?? null)),
+                'status' => $latestPayment ? $latestPayment->status : 'unknown',
+                'transaction_id' => $latestPayment->transaction_id ?? null,
+            ];
+
+            if ($depositPayment) {
+                $paymentPayload['deposit'] = [
+                    'payment_id' => $depositPayment->payment_id,
+                    'amount_vnd' => floatval($depositPayment->amount_vnd),
+                    'status' => $depositPayment->status,
+                    'transaction_id' => $depositPayment->transaction_id ?? null,
+                    // qr_code_url may be null if not persisted; frontend will handle null
+                    'qr_code_url' => $depositPayment->qr_code_url ?? null,
+                ];
+            }
+
+            if ($atHotelPayment) {
+                $paymentPayload['at_hotel'] = [
+                    'payment_id' => $atHotelPayment->payment_id,
+                    'amount_vnd' => floatval($atHotelPayment->amount_vnd),
+                    'cash_amount_vnd' => floatval($atHotelPayment->cash_amount_vnd ?? 0),
+                    'status' => $atHotelPayment->status,
+                    'transaction_id' => $atHotelPayment->transaction_id ?? null,
+                ];
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'booking' => $booking,
                     'rooms' => $bookingRooms,
-                    'payment' => $payment,
+                    'payment' => $paymentPayload,
                     'summary' => [
                         'total_rooms' => $bookingRooms->count(),
                         'total_guests' => $bookingRooms->sum('adults') + $bookingRooms->sum('children'),
-                        'total_amount' => $booking->total_price_vnd,
-                        'payment_status' => $payment ? $payment->status : 'unknown'
+                        'total_amount' => $bookingTotal,
+                        'payment_status' => $paymentPayload['status'] ?? 'unknown',
+                        'remaining_balance_vnd' => $remainingBalance
                     ]
                 ]
             ]);
@@ -1714,63 +2005,25 @@ class PaymentController extends Controller
             $cPayTransaction = $this->checkCPayAPI($bookingCode, $expectedAmount);
 
             if ($cPayTransaction) {
-                // Transaction found in CPay, update our records
-                DB::beginTransaction();
-                
+                Log::info('CPay transaction found; attempting to apply to booking payment', ['booking_code' => $bookingCode, 'transaction' => $cPayTransaction]);
+
+                // Try to apply the found transaction directly to a pending payment (auto-verify)
                 try {
-                    // Kiểm tra xem có rooms data cached không trước khi complete booking
-                    $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
-                    
-                    if ($roomsData) {
-                        // Có cached data, hoàn thành booking trước
-                        $this->completeBookingAfterPayment($bookingCode);
-                    } else {
-                        Log::warning("No cached rooms data found for booking: {$bookingCode}, skip completing booking");
-                    }
-
-                    // Update booking status
-                    $booking->update([
-                        'status' => 'confirmed'
-                    ]);
-
-                    // Update payment status
-                    if ($payment) {
-                        $payment->update([
-                            'status' => 'completed',
-                            'transaction_id' => $cPayTransaction['transaction_id'],
-                            'updated_at' => now()
-                        ]);
-                    } else {
-                        // Create payment record if doesn't exist
-                        $payment = Payment::create([
-                            'booking_id' => $booking->booking_id,
-                            'amount_vnd' => $expectedAmount,
-                            'payment_type' => 'vietqr',
-                            'status' => 'completed',
-                            'transaction_id' => $cPayTransaction['transaction_id']
-                        ]);
-                    }
-
-                    DB::commit();
-
+                    $applyResult = $this->applyCPayTransactionToPayment($booking, $cPayTransaction);
+                    return response()->json($applyResult);
+                } catch (\Exception $e) {
+                    Log::error('Error applying CPay transaction automatically: ' . $e->getMessage());
+                    // Fallback: return transaction to frontend if auto-apply failed
                     return response()->json([
                         'success' => true,
-                        'message' => 'Giao dịch thanh toán đã được xác nhận',
+                        'message' => 'Giao dịch tìm thấy từ CPay nhưng không thể tự động áp dụng. Vui lòng xác nhận thủ công.',
                         'transaction' => [
-                            'id' => $payment->id,
-                            'booking_code' => $bookingCode,
-                            'amount' => $payment->amount_vnd,
-                            'status' => 'completed',
-                            'payment_method' => 'vietqr',
-                            'transaction_id' => $cPayTransaction['transaction_id'],
-                            'created_at' => $payment->created_at,
-                            'updated_at' => $payment->updated_at
+                            'transaction_id' => $cPayTransaction['transaction_id'] ?? ('CPAY_' . $bookingCode . '_' . time()),
+                            'amount' => $cPayTransaction['amount'],
+                            'status' => $cPayTransaction['status'] ?? 'success',
+                            'cpay_data' => $cPayTransaction['cpay_data'] ?? null
                         ]
                     ]);
-
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    throw $e;
                 }
             }
 
@@ -1787,6 +2040,123 @@ class PaymentController extends Controller
                 'message' => 'Lỗi hệ thống khi kiểm tra thanh toán'
             ], 500);
         }
+    }
+
+    /**
+     * Try to apply a CPay transaction to an existing pending Payment record.
+     * Returns a structured JSON response like verifyVietQRPayment.
+     */
+    protected function applyCPayTransactionToPayment($booking, $cPayTransaction)
+    {
+        DB::beginTransaction();
+
+        $amount = $cPayTransaction['amount'] ?? null;
+        $bookingCode = $booking->booking_code;
+
+        // Find pending deposit first
+        $payment = null;
+        $depositPayment = Payment::where('booking_id', $booking->booking_id)
+            ->where('payment_type', 'deposit')
+            ->where('status', 'pending')
+            ->first();
+
+        if ($depositPayment) {
+            if ((float)$depositPayment->amount_vnd === (float)$amount) {
+                $payment = $depositPayment;
+            } elseif ($amount !== null && (float)$amount >= (float)$depositPayment->amount_vnd) {
+                $payment = $depositPayment;
+            }
+        }
+
+        if (!$payment) {
+            $payment = Payment::where('booking_id', $booking->booking_id)
+                ->where('amount_vnd', $amount)
+                ->where('status', 'pending')
+                ->first();
+        }
+
+        if (!$payment) {
+            $payment = Payment::where('booking_id', $booking->booking_id)
+                ->whereIn('payment_type', ['vietqr','qr_code','full','deposit'])
+                ->where('status', 'pending')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
+        if (!$payment) {
+            // No pending payment found — as a fallback, create a payment record automatically
+            // if the external transaction looks valid for this booking.
+            // Determine likely payment type: deposit (50%) or full/online.
+            $bookingTotal = floatval($booking->total_price_vnd ?? $booking->total_price ?? 0);
+            $depositAmount = round($bookingTotal * 0.5);
+
+            // Choose payment type heuristically
+            if ($amount !== null && (float)$amount >= (float)$bookingTotal) {
+                $chosenType = 'vietqr'; // full payment
+            } elseif ($amount !== null && (float)$amount >= (float)$depositAmount) {
+                // Amount covers at least deposit -> treat as deposit
+                $chosenType = 'deposit';
+            } else {
+                // Unknown/partial amount -> create as vietqr by default
+                $chosenType = 'vietqr';
+            }
+
+            Log::info('Auto-creating Payment record for CPay transaction', [
+                'booking_id' => $booking->booking_id,
+                'booking_code' => $bookingCode,
+                'amount' => $amount,
+                'chosen_type' => $chosenType
+            ]);
+
+            $transactionId = $cPayTransaction['transaction_id'] ?? ('CPAY_' . $bookingCode . '_' . time());
+
+            $payment = Payment::create([
+                'booking_id' => $booking->booking_id,
+                'amount_vnd' => $amount,
+                'payment_type' => $chosenType,
+                'status' => 'completed',
+                'transaction_id' => $transactionId,
+            ]);
+
+            Log::info('Auto-created Payment', ['payment_id' => $payment->payment_id, 'payment_type' => $payment->payment_type]);
+        }
+
+        $transactionId = $cPayTransaction['transaction_id'] ?? ('CPAY_' . $bookingCode . '_' . time());
+
+        $payment->update([
+            'status' => 'completed',
+            'transaction_id' => $transactionId,
+            'updated_at' => now()
+        ]);
+
+        // If deposit, confirm booking and run completion
+        if ($payment->payment_type === 'deposit') {
+            $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
+            if ($roomsData) {
+                $this->completeBookingAfterPayment($bookingCode);
+            }
+            $booking->update(['status' => 'Confirmed', 'updated_at' => now()]);
+        } else {
+            $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
+            if ($roomsData) {
+                $this->completeBookingAfterPayment($bookingCode);
+            }
+            $booking->update(['status' => 'Confirmed', 'updated_at' => now()]);
+        }
+
+        DB::commit();
+
+        return [
+            'success' => true,
+            'message' => 'Giao dịch đã được áp dụng và cập nhật tự động.',
+            'transaction' => [
+                'transaction_id' => $transactionId,
+                'amount' => $amount,
+                'applied_to_payment_id' => $payment->payment_id,
+                'payment_type' => $payment->payment_type
+            ],
+            'booking_code' => $bookingCode
+        ];
     }
 
     /**

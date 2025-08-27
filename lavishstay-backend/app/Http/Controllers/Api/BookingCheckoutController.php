@@ -1185,24 +1185,34 @@ class BookingCheckoutController extends Controller
             $hotelInfo = null;
             
             try {
-                $hotelInfo = DB::table('booking_rooms as br')
-                    ->join('room as r', 'br.room_id', '=', 'r.room_id')
-                    ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
-                    ->where('br.booking_id', $booking->booking_id)
-                    ->select('h.*')
-                    ->first();
+                $hotelTableExists = DB::select("SHOW TABLES LIKE 'hotel'");
+                $bookingRoomsTableExists = DB::select("SHOW TABLES LIKE 'booking_rooms'");
+                $roomHasHotelId = DB::select("SHOW COLUMNS FROM room LIKE 'hotel_id'");
+
+                if (!empty($hotelTableExists) && !empty($bookingRoomsTableExists) && !empty($roomHasHotelId)) {
+                    $hotelInfo = DB::table('booking_rooms as br')
+                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                        ->where('br.booking_id', $booking->booking_id)
+                        ->select('h.*')
+                        ->first();
+                }
             } catch (\Exception $e) {
                 Log::warning("booking_rooms hotel query failed: " . $e->getMessage());
             }
             
             if (!$hotelInfo) {
                 try {
-                    $hotelInfo = DB::table('booking_room as br')
-                        ->join('room as r', 'br.room_id', '=', 'r.room_id')
-                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
-                        ->where('br.booking_id', $booking->booking_id)
-                        ->select('h.*')
-                        ->first();
+                    $bookingRoomTableExists = DB::select("SHOW TABLES LIKE 'booking_room'");
+                    $roomHasHotelId = DB::select("SHOW COLUMNS FROM room LIKE 'hotel_id'");
+                    if (!empty($hotelTableExists) && !empty($bookingRoomTableExists) && !empty($roomHasHotelId)) {
+                        $hotelInfo = DB::table('booking_room as br')
+                            ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                            ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                            ->where('br.booking_id', $booking->booking_id)
+                            ->select('h.*')
+                            ->first();
+                    }
                 } catch (\Exception $e) {
                     Log::warning("booking_room hotel query failed: " . $e->getMessage());
                 }
@@ -1210,11 +1220,14 @@ class BookingCheckoutController extends Controller
             
             if (!$hotelInfo && $booking->room_id) {
                 try {
-                    $hotelInfo = DB::table('room as r')
-                        ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
-                        ->where('r.room_id', $booking->room_id)
-                        ->select('h.*')
-                        ->first();
+                    $roomHasHotelId = DB::select("SHOW COLUMNS FROM room LIKE 'hotel_id'");
+                    if (!empty($hotelTableExists) && !empty($roomHasHotelId)) {
+                        $hotelInfo = DB::table('room as r')
+                            ->join('hotel as h', 'r.hotel_id', '=', 'h.hotel_id')
+                            ->where('r.room_id', $booking->room_id)
+                            ->select('h.*')
+                            ->first();
+                    }
                 } catch (\Exception $e) {
                     Log::warning("Direct hotel query failed: " . $e->getMessage());
                 }
@@ -1475,10 +1488,29 @@ class BookingCheckoutController extends Controller
             }
             
             if (!empty($roomIds)) {
+                // Get cleaning duration from config
+                $cleaningDurationMinutes = config('hotel.cleaning_duration_minutes', 120);
+                $cleaningStartsAt = Carbon::now();
+                $cleaningEndsAt = $cleaningStartsAt->copy()->addMinutes($cleaningDurationMinutes);
+                
+                // Update cleaning timestamps and metadata. Do NOT write a non-existent enum value to `status` column.
                 DB::table('room')
                     ->whereIn('room_id', $roomIds)
                     ->where('status', '!=', 'maintenance')
-                    ->update(['status' => 'cleaning']);
+                    ->update([
+                        // keep the existing `status` value to avoid enum truncation; rely on cleaning flags instead
+                        'cleaning_started_at' => $cleaningStartsAt,
+                        'cleaning_ends_at' => $cleaningEndsAt,
+                        'cleaning_by' => Auth::id(), // Current user who processed checkout
+                        'cleaning_note' => "Auto-set after checkout of booking {$booking->booking_code}"
+                    ]);
+                    
+                Log::info("Updated room cleaning status", [
+                    'room_ids' => $roomIds,
+                    'cleaning_starts_at' => $cleaningStartsAt->toDateTimeString(),
+                    'cleaning_ends_at' => $cleaningEndsAt->toDateTimeString(),
+                    'duration_minutes' => $cleaningDurationMinutes
+                ]);
             }
 
             return $roomIds;
@@ -1494,12 +1526,13 @@ class BookingCheckoutController extends Controller
     private function createAuditLog($booking, $checkoutTime, $amountCalculation, $validationResult)
     {
         try {
+            // Insert audit log using current `audit_logs` schema (columns: model, model_id, action enum values)
             DB::table('audit_logs')->insert([
                 'user_id' => Auth::id(),
-                'action' => 'Check-out',
-                'table_name' => 'booking',
-                'record_id' => $booking->booking_id,
-                'description' => "Check-out completed for booking {$booking->booking_code} at {$checkoutTime}. Total amount: " . number_format($amountCalculation['total_amount']) . " VND. Status changed to Cleaning. Validation: " . ($validationResult->canCheckout ? 'APPROVED' : 'FORCED') . " with " . count($validationResult->warnings) . " warnings.",
+                'action' => 'other', // use allowed enum value
+                'model' => 'booking',
+                'model_id' => $booking->booking_id,
+                'description' => "Check-out completed for booking {$booking->booking_code} at {$checkoutTime}. Total amount: " . number_format($amountCalculation['total_amount']) . " VND. Validation: " . ($validationResult->canCheckout ? 'APPROVED' : 'FORCED') . " with " . count($validationResult->warnings) . " warnings.",
                 'created_at' => Carbon::now(),
             ]);
         } catch (\Exception $e) {

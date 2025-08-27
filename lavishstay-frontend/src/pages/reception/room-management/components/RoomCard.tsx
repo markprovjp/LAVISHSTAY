@@ -18,6 +18,8 @@ interface RoomCardProps {
         room_number: string;
         room_type: string;
         status: 'available' | 'occupied' | 'maintenance' | 'reserved';
+        is_cleaning?: boolean;
+        cleaning_ends_at?: string | null;
         guest_name?: string;
         check_in?: string;
         check_out?: string;
@@ -28,7 +30,7 @@ interface RoomCardProps {
     onStatusChange: (roomId: string, newStatus: string) => void;
 }
 
-const RoomCard: React.FC<RoomCardProps> = ({ room, onViewDetails, onStatusChange }) => {
+const RoomCard: React.FC<RoomCardProps> = ({ room, onViewDetails }) => {
     const getStatusColor = (status: string) => {
         const colors = {
             available: 'green',
@@ -86,6 +88,12 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onViewDetails, onStatusChange
         >
             <Space direction="vertical" size={4} style={{ width: '100%' }}>
                 <Text type="secondary">{room.room_type}</Text>
+
+                {room.is_cleaning && room.cleaning_ends_at && (
+                    <Tag color="processing">
+                        Đang dọn • còn {dayjs(room.cleaning_ends_at).diff(dayjs(), 'minute')} phút
+                    </Tag>
+                )}
 
                 {room.guest_name && (
                     <Space>
