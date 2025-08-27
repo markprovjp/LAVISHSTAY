@@ -4,376 +4,290 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\NotificationType;
+use App\Models\NotificationUser;
 use App\Models\User;
-use App\Models\UserNotificationSetting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 
 class NotificationService
 {
     /**
-     * Send notification to multiple users
-     */
-    public function sendToUsers(
-        array $userIds, 
-        string $title, 
-        string $message, 
-        array $data = [], 
-        string $url = '#',
-        string $priority = 'normal',
-        string $icon = '🔔',
-        string $color = '#3B82F6'
-    ): bool {
-        try {
-            $notifications = [];
-            $timestamp = now();
-
-            foreach ($userIds as $userId) {
-                $notifications[] = [
-                    'id' => (string) Str::uuid(),
-                    'notification_type_id' => null, // Custom notifications don't have a type
-                    'notifiable_type' => User::class,
-                    'notifiable_id' => $userId,
-                    'title' => $title,
-                    'message' => $message,
-                    'data' => json_encode($data),
-                    'priority' => $priority,
-                    'icon' => $icon,
-                    'color' => $color,
-                    'url' => $url,
-                    'status' => 'sent',
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ];
-            }
-
-            // Batch insert for better performance
-            $result = DB::table('notifications')->insert($notifications);
-
-            if ($result) {
-                Log::info("Sent notifications to " . count($userIds) . " users", [
-                    'title' => $title,
-                    'user_count' => count($userIds)
-                ]);
-            }
-
-            return $result;
-
-        } catch (\Exception $e) {
-            Log::error('Error sending notifications to users: ' . $e->getMessage(), [
-                'user_ids' => $userIds,
-                'title' => $title
-            ]);
-            return false;
-        }
-    }
-
-    /**
      * Send notification by type
      */
-    public function sendByType(string $typeName, array $data = [], array $userIds = null): bool
+    public function sendByType(string $typeName, array $data = [], string $url = '#'): bool
     {
         try {
+            Log::info('Sending notification by type', [
+                'type' => $typeName,
+                'data' => $data
+            ]);
+
+            // Get notification type
             $notificationType = NotificationType::where('name', $typeName)
                 ->where('is_active', true)
                 ->first();
 
             if (!$notificationType) {
-                Log::warning("Notification type not found or inactive: {$typeName}");
+                Log::warning('Notification type not found or inactive', ['type' => $typeName]);
                 return false;
             }
 
-            // Get target users
-            if ($userIds === null) {
-                $targetUsers = $notificationType->getTargetUsers();
-                $userIds = $targetUsers->pluck('id')->toArray();
-            }
+            // Get users who should receive this notification type
+            $targetUsers = NotificationUser::getUsersForNotificationType($typeName);
 
-            if (empty($userIds)) {
-                Log::warning("No target users found for notification type: {$typeName}");
+            if ($targetUsers->isEmpty()) {
+                Log::warning('No target users found for notification type', [
+                    'type' => $typeName,
+                    'notification_type_id' => $notificationType->id
+                ]);
                 return false;
             }
 
-            // Generate message from template
-            $message = $notificationType->generateMessage($data);
-
-            return $this->sendToUsersWithType(
-                $userIds,
-                $notificationType,
-                $notificationType->title,
-                $message,
-                $data
-            );
-
-        } catch (\Exception $e) {
-            Log::error('Error sending notification by type: ' . $e->getMessage(), [
+            Log::info('Found target users for notification', [
                 'type' => $typeName,
-                'data' => $data
+                'user_count' => $targetUsers->count(),
+                'user_ids' => $targetUsers->pluck('id')->toArray()
             ]);
-            return false;
-        }
-    }
 
-    /**
-     * Send notification to users with specific type
-     */
-    protected function sendToUsersWithType(
-        array $userIds,
-        NotificationType $notificationType,
-        string $title,
-        string $message,
-        array $data = []
-    ): bool {
-        try {
-            $notifications = [];
-            $timestamp = now();
+            // Replace placeholders in message template
+            $message = $this->replacePlaceholders($notificationType->message_template, $data);
+            $title = $this->replacePlaceholders($notificationType->title, $data);
 
-            foreach ($userIds as $userId) {
-                // Check user notification settings
-                $setting = UserNotificationSetting::where('user_id', $userId)
-                    ->where('notification_type_id', $notificationType->id)
-                    ->first();
-
-                // Skip if user has disabled this notification type
-                if ($setting && !$setting->is_enabled) {
-                    continue;
+            // Send to each user
+            $sentCount = 0;
+            foreach ($targetUsers as $user) {
+                if ($this->sendToUser($user, $title, $message, $data, $url, $notificationType)) {
+                    $sentCount++;
                 }
-
-                $notifications[] = [
-                    'id' => (string) Str::uuid(),
-                    'notification_type_id' => $notificationType->id,
-                    'notifiable_type' => User::class,
-                    'notifiable_id' => $userId,
-                    'title' => $title,
-                    'message' => $message,
-                    'data' => json_encode($data),
-                    'priority' => $notificationType->priority,
-                    'icon' => $notificationType->icon,
-                    'color' => $notificationType->color,
-                    'url' => $data['url'] ?? '#',
-                    'status' => 'sent',
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ];
             }
 
-            if (empty($notifications)) {
-                Log::info("No notifications to send - all users have disabled this type", [
-                    'type' => $notificationType->name
-                ]);
-                return true;
-            }
+            Log::info('Notification sent by type', [
+                'type' => $typeName,
+                'target_users' => $targetUsers->count(),
+                'sent_count' => $sentCount
+            ]);
 
-            // Batch insert
-            $result = DB::table('notifications')->insert($notifications);
-
-            if ($result) {
-                Log::info("Sent {$notificationType->name} notifications", [
-                    'type' => $notificationType->name,
-                    'count' => count($notifications)
-                ]);
-            }
-
-            return $result;
+            return $sentCount > 0;
 
         } catch (\Exception $e) {
-            Log::error('Error sending notifications with type: ' . $e->getMessage(), [
-                'type' => $notificationType->name,
-                'user_ids' => $userIds
+            Log::error('Error sending notification by type', [
+                'type' => $typeName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return false;
         }
     }
 
     /**
-     * Send booking notification
+     * Send notification to specific users
      */
-    public function sendBookingNotification(string $action, array $data): bool
+    public function sendToUsers(array $userIds, string $title, string $message, array $data = [], string $url = '#'): bool
     {
-        $typeMap = [
-            'new' => 'booking_new',
-            'cancelled' => 'booking_cancelled',
-            'modified' => 'booking_modified',
-        ];
+        try {
+            Log::info('Sending notification to specific users', [
+                'user_ids' => $userIds,
+                'title' => $title
+            ]);
 
-        $typeName = $typeMap[$action] ?? null;
-        if (!$typeName) {
-            Log::warning("Unknown booking action: {$action}");
+            $users = User::whereIn('id', $userIds)->get();
+            
+            if ($users->isEmpty()) {
+                Log::warning('No users found for notification', ['user_ids' => $userIds]);
+                return false;
+            }
+
+            $sentCount = 0;
+            foreach ($users as $user) {
+                if ($this->sendToUser($user, $title, $message, $data, $url)) {
+                    $sentCount++;
+                }
+            }
+
+            Log::info('Notification sent to users', [
+                'target_users' => count($userIds),
+                'sent_count' => $sentCount
+            ]);
+
+            return $sentCount > 0;
+
+        } catch (\Exception $e) {
+            Log::error('Error sending notification to users', [
+                'user_ids' => $userIds,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
-
-        return $this->sendByType($typeName, $data);
     }
 
     /**
-     * Send payment notification
+     * Send notification to a single user
      */
-    public function sendPaymentNotification(string $status, array $data): bool
+    public function sendToUser(User $user, string $title, string $message, array $data = [], string $url = '#', NotificationType $notificationType = null): bool
     {
-        $typeMap = [
-            'success' => 'payment_success',
-            'failed' => 'payment_failed',
-            'refund_requested' => 'refund_requested',
-        ];
+        try {
+            $notification = Notification::create([
+                'id' => (string) Str::uuid(),
+                'notification_type_id' => $notificationType?->id,
+                'notifiable_type' => User::class,
+                'notifiable_id' => $user->id,
+                'title' => $title,
+                'message' => $message,
+                'data' => $data,
+                'priority' => $notificationType?->priority ?? 'normal',
+                'icon' => $notificationType?->icon ?? '🔔',
+                'color' => $notificationType?->color ?? '#3B82F6',
+                'url' => $url,
+                'status' => 'sent',
+            ]);
 
-        $typeName = $typeMap[$status] ?? null;
-        if (!$typeName) {
-            Log::warning("Unknown payment status: {$status}");
+            Log::info('Notification created for user', [
+                'notification_id' => $notification->id,
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'title' => $title
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error creating notification for user', [
+                'user_id' => $user->id,
+                'title' => $title,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
-
-        return $this->sendByType($typeName, $data);
     }
 
     /**
-     * Send room notification
+     * Send notification to users with specific roles
      */
-    public function sendRoomNotification(string $type, array $data): bool
+    public function sendToRoles(array $roles, string $title, string $message, array $data = [], string $url = '#'): bool
     {
-        $typeMap = [
-            'maintenance' => 'room_maintenance',
-            'cleaning_urgent' => 'room_cleaning_urgent',
-        ];
+        try {
+            $users = User::whereIn('role', $roles)->get();
+            
+            if ($users->isEmpty()) {
+                Log::warning('No users found with specified roles', ['roles' => $roles]);
+                return false;
+            }
 
-        $typeName = $typeMap[$type] ?? null;
-        if (!$typeName) {
-            Log::warning("Unknown room notification type: {$type}");
+            return $this->sendToUsers($users->pluck('id')->toArray(), $title, $message, $data, $url);
+
+        } catch (\Exception $e) {
+            Log::error('Error sending notification to roles', [
+                'roles' => $roles,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
-
-        return $this->sendByType($typeName, $data);
     }
 
     /**
-     * Send review notification
+     * Replace placeholders in message template
      */
-    public function sendReviewNotification(array $data): bool
+    private function replacePlaceholders(string $template, array $data): string
     {
-        $rating = $data['rating'] ?? 5;
-        $typeName = $rating <= 2 ? 'review_negative' : 'review_new';
-
-        return $this->sendByType($typeName, $data);
-    }
-
-    /**
-     * Send system notification
-     */
-    public function sendSystemNotification(string $type, array $data): bool
-    {
-        $typeMap = [
-            'error' => 'system_error',
-            'maintenance' => 'system_maintenance',
-        ];
-
-        $typeName = $typeMap[$type] ?? null;
-        if (!$typeName) {
-            Log::warning("Unknown system notification type: {$type}");
-            return false;
+        foreach ($data as $key => $value) {
+            $placeholder = '{' . $key . '}';
+            $template = str_replace($placeholder, (string) $value, $template);
         }
-
-        return $this->sendByType($typeName, $data);
+        
+        return $template;
     }
 
     /**
      * Mark notification as read
      */
-    public function markAsRead(string $notificationId, int $userId): bool
+    public function markAsRead(string $notificationId): bool
     {
         try {
-            $result = Notification::where('id', $notificationId)
-                ->where('notifiable_id', $userId)
-                ->where('notifiable_type', User::class)
-                ->whereNull('read_at')
-                ->update(['read_at' => now()]);
+            $notification = Notification::find($notificationId);
+            
+            if (!$notification) {
+                return false;
+            }
 
-            return $result > 0;
+            $notification->markAsRead();
+            return true;
 
         } catch (\Exception $e) {
-            Log::error('Error marking notification as read: ' . $e->getMessage(), [
+            Log::error('Error marking notification as read', [
                 'notification_id' => $notificationId,
-                'user_id' => $userId
+                'error' => $e->getMessage()
             ]);
             return false;
         }
     }
 
     /**
-     * Mark all notifications as read for a user
+     * Mark multiple notifications as read
      */
-    public function markAllAsRead(int $userId): int
+    public function markMultipleAsRead(array $notificationIds): bool
     {
         try {
-            return Notification::where('notifiable_id', $userId)
-                ->where('notifiable_type', User::class)
+            Notification::whereIn('id', $notificationIds)
                 ->whereNull('read_at')
                 ->update(['read_at' => now()]);
 
+            return true;
+
         } catch (\Exception $e) {
-            Log::error('Error marking all notifications as read: ' . $e->getMessage(), [
-                'user_id' => $userId
+            Log::error('Error marking multiple notifications as read', [
+                'notification_ids' => $notificationIds,
+                'error' => $e->getMessage()
             ]);
-            return 0;
+            return false;
         }
     }
 
     /**
-     * Get user notifications
+     * Delete notification
      */
-    public function getUserNotifications(int $userId, int $limit = 10, bool $unreadOnly = false)
+    public function deleteNotification(string $notificationId): bool
     {
         try {
-            $query = Notification::where('notifiable_id', $userId)
-                ->where('notifiable_type', User::class)
-                ->with('notificationType');
-
-            if ($unreadOnly) {
-                $query->whereNull('read_at');
+            $notification = Notification::find($notificationId);
+            
+            if (!$notification) {
+                return false;
             }
 
-            return $query->latest()->limit($limit)->get();
+            $notification->delete();
+            return true;
 
         } catch (\Exception $e) {
-            Log::error('Error getting user notifications: ' . $e->getMessage(), [
-                'user_id' => $userId
+            Log::error('Error deleting notification', [
+                'notification_id' => $notificationId,
+                'error' => $e->getMessage()
             ]);
-            return collect();
+            return false;
         }
+    }
+
+    /**
+     * Get notifications for user
+     */
+    public function getNotificationsForUser(int $userId, int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    {
+        return Notification::where('notifiable_type', User::class)
+            ->where('notifiable_id', $userId)
+            ->with('notificationType')
+            ->latest()
+            ->limit($limit)
+            ->get();
     }
 
     /**
      * Get unread count for user
      */
-    public function getUnreadCount(int $userId): int
+    public function getUnreadCountForUser(int $userId): int
     {
-        try {
-            return Notification::where('notifiable_id', $userId)
-                ->where('notifiable_type', User::class)
-                ->whereNull('read_at')
-                ->count();
-
-        } catch (\Exception $e) {
-            Log::error('Error getting unread count: ' . $e->getMessage(), [
-                'user_id' => $userId
-            ]);
-            return 0;
-        }
-    }
-
-    /**
-     * Clean old notifications
-     */
-    public function cleanOldNotifications(int $days = 30): int
-    {
-        try {
-            $cutoffDate = now()->subDays($days);
-            
-            return Notification::where('created_at', '<', $cutoffDate)->delete();
-
-        } catch (\Exception $e) {
-            Log::error('Error cleaning old notifications: ' . $e->getMessage());
-            return 0;
-        }
+        return Notification::where('notifiable_type', User::class)
+            ->where('notifiable_id', $userId)
+            ->whereNull('read_at')
+            ->count();
     }
 
     /**
@@ -381,68 +295,95 @@ class NotificationService
      */
     public function getStatistics(): array
     {
+        $total = Notification::count();
+        $unread = Notification::whereNull('read_at')->count();
+        $today = Notification::whereDate('created_at', today())->count();
+        $thisWeek = Notification::whereBetween('created_at', [
+            now()->startOfWeek(),
+            now()->endOfWeek()
+        ])->count();
+
+        $byPriority = Notification::selectRaw('priority, COUNT(*) as count')
+            ->groupBy('priority')
+            ->pluck('count', 'priority')
+            ->toArray();
+
+        $byStatus = Notification::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        return [
+            'total' => $total,
+            'unread' => $unread,
+            'today' => $today,
+            'this_week' => $thisWeek,
+            'by_priority' => $byPriority,
+            'by_status' => $byStatus,
+        ];
+    }
+
+    /**
+     * Clean up old notifications
+     */
+    public function cleanup(int $days = 30): int
+    {
         try {
-            return [
-                'total' => Notification::count(),
-                'unread' => Notification::whereNull('read_at')->count(),
-                'today' => Notification::whereDate('created_at', today())->count(),
-                'this_week' => Notification::whereBetween('created_at', [
-                    now()->startOfWeek(),
-                    now()->endOfWeek()
-                ])->count(),
-                'by_priority' => Notification::selectRaw('priority, COUNT(*) as count')
-                    ->groupBy('priority')
-                    ->pluck('count', 'priority')
-                    ->toArray(),
-                'by_status' => Notification::selectRaw('status, COUNT(*) as count')
-                    ->groupBy('status')
-                    ->pluck('count', 'status')
-                    ->toArray(),
-            ];
+            $count = Notification::where('created_at', '<', now()->subDays($days))->count();
+            Notification::where('created_at', '<', now()->subDays($days))->delete();
+            
+            Log::info('Cleaned up old notifications', ['deleted_count' => $count, 'days' => $days]);
+            
+            return $count;
 
         } catch (\Exception $e) {
-            Log::error('Error getting notification statistics: ' . $e->getMessage());
-            return [];
+            Log::error('Error cleaning up notifications', [
+                'days' => $days,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
         }
     }
 
     /**
-     * Test notification system
+     * Setup default notification settings for user
      */
-    public function testSystem(): array
+    public function setupDefaultNotificationsForUser(int $userId, array $notificationTypes = []): bool
     {
-        $results = [];
-
         try {
-            // Test database connection
-            $results['database'] = DB::connection()->getPdo() ? 'OK' : 'FAILED';
-
-            // Test user retrieval
-            $userCount = User::count();
-            $results['users'] = $userCount > 0 ? "OK ({$userCount} users)" : 'NO USERS';
-
-            // Test notification types
-            $typeCount = NotificationType::active()->count();
-            $results['notification_types'] = $typeCount > 0 ? "OK ({$typeCount} types)" : 'NO TYPES';
-
-            // Test notification creation
-            $testUser = User::first();
-            if ($testUser) {
-                $testResult = $this->sendToUsers(
-                    [$testUser->id],
-                    'System Test',
-                    'This is a system test notification',
-                    ['test' => true]
-                );
-                $results['notification_creation'] = $testResult ? 'OK' : 'FAILED';
-            } else {
-                $results['notification_creation'] = 'NO TEST USER';
+            if (empty($notificationTypes)) {
+                // Default notification types for all users
+                $notificationTypes = [
+                    'booking_new',
+                    'booking_cancelled',
+                    'payment_success',
+                    'payment_failed',
+                ];
             }
 
-        } catch (\Exception $e) {
-            $results['error'] = $e->getMessage();
-        }
+            NotificationUser::bulkEnableNotifications([$userId], $notificationTypes);
 
-        return $results;
+            Log::info('Setup default notifications for user', [
+                'user_id' => $userId,
+                'notification_types' => $notificationTypes
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error setting up default notifications for user', [
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Get users configured for a notification type
+     */
+    public function getUsersForNotificationType(string $notificationType): \Illuminate\Database\Eloquent\Collection
+    {
+        return NotificationUser::getUsersForNotificationType($notificationType);
     }
 }

@@ -14,6 +14,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.4",
+        "maatwebsite/excel": "^1.1",
         "phpoffice/phpspreadsheet": "^4.5",
         "pusher/pusher-php-server": "^7.2"
     },

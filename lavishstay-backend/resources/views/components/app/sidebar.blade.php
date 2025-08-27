@@ -906,6 +906,22 @@
                         </div>
                     </li>
                     @endif
+
+                    {{-- Coupon --}}
+                    @if (Auth::user()?->hasPermission('thanh_toan'))
+                        <li class="sidebar-item pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['coupon'])) {{ 'from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]' }} @endif">
+                            <a class="block text-gray-800 dark:text-gray-100 truncate transition-all duration-200 @if (!in_array(Request::segment(1), ['admin']) || !in_array(Request::segment(2), ['coupon'])) {{ 'hover:text-gray-900 dark:hover:text-white' }} @endif"
+                                href="{{ route('admin.coupons.index') }}">
+                                <div class="flex items-center">
+                                    <svg class="shrink-0  @if (in_array(Request::segment(1), ['admin']) && in_array(Request::segment(2), ['coupon'])) {{ 'text-violet-500' }}@else{{ 'text-gray-400 dark:text-gray-500' }} @endif" width="20px" height="20px"					
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
+                                    </svg>
+                                    <span class="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">Mã giảm giá</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endif
                 </ul>
             </div>
             @endif

@@ -5,29 +5,20 @@ namespace App\Providers;
 use App\Events\BookingCreated;
 use App\Events\BookingCancelled;
 use App\Events\BookingModified;
-use App\Events\CheckinReminder;
-use App\Events\CheckoutCompleted;
+use App\Events\BookingCheckedIn;
+use App\Events\BookingCheckedOut;
 use App\Events\PaymentSuccessful;
 use App\Events\PaymentFailed;
 use App\Events\RefundRequested;
 use App\Events\RoomMaintenanceRequired;
-use App\Events\UrgentCleaningRequired;
-use App\Events\ReviewSubmitted;
-use App\Events\NegativeReviewReceived;
-use App\Events\SystemErrorOccurred;
-use App\Events\SystemMaintenanceScheduled;
-use App\Events\StaffShiftReminder;
-
-use App\Listeners\BookingNotificationListener;
-use App\Listeners\PaymentNotificationListener;
-use App\Listeners\RoomNotificationListener;
-use App\Listeners\ReviewNotificationListener;
-use App\Listeners\SystemNotificationListener;
-
+use App\Events\RoomCleaningRequired;
+use App\Events\RoomStatusChanged;
+use App\Listeners\NotificationEventListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -41,73 +32,44 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
 
-        // Booking Events
+        // Booking Events - Using full class names
         BookingCreated::class => [
-            'App\Listeners\BookingNotificationListener@handleBookingCreated',
+            NotificationEventListener::class,
         ],
         BookingCancelled::class => [
-            'App\Listeners\BookingNotificationListener@handleBookingCancelled',
+            NotificationEventListener::class,
         ],
         BookingModified::class => [
-            'App\Listeners\BookingNotificationListener@handleBookingModified',
+            NotificationEventListener::class,
         ],
-        CheckinReminder::class => [
-            'App\Listeners\BookingNotificationListener@handleCheckinReminder',
+        BookingCheckedIn::class => [
+            NotificationEventListener::class,
         ],
-        CheckoutCompleted::class => [
-            'App\Listeners\BookingNotificationListener@handleCheckoutCompleted',
+        BookingCheckedOut::class => [
+            NotificationEventListener::class,
         ],
 
         // Payment Events
         PaymentSuccessful::class => [
-            'App\Listeners\PaymentNotificationListener@handlePaymentSuccessful',
+            NotificationEventListener::class,
         ],
         PaymentFailed::class => [
-            'App\Listeners\PaymentNotificationListener@handlePaymentFailed',
+            NotificationEventListener::class,
         ],
         RefundRequested::class => [
-            'App\Listeners\PaymentNotificationListener@handleRefundRequested',
+            NotificationEventListener::class,
         ],
 
         // Room Events
         RoomMaintenanceRequired::class => [
-            'App\Listeners\RoomNotificationListener@handleRoomMaintenanceRequired',
+            NotificationEventListener::class,
         ],
-        UrgentCleaningRequired::class => [
-            'App\Listeners\RoomNotificationListener@handleUrgentCleaningRequired',
+        RoomCleaningRequired::class => [
+            NotificationEventListener::class,
         ],
-
-        // Review Events
-        ReviewSubmitted::class => [
-            'App\Listeners\ReviewNotificationListener@handleReviewSubmitted',
+        RoomStatusChanged::class => [
+            NotificationEventListener::class,
         ],
-        NegativeReviewReceived::class => [
-            'App\Listeners\ReviewNotificationListener@handleNegativeReviewReceived',
-        ],
-
-        // System Events
-        SystemErrorOccurred::class => [
-            'App\Listeners\SystemNotificationListener@handleSystemErrorOccurred',
-        ],
-        SystemMaintenanceScheduled::class => [
-            'App\Listeners\SystemNotificationListener@handleSystemMaintenanceScheduled',
-        ],
-        StaffShiftReminder::class => [
-            'App\Listeners\SystemNotificationListener@handleStaffShiftReminder',
-        ],
-    ];
-
-    /**
-     * The subscriber classes to register.
-     *
-     * @var array
-     */
-    protected $subscribe = [
-        BookingNotificationListener::class,
-        PaymentNotificationListener::class,
-        RoomNotificationListener::class,
-        ReviewNotificationListener::class,
-        SystemNotificationListener::class,
     ];
 
     /**
@@ -115,9 +77,20 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        parent::boot();
+        Log::info('EventServiceProvider booting', [
+            'registered_events' => array_keys($this->listen)
+        ]);
 
-        // Additional event registrations can go here
+        // Register a wildcard listener to debug all events
+        Event::listen('*', function ($eventName, $data) {
+            if (str_contains($eventName, 'Booking') || str_contains($eventName, 'Payment') || str_contains($eventName, 'Room')) {
+                Log::info('Event fired', [
+                    'event' => $eventName,
+                    'data_count' => count($data),
+                    'timestamp' => now()
+                ]);
+            }
+        });
     }
 
     /**

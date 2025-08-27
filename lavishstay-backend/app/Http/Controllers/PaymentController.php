@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BookingCreated;
+use App\Events\PaymentSuccessful;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\BookingRoom;
@@ -1941,6 +1943,7 @@ class PaymentController extends Controller
                 throw new \Exception("Booking not found: {$bookingCode}");
             }
 
+            event(new BookingCreated($booking));
             // Lấy rooms data từ cache
             $roomsData = cache()->get("booking_rooms_data_{$bookingCode}");
             if (!$roomsData) {
@@ -2387,6 +2390,9 @@ class PaymentController extends Controller
                     $payment->update([
                         'status' => 'completed'
                     ]);
+                }
+                if ($payment) {
+                    event(new PaymentSuccessful($payment));
                 }
             }
 

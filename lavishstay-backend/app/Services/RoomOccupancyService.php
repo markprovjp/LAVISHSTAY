@@ -3,384 +3,291 @@
 namespace App\Services;
 
 use App\Models\RoomOccupancy;
-use App\Models\Booking;
-use App\Models\BookingRoom;
 use App\Models\RoomType;
+use App\Models\Booking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class RoomOccupancyService
 {
     /**
-     * Calculate and update room occupancy for all room types for a specific date
-     * This is the main method that runs daily at 00:01 AM
-     * 
-     * @param Carbon|string|null $date
-     * @return array
+     * Get current occupancy rate for a specific room type
      */
-    public function calculateDailyOccupancy($date = null)
+    public function getCurrentOccupancyRate(int $roomTypeId, Carbon $date = null): float
     {
+        $date = $date ?? Carbon::today();
+        
         try {
-            $targetDate = $date ? Carbon::parse($date) : Carbon::today();
-            
-            Log::info("Starting daily room occupancy calculation for date: {$targetDate->toDateString()}");
+            $occupancy = RoomOccupancy::where('room_type_id', $roomTypeId)
+                ->where('date', $date->format('Y-m-d'))
+                ->first();
 
-            DB::beginTransaction();
-
-            $results = [];
-            $roomTypes = RoomType::all();
-
-            foreach ($roomTypes as $roomType) {
-                try {
-                    $result = $this->calculateOccupancyForRoomType($roomType, $targetDate);
-                    $results[] = $result;
-                    
-                    Log::info("Calculated occupancy for room type {$roomType->room_type_id}", [
-                        'room_type_name' => $roomType->name,
-                        'total_rooms' => $result['total_rooms'],
-                        'booked_rooms' => $result['booked_rooms'],
-                        'occupancy_rate' => $result['occupancy_rate']
-                    ]);
-                    
-                } catch (Exception $e) {
-                    Log::error("Error calculating occupancy for room type {$roomType->room_type_id}: " . $e->getMessage());
-                    throw $e;
-                }
+            if (!$occupancy) {
+                // If no record exists, create one
+                $this->updateRoomOccupancy($roomTypeId, $date);
+                
+                // Try to get the record again
+                $occupancy = RoomOccupancy::where('room_type_id', $roomTypeId)
+                    ->where('date', $date->format('Y-m-d'))
+                    ->first();
             }
 
-            DB::commit();
+            return $occupancy ? (float) $occupancy->occupancy_rate : 0.0;
 
-            Log::info("Successfully completed daily occupancy calculation for {$targetDate->toDateString()}", [
-                'total_room_types' => count($results),
-                'date' => $targetDate->toDateString()
+        } catch (\Exception $e) {
+            Log::error("Error getting occupancy rate", [
+                'room_type_id' => $roomTypeId,
+                'date' => $date->format('Y-m-d'),
+                'error' => $e->getMessage()
             ]);
-
-            return [
-                'success' => true,
-                'date' => $targetDate->toDateString(),
-                'results' => $results,
-                'summary' => $this->generateSummary($results)
-            ];
-
-        } catch (Exception $e) {
-            DB::rollBack();
             
-            Log::error("Failed to calculate daily occupancy for date: " . ($date ?? 'today'), [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-                'date' => $targetDate->toDateString() ?? null
-            ];
+            return 0.0;
         }
     }
 
     /**
-     * Calculate occupancy for a specific room type and date
-     * 
-     * @param RoomType $roomType
-     * @param Carbon $date
-     * @return array
+     * Update room occupancy for a specific room type and date
      */
-    private function calculateOccupancyForRoomType(RoomType $roomType, Carbon $date)
+    public function updateRoomOccupancy(int $roomTypeId, Carbon $date = null): bool
     {
+        $date = $date ?? Carbon::today();
+        
         try {
-            // Get total rooms for this room type from room_types table
-            $totalRooms = $roomType->total_room ?? 0;
-
-            if ($totalRooms == 0) {
-                Log::warning("Room type {$roomType->room_type_id} has 0 total rooms");
+            $roomType = RoomType::find($roomTypeId);
+            if (!$roomType) {
+                throw new \Exception("Room type not found: {$roomTypeId}");
             }
 
-            // Calculate booked rooms for this date
-            $bookedRooms = $this->calculateBookedRooms($roomType->room_type_id, $date);
-
-            // Ensure booked_rooms doesn't exceed total_rooms
+            $totalRooms = (int) $roomType->total_room;
+            $bookedRooms = $this->calculateBookedRooms($roomTypeId, $date);
+            
+            // Ensure booked rooms doesn't exceed total rooms
             $bookedRooms = min($bookedRooms, $totalRooms);
 
-            // Create or update the room_occupancy record
-            $occupancy = RoomOccupancy::updateOrCreate(
+            RoomOccupancy::updateOrCreate(
                 [
-                    'room_type_id' => $roomType->room_type_id,
-                    'date' => $date->toDateString()
+                    'room_type_id' => $roomTypeId,
+                    'date' => $date->format('Y-m-d')
                 ],
                 [
                     'total_rooms' => $totalRooms,
-                    'booked_rooms' => $bookedRooms,
-                    // occupancy_rate is auto-calculated by database
-                    'updated_at' => now()
+                    'booked_rooms' => $bookedRooms
                 ]
             );
 
-            // Get the calculated occupancy_rate from database
-            $occupancy->refresh();
-            $occupancyRate = $occupancy->occupancy_rate ?? 0;
+            // Clear cache for this room type
+            $this->clearOccupancyCache($roomTypeId, $date);
 
-            return [
-                'occupancy_id' => $occupancy->occupancy_id,
-                'room_type_id' => $roomType->room_type_id,
-                'room_type_name' => $roomType->name,
-                'date' => $date->toDateString(),
-                'total_rooms' => $totalRooms,
-                'booked_rooms' => $bookedRooms,
-                'available_rooms' => max(0, $totalRooms - $bookedRooms),
-                'occupancy_rate' => $occupancyRate
-            ];
-
-        } catch (Exception $e) {
-            Log::error("Error in calculateOccupancyForRoomType for room type {$roomType->room_type_id}: " . $e->getMessage());
-            throw new Exception("Failed to calculate occupancy for room type {$roomType->room_type_id}: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Calculate booked rooms for specific room type and date
-     * Logic: Rooms that are occupied on the target date
-     * - Bookings with check_in <= target_date AND check_out > target_date
-     * 
-     * @param int $roomTypeId
-     * @param Carbon $date
-     * @return int
-     */
-    private function calculateBookedRooms($roomTypeId, Carbon $date)
-    {
-        try {
-            // Count rooms that are occupied on the target date
-            // This includes:
-            // 1. Guests checking in today
-            // 2. Guests who are staying through today (checked in before, checking out after)
-            
-            $bookedRooms = DB::table('booking')
-                ->join('booking_rooms', 'booking.booking_id', '=', 'booking_rooms.booking_id')
-                ->join('room', 'booking_rooms.room_id', '=', 'room.room_id')
-                ->where('room.room_type_id', $roomTypeId)
-                ->whereIn('booking.status', ['confirmed', 'operational']) // Active bookings
-                ->where('booking.check_in_date', '<=', $date->toDateString())
-                ->where('booking.check_out_date', '>', $date->toDateString())
-                ->count('booking_rooms.id'); // Count individual room bookings
-
-            Log::debug("Calculated booked rooms for room type {$roomTypeId} on {$date->toDateString()}: {$bookedRooms}");
-
-            return $bookedRooms;
-
-        } catch (Exception $e) {
-            Log::error("Error calculating booked rooms for room type {$roomTypeId}: " . $e->getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Update occupancy when a same-day booking is made
-     * This method should be called from PaymentController after successful booking
-     * 
-     * @param int $roomTypeId
-     * @param int $roomsCount
-     * @param Carbon|string|null $date
-     * @return bool
-     */
-    public function updateOccupancyForSameDayBooking($roomTypeId, $roomsCount = 1, $date = null)
-    {
-        try {
-            $targetDate = $date ? Carbon::parse($date) : Carbon::today();
-            
-            Log::info("Updating occupancy for same-day booking", [
-                'room_type_id' => $roomTypeId,
-                'rooms_count' => $roomsCount,
-                'date' => $targetDate->toDateString()
-            ]);
-
-            DB::beginTransaction();
-
-            // Find existing occupancy record for today
-            $occupancy = RoomOccupancy::where('room_type_id', $roomTypeId)
-                ->where('date', $targetDate->toDateString())
-                ->first();
-
-            if ($occupancy) {
-                // Update existing record
-                $newBookedRooms = min($occupancy->booked_rooms + $roomsCount, $occupancy->total_rooms);
-                
-                $occupancy->update([
-                    'booked_rooms' => $newBookedRooms,
-                    'updated_at' => now()
-                ]);
-
-                Log::info("Updated existing occupancy record", [
-                    'occupancy_id' => $occupancy->occupancy_id,
-                    'old_booked_rooms' => $occupancy->booked_rooms - $roomsCount,
-                    'new_booked_rooms' => $newBookedRooms
-                ]);
-            } else {
-                // Create new record if doesn't exist (shouldn't happen if daily job runs properly)
-                $roomType = RoomType::find($roomTypeId);
-                if ($roomType) {
-                    $this->calculateOccupancyForRoomType($roomType, $targetDate);
-                    Log::info("Created new occupancy record for same-day booking");
-                }
-            }
-
-            DB::commit();
             return true;
 
-        } catch (Exception $e) {
-            DB::rollBack();
-            
-            Log::error("Failed to update occupancy for same-day booking: " . $e->getMessage(), [
+        } catch (\Exception $e) {
+            Log::error("Error updating room occupancy", [
                 'room_type_id' => $roomTypeId,
-                'rooms_count' => $roomsCount,
-                'date' => $targetDate->toDateString() ?? null
+                'date' => $date->format('Y-m-d'),
+                'error' => $e->getMessage()
             ]);
-
+            
             return false;
         }
     }
 
     /**
-     * Get current occupancy data for all room types
-     * 
-     * @param Carbon|string|null $date
-     * @return array
+     * Update occupancy for all room types for a specific date
      */
-    public function getCurrentOccupancy($date = null)
+    public function updateAllRoomOccupancy(Carbon $date = null): array
     {
+        $date = $date ?? Carbon::today();
+        $results = [];
+        
+        $roomTypes = RoomType::all();
+        
+        foreach ($roomTypes as $roomType) {
+            $success = $this->updateRoomOccupancy($roomType->room_type_id, $date);
+            $results[$roomType->room_type_id] = [
+                'room_type_name' => $roomType->name,
+                'success' => $success
+            ];
+        }
+        
+        return $results;
+    }
+
+    /**
+     * Calculate booked rooms for a specific room type and date
+     */
+    private function calculateBookedRooms(int $roomTypeId, Carbon $date): int
+    {
+        $cacheKey = "booked_rooms_{$roomTypeId}_{$date->format('Y-m-d')}";
+        
+        return Cache::remember($cacheKey, 300, function () use ($roomTypeId, $date) { // Cache for 5 minutes
+            try {
+                // Count unique rooms that are booked for the target date
+                $bookedRooms = DB::table('bookings')
+                    ->join('booking_rooms', 'bookings.booking_id', '=', 'booking_rooms.booking_id')
+                    ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.room_id')
+                    ->where('rooms.room_type_id', $roomTypeId)
+                    ->where('bookings.status', 'confirmed')
+                    ->where('bookings.check_in_date', '<=', $date->format('Y-m-d'))
+                    ->where('bookings.check_out_date', '>', $date->format('Y-m-d'))
+                    ->distinct('booking_rooms.room_id')
+                    ->count('booking_rooms.room_id');
+
+                return (int) $bookedRooms;
+
+            } catch (\Exception $e) {
+                Log::error("Error calculating booked rooms", [
+                    'room_type_id' => $roomTypeId,
+                    'date' => $date->format('Y-m-d'),
+                    'error' => $e->getMessage()
+                ]);
+                
+                return 0;
+            }
+        });
+    }
+
+    /**
+     * Get occupancy statistics for all room types
+     */
+    public function getOccupancyStats(Carbon $date = null): array
+    {
+        $date = $date ?? Carbon::today();
+        
         try {
-            $targetDate = $date ? Carbon::parse($date) : Carbon::today();
-            
             $occupancies = RoomOccupancy::with('roomType')
-                ->where('date', $targetDate->toDateString())
+                ->where('date', $date->format('Y-m-d'))
                 ->get();
 
-            // If no records exist for the date, calculate them
-            if ($occupancies->isEmpty()) {
-                Log::info("No occupancy records found for {$targetDate->toDateString()}, calculating now...");
-                $this->calculateDailyOccupancy($targetDate);
-                $occupancies = RoomOccupancy::with('roomType')->where('date', $targetDate->toDateString())->get();
-            }
-
-            return $occupancies->map(function ($occupancy) {
-                return [
-                    'occupancy_id' => $occupancy->occupancy_id,
+            $stats = [];
+            
+            foreach ($occupancies as $occupancy) {
+                if (!$occupancy->roomType) continue;
+                
+                $occupancyRate = (float) $occupancy->occupancy_rate;
+                $availableRooms = $occupancy->total_rooms - $occupancy->booked_rooms;
+                
+                $stats[] = [
                     'room_type_id' => $occupancy->room_type_id,
-                    'room_type_name' => $occupancy->roomType->name ?? 'Unknown',
-                    'date' => $occupancy->date,
+                    'room_type_name' => $occupancy->roomType->name,
                     'total_rooms' => $occupancy->total_rooms,
                     'booked_rooms' => $occupancy->booked_rooms,
-                    'available_rooms' => $occupancy->total_rooms - $occupancy->booked_rooms,
-                    'occupancy_rate' => $occupancy->occupancy_rate
+                    'available_rooms' => $availableRooms,
+                    'occupancy_rate' => $occupancyRate,
+                    'status' => $this->getOccupancyStatus($occupancyRate),
+                    'date' => $occupancy->date
                 ];
-            })->toArray();
-
-        } catch (Exception $e) {
-            Log::error("Error getting current occupancy: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * Get occupancy statistics for reporting
-     * 
-     * @param Carbon|string|null $startDate
-     * @param Carbon|string|null $endDate
-     * @return array
-     */
-    public function getOccupancyStatistics($startDate = null, $endDate = null)
-    {
-        try {
-            $start = $startDate ? Carbon::parse($startDate) : Carbon::today()->subDays(7);
-            $end = $endDate ? Carbon::parse($endDate) : Carbon::today();
-
-            $occupancies = RoomOccupancy::with('roomType')
-                ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-                ->orderBy('date', 'desc')
-                ->get();
-
-            $totalRooms = $occupancies->sum('total_rooms');
-            $totalBooked = $occupancies->sum('booked_rooms');
-            $averageOccupancy = $occupancies->avg('occupancy_rate');
-
-            return [
-                'period' => [
-                    'start_date' => $start->toDateString(),
-                    'end_date' => $end->toDateString(),
-                    'days' => $start->diffInDays($end) + 1
-                ],
-                'summary' => [
-                    'total_rooms' => $totalRooms,
-                    'total_booked' => $totalBooked,
-                    'total_available' => $totalRooms - $totalBooked,
-                    'average_occupancy_rate' => round($averageOccupancy, 2),
-                    'records_count' => $occupancies->count()
-                ],
-                'by_room_type' => $occupancies->groupBy('room_type_id')->map(function ($group) {
-                    $first = $group->first();
-                    return [
-                        'room_type_id' => $first->room_type_id,
-                        'room_type_name' => $first->roomType->name ?? 'Unknown',
-                        'average_occupancy_rate' => round($group->avg('occupancy_rate'), 2),
-                        'max_occupancy_rate' => $group->max('occupancy_rate'),
-                        'min_occupancy_rate' => $group->min('occupancy_rate'),
-                        'total_records' => $group->count()
-                    ];
-                })->values()
-            ];
-
-        } catch (Exception $e) {
-            Log::error("Error getting occupancy statistics: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * Generate summary from calculation results
-     * 
-     * @param array $results
-     * @return array
-     */
-    private function generateSummary(array $results)
-    {
-        $totalRooms = array_sum(array_column($results, 'total_rooms'));
-        $totalBooked = array_sum(array_column($results, 'booked_rooms'));
-        $totalAvailable = $totalRooms - $totalBooked;
-
-        return [
-            'total_rooms' => $totalRooms,
-            'total_booked' => $totalBooked,
-            'total_available' => $totalAvailable,
-            'overall_occupancy_rate' => $totalRooms > 0 ? round(($totalBooked / $totalRooms) * 100, 2) : 0,
-            'room_types_processed' => count($results)
-        ];
-    }
-
-    /**
-     * Clean up old occupancy records
-     * Keep records for analysis and reporting
-     * 
-     * @param int $daysToKeep
-     * @return int
-     */
-    public function cleanupOldRecords($daysToKeep = 365)
-    {
-        try {
-            $cutoffDate = Carbon::now()->subDays($daysToKeep);
+            }
             
-            $deletedCount = RoomOccupancy::where('date', '<', $cutoffDate)->delete();
-            
-            Log::info("Cleaned up old room_occupancy records", [
-                'cutoff_date' => $cutoffDate->toDateString(),
-                'deleted_count' => $deletedCount,
-                'days_kept' => $daysToKeep
+            return $stats;
+
+        } catch (\Exception $e) {
+            Log::error("Error getting occupancy stats", [
+                'date' => $date->format('Y-m-d'),
+                'error' => $e->getMessage()
             ]);
+            
+            return [];
+        }
+    }
 
-            return $deletedCount;
+    /**
+     * Get occupancy status based on rate
+     */
+    private function getOccupancyStatus(float $occupancyRate): string
+    {
+        if ($occupancyRate >= 90) {
+            return 'Đầy';
+        } elseif ($occupancyRate >= 75) {
+            return 'Cao';
+        } elseif ($occupancyRate >= 50) {
+            return 'Trung bình';
+        } elseif ($occupancyRate >= 25) {
+            return 'Thấp';
+        } else {
+            return 'Rất thấp';
+        }
+    }
 
-        } catch (Exception $e) {
-            Log::error("Error cleaning up old room_occupancy records: " . $e->getMessage());
+    /**
+     * Clear occupancy cache for a specific room type and date
+     */
+    private function clearOccupancyCache(int $roomTypeId, Carbon $date): void
+    {
+        $cacheKey = "booked_rooms_{$roomTypeId}_{$date->format('Y-m-d')}";
+        Cache::forget($cacheKey);
+    }
+
+    /**
+     * Get available rooms for a specific room type and date range
+     */
+    public function getAvailableRooms(int $roomTypeId, Carbon $checkIn, Carbon $checkOut): int
+    {
+        try {
+            $roomType = RoomType::find($roomTypeId);
+            if (!$roomType) {
+                return 0;
+            }
+
+            $totalRooms = (int) $roomType->total_room;
+            
+            // Find the maximum booked rooms across the date range
+            $maxBookedRooms = 0;
+            $currentDate = $checkIn->copy();
+            
+            while ($currentDate->lt($checkOut)) {
+                $bookedRooms = $this->calculateBookedRooms($roomTypeId, $currentDate);
+                $maxBookedRooms = max($maxBookedRooms, $bookedRooms);
+                $currentDate->addDay();
+            }
+            
+            return max(0, $totalRooms - $maxBookedRooms);
+
+        } catch (\Exception $e) {
+            Log::error("Error getting available rooms", [
+                'room_type_id' => $roomTypeId,
+                'check_in' => $checkIn->format('Y-m-d'),
+                'check_out' => $checkOut->format('Y-m-d'),
+                'error' => $e->getMessage()
+            ]);
+            
             return 0;
+        }
+    }
+
+    /**
+     * Trigger real-time occupancy update when booking status changes
+     */
+    public function onBookingStatusChanged(int $bookingId): void
+    {
+        try {
+            $booking = Booking::with('bookingRooms.room.roomType')->find($bookingId);
+            if (!$booking) return;
+
+            // Get affected room types
+            $roomTypeIds = $booking->bookingRooms
+                ->pluck('room.room_type_id')
+                ->unique()
+                ->filter();
+
+            // Update occupancy for each affected room type
+            $checkIn = Carbon::parse($booking->check_in_date);
+            $checkOut = Carbon::parse($booking->check_out_date);
+            $currentDate = $checkIn->copy();
+
+            while ($currentDate->lt($checkOut)) {
+                foreach ($roomTypeIds as $roomTypeId) {
+                    $this->updateRoomOccupancy($roomTypeId, $currentDate);
+                }
+                $currentDate->addDay();
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Error updating occupancy after booking status change", [
+                'booking_id' => $bookingId,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

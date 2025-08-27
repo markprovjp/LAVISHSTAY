@@ -211,349 +211,407 @@ class BookingController extends Controller {
 
 
 
-  public function createNewBooking(Request $request)
-{
-    try {
-        // LOG: Request data đầu vào
-        Log::info('=== START createNewBooking ===', [
-            'request_method' => $request->method(),
-            'request_url' => $request->fullUrl(),
-            'request_data' => $request->all(),
-            'user_id' => auth()->id(),
-            'timestamp' => now()
-        ]);
-
-        $validator = Validator::make($request->all(), [
-            'guest_name' => 'required|string|max:255',
-            'guest_phone' => 'required|string|max:20',
-            'guest_email' => 'required|email|max:255',
-            'check_in_date' => 'required|date|after_or_equal:today',
-            'check_out_date' => 'required|date|after:check_in_date',
-            'room_type_id' => 'required|exists:room_types,room_type_id',
-            'package_id' => 'required|exists:room_type_package,package_id',
-            'adults' => 'required|integer|min:1|max:10',
-            'children' => 'nullable|integer|min:0|max:5',
-            'rooms_count' => 'required|integer|min:1|max:5',
-            'notes' => 'nullable|string|max:1000',
-            'selected_room_ids' => 'nullable|array',
-            'selected_room_ids.*' => 'integer|exists:room,room_id'
-        ]);
-
-        // LOG: Validation results
-        if ($validator->fails()) {
-            Log::error('=== VALIDATION FAILED ===', [
-                'errors' => $validator->errors()->toArray(),
-                'failed_rules' => $validator->failed(),
-                'request_data' => $request->all()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors(),
-                'debug_info' => [
-                    'failed_fields' => array_keys($validator->errors()->toArray()),
-                    'request_keys' => array_keys($request->all())
-                ]
-            ], 422);
-        }
-
-        Log::info('Validation passed successfully');
-
-        DB::beginTransaction();
-        Log::info('Database transaction started');
-
-        // Generate booking code
-        $bookingCode = 'BK' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        
-        // Ensure unique booking code
-        $attempts = 0;
-        while (DB::table('booking')->where('booking_code', $bookingCode)->exists()) {
-            $bookingCode = 'BK' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            $attempts++;
-            if ($attempts > 10) {
-                Log::error('Too many attempts to generate unique booking code');
-                break;
-            }
-        }
-        
-        Log::info('Generated booking code', ['booking_code' => $bookingCode, 'attempts' => $attempts]);
-
-        // LOG: Check if package exists
-        Log::info('Checking package existence', ['package_id' => $request->package_id]);
-        $package = DB::table('room_type_package')->where('package_id', $request->package_id)->first();
-        
-        if (!$package) {
-            Log::error('Package not found', [
-                'package_id' => $request->package_id,
-                'available_packages' => DB::table('room_type_package')->pluck('package_id')->toArray()
-            ]);
-            
-            DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'Gói phòng không tồn tại',
-                'debug_info' => [
-                    'requested_package_id' => $request->package_id,
-                    'available_packages' => DB::table('room_type_package')->pluck('package_id')->toArray()
-                ]
-            ], 404);
-        }
-        
-        Log::info('Package found', ['package' => $package]);
-
-        // LOG: Check if room type exists
-        Log::info('Checking room type existence', ['room_type_id' => $request->room_type_id]);
-        $roomType = DB::table('room_types')->where('room_type_id', $request->room_type_id)->first();
-        
-        if (!$roomType) {
-            Log::error('Room type not found', [
-                'room_type_id' => $request->room_type_id,
-                'available_room_types' => DB::table('room_types')->pluck('room_type_id')->toArray()
-            ]);
-            
-            DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'Loại phòng không tồn tại',
-                'debug_info' => [
-                    'requested_room_type_id' => $request->room_type_id,
-                    'available_room_types' => DB::table('room_types')->pluck('room_type_id')->toArray()
-                ]
-            ], 404);
-        }
-        
-        Log::info('Room type found', ['room_type' => $roomType]);
-
-        // Calculate pricing: base price + package modifier
-        $checkIn = Carbon::parse($request->check_in_date);
-        $checkOut = Carbon::parse($request->check_out_date);
-        $nights = $checkIn->diffInDays($checkOut);
-        $roomsCount = $request->rooms_count;
-        
-        $basePricePerNight = $roomType->base_price;
-        $packageModifier = $package->price_modifier_vnd;
-        $finalPricePerNight = $basePricePerNight + $packageModifier;
-        $totalPrice = $finalPricePerNight * $nights * $roomsCount;
-
-        Log::info('Pricing calculated', [
-            'check_in' => $request->check_in_date,
-            'check_out' => $request->check_out_date,
-            'nights' => $nights,
-            'rooms_count' => $roomsCount,
-            'base_price_per_night' => $basePricePerNight,
-            'package_modifier' => $packageModifier,
-            'final_price_per_night' => $finalPricePerNight,
-            'total_price' => $totalPrice
-        ]);
-
-        // SỬA: Create booking với các cột đúng theo database schema
-        $bookingData = [
-            'booking_code' => $bookingCode,
-            'guest_name' => $request->guest_name,
-            'guest_phone' => $request->guest_phone,
-            'guest_email' => $request->guest_email,
-            'check_in_date' => $request->check_in_date,
-            'check_out_date' => $request->check_out_date,
-            'room_type_id' => $request->room_type_id,
-            // SỬA: Loại bỏ adults, children, guest_count vì không có trong bảng booking
-            'total_price_vnd' => $totalPrice,
-            'status' => 'Confirmed',
-            'status' => 'Completed',
-            'notes' => $request->notes,
-            'user_id' => Auth::id() ?? null,
-            'created_at' => now(),
-            'updated_at' => now()
-        ];
-
-        Log::info('Inserting booking data', ['booking_data' => $bookingData]);
-        
-        $bookingId = DB::table('booking')->insertGetId($bookingData);
-        
-        Log::info('Booking created successfully', ['booking_id' => $bookingId]);
-
-        // SỬA: Tạo representative chính cho booking (giống completeBookingAfterPayment)
-        $mainRepresentativeId = DB::table('representatives')->insertGetId([
-            'booking_id' => $bookingId,
-            'booking_code' => $bookingCode,
-            'room_id' => NULL,
-            'full_name' => $request->guest_name,
-            'phone_number' => $request->guest_phone,
-            'email' => $request->guest_email,
-            'id_card' => '', // Có thể thêm field này vào form sau
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        Log::info('Main representative created', ['representative_id' => $mainRepresentativeId]);
-
-        // SỬA: Tạo room_option (giống completeBookingAfterPayment)
-        $optionId = 'ADMIN-' . $bookingCode;
-        $roomOptionData = [
-            'option_id' => $optionId,
-            'room_id' => NULL,
-            'name' => $package->name . ' (Admin Created)',
-            'price_per_night_vnd' => $finalPricePerNight,
-            'max_guests' => $request->adults + ($request->children ?? 0),
-            'min_guests' => $request->adults,
-            'urgency_message' => null,
-            'most_popular' => 0,
-            'recommended' => 0,
-            'meal_type' => null,
-            'bed_type' => null,
-            'recommendation_score' => null,
-            'deposit_policy_id' => null,
-            'cancellation_policy_id' => null,
-            'check_out_policy_id' => null,
-            'package_id' => $request->package_id,
-            'policy_applied_reason' => 'Tạo bởi admin',
-            'policy_applied_date' => $request->check_in_date,
-            'policy_snapshot_json' => json_encode([]),
-            'adjusted_price' => $finalPricePerNight,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-
-        $roomOptionInserted = false;
-        $finalOptionId = null;
-        
+    public function createNewBooking(Request $request)
+    {
         try {
-            DB::table('room_option')->insert($roomOptionData);
-            $roomOptionInserted = true;
-            $finalOptionId = $optionId;
-            Log::info('Room option created successfully', ['option_id' => $optionId]);
-        } catch (\Exception $e) {
-            Log::error('Error creating room option', [
-                'option_id' => $optionId,
-                'error' => $e->getMessage(),
-                'sql_state' => $e->getCode()
+            // LOG: Request data đầu vào
+            Log::info('=== START createNewBooking ===', [
+                'request_method' => $request->method(),
+                'request_url' => $request->fullUrl(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->id(),
+                'timestamp' => now()
             ]);
-            // Nếu insert room_option thất bại, sử dụng NULL cho option_id
-            $finalOptionId = null;
-        }
 
-        // Cập nhật option_id vào booking nếu tạo thành công
-        if ($roomOptionInserted) {
-            try {
-                DB::table('booking')->where('booking_id', $bookingId)->update(['option_id' => $optionId]);
-                Log::info('Updated booking with option_id', ['booking_id' => $bookingId, 'option_id' => $optionId]);
-            } catch (\Exception $e) {
-                Log::error('Error updating booking with option_id', [
-                    'booking_id' => $bookingId,
-                    'option_id' => $optionId,
-                    'error' => $e->getMessage()
+            $validator = Validator::make($request->all(), [
+                'guest_name' => 'required|string|max:255',
+                'guest_phone' => 'required|string|max:20',
+                'guest_email' => 'required|email|max:255',
+                'check_in_date' => 'required|date|after_or_equal:today',
+                'check_out_date' => 'required|date|after:check_in_date',
+                'room_type_id' => 'required|exists:room_types,room_type_id',
+                'package_id' => 'required|exists:room_type_package,package_id',
+                'adults' => 'required|integer|min:1|max:10',
+                'children' => 'nullable|integer|min:0|max:5',
+                'rooms_count' => 'required|integer|min:1|max:5',
+                'notes' => 'nullable|string|max:1000',
+                'selected_room_ids' => 'nullable|array',
+                'selected_room_ids.*' => 'integer|exists:room,room_id'
+            ]);
+
+            // LOG: Validation results
+            if ($validator->fails()) {
+                Log::error('=== VALIDATION FAILED ===', [
+                    'errors' => $validator->errors()->toArray(),
+                    'failed_rules' => $validator->failed(),
+                    'request_data' => $request->all()
                 ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dữ liệu không hợp lệ',
+                    'errors' => $validator->errors(),
+                    'debug_info' => [
+                        'failed_fields' => array_keys($validator->errors()->toArray()),
+                        'request_keys' => array_keys($request->all())
+                    ]
+                ], 422);
             }
-        }
 
-        // SỬA: Xử lý selected rooms
-        $selectedRoomIds = $request->selected_room_ids ?? [];
-        Log::info('Processing selected rooms', [
-            'selected_room_ids' => $selectedRoomIds,
-            'selected_rooms_count' => count($selectedRoomIds),
-            'required_rooms_count' => $roomsCount
-        ]);
-        
-        // Tạo booking_rooms entries
-        for ($i = 0; $i < $roomsCount; $i++) {
-            $roomId = isset($selectedRoomIds[$i]) ? $selectedRoomIds[$i] : null;
-            
-            $bookingRoomData = [
-                'booking_id' => $bookingId,
-                'booking_code' => $bookingCode,
-                'room_id' => $roomId, // Có thể là null nếu chưa chọn phòng cụ thể
-                'option_id' => $finalOptionId,
-                'option_name' => $package->name,
-                'option_price' => $finalPricePerNight,
-                'representative_id' => $mainRepresentativeId,
-                'adults' => $request->adults, // SỬA: Lưu trong booking_rooms thay vì booking
-                'children' => $request->children ?? 0, // SỬA: Lưu trong booking_rooms thay vì booking
-                'children_age' => null, // Có thể xử lý children_ages sau
-                'price_per_night' => $finalPricePerNight,
-                'nights' => $nights,
-                'total_price' => $finalPricePerNight * $nights,
-                'check_in_date' => $request->check_in_date,
-                'check_out_date' => $request->check_out_date,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-            
-            Log::info("Creating booking_room entry {$i}", [
-                'booking_id' => $bookingId,
-                'room_id' => $roomId,
-                'option_id' => $finalOptionId
-            ]);
-            
-            $bookingRoomId = DB::table('booking_rooms')->insertGetId($bookingRoomData);
-            
-            Log::info("Booking room created successfully", [
-                'booking_room_id' => $bookingRoomId,
-                'room_id' => $roomId
-            ]);
+            Log::info('Validation passed successfully');
 
-            // SỬA: Xử lý children ages nếu có
-            if ($request->children_ages && is_array($request->children_ages)) {
-                foreach ($request->children_ages as $childIndex => $age) {
-                    if (is_numeric($age) && $age >= 0 && $age <= 17) {
-                        DB::table('booking_room_children')->insert([
-                            'booking_room_id' => $bookingRoomId,
-                            'age' => (int)$age,
-                            'child_index' => $childIndex,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
-                        
-                        Log::info("Child age recorded", [
-                            'booking_room_id' => $bookingRoomId,
-                            'child_index' => $childIndex,
-                            'age' => $age
-                        ]);
-                    }
+            DB::beginTransaction();
+            Log::info('Database transaction started');
+
+            // Generate booking code
+            $bookingCode = 'BK' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            
+            // Ensure unique booking code
+            $attempts = 0;
+            while (DB::table('booking')->where('booking_code', $bookingCode)->exists()) {
+                $bookingCode = 'BK' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                $attempts++;
+                if ($attempts > 10) {
+                    Log::error('Too many attempts to generate unique booking code');
+                    break;
                 }
             }
-        }
+            
+            Log::info('Generated booking code', ['booking_code' => $bookingCode, 'attempts' => $attempts]);
 
-        DB::commit();
-        Log::info('Database transaction committed successfully');
+            // LOG: Check if package exists
+            Log::info('Checking package existence', ['package_id' => $request->package_id]);
+            $package = DB::table('room_type_package')->where('package_id', $request->package_id)->first();
+            
+            if (!$package) {
+                Log::error('Package not found', [
+                    'package_id' => $request->package_id,
+                    'available_packages' => DB::table('room_type_package')->pluck('package_id')->toArray()
+                ]);
+                
+                DB::rollback();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gói phòng không tồn tại',
+                    'debug_info' => [
+                        'requested_package_id' => $request->package_id,
+                        'available_packages' => DB::table('room_type_package')->pluck('package_id')->toArray()
+                    ]
+                ], 404);
+            }
+            
+            Log::info('Package found', ['package' => $package]);
 
-        $responseData = [
-            'success' => true,
-            'message' => 'Đã tạo đặt phòng thành công',
-            'data' => [
-                'booking_id' => $bookingId,
+            // LOG: Check if room type exists
+            Log::info('Checking room type existence', ['room_type_id' => $request->room_type_id]);
+            $roomType = DB::table('room_types')->where('room_type_id', $request->room_type_id)->first();
+            
+            if (!$roomType) {
+                Log::error('Room type not found', [
+                    'room_type_id' => $request->room_type_id,
+                    'available_room_types' => DB::table('room_types')->pluck('room_type_id')->toArray()
+                ]);
+                
+                DB::rollback();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Loại phòng không tồn tại',
+                    'debug_info' => [
+                        'requested_room_type_id' => $request->room_type_id,
+                        'available_room_types' => DB::table('room_types')->pluck('room_type_id')->toArray()
+                    ]
+                ], 404);
+            }
+            
+            Log::info('Room type found', ['room_type' => $roomType]);
+
+            // Calculate pricing: base price + package modifier
+            $checkIn = Carbon::parse($request->check_in_date);
+            $checkOut = Carbon::parse($request->check_out_date);
+            $nights = $checkIn->diffInDays($checkOut);
+            $roomsCount = $request->rooms_count;
+            
+            $basePricePerNight = $roomType->base_price;
+            $packageModifier = $package->price_modifier_vnd;
+            $finalPricePerNight = $basePricePerNight + $packageModifier;
+            $totalPrice = $finalPricePerNight * $nights * $roomsCount;
+
+            Log::info('Pricing calculated', [
+                'check_in' => $request->check_in_date,
+                'check_out' => $request->check_out_date,
+                'nights' => $nights,
+                'rooms_count' => $roomsCount,
+                'base_price_per_night' => $basePricePerNight,
+                'package_modifier' => $packageModifier,
+                'final_price_per_night' => $finalPricePerNight,
+                'total_price' => $totalPrice
+            ]);
+
+            // SỬA: Create booking với các cột đúng theo database schema
+            $bookingData = [
                 'booking_code' => $bookingCode,
                 'guest_name' => $request->guest_name,
+                'guest_phone' => $request->guest_phone,
                 'guest_email' => $request->guest_email,
                 'check_in_date' => $request->check_in_date,
                 'check_out_date' => $request->check_out_date,
+                'room_type_id' => $request->room_type_id,
+                // SỬA: Loại bỏ adults, children, guest_count vì không có trong bảng booking
                 'total_price_vnd' => $totalPrice,
                 'status' => 'Confirmed',
-                'guest_count' => $request->adults + ($request->children ?? 0), // SỬA: Thêm guest_count vào response
-                'adults' => $request->adults, // SỬA: Thêm adults vào response
-                'children' => $request->children ?? 0, // SỬA: Thêm children vào response
-                'rooms_count' => $roomsCount // SỬA: Thêm rooms_count vào response
+                'status' => 'Completed',
+                'notes' => $request->notes,
+                'user_id' => Auth::id() ?? null,
+                'created_at' => now(),
+                'updated_at' => now()
+            ];
+
+            Log::info('Inserting booking data', ['booking_data' => $bookingData]);
+            
+            $bookingId = DB::table('booking')->insertGetId($bookingData);
+            
+            Log::info('Booking created successfully', ['booking_id' => $bookingId]);
+
+            // SỬA: Tạo representative chính cho booking (giống completeBookingAfterPayment)
+            $mainRepresentativeId = DB::table('representatives')->insertGetId([
+                'booking_id' => $bookingId,
+                'booking_code' => $bookingCode,
+                'room_id' => NULL,
+                'full_name' => $request->guest_name,
+                'phone_number' => $request->guest_phone,
+                'email' => $request->guest_email,
+                'id_card' => '', // Có thể thêm field này vào form sau
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Main representative created', ['representative_id' => $mainRepresentativeId]);
+
+            // SỬA: Tạo room_option (giống completeBookingAfterPayment)
+            $optionId = 'ADMIN-' . $bookingCode;
+            $roomOptionData = [
+                'option_id' => $optionId,
+                'room_id' => NULL,
+                'name' => $package->name . ' (Admin Created)',
+                'price_per_night_vnd' => $finalPricePerNight,
+                'max_guests' => $request->adults + ($request->children ?? 0),
+                'min_guests' => $request->adults,
+                'urgency_message' => null,
+                'most_popular' => 0,
+                'recommended' => 0,
+                'meal_type' => null,
+                'bed_type' => null,
+                'recommendation_score' => null,
+                'deposit_policy_id' => null,
+                'cancellation_policy_id' => null,
+                'check_out_policy_id' => null,
+                'package_id' => $request->package_id,
+                'policy_applied_reason' => 'Tạo bởi admin',
+                'policy_applied_date' => $request->check_in_date,
+                'policy_snapshot_json' => json_encode([]),
+                'adjusted_price' => $finalPricePerNight,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $roomOptionInserted = false;
+            $finalOptionId = null;
+            
+            try {
+                DB::table('room_option')->insert($roomOptionData);
+                $roomOptionInserted = true;
+                $finalOptionId = $optionId;
+                Log::info('Room option created successfully', ['option_id' => $optionId]);
+            } catch (\Exception $e) {
+                Log::error('Error creating room option', [
+                    'option_id' => $optionId,
+                    'error' => $e->getMessage(),
+                    'sql_state' => $e->getCode()
+                ]);
+                // Nếu insert room_option thất bại, sử dụng NULL cho option_id
+                $finalOptionId = null;
+            }
+
+            // Cập nhật option_id vào booking nếu tạo thành công
+            if ($roomOptionInserted) {
+                try {
+                    DB::table('booking')->where('booking_id', $bookingId)->update(['option_id' => $optionId]);
+                    Log::info('Updated booking with option_id', ['booking_id' => $bookingId, 'option_id' => $optionId]);
+                } catch (\Exception $e) {
+                    Log::error('Error updating booking with option_id', [
+                        'booking_id' => $bookingId,
+                        'option_id' => $optionId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // SỬA: Xử lý selected rooms
+            $selectedRoomIds = $request->selected_room_ids ?? [];
+            Log::info('Processing selected rooms', [
+                'selected_room_ids' => $selectedRoomIds,
+                'selected_rooms_count' => count($selectedRoomIds),
+                'required_rooms_count' => $roomsCount
+            ]);
+            
+            // Tạo booking_rooms entries
+            for ($i = 0; $i < $roomsCount; $i++) {
+                $roomId = isset($selectedRoomIds[$i]) ? $selectedRoomIds[$i] : null;
                 
-            ]
-        ];
+                $bookingRoomData = [
+                    'booking_id' => $bookingId,
+                    'booking_code' => $bookingCode,
+                    'room_id' => $roomId, // Có thể là null nếu chưa chọn phòng cụ thể
+                    'option_id' => $finalOptionId,
+                    'option_name' => $package->name,
+                    'option_price' => $finalPricePerNight,
+                    'representative_id' => $mainRepresentativeId,
+                    'adults' => $request->adults, // SỬA: Lưu trong booking_rooms thay vì booking
+                    'children' => $request->children ?? 0, // SỬA: Lưu trong booking_rooms thay vì booking
+                    'children_age' => null, // Có thể xử lý children_ages sau
+                    'price_per_night' => $finalPricePerNight,
+                    'nights' => $nights,
+                    'total_price' => $finalPricePerNight * $nights,
+                    'check_in_date' => $request->check_in_date,
+                    'check_out_date' => $request->check_out_date,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                
+                Log::info("Creating booking_room entry {$i}", [
+                    'booking_id' => $bookingId,
+                    'room_id' => $roomId,
+                    'option_id' => $finalOptionId
+                ]);
+                
+                $bookingRoomId = DB::table('booking_rooms')->insertGetId($bookingRoomData);
+                
+                Log::info("Booking room created successfully", [
+                    'booking_room_id' => $bookingRoomId,
+                    'room_id' => $roomId
+                ]);
 
-        Log::info('=== END createNewBooking SUCCESS ===', [
-            'booking_id' => $bookingId,
-            'booking_code' => $bookingCode,
-            'response_data' => $responseData
+                // SỬA: Xử lý children ages nếu có
+                if ($request->children_ages && is_array($request->children_ages)) {
+                    foreach ($request->children_ages as $childIndex => $age) {
+                        if (is_numeric($age) && $age >= 0 && $age <= 17) {
+                            DB::table('booking_room_children')->insert([
+                                'booking_room_id' => $bookingRoomId,
+                                'age' => (int)$age,
+                                'child_index' => $childIndex,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                            
+                            Log::info("Child age recorded", [
+                                'booking_room_id' => $bookingRoomId,
+                                'child_index' => $childIndex,
+                                'age' => $age
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+Log::info('Database transaction committed successfully');
+
+// THÔNG BÁO TỰ ĐỘNG KHI TẠO BOOKING MỚI
+try {
+    Log::info('=== AUTO NOTIFICATION START ===', [
+        'booking_id' => $bookingId,
+        'booking_code' => $bookingCode,
+        'guest_name' => $request->guest_name
+    ]);
+
+    // Load booking với tất cả relationships cần thiết
+    $booking = Booking::with(['roomType', 'bookingRooms.room', 'representatives'])
+        ->find($bookingId);
+    
+    if (!$booking) {
+        Log::error('Booking not found for notification', ['booking_id' => $bookingId]);
+        throw new \Exception('Booking not found after creation');
+    }
+
+    Log::info('Booking loaded for notification', [
+        'booking_id' => $booking->booking_id,
+        'guest_name' => $booking->guest_name,
+        'room_type' => $booking->roomType ? $booking->roomType->name : 'N/A',
+        'booking_rooms_count' => $booking->bookingRooms->count()
+    ]);
+
+    // Tạo room relation cho notification
+    if ($booking->bookingRooms->isNotEmpty() && $booking->bookingRooms->first()->room) {
+        $room = $booking->bookingRooms->first()->room;
+        $booking->setRelation('room', $room);
+        Log::info('Using actual room for notification', [
+            'room_id' => $room->room_id,
+            'room_number' => $room->room_number
         ]);
-
-        return response()->json($responseData);
-
-    } catch (\Exception $e) {
-        DB::rollback();
-        
-        Log::error('=== ERROR in createNewBooking ===', [
-            'error_message' => $e->getMessage(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
-            'request_data' => $request->all()
+    } else {
+        // Fallback to room type name
+        $booking->setRelation('room', (object) [
+            'room_number' => $booking->roomType ? $booking->roomType->name : 'TBD',
+            'id' => null
         ]);
+        Log::info('Using room type as fallback for notification', [
+            'room_type' => $booking->roomType ? $booking->roomType->name : 'N/A'
+        ]);
+    }
+
+    // Fire BookingCreated event
+    event(new BookingCreated($booking));
+    
+    Log::info('BookingCreated event fired successfully', [
+        'booking_id' => $booking->booking_id,
+        'event_class' => 'App\Events\BookingCreated'
+    ]);
+
+    Log::info('=== AUTO NOTIFICATION END ===');
+
+} catch (\Exception $e) {
+    Log::error('Auto notification failed', [
+        'booking_id' => $bookingId,
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ]);
+    
+    // Không throw exception ở đây vì booking đã được tạo thành công
+    // Chỉ log lỗi để không ảnh hưởng đến response
+}
+
+// Tiếp tục với response như cũ...
+$responseData = [
+    'success' => true,
+    'message' => 'Đã tạo đặt phòng thành công',
+    'data' => [
+        'booking_id' => $bookingId,
+        'booking_code' => $bookingCode,
+        'guest_name' => $request->guest_name,
+        'guest_email' => $request->guest_email,
+        'check_in_date' => $request->check_in_date,
+        'check_out_date' => $request->check_out_date,
+        'total_price_vnd' => $totalPrice,
+        'status' => 'Confirmed',
+        'guest_count' => $request->adults + ($request->children ?? 0),
+        'adults' => $request->adults,
+        'children' => $request->children ?? 0,
+        'rooms_count' => $roomsCount
+    ]
+];
+
+return response()->json($responseData);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            Log::error('=== ERROR in createNewBooking ===', [
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
 
             return response()->json([
                 'success' => false,
@@ -561,6 +619,7 @@ class BookingController extends Controller {
             ], 500);
         }
     }
+    
     /**
      * Display a listing of bookings
      */

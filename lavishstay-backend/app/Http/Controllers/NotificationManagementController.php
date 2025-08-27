@@ -20,59 +20,59 @@ class NotificationManagementController extends Controller
     public function __construct(NotificationService $notificationService)
     {
         $this->notificationService = $notificationService;
-        $this->middleware(['auth', 'role:admin']);
+        $this->middleware(['auth', 'permission:thong_bao']);
     }
 
     /**
      * Display notification management dashboard
      */
     public function index()
-{
-    try {
-        $statistics = [
-            'total_notifications' => Notification::count(),
-            'unread_notifications' => Notification::whereNull('read_at')->count(),
-            'today_notifications' => Notification::whereDate('created_at', today())->count(),
-            'urgent_notifications' => Notification::where('priority', 'urgent')->whereNull('read_at')->count(),
-            'notification_types' => NotificationType::count(),
-            'active_types' => NotificationType::active()->count(),
-            'total_users' => User::count(),
-            'users_with_settings' => UserNotificationSetting::distinct('user_id')->count(),
-        ];
+    {
+        try {
+            $statistics = [
+                'total_notifications' => Notification::count(),
+                'unread_notifications' => Notification::whereNull('read_at')->count(),
+                'today_notifications' => Notification::whereDate('created_at', today())->count(),
+                'urgent_notifications' => Notification::where('priority', 'urgent')->whereNull('read_at')->count(),
+                'notification_types' => NotificationType::count(),
+                'active_types' => NotificationType::active()->count(),
+                'total_users' => User::count(),
+                'users_with_settings' => UserNotificationSetting::distinct('user_id')->count(),
+            ];
 
-        $recentNotifications = Notification::with(['notificationType'])
-            ->latest()
-            ->limit(10)
-            ->get();
+            $recentNotifications = Notification::with(['notificationType'])
+                ->latest()
+                ->limit(10)
+                ->get();
 
-        $notificationsByPriority = [
-            'urgent' => Notification::where('priority', 'urgent')->count(),
-            'high' => Notification::where('priority', 'high')->count(),
-            'normal' => Notification::where('priority', 'normal')->count(),
-            'low' => Notification::where('priority', 'low')->count(),
-        ];
+            $notificationsByPriority = [
+                'urgent' => Notification::where('priority', 'urgent')->count(),
+                'high' => Notification::where('priority', 'high')->count(),
+                'normal' => Notification::where('priority', 'normal')->count(),
+                'low' => Notification::where('priority', 'low')->count(),
+            ];
 
-        $notificationsByStatus = [
-            'sent' => Notification::where('status', 'sent')->count(),
-            'pending' => Notification::where('status', 'pending')->count(),
-            'failed' => Notification::where('status', 'failed')->count(),
-        ];
+            $notificationsByStatus = [
+                'sent' => Notification::where('status', 'sent')->count(),
+                'pending' => Notification::where('status', 'pending')->count(),
+                'failed' => Notification::where('status', 'failed')->count(),
+            ];
 
-        $notificationTypes = NotificationType::withCount('notifications')->get();
+            $notificationTypes = NotificationType::withCount('notifications')->get();
 
-        return view('admin.notifications.index', compact(
-            'statistics',
-            'recentNotifications',
-            'notificationsByPriority',
-            'notificationsByStatus',
-            'notificationTypes'
-        ));
+            return view('admin.notifications.index', compact(
+                'statistics',
+                'recentNotifications',
+                'notificationsByPriority',
+                'notificationsByStatus',
+                'notificationTypes'
+            ));
 
-    } catch (\Exception $e) {
-        Log::error('Error loading notification dashboard: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Không thể tải trang quản lý thông báo');
+        } catch (\Exception $e) {
+            Log::error('Error loading notification dashboard: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Không thể tải trang quản lý thông báo');
+        }
     }
-}
 
     /**
      * Display all notifications with filtering

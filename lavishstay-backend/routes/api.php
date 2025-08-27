@@ -38,8 +38,8 @@ use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
 use App\Http\Controllers\Api\RoomTypeOverviewController;
-use App\Http\Controllers\CouponController;
-use App\Http\Controllers\AdminCouponController;
+use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\AdminCouponController;
 
 /*
 |--------------------------------------------------------------------------

@@ -15,7 +15,17 @@
                     <option value="7">7 ngày qua</option>
                     <option value="30" selected>30 ngày qua</option>
                     <option value="90">90 ngày qua</option>
+                    <option value="365">1 năm qua</option>
                 </select>
+
+                <!-- Export Excel Button -->
+                <button onclick="exportExcel()" class="btn bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600">
+                    <svg class="fill-current shrink-0 w-4 h-4 mr-2" viewBox="0 0 16 16">
+                        <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                    </svg>
+                    <span class="max-xs:sr-only">Export Excel</span>
+                </button>
 
                 <!-- Refresh Button -->
                 <button onclick="refreshDashboard()" class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
@@ -137,7 +147,7 @@
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
                 <div class="text-center">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">ADR</h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Giá phòng trung bình</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Giá phòng trung bình</p>
                     <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                         {{ number_format($businessSummary['adr']) }}₫
                     </div>
@@ -214,7 +224,7 @@
                 <div>
                     <h4 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">Tỷ lệ lấp đầy theo loại</h4>
                     <div class="space-y-4">
-                        @foreach($roomTypeStats['occupancy_by_type'] as $roomType)
+                        @forelse($roomTypeStats['occupancy_by_type'] as $roomType)
                         <div>
                             <div class="flex justify-between text-sm mb-1">
                                 <span class="text-gray-700 dark:text-gray-300">{{ $roomType->name }}</span>
@@ -225,13 +235,130 @@
                                      style="width: {{ $roomType->occupancy_rate }}%"></div>
                             </div>
                         </div>
-                        @endforeach
+                        @empty
+                        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <p>Chưa có dữ liệu loại phòng</p>
+                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 5. HOẠT ĐỘNG LỄ TÂN & CẢNH BÁO -->
+        <!-- 5. REVIEWS & TIN TỨC GẦN ĐÂY -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Reviews gần đây -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Reviews gần đây</h3>
+                    <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        Xem tất cả
+                    </a>
+                </div>
+                <div class="space-y-4">
+                    @forelse($recentReviews as $review)
+                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= ($review->rating ?? 0))
+                                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @endif
+                                @endfor
+                            </div>
+                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">{{ $review->rating ?? 0 }}/5</span>
+                        </div>
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">{{ Str::limit($review->comment ?? 'Không có bình luận', 100) }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ $review->guest_name ?? 'Khách hàng' }} • {{ \Carbon\Carbon::parse($review->created_at)->diffForHumans() }}
+                        </p>
+                    </div>
+                    @empty
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                        </svg>
+                        <p>Chưa có review nào</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Tin tức hot -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Tin tức nổi bật</h3>
+                    <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        Xem tất cả
+                    </a>
+                </div>
+                <div class="space-y-4">
+                    @forelse($hotNews as $news)
+                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            {{ Str::limit($news->title, 60) }}
+                        </h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ Str::limit($news->summary ?? '', 80) }}
+                        </p>
+                        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <span>{{ $news->views ?? 0 }} lượt xem</span>
+                            <span>{{ \Carbon\Carbon::parse($news->created_at)->diffForHumans() }}</span>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15"></path>
+                        </svg>
+                        <p>Chưa có tin tức nào</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Comments gần đây -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Bình luận gần đây</h3>
+                    <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        Xem tất cả
+                    </a>
+                </div>
+                <div class="space-y-4">
+                    @forelse($recentComments as $comment)
+                    <div class="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                            {{ Str::limit($comment->content ?? '', 80) }}
+                        </p>
+                        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <span>{{ $comment->name ?? 'Khách' }}</span>
+                            <span>{{ \Carbon\Carbon::parse($comment->created_at)->diffForHumans() }}</span>
+                        </div>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            Trên: {{ Str::limit($comment->title ?? 'Bài viết', 40) }}
+                        </p>
+                    </div>
+                    @empty
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        <p>Chưa có bình luận nào</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. HOẠT ĐỘNG LỄ TÂN & CẢNH BÁO -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             
             <!-- Hoạt động lễ tân -->
@@ -318,7 +445,7 @@
                     </div>
                     @endif
 
-                                        @if($alerts['maintenance_rooms'] > 0)
+                    @if($alerts['maintenance_rooms'] > 0)
                     <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg border-l-4 border-gray-500">
                         <svg class="w-10 h-10 text-gray-600 dark:text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -331,7 +458,7 @@
                     </div>
                     @endif
 
-                    @if($alerts['rooms_need_cleaning'] == 0 && $alerts['overdue_payments'] == 0 && $alerts['maintenance_rooms'] == 0)
+                    @if($alerts['rooms_need_cleaning'] == 0 && $alerts['overdue_payments'] == 0 && $alerts['maintenance_rooms'] == 0 && $alerts['arriving_tomorrow'] == 0)
                     <div class="flex items-center justify-center p-8 text-gray-500 dark:text-gray-400">
                         <svg class="w-8 h-8 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -343,14 +470,14 @@
             </div>
         </div>
 
-        <!-- 6. BẢNG DỮ LIỆU CHI TIẾT -->
+        <!-- 7. BẢNG DỮ LIỆU CHI TIẾT -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             
             <!-- Đặt phòng mới nhất -->
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Đặt phòng mới nhất</h3>
-                    <a href="{{ route('admin.bookings') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
                         Xem tất cả
                     </a>
                 </div>
@@ -360,28 +487,31 @@
                         <div class="flex-1">
                             <div class="flex items-center">
                                 <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {{ $booking->booking_code }}
+                                    {{ $booking->booking_code ?? 'N/A' }}
                                 </span>
                                 <span class="ml-2 px-2 py-1 text-xs rounded-full 
-                                    @if($booking->status == 'confirmed') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-                                    @elseif($booking->status == 'pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
-                                    @elseif($booking->status == 'cancelled') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                    @if($booking->status == 'Confirmed') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                    @elseif($booking->status == 'Pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                                    @elseif($booking->status == 'Cancelled') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
                                     @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
-                                    {{ ucfirst($booking->status) }}
+                                    {{ $booking->status ?? 'Unknown' }}
                                 </span>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {{ $booking->guest_name }} • {{ \Carbon\Carbon::parse($booking->created_at)->format('d/m H:i') }}
+                                {{ $booking->guest_name ?? 'N/A' }} • {{ \Carbon\Carbon::parse($booking->created_at)->format('d/m H:i') }}
                             </p>
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {{ number_format($booking->total_price_vnd) }}₫
+                                {{ number_format($booking->total_price_vnd ?? 0) }}₫
                             </p>
                         </div>
                     </div>
                     @empty
                     <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
                         <p>Chưa có đặt phòng nào</p>
                     </div>
                     @endforelse
@@ -401,10 +531,10 @@
                     <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <div class="flex-1">
                             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {{ $booking->guest_name }}
+                                {{ $booking->guest_name ?? 'N/A' }}
                             </p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                {{ $booking->booking_code }} • {{ $booking->guest_phone }}
+                                {{ $booking->booking_code ?? 'N/A' }} • {{ $booking->guest_phone ?? 'N/A' }}
                             </p>
                         </div>
                         <div class="text-right">
@@ -415,6 +545,9 @@
                     </div>
                     @empty
                     <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
                         <p>Không có khách check-in hôm nay</p>
                     </div>
                     @endforelse
@@ -422,7 +555,7 @@
             </div>
         </div>
 
-        <!-- 7. THỐNG KÊ KHÁCH HÀNG & TÀI CHÍNH -->
+        <!-- 8. THỐNG KÊ KHÁCH HÀNG & TÀI CHÍNH -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             
             <!-- Thống kê khách hàng -->
@@ -461,7 +594,7 @@
                         </p>
                     </div>
                     <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Tổng giá trị booking</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">Tổng giá trị</p>
                         <p class="text-lg font-bold text-blue-600 dark:text-blue-400">
                             {{ number_format($financialMetrics['total_bookings_value']) }}₫
                         </p>
@@ -470,15 +603,18 @@
             </div>
         </div>
 
-        <!-- 8. TOP KHÁCH HÀNG -->
+        <!-- 9. TOP KHÁCH HÀNG -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 mb-8">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Top khách hàng</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Top khách hàng VIP</h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-900/50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Khách hàng
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Email
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Số lần đặt
@@ -492,25 +628,27 @@
                         @forelse($customerStats['top_customers'] as $customer)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ $customer->guest_name }}
-                                    </div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $customer->guest_email }}
-                                    </div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {{ $customer->guest_name ?? 'N/A' }}
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                {{ $customer->booking_count }} lần
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ $customer->guest_email ?? 'N/A' }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                    {{ $customer->booking_count ?? 0 }} lần
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
-                                {{ number_format($customer->total_spent) }}₫
+                                {{ number_format($customer->total_spent ?? 0) }}₫
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="3" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                 Chưa có dữ liệu khách hàng
                             </td>
                         </tr>
@@ -519,132 +657,65 @@
                 </table>
             </div>
         </div>
+
     </div>
 
-    @push('styles')
+    <!-- Custom CSS -->
     <style>
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
+        .quick-filter-btn {
+            @apply px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700;
         }
-        
-        .metric-card {
-            transition: transform 0.2s ease-in-out;
+        .quick-filter-btn.active {
+            @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:border-blue-500;
         }
-        
-                .metric-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .progress-bar {
-            transition: width 0.3s ease-in-out;
-        }
-        
-        .alert-item {
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .btn {
+            @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
         }
     </style>
-    @endpush
 
-
-    <!-- Chart.js -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    
     <script>
-        console.log(45445);
-        
-        console.log('chartData:', @json($chartData));
-        console.log('roomTypeStats:', @json($roomTypeStats));
-        // Global chart configuration
-        Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
-        Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#9CA3AF' : '#6B7280';
+        // Global variables
+        let revenueChart, bookingsChart, roomTypeRevenueChart;
         
         // Chart data from backend
         const chartData = @json($chartData);
         const roomTypeStats = @json($roomTypeStats);
-        // Initialize charts when DOM is loaded
+
+        // Initialize charts when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initializeCharts();
-            setupRealTimeUpdates();
-            setupPeriodFilter();
+            startRealtimeUpdates();
+            initializeFilterHandlers();
         });
-        
+
+        // Initialize all charts
         function initializeCharts() {
-            // 1. Revenue Chart
             initRevenueChart();
-            
-            // 2. Bookings Chart
             initBookingsChart();
-            
-            // 3. Room Type Revenue Chart
             initRoomTypeRevenueChart();
         }
-        
+
+        // Revenue Chart
         function initRevenueChart() {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const ctx = document.getElementById('revenueChart');
+            if (!ctx) return;
             
-            const revenueData = chartData.revenue.map(item => ({
-                x: item.date,
-                y: item.revenue
-            }));
-            console.log('roomTypeStatsssssssss:', revenueData);
-            
-            new Chart(ctx, {
+            revenueChart = new Chart(ctx.getContext('2d'), {
                 type: 'line',
                 data: {
+                    labels: chartData.revenue.map(item => {
+                        const date = new Date(item.date);
+                        return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+                    }),
                     datasets: [{
                         label: 'Doanh thu (VNĐ)',
-                        data: revenueData,
+                        data: chartData.revenue.map(item => item.revenue),
                         borderColor: 'rgb(239, 68, 68)',
                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
                         tension: 0.4,
-                        pointBackgroundColor: 'rgb(239, 68, 68)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
+                        fill: true
                     }]
                 },
                 options: {
@@ -653,47 +724,14 @@
                     plugins: {
                         legend: {
                             display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgb(239, 68, 68)',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(context.parsed.y) + '₫';
-                                }
-                            }
                         }
                     },
                     scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                displayFormats: {
-                                    day: 'dd/MM'
-                                }
-                            },
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                maxTicksLimit: 7
-                            }
-                        },
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            },
                             ticks: {
                                 callback: function(value) {
-                                    return new Intl.NumberFormat('vi-VN', {
-                                        notation: 'compact',
-                                        compactDisplay: 'short'
-                                    }).format(value) + '₫';
+                                    return new Intl.NumberFormat('vi-VN').format(value) + '₫';
                                 }
                             }
                         }
@@ -705,26 +743,25 @@
                 }
             });
         }
-        
+
+        // Bookings Chart
         function initBookingsChart() {
-            const ctx = document.getElementById('bookingsChart').getContext('2d');
+            const ctx = document.getElementById('bookingsChart');
+            if (!ctx) return;
             
-            const bookingData = chartData.bookings.map(item => ({
-                x: item.date,
-                y: item.bookings
-            }));
-            
-            new Chart(ctx, {
+            bookingsChart = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
+                    labels: chartData.bookings.map(item => {
+                        const date = new Date(item.date);
+                        return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+                    }),
                     datasets: [{
-                        label: 'Số lượt đặt phòng',
-                        data: bookingData,
+                        label: 'Số lượt đặt',
+                        data: chartData.bookings.map(item => item.bookings),
                         backgroundColor: 'rgba(59, 130, 246, 0.8)',
                         borderColor: 'rgb(59, 130, 246)',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                        borderSkipped: false,
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -733,41 +770,11 @@
                     plugins: {
                         legend: {
                             display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
-                            borderColor: 'rgb(59, 130, 246)',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Đặt phòng: ' + context.parsed.y + ' lượt';
-                                }
-                            }
                         }
                     },
                     scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                displayFormats: {
-                                    day: 'dd/MM'
-                                }
-                            },
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                maxTicksLimit: 7
-                            }
-                        },
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            },
                             ticks: {
                                 stepSize: 1
                             }
@@ -776,34 +783,30 @@
                 }
             });
         }
-        
+
+        // Room Type Revenue Chart
         function initRoomTypeRevenueChart() {
-            const ctx = document.getElementById('roomTypeRevenueChart').getContext('2d');
+            const ctx = document.getElementById('roomTypeRevenueChart');
+            if (!ctx) return;
             
-            const roomTypeData = roomTypeStats.booking_by_type;
-            const labels = roomTypeData.map(item => item.name);
-            const revenues = roomTypeData.map(item => item.revenue);
-            
-            // Generate colors for each room type
             const colors = [
-                'rgba(239, 68, 68, 0.8)',   // Red
-                'rgba(59, 130, 246, 0.8)',  // Blue
-                'rgba(16, 185, 129, 0.8)',  // Green
-                'rgba(245, 158, 11, 0.8)',  // Yellow
-                'rgba(139, 92, 246, 0.8)',  // Purple
-                'rgba(236, 72, 153, 0.8)',  // Pink
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(236, 72, 153, 0.8)'
             ];
-            
-            new Chart(ctx, {
+
+            roomTypeRevenueChart = new Chart(ctx.getContext('2d'), {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: roomTypeStats.booking_by_type.map(item => item.name),
                     datasets: [{
-                        data: revenues,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderColor: colors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
+                        data: roomTypeStats.booking_by_type.map(item => item.revenue),
+                        backgroundColor: colors,
                         borderWidth: 2,
-                        hoverOffset: 4
+                        borderColor: '#ffffff'
                     }]
                 },
                 options: {
@@ -814,175 +817,204 @@
                             position: 'bottom',
                             labels: {
                                 padding: 20,
-                                usePointStyle: true,
-                                font: {
-                                    size: 12
-                                }
+                                usePointStyle: true
                             }
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            titleColor: '#fff',
-                            bodyColor: '#fff',
                             callbacks: {
                                 label: function(context) {
-                                    const label = context.label || '';
                                     const value = new Intl.NumberFormat('vi-VN').format(context.parsed);
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                    return `${label}: ${value}₫ (${percentage}%)`;
+                                    return context.label + ': ' + value + '₫';
                                 }
                             }
                         }
-                    },
-                    cutout: '60%'
+                    }
                 }
             });
         }
-        
+
         // Real-time updates
-        function setupRealTimeUpdates() {
+        function startRealtimeUpdates() {
             // Update every 30 seconds
-            setInterval(updateRealTimeStats, 30000);
+            setInterval(updateRealtimeStats, 30000);
         }
-        
-        function updateRealTimeStats() {
-            fetch('{{ route("admin.dashboard.realtime-stats") }}')
+
+        function updateRealtimeStats() {
+            fetch('/admin/dashboard/realtime-stats')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         // Update room stats
-                        document.getElementById('rooms-available').textContent = data.data.rooms_available;
-                        document.getElementById('rooms-occupied').textContent = data.data.rooms_occupied;
-                        document.getElementById('today-revenue').textContent = 
-                            new Intl.NumberFormat('vi-VN').format(data.data.today_revenue) + '₫';
-                        document.getElementById('today-bookings').textContent = data.data.today_bookings;
+                        const roomsAvailable = document.getElementById('rooms-available');
+                        const roomsOccupied = document.getElementById('rooms-occupied');
+                        const todayRevenue = document.getElementById('today-revenue');
+                        const todayBookings = document.getElementById('today-bookings');
+
+                        if (roomsAvailable) roomsAvailable.textContent = data.data.rooms_available;
+                        if (roomsOccupied) roomsOccupied.textContent = data.data.rooms_occupied;
+                        if (todayRevenue) todayRevenue.textContent = new Intl.NumberFormat('vi-VN').format(data.data.today_revenue) + '₫';
+                        if (todayBookings) todayBookings.textContent = data.data.today_bookings;
                     }
                 })
                 .catch(error => {
-                    console.error('Error updating real-time stats:', error);
+                    console.error('Error updating realtime stats:', error);
                 });
         }
-        
-        // Period filter
-        function setupPeriodFilter() {
-            const periodFilter = document.getElementById('period-filter');
-            periodFilter.addEventListener('change', function() {
-                updateChartsData(this.value);
-            });
+
+        // Filter handlers
+        function initializeFilterHandlers() {
+            const filterType = document.getElementById('filter_type');
+            if (filterType) {
+                filterType.addEventListener('change', toggleFilterOptions);
+            }
         }
-        
-        function updateChartsData(period) {
-            showLoading();
-            
-            fetch(`{{ route("admin.dashboard.chart-data") }}?period=${period}`)
+
+        function toggleAdvancedFilter() {
+            const panel = document.getElementById('advanced-filter');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+
+        function toggleFilterOptions() {
+            const filterType = document.getElementById('filter_type').value;
+            const presetOptions = document.getElementById('preset-options');
+            const customRangeOptions = document.getElementById('custom-range-options');
+            const specificDateOptions = document.getElementById('specific-date-options');
+
+            // Hide all options first
+            presetOptions.classList.add('hidden');
+            customRangeOptions.classList.add('hidden');
+            specificDateOptions.classList.add('hidden');
+
+            // Show relevant option
+            switch(filterType) {
+                case 'preset':
+                    presetOptions.classList.remove('hidden');
+                    break;
+                case 'custom_range':
+                    customRangeOptions.classList.remove('hidden');
+                    break;
+                case 'specific_date':
+                    specificDateOptions.classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function applyQuickFilter(period) {
+            // Update active button
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const targetBtn = document.querySelector(`[data-filter="${period}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+
+            // Update charts
+            updateChartData(period);
+        }
+
+        function updateChartData(period) {
+            fetch(`/admin/dashboard/chart-data?period=${period}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        // Update charts with new data
-                        updateRevenueChart(data.data.revenue);
-                        updateBookingsChart(data.data.bookings);
+                    if (data.success && revenueChart && bookingsChart) {
+                        // Update revenue chart
+                        revenueChart.data.labels = data.data.revenue.map(item => {
+                            const date = new Date(item.date);
+                            return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+                        });
+                        revenueChart.data.datasets[0].data = data.data.revenue.map(item => item.revenue);
+                        revenueChart.update();
+
+                        // Update bookings chart
+                        bookingsChart.data.labels = data.data.bookings.map(item => {
+                            const date = new Date(item.date);
+                            return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+                        });
+                        bookingsChart.data.datasets[0].data = data.data.bookings.map(item => item.bookings);
+                        bookingsChart.update();
                     }
                 })
                 .catch(error => {
                     console.error('Error updating chart data:', error);
-                    showNotification('Có lỗi xảy ra khi cập nhật dữ liệu', 'error');
-                })
-                .finally(() => {
-                    hideLoading();
                 });
         }
-        
-        function updateRevenueChart(newData) {
-            // Implementation for updating revenue chart
-            // This would require storing chart instances globally
-        }
-        
-        function updateBookingsChart(newData) {
-            // Implementation for updating bookings chart
-        }
-        
-        // Dashboard refresh
-        function refreshDashboard() {
-            showLoading();
-            location.reload();
-        }
-        
-        // Utility functions
-        function showLoading() {
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.id = 'loading-overlay';
-            loadingOverlay.innerHTML = `
-                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
-                    <div class="spinner"></div>
-                    <span class="text-gray-900 dark:text-gray-100">Đang tải dữ liệu...</span>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-        }
-        
-        function hideLoading() {
-            const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) {
-                loadingOverlay.remove();
+
+        function resetFilter() {
+            const filterForm = document.getElementById('filter-form');
+            const filterType = document.getElementById('filter_type');
+            if (filterForm) filterForm.reset();
+            if (filterType) {
+                filterType.value = 'preset';
+                toggleFilterOptions();
             }
         }
-        
-        function showNotification(message, type = 'info') {
-            // Create notification toast
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 translate-x-full`;
-            
-            const bgColor = {
-                'success': 'bg-green-500',
-                'error': 'bg-red-500',
-                'warning': 'bg-yellow-500',
-                'info': 'bg-blue-500'
-            }[type] || 'bg-blue-500';
-            
-            notification.className += ` ${bgColor} text-white`;
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <span class="flex-1">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white hover:text-gray-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Animate in
-            setTimeout(() => {
-                notification.classList.remove('translate-x-full');
-            }, 100);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                notification.classList.add('translate-x-full');
+
+        // Refresh dashboard
+        function refreshDashboard() {
+            // Show loading state
+            const refreshBtn = document.querySelector('button[onclick="refreshDashboard()"]');
+            if (refreshBtn) {
+                const originalContent = refreshBtn.innerHTML;
+                refreshBtn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                refreshBtn.disabled = true;
+
+                // Reload page after short delay
                 setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 300);
-            }, 5000);
+                    window.location.reload();
+                }, 1000);
+            }
         }
-        
-                // Dark mode chart updates
+
+        // Export Excel
+        function exportExcel() {
+            const exportBtn = document.querySelector('button[onclick="exportExcel()"]');
+            if (exportBtn) {
+                const originalContent = exportBtn.innerHTML;
+                
+                // Show loading state
+                exportBtn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Đang xuất...';
+                exportBtn.disabled = true;
+
+                // Create download link
+                const link = document.createElement('a');
+                link.href = `/admin/dashboard/export-excel`;
+                link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Reset button after delay
+                setTimeout(() => {
+                    exportBtn.innerHTML = originalContent;
+                    exportBtn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Dark mode chart updates
         function updateChartsForTheme() {
             const isDark = document.documentElement.classList.contains('dark');
-            Chart.defaults.color = isDark ? '#9CA3AF' : '#6B7280';
-            
-            // Update all chart instances if they exist
-            Chart.instances.forEach(chart => {
-                chart.options.plugins.legend.labels.color = isDark ? '#9CA3AF' : '#6B7280';
-                chart.update();
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            [revenueChart, bookingsChart, roomTypeRevenueChart].forEach(chart => {
+                if (chart && chart.options.scales) {
+                    if (chart.options.scales.x) {
+                        chart.options.scales.x.ticks.color = textColor;
+                        chart.options.scales.x.grid.color = gridColor;
+                    }
+                    if (chart.options.scales.y) {
+                        chart.options.scales.y.ticks.color = textColor;
+                        chart.options.scales.y.grid.color = gridColor;
+                    }
+                    chart.update();
+                }
             });
         }
-        
+
         // Listen for theme changes
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
@@ -991,43 +1023,10 @@
                 }
             });
         });
-        
+
         observer.observe(document.documentElement, {
             attributes: true,
             attributeFilter: ['class']
         });
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // F5 or Ctrl+R to refresh
-            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-                e.preventDefault();
-                refreshDashboard();
-            }
-            
-            // Ctrl+D to toggle dark mode (if implemented)
-            if (e.ctrlKey && e.key === 'd') {
-                e.preventDefault();
-                // Toggle dark mode implementation
-            }
-        });
-        
-        // Auto-refresh every 5 minutes
-        setInterval(function() {
-            updateRealTimeStats();
-        }, 300000);
-        
-        // Page visibility API - pause updates when tab is not active
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                // Pause updates
-                console.log('Dashboard paused - tab not active');
-            } else {
-                // Resume updates
-                console.log('Dashboard resumed - tab active');
-                updateRealTimeStats();
-            }
-        });
     </script>
- 
 </x-app-layout>
