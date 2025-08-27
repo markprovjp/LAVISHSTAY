@@ -52,6 +52,8 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomTransferPolicyController;
 use App\Http\Controllers\SpecialRequestController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\NewsController\CommentsController;
+
 
 Route::redirect('/', 'login');
 Route::get('/home', [DashboardController::class, 'index'])->name('home');
@@ -86,7 +88,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         return view('pages/settings/notifications');
     })->name('notifications');
 
-    
+
 
 
 
@@ -105,7 +107,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     //Roles//////////////////////////////////
-    Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::prefix('admin')->middleware(['auth', 'role:system_admin'])->group(function () {
         Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
         Route::get('/roles/edit/{id}', [RoleController::class, 'edit'])->name('admin.roles.edit');
         Route::put('/roles/update/{id}', [RoleController::class, 'update'])->name('admin.roles.update');
@@ -131,7 +133,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
 
-   
+
     Route::middleware(['auth', 'permission:quan_ly_khach_hang'])->group(function () {
         Route::get('/admin/customers', [CustomerController::class, 'index'])->name('admin.users.customers.index');
         Route::get('/admin/customers/create', [CustomerController::class, 'create'])->name('admin.users.customers.create');
@@ -171,12 +173,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/room-types/packages/{package}/edit', [RoomTypeController::class, 'editPackage'])->name('admin.room-types.packages.edit');
     Route::put('/admin/room-types/packages/{package}', [RoomTypeController::class, 'updatePackage'])->name('admin.room-types.packages.update');
     Route::delete('/admin/room-types/{roomType}/packages/{package}', [RoomTypeController::class, 'destroyPackage'])->name('admin.room-types.packages.destroy');
-    Route::get('/admin/room-types/{roomType}/manage-packages-services', [RoomTypeController::class, 'managePackagesServices'])->name('admin.room-types.manage-packages-services'); 
+    Route::get('/admin/room-types/{roomType}/manage-packages-services', [RoomTypeController::class, 'managePackagesServices'])->name('admin.room-types.manage-packages-services');
     Route::get('/admin/room-types/packages/{package}/services', [RoomTypeController::class, 'getPackageServices'])->name('admin.room-types.packages.services');
     Route::post('/admin/room-types/packages/{package}/services', [RoomTypeController::class, 'storePackageServices'])->name('admin.room-types.packages.services.store');
-    Route::delete('/admin/room-types/packages/{package}/services/{service}', [RoomTypeController::class, 'destroyPackageService'])->name('admin.room-types.packages.services.destroy');   
+    Route::delete('/admin/room-types/packages/{package}/services/{service}', [RoomTypeController::class, 'destroyPackageService'])->name('admin.room-types.packages.services.destroy');
     Route::get('/admin/room-types/{roomType}/packages/{package}/manage-services', [RoomTypeController::class, 'managePackageServices'])->name('admin.room-types.packages.manage-services');
-    Route::post('/admin/room-types/packages/{package}/toggle-status', [RoomTypeController::class, 'togglePackageStatus'])->name('admin.room-types.packages.toggle-status');    
+    Route::post('/admin/room-types/packages/{package}/toggle-status', [RoomTypeController::class, 'togglePackageStatus'])->name('admin.room-types.packages.toggle-status');
 
     // Room //////////////////////////////////////////
     Route::get('/admin/rooms/type/{room_type_id}', [RoomController::class, 'roomsByType'])->name('admin.rooms.by-type');
@@ -345,12 +347,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('/bookings/bulk-confirm', [BookingController::class, 'bulkConfirm'])->name('admin.bookings.bulk-confirm');
     Route::post('/bookings/bulk-cancel', [BookingController::class, 'bulkCancel'])->name('admin.bookings.bulk-cancel');
     Route::post('/bookings/bulk-update-status', [BookingController::class, 'bulkUpdateStatus'])->name('admin.bookings.bulk-update-status');
-    
+
     // Export and analytics
     Route::get('/bookings/export', [BookingController::class, 'export'])->name('admin.bookings.export');
     Route::get('/bookings/analytics', [BookingController::class, 'analytics'])->name('admin.bookings.analytics');
     Route::get('/bookings/stats', [BookingController::class, 'getStats'])->name('admin.bookings.stats');
-    
+
     // New booking
     Route::get('/bookings/new/modal', [BookingController::class, 'showNewBookingModal'])->name('admin.bookings.new-modal');
     Route::post('/bookings/store', [BookingController::class, 'store'])->name('admin.bookings.store');
@@ -406,11 +408,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Special Requests Dashboard
     Route::get('/admin/special-requests', [SpecialRequestController::class, 'index'])
         ->name('admin.special-requests');
-    
+
     // Get request details for modal
     Route::get('/admin/special-requests/{type}/{id}', [SpecialRequestController::class, 'show'])
         ->name('admin.special-requests.show');
-    
+
     // Approve request
     Route::post('/admin/special-requests/{type}/{id}/approve', [SpecialRequestController::class, 'approve'])
         ->name('admin.special-requests.approve');
@@ -423,7 +425,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('/admin/special-requests/statistics', [SpecialRequestController::class, 'getStatistics'])
         ->name('admin.special-requests.statistics');
 
-Route::get('/admin/special-requests/stream', [SpecialRequestController::class, 'stream']);
+    Route::get('/admin/special-requests/stream', [SpecialRequestController::class, 'stream']);
 
     ///////////////////// CHÍNH SÁCH /////////////////////////////////////////////////////
 
@@ -510,7 +512,7 @@ Route::get('/admin/special-requests/stream', [SpecialRequestController::class, '
 
     // Chính sách thanh toán ///////////////////////////////////////////////////
     // Route::get('/admin/payment-policies', [PaymentPolicyController::class, 'index'])->name('admin.payment-policies');
-    
+
 
     // Chính sách phụ thu trẻ em ///////////////////////////////////////////////////
     Route::get('/admin/children-surcharge', [ChildPolicyController::class, 'index'])->name('admin.children-surcharge');
@@ -519,7 +521,7 @@ Route::get('/admin/special-requests/stream', [SpecialRequestController::class, '
     Route::get('/admin/children-surcharge/{childrenSurcharge}/edit', [ChildPolicyController::class, 'edit'])->name('admin.children-surcharge.edit');
     Route::put('/admin/children-surcharge/{childrenSurcharge}', [ChildPolicyController::class, 'update'])->name('admin.children-surcharge.update');
     Route::delete('/admin/children-surcharge/{childrenSurcharge}', [ChildPolicyController::class, 'destroy'])->name('admin.children-surcharge.destroy');
-    
+
 
 
 
@@ -636,41 +638,48 @@ Route::get('/admin/special-requests/stream', [SpecialRequestController::class, '
 
 
     // ---------------- DANH MỤC ----------------
-// Nhóm route cho danh mục tin tức
-Route::prefix('admin/news')->name('admin.news.')->group(function () {
-    Route::get('categories', [NewsCategoryController::class, 'index'])->name('categories.index');
-    Route::get('categories/create', [NewsCategoryController::class, 'create'])->name('categories.create');
-    Route::post('categories', [NewsCategoryController::class, 'store'])->name('categories.store');
-    Route::get('categories/{category}/edit', [NewsCategoryController::class, 'edit'])->name('categories.edit');
-    Route::put('categories/{category}', [NewsCategoryController::class, 'update'])->name('categories.update');
-    Route::delete('categories/{category}', [NewsCategoryController::class, 'destroy'])->name('categories.destroy');
-});
+    // Nhóm route cho danh mục tin tức
+    Route::prefix('admin/news')->name('admin.news.')->group(function () {
+        Route::get('categories', [NewsCategoryController::class, 'index'])->name('categories.index');
+        Route::get('categories/create', [NewsCategoryController::class, 'create'])->name('categories.create');
+        Route::post('categories', [NewsCategoryController::class, 'store'])->name('categories.store');
+        Route::get('categories/{category}/edit', [NewsCategoryController::class, 'edit'])->name('categories.edit');
+        Route::put('categories/{category}', [NewsCategoryController::class, 'update'])->name('categories.update');
+        Route::delete('categories/{category}', [NewsCategoryController::class, 'destroy'])->name('categories.destroy');
+    });
 
-// Route xử lý upload ảnh cho CKEditor
+    // Route xử lý upload ảnh cho CKEditor
     Route::post('admin/news/create/ckeditor', [NewsController::class, 'uploadImage'])->name('admin.news.create.ckeditor');
     Route::post('admin/news/edit/ckeditor', [NewsController::class, 'uploadImage'])->name('admin.news.edit.ckeditor');
     // Route::post('/admin/news/create/ckeditor', [NewsController::class, 'uploadCkeditorImage'])->name('admin.news.create.ckeditor');
-// ---------------- BÀI VIẾT ----------------
-Route::prefix('admin')->name('admin.')->group(function () {
-    // Route cho bài viết
-    Route::get('news', [NewsController::class, 'index'])->name('news.index');
-    Route::get('news/create', [NewsController::class, 'create'])->name('news.create');
-    Route::post('news/store', [NewsController::class, 'store'])->name('news.store');
-    Route::get('news/edit/{news}', [NewsController::class, 'edit'])->name('news.edit');
-    Route::put('news/update/{news}', [NewsController::class, 'update'])->name('news.update');
-    Route::delete('news/destroy/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
-    Route::delete('news/destroy/{id}', [NewsController::class, 'destroyMedia'])->name('media.destroy');
+    // ---------------- BÀI VIẾT ----------------
+    Route::prefix('admin')->name('admin.')->group(function () {
+        // Route cho bài viết
+        Route::get('news', [NewsController::class, 'index'])->name('news.index');
+        Route::get('news/create', [NewsController::class, 'create'])->name('news.create');
+        Route::post('news/store', [NewsController::class, 'store'])->name('news.store');
+        Route::get('news/edit/{news}', [NewsController::class, 'edit'])->name('news.edit');
+        Route::put('news/update/{news}', [NewsController::class, 'update'])->name('news.update');
+        Route::delete('news/destroy/{news}', [NewsController::class, 'destroy'])->name('news.destroy');
+        Route::delete('news/destroy/{id}', [NewsController::class, 'destroyMedia'])->name('media.destroy');
+        Route::post('news/{id}/update-featured', [NewsController::class, 'updateFeatured'])->name('news.update-featured');
+        Route::get('news/show/{news}', [NewsController::class, 'show'])->name('news.show');
+        Route::post('news/bulk-action', [NewsController::class, 'bulkAction'])->name('news.bulk');
 
-    Route::get('news/show/{news}', [NewsController::class, 'show'])->name('news.show');
-    Route::post('news/bulk-action', [NewsController::class, 'bulkAction'])->name('news.bulk');
+        //Route cho bình luận
 
-    // Route cho media
-    Route::get('news/media', [MediaController::class, 'index'])->name('media.index');
-    Route::post('news/media', [MediaController::class, 'store'])->name('media.store');
-    Route::post('news/media/upload', [MediaController::class, 'upload'])->name('media.upload');
-    Route::post('media/meta/{media}', [MediaController::class, 'updateMeta'])->name('media.updateMeta');
-    Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
-});
+        Route::get('news/{news}/comments', [CommentsController::class, 'comments'])->name('news.comments.comments');
+        Route::post('news/{news}/comments', [CommentsController::class, 'store'])->name('news.comments.store');
+        Route::delete('news/comments/{comment}', [CommentsController::class, 'deleteComment'])->name('news.comments.delete');
+        Route::post('news/comments/{comment}/like', [CommentsController::class, 'likeComment'])->name('news.comments.like');
+        Route::get('news/{news}/comments/fetch', [CommentsController::class, 'fetchComments'])->name('news.comments.fetch');
+        // Route cho media
+        Route::get('news/media', [MediaController::class, 'index'])->name('media.index');
+        Route::post('news/media', [MediaController::class, 'store'])->name('media.store');
+        Route::post('news/media/upload', [MediaController::class, 'upload'])->name('media.upload');
+        Route::post('media/meta/{media}', [MediaController::class, 'updateMeta'])->name('media.updateMeta');
+        Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+    });
 
 
 
@@ -716,7 +725,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 
     Route::get('/admin/payment/setting', [PaymentController::class, 'settings'])->name('admin.payment.setting');
-    Route::put('/admin/payment/setting', [PaymentController::class, 'updateSettings'])->name('admin.payment.setting.update'); 
+    Route::put('/admin/payment/setting', [PaymentController::class, 'updateSettings'])->name('admin.payment.setting.update');
     Route::post('/admin/payment/setting/test-vietqr', [PaymentController::class, 'testVietQRFromAdmin'])->name('admin.payment.setting.test-vietqr');
     Route::get('/admin/payment/setting/reset', [PaymentController::class, 'resetToDefaultsFromAdmin'])->name('admin.payment.setting.reset');
 
@@ -725,14 +734,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/admin/chatbot', [ChatController::class, 'show'])->name('admin.chat-support');
     // Admin Chat Support Routes
     Route::prefix('admin')->name('admin.')->group(function () {
-            Route::get('/chat-support', [ChatSupportController::class, 'index'])->name('chat-support');
-            Route::post('/chat-support/{conversation}/send', [ChatSupportController::class, 'sendMessage'])->name('chat-support.send');
-            Route::post('/chat-support/{conversation}/status', [ChatSupportController::class, 'updateStatus'])->name('chat-support.status');
-            Route::get('/chat-support/{conversation}/messages/latest', [ChatSupportController::class, 'getLatestMessages'])->name('chat-support.messages.latest');
-            Route::post('/chat-support/{conversation}/read', [ChatSupportController::class, 'markAsRead'])->name('chat-support.read');
-            Route::delete('/chat-support/{conversation}', [ChatSupportController::class, 'deleteConversation'])->name('chat-support.delete');
-            Route::get('/chat-support/{conversation}/export', [ChatSupportController::class, 'exportConversation'])->name('chat-support.export');
-        });
+        Route::get('/chat-support', [ChatSupportController::class, 'index'])->name('chat-support');
+        Route::post('/chat-support/{conversation}/send', [ChatSupportController::class, 'sendMessage'])->name('chat-support.send');
+        Route::post('/chat-support/{conversation}/status', [ChatSupportController::class, 'updateStatus'])->name('chat-support.status');
+        Route::get('/chat-support/{conversation}/messages/latest', [ChatSupportController::class, 'getLatestMessages'])->name('chat-support.messages.latest');
+        Route::post('/chat-support/{conversation}/read', [ChatSupportController::class, 'markAsRead'])->name('chat-support.read');
+        Route::delete('/chat-support/{conversation}', [ChatSupportController::class, 'deleteConversation'])->name('chat-support.delete');
+        Route::get('/chat-support/{conversation}/export', [ChatSupportController::class, 'exportConversation'])->name('chat-support.export');
+    });
 
 
 
@@ -748,22 +757,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::prefix('admin/audit')->name('admin.audit.')->group(function () {
         // Main audit log page
         Route::get('/', [AuditController::class, 'index'])->name('index');
-        
+
         // Show specific audit log (supports AJAX)
         Route::get('/{auditLog}', [AuditController::class, 'show'])->name('show');
-        
+
         // Compare two audit logs
         Route::get('/compare', [AuditController::class, 'compare'])->name('compare');
-        
+
         // Export audit logs
         Route::post('/export', [AuditController::class, 'export'])->name('export');
-        
+
         // Get statistics (AJAX endpoint)
         Route::get('/api/statistics', [AuditController::class, 'statistics'])->name('statistics');
-        
+
         // Restore deleted record
         Route::post('/{auditLog}/restore', [AuditController::class, 'restore'])->name('restore');
-        
+
         // Cleanup old logs
         Route::post('/cleanup', [AuditController::class, 'cleanup'])->name('cleanup');
     });
@@ -773,59 +782,58 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 
     // Notification routes - session-based authentication
-Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
-    // Basic notification endpoints
-    Route::get('/', [NotificationController::class, 'index'])->name('index');
-    Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
-    Route::get('/statistics', [NotificationController::class, 'statistics'])->name('statistics');
-    
-    // Mark as read endpoints
-    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
-    Route::post('/mark-multiple-read', [NotificationController::class, 'markMultipleAsRead'])->name('mark-multiple');
-    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all');
-    
-    // Delete notifications
-    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
-    
-    // User notification settings
-    Route::get('/settings', [NotificationController::class, 'getSettings'])->name('settings.get');
-    Route::post('/settings', [NotificationController::class, 'updateSettings'])->name('settings.update');
-});
+    Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
+        // Basic notification endpoints
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
+        Route::get('/statistics', [NotificationController::class, 'statistics'])->name('statistics');
 
-// Admin-only notification management routes
-Route::middleware(['auth', 'role:admin'])->prefix('notifications/admin')->name('notifications.admin.')->group(function () {
-    // Notification types management
-    Route::get('/types', [NotificationController::class, 'getTypes'])->name('types');
-    
-    // Send test notifications
-    Route::post('/send-test', [NotificationController::class, 'sendTest'])->name('send-test');
-    
-    // View all users' notifications (admin only)
-    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->name('all');
-    
-    // Notification statistics for all users
-    Route::get('/statistics/global', [NotificationController::class, 'getGlobalStatistics'])->name('statistics.global');
-    
-    // Bulk operations
-    Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('bulk-delete');
-    Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('bulk-mark-read');
-});
+        // Mark as read endpoints
+        Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-multiple-read', [NotificationController::class, 'markMultipleAsRead'])->name('mark-multiple');
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all');
 
-// Manager-level notification sending routes
-Route::middleware(['auth', 'role:admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {
-    // Send notifications to specific users or roles
-    Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('users');
-    Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('roles');
-    Route::post('/broadcast', [NotificationController::class, 'broadcastNotification'])->name('broadcast');
-});
+        // Delete notifications
+        Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
 
-// Development/Testing endpoints
-if (app()->environment(['local', 'staging'])) {
-    Route::middleware(['auth', 'role:admin'])->prefix('notifications/dev')->name('notifications.dev.')->group(function () {
-        Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('trigger');
-        Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('pusher');
-        Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('fake');
+        // User notification settings
+        Route::get('/settings', [NotificationController::class, 'getSettings'])->name('settings.get');
+        Route::post('/settings', [NotificationController::class, 'updateSettings'])->name('settings.update');
     });
-}
 
+    // Admin-only notification management routes
+    Route::middleware(['auth', 'role:admin'])->prefix('notifications/admin')->name('notifications.admin.')->group(function () {
+        // Notification types management
+        Route::get('/types', [NotificationController::class, 'getTypes'])->name('types');
+
+        // Send test notifications
+        Route::post('/send-test', [NotificationController::class, 'sendTest'])->name('send-test');
+
+        // View all users' notifications (admin only)
+        Route::get('/all', [NotificationController::class, 'getAllNotifications'])->name('all');
+
+        // Notification statistics for all users
+        Route::get('/statistics/global', [NotificationController::class, 'getGlobalStatistics'])->name('statistics.global');
+
+        // Bulk operations
+        Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('bulk-mark-read');
+    });
+
+    // Manager-level notification sending routes
+    Route::middleware(['auth', 'role:admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {
+        // Send notifications to specific users or roles
+        Route::post('/to-users', [NotificationController::class, 'sendToUsers'])->name('users');
+        Route::post('/to-roles', [NotificationController::class, 'sendToRoles'])->name('roles');
+        Route::post('/broadcast', [NotificationController::class, 'broadcastNotification'])->name('broadcast');
+    });
+
+    // Development/Testing endpoints
+    if (app()->environment(['local', 'staging'])) {
+        Route::middleware(['auth', 'role:admin'])->prefix('notifications/dev')->name('notifications.dev.')->group(function () {
+            Route::post('/trigger-event/{event}', [NotificationController::class, 'triggerTestEvent'])->name('trigger');
+            Route::get('/pusher-test', [NotificationController::class, 'pusherTest'])->name('pusher');
+            Route::post('/fake-notification', [NotificationController::class, 'createFakeNotification'])->name('fake');
+        });
+    }
 });

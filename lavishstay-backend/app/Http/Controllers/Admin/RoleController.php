@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Role;
+use Illuminate\Database\QueryException;
 
 class RoleController extends Controller
 {
@@ -62,13 +63,33 @@ class RoleController extends Controller
 
     public function destroy($id)
     {
+        // Tìm role theo ID, nếu không có thì trả về 404
         $role = Role::findOrFail($id);
-        if (in_array(strtolower($role->name), ['admin', 'guest'])) {
+
+        // Ngăn không cho xoá role đặc biệt
+        if (in_array(strtolower($role->name), ['system_admin', 'guest'])) {
             return redirect()->route('admin.roles.index')
                 ->with('error', 'Không thể xoá vai trò đặc biệt: ' . $role->name . '!');
         }
 
-        $role->delete();
-        return redirect()->route('admin.roles.index')->with('success', 'Xoá vai trò thành công!');
+        try {
+            // Tiến hành xoá role
+            $role->delete();
+
+            return redirect()->route('admin.roles.index')
+                ->with('success', 'Vai trò đã được xoá thành công!');
+        } catch (QueryException $e) {
+            if ($e->getCode() == '23000') {
+                return redirect()->route('admin.roles.index')
+                    ->with(
+                        'error',
+                        'Không thể xoá vai trò "' . $role->name . '" vì vẫn đang được sử dụng. 
+                     Vui lòng gỡ role khỏi người dùng hoặc quyền liên quan trước khi xoá.'
+                    );
+            }
+
+            // Các lỗi khác thì ném ra cho Laravel xử lý
+            throw $e;
+        }
     }
 }

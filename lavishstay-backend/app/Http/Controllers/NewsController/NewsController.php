@@ -19,40 +19,60 @@ class NewsController extends Controller
 {
     public function index(Request $request)
     {
-        // Truy vấn bài viết
-        $query = News::select('id', 'meta_title', 'category_id', 'author_id', 'thumbnail_id', 'status', 'published_at')
-            ->with([
-                'category:id,name',
-                'thumbnail:id,filepath,alt_text',
-                'author:id,name'
-            ]);
+        $query = News::select('id', 'meta_title', 'category_id', 'author_id', 'thumbnail_id', 'status', 'published_at', 'is_featured', 'views')
+            ->with(['category:id,name', 'thumbnail:id,filepath,alt_text', 'author:id,name']);
 
-        // Áp dụng bộ lọc (nếu có)
-        if ($request->has('search_title') && $request->search_title !== null) {
+        if ($request->search_title) {
             $query->where('meta_title', 'like', '%' . $request->search_title . '%');
         }
-        if ($request->has('category_id') && $request->category_id !== null) {
+        if ($request->category_id) {
             $query->where('category_id', $request->category_id);
         }
-        if ($request->has('author_id') && $request->author_id !== null) {
+        if ($request->author_id) {
             $query->where('author_id', $request->author_id);
         }
-        if ($request->has('status') && in_array($request->input('status'), ['0', '1'], true)) {
-            $query->where('status', (int) $request->input('status'));
+        if ($request->status !== null && in_array($request->status, ['0', '1'])) {
+            $query->where('status', (int) $request->status);
         }
-        if ($request->has('search_date') && $request->search_date !== null) {
+        if ($request->search_date) {
             $query->whereDate('published_at', $request->search_date);
+        }
+        if ($request->is_featured !== null && in_array($request->is_featured, ['0', '1'])) {
+            $query->where('is_featured', (int) $request->is_featured);
         }
 
         $news = $query->paginate(10);
 
-        // Lấy danh mục và tác giả
-        $categories = NewsCategory::select('id', 'name')->get();
+        $categories = NewsCategory::select('id', 'name')
+            ->whereIn('id', News::select('category_id')->distinct())
+            ->get();
+
         $authors = User::select('id', 'name')
-            ->whereExists(fn($q) => $q->select('id')->from('news')->whereColumn('news.author_id', 'users.id'))
+            ->whereIn('id', News::select('author_id')->distinct())
             ->get();
 
         return view('admin.news.index', compact('news', 'categories', 'authors'));
+    }
+
+    public function updateFeatured(Request $request, $id)
+    {
+        $request->validate(['is_featured' => 'required|in:0,1']);
+        $news = News::find($id);
+
+        if (!$news) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bài viết.'
+            ], 404);
+        }
+
+        $news->is_featured = $request->is_featured;
+        $news->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật trạng thái nổi bật thành công!'
+        ], 200);
     }
 
     public function create()
@@ -61,7 +81,7 @@ class NewsController extends Controller
         $categories = NewsCategory::select('id', 'name')->get();
         $mediaFiles = MediaFile::select('id', 'filename', 'filepath', 'alt_text', 'title')->get();
 
-        // Chuyển dữ liệu thành dạng JSON để AlpineJS có thể sử dụng
+        // Chuyển dữ liệu thành dạng JSON để AlpineJS sử dụng
         $mediaJson = $mediaFiles->map(function ($file) {
             return [
                 'id' => $file->id,
@@ -72,105 +92,123 @@ class NewsController extends Controller
             ];
         })->values();
 
-        // Trả về view với các dữ liệu cần thiết
         return view('admin.news.create', compact('categories', 'mediaFiles', 'mediaJson'));
     }
 
+  public function store(Request $request)
+{
+    // Xác thực dữ liệu đầu vào
+    $validated = $request->validate([
+        'meta_title' => 'required|string|max:255',
+        'slug' => 'nullable|string|max:255',
+        'meta_description' => 'required|string|max:160',
+        'meta_keywords' => 'required|string|max:100',
+        'content' => 'required|string',
+        'summary' => 'nullable|string|max:500',
+        'tags' => 'nullable|string',
+        'is_featured' => 'nullable|boolean', // Xác thực is_featured là boolean
+        'canonical_url' => 'nullable|url|max:255',
+        'schema_json' => 'nullable|json',
+        'category_id' => 'required|exists:news_categories,id',
+        'status' => 'required|boolean',
+        'publish_date' => 'required|date_format:Y-m-d\TH:i',
+        'thumbnail_id' => 'nullable|exists:media_files,id',
+        'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+    ], [
+        'meta_description.required' => 'Mô tả ngắn không được để trống.',
+        'meta_keywords.required' => 'Từ khóa SEO không được để trống.',
+        'publish_date.required' => 'Ngày đăng bài không được để trống.',
+        'canonical_url.url' => 'Canonical URL phải là một URL hợp lệ.',
+        'schema_json.json' => 'Schema JSON phải là định dạng JSON hợp lệ.',
+    ]);
 
-    public function store(Request $request)
-    {
-        // Xác thực dữ liệu từ form
-        $validated = $request->validate([
-            'meta_title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255',
-            'meta_description' => 'required|string|max:160', // Bắt buộc, giới hạn 160 ký tự
-            'meta_keywords' => 'required|string|max:100', // Bắt buộc, giới hạn 100 ký tự
-            'content' => 'required|string',
-            'category_id' => 'required|exists:news_categories,id',
-            'status' => 'required|boolean',
-            'publish_date' => 'required|date_format:Y-m-d\TH:i', // Bắt buộc
-            'thumbnail_id' => 'nullable|exists:media_files,id',
-            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
-        ], [
-            // Tùy chỉnh thông báo lỗi
-            'meta_description.required' => 'Mô tả ngắn không được để trống.',
-            'meta_keywords.required' => 'Từ khóa SEO không được để trống.',
-            'publish_date.required' => 'Ngày đăng bài không được để trống.',
-        ]);
+    // Kiểm tra ảnh đại diện
+    if (!$request->hasFile('thumbnail') && !$request->input('thumbnail_id')) {
+        return back()->withErrors(['thumbnail' => 'Bạn phải chọn hoặc tải lên một ảnh đại diện.'])->withInput();
+    }
 
-        // Kiểm tra bắt buộc phải có thumbnail hoặc thumbnail_id
-        if (!$request->hasFile('thumbnail') && !$request->input('thumbnail_id')) {
-            return redirect()->back()->withErrors(['thumbnail' => 'Bạn phải chọn hoặc tải lên một ảnh đại diện.']);
-        }
+    // Tạo slug duy nhất
+    $slug = $request->input('slug') ? Str::slug($request->slug) : Str::slug($validated['meta_title']);
+    $originalSlug = $slug;
+    $i = 1;
+    while (News::where('slug', $slug)->exists()) {
+        $slug = "$originalSlug-$i";
+        $i++;
+    }
 
-        // Tạo slug tự động từ meta_title nếu không có slug
-        $slug = $request->input('slug') ? Str::slug($request->input('slug')) : Str::slug($validated['meta_title']);
+    // Xử lý tags: Lưu trực tiếp chuỗi tags từ input
+    $tags = $request->tags ? trim($request->tags) : 'promotion,summer,discount,offer';
+    // - Dòng trên: Lấy chuỗi tags từ request, loại bỏ khoảng trắng thừa.
+    // + Lợi ích: Lưu tags dưới dạng chuỗi thô, đúng yêu cầu không mã hóa.
+    // + Lý do: Cột tags là text, không cần JSON.
 
-        // Kiểm tra slug có trùng không và tạo slug duy nhất nếu cần
-        $originalSlug = $slug;
-        $i = 1;
-        while (News::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $i;
-            $i++;
-        }
+    // Xử lý schema_json
+    $schema_json = $request->schema_json ?: json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'Article',
+        'headline' => $validated['meta_title'],
+        'description' => $validated['meta_description'],
+        'author' => ['@type' => 'Organization', 'name' => 'LavishStay Resort'],
+        'publisher' => ['@type' => 'Organization', 'name' => 'LavishStay Resort'],
+    ], JSON_UNESCAPED_UNICODE);
 
-        // Xử lý tải ảnh đại diện lên (nếu có)
-        if ($request->hasFile('thumbnail')) {
-            $file = $request->file('thumbnail');
+    // Xử lý ảnh đại diện
+    if ($request->hasFile('thumbnail')) {
+        $file = $request->file('thumbnail');
+        if ($file->isValid()) {
+            $filename = time() . '_' . Str::slug($file->getClientOriginalName()) . '.' . $file->extension();
+            $path = $file->storeAs('uploads/ckeditor', $filename, 'public');
+            $url = asset("storage/$path");
 
-            // Kiểm tra nếu file hợp lệ
-            if (!$file->isValid()) {
-                return redirect()->back()->withErrors(['thumbnail' => 'Ảnh tải lên không hợp lệ.']);
-            }
-
-            $filename = time() . '_' . Str::slug($file->getClientOriginalName(), '-') . '.' . $file->getClientOriginalExtension();
-            $filepath = $file->storeAs('media', $filename, 'public');
-
-            // Lấy kích thước ảnh
-            $fullPath = storage_path('app/public/media/' . $filename);
-            [$width, $height] = getimagesize($fullPath);
-
-            // Lưu thông tin ảnh vào bảng media_files
             $mediaFile = MediaFile::create([
                 'filename' => $filename,
-                'filepath' => Storage::url($filepath), // Sử dụng Storage::url() để tạo đường dẫn
+                'filepath' => $url,
                 'alt_text' => $validated['meta_description'],
                 'title' => $validated['meta_title'],
                 'type' => $file->getClientMimeType(),
                 'size' => $file->getSize(),
-                'width' => $width,
-                'height' => $height,
                 'used_in' => 'news',
             ]);
-
             $thumbnail_id = $mediaFile->id;
         } else {
-            // Sử dụng thumbnail_id từ request
-            $thumbnail_id = $validated['thumbnail_id'];
+            return back()->withErrors(['thumbnail' => 'Ảnh tải lên không hợp lệ.'])->withInput();
         }
-
-        // Gán tác giả là người dùng đang đăng nhập
-        $author_id = Auth()->user()->id;
-
-        // Tạo bài viết mới
-        $news = News::create([
-            'meta_title' => $validated['meta_title'],
-            'slug' => $slug,
-            'meta_description' => $validated['meta_description'],
-            'meta_keywords' => $validated['meta_keywords'],
-            'content' => $validated['content'],
-            'category_id' => $validated['category_id'],
-            'author_id' => $author_id,
-            'status' => $validated['status'],
-            'published_at' => Carbon::parse($validated['publish_date']),
-            'thumbnail_id' => $thumbnail_id,
-        ]);
-
-        
-
-        // Trả về thông báo thành công
-        return redirect()->route('admin.news.index')->with('success', 'Bài viết đã được tạo thành công!');
+    } else {
+        $thumbnail_id = $validated['thumbnail_id'];
     }
+
+    // Xử lý is_featured: Kiểm tra và gán giá trị boolean
+    $isFeatured = $request->has('is_featured') ? 1 : 0;
+    // - Dòng trên: Kiểm tra xem is_featured có trong request không, gán 1 nếu có, 0 nếu không.
+    // + Lợi ích: Đảm bảo is_featured được lưu đúng giá trị (1 nếu chọn checkbox, 0 nếu không).
+    // + Lý do: Checkbox chỉ gửi giá trị khi được chọn, dùng $request->has để kiểm tra rõ ràng.
+
+    // Tạo bài viết
+    News::create([
+        'title' => $validated['meta_title'],
+        'slug' => $slug,
+        'meta_title' => $validated['meta_title'],
+        'meta_description' => $validated['meta_description'],
+        'meta_keywords' => $validated['meta_keywords'],
+        'content' => $validated['content'],
+        'summary' => $validated['summary'],
+        'tags' => $tags,
+        'is_featured' => $isFeatured, // Sử dụng biến $isFeatured
+        'canonical_url' => $request->canonical_url ?: (config('app.url') . "/news/$slug"),
+        'schema_json' => $schema_json,
+        'category_id' => $validated['category_id'],
+        'author_id' => Auth::id(),
+        'thumbnail_id' => $thumbnail_id,
+        'status' => $validated['status'],
+        'published_at' => Carbon::parse($validated['publish_date']),
+        'views' => 0,
+    ]);
+    // - Dòng News::create: Lưu bài viết với is_featured đúng giá trị từ checkbox.
+    // + Lợi ích: Đảm bảo bài viết được đánh dấu nổi bật nếu người dùng chọn checkbox.
+    // + Lý do: Sử dụng biến $isFeatured để rõ ràng và tránh lỗi từ request.
+
+    return redirect()->route('admin.news.index')->with('success', 'Bài viết đã được tạo thành công!');
+}
     public function uploadImage(Request $request)
     {
         try {
@@ -183,7 +221,7 @@ class NewsController extends Controller
             if ($request->hasFile('upload')) {
                 $originName = $request->file('upload')->getClientOriginalName();
                 $extension = $request->file('upload')->getClientOriginalExtension();
-                $fileName = 'phuocxanh_' . time() . '.' . $extension;
+                $fileName = 'Lavishstay_' . time() . '.' . $extension;
 
                 // Lưu file vào storage/app/public/uploads/ckeditor
                 $path = $request->file('upload')->storeAs('uploads/ckeditor', $fileName, 'public');
@@ -232,128 +270,178 @@ class NewsController extends Controller
 
 
 
-   public function edit($id)
-{
-    $news = News::findOrFail($id);
-    $categories = NewsCategory::select('id', 'name')->get();
-    $mediaFiles = MediaFile::select('id', 'filename', 'filepath', 'alt_text', 'title')->get();
-    $mediaJson = $mediaFiles->map(function ($file) {
-        return [
-            'id' => $file->id,
-            'filename' => $file->filename,
-            'filepath' => $file->filepath,
-            'alt_text' => $file->alt_text,
-            'title' => $file->title,
-        ];
-    })->values();
-
-    return view('admin.news.edit', compact('news', 'categories', 'mediaFiles', 'mediaJson'));
-}
-
-
-    public function update(Request $request, $id)
+    public function edit(News $news)
     {
-        $news = News::findOrFail($id);
+        // Lấy danh mục và media files
+        $categories = NewsCategory::select('id', 'name')->get();
+        $mediaFiles = MediaFile::select('id', 'filename', 'filepath', 'alt_text', 'title')->get();
 
-        $validated = $request->validate([
-            'meta_title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255',
-            'meta_description' => 'required|string|max:160',
-            'meta_keywords' => 'required|string|max:100',
-            'content' => 'required|string',
-            'category_id' => 'required|exists:news_categories,id',
-            'status' => 'required|boolean',
-            'publish_date' => 'required|date_format:Y-m-d\TH:i',
-            'thumbnail_id' => 'nullable|exists:media_files,id',
-            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
-        ], [
-            'meta_description.required' => 'Mô tả ngắn không được để trống.',
-            'meta_keywords.required' => 'Từ khóa SEO không được để trống.',
-            'publish_date.required' => 'Ngày đăng bài không được để trống.',
-            'category_id.required' => 'Danh mục bài viết không được để trống.',
-            'content.required' => 'Nội dung bài viết không được để trống.',
-        ]);
+        // Chuyển dữ liệu thành dạng JSON để AlpineJS có thể sử dụng
+        $mediaJson = $mediaFiles->map(function ($file) {
+            return [
+                'id' => $file->id,
+                'filename' => $file->filename,
+                'filepath' => $file->filepath,
+                'alt_text' => $file->alt_text,
+                'title' => $file->title,
+            ];
+        })->values();
 
-        if (!$request->hasFile('thumbnail') && !$request->input('thumbnail_id')) {
-            return redirect()->back()->withErrors(['thumbnail' => 'Bạn phải chọn hoặc tải lên một ảnh đại diện.'])->withInput();
-        }
+        // Trả về view với các dữ liệu cần thiết
+        return view('admin.news.edit', compact('news', 'categories', 'mediaFiles', 'mediaJson'));
+    }
 
-        $slug = $request->input('slug') ? Str::slug($request->input('slug')) : Str::slug($validated['meta_title']);
-        $originalSlug = $slug;
-        $i = 1;
-        while (News::where('slug', $slug)->where('id', '!=', $news->id)->exists()) {
-            $slug = $originalSlug . '-' . $i;
-            $i++;
-        }
+    public function update(Request $request, News $news)
+{
+    // Xác thực dữ liệu đầu vào
+    $validated = $request->validate([
+        'meta_title' => 'required|string|max:255',
+        'slug' => 'nullable|string|max:255',
+        'meta_description' => 'required|string|max:160',
+        'meta_keywords' => 'required|string|max:100',
+        'content' => 'required|string',
+        'summary' => 'nullable|string|max:500',
+        'tags' => 'nullable|string', // Chuỗi tags cách nhau bởi dấu phẩy
+        'is_featured' => 'nullable|boolean',
+        'canonical_url' => 'nullable|url|max:255',
+        'schema_json' => 'nullable|json',
+        'category_id' => 'required|exists:news_categories,id',
+        'status' => 'required|boolean',
+        'publish_date' => 'required|date_format:Y-m-d\TH:i',
+        'thumbnail_id' => 'nullable|exists:media_files,id',
+        'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
+    ], [
+        'meta_description.required' => 'Mô tả ngắn không được để trống.',
+        'meta_keywords.required' => 'Từ khóa SEO không được để trống.',
+        'publish_date.required' => 'Ngày đăng bài không được để trống.',
+        'canonical_url.url' => 'Canonical URL phải là một URL hợp lệ.',
+        'schema_json.json' => 'Schema JSON phải là định dạng JSON hợp lệ.',
+    ]);
 
-        if ($request->hasFile('thumbnail')) {
-            $file = $request->file('thumbnail');
-            if (!$file->isValid()) {
-                return redirect()->back()->withErrors(['thumbnail' => 'Ảnh tải lên không hợp lệ.'])->withInput();
-            }
-            $filename = 'phuocxanh_' . time() . '.' . $file->getClientOriginalExtension();
-            $filepath = $file->storeAs('uploads/ckeditor', $filename, 'public');
-            $fullPath = storage_path('app/public/uploads/ckeditor/' . $filename);
-            [$width, $height] = getimagesize($fullPath) ?: [0, 0];
+    // Kiểm tra ảnh đại diện
+    if (!$request->hasFile('thumbnail') && !$request->input('thumbnail_id')) {
+        return back()->withErrors(['thumbnail' => 'Bạn phải chọn hoặc tải lên một ảnh đại diện.'])->withInput();
+    }
+
+    // Tạo slug duy nhất
+    $slug = $request->input('slug') ? Str::slug($request->slug) : Str::slug($validated['meta_title']);
+    $originalSlug = $slug;
+    $i = 1;
+    while (News::where('slug', $slug)->where('id', '!=', $news->id)->exists()) {
+        $slug = "$originalSlug-$i";
+        $i++;
+    }
+
+    // Xử lý tags: Lưu trực tiếp chuỗi tags từ input
+    $tags = $request->tags ? trim($request->tags) : null;
+    // - Dòng trên: Lấy chuỗi tags từ request, loại bỏ khoảng trắng thừa, nếu không có thì gán null.
+    // + Lợi ích: Lưu tags dưới dạng chuỗi thô như "Tôi là Phước,Phước ơi,Tôi đây,Tin hot", đúng yêu cầu không mã hóa.
+    // + Lý do: Cột tags trong bảng news là TEXT, không cần mã hóa JSON.
+
+    // Xử lý is_featured: Kiểm tra và gán giá trị boolean
+    $isFeatured = $request->has('is_featured') ? 1 : 0;
+    // - Dòng trên: Kiểm tra xem is_featured có trong request không, gán 1 nếu có, 0 nếu không.
+    // + Lợi ích: Đảm bảo is_featured được lưu đúng giá trị (1 nếu chọn checkbox, 0 nếu không).
+    // + Lý do: Checkbox chỉ gửi giá trị khi được chọn, dùng $request->has để kiểm tra rõ ràng.
+
+    // Xử lý canonical_url
+    $canonical_url = $request->canonical_url ?: (config('app.url') . "/news/$slug");
+
+    // Xử lý schema_json
+    $thumbnail_id = $request->thumbnail_id;
+    $schema_json = $request->schema_json;
+    if (!$schema_json) {
+        $thumbnail = $thumbnail_id ? MediaFile::find($thumbnail_id) : null;
+        $schema_json = json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $validated['meta_title'],
+            'description' => $validated['meta_description'],
+            'author' => ['@type' => 'Person', 'name' => Auth::user()->name],
+            'publisher' => ['@type' => 'Organization', 'name' => 'LavishStay Resort'],
+            'datePublished' => Carbon::parse($validated['publish_date'])->toIso8601String(),
+            'image' => $thumbnail ? [
+                '@type' => 'ImageObject',
+                'url' => $thumbnail->filepath,
+                'width' => $thumbnail->width ?? 800,
+                'height' => $thumbnail->height ?? 600,
+            ] : null,
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    // Xử lý ảnh đại diện
+    if ($request->hasFile('thumbnail')) {
+        $file = $request->file('thumbnail');
+        if ($file->isValid()) {
+            $filename = time() . '_' . Str::slug($file->getClientOriginalName()) . '.' . $file->extension();
+            $path = $file->storeAs('uploads/ckeditor', $filename, 'public');
+            $url = asset("storage/$path");
+            [$width, $height] = getimagesize(storage_path("app/public/$path")) ?: [0, 0];
 
             $mediaFile = MediaFile::create([
                 'filename' => $filename,
-                'filepath' => Storage::url($filepath),
+                'filepath' => $url,
                 'alt_text' => $validated['meta_description'],
                 'title' => $validated['meta_title'],
                 'type' => $file->getClientMimeType(),
                 'size' => $file->getSize(),
-                'width' => $width,
-                'height' => $height,
                 'used_in' => 'news',
             ]);
             $thumbnail_id = $mediaFile->id;
-
-            // Xóa ảnh đại diện cũ nếu có
-            if ($news->thumbnail_id) {
-                $oldMedia = MediaFile::find($news->thumbnail_id);
-                if ($oldMedia && $oldMedia->used_in === 'news') {
-                    Storage::disk('public')->delete(str_replace(Storage::url(''), '', $oldMedia->filepath));
-                    $oldMedia->delete();
-                }
-            }
         } else {
-            $thumbnail_id = $validated['thumbnail_id'];
-        }
-
-        try {
-            $news->update([
-                'meta_title' => $validated['meta_title'],
-                'slug' => $slug,
-                'meta_description' => $validated['meta_description'],
-                'meta_keywords' => $validated['meta_keywords'],
-                'content' => $validated['content'],
-                'category_id' => $validated['category_id'],
-                'status' => $validated['status'],
-                'published_at' => Carbon::parse($validated['publish_date']),
-                'thumbnail_id' => $thumbnail_id,
-            ]);
-
-            
-
-            return redirect()->route('admin.news.index')->with('success', 'Bài viết đã được cập nhật thành công!');
-        } catch (\Exception $e) {
-            \Log::error('Error updating news: ' . $e->getMessage());
-            return redirect()->back()->withErrors(['error' => 'Lỗi hệ thống khi cập nhật bài viết. Vui lòng thử lại.'])->withInput();
+            return back()->withErrors(['thumbnail' => 'Ảnh tải lên không hợp lệ.'])->withInput();
         }
     }
 
+    // Cập nhật bài viết
+    $news->update([
+        'title' => $validated['meta_title'],
+        'slug' => $slug,
+        'meta_title' => $validated['meta_title'],
+        'meta_description' => $validated['meta_description'],
+        'meta_keywords' => $validated['meta_keywords'],
+        'content' => $validated['content'],
+        'summary' => $validated['summary'],
+        'tags' => $tags, // Lưu tags dưới dạng chuỗi thô
+        'is_featured' => $isFeatured, // Sử dụng biến $isFeatured
+        'canonical_url' => $canonical_url,
+        'schema_json' => $schema_json,
+        'category_id' => $validated['category_id'],
+        'author_id' => Auth::id(),
+        'thumbnail_id' => $thumbnail_id,
+        'status' => $validated['status'],
+        'published_at' => Carbon::parse($validated['publish_date']),
+    ]);
+    // - Dòng $news->update: Cập nhật bài viết với tags dạng chuỗi thô và is_featured đúng giá trị.
+    // + Lợi ích: Đảm bảo tags không mã hóa JSON và bài viết được đánh dấu nổi bật nếu chọn checkbox.
+    // + Lý do: Đồng nhất với hàm store, phù hợp với bảng news (tags là TEXT, is_featured là tinyint).
 
-    // Xóa bài viết
+    return redirect()->route('admin.news.index')->with('success', 'Bài viết đã được cập nhật thành công!');
+}
+
+
+
     public function destroy($id)
     {
-        // Tìm và xóa bài viết
-        $news = News::findOrFail($id);
+        $news = News::find($id);
+
+        if (!$news) {
+            return redirect()->route('admin.news.index')->with('error', 'Không tìm thấy bài viết.');
+        }
+
+        // Kiểm tra ràng buộc
+        if ($news->comments()->exists()) {
+            return redirect()->route('admin.news.index')->with('error', 'Không thể xóa bài viết vì có bình luận liên kết.');
+        }
+
+        if ($news->userActions()->exists()) {
+            return redirect()->route('admin.news.index')->with('error', 'Không thể xóa bài viết vì có hành động (thích, đánh dấu, đánh giá) liên kết.');
+        }
+
         $news->delete();
 
         return redirect()->route('admin.news.index')->with('success', 'Bài viết đã được xóa!');
     }
-
 
     public function destroyMedia($id)
     {
@@ -367,64 +455,5 @@ class NewsController extends Controller
 
         return response()->json(['success' => true]);
     }
-
-    // public function uploadImage(Request $request)
-    // {
-    //     try {
-    //         // Xác thực file upload
-    //         $request->validate([
-    //             'upload' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-    //         ]);
-
-    //         // Kiểm tra file upload
-    //         if ($request->hasFile('upload')) {
-    //             $originName = $request->file('upload')->getClientOriginalName();
-    //             $extension = $request->file('upload')->getClientOriginalExtension();
-    //             $fileName = 'phuocxanh_' . time() . '.' . $extension;
-
-    //             // Lưu file vào storage/app/public/uploads/ckeditor
-    //             $path = $request->file('upload')->storeAs('uploads/ckeditor', $fileName, 'public');
-    //             $url = asset('storage/uploads/ckeditor/' . $fileName);
-
-    //             // Lưu thông tin file vào bảng media_files
-    //             $mediaFile = MediaFile::create([
-    //                 'filename' => $fileName,
-    //                 'filepath' => $url,
-    //                 'alt_text' => $request->input('alt_text') ?? 'Hình ảnh bài viết',
-    //                 'title' => $request->input('title') ?? 'Hình ảnh bài viết',
-    //                 'type' => $request->file('upload')->getClientMimeType(),
-    //                 'size' => $request->file('upload')->getSize(),
-    //                 'used_in' => 'news_ckeditor',
-    //             ]);
-
-    //             // Lưu liên kết với news_id nếu có
-    //             if ($request->has('news_id')) {
-    //                 NewsMediaFile::create([
-    //                     'news_id' => $request->input('news_id'),
-    //                     'media_file_id' => $mediaFile->id,
-    //                 ]);
-    //             }
-
-    //             // Lấy CKEditorFuncNum từ request
-    //             $CKEditorFuncNum = $request->input('CKEditorFuncNum', 0);
-    //             $msg = 'Image uploaded successfully';
-
-    //             // Trả về response HTML cho CKEditor, bao gồm data-filepath
-    //             $response = "<script>window.parent.CKEDITOR.tools.callFunction($CKEditorFuncNum, '$url', '$msg');";
-    //             $response .= "document.dispatchEvent(new CustomEvent('imageUploaded', { detail: { filepath: '$url' } }));</script>";
-
-    //             header('Content-Type: text/html; charset=utf-8');
-    //             echo $response;
-    //         } else {
-    //             throw new \Exception('No file uploaded');
-    //         }
-    //     } catch (\Exception $e) {
-    //         \Log::error('Lỗi khi upload ảnh qua CKEditor: ' . $e->getMessage());
-    //         $CKEditorFuncNum = $request->input('CKEditorFuncNum', 0);
-    //         $response = "<script>window.parent.CKEDITOR.tools.callFunction($CKEditorFuncNum, '', 'Lỗi khi upload ảnh: {$e->getMessage()}');</script>";
-    //         header('Content-Type: text/html; charset=utf-8');
-    //         echo $response;
-    //     }
-    // }
 
 }

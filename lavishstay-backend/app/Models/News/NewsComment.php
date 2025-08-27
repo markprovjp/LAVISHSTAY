@@ -5,6 +5,7 @@ namespace App\Models\News;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use App\Models\News\News;
 
 class NewsComment extends Model
 {
@@ -24,7 +25,6 @@ class NewsComment extends Model
         'likes' => 'integer',
     ];
 
-    // Relationships
     public function news()
     {
         return $this->belongsTo(News::class);
@@ -50,7 +50,6 @@ class NewsComment extends Model
         return $this->hasMany(NewsComment::class, 'parent_id')->with('allReplies');
     }
 
-    // Scopes
     public function scopeTopLevel($query)
     {
         return $query->whereNull('parent_id');
@@ -61,7 +60,6 @@ class NewsComment extends Model
         return $query->whereNotNull('parent_id');
     }
 
-    // Helper methods
     public function isReply()
     {
         return !is_null($this->parent_id);

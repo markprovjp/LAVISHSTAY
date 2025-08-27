@@ -171,6 +171,7 @@ return [
         App\Providers\JetstreamServiceProvider::class,
         App\Providers\HelperServiceProvider::class,
         App\Providers\AuditServiceProvider::class,
+        
     ])->toArray(),
 
     /*
