@@ -10,7 +10,7 @@
                     {{ $user->name }}</p>
             </div>
             <div class="flex items-center space-x-3 mb-4">
-                <a href="{{ route('admin.users.staffs.show', $user->id) }}">
+                <a href="{{ route('admin.users.staffs.index') }}">
                     <button
                         class="btn cursor-pointer bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
                         <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -46,8 +46,9 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl dark:border-gray-700">
-            <form action="{{ route('admin.users.staffs.update', $user->id) }}" method="POST" enctype="multipart/form-data"
-                class="p-6">
+
+            <form action="{{ route('admin.users.staffs.update', $user->id) }}" method="POST"
+                enctype="multipart/form-data" class="p-6">
                 @csrf
                 @method('PUT')
 
@@ -90,6 +91,14 @@
                             </p>
                         @enderror
                     </div>
+
+                    <div class="mb-10">
+                        <a href="{{ route('admin.users.staffs.show', $user->id) }}"
+                            class="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-md hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white cursor-pointer">
+                            <i class="fas fa-arrow-left fa-xs mr-1.5"></i> Quay lại
+                        </a>
+                    </div>
+
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -103,7 +112,7 @@
                                 Họ và tên <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}"
-                                required
+                                
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="Nhập họ và tên">
                             @error('name')
@@ -122,7 +131,7 @@
                                 Email <span class="text-red-500">*</span>
                             </label>
                             <input type="email" id="email" name="email"
-                                value="{{ old('email', $user->email) }}" required
+                                value="{{ old('email', $user->email) }}" 
                                 class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
                                 placeholder="example@email.com">
                             @error('email')
@@ -138,7 +147,7 @@
                             <label for="phone"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fas fa-phone mr-2 text-violet-600"></i>
-                                Số điện thoại
+                                Số điện thoại <span class="text-red-500">*</span>
                             </label>
                             <input type="tel" id="phone" name="phone"
                                 value="{{ old('phone', $user->phone) }}"
@@ -157,7 +166,7 @@
                             <label for="identity_code"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 <i class="fas fa-id-card mr-2 text-violet-600"></i>
-                                Số CCCD / Hộ chiếu
+                                Số CCCD / Hộ chiếu <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="identity_code" name="identity_code"
                                 value="{{ old('identity_code', $user->identity_code) }}"
@@ -172,34 +181,6 @@
                         </div>
 
 
-                        {{-- <!-- Vai trò -->
-                        <div>
-                            <label for="role_id"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <i class="fa-solid fa-user-tag mr-2 text-violet-600"></i>
-                                Vai trò <span class="text-red-500">*</span>
-                            </label>
-
-                            <select id="role_id" name="role_id" required
-                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                                <option value="">Chọn vai trò</option>
-
-                                @foreach ($staffRoles as $role)
-                                    <option value="{{ $role->id }}"
-                                        {{ old('role_id', $user->roles->first()->id ?? '') == $role->id ? 'selected' : '' }}>
-                                        {{ \App\Models\Role::getRoleLabel($role->name) }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @error('role_id')
-                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    {{ $message }}
-                                </p>
-                            @enderror
-                        </div> --}}
-
                     </div>
 
 
@@ -212,12 +193,14 @@
                                 Vai trò <span class="text-red-500">*</span>
                             </label>
 
-                            <select id="role_id" name="role_id" required
-                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
-                                <option value="">Chọn vai trò</option>
+                            <select id="role_id" name="role_id" 
+                                class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
+               bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 
+               focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+
+                                <option value="">-- Chọn vai trò --</option>
                                 @foreach ($staffRoles as $role)
-                                    <option value="{{ $role->id }}"
-                                        {{ old('role_id', $user->roles->first()->id ?? '') == $role->id ? 'selected' : '' }}>
+                                    <option value="{{ $role->id }}" @selected(old('role_id', $user->roles->first()->id ?? '') == $role->id)>
                                         {{ \App\Models\Role::getRoleLabel($role->name) }}
                                     </option>
                                 @endforeach
@@ -225,8 +208,7 @@
 
                             @error('role_id')
                                 <p class="mt-2 text-sm text-red-600 dark:text-red-400">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i>
-                                    {{ $message }}
+                                    <i class="fas fa-exclamation-triangle mr-1"></i> {{ $message }}
                                 </p>
                             @enderror
                         </div>
@@ -255,7 +237,7 @@
                     <!-- Action Buttons -->
                     <div></div>
                     <div class="flex items-center justify-end space-x-4 mt-8 pt-6">
-                        <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white">
+                        <button type="submit" class="btn bg-violet-500 hover:bg-violet-600 text-white cursor-pointer">
                             <i class="fas fa-save mr-2"></i> Cập nhật người dùng
                         </button>
                     </div>

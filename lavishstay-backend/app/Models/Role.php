@@ -65,15 +65,18 @@ class Role extends Model
     /**
      * Trả về tên hiển thị tiếng Việt cho vai trò (nếu có)
      */
-    public static function getRoleLabel($name)
+     public static function getRoleLabel($name)
     {
         return [
-            'admin' => 'Quản trị viên',
-            'manager' => 'Quản lý',
+            'system_admin' => 'Quản trị hệ thống',
+            'guest' => 'Khách hàng',
             'receptionist' => 'Lễ tân',
-            'guest' => 'Khách',
+            'hotel_manager' => 'Quản lý khách sạn',
+            'dept_manager' => 'Quản lý bộ phận',
+            'housekeeping' => 'Nhân viên buồng phòng',
+            'marketing' => 'Đội Marketing & SEO',
+            'finance' => 'Kế toán/Tài chính',
         ][$name] ?? ucfirst($name);
     }
-
    
 }
