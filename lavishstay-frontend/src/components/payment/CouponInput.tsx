@@ -9,8 +9,7 @@ import {
     Divider,
     Alert,
     Row,
-    Col,
-    Checkbox
+    Col
 } from 'antd';
 import {
     GiftOutlined,
@@ -86,7 +85,8 @@ const CouponInput: React.FC<CouponInputProps> = ({
     const [isValidating, setIsValidating] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-    const [shouldApplyToBooking, setShouldApplyToBooking] = useState(true);
+    // Auto-apply is always true in current UX. Use constant to avoid unused setter lint.
+    const shouldApplyToBooking = true;
 
     // Validation function
     const validateCoupon = async (code: string) => {
@@ -115,6 +115,10 @@ const CouponInput: React.FC<CouponInputProps> = ({
                 booking_preview: bookingPreview
             };
 
+            // Debug: log the exact payload sent to backend (helps diagnose 422)
+            // eslint-disable-next-line no-console
+            console.debug('Coupon validate request payload:', validateRequest);
+
             const validateResult = await couponService.validateCoupon(validateRequest);
 
             if (validateResult.valid && validateResult.coupon && validateResult.discount_vnd !== undefined) {
@@ -137,9 +141,23 @@ const CouponInput: React.FC<CouponInputProps> = ({
                 setErrorMessage(getCouponErrorMessage(validateResult.reason));
             }
         } catch (error: any) {
+            // eslint-disable-next-line no-console
             console.error('Coupon validation error:', error);
 
-            if (error.response?.status === 429) {
+            // Laravel returns 422 with validation errors in `errors` or a `message` string.
+            if (error.response?.status === 422) {
+                const data = error.response.data || {};
+                // Prefer first field validation message
+                if (data.errors && typeof data.errors === 'object') {
+                    const firstKey = Object.keys(data.errors)[0];
+                    const firstMsg = Array.isArray(data.errors[firstKey]) ? data.errors[firstKey][0] : null;
+                    setErrorMessage(firstMsg || data.message || getCouponErrorMessage('min_amount'));
+                } else if (data.message) {
+                    setErrorMessage(data.message);
+                } else {
+                    setErrorMessage(getCouponErrorMessage('network_error'));
+                }
+            } else if (error.response?.status === 429) {
                 setErrorMessage(getCouponErrorMessage('rate_limit'));
             } else if (error.response?.status >= 500) {
                 setErrorMessage(getCouponErrorMessage('server_error'));

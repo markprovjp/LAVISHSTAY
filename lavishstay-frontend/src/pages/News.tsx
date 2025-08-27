@@ -23,6 +23,15 @@ const NewsPage: React.FC = () => {
     // Lấy toàn bộ response của API news list để debug
     const { data: newsListResponse, isLoading, error } = useNewsList({ per_page: 10 });
 
+    // Dev-only: Hiển thị debug JSON để kiểm tra API response
+    React.useEffect(() => {
+        if (process.env.NODE_ENV !== 'production') {
+            console.debug('News Page - API Response:', newsListResponse);
+            console.debug('News Page - Loading:', isLoading);
+            console.debug('News Page - Error:', error);
+        }
+    }, [newsListResponse, isLoading, error]);
+
     // Hiển thị debug JSON ở đầu trang
     // const debugBlock = (
     //     <div style={{ background: '#f6f8fa', color: '#333', fontSize: 13, padding: 16, marginBottom: 24, borderRadius: 8, border: '1px solid #eee', wordBreak: 'break-all' }}>
@@ -32,6 +41,16 @@ const NewsPage: React.FC = () => {
     //         </pre>
     //     </div>
     // );
+
+    // selected category id (null = all)
+    const [selectedCategoryId, setSelectedCategoryId] = React.useState<number | null>(null);
+
+    // Dev: Log when category changes
+    React.useEffect(() => {
+        if (process.env.NODE_ENV !== 'production') {
+            console.debug('News Page - Selected Category ID:', selectedCategoryId);
+        }
+    }, [selectedCategoryId]);
 
     return (
         <>
@@ -73,7 +92,7 @@ const NewsPage: React.FC = () => {
 
                         {/* Category Tabs */}
                         <div className="mb-8">
-                            <NewsCategoryTabs />
+                            <NewsCategoryTabs onCategoryChange={(catId) => setSelectedCategoryId(catId)} />
                         </div>
 
                         {/* Main Content & Sidebar */}
@@ -81,7 +100,7 @@ const NewsPage: React.FC = () => {
                             {/* News List */}
                             <div className="lg:col-span-3">
                                 <Suspense fallback={<Spin size="large" className="flex justify-center py-12" />}>
-                                    <NewsList />
+                                    <NewsList categoryId={selectedCategoryId || undefined} />
                                 </Suspense>
                             </div>
 

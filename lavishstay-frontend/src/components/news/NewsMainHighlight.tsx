@@ -1,12 +1,14 @@
 // src/components/news/NewsMainHighlight.tsx
 import React from 'react';
-import { Card, Tag, Badge, Avatar, Spin, Empty, Alert } from 'antd';
+import { Card, Tag, Badge, Avatar, Spin, Empty, Alert, Image, Button } from 'antd';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import { useTranslation } from 'react-i18next';
-import { ClockCircleOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, EyeOutlined, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { useFeaturedNews } from '../../hooks/useNews';
+import { News, EnhancedNews } from '../../types/news';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
@@ -14,7 +16,6 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
-import { normalizeNewsResponse } from '../../utils/normalizeNewsData';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
@@ -22,6 +23,23 @@ dayjs.locale('vi');
 interface NewsMainHighlightProps {
     onNewsClick?: (slug: string) => void;
 }
+
+// Helper function to get image URL with fallback
+const getImageUrl = (newsItem: any): string => {
+    return newsItem.featured_image ||
+        newsItem.image_url ||
+        newsItem.image ||
+        newsItem.thumbnail?.filepath ||
+        '/images/placeholder-news.png';
+};
+
+// Helper function to get summary/excerpt
+const getSummary = (newsItem: any): string => {
+    return newsItem.summary ||
+        newsItem.excerpt ||
+        newsItem.meta_description ||
+        'Không có mô tả';
+};
 
 const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
     onNewsClick
@@ -34,9 +52,11 @@ const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
         is_featured: 1
     });
 
-    // Log toàn bộ response từ backend để debug
+    // Dev-only: Log response để debug
     React.useEffect(() => {
-        console.log('Featured News Response:', featuredNewsResponse);
+        if (process.env.NODE_ENV !== 'production') {
+            console.debug('NewsMainHighlight - Featured News Response:', featuredNewsResponse);
+        }
     }, [featuredNewsResponse]);
 
     // Handle loading state
@@ -72,9 +92,7 @@ const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
         );
     }
 
-    // Normalize the response data to prevent iteration/spreading errors
-    const normalizedResponse = normalizeNewsResponse(featuredNewsResponse);
-    const featuredNews = normalizedResponse.data;
+    const featuredNews = featuredNewsResponse.data;
 
     return (
         <motion.div
@@ -117,30 +135,29 @@ const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
                 fadeEffect={{ crossFade: true }}
                 className="news-highlight-swiper h-[500px] md:h-[600px] rounded-2xl overflow-hidden"
             >
-                {featuredNews.map((newsItem) => (
+                {featuredNews.map((newsItem: any) => (
                     <SwiperSlide key={newsItem.id}>
                         <motion.div
                             whileHover={{ scale: 1.02 }}
                             transition={{ type: "spring", stiffness: 300 }}
-                            className="relative h-full cursor-pointer"
-                            onClick={() => onNewsClick?.(newsItem.slug)}
+                            className=" h-full cursor-pointer"
                         >
                             <Card
-                                className="h-full border-0 shadow-2xl overflow-hidden bg-gradient-to-b from-transparent to-black/50"
+                                className="h-full border-0 shadow-2xl overflow-hidden"
                                 cover={
-                                    <div className="relative h-full">
-                                        <img
-                                            src={newsItem.featured_image || 'https://via.placeholder.com/800x600'}
+                                    <div className=" h-full">
+                                        <Image
+                                            src={getImageUrl(newsItem)}
                                             alt={newsItem.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                                            className="w-full h-full object-cover transition-transform  "
+                                            fallback="/images/placeholder-news.png"
+                                            preview={false}
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
                                         {/* Category Badge */}
                                         <div className="absolute top-4 left-4">
-                                            <Tag
-                                                className="px-3 py-1 bg-red-500 text-white border-red-500 rounded-full font-medium"
-                                            >
+                                            <Tag className="bg-red-500 text-white border-red-500 rounded-full font-medium">
                                                 {newsItem.category?.name || 'Tin tức'}
                                             </Tag>
                                         </div>
@@ -152,7 +169,7 @@ const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
                                             </h3>
 
                                             <p className="text-gray-200 text-sm md:text-base mb-4 line-clamp-2">
-                                                {newsItem.summary}
+                                                {getSummary(newsItem)}
                                             </p>
 
                                             <div className="flex items-center justify-between">
@@ -161,33 +178,35 @@ const NewsMainHighlight: React.FC<NewsMainHighlightProps> = ({
                                                         <Avatar
                                                             size="small"
                                                             icon={<UserOutlined />}
-                                                            src={newsItem.authorAvatar}
+                                                            src={newsItem.author?.avatar_url}
                                                         />
-                                                        <span>{newsItem.authorName}</span>
+                                                        <span>{newsItem.author?.name || 'Admin'}</span>
                                                     </div>
 
                                                     <div className="flex items-center space-x-1">
                                                         <ClockCircleOutlined />
-                                                        <span>{dayjs(newsItem.published_at).fromNow()}</span>
+                                                        <span>{dayjs(newsItem.published_at || newsItem.publish_date).fromNow()}</span>
                                                     </div>
 
                                                     <div className="flex items-center space-x-1">
                                                         <EyeOutlined />
-                                                        <span>{newsItem.views.toLocaleString()}</span>
+                                                        <span>{(newsItem.views || 0).toLocaleString()}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Tags */}
-                                            <div className="flex flex-wrap gap-2 mt-4">
-                                                {newsItem.formattedTags?.slice(0, 3).map((tag, index) => (
-                                                    <Tag
-                                                        key={index}
-                                                        className="text-xs px-2 py-1 bg-white/20 border-white/30 text-white backdrop-blur-sm"
+                                            {/* Action Button */}
+                                            <div className="mt-4">
+                                                <Link to={`/news/${newsItem.slug}`}>
+                                                    <Button
+                                                        type="primary"
+                                                        size="large"
+                                                        icon={<ArrowRightOutlined />}
+                                                        className="bg-red-500 hover:bg-red-600 border-red-500"
                                                     >
-                                                        #{tag}
-                                                    </Tag>
-                                                ))}
+                                                        {t('news.readMore', 'Xem chi tiết')}
+                                                    </Button>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>

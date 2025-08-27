@@ -222,11 +222,15 @@ const Payment: React.FC = () => {
         }
 
         // Store customer info in state for use in CompletionStep
+        // Ensure we retrieve specialRequests reliably from the form if values doesn't contain it
+        const specialFromForm = form.getFieldValue ? form.getFieldValue('specialRequests') : undefined;
+        const finalSpecialRequests = (values && values.specialRequests && values.specialRequests.length) ? values.specialRequests : (Array.isArray(specialFromForm) ? specialFromForm : (specialFromForm ? [specialFromForm] : []));
+
         setCustomerInfo({
             fullName: values.fullName,
             email: values.email,
             phone: values.phone,
-            specialRequests: values.specialRequests
+            specialRequests: finalSpecialRequests
         });
 
         // Note: payment method is selected in PaymentStep; do not enforce here.
@@ -343,7 +347,8 @@ const Payment: React.FC = () => {
                 total_guests: totalGuests,
                 total_price: totals.finalTotal,
                 payment_method: selectedPaymentMethod,
-                notes: values.specialRequests,
+                // Fallback to form value if values.specialRequests is empty
+                notes: (values && values.specialRequests && values.specialRequests.length) ? values.specialRequests : finalSpecialRequests,
                 room_type_id: roomsPayload[0].room_type_id || roomsPayload[0].room_id,
                 rooms: roomsPayload,
                 totals: {

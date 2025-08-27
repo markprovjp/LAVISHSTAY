@@ -1,19 +1,38 @@
 // src/components/news/NewsHighlights.tsx
 import React from 'react';
-import { Card, Tag, Avatar, Row, Col, Alert, Empty } from 'antd';
+import { Card, Tag, Avatar, Row, Col, Alert, Empty, Skeleton, Image, Button } from 'antd';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { ClockCircleOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined, EyeOutlined, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { useNewsList } from '../../hooks/useNews';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { normalizeNewsResponse } from '../../utils/normalizeNewsData';
+import 'dayjs/locale/vi';
 
 dayjs.extend(relativeTime);
+dayjs.locale('vi');
 
 interface NewsHighlightsProps {
     onNewsClick?: (slug: string) => void;
 }
+
+// Helper function to get image URL with fallback
+const getImageUrl = (newsItem: any): string => {
+    return newsItem.featured_image ||
+        newsItem.image_url ||
+        newsItem.image ||
+        newsItem.thumbnail?.filepath ||
+        '/images/placeholder-news.png';
+};
+
+// Helper function to get summary/excerpt
+const getSummary = (newsItem: any): string => {
+    return newsItem.summary ||
+        newsItem.excerpt ||
+        newsItem.meta_description ||
+        'Không có mô tả';
+};
 
 const NewsHighlights: React.FC<NewsHighlightsProps> = ({ onNewsClick }) => {
     const { t } = useTranslation();
@@ -25,6 +44,13 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ onNewsClick }) => {
         sort_by: 'published_at',
         sort_order: 'desc'
     });
+
+    // Dev-only: Log response để debug
+    React.useEffect(() => {
+        if (process.env.NODE_ENV !== 'production') {
+            console.debug('NewsHighlights - News Response:', newsResponse);
+        }
+    }, [newsResponse]);
 
     if (isLoading) {
         return (
@@ -38,7 +64,11 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ onNewsClick }) => {
                 <Row gutter={[16, 16]}>
                     {Array.from({ length: 4 }, (_, index) => (
                         <Col xs={24} sm={12} lg={6} key={index}>
-                            <Card loading />
+                            <Card>
+                                <Skeleton loading active avatar paragraph={{ rows: 3 }}>
+                                    <Card.Meta title="" description="" />
+                                </Skeleton>
+                            </Card>
                         </Col>
                     ))}
                 </Row>
@@ -53,6 +83,7 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ onNewsClick }) => {
                 description={t('news.error.tryAgain', 'Vui lòng thử lại sau')}
                 type="error"
                 showIcon
+                className="mb-4"
             />
         );
     }
@@ -62,25 +93,19 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ onNewsClick }) => {
             <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description={t('news.empty.noNews', 'Chưa có tin tức')}
+                className="py-12"
             />
         );
     }
 
-    // Normalize the response data to prevent iteration/spreading errors
-    const normalizedResponse = normalizeNewsResponse(newsResponse);
-    const news = normalizedResponse.data;
+    const newsList = newsResponse.data;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-6"
-        >
+        <div className="space-y-6">
             <div className="flex items-center space-x-3 mb-6">
                 <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: 2, repeat: Infinity }}
                     className="w-2 h-2 bg-blue-500 rounded-full"
                 />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -89,94 +114,100 @@ const NewsHighlights: React.FC<NewsHighlightsProps> = ({ onNewsClick }) => {
             </div>
 
             <Row gutter={[16, 16]}>
-                {news.map((newsItem, index) => (
+                {newsList.map((newsItem: any, index: number) => (
                     <Col xs={24} sm={12} lg={6} key={newsItem.id}>
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{
-                                duration: 0.5,
-                                delay: index * 0.1,
-                                ease: "easeOut"
-                            }}
-                            whileHover={{
-                                y: -5,
-                                transition: { duration: 0.2 }
-                            }}
+                            transition={{ delay: index * 0.1, duration: 0.6 }}
+                            whileHover={{ y: -5 }}
                         >
                             <Card
-                                hoverable
-                                className="h-full shadow-md hover:shadow-xl transition-all duration-300 border-0 overflow-hidden bg-white dark:bg-gray-800"
+                                className="h-full hover:shadow-lg transition-all duration-300 border-0 shadow-sm"
                                 cover={
-                                    <div className="relative overflow-hidden group">
-                                        <img
+                                    <div className="relative h-48 overflow-hidden">
+                                        <Image
+                                            src={getImageUrl(newsItem)}
                                             alt={newsItem.title}
-                                            src={newsItem.featured_image || 'https://via.placeholder.com/400x250'}
-                                            className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
+                                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                                            fallback="/images/placeholder-news.png"
+                                            preview={false}
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                                        {/* Category badge */}
-                                        <div className="absolute top-3 left-3">
-                                            <Tag
-                                                className="px-2 py-1 text-xs bg-blue-500 text-white border-blue-500 rounded-md font-medium"
-                                            >
+                                        <div className="absolute top-2 left-2">
+                                            <Tag className="bg-blue-500 text-white border-blue-500 rounded">
                                                 {newsItem.category?.name || 'Tin tức'}
                                             </Tag>
                                         </div>
                                     </div>
                                 }
-                                onClick={() => onNewsClick?.(newsItem.slug)}
+                                actions={[
+                                    <Link to={`/news/${newsItem.slug}`} key="view">
+                                        <Button
+                                            type="text"
+                                            icon={<ArrowRightOutlined />}
+                                            className="text-blue-500 hover:text-blue-600"
+                                        >
+                                            {t('news.readMore', 'Xem chi tiết')}
+                                        </Button>
+                                    </Link>
+                                ]}
                             >
-                                <div className="p-2">
-                                    <h3 className="text-base font-bold mb-2 line-clamp-2 text-gray-900 dark:text-white leading-tight">
-                                        {newsItem.title}
-                                    </h3>
+                                <Card.Meta
+                                    title={
+                                        <Link
+                                            to={`/news/${newsItem.slug}`}
+                                            className="text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
+                                        >
+                                            {newsItem.title}
+                                        </Link>
+                                    }
+                                    description={
+                                        <div className="space-y-3">
+                                            <p className="text-gray-600 text-sm line-clamp-2">
+                                                {getSummary(newsItem)}
+                                            </p>
 
-                                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2 leading-relaxed">
-                                        {newsItem.summary}
-                                    </p>
+                                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                                <div className="flex items-center space-x-2">
+                                                    <Avatar
+                                                        size="small"
+                                                        icon={<UserOutlined />}
+                                                        src={newsItem.author?.avatar_url}
+                                                    />
+                                                    <span>{newsItem.author?.name || 'Admin'}</span>
+                                                </div>
 
-                                    {/* Author and stats */}
-                                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                        <div className="flex items-center space-x-2">
-                                            <Avatar
-                                                size={20}
-                                                icon={<UserOutlined />}
-                                                src={newsItem.authorAvatar}
-                                            />
-                                            <span>{newsItem.authorName}</span>
-                                        </div>
-
-                                        <div className="flex items-center space-x-3">
-                                            <div className="flex items-center space-x-1">
-                                                <EyeOutlined />
-                                                <span>{newsItem.views.toLocaleString()}</span>
+                                                <div className="flex items-center space-x-1">
+                                                    <ClockCircleOutlined />
+                                                    <span>{dayjs(newsItem.published_at || newsItem.publish_date).fromNow()}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center space-x-1">
-                                                <ClockCircleOutlined />
-                                                <span>{dayjs(newsItem.published_at).fromNow()}</span>
+
+                                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                                <div className="flex items-center space-x-1">
+                                                    <EyeOutlined />
+                                                    <span>{(newsItem.views || 0).toLocaleString()} lượt xem</span>
+                                                </div>
+
+                                                {newsItem.tags && newsItem.tags.length > 0 && (
+                                                    <div className="flex space-x-1">
+                                                        {newsItem.tags.slice(0, 2).map((tag: any) => (
+                                                            <Tag key={tag.id} className="text-xs">
+                                                                #{tag.name}
+                                                            </Tag>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Tags */}
-                                    {newsItem.formattedTags && newsItem.formattedTags.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mb-2">
-                                            {newsItem.formattedTags.slice(0, 2).map((tag, index) => (
-                                                <Tag key={index} color="blue">
-                                                    #{tag}
-                                                </Tag>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                    }
+                                />
                             </Card>
                         </motion.div>
                     </Col>
                 ))}
             </Row>
-        </motion.div>
+        </div>
     );
 };
 

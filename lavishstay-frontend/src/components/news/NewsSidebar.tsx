@@ -1,20 +1,30 @@
 // src/components/news/NewsSidebar.tsx
 import React, { useState, useEffect } from 'react';
-import { Card, List, Tag, Divider, Progress, Statistic, Empty } from 'antd';
+import { Card, List, Tag, Divider, Progress, Statistic, Empty, Spin, Button } from 'antd';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { useTrendingNews, useNewsCategories } from '../../hooks/useNews';
-import type { NewsItem } from '../../services/newsApi';
+import { Link } from 'react-router-dom';
+import { useTrendingNews, useNewsCategories, useNewsList } from '../../hooks/useNews';
 import {
     FireOutlined,
     EyeOutlined,
-    ClockCircleOutlined,
+
     CloudOutlined,
     RiseOutlined,
     TrophyOutlined,
-    CalendarOutlined
+    CalendarOutlined,
+
+    ArrowRightOutlined,
+    ThunderboltOutlined,
+    StarOutlined,
+    BarChartOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/vi';
+
+dayjs.extend(relativeTime);
+dayjs.locale('vi');
 
 interface WeatherData {
     location: string;
@@ -25,6 +35,8 @@ interface WeatherData {
     icon: string;
 }
 
+
+
 const NewsSidebar: React.FC = () => {
     const { t } = useTranslation();
     const [currentTime, setCurrentTime] = useState(dayjs());
@@ -34,7 +46,6 @@ const NewsSidebar: React.FC = () => {
         const timer = setInterval(() => {
             setCurrentTime(dayjs());
         }, 1000);
-
         return () => clearInterval(timer);
     }, []);
 
@@ -48,258 +59,288 @@ const NewsSidebar: React.FC = () => {
     // Lấy categories để hiển thị thống kê
     const { data: categoriesResponse } = useNewsCategories();
 
-    // Mock weather data (có thể tích hợp API thời tiết thật)
-    const weatherData: WeatherData = {
-        location: 'TP. Hồ Chí Minh',
-        temperature: 32,
-        condition: 'Nắng ít mây',
-        humidity: 75,
-        windSpeed: 15,
-        icon: '☀️'
-    };
+    // Lấy tổng số tin để thống kê
+    const { data: allNewsResponse } = useNewsList({ per_page: 1 });
 
-    // Tính toán top categories từ API data
-    const topCategories = categoriesResponse?.data
-        .sort((a, b) => (b.news_count || 0) - (a.news_count || 0))
-        .slice(0, 5)
-        .map((cat, index) => {
-            const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1'];
-            const total = categoriesResponse.data.reduce((sum, c) => sum + (c.news_count || 0), 0);
-            return {
-                name: cat.name,
-                count: cat.news_count || 0,
-                percentage: total > 0 ? Math.round(((cat.news_count || 0) / total) * 100) : 0,
-                color: colors[index % colors.length]
-            };
-        }) || [];
+    // Dev-only: Log responses để debug
+    React.useEffect(() => {
+        if (process.env.NODE_ENV !== 'production') {
+            console.debug('NewsSidebar - Trending Response:', trendingResponse);
+            console.debug('NewsSidebar - Categories Response:', categoriesResponse);
+            console.debug('NewsSidebar - All News Response:', allNewsResponse);
+        }
+    }, [trendingResponse, categoriesResponse, allNewsResponse]);
+
+    // Mock weather data (có thể thay bằng API thật). User requested Thanh Hóa.
+    const [weather] = useState<WeatherData>({
+        location: 'Thanh Hóa',
+        temperature: 28,
+        condition: 'Nắng',
+        humidity: 65,
+        windSpeed: 12,
+        icon: '☀️'
+    });
+
+    // Calculate statistics từ dữ liệu API
+    // Compute statistics, fallback if backend doesn't provide counts
+    const computedTotalArticles = allNewsResponse?.total || (categoriesResponse?.data ? categoriesResponse.data.reduce((s: number, c: any) => s + (c.news_count || 0), 0) : 0);
+    const statistics = {
+        totalArticles: computedTotalArticles,
+        totalCategories: categoriesResponse?.data?.length || 0,
+        totalViews: trendingResponse?.data?.reduce((sum: number, item: any) => sum + (item.views || 0), 0) || 0,
+        todayArticles: Math.floor(Math.random() * 5) + 1 // Mock data for today
+    };
 
     return (
         <div className="space-y-6">
-            {/* Clock Widget */}
+            {/* Quick Statistics */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-            >
-                <Card 
-                    className="text-center bg-gradient-to-br from-blue-500 to-purple-600 text-white border-0"
-                    bodyStyle={{ padding: '20px' }}
-                >
-                    <div className="space-y-2">
-                        <ClockCircleOutlined className="text-2xl mb-2" />
-                        <div className="text-2xl font-bold">
-                            {currentTime.format('HH:mm:ss')}
-                        </div>
-                        <div className="text-sm opacity-90">
-                            {currentTime.format('dddd, DD/MM/YYYY')}
-                        </div>
-                    </div>
-                </Card>
-            </motion.div>
-
-            {/* Weather Widget */}
-            <motion.div
-                initial={{ opacity: 0, x: 50 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+                transition={{ duration: 0.6 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
-                            <CloudOutlined className="text-blue-500" />
-                            <span>{t('news.sidebar.weather', 'Thời tiết')}</span>
+                            <BarChartOutlined className="text-blue-500" />
+                            <span>{t('news.sidebar.statistics', 'Thống kê nhanh')}</span>
                         </div>
                     }
-                    className="shadow-md"
-                    bodyStyle={{ padding: '16px' }}
+                    className="shadow-sm"
                 >
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <div className="text-2xl font-bold text-orange-500">
-                                {weatherData.temperature}°C
-                            </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                {weatherData.condition}
-                            </div>
-                        </div>
-                        <div className="text-3xl">
-                            {weatherData.icon}
-                        </div>
-                    </div>
-                    <Divider className="my-3" />
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="flex items-center space-x-1">
-                            <span className="opacity-70">Độ ẩm:</span>
-                            <span>{weatherData.humidity}%</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                            <span className="opacity-70">Gió:</span>
-                            <span>{weatherData.windSpeed} km/h</span>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Statistic
+                            title={t('news.sidebar.totalArticles', 'Tổng bài viết')}
+                            value={statistics.totalArticles}
+                            prefix={<RiseOutlined />}
+                            valueStyle={{ color: '#3f8600' }}
+                        />
+                        <Statistic
+                            title={t('news.sidebar.totalViews', 'Lượt xem')}
+                            value={statistics.totalViews}
+                            prefix={<EyeOutlined />}
+                            valueStyle={{ color: '#1890ff' }}
+                        />
+                        <Statistic
+                            title={t('news.sidebar.categories', 'Chuyên mục')}
+                            value={statistics.totalCategories}
+                            prefix={<TrophyOutlined />}
+                            valueStyle={{ color: '#722ed1' }}
+                        />
+                        <Statistic
+                            title={t('news.sidebar.todayArticles', 'Hôm nay')}
+                            value={statistics.todayArticles}
+                            prefix={<CalendarOutlined />}
+                            valueStyle={{ color: '#fa541c' }}
+                        />
                     </div>
                 </Card>
             </motion.div>
 
             {/* Trending News */}
             <motion.div
-                initial={{ opacity: 0, x: 50 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
                             <FireOutlined className="text-red-500" />
                             <span>{t('news.sidebar.trending', 'Tin thịnh hành')}</span>
                         </div>
                     }
-                    className="shadow-md"
-                    bodyStyle={{ padding: '12px' }}
+                    className="shadow-sm"
                 >
                     {isTrendingLoading ? (
-                        <div className="space-y-3">
-                            {Array.from({ length: 3 }, (_, i) => (
-                                <div key={i} className="flex space-x-3 animate-pulse">
-                                    <div className="w-12 h-12 bg-gray-200 rounded"></div>
-                                    <div className="flex-1 space-y-2">
-                                        <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                                        <div className="h-2 bg-gray-200 rounded w-1/2"></div>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="flex justify-center py-8">
+                            <Spin />
                         </div>
-                    ) : !trendingResponse?.data || trendingResponse.data.length === 0 ? (
-                        <Empty 
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={t('news.empty.noTrending', 'Chưa có tin thịnh hành')}
-                            className="py-4"
-                        />
-                    ) : (
+                    ) : trendingResponse?.data && trendingResponse.data.length > 0 ? (
                         <List
                             dataSource={trendingResponse.data}
-                            renderItem={(item: NewsItem, index: number) => (
-                                <List.Item className="px-0 py-2 border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded cursor-pointer">
-                                    <div className="flex items-start space-x-3 w-full">
+                            renderItem={(item: any, index: number) => (
+                                <List.Item className="px-0">
+                                    <div className="flex space-x-3 w-full">
                                         <div className="flex-shrink-0">
-                                            <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                                            <div className={`
+                                                w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white
+                                                ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-500' : 'bg-gray-300'}
+                                            `}>
+                                                {index + 1}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="text-sm font-medium line-clamp-2 text-gray-900 dark:text-white mb-1">
-                                                {item.title}
-                                            </h4>
-                                            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+
+                                        <div className="flex-grow min-w-0">
+                                            <Link
+                                                to={`/news/${item.slug}`}
+                                                className="block hover:text-blue-600 transition-colors"
+                                            >
+                                                <h4 className="text-sm font-medium line-clamp-2 mb-1">
+                                                    {item.title}
+                                                </h4>
+                                            </Link>
+
+                                            <div className="flex items-center justify-between text-xs text-gray-500">
                                                 <div className="flex items-center space-x-1">
                                                     <EyeOutlined />
-                                                    <span>{item.views.toLocaleString()}</span>
+                                                    <span>{(item.views || 0).toLocaleString()}</span>
                                                 </div>
-                                                <div className="flex items-center space-x-1">
-                                                    <RiseOutlined className="text-green-500" />
-                                                    <span>#{index + 1}</span>
-                                                </div>
-                                            </div>
-                                            <div className="mt-1">
-                                                <Tag 
-                                                    className="text-xs px-2 py-0"
-                                                    color="blue"
-                                                >
-                                                    {item.category?.name || 'Tin tức'}
-                                                </Tag>
+                                                <span>{dayjs(item.published_at || item.publish_date).fromNow()}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </List.Item>
                             )}
                         />
+                    ) : (
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description={t('news.sidebar.noTrending', 'Chưa có tin thịnh hành')}
+                        />
                     )}
                 </Card>
             </motion.div>
 
-            {/* Top Categories */}
+            {/* Categories Overview */}
             <motion.div
-                initial={{ opacity: 0, x: 50 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
-                            <TrophyOutlined className="text-yellow-500" />
-                            <span>{t('news.sidebar.topCategories', 'Chủ đề hàng đầu')}</span>
+                            <TrophyOutlined className="text-purple-500" />
+                            <span>{t('news.sidebar.topCategories', 'Chuyên mục hàng đầu')}</span>
                         </div>
                     }
-                    className="shadow-md"
-                    bodyStyle={{ padding: '16px' }}
+                    className="shadow-sm"
                 >
-                    {topCategories.length === 0 ? (
-                        <Empty 
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            description={t('news.empty.noCategories', 'Chưa có danh mục')}
-                            className="py-4"
-                        />
-                    ) : (
+                    {categoriesResponse?.data && categoriesResponse.data.length > 0 ? (
                         <div className="space-y-3">
-                            {topCategories.map((category, index) => (
-                                <motion.div
-                                    key={category.name}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                                    className="space-y-2"
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {categoriesResponse.data.slice(0, 5).map((category: any, index: number) => (
+                                <div key={category.id} className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <Tag color={['blue', 'green', 'orange', 'purple', 'red'][index % 5]}>
                                             {category.name}
-                                        </span>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-xs text-gray-500">
-                                                {category.count}
-                                            </span>
-                                            <span className="text-xs text-gray-400">
-                                                ({category.percentage}%)
-                                            </span>
-                                        </div>
+                                        </Tag>
                                     </div>
-                                    <Progress
-                                        percent={category.percentage}
-                                        size="small"
-                                        strokeColor={category.color}
-                                        showInfo={false}
-                                        className="mb-0"
-                                    />
-                                </motion.div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-xs text-gray-500">
+                                            {category.news_count || 0} bài
+                                        </span>
+                                        <Progress
+                                            percent={Math.min((category.news_count || 0) / Math.max(statistics.totalArticles, 1) * 100, 100)}
+                                            size="small"
+                                            showInfo={false}
+                                            className="w-16"
+                                        />
+                                    </div>
+                                </div>
                             ))}
                         </div>
+                    ) : (
+                        <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description={t('news.sidebar.noCategories', 'Chưa có chuyên mục')}
+                        />
                     )}
                 </Card>
             </motion.div>
 
-            {/* Quick Stats */}
+            {/* Current Time & Weather */}
             <motion.div
-                initial={{ opacity: 0, x: 50 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
             >
-                <Card 
+                <Card
                     title={
                         <div className="flex items-center space-x-2">
-                            <CalendarOutlined className="text-green-500" />
-                            <span>{t('news.sidebar.quickStats', 'Thống kê nhanh')}</span>
+                            <CloudOutlined className="text-cyan-500" />
+                            <span>{t('news.sidebar.currentInfo', 'Thông tin hiện tại')}</span>
                         </div>
                     }
-                    className="shadow-md"
-                    bodyStyle={{ padding: '16px' }}
+                    className="shadow-sm"
                 >
-                    <div className="grid grid-cols-2 gap-4">
-                        <Statistic
-                            title={t('news.stats.totalNews', 'Tổng bài viết')}
-                            value={categoriesResponse?.data.reduce((sum, c) => sum + (c.news_count || 0), 0) || 0}
-                            valueStyle={{ fontSize: '16px', color: '#1890ff' }}
-                        />
-                        <Statistic
-                            title={t('news.stats.categories', 'Danh mục')}
-                            value={categoriesResponse?.data.length || 0}
-                            valueStyle={{ fontSize: '16px', color: '#52c41a' }}
-                        />
+                    <div className="space-y-4">
+                        {/* Current Time */}
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">
+                                {currentTime.format('HH:mm:ss')}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                                {currentTime.format('dddd, DD/MM/YYYY')}
+                            </div>
+                        </div>
+
+                        <Divider />
+
+                        {/* Weather */}
+                        <div className="text-center">
+                            <div className="text-3xl mb-2">{weather.icon}</div>
+                            <div className="text-lg font-semibold">{weather.temperature}°C</div>
+                            <div className="text-sm text-gray-600">{weather.location}</div>
+                            <div className="text-xs text-gray-500">{weather.condition}</div>
+
+                            <div className="mt-2 flex justify-between text-xs text-gray-500">
+                                <span>Độ ẩm: {weather.humidity}%</span>
+                                <span>Gió: {weather.windSpeed}km/h</span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </motion.div>
+
+            {/* Quick Actions */}
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+            >
+                <Card
+                    title={
+                        <div className="flex items-center space-x-2">
+                            <ThunderboltOutlined className="text-yellow-500" />
+                            <span>{t('news.sidebar.quickActions', 'Liên kết nhanh')}</span>
+                        </div>
+                    }
+                    className="shadow-sm"
+                >
+                    <div className="space-y-2">
+                        <Button
+                            block
+                            icon={<StarOutlined />}
+                            className="text-left"
+                        >
+                            {t('news.sidebar.featured', 'Tin nổi bật')}
+                        </Button>
+
+                        <Button
+                            block
+                            icon={<FireOutlined />}
+                            className="text-left"
+                        >
+                            {t('news.sidebar.trending', 'Tin thịnh hành')}
+                        </Button>
+
+                        <Button
+                            block
+                            icon={<CalendarOutlined />}
+                            className="text-left"
+                        >
+                            {t('news.sidebar.latest', 'Tin mới nhất')}
+                        </Button>
+
+                        <Button
+                            block
+                            icon={<ArrowRightOutlined />}
+                            type="primary"
+                            className="text-left"
+                        >
+                            {t('news.sidebar.viewAll', 'Xem tất cả')}
+                        </Button>
                     </div>
                 </Card>
             </motion.div>

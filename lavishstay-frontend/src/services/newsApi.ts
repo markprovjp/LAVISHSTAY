@@ -1,5 +1,6 @@
 // src/services/newsApi.ts
 import { ApiService } from './apiService';
+import api from '../utils/api';
 
 // TypeScript interfaces
 export interface ApiParams {
@@ -122,32 +123,33 @@ export const newsApi = {
 
     // Tạo bình luận
     async createComment(newsId: number, data: { content: string; parent_id?: number | null }): Promise<Comment> {
-        const res = await ApiService.post<{ data: Comment }>(`news/${newsId}/comments`, data);
-        return res.data;
+        // use axios instance which injects Authorization header via interceptor
+        const res = await api.post(`/news/${newsId}/comments`, data);
+        return res.data.data || res.data;
     },
 
     // Like bài viết (use backend "news-actions" prefix)
     async toggleLike(newsId: number): Promise<{ is_liked: boolean; likes_count: number }> {
-        const res = await ApiService.post<{ data: { is_liked: boolean; likes_count: number } }>(`news-actions/${newsId}/like`, {});
-        return res.data;
+        const res = await api.post(`/news-actions/${newsId}/like`, {});
+        return res.data.data || res.data;
     },
 
     // Bookmark bài viết (use backend "news-actions" prefix)
     async toggleBookmark(newsId: number): Promise<{ is_bookmarked: boolean }> {
-        const res = await ApiService.post<{ data: { is_bookmarked: boolean } }>(`news-actions/${newsId}/bookmark`, {});
-        return res.data;
+        const res = await api.post(`/news-actions/${newsId}/bookmark`, {});
+        return res.data.data || res.data;
     },
 
     // Đánh giá bài viết (use backend "news-actions" prefix)
     async rateNews(newsId: number, rating: number): Promise<{ rating: number; user_rating: number }> {
-        const res = await ApiService.post<{ data: { rating: number; user_rating: number } }>(`news-actions/${newsId}/rate`, { rating });
-        return res.data;
+        const res = await api.post(`/news-actions/${newsId}/rate`, { rating });
+        return res.data.data || res.data;
     },
 
     // Like bình luận (nested under news)
     async toggleCommentLike(newsId: number, commentId: number): Promise<{ is_liked: boolean; likes_count: number }> {
-        const res = await ApiService.post<{ data: { is_liked: boolean; likes_count: number } }>(`news/${newsId}/comments/${commentId}/like`, {});
-        return res.data;
+        const res = await api.post(`/news/${newsId}/comments/${commentId}/like`, {});
+        return res.data.data || res.data;
     },
 
     // Get news by category

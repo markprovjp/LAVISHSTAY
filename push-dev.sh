@@ -3,8 +3,24 @@
 echo "🚀 Pushing changes to DEV branch..."
 
 DEFAULT_BRANCH="DEV"
-REMOTE_NAME=${1:-origin}  # Mặc định origin
+
+# Determine remote name and optional commit message.
+# If the first arg matches a git remote name, use it as REMOTE_NAME and treat the rest as commit message.
+# Otherwise default REMOTE_NAME to 'origin' and treat all args as the commit message.
+all_args=("$@")
+git_remotes=$(git remote 2>/dev/null || echo "")
+if [ $# -gt 0 ] && [ -n "$git_remotes" ] && echo "$git_remotes" | grep -xq "$1"; then
+    REMOTE_NAME="$1"
+    # shift positional parameters so $@ now contains the commit message parts (if any)
+    shift
+else
+    REMOTE_NAME="origin"
+fi
+
 REMOTE_BRANCH=$DEFAULT_BRANCH
+
+# Remaining positional args (if any) will be used as commit message
+COMMIT_MSG="$*"
 
 # Kiểm tra rebase/merge đang dở
 if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
@@ -94,9 +110,13 @@ fi
 # Add lại sau khi stash pop
 git add .
 
-# Tạo commit message tự động
-changed_files=$(git diff --cached --name-only | tr '\n' ', ' | sed 's/, $//')
-commit_message="Update files: $changed_files - $(date '+%Y-%m-%d %H:%M:%S')"
+# Tạo commit message: nếu người dùng truyền message vào script thì dùng nó, ngược lại tạo tự động
+if [ -n "$COMMIT_MSG" ]; then
+    commit_message="$COMMIT_MSG"
+else
+    changed_files=$(git diff --cached --name-only | tr '\n' ', ' | sed 's/, $//')
+    commit_message="Update files: $changed_files - $(date '+%Y-%m-%d %H:%M:%S')"
+fi
 echo "💬 Commit: $commit_message"
 git commit -m "$commit_message"
 
