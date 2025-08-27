@@ -18,6 +18,7 @@ use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\CheckoutRequestController;
 use App\Http\Controllers\ChildPolicyController;
+use App\Http\Controllers\CompensationPolicyController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\RoomTypeAmenityController;
 use Illuminate\Support\Facades\Route;
@@ -570,6 +571,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
+
+     // Chính sách bồi thường
+    Route::get('/admin/compensation-policies', [CompensationPolicyController::class, 'index'])->name('admin.compensation-policies');
+    Route::get('/admin/compensation-policies/create', [CompensationPolicyController::class, 'create'])->name('admin.compensation-policies.create');
+    Route::post('/admin/compensation-policies', [CompensationPolicyController::class, 'store'])->name('admin.compensation-policies.store');
+    Route::get('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'show'])->name('admin.compensation-policies.show');
+    Route::get('/admin/compensation-policies/{id}/edit', [CompensationPolicyController::class, 'edit'])->name('admin.compensation-policies.edit');
+    Route::put('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'update'])->name('admin.compensation-policies.update');
+    Route::delete('/admin/compensation-policies/{id}', [CompensationPolicyController::class, 'destroy'])->name('admin.compensation-policies.destroy');
+    Route::patch('/admin/compensation-policies/toggle-status/{id}', [CompensationPolicyController::class, 'toggleStatus'])->name('admin.compensation-policies.toggle-status');
 
 
 
