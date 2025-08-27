@@ -233,7 +233,7 @@
                                          class="h-10 w-10 object-cover rounded-lg shadow-sm" loading="lazy">
                                 </td>
                                 <td class="px-4 py-3 text-sm">
-                                    <a href="{{ route('admin.news.show', $item->id) }}"
+                                    <a href=""
                                        class="text-gray-900 dark:text-gray-100 hover:text-violet-600 dark:hover:text-violet-400 transition duration-150 cursor-pointer truncate">
                                         {{ $item->meta_title ?? 'Không có tiêu đề' }}
                                     </a>
@@ -282,7 +282,7 @@
                                         <div id="dropdown-menu-{{ $item->id }}"
                                              class="hidden menu-button-action bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none">
                                             <div class="py-1" role="menu">
-                                                <a href="{{ route('admin.news.show', $item->id) }}"
+                                                {{-- <a href="{{ route('admin.news.show', $item->id) }}"
                                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
                                                    role="menuitem">
                                                     <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -290,7 +290,7 @@
                                                               d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
                                                     Xem chi tiết
-                                                </a>
+                                                </a> --}}
                                                 <a href="{{ route('admin.news.edit', $item->id) }}"
                                                    class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer"
                                                    role="menuitem">

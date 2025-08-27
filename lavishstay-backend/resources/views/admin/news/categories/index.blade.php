@@ -1,8 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Quản lý danh mục bài viết</h1>
-    </x-slot>
-
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto" x-data="{ showCreate: false, editModal: false, editData: null }">
         <!-- Header -->
         <div class="sm:flex sm:justify-between sm:items-center mb-8">

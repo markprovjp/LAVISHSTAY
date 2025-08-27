@@ -226,19 +226,19 @@
 
                                         <!-- Email -->
                                         <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                            {!! $user->email ?: '<span class="text-violet-500">Chưa cung cấp</span>' !!}
+                                            {!! $user->email ?: '<span class="text-red-300">Chưa cung cấp</span>' !!}
                                         </td>
 
                                         <!-- Phone -->
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {!! $user->phone ?: '<span class="text-violet-500">Chưa cung cấp</span>' !!}
+                                            {!! $user->phone ?: '<span class="text-red-300">Chưa cung cấp</span>' !!}
                                         </td>
 
                                         <!-- Identity Code -->
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {!! $user->identity_code ?: '<span class="text-violet-500">Chưa cung cấp</span>' !!}
+                                            {!! $user->identity_code ?: '<span class="text-red-300">Chưa cung cấp</span>' !!}
                                         </td>
 
                                         <!-- Role -->
@@ -246,7 +246,7 @@
                                             @foreach ($user->roles as $role)
                                                 @php
                                                     $roleColors = [
-                                                        'guest' => 'bg-blue-100 text-blue-800',     
+                                                        'customer' => 'bg-purple-100 text-purple-800',
                                                     ];
                                                     $color = $roleColors[$role->name] ?? 'bg-gray-100 text-gray-800';
                                                 @endphp
@@ -288,6 +288,18 @@
                                                             role="menuitem">
                                                             Xem Chi tiết
                                                         </a>
+                                                        <!-- Lịch sử hoạt động -->
+                                                        <a href="{{ route('admin.users.customers.activities', $user->id) }}"
+                                                            class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                                                            role="menuitem">
+                                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                                            </svg>
+                                                            Lịch sử hoạt động
+                                                        </a>
+
+                                                        <!-- Divider -->
                                                         <div class="border-t border-gray-100 dark:border-gray-700">
                                                         </div>
                                                         <button
