@@ -1,4 +1,10 @@
 <x-app-layout>
+    <style>
+                .modal-overlay {
+                /* z-index: 50; */
+                background-color: rgba(0, 0, 0, 0.621);
+                }
+        </style>
     <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
 
         <!-- Page header -->
@@ -305,7 +311,7 @@
                 </div>
 
                 <!-- Single Image Viewer Modal -->
-                <div id="singleImageModal" class="h-full fixed inset-0 bg-black bg-opacity-90 z-50 hidden">
+                <div id="singleImageModal" class="h-full fixed inset-0 modal-overlay z-50 hidden">
                     <div class="h-full flex items-center justify-center p-4">
                         <!-- Close Button -->
                         <button onclick="closeSingleImageModal()"
@@ -331,7 +337,7 @@
                 </div>
 
                 <!-- All Images Gallery Modal -->
-                <div id="allImagesModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden">
+                <div id="allImagesModal" class="fixed inset-0 modal-overlay z-50 hidden">
                     <div class="h-full flex flex-col">
 
                         <!-- Header -->
@@ -350,7 +356,7 @@
                         </div>
 
                         <!-- Images Grid -->
-                        <div class="flex-1 overflow-y-auto p-6">
+                        <div class="h-full flex-1 overflow-y-auto p-6">
                             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 @foreach ($roomType->images as $index => $image)
                                     <div class="relative group cursor-pointer"
@@ -809,7 +815,7 @@
 
     <!-- Image Viewer Modal -->
     <div id="imageViewerModal"
-        class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center p-4">
+        class="fixed inset-0 modal-overlay z-50 hidden items-center justify-center p-4">
         <div class="relative max-w-7xl max-h-full w-full h-full flex items-center justify-center">
 
             <!-- Close Button -->
@@ -857,7 +863,7 @@
     </div>
 
     <!-- All Images Gallery Modal -->
-    <div id="allImagesModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden">
+    <div id="allImagesModal" class="h-full fixed inset-0 modal-overlay z-50 hidden">
         <div class="h-full flex flex-col">
 
             <!-- Header -->
@@ -876,7 +882,7 @@
             </div>
 
             <!-- Images Grid -->
-            <div class="flex-1 overflow-y-auto p-6">
+            <div class="h-full flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     @foreach ($roomType->images as $index => $image)
                         <div class="relative group cursor-pointer"
