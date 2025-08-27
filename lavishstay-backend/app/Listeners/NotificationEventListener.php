@@ -16,6 +16,7 @@ use App\Events\RoomCleaningRequired;
 use App\Events\RoomStatusChanged;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 
 class NotificationEventListener
 {
@@ -103,17 +104,8 @@ class NotificationEventListener
                 'has_room_type_relation' => isset($booking->roomType)
             ]);
 
-            // Get room information
-            $roomNumber = 'N/A';
-            if (isset($booking->room) && $booking->room) {
-                $roomNumber = $booking->room->room_number ?? 'N/A';
-                Log::info('Using room relation', ['room_number' => $roomNumber]);
-            } elseif (method_exists($booking, 'roomType') && $booking->roomType) {
-                $roomNumber = $booking->roomType->name ?? 'N/A';
-                Log::info('Using roomType relation', ['room_type_name' => $roomNumber]);
-            } else {
-                Log::info('No room information available, using default');
-            }
+            // Resolve room information safely (handle model or collection)
+            $roomNumber = $this->resolveRoomNumber($booking);
 
             $notificationData = [
                 'booking_id' => $booking->booking_id ?? $booking->id,
@@ -153,12 +145,7 @@ class NotificationEventListener
         try {
             $booking = $event->booking;
             
-            $roomNumber = 'N/A';
-            if (isset($booking->room) && $booking->room) {
-                $roomNumber = $booking->room->room_number ?? 'N/A';
-            } elseif (method_exists($booking, 'roomType') && $booking->roomType) {
-                $roomNumber = $booking->roomType->name ?? 'N/A';
-            }
+            $roomNumber = $this->resolveRoomNumber($booking);
             
             $result = $this->notificationService->sendByType('booking_cancelled', [
                 'booking_id' => $booking->booking_id ?? $booking->id,
@@ -193,12 +180,7 @@ class NotificationEventListener
                 $changesList[] = "{$field}: {$change['old']} → {$change['new']}";
             }
 
-            $roomNumber = 'N/A';
-            if (isset($booking->room) && $booking->room) {
-                $roomNumber = $booking->room->room_number ?? 'N/A';
-            } elseif (method_exists($booking, 'roomType') && $booking->roomType) {
-                $roomNumber = $booking->roomType->name ?? 'N/A';
-            }
+            $roomNumber = $this->resolveRoomNumber($booking);
             
             $result = $this->notificationService->sendByType('booking_modified', [
                 'booking_id' => $booking->booking_id ?? $booking->id,
@@ -227,12 +209,7 @@ class NotificationEventListener
         try {
             $booking = $event->booking;
 
-            $roomNumber = 'N/A';
-            if (isset($booking->room) && $booking->room) {
-                $roomNumber = $booking->room->room_number ?? 'N/A';
-            } elseif (method_exists($booking, 'roomType') && $booking->roomType) {
-                $roomNumber = $booking->roomType->name ?? 'N/A';
-            }
+            $roomNumber = $this->resolveRoomNumber($booking);
             
             $result = $this->notificationService->sendByType('checkin_reminder', [
                 'booking_id' => $booking->booking_id ?? $booking->id,
@@ -260,12 +237,7 @@ class NotificationEventListener
         try {
             $booking = $event->booking;
 
-            $roomNumber = 'N/A';
-            if (isset($booking->room) && $booking->room) {
-                $roomNumber = $booking->room->room_number ?? 'N/A';
-            } elseif (method_exists($booking, 'roomType') && $booking->roomType) {
-                $roomNumber = $booking->roomType->name ?? 'N/A';
-            }
+            $roomNumber = $this->resolveRoomNumber($booking);
             
             $result = $this->notificationService->sendByType('checkout_completed', [
                 'booking_id' => $booking->booking_id ?? $booking->id,
@@ -373,18 +345,21 @@ class NotificationEventListener
     {
         try {
             $room = $event->room;
-            
+
+            $roomId = $this->resolveRoomIdFrom($room);
+            $roomNumber = $this->resolveRoomNumberFrom($room);
+
             $result = $this->notificationService->sendByType('room_maintenance', [
-                'room_id' => $room->id,
-                'room_number' => $room->room_number ?? 'N/A',
+                'room_id' => $roomId,
+                'room_number' => $roomNumber,
                 'issue' => $event->issue,
                 'priority' => $event->priority,
                 'reported_at' => now()->format('d/m/Y H:i'),
-                'url' => '#room-' . $room->id
+                'url' => '#room-' . ($roomId ?? 'unknown')
             ]);
 
             Log::info('Room maintenance notification sent', [
-                'room_id' => $room->id,
+                'room_id' => $roomId,
                 'result' => $result
             ]);
 
@@ -400,19 +375,22 @@ class NotificationEventListener
     {
         try {
             $room = $event->room;
-            
+
+            $roomId = $this->resolveRoomIdFrom($room);
+            $roomNumber = $this->resolveRoomNumberFrom($room);
+
             $typeName = $event->urgency === 'urgent' ? 'room_cleaning_urgent' : 'room_maintenance';
-            
+
             $result = $this->notificationService->sendByType($typeName, [
-                'room_id' => $room->id,
-                'room_number' => $room->room_number ?? 'N/A',
+                'room_id' => $roomId,
+                'room_number' => $roomNumber,
                 'urgency' => $event->urgency,
                 'requested_at' => now()->format('d/m/Y H:i'),
-                'url' => '#room-' . $room->id
+                'url' => '#room-' . ($roomId ?? 'unknown')
             ]);
 
             Log::info('Room cleaning notification sent', [
-                'room_id' => $room->id,
+                'room_id' => $roomId,
                 'result' => $result
             ]);
 
@@ -428,23 +406,119 @@ class NotificationEventListener
     {
         try {
             $room = $event->room;
-            
+
+            $roomId = $this->resolveRoomIdFrom($room);
+            $roomNumber = $this->resolveRoomNumberFrom($room);
+
             $result = $this->notificationService->sendByType('room_maintenance', [
-                'room_id' => $room->id,
-                'room_number' => $room->room_number ?? 'N/A',
+                'room_id' => $roomId,
+                'room_number' => $roomNumber,
                 'old_status' => $event->oldStatus,
                 'new_status' => $event->newStatus,
                 'changed_at' => now()->format('d/m/Y H:i'),
-                'url' => '#room-' . $room->id
+                'url' => '#room-' . ($roomId ?? 'unknown')
             ]);
 
             Log::info('Room status changed notification sent', [
-                'room_id' => $room->id,
+                'room_id' => $roomId,
                 'result' => $result
             ]);
 
         } catch (\Exception $e) {
             Log::error('Failed to send room status changed notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Safely resolve room number from a booking instance.
+     * Handles cases where booking->room may be a Collection, array, or model.
+     */
+    protected function resolveRoomNumber($booking)
+    {
+        try {
+            // If room is a Collection, take first
+            if (isset($booking->room) && $booking->room instanceof Collection) {
+                $first = $booking->room->first();
+                if ($first && (is_object($first) || is_array($first))) {
+                    return $first->room_number ?? ($first['room_number'] ?? 'N/A');
+                }
+                return 'N/A';
+            }
+
+            // If room is an array
+            if (isset($booking->room) && is_array($booking->room)) {
+                $first = reset($booking->room);
+                return $first['room_number'] ?? 'N/A';
+            }
+
+            // If room is a model/object
+            if (isset($booking->room) && is_object($booking->room)) {
+                return $booking->room->room_number ?? 'N/A';
+            }
+
+            // Fallback to roomType name if present
+            if (method_exists($booking, 'roomType') && $booking->roomType) {
+                return $booking->roomType->name ?? 'N/A';
+            }
+
+            return 'N/A';
+        } catch (\Exception $e) {
+            Log::warning('resolveRoomNumber failed: ' . $e->getMessage());
+            return 'N/A';
+        }
+    }
+
+    /**
+     * Resolve a room id from various room representations (model, collection, array).
+     */
+    protected function resolveRoomIdFrom($room)
+    {
+        try {
+            if ($room instanceof Collection) {
+                $first = $room->first();
+                return $first->id ?? ($first['id'] ?? null);
+            }
+
+            if (is_array($room)) {
+                $first = reset($room);
+                return $first['id'] ?? null;
+            }
+
+            if (is_object($room)) {
+                return $room->id ?? null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::warning('resolveRoomIdFrom failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Resolve room number from various room representations (model, collection, array).
+     */
+    protected function resolveRoomNumberFrom($room)
+    {
+        try {
+            if ($room instanceof Collection) {
+                $first = $room->first();
+                return $first->room_number ?? ($first['room_number'] ?? 'N/A');
+            }
+
+            if (is_array($room)) {
+                $first = reset($room);
+                return $first['room_number'] ?? 'N/A';
+            }
+
+            if (is_object($room)) {
+                return $room->room_number ?? 'N/A';
+            }
+
+            return 'N/A';
+        } catch (\Exception $e) {
+            Log::warning('resolveRoomNumberFrom failed: ' . $e->getMessage());
+            return 'N/A';
         }
     }
 }

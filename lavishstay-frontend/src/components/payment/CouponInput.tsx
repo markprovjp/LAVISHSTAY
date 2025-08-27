@@ -251,65 +251,73 @@ const CouponInput: React.FC<CouponInputProps> = ({
                 </Space>
             </Divider>
 
-            {/* Applied Coupon Display */}
+            {/* Applied Coupon Display (cleaner card with left accent) */}
             {appliedCoupon && (
-                <Alert
-                    message={
-                        <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                            <Row justify="space-between" align="middle">
-                                <Col>
-                                    <Space>
-                                        <Tag color="green" icon={<CheckCircleOutlined />}>
-                                            {appliedCoupon.code}
-                                        </Tag>
-                                        <Text type="success" strong>
-                                            Đã áp dụng
-                                        </Text>
-                                    </Space>
-                                </Col>
-                                <Col>
-                                    <Button
-                                        type="text"
-                                        size="small"
-                                        icon={<CloseOutlined />}
-                                        onClick={handleRemoveCoupon}
-                                        disabled={disabled}
-                                    >
-                                        Gỡ mã
-                                    </Button>
-                                </Col>
-                            </Row>
+                <div
+                    style={{
+                        display: 'flex',
+                        width: '100%',
+                        background: '#fff',
+                        borderRadius: 8,
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        boxShadow: '0 1px 2px rgba(16,24,40,0.03)',
+                        marginBottom: 16,
+                        overflow: 'hidden'
+                    }}
+                >
+                    {/* accent */}
+                    <div style={{ width: 6, background: '#52c41a' }} />
 
-                            <div>
+                    <div style={{ padding: 12, flex: 1 }}>
+                        <Row justify="space-between" align="middle">
+                            <Col>
+                                <Space>
+                                    <Tag color="success" icon={<CheckCircleOutlined />} style={{ padding: '0 8px', height: 28 }}>
+                                        {appliedCoupon.code}
+                                    </Tag>
+                                    <Text style={{ color: '#237804', fontWeight: 700 }}>Đã áp dụng</Text>
+                                </Space>
+                            </Col>
+                            <Col>
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<CloseOutlined />}
+                                    onClick={handleRemoveCoupon}
+                                    disabled={disabled}
+                                >
+                                    Gỡ mã
+                                </Button>
+                            </Col>
+                        </Row>
+
+                        {appliedCoupon.description && (
+                            <div style={{ marginTop: 8 }}>
                                 <Text type="secondary">{appliedCoupon.description}</Text>
                             </div>
+                        )}
 
-                            <Row justify="space-between">
+                        <div style={{ marginTop: 12 }}>
+                            <Row justify="space-between" align="middle">
                                 <Col>
-                                    <Text>Giảm giá:</Text>
+                                    <Text>Giảm giá</Text>
                                 </Col>
                                 <Col>
-                                    <Text strong style={{ color: '#52c41a' }}>
-                                        -{formatVND(appliedCoupon.discount_vnd)}
-                                    </Text>
+                                    <Text strong style={{ color: '#389e0d' }}>-{formatVND(appliedCoupon.discount_vnd)}</Text>
                                 </Col>
                             </Row>
 
-                            <Row justify="space-between">
+                            <Row justify="space-between" align="middle" style={{ marginTop: 6 }}>
                                 <Col>
-                                    <Text strong>Tổng mới:</Text>
+                                    <Text strong>Tổng mới</Text>
                                 </Col>
                                 <Col>
-                                    <Text strong style={{ fontSize: '16px', color: '#1890ff' }}>
-                                        {formatVND(appliedCoupon.new_total_vnd)}
-                                    </Text>
+                                    <Text strong style={{ fontSize: 16, color: '#096dd9' }}>{formatVND(appliedCoupon.new_total_vnd)}</Text>
                                 </Col>
                             </Row>
-                        </Space>
-                    }
-                    type="success"
-                    style={{ marginBottom: 16 }}
-                />
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Coupon Input */}
