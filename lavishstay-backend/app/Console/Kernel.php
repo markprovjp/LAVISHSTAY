@@ -18,6 +18,20 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
+        // Update daily room occupancy at midnight every day
+        $schedule->command('occupancy:update-daily')
+            ->dailyAt('00:00')
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/occupancy-update.log'));
+
+        // Optional: Update occupancy data every hour during business hours for real-time updates
+        $schedule->command('occupancy:update-daily')
+            ->hourly()
+            ->between('06:00', '23:00')
+            ->withoutOverlapping()
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/occupancy-hourly.log'));
         // Update occupancy data every hour
         $schedule->command('pricing:update-occupancy')
                  ->hourly()

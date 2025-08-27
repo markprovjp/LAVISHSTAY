@@ -3,8 +3,10 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
@@ -275,7 +277,7 @@ class User extends Authenticatable
             }
         } catch (\Exception $e) {
             // Log error but don't block user creation
-            \Log::warning('Failed to create default notification settings for user ' . $this->id . ': ' . $e->getMessage());
+            Log::warning('Failed to create default notification settings for user ' . $this->id . ': ' . $e->getMessage());
         }
     }
 
@@ -340,6 +342,146 @@ class User extends Authenticatable
         })->take(2)->implode('');
 
         return "https://ui-avatars.com/api/?name={$initials}&background=3B82F6&color=ffffff&size=40";
+    }
+
+
+     
+
+    /**
+     * Get active notification settings for the user.
+     */
+    public function activeNotificationSettings(): HasMany
+    {
+        return $this->hasMany(NotificationUser::class)->where('is_active', true);
+    }
+
+    
+   
+
+    /**
+     * Check if user should receive a specific notification type.
+     */
+    public function shouldReceiveNotification($notificationType): bool
+    {
+        return $this->notificationSettings()
+            ->where('notification_type', $notificationType)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Enable notification type for user.
+     */
+    public function enableNotification($notificationType, $settings = [])
+    {
+        return NotificationUser::enableNotification($this->id, $notificationType, $settings);
+    }
+
+    /**
+     * Disable notification type for user.
+     */
+    public function disableNotification($notificationType)
+    {
+        return NotificationUser::disableNotification($this->id, $notificationType);
+    }
+
+    /**
+     * Get all notification types user is subscribed to.
+     */
+    public function getNotificationTypes(): array
+    {
+        return NotificationUser::getUserNotificationTypes($this->id);
+    }
+
+    /**
+     * Get user's notification statistics.
+     */
+    public function getNotificationStatistics(): array
+    {
+        $total = $this->notifications()->count();
+        $unread = $this->unreadNotifications()->count();
+        $today = $this->notifications()->whereDate('created_at', today())->count();
+
+        return [
+            'total' => $total,
+            'unread' => $unread,
+            'read' => $total - $unread,
+            'today' => $today,
+            'read_rate' => $total > 0 ? round((($total - $unread) / $total) * 100, 2) : 0,
+        ];
+    }
+
+    /**
+     * Scope to get users who should receive a specific notification type.
+     */
+    public function scopeForNotificationType($query, $notificationType)
+    {
+        return $query->whereHas('notificationSettings', function ($q) use ($notificationType) {
+            $q->where('notification_type', $notificationType)
+              ->where('is_active', true);
+        });
+    }
+
+    /**
+     * Scope to get users with specific roles.
+     */
+    public function scopeWithRole($query, $roles)
+    {
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
+
+        return $query->whereIn('role', $roles);
+    }
+
+    /**
+     * Scope to get active users.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+
+    /**
+     * Get the user's role display name.
+     */
+    public function getRoleDisplayAttribute(): string
+    {
+        return match($this->role) {
+            'admin' => 'Quản trị viên',
+            'hotel_manager' => 'Quản lý khách sạn',
+            'receptionist' => 'Lễ tân',
+            'housekeeping' => 'Dọn phòng',
+            'finance' => 'Kế toán',
+            'marketing' => 'Marketing',
+            'guest' => 'Khách hàng',
+            default => 'Người dùng'
+        };
+    }
+
+    /**
+     * Check if user has admin role.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user has manager role.
+     */
+    public function isManager(): bool
+    {
+        return in_array($this->role, ['admin', 'hotel_manager']);
+    }
+
+    /**
+     * Check if user has staff role.
+     */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, ['admin', 'hotel_manager', 'receptionist', 'housekeeping', 'finance']);
     }
     
 }

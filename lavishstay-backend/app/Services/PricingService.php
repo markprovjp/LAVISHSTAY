@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\FacadesLog;
 
 class PricingService
 {
@@ -754,14 +755,14 @@ class PricingService
             $current->addDay();
         }
         
-        \Log::info('Pricing cache cleared successfully', [
+        Log::info('Pricing cache cleared successfully', [
             'room_type_id' => $roomTypeId,
             'start_date' => $startDate,
             'end_date' => $endDate
         ]);
         
     } catch (\Exception $e) {
-        \Log::error('Error clearing pricing cache: ' . $e->getMessage(), [
+        Log::error('Error clearing pricing cache: ' . $e->getMessage(), [
             'room_type_id' => $roomTypeId,
             'start_date' => $startDate,
             'end_date' => $endDate

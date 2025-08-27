@@ -2,209 +2,264 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\DynamicPricingRule;
 use App\Models\RoomType;
 use App\Services\DynamicPricingService;
 use App\Services\RoomOccupancyService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class DynamicPricingController extends Controller
 {
-    protected $dynamicPricingService;
-    protected $occupancyService;
+    protected DynamicPricingService $pricingService;
+    protected RoomOccupancyService $occupancyService;
 
-    public function __construct(DynamicPricingService $dynamicPricingService, RoomOccupancyService $occupancyService)
+    public function __construct(DynamicPricingService $pricingService, RoomOccupancyService $occupancyService)
     {
-        $this->dynamicPricingService = $dynamicPricingService;
+        $this->pricingService = $pricingService;
         $this->occupancyService = $occupancyService;
     }
 
+    /**
+     * Display the dynamic pricing management page
+     */
     public function index()
     {
         return view('admin.pricing.dynamic_price');
     }
 
+    /**
+     * Get dynamic pricing rules data for DataTable
+     */
     public function getData(Request $request)
     {
         try {
-            $query = DynamicPricingRule::with('roomType')
-                ->select('dynamic_pricing_rules.*')
-                ->leftJoin('room_types', 'dynamic_pricing_rules.room_type_id', '=', 'room_types.room_type_id');
-
-            $rules = $query->paginate(10);
+            $page = $request->get('page', 1);
+            $perPage = $request->get('per_page', 10);
             
-            foreach ($rules as $rule) {
-                $rule->room_type_name = $rule->roomType ? $rule->roomType->name : 'Tất cả loại phòng';
+            // Get rules with current status
+            $rulesWithStatus = $this->pricingService->getRulesWithStatus();
+            
+            // Convert to collection for pagination
+            $collection = collect($rulesWithStatus);
+            $total = $collection->count();
+            
+            // Manual pagination
+            $offset = ($page - 1) * $perPage;
+            $items = $collection->slice($offset, $perPage)->values();
+            
+            // Add additional room information
+            $items = $items->map(function ($rule) {
+                $roomType = RoomType::find($rule['room_type_id']);
+                if ($roomType) {
+                    $occupancyStats = $this->occupancyService->getOccupancyStats();
+                    $roomStats = collect($occupancyStats)->firstWhere('room_type_id', $rule['room_type_id']);
+                    
+                    $rule['total_rooms'] = $roomStats['total_rooms'] ?? $roomType->total_room;
+                    $rule['available_rooms'] = $roomStats['available_rooms'] ?? 0;
+                }
                 
-                // Get current occupancy data
-                $occupancyData = $this->getOccupancyDataForRule($rule->room_type_id);
-                $rule->current_occupancy = $occupancyData['occupancy_rate'];
-                $rule->total_rooms = $occupancyData['total_rooms'];
-                $rule->booked_rooms = $occupancyData['booked_rooms'];
-                $rule->available_rooms = $occupancyData['available_rooms'];
-                
-                // Check if rule is triggered
-                $rule->is_triggered = $rule->is_active && $rule->current_occupancy >= $rule->occupancy_threshold;
-            }
+                return $rule;
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $items,
+                'total' => $total,
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'last_page' => ceil($total / $perPage),
+                'from' => $offset + 1,
+                'to' => min($offset + $perPage, $total)
+            ]);
 
-            return response()->json($rules);
         } catch (\Exception $e) {
-            \Log::error('Error in getData: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to load data: ' . $e->getMessage()], 500);
+            Log::error('Error getting dynamic pricing data', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi tải dữ liệu: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
         }
     }
 
-    public function getRoomTypes()
-    {
-        try {
-            $roomTypes = RoomType::select('room_type_id', 'name')
-                ->orderBy('name')
-                ->get();
-            
-            return response()->json($roomTypes);
-        } catch (\Exception $e) {
-            \Log::error('Error loading room types: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to load room types'], 500);
-        }
-    }
-
+    /**
+     * Get occupancy statistics
+     */
     public function getOccupancyStats()
     {
         try {
-            $today = now()->toDateString();
+            $stats = $this->occupancyService->getOccupancyStats();
             
-            // Get all room types
-            $roomTypes = RoomType::select('room_type_id', 'name')->get();
-            
-            $stats = [];
-            
-            foreach ($roomTypes as $roomType) {
-                $occupancyData = $this->getOccupancyDataForRule($roomType->room_type_id);
+            // Add active and triggered rules count for each room type
+            $statsWithRules = collect($stats)->map(function ($stat) {
+                $rules = DynamicPricingRule::where('room_type_id', $stat['room_type_id'])->get();
+                $activeRules = $rules->where('is_active', true);
+                $triggeredRules = $activeRules->where('occupancy_threshold', '<=', $stat['occupancy_rate']);
                 
-                $stats[] = [
-                    'room_type_id' => $roomType->room_type_id,
-                    'room_type_name' => $roomType->name,
-                    'total_rooms' => $occupancyData['total_rooms'],
-                    'available_rooms' => $occupancyData['available_rooms'],
-                    'booked_rooms' => $occupancyData['booked_rooms'],
-                    'occupancy_rate' => $occupancyData['occupancy_rate'],
-                    'status' => $this->getOccupancyStatus($occupancyData['occupancy_rate'])
-                ];
-            }
+                $stat['active_rules'] = $activeRules->count();
+                $stat['triggered_rules'] = $triggeredRules->count();
+                
+                return $stat;
+            });
 
-            return response()->json($stats);
-        } catch (\Exception $e) {
-            \Log::error('Error getting occupancy stats: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to load occupancy stats: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function calculateDynamicPrice(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'room_type_id' => 'required|exists:room_types,room_type_id',
-            'base_price' => 'required|numeric|min:0',
-            'date' => 'required|date'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $occupancyRate = $this->getOccupancyRateForDate($request->room_type_id, $request->date);
-            $priceAdjustment = $this->getPriceAdjustment($request->room_type_id, $occupancyRate);
-            
-            $basePrice = floatval($request->base_price);
-            $adjustedPrice = $basePrice + ($basePrice * $priceAdjustment / 100);
-            
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'base_price' => $basePrice,
-                    'occupancy_rate' => $occupancyRate,
-                    'price_adjustment' => $priceAdjustment,
-                    'adjusted_price' => $adjustedPrice,
-                    'price_difference' => $adjustedPrice - $basePrice
-                ]
+                'data' => $statsWithRules->toArray()
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error calculating dynamic price: ' . $e->getMessage());
+            Log::error('Error getting occupancy stats', [
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi tính toán giá động'
+                'message' => 'Lỗi khi tải thống kê lấp đầy: ' . $e->getMessage(),
+                'data' => []
             ], 500);
         }
     }
 
-    public function store(Request $request)
+    /**
+     * Get room types for select options
+     */
+    public function getRoomTypes()
     {
-        $validator = Validator::make($request->all(), [
-            'room_type_id' => 'required|exists:room_types,room_type_id',
-            'occupancy_threshold' => 'required|numeric|min:0|max:100',
-            'price_adjustment' => 'required|numeric|min:-100|max:500',
-            'is_active' => 'boolean'
-        ]);
+        try {
+            $roomTypes = RoomType::select('room_type_id', 'name', 'base_price', 'total_room')
+                ->orderBy('name')
+                ->get();
 
-        if ($validator->fails()) {
+            return response()->json([
+                'success' => true,
+                'data' => $roomTypes
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting room types', [
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Lỗi khi tải danh sách loại phòng: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
         }
+    }
 
+    /**
+     * Store a new dynamic pricing rule
+     */
+    public function store(Request $request)
+    {
         try {
-            // Kiểm tra trùng lặp
-            $exists = DynamicPricingRule::where('room_type_id', $request->room_type_id)
-                ->where('occupancy_threshold', $request->occupancy_threshold)
-                ->exists();
+            // Validate request data
+            $validator = Validator::make($request->all(), [
+                'room_type_id' => 'required|exists:room_types,room_type_id',
+                'occupancy_threshold' => 'required|numeric|min:0|max:100',
+                'price_adjustment' => 'required|numeric|min:-100|max:500',
+                'is_active' => 'boolean'
+            ], [
+                'room_type_id.required' => 'Vui lòng chọn loại phòng',
+                'room_type_id.exists' => 'Loại phòng không tồn tại',
+                'occupancy_threshold.required' => 'Vui lòng nhập ngưỡng lấp đầy',
+                'occupancy_threshold.numeric' => 'Ngưỡng lấp đầy phải là số',
+                'occupancy_threshold.min' => 'Ngưỡng lấp đầy phải >= 0',
+                'occupancy_threshold.max' => 'Ngưỡng lấp đầy phải <= 100',
+                'price_adjustment.required' => 'Vui lòng nhập tỷ lệ điều chỉnh giá',
+                'price_adjustment.numeric' => 'Tỷ lệ điều chỉnh giá phải là số',
+                'price_adjustment.min' => 'Tỷ lệ điều chỉnh giá phải >= -100%',
+                'price_adjustment.max' => 'Tỷ lệ điều chỉnh giá phải <= 500%'
+            ]);
 
-            if ($exists) {
+            if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Đã tồn tại quy tắc với ngưỡng này cho loại phòng đã chọn'
+                    'message' => 'Dữ liệu không hợp lệ',
+                    'errors' => $validator->errors()
                 ], 422);
             }
 
-            DynamicPricingRule::create([
+            // Additional validation using service
+            $serviceErrors = $this->pricingService->validateRule($request->all());
+            if (!empty($serviceErrors)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dữ liệu không hợp lệ',
+                    'errors' => $serviceErrors
+                ], 422);
+            }
+
+            // Check for duplicate rules (same room type and threshold)
+            $existingRule = DynamicPricingRule::where('room_type_id', $request->room_type_id)
+                ->where('occupancy_threshold', $request->occupancy_threshold)
+                ->first();
+
+            if ($existingRule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đã tồn tại quy tắc với ngưỡng lấp đầy này cho loại phòng đã chọn'
+                ], 422);
+            }
+
+            // Create new rule
+            $rule = DynamicPricingRule::create([
                 'room_type_id' => $request->room_type_id,
                 'occupancy_threshold' => $request->occupancy_threshold,
                 'price_adjustment' => $request->price_adjustment,
-                'is_active' => $request->is_active ?? true
+                'is_active' => $request->boolean('is_active', true),
+                'priority' => $request->get('priority', 1),
+                'is_exclusive' => $request->boolean('is_exclusive', false)
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Thêm quy tắc giá động thành công'
+                'message' => 'Thêm quy tắc giá động thành công',
+                'data' => $rule
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error storing dynamic rule: ' . $e->getMessage());
+            Log::error('Error creating dynamic pricing rule', [
+                'request_data' => $request->all(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi thêm quy tắc: ' . $e->getMessage()
+                'message' => 'Lỗi khi tạo quy tắc: ' . $e->getMessage()
             ], 500);
         }
     }
 
+    /**
+     * Show a specific dynamic pricing rule
+     */
     public function show($id)
     {
         try {
             $rule = DynamicPricingRule::with('roomType')->findOrFail($id);
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $rule
             ]);
+
         } catch (\Exception $e) {
-            \Log::error('Error showing dynamic rule: ' . $e->getMessage());
+            Log::error('Error getting dynamic pricing rule', [
+                'rule_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Không tìm thấy quy tắc'
@@ -212,60 +267,87 @@ class DynamicPricingController extends Controller
         }
     }
 
+    /**
+     * Update a dynamic pricing rule
+     */
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'room_type_id' => 'required|exists:room_types,room_type_id',
-            'occupancy_threshold' => 'required|numeric|min:0|max:100',
-            'price_adjustment' => 'required|numeric|min:-100|max:500',
-            'is_active' => 'boolean'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         try {
             $rule = DynamicPricingRule::findOrFail($id);
 
-            // Kiểm tra trùng lặp (trừ bản ghi hiện tại)
-            $exists = DynamicPricingRule::where('room_type_id', $request->room_type_id)
-                ->where('occupancy_threshold', $request->occupancy_threshold)
-                ->where('rule_id', '!=', $id)
-                ->exists();
+            // Validate request data
+            $validator = Validator::make($request->all(), [
+                'room_type_id' => 'required|exists:room_types,room_type_id',
+                'occupancy_threshold' => 'required|numeric|min:0|max:100',
+                'price_adjustment' => 'required|numeric|min:-100|max:500',
+                'is_active' => 'boolean'
+            ], [
+                'room_type_id.required' => 'Vui lòng chọn loại phòng',
+                'room_type_id.exists' => 'Loại phòng không tồn tại',
+                'occupancy_threshold.required' => 'Vui lòng nhập ngưỡng lấp đầy',
+                'occupancy_threshold.numeric' => 'Ngưỡng lấp đầy phải là số',
+                'occupancy_threshold.min' => 'Ngưỡng lấp đầy phải >= 0',
+                'occupancy_threshold.max' => 'Ngưỡng lấp đầy phải <= 100',
+                'price_adjustment.required' => 'Vui lòng nhập tỷ lệ điều chỉnh giá',
+                'price_adjustment.numeric' => 'Tỷ lệ điều chỉnh giá phải là số',
+                'price_adjustment.min' => 'Tỷ lệ điều chỉnh giá phải >= -100%',
+                'price_adjustment.max' => 'Tỷ lệ điều chỉnh giá phải <= 500%'
+            ]);
 
-            if ($exists) {
+            if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Đã tồn tại quy tắc với ngưỡng này cho loại phòng đã chọn'
+                    'message' => 'Dữ liệu không hợp lệ',
+                    'errors' => $validator->errors()
                 ], 422);
             }
 
+            // Check for duplicate rules (excluding current rule)
+            $existingRule = DynamicPricingRule::where('room_type_id', $request->room_type_id)
+                ->where('occupancy_threshold', $request->occupancy_threshold)
+                ->where('rule_id', '!=', $id)
+                ->first();
+
+            if ($existingRule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Đã tồn tại quy tắc với ngưỡng lấp đầy này cho loại phòng đã chọn'
+                ], 422);
+            }
+
+            // Update rule
             $rule->update([
                 'room_type_id' => $request->room_type_id,
                 'occupancy_threshold' => $request->occupancy_threshold,
                 'price_adjustment' => $request->price_adjustment,
-                'is_active' => $request->is_active ?? $rule->is_active
+                'is_active' => $request->boolean('is_active', true),
+                'priority' => $request->get('priority', $rule->priority),
+                'is_exclusive' => $request->boolean('is_exclusive', $rule->is_exclusive)
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Cập nhật quy tắc giá động thành công'
+                'message' => 'Cập nhật quy tắc giá động thành công',
+                'data' => $rule
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error updating dynamic rule: ' . $e->getMessage());
+            Log::error('Error updating dynamic pricing rule', [
+                'rule_id' => $id,
+                'request_data' => $request->all(),
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi cập nhật quy tắc: ' . $e->getMessage()
+                'message' => 'Lỗi khi cập nhật quy tắc: ' . $e->getMessage()
             ], 500);
         }
     }
 
+    /**
+     * Toggle rule status (active/inactive)
+     */
     public function toggleStatus($id)
     {
         try {
@@ -273,22 +355,30 @@ class DynamicPricingController extends Controller
             $rule->is_active = !$rule->is_active;
             $rule->save();
 
-            $status = $rule->is_active ? 'kích hoạt' : 'vô hiệu hóa';
+            $status = $rule->is_active ? 'kích hoạt' : 'tạm dừng';
 
             return response()->json([
                 'success' => true,
-                'message' => "Đã {$status} quy tắc thành công"
+                'message' => "Đã {$status} quy tắc thành công",
+                'data' => $rule
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error toggling dynamic rule status: ' . $e->getMessage());
+            Log::error('Error toggling rule status', [
+                'rule_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi thay đổi trạng thái: ' . $e->getMessage()
+                'message' => 'Lỗi khi thay đổi trạng thái quy tắc'
             ], 500);
         }
     }
 
+    /**
+     * Delete a dynamic pricing rule
+     */
     public function destroy($id)
     {
         try {
@@ -301,84 +391,123 @@ class DynamicPricingController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error deleting dynamic rule: ' . $e->getMessage());
+            Log::error('Error deleting dynamic pricing rule', [
+                'rule_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi xóa quy tắc: ' . $e->getMessage()
+                'message' => 'Lỗi khi xóa quy tắc'
             ], 500);
         }
     }
 
-    public function syncOccupancy(Request $request)
+    /**
+     * Sync occupancy data manually
+     */
+    public function syncOccupancy()
     {
         try {
-            $date = $request->input('date', now()->toDateString());
+            $results = $this->occupancyService->updateAllRoomOccupancy();
             
-            $this->occupancyService->syncOccupancyForDate($date);
+            $successCount = collect($results)->where('success', true)->count();
+            $totalCount = count($results);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Đồng bộ thành công {$successCount}/{$totalCount} loại phòng",
+                'data' => $results
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error syncing occupancy data', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi đồng bộ dữ liệu lấp đầy: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate occupancy percentage for a room type and date
+     * Updated to use the new service
+     */
+    public function calculateOccupancyPercent($roomTypeId, $checkIn)
+    {
+        try {
+            $date = Carbon::parse($checkIn);
+            $occupancyRate = $this->occupancyService->getCurrentOccupancyRate($roomTypeId, $date);
+            
+            return $occupancyRate;
+
+        } catch (\Exception $e) {
+            Log::error('Error calculating occupancy percent', [
+                'room_type_id' => $roomTypeId,
+                'check_in' => $checkIn,
+                'error' => $e->getMessage()
+            ]);
+            
+            return 0.0;
+        }
+    }
+
+    /**
+     * Calculate adjusted price for a room type
+     * Updated to use the new service
+     */
+    public function calculateAdjustedPrice($roomTypeId, Request $request)
+    {
+        try {
+            $checkIn = $request->get('check_in') ? Carbon::parse($request->get('check_in')) : Carbon::today();
+            $basePrice = $request->get('base_price');
+            
+            $priceData = $this->pricingService->calculateAdjustedPrice($roomTypeId, $checkIn, $basePrice);
+            
+            return $priceData['adjusted_price'];
+
+        } catch (\Exception $e) {
+            Log::error('Error calculating adjusted price', [
+                'room_type_id' => $roomTypeId,
+                'request_data' => $request->all(),
+                'error' => $e->getMessage()
+            ]);
+            
+            // Return base price as fallback
+            $roomType = RoomType::find($roomTypeId);
+            return $roomType ? $roomType->base_price : 0;
+        }
+    }
+
+    /**
+     * Get pricing analysis for a room type
+     */
+    public function getPricingAnalysis(Request $request, $roomTypeId)
+    {
+        try {
+            $startDate = $request->get('start_date') ? Carbon::parse($request->get('start_date')) : Carbon::today();
+            $endDate = $request->get('end_date') ? Carbon::parse($request->get('end_date')) : Carbon::today()->addDays(7);
+            
+            $analysis = $this->pricingService->getPricingAnalysis($roomTypeId, $startDate, $endDate);
             
             return response()->json([
                 'success' => true,
-                'message' => 'Đồng bộ dữ liệu lấp đầy thành công'
+                'data' => $analysis
             ]);
-            
+
         } catch (\Exception $e) {
-            \Log::error('Error syncing occupancy: ' . $e->getMessage());
+            Log::error('Error getting pricing analysis', [
+                'room_type_id' => $roomTypeId,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra khi đồng bộ dữ liệu: ' . $e->getMessage()
+                'message' => 'Lỗi khi phân tích giá: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    // Helper methods
-    private function getOccupancyDataForRule($roomTypeId)
-    {
-        try {
-            return $this->occupancyService->calculateOccupancyFromBookings($roomTypeId, now()->toDateString());
-        } catch (\Exception $e) {
-            \Log::error('Error getting occupancy data for rule: ' . $e->getMessage());
-            return [
-                'total_rooms' => 0,
-                'available_rooms' => 0,
-                'booked_rooms' => 0,
-                'occupancy_rate' => 0
-            ];
-        }
-    }
-
-    private function getOccupancyRateForDate($roomTypeId, $date)
-    {
-        try {
-            $occupancyData = $this->occupancyService->calculateOccupancyFromBookings($roomTypeId, $date);
-            return $occupancyData['occupancy_rate'];
-        } catch (\Exception $e) {
-            \Log::error('Error getting occupancy rate for date: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
-    private function getPriceAdjustment($roomTypeId, $occupancyRate)
-    {
-        try {
-            $rule = DynamicPricingRule::where('room_type_id', $roomTypeId)
-                ->where('is_active', 1)
-                ->where('occupancy_threshold', '<=', $occupancyRate)
-                ->orderBy('occupancy_threshold', 'desc')
-                ->first();
-
-            return $rule ? $rule->price_adjustment : 0;
-        } catch (\Exception $e) {
-            \Log::error('Error getting price adjustment: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
-    private function getOccupancyStatus($occupancy)
-    {
-        if ($occupancy >= 90) return 'Rất cao';
-        if ($occupancy >= 70) return 'Cao';
-        if ($occupancy >= 50) return 'Trung bình';
-        if ($occupancy >= 30) return 'Thấp';
-        return 'Rất thấp';
     }
 }

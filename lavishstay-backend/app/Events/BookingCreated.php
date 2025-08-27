@@ -9,11 +9,11 @@ use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+// Remove SerializesModels to avoid serialization issues
 
 class BookingCreated
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public $booking;
 
@@ -30,7 +30,7 @@ class BookingCreated
 
 class BookingCancelled
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public $booking;
     public $reason;
@@ -49,7 +49,7 @@ class BookingCancelled
 
 class BookingModified
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public $booking;
     public $changes;
@@ -68,7 +68,7 @@ class BookingModified
 
 class BookingCheckedIn
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public $booking;
 
@@ -85,7 +85,7 @@ class BookingCheckedIn
 
 class BookingCheckedOut
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
     public $booking;
 

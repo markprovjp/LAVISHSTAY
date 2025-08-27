@@ -18,6 +18,7 @@ use App\Http\Controllers\CheckinPolicyController;
 use App\Http\Controllers\CheckoutPolicyController;
 use App\Http\Controllers\CheckoutRequestController;
 use App\Http\Controllers\ChildPolicyController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\RoomTypeAmenityController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataFeedController;
@@ -88,8 +89,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     //     return view('admin.notifications.index');
     // })->name('admin.notifications.index');
 
-    Route::middleware(['auth', 'role:system_admin'])->prefix('admin/notifications')->name('admin.notifications.')->group(function () {
-    
+    Route::middleware(['auth', 'permission:thong_bao'])->prefix('admin/notifications')->name('admin.notifications.')->group(function () {
         // Dashboard
         Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
         
@@ -414,6 +414,19 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
 
+
+    // Coupon management routes
+
+    Route::get('/admin/coupons', [CouponController::class, 'index'])->name('admin.coupons.index');
+    Route::get('/admin/coupons/create', [CouponController::class, 'create'])->name('admin.coupons.create');
+    Route::post('/admin/coupons', [CouponController::class, 'store'])->name('admin.coupons.store');
+    Route::get('/admin/coupons/{coupon}/edit', [CouponController::class, 'edit'])->name('admin.coupons.edit');
+    Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])->name('admin.coupons.update');
+    Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])->name('admin.coupons.destroy');
+    Route::patch('/admin/coupons/{coupon}/toggle-status', [CouponController::class, 'toggleStatus'])->name('admin.coupons.toggle-status');
+    Route::get('/admin/coupons/{coupon}/redemptions', [CouponController::class, 'redemptions'])->name('admin.coupons.redemptions');
+    Route::get('/admin/coupons/all-history', [CouponController::class, 'allRedemptions'])->name('admin.coupons.all-redemptions');
+
     ////////////////////// YÊU CẦU ĐẶT PHÒNG /////////////////////////////////////////////////////
 
     // Hủy phòng
@@ -594,15 +607,36 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     //Giá động
+    // Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+    //     Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
+    //     Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
+    //     Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
+    //     Route::get('/occupancy-stats', [DynamicPricingController::class, 'getOccupancyStats'])->name('occupancy-stats');
+    //     Route::post('/calculate', [DynamicPricingController::class, 'calculateDynamicPrice'])->name('calculate');
+    //     Route::post('/sync-occupancy', [DynamicPricingController::class, 'syncOccupancy'])->name('sync-occupancy'); // Thêm route này
+    //     Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
+    //     Route::post('/', [DynamicPricingController::class, 'store'])->name('store');
+    //     Route::put('/{id}', [DynamicPricingController::class, 'update'])->name('update');
+    //     Route::patch('/{id}/toggle-status', [DynamicPricingController::class, 'toggleStatus'])->name('toggle-status');
+    //     Route::delete('/{id}', [DynamicPricingController::class, 'destroy'])->name('destroy');
+    // });
+     // Dynamic Pricing Management Routes
     Route::prefix('admin/dynamic-pricing')->name('admin.dynamic-pricing.')->group(function () {
+        // Main page
         Route::get('/', [DynamicPricingController::class, 'index'])->name('index');
+        
+        // API endpoints for admin interface
         Route::get('/data', [DynamicPricingController::class, 'getData'])->name('data');
-        Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
         Route::get('/occupancy-stats', [DynamicPricingController::class, 'getOccupancyStats'])->name('occupancy-stats');
+        Route::get('/room-types', [DynamicPricingController::class, 'getRoomTypes'])->name('room-types');
         Route::post('/calculate', [DynamicPricingController::class, 'calculateDynamicPrice'])->name('calculate');
-        Route::post('/sync-occupancy', [DynamicPricingController::class, 'syncOccupancy'])->name('sync-occupancy'); // Thêm route này
-        Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
+        Route::post('/sync-occupancy', [DynamicPricingController::class, 'syncOccupancy'])->name('sync-occupancy');
+        Route::get('/test-rules', [DynamicPricingController::class, 'testRules'])->name('test-rules');
+        Route::get('/pricing-preview/{roomTypeId}', [DynamicPricingController::class, 'getPricingPreview'])->name('pricing-preview');
+        
+        // CRUD operations
         Route::post('/', [DynamicPricingController::class, 'store'])->name('store');
+        Route::get('/{id}', [DynamicPricingController::class, 'show'])->name('show');
         Route::put('/{id}', [DynamicPricingController::class, 'update'])->name('update');
         Route::patch('/{id}/toggle-status', [DynamicPricingController::class, 'toggleStatus'])->name('toggle-status');
         Route::delete('/{id}', [DynamicPricingController::class, 'destroy'])->name('destroy');
@@ -834,6 +868,9 @@ Route::middleware(['auth', 'role:system_admin'])->prefix('notifications/admin')-
     Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('bulk-delete');
     Route::post('/bulk-mark-read', [NotificationController::class, 'bulkMarkAsRead'])->name('bulk-mark-read');
 });
+
+
+
 
 // Manager-level notification sending routes
 Route::middleware(['auth', 'role:system_admin|hotel_manager'])->prefix('notifications/send')->name('notifications.send.')->group(function () {

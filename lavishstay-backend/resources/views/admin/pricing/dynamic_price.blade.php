@@ -19,12 +19,13 @@
                     <span class="max-xs:sr-only">Đồng bộ dữ liệu</span>
                 </button>
 
-                <a href="{{ route('admin.pricing.index') }}" class="btn bg-gray-500 hover:bg-gray-600 text-white">
+                <button id="refreshBtn" class="btn cursor-pointer bg-blue-500 hover:bg-blue-600 text-white">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
-                        <path d="M7.3 8.7c-.4-.4-.4-1 0-1.4l7-7c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4L9.4 8l6.3 6.3c.4.4.4 1 0 1.4-.4.4-1 .4-1.4 0l-7-7z"/>
+                        <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zM7 11.4L3.6 8 5 6.6l2 2 4-4L12.4 6 7 11.4z"/>
                     </svg>
-                    <span class="max-xs:sr-only">Quay lại</span>
-                </a>
+                    <span class="max-xs:sr-only">Làm mới</span>
+                </button>
+
                 <!-- Add Dynamic Rule button -->
                 <button id="addDynamicRuleBtn" class="btn cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white">
                     <svg class="fill-current shrink-0 xs:hidden" width="16" height="16" viewBox="0 0 16 16">
@@ -92,7 +93,7 @@
                                         <th class="p-2 whitespace-nowrap">
                                             <div class="font-semibold text-left">Thông tin phòng</div>
                                         </th>
-                                                                                <th class="p-2 whitespace-nowrap">
+                                        <th class="p-2 whitespace-nowrap">
                                             <div class="font-semibold text-left">Trạng thái</div>
                                         </th>
                                         <th class="p-2 whitespace-nowrap">
@@ -223,735 +224,832 @@
 
     <script>
         // Global variables
-        let currentPage = 1;
-        let isLoading = false;
-        let isDynamicRuleEditMode = false;
-        let editingDynamicRuleId = null;
+        let currentEditingRuleId = null;
+        let isSubmitting = false;
 
-        // DOM elements
-        const elements = {
-            syncOccupancyBtn: document.getElementById('syncOccupancyBtn'),
-            addDynamicRuleBtn: document.getElementById('addDynamicRuleBtn'),
-            addDynamicRuleBtnEmpty: document.getElementById('addDynamicRuleBtnEmpty'),
-            dynamicRuleModal: document.getElementById('dynamicRuleModal'),
-            dynamicRuleForm: document.getElementById('dynamicRuleForm'),
-            loadingState: document.getElementById('loadingState'),
-            emptyState: document.getElementById('emptyState'),
-            tableContent: document.getElementById('tableContent'),
-            tableBody: document.getElementById('tableBody'),
-            paginationContainer: document.getElementById('paginationContainer'),
-            occupancyStatsContainer: document.getElementById('occupancyStatsContainer')
-        };
-
-        // Initialize
+        // Safe Dynamic Pricing JavaScript with proper error handling
         document.addEventListener('DOMContentLoaded', function() {
-            loadOccupancyStats();
-            loadRoomTypes();
-            loadData();
-            bindEvents();
-
-            // Auto close notification
-            if (document.getElementById('notification')) {
-                setTimeout(() => {
-                    closeNotification();
-                }, 5000);
-            }
+            // Initialize the dynamic pricing system safely
+            initializeDynamicPricingSafe();
         });
 
-        // Bind events
-        function bindEvents() {
-            // Sync occupancy
-            elements.syncOccupancyBtn.addEventListener('click', syncOccupancyData);
-
-            // Add buttons
-            elements.addDynamicRuleBtn.addEventListener('click', () => showDynamicRuleModal());
-            if (elements.addDynamicRuleBtnEmpty) {
-                elements.addDynamicRuleBtnEmpty.addEventListener('click', () => showDynamicRuleModal());
-            }
-
-            // Modal form
-            elements.dynamicRuleForm.addEventListener('submit', handleDynamicRuleSubmit);
-
-            // Close modal on outside click
-            elements.dynamicRuleModal.addEventListener('click', function(e) {
-                if (e.target === elements.dynamicRuleModal) {
-                    closeDynamicRuleModal();
-                }
-            });
+        function initializeDynamicPricingSafe() {
+            console.log('🚀 Initializing Dynamic Pricing System...');
+            
+            // Load initial data with error handling
+            loadOccupancyStatsSafe();
+            loadRoomTypesSafe();
+            loadDataSafe();
+            bindEventsSafe();
         }
 
-        // Load occupancy statistics
-        async function loadOccupancyStats() {
+        // Safe function to load occupancy stats
+        async function loadOccupancyStatsSafe() {
             try {
-                const response = await fetch('{{ route('admin.dynamic-pricing.occupancy-stats') }}');
-                const data = await response.json();
-
-                if (response.ok) {
-                    updateOccupancyStats(data);
-                } else {
-                    console.error('Failed to load occupancy stats:', data);
-                }
-            } catch (error) {
-                console.error('Error loading occupancy stats:', error);
-            }
-        }
-
-        // Update occupancy statistics display
-        function updateOccupancyStats(stats) {
-            const statsHtml = stats.map(stat => {
-                const statusClass = {
-                    'Rất cao': 'bg-red-100 text-red-800',
-                    'Cao': 'bg-orange-100 text-orange-800',
-                    'Trung bình': 'bg-yellow-100 text-yellow-800',
-                    'Thấp': 'bg-blue-100 text-blue-800',
-                    'Rất thấp': 'bg-gray-100 text-gray-800'
-                };
-
-                return `
-                    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">${stat.room_type_name}</h3>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass[stat.status] || 'bg-gray-100 text-gray-800'}">
-                                ${stat.status}
-                            </span>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Tỷ lệ lấp đầy:</span>
-                                <span class="font-medium text-gray-900 dark:text-gray-100">${stat.occupancy_rate}%</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Phòng đã đặt:</span>
-                                <span class="font-medium text-gray-900 dark:text-gray-100">${stat.booked_rooms}/${stat.total_rooms}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Phòng trống:</span>
-                                <span class="font-medium text-gray-900 dark:text-gray-100">${stat.available_rooms}</span>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${stat.occupancy_rate}%"></div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            elements.occupancyStatsContainer.innerHTML = statsHtml;
-        }
-
-        // Load room types
-        async function loadRoomTypes() {
-            try {
-                const response = await fetch('{{ route("admin.dynamic-pricing.room-types") }}');
-                const roomTypes = await response.json();
+                console.log('📊 Loading occupancy stats...');
                 
-                const select = document.getElementById('roomTypeId');
-                select.innerHTML = '<option value="">Chọn loại phòng</option>';
-                
-                roomTypes.forEach(roomType => {
-                    const option = document.createElement('option');
-                    option.value = roomType.room_type_id;
-                    option.textContent = roomType.name;
-                    select.appendChild(option);
+                const response = await fetch('/admin/dynamic-pricing/occupancy-stats', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
                 });
-            } catch (error) {
-                console.error('Error loading room types:', error);
-            }
-        }
 
-        // Load data
-        async function loadData(page = 1) {
-            if (isLoading) return;
-
-            isLoading = true;
-            showLoading();
-
-            try {
-                const response = await fetch(`{{ route('admin.dynamic-pricing.data') }}?page=${page}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    currentPage = page;
-                    displayData(data);
-                } else {
-                    showError('Không thể tải dữ liệu: ' + (data.message || 'Lỗi không xác định'));
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const result = await response.json();
+                console.log('📊 Occupancy stats response:', result);
+
+                if (result.success && result.data) {
+                    // Ensure data is an array
+                    const stats = Array.isArray(result.data) ? result.data : [];
+                    updateOccupancyStatsSafe(stats);
+                } else {
+                    console.warn('⚠️ No occupancy stats data received');
+                    updateOccupancyStatsSafe([]);
+                }
+
             } catch (error) {
-                console.error('Error loading data:', error);
-                showError('Có lỗi xảy ra khi tải dữ liệu');
-            } finally {
-                isLoading = false;
+                console.error('❌ Error loading occupancy stats:', error);
+                showNotificationSafe('Không thể tải thống kê lấp đầy: ' + error.message, 'error');
+                updateOccupancyStatsSafe([]);
             }
         }
 
-        // Display data
-        function displayData(data) {
-            if (!data.data || data.data.length === 0) {
-                showEmptyState();
-                return;
-            }
-
-            showTableContent();
-
-            // Generate table rows
-            const rows = data.data.map(rule => {
-                const statusClass = rule.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                const statusText = rule.is_active ? 'Hoạt động' : 'Không hoạt động';
+        // Safe function to update occupancy stats in UI
+        function updateOccupancyStatsSafe(stats) {
+            try {
+                console.log('📊 Updating occupancy stats UI with:', stats);
                 
-                const triggeredClass = rule.is_triggered ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
-                const triggeredText = rule.is_triggered ? 'Đang kích hoạt' : 'Chưa kích hoạt';
+                // Ensure stats is an array
+                if (!Array.isArray(stats)) {
+                    console.warn('⚠️ Stats is not an array, converting:', stats);
+                    stats = [];
+                }
 
-                return `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td class="p-2 whitespace-nowrap">
-                            <div class="font-medium text-gray-900 dark:text-gray-100">${rule.rule_id}</div>
-                        </td>
-                        <td class="p-2 whitespace-nowrap">
-                            <div class="text-sm text-gray-900 dark:text-gray-100">${rule.room_type_name}</div>
-                        </td>
-                        <td class="p-2 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${rule.occupancy_threshold}%</div>
-                        </td>
-                        <td class="p-2 whitespace-nowrap">
-                            <div class="text-sm font-medium ${rule.price_adjustment >= 0 ? 'text-green-600' : 'text-red-600'}">
-                                ${rule.price_adjustment >= 0 ? '+' : ''}${rule.price_adjustment}%
+                const container = document.getElementById('occupancyStatsContainer');
+                if (!container) {
+                    console.warn('⚠️ Occupancy stats container not found');
+                    return;
+                }
+
+                if (stats.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <div class="text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">Chưa có dữ liệu</h3>
+                                <p class="mt-1 text-sm text-gray-500">Chưa có thống kê lấp đầy phòng nào.</p>
                             </div>
-                        </td>
-                        <td class="p-2 whitespace-nowrap">
-                            <div class="flex items-center space-x-2">
-                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${rule.current_occupancy}%</div>
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${triggeredClass}">
-                                    ${triggeredText}
-                                </span>
-                            </div>
-                        </td>
-                        <td class="p-2 whitespace-nowrap">
-                            <div class="text-xs text-gray-600 dark:text-gray-400">
-                                <div>Tổng: ${rule.total_rooms || 0}</div>
-                                <div>Đã đặt: ${rule.booked_rooms || 0}</div>
-                                <div>Trống: ${rule.available_rooms || 0}</div>
-                            </div>
-                        </td>
-                        <td class="p-2 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                                ${statusText}
-                            </span>
-                        </td>
-                        <td class="p-2 whitespace-nowrap text-center">
-                            <div class="relative inline-block text-left">
-                                <button type="button"
-                                    class="button-action inline-flex items-center justify-center w-8 h-8 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors duration-200"
-                                    onclick="toggleDropdown(${rule.rule_id})"
-                                    id="dropdown-button-${rule.rule_id}">
-                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
-                                        </path>
-                                    </svg>
-                                </button>
+                        </div>
+                    `;
+                    return;
+                }
 
-                                <!-- Dropdown Menu -->
-                                <div id="dropdown-menu-${rule.rule_id}"
-                                    class="hidden menu-button-action absolute right-0 z-50 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                    <div class="py-1" role="menu">
-                                        <!-- Edit -->
-                                        <button onclick="editDynamicRule(${rule.rule_id}); closeDropdown(${rule.rule_id})"
-                                            class="flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                            role="menuitem">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                            </svg>
-                                            Chỉnh sửa
-                                        </button>
-
-                                        <!-- Toggle Status -->
-                                        <button onclick="toggleDynamicRuleStatus(${rule.rule_id}); closeDropdown(${rule.rule_id})"
-                                            class="flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                                            role="menuitem">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            ${rule.is_active ? 'Tạm dừng' : 'Kích hoạt'}
-                                        </button>
-
-                                        <!-- Divider -->
-                                        <div class="border-t border-gray-100 dark:border-gray-700"></div>
-
-                                        <!-- Delete -->
-                                        <button onclick="deleteDynamicRule(${rule.rule_id}); closeDropdown(${rule.rule_id})"
-                                            class="flex cursor-pointer items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150"
-                                            role="menuitem">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                                </path>
-                                            </svg>
-                                            Xóa
-                                        </button>
+                let html = '';
+                
+                stats.forEach(stat => {
+                    const occupancyRate = parseFloat(stat.occupancy_rate || 0);
+                    const statusColor = getOccupancyStatusColor(occupancyRate);
+                    
+                    html += `
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">${stat.room_type_name || 'N/A'}</h3>
+                                    <p class="text-sm text-gray-500">Loại phòng</p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold ${statusColor.text}">${occupancyRate.toFixed(1)}%</div>
+                                    <div class="text-xs ${statusColor.bg} ${statusColor.text} px-2 py-1 rounded-full">
+                                        ${stat.status || 'N/A'}
                                     </div>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+                            <div class="mt-4 grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                    <div class="text-gray-500 dark:text-gray-400">Tổng phòng</div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">${stat.total_rooms || 0}</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500 dark:text-gray-400">Đã đặt</div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">${stat.booked_rooms || 0}</div>
+                                </div>
+                                <div>
+                                    <div class="text-gray-500 dark:text-gray-400">Còn trống</div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">${stat.available_rooms || 0}</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-sm">
+                                <div class="text-gray-500 dark:text-gray-400">Quy tắc hoạt động: ${(stat.active_rules || []).length}</div>
+                                <div class="text-gray-500 dark:text-gray-400">Quy tắc được kích hoạt: ${(stat.triggered_rules || []).length}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
 
-            elements.tableBody.innerHTML = rows;
-
-            // Update pagination
-            updatePagination(data);
-        }
-
-        // Update pagination
-        function updatePagination(data) {
-            if (data.last_page <= 1) {
-                elements.paginationContainer.innerHTML = '';
-                return;
+            } catch (error) {
+                console.error('❌ Error updating occupancy stats UI:', error);
             }
-
-            let paginationHtml = '<div class="flex items-center justify-between">';
-
-            // Info
-            paginationHtml += `
-                <div class="text-sm text-gray-700 dark:text-gray-300">
-                    Hiển thị <span class="font-medium">${data.from}</span> đến <span class="font-medium">${data.to}</span> 
-                    trong tổng số <span class="font-medium">${data.total}</span> kết quả
-                </div>
-            `;
-
-            // Pagination buttons
-            paginationHtml += '<div class="flex space-x-1">';
-
-            // Previous button
-            if (data.current_page > 1) {
-                paginationHtml += `
-                    <button onclick="loadData(${data.current_page - 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                        Trước
-                    </button>
-                `;
-            }
-
-            // Page numbers
-            const startPage = Math.max(1, data.current_page - 2);
-            const endPage = Math.min(data.last_page, data.current_page + 2);
-
-            for (let i = startPage; i <= endPage; i++) {
-                const isActive = i === data.current_page;
-                const buttonClass = isActive ?
-                    'px-3 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-md' :
-                    'px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50';
-
-                paginationHtml += `
-                    <button onclick="loadData(${i})" class="${buttonClass}">
-                        ${i}
-                    </button>
-                `;
-            }
-
-            // Next button
-            if (data.current_page < data.last_page) {
-                paginationHtml += `
-                    <button onclick="loadData(${data.current_page + 1})" class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-                        Sau
-                    </button>
-                `;
-            }
-
-            paginationHtml += '</div></div>';
-
-            elements.paginationContainer.innerHTML = paginationHtml;
         }
 
-        // Show/hide states
-        function showLoading() {
-            elements.loadingState.classList.remove('hidden');
-            elements.emptyState.classList.add('hidden');
-            elements.tableContent.classList.add('hidden');
-        }
-
-        function showEmptyState() {
-            elements.loadingState.classList.add('hidden');
-            elements.emptyState.classList.remove('hidden');
-            elements.tableContent.classList.add('hidden');
-        }
-
-        function showTableContent() {
-            elements.loadingState.classList.add('hidden');
-            elements.emptyState.classList.add('hidden');
-            elements.tableContent.classList.remove('hidden');
-        }
-
-        // Sync occupancy data
-        async function syncOccupancyData() {
-            const btn = elements.syncOccupancyBtn;
-            const originalText = btn.innerHTML;
-            
-            // Show loading
-            btn.disabled = true;
-            btn.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                            <span class="max-xs:sr-only">Đang đồng bộ...</span>
-            `;
-
+        // Safe function to load room types
+        async function loadRoomTypesSafe() {
             try {
-                // Call sync API endpoint (you'll need to create this)
-                const response = await fetch('{{ route("admin.dynamic-pricing.sync-occupancy") }}', {
-                    method: 'POST',
+                console.log('🏨 Loading room types...');
+                
+                const response = await fetch('/admin/dynamic-pricing/room-types', {
+                    method: 'GET',
                     headers: {
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     }
                 });
 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    showSuccess(result.message || 'Đồng bộ dữ liệu thành công!');
-                    // Reload occupancy stats and table data
-                    loadOccupancyStats();
-                    loadData(currentPage);
-                } else {
-                    showError(result.message || 'Có lỗi xảy ra khi đồng bộ dữ liệu');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            } catch (error) {
-                console.error('Error syncing occupancy data:', error);
-                showError('Có lỗi xảy ra khi đồng bộ dữ liệu');
-            } finally {
-                // Restore button
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        }
 
-        // Show dynamic rule modal
-        function showDynamicRuleModal(id = null) {
-            // Reset form
-            elements.dynamicRuleForm.reset();
-            document.getElementById('dynamicRuleId').value = '';
-
-            if (id) {
-                // Edit mode
-                isDynamicRuleEditMode = true;
-                editingDynamicRuleId = id;
-                document.getElementById('dynamicRuleModalTitle').textContent = 'Chỉnh sửa quy tắc giá động';
-                document.getElementById('dynamicRuleSubmitText').textContent = 'Cập nhật';
-                loadDynamicRuleData(id);
-            } else {
-                // Add mode
-                isDynamicRuleEditMode = false;
-                editingDynamicRuleId = null;
-                document.getElementById('dynamicRuleModalTitle').textContent = 'Thêm quy tắc giá động';
-                document.getElementById('dynamicRuleSubmitText').textContent = 'Thêm mới';
-            }
-
-            elements.dynamicRuleModal.classList.remove('hidden');
-        }
-
-        // Close dynamic rule modal
-        function closeDynamicRuleModal() {
-            elements.dynamicRuleModal.classList.add('hidden');
-            elements.dynamicRuleForm.reset();
-        }
-
-        // Load dynamic rule data for editing
-        async function loadDynamicRuleData(id) {
-            try {
-                const response = await fetch(`{{ route("admin.dynamic-pricing.show", ":id") }}`.replace(':id', id));
                 const result = await response.json();
+                console.log('🏨 Room types response:', result);
 
-                if (response.ok && result.success) {
-                    const rule = result.data;
-
-                    // Fill form
-                    document.getElementById('dynamicRuleId').value = rule.rule_id;
-                    document.getElementById('roomTypeId').value = rule.room_type_id || '';
-                    document.getElementById('occupancyThreshold').value = rule.occupancy_threshold;
-                    document.getElementById('priceAdjustment').value = rule.price_adjustment;
-                    document.getElementById('isActive').checked = rule.is_active;
+                if (result.success && result.data) {
+                    // Ensure data is an array
+                    const roomTypes = Array.isArray(result.data) ? result.data : [];
+                    updateRoomTypesSelectSafe(roomTypes);
                 } else {
-                    showError('Không thể tải dữ liệu: ' + (result.message || 'Lỗi không xác định'));
+                    console.warn('⚠️ No room types data received');
+                    updateRoomTypesSelectSafe([]);
                 }
+
             } catch (error) {
-                console.error('Error loading dynamic rule data:', error);
-                showError('Có lỗi xảy ra khi tải dữ liệu');
+                console.error('❌ Error loading room types:', error);
+                showNotificationSafe('Không thể tải danh sách loại phòng: ' + error.message, 'error');
+                updateRoomTypesSelectSafe([]);
             }
         }
 
-        // Handle dynamic rule form submit
-        async function handleDynamicRuleSubmit(e) {
-            e.preventDefault();
-
-            const submitBtn = document.getElementById('dynamicRuleSubmitBtn');
-            const submitText = document.getElementById('dynamicRuleSubmitText');
-            const submitLoading = document.getElementById('dynamicRuleSubmitLoading');
-
-            // Show loading
-            submitBtn.disabled = true;
-            submitText.classList.add('hidden');
-            submitLoading.classList.remove('hidden');
-
+        // Safe function to update room types select options
+        function updateRoomTypesSelectSafe(roomTypes) {
             try {
-                const formData = new FormData(elements.dynamicRuleForm);
-
-                // Build request data
-                const requestData = {
-                    room_type_id: formData.get('room_type_id'),
-                    occupancy_threshold: parseFloat(formData.get('occupancy_threshold')),
-                    price_adjustment: parseFloat(formData.get('price_adjustment')),
-                    is_active: document.getElementById('isActive').checked
-                };
-
-                const url = isDynamicRuleEditMode 
-                    ? `{{ route("admin.dynamic-pricing.update", ":id") }}`.replace(':id', editingDynamicRuleId)
-                    : '{{ route("admin.dynamic-pricing.store") }}';
+                console.log('🏨 Updating room types select with:', roomTypes);
                 
-                const method = isDynamicRuleEditMode ? 'PUT' : 'POST';
+                // Ensure roomTypes is an array
+                if (!Array.isArray(roomTypes)) {
+                    console.warn('⚠️ Room types is not an array, converting:', roomTypes);
+                    roomTypes = [];
+                }
 
+                const selects = document.querySelectorAll('select[name="room_type_id"]');
+                
+                selects.forEach(select => {
+                    // Clear existing options except the first one (placeholder)
+                    const firstOption = select.querySelector('option:first-child');
+                    select.innerHTML = '';
+                    
+                    if (firstOption) {
+                        select.appendChild(firstOption);
+                    } else {
+                        select.innerHTML = '<option value="">Chọn loại phòng</option>';
+                    }
+
+                    // Add room type options
+                    roomTypes.forEach(roomType => {
+                        const option = document.createElement('option');
+                        option.value = roomType.room_type_id || '';
+                        option.textContent = `${roomType.name || 'N/A'} - $${parseFloat(roomType.base_price || 0).toFixed(2)}`;
+                        select.appendChild(option);
+                    });
+                });
+
+            } catch (error) {
+                console.error('❌ Error updating room types select:', error);
+            }
+        }
+
+        // Safe function to load dynamic pricing data
+        async function loadDataSafe(page = 1) {
+            try {
+                console.log('📋 Loading dynamic pricing data...');
+                
+                // Show loading state
+                showLoadingState();
+                
+                const response = await fetch(`/admin/dynamic-pricing/data?page=${page}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('📋 Dynamic pricing data response:', result);
+
+                if (result.success && result.data) {
+                    // Ensure data is an array
+                    const data = Array.isArray(result.data) ? result.data : [];
+                    updateDataTableSafe(data, result);
+                } else {
+                    console.warn('⚠️ No dynamic pricing data received');
+                    updateDataTableSafe([], result);
+                }
+
+            } catch (error) {
+                console.error('❌ Error loading dynamic pricing data:', error);
+                showNotificationSafe('Không thể tải dữ liệu quy tắc giá động: ' + error.message, 'error');
+                updateDataTableSafe([], {});
+            }
+        }
+
+        // Show loading state
+        function showLoadingState() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tableContent = document.getElementById('tableContent');
+            
+            if (loadingState) loadingState.classList.remove('hidden');
+            if (emptyState) emptyState.classList.add('hidden');
+            if (tableContent) tableContent.classList.add('hidden');
+        }
+
+        // Safe function to update data table
+        function updateDataTableSafe(data, pagination = {}) {
+            try {
+                console.log('📋 Updating data table with:', data);
+                
+                // Ensure data is an array
+                if (!Array.isArray(data)) {
+                    console.warn('⚠️ Data is not an array, converting:', data);
+                    data = [];
+                }
+
+                const loadingState = document.getElementById('loadingState');
+                const emptyState = document.getElementById('emptyState');
+                const tableContent = document.getElementById('tableContent');
+                const tableBody = document.getElementById('tableBody');
+
+                // Hide loading state
+                if (loadingState) loadingState.classList.add('hidden');
+
+                if (data.length === 0) {
+                    // Show empty state
+                    if (emptyState) emptyState.classList.remove('hidden');
+                    if (tableContent) tableContent.classList.add('hidden');
+                    return;
+                }
+
+                // Show table content
+                if (emptyState) emptyState.classList.add('hidden');
+                if (tableContent) tableContent.classList.remove('hidden');
+
+                if (!tableBody) {
+                    console.warn('⚠️ Table body not found');
+                    return;
+                }
+
+                let html = '';
+                data.forEach(rule => {
+                    const occupancyRate = parseFloat(rule.current_occupancy || 0);
+                    const isTriggered = rule.is_triggered || false;
+                    const statusClass = rule.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                    const triggeredClass = isTriggered ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800';
+                    
+                    html += `
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${rule.rule_id || 'N/A'}</div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">${rule.room_type_name || 'N/A'}</div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${parseFloat(rule.occupancy_threshold || 0).toFixed(1)}%</div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    ${parseFloat(rule.price_adjustment || 0) >= 0 ? '+' : ''}${parseFloat(rule.price_adjustment || 0).toFixed(1)}%
+                                </div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${occupancyRate.toFixed(1)}%</div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${rule.available_rooms || 0}/${rule.total_rooms || 0}</div>
+                            </td>
+                            <td class="p-2 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">
+                                    ${rule.is_active ? 'Hoạt động' : 'Tạm dừng'}
+                                </span>
+                            </td>
+                            <td class="p-2 whitespace-nowrap text-right">
+                                <div class="flex justify-end space-x-2">
+                                    <button onclick="editRule(${rule.rule_id})" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm">
+                                        Sửa
+                                    </button>
+                                    <button onclick="toggleRuleStatus(${rule.rule_id})" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 text-sm">
+                                        ${rule.is_active ? 'Tạm dừng' : 'Kích hoạt'}
+                                    </button>
+                                    <button onclick="deleteRule(${rule.rule_id})" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm">
+                                        Xóa
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableBody.innerHTML = html;
+
+                // Update pagination if provided
+                if (pagination.total) {
+                    updatePaginationSafe(pagination);
+                }
+
+            } catch (error) {
+                console.error('❌ Error updating data table:', error);
+            }
+        }
+
+        // Safe function to update pagination
+        function updatePaginationSafe(pagination) {
+            try {
+                const paginationContainer = document.getElementById('paginationContainer');
+                if (!paginationContainer) return;
+
+                const currentPage = pagination.current_page || 1;
+                const lastPage = pagination.last_page || 1;
+                const total = pagination.total || 0;
+
+                let html = `
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                            Hiển thị ${pagination.from || 0} đến ${pagination.to || 0} trong tổng số ${total} kết quả
+                        </div>
+                        <div class="flex space-x-1">
+                `;
+
+                // Previous button
+                if (currentPage > 1) {
+                    html += `<button onclick="loadDataSafe(${currentPage - 1})" class="px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">Trước</button>`;
+                }
+
+                // Page numbers
+                for (let i = Math.max(1, currentPage - 2); i <= Math.min(lastPage, currentPage + 2); i++) {
+                    const activeClass = i === currentPage ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600';
+                    html += `<button onclick="loadDataSafe(${i})" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md ${activeClass}">${i}</button>`;
+                }
+
+                // Next button
+                if (currentPage < lastPage) {
+                    html += `<button onclick="loadDataSafe(${currentPage + 1})" class="px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300">Sau</button>`;
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+
+                paginationContainer.innerHTML = html;
+
+            } catch (error) {
+                console.error('❌ Error updating pagination:', error);
+            }
+        }
+
+        // Safe function to bind events
+        function bindEventsSafe() {
+            try {
+                console.log('🔗 Binding events...');
+
+                // Sync occupancy button
+                const syncButton = document.getElementById('syncOccupancyBtn');
+                if (syncButton) {
+                    syncButton.addEventListener('click', syncOccupancySafe);
+                }
+
+                // Refresh button
+                const refreshButton = document.getElementById('refreshBtn');
+                if (refreshButton) {
+                    refreshButton.addEventListener('click', () => {
+                        loadOccupancyStatsSafe();
+                        loadDataSafe();
+                    });
+                }
+
+                // Add rule buttons
+                const addRuleBtn = document.getElementById('addDynamicRuleBtn');
+                const addRuleBtnEmpty = document.getElementById('addDynamicRuleBtnEmpty');
+                
+                if (addRuleBtn) {
+                    addRuleBtn.addEventListener('click', openCreateModal);
+                }
+                if (addRuleBtnEmpty) {
+                    addRuleBtnEmpty.addEventListener('click', openCreateModal);
+                }
+
+                // Form submission
+                const dynamicRuleForm = document.getElementById('dynamicRuleForm');
+                if (dynamicRuleForm) {
+                    dynamicRuleForm.addEventListener('submit', handleFormSubmit);
+                }
+
+            } catch (error) {
+                console.error('❌ Error binding events:', error);
+            }
+        }
+
+        // Safe function to sync occupancy
+        async function syncOccupancySafe() {
+            try {
+                console.log('🔄 Syncing occupancy data...');
+                
+                const syncButton = document.getElementById('syncOccupancyBtn');
+                if (syncButton) {
+                    syncButton.disabled = true;
+                    syncButton.innerHTML = '<svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="max-xs:sr-only">Đang đồng bộ...</span>';
+                }
+                
+                const response = await fetch('/admin/dynamic-pricing/sync-occupancy', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('🔄 Sync response:', result);
+
+                if (result.success) {
+                    showNotificationSafe('Đồng bộ dữ liệu lấp đầy thành công!', 'success');
+                    // Reload data
+                    loadOccupancyStatsSafe();
+                    loadDataSafe();
+                } else {
+                    throw new Error(result.message || 'Sync failed');
+                }
+
+            } catch (error) {
+                console.error('❌ Error syncing occupancy:', error);
+                showNotificationSafe('Lỗi khi đồng bộ dữ liệu: ' + error.message, 'error');
+            } finally {
+                // Reset sync button
+                const syncButton = document.getElementById('syncOccupancyBtn');
+                if (syncButton) {
+                    syncButton.disabled = false;
+                    syncButton.innerHTML = '<svg class="fill-current shrink-0 xs:hidden" viewBox="0 0 24 24" height="24px" width="24px"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> <span class="max-xs:sr-only">Đồng bộ dữ liệu</span>';
+                }
+            }
+        }
+
+        // Modal functions
+        function openCreateModal() {
+            console.log('Opening create modal...');
+            currentEditingRuleId = null;
+            
+            // Reset form
+            const form = document.getElementById('dynamicRuleForm');
+            if (form) form.reset();
+            
+            // Update modal title and button text
+            const modalTitle = document.getElementById('dynamicRuleModalTitle');
+            const submitText = document.getElementById('dynamicRuleSubmitText');
+            
+            if (modalTitle) modalTitle.textContent = 'Thêm quy tắc giá động';
+            if (submitText) submitText.textContent = 'Thêm mới';
+            
+            // Show modal
+            const modal = document.getElementById('dynamicRuleModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeDynamicRuleModal() {
+            const modal = document.getElementById('dynamicRuleModal');
+            if (modal) modal.classList.add('hidden');
+            currentEditingRuleId = null;
+        }
+
+        // Edit rule function
+        async function editRule(ruleId) {
+            try {
+                console.log('Editing rule:', ruleId);
+                
+                const response = await fetch(`/admin/dynamic-pricing/${ruleId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const rule = result.data;
+                    currentEditingRuleId = ruleId;
+                    
+                    // Populate form
+                    document.getElementById('roomTypeId').value = rule.room_type_id || '';
+                    document.getElementById('occupancyThreshold').value = rule.occupancy_threshold || '';
+                    document.getElementById('priceAdjustment').value = rule.price_adjustment || '';
+                    document.getElementById('isActive').checked = rule.is_active || false;
+                    
+                    // Update modal title and button text
+                    const modalTitle = document.getElementById('dynamicRuleModalTitle');
+                    const submitText = document.getElementById('dynamicRuleSubmitText');
+                    
+                    if (modalTitle) modalTitle.textContent = 'Chỉnh sửa quy tắc giá động';
+                    if (submitText) submitText.textContent = 'Cập nhật';
+                    
+                    // Show modal
+                    const modal = document.getElementById('dynamicRuleModal');
+                    if (modal) modal.classList.remove('hidden');
+                } else {
+                    throw new Error(result.message || 'Failed to load rule data');
+                }
+
+            } catch (error) {
+                console.error('❌ Error editing rule:', error);
+                showNotificationSafe('Lỗi khi tải dữ liệu quy tắc: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle rule status
+        async function toggleRuleStatus(ruleId) {
+            try {
+                console.log('Toggling rule status:', ruleId);
+                
+                const response = await fetch(`/admin/dynamic-pricing/${ruleId}/toggle-status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotificationSafe(result.message, 'success');
+                    loadDataSafe();
+                } else {
+                    throw new Error(result.message || 'Failed to toggle rule status');
+                }
+
+            } catch (error) {
+                console.error('❌ Error toggling rule status:', error);
+                showNotificationSafe('Lỗi khi thay đổi trạng thái: ' + error.message, 'error');
+            }
+        }
+
+        // Delete rule
+        async function deleteRule(ruleId) {
+            if (!confirm('Bạn có chắc chắn muốn xóa quy tắc này?')) {
+                return;
+            }
+
+            try {
+                console.log('Deleting rule:', ruleId);
+                
+                const response = await fetch(`/admin/dynamic-pricing/${ruleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotificationSafe(result.message, 'success');
+                    loadDataSafe();
+                } else {
+                    throw new Error(result.message || 'Failed to delete rule');
+                }
+
+            } catch (error) {
+                console.error('❌ Error deleting rule:', error);
+                showNotificationSafe('Lỗi khi xóa quy tắc: ' + error.message, 'error');
+            }
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            if (isSubmitting) return;
+            
+            try {
+                isSubmitting = true;
+                
+                // Show loading state
+                const submitBtn = document.getElementById('dynamicRuleSubmitBtn');
+                const submitText = document.getElementById('dynamicRuleSubmitText');
+                const submitLoading = document.getElementById('dynamicRuleSubmitLoading');
+                
+                if (submitBtn) submitBtn.disabled = true;
+                if (submitText) submitText.classList.add('hidden');
+                if (submitLoading) submitLoading.classList.remove('hidden');
+                
+                // Get form data
+                const formData = new FormData(event.target);
+                const data = {
+                    room_type_id: formData.get('room_type_id'),
+                    occupancy_threshold: formData.get('occupancy_threshold'),
+                    price_adjustment: formData.get('price_adjustment'),
+                    is_active: formData.get('is_active') ? true : false
+                };
+                
+                // Determine URL and method
+                const url = currentEditingRuleId 
+                    ? `/admin/dynamic-pricing/${currentEditingRuleId}`
+                    : '/admin/dynamic-pricing';
+                const method = currentEditingRuleId ? 'PUT' : 'POST';
+                
                 const response = await fetch(url, {
                     method: method,
                     headers: {
+                        'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
-                    body: JSON.stringify(requestData)
+                    body: JSON.stringify(data)
                 });
 
-                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
-                if (response.ok && result.success) {
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotificationSafe(result.message, 'success');
                     closeDynamicRuleModal();
-                    showSuccess(result.message || 'Thao tác thành công!');
-                    loadData(currentPage);
-                    loadOccupancyStats();
+                    loadDataSafe();
+                    loadOccupancyStatsSafe();
                 } else {
-                    showError(result.message || 'Có lỗi xảy ra');
-
-                    // Show validation errors
                     if (result.errors) {
-                        Object.keys(result.errors).forEach(field => {
-                            console.error(`${field}: ${result.errors[field].join(', ')}`);
+                        // Show validation errors
+                        let errorMessage = 'Dữ liệu không hợp lệ:\n';
+                        Object.values(result.errors).forEach(errors => {
+                            errors.forEach(error => {
+                                errorMessage += '- ' + error + '\n';
+                            });
                         });
+                        showNotificationSafe(errorMessage, 'error');
+                    } else {
+                        throw new Error(result.message || 'Failed to save rule');
                     }
                 }
+
             } catch (error) {
-                console.error('Error submitting dynamic rule form:', error);
-                showError('Có lỗi xảy ra khi gửi dữ liệu: ' + error.message);
+                console.error('❌ Error submitting form:', error);
+                showNotificationSafe('Lỗi khi lưu quy tắc: ' + error.message, 'error');
             } finally {
-                // Hide loading
-                submitBtn.disabled = false;
-                submitText.classList.remove('hidden');
-                submitLoading.classList.add('hidden');
+                isSubmitting = false;
+                
+                // Reset loading state
+                const submitBtn = document.getElementById('dynamicRuleSubmitBtn');
+                const submitText = document.getElementById('dynamicRuleSubmitText');
+                const submitLoading = document.getElementById('dynamicRuleSubmitLoading');
+                
+                if (submitBtn) submitBtn.disabled = false;
+                if (submitText) submitText.classList.remove('hidden');
+                if (submitLoading) submitLoading.classList.add('hidden');
             }
         }
 
-        // Toggle dropdown menu
-        function toggleDropdown(id) {
-            const dropdown = document.getElementById(`dropdown-menu-${id}`);
-            const allDropdowns = document.querySelectorAll('[id^="dropdown-menu-"]');
-
-            // Close all other dropdowns
-            allDropdowns.forEach(menu => {
-                if (menu.id !== `dropdown-menu-${id}`) {
-                    menu.classList.add('hidden');
-                }
-            });
-
-            // Toggle current dropdown
-            dropdown.classList.toggle('hidden');
-        }
-
-        // Close dropdown
-        function closeDropdown(id) {
-            const dropdown = document.getElementById(`dropdown-menu-${id}`);
-            dropdown.classList.add('hidden');
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const dropdowns = document.querySelectorAll('[id^="dropdown-menu-"]');
-            const buttons = document.querySelectorAll('[id^="dropdown-button-"]');
-
-            let clickedInsideDropdown = false;
-
-            // Check if clicked inside any dropdown or button
-            dropdowns.forEach(dropdown => {
-                if (dropdown.contains(event.target)) {
-                    clickedInsideDropdown = true;
-                }
-            });
-
-            buttons.forEach(button => {
-                if (button.contains(event.target)) {
-                    clickedInsideDropdown = true;
-                }
-            });
-
-            // If clicked outside, close all dropdowns
-            if (!clickedInsideDropdown) {
-                dropdowns.forEach(dropdown => {
-                    dropdown.classList.add('hidden');
-                });
+        // Helper function to get occupancy status color
+        function getOccupancyStatusColor(occupancyRate) {
+            if (occupancyRate >= 90) {
+                return { bg: 'bg-red-100', text: 'text-red-800' };
+            } else if (occupancyRate >= 75) {
+                return { bg: 'bg-orange-100', text: 'text-orange-800' };
+            } else if (occupancyRate >= 50) {
+                return { bg: 'bg-yellow-100', text: 'text-yellow-800' };
+            } else if (occupancyRate >= 25) {
+                return { bg: 'bg-blue-100', text: 'text-blue-800' };
+            } else {
+                return { bg: 'bg-gray-100', text: 'text-gray-800' };
             }
-        });
-
-        // Edit dynamic rule
-        function editDynamicRule(id) {
-            showDynamicRuleModal(id);
         }
 
-        // Toggle dynamic rule status
-        async function toggleDynamicRuleStatus(id) {
+        // Safe notification function
+        function showNotificationSafe(message, type = 'success') {
             try {
-                const response = await fetch(`{{ route("admin.dynamic-pricing.toggle-status", ":id") }}`.replace(':id', id), {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
+                // Remove existing notifications
+                const existingNotifications = document.querySelectorAll('.dynamic-notification');
+                existingNotifications.forEach(notification => notification.remove());
+
+                const colors = {
+                    success: {
+                        bg: 'from-green-50 to-green-100',
+                        border: 'border-green-500',
+                        text: 'text-green-600',
+                        icon: 'text-green-500'
+                    },
+                    error: {
+                        bg: 'from-red-50 to-red-100',
+                        border: 'border-red-500',
+                        text: 'text-red-600',
+                        icon: 'text-red-500'
+                    },
+                    warning: {
+                        bg: 'from-yellow-50 to-yellow-100',
+                        border: 'border-yellow-500',
+                        text: 'text-yellow-600',
+                        icon: 'text-yellow-500'
                     }
-                });
+                };
 
-                const result = await response.json();
+                const color = colors[type] || colors.success;
 
-                if (response.ok && result.success) {
-                    showSuccess(result.message || 'Cập nhật trạng thái thành công!');
-                    loadData(currentPage);
-                    loadOccupancyStats();
-                } else {
-                    showError(result.message || 'Có lỗi xảy ra khi cập nhật trạng thái');
-                }
-            } catch (error) {
-                console.error('Error toggling dynamic rule status:', error);
-                showError('Có lỗi xảy ra khi cập nhật trạng thái');
-            }
-        }
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r ${color.bg} border-l-4 ${color.border} shadow-md z-50`;
+                notification.innerHTML = `
+                    <div class="flex items-center justify-center w-8 h-8 ${color.icon}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            ${type === 'success' ? 
+                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                            }
+                        </svg>
+                    </div>
+                    <div class="ml-3 mr-8">
+                        <h3 class="font-semibold ${color.text}">${type === 'success' ? 'Thành công!' : 'Thông báo'}</h3>
+                        <div class="text-sm ${color.text}" style="white-space: pre-line;">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="absolute right-2 top-2 ${color.text} hover:opacity-75">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
 
-        // Delete dynamic rule
-        async function deleteDynamicRule(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa quy tắc giá động này?')) {
-                return;
-            }
+                document.body.appendChild(notification);
 
-            try {
-                const response = await fetch(`{{ route("admin.dynamic-pricing.destroy", ":id") }}`.replace(':id', id), {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
+                // Auto close after 3 seconds for success, 5 seconds for errors
+                const autoCloseTime = type === 'success' ? 3000 : 5000;
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
                     }
-                });
+                }, autoCloseTime);
 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    showSuccess(result.message || 'Xóa thành công!');
-                    loadData(currentPage);
-                    loadOccupancyStats();
-                } else {
-                    showError(result.message || 'Có lỗi xảy ra khi xóa');
-                }
             } catch (error) {
-                console.error('Error deleting dynamic rule:', error);
-                showError('Có lỗi xảy ra khi xóa dữ liệu');
+                console.error('❌ Error showing notification:', error);
             }
         }
 
-        // Show success notification
-        function showSuccess(message) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.dynamic-notification');
-            existingNotifications.forEach(notification => notification.remove());
-
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500 shadow-md z-50';
-            notification.innerHTML = `
-                <div class="flex items-center justify-center w-8 h-8 text-green-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 mr-8">
-                    <h3 class="font-semibold text-green-700">Thành công!</h3>
-                    <div class="text-sm text-green-600">${message}</div>
-                </div>
-                <button onclick="this.parentElement.remove()" class="absolute right-2 top-2 text-green-600 hover:text-green-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Auto close after 3 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 3000);
-        }
-
-        // Show error notification
-        function showError(message) {
-            // Remove existing notifications
-            const existingNotifications = document.querySelectorAll('.dynamic-notification');
-            existingNotifications.forEach(notification => notification.remove());
-
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.className = 'dynamic-notification fixed top-4 right-4 transform transition-all duration-300 ease-out flex items-center p-4 rounded-lg bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-500 shadow-md z-50';
-            notification.innerHTML = `
-                <div class="flex items-center justify-center w-8 h-8 text-red-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3 mr-8">
-                    <h3 class="font-semibold text-red-700">Lỗi!</h3>
-                    <div class="text-sm text-red-600">${message}</div>
-                </div>
-                <button onclick="this.parentElement.remove()" class="absolute right-2 top-2 text-red-600 hover:text-red-800">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            `;
-
-            document.body.appendChild(notification);
-
-            // Auto close after 5 seconds
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-
-        // Close static notification (from session)
+        // Close notification function for session notifications
         function closeNotification() {
             const notification = document.getElementById('notification');
             if (notification) {
-                notification.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
+                notification.remove();
             }
         }
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                                closeDynamicRuleModal();
-            }
-        });
+        // Auto close session notification
+        setTimeout(() => {
+            closeNotification();
+        }, 5000);
     </script>
 
     <style>
@@ -1056,6 +1154,3 @@
     </style>
 
 </x-app-layout>
-
-
-

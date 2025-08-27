@@ -90,13 +90,13 @@ class AccommodationHistoryController extends Controller
         // Paginate results
         $accommodationHistory = $query->paginate(20)->appends($request->query());
 
-        // Get rooms organized by room type and floor for dropdown
+        // Get rooms organized properly for dropdown
         $roomsForFilter = $this->getRoomsForFilter();
 
+        // dd($roomsForFilter);
         // Calculate statistics
         $statistics = $this->calculateStatistics($startDate, $endDate, $roomId);
 
-        // dd($roomsForFilter);
         return view('admin.bookings.accommodation-history.index', compact(
             'accommodationHistory',
             'roomsForFilter',
@@ -112,7 +112,7 @@ class AccommodationHistoryController extends Controller
 
     private function getRoomsForFilter()
     {
-        // Lấy tất cả phòng active, nhóm theo loại phòng và tầng
+        // Lấy tất cả phòng có thể sử dụng được (không phải out_of_service)
         $rooms = DB::table('room as r')
             ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
             ->leftJoin('floors as f', 'r.floor_id', '=', 'f.floor_id')
@@ -123,23 +123,32 @@ class AccommodationHistoryController extends Controller
                 'rt.name as room_type_name',
                 'f.floor_id',
                 'f.floor_number',
-                'f.floor_name'
+                'f.floor_name',
+                'r.status as room_status'
             )
-            ->where('r.status', 'active')
+            ->whereNotIn('r.status', ['out_of_service']) // Loại bỏ phòng ngừng phục vụ
             ->orderBy('rt.name', 'asc')
             ->orderBy('f.floor_number', 'asc')
             ->orderBy('r.name', 'asc')
             ->get();
 
+        // Debug: Log số lượng phòng tìm được
+        \Log::info('Rooms found for filter: ' . $rooms->count());
+        
         // Nhóm theo loại phòng, sau đó theo tầng
         $groupedRooms = [];
         
         foreach ($rooms as $room) {
             $roomTypeName = $room->room_type_name;
-            $floorDisplay = $room->floor_number ? "Tầng {$room->floor_number}" : "Không xác định";
             
-            if ($room->floor_name) {
-                $floorDisplay .= " ({$room->floor_name})";
+            // Xử lý tên tầng
+            if ($room->floor_number) {
+                $floorDisplay = "Tầng {$room->floor_number}";
+                if ($room->floor_name) {
+                    $floorDisplay .= " - {$room->floor_name}";
+                }
+            } else {
+                $floorDisplay = "Chưa xác định tầng";
             }
             
             if (!isset($groupedRooms[$roomTypeName])) {
@@ -152,6 +161,9 @@ class AccommodationHistoryController extends Controller
             
             $groupedRooms[$roomTypeName][$floorDisplay][] = $room;
         }
+
+        // Debug: Log cấu trúc dữ liệu
+        \Log::info('Grouped rooms structure: ', $groupedRooms);
 
         return $groupedRooms;
     }
@@ -208,7 +220,6 @@ class AccommodationHistoryController extends Controller
             $occupancyRate = $totalDays > 0 ? round(($occupiedDays / $totalDays) * 100, 1) : 0;
         }
 
-        
         return [
             'total_bookings' => $totalBookings,
             'total_rooms' => $totalRooms,
@@ -333,50 +344,5 @@ class AccommodationHistoryController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
-    }
-
-    // Method để lấy thống kê theo phòng (có thể dùng cho API)
-    public function getRoomStatistics(Request $request)
-    {
-        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-
-        $roomStats = DB::table('booking_rooms as br')
-            ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
-            ->join('room as r', 'br.room_id', '=', 'r.room_id')
-            ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
-            ->leftJoin('floors as f', 'r.floor_id', '=', 'f.floor_id')
-            ->select([
-                'r.room_id',
-                'r.name as room_name',
-                'rt.name as room_type_name',
-                'f.floor_number',
-                'f.floor_name',
-                DB::raw('COUNT(DISTINCT b.booking_id) as total_bookings'),
-                DB::raw('SUM(b.guest_count) as total_guests'),
-                DB::raw('SUM(DISTINCT b.total_price_vnd) as total_revenue'),
-                DB::raw('AVG(DATEDIFF(b.check_out_date, b.check_in_date)) as avg_stay_duration')
-            ])
-            ->where(function($q) use ($startDate, $endDate) {
-                $q->whereBetween('b.check_in_date', [$startDate, $endDate])
-                  ->orWhereBetween('b.check_out_date', [$startDate, $endDate])
-                  ->orWhere(function($subQ) use ($startDate, $endDate) {
-                      $subQ->where('b.check_in_date', '<=', $startDate)
-                           ->where('b.check_out_date', '>=', $endDate);
-                  });
-            })
-            ->whereIn('b.status', ['confirmed', 'completed'])
-            ->groupBy('r.room_id', 'r.name', 'rt.name', 'f.floor_number', 'f.floor_name')
-            ->orderBy('total_revenue', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $roomStats,
-            'period' => [
-                'start' => $startDate,
-                'end' => $endDate
-            ]
-        ]);
     }
 }
