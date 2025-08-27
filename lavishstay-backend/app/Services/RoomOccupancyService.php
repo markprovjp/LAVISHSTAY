@@ -290,4 +290,33 @@ class RoomOccupancyService
             ]);
         }
     }
+
+    /**
+     * Update occupancy specifically for same-day booking flow.
+     * Kept as a thin wrapper to reuse existing updateRoomOccupancy logic.
+     *
+     * @param int $roomTypeId
+     * @param int $roomsCount
+     * @param string|\Carbon\Carbon $date
+     * @return bool
+     */
+    public function updateOccupancyForSameDayBooking(int $roomTypeId, int $roomsCount, $date): bool
+    {
+        try {
+            $carbonDate = $date instanceof Carbon ? $date : Carbon::parse($date);
+
+            // Use the full recalculation to ensure accurate counts (handles concurrency)
+            return $this->updateRoomOccupancy($roomTypeId, $carbonDate);
+
+        } catch (\Exception $e) {
+            Log::error('Error in updateOccupancyForSameDayBooking', [
+                'room_type_id' => $roomTypeId,
+                'rooms_count' => $roomsCount,
+                'date' => is_string($date) ? $date : $date->toDateString(),
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
+        }
+    }
 }

@@ -77,8 +77,8 @@ return [
     */
     'excluded_models' => [
         'App\Models\AuditLog',
-    // Notifications are stored in `user_notifications` with UUID ids.
-    // Excluding them prevents audit_logs.model_id (integer) from failing on UUIDs.
+    // Notifications use UUID ids. Exclude Notification models so audit_logs.model_id won't fail.
+    'App\Models\Notification',
     'App\Models\UserNotification',
         'App\Models\Session',
         'App\Models\Cache',

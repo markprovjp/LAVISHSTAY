@@ -12,24 +12,12 @@ class AuditObserver
     /**
      * Models to exclude from auditing
      */
-    protected static $excludedModels = [
-        'App\Models\AuditLog',
-        'App\Models\Session',
-        'App\Models\Cache',
-        'App\Models\FailedJob',
-        'App\Models\PersonalAccessToken'
-    ];
+    protected static $excludedModels = [];
 
     /**
      * Fields to exclude from auditing
      */
-    protected static $excludedFields = [
-        'updated_at',
-        'created_at',
-        'deleted_at',
-        'remember_token',
-        'email_verified_at'
-    ];
+    protected static $excludedFields = [];
 
     /**
      * Handle the Model "created" event.
@@ -86,9 +74,13 @@ class AuditObserver
     protected function shouldAudit(Model $model): bool
     {
         $modelClass = get_class($model);
+        // Load exclusions from config if not already loaded
+        if (empty(self::$excludedModels)) {
+            self::$excludedModels = config('audit.excluded_models', []);
+        }
         
         // Skip excluded models
-        if (in_array($modelClass, self::$excludedModels)) {
+        if (in_array($modelClass, self::$excludedModels, true)) {
             return false;
         }
         
@@ -110,6 +102,10 @@ class AuditObserver
      */
     protected function filterFields(array $data): array
     {
+        if (empty(self::$excludedFields)) {
+            self::$excludedFields = config('audit.excluded_fields', []);
+        }
+
         return array_diff_key($data, array_flip(self::$excludedFields));
     }
 
@@ -124,7 +120,8 @@ class AuditObserver
         $auditData = [
             'action' => $action,
             'model' => $modelName,
-            'model_id' => $modelId,
+            // Cast model id to string to avoid issues when models use UUIDs
+            'model_id' => (string) $modelId,
             'old_values' => $oldValues,
             'new_values' => $newValues,
             'user_id' => Auth::id(),
