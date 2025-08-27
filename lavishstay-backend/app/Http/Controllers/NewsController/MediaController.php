@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\NewsController;
 
 use App\Models\News\MediaFile;
@@ -17,6 +18,25 @@ class MediaController extends Controller
     {
         $mediaFiles = MediaFile::all();
         return view('admin.media.index', compact('mediaFiles'));
+    }
+
+    public function show($id)
+    {
+        $media = MediaFile::find($id);
+        if (!$media) {
+            return response()->json(['media' => null], 404);
+        }
+
+        return response()->json(['media' => [
+            'id' => $media->id,
+            'filename' => $media->filename,
+            'filepath' => $media->filepath,
+            'alt_text' => $media->alt_text,
+            'title' => $media->title,
+            'width' => $media->width ?? null,
+            'height' => $media->height ?? null,
+            'size' => $media->size ?? null,
+        ]]);
     }
 
     public function upload(Request $request)

@@ -65,7 +65,7 @@ class Role extends Model
     /**
      * Trả về tên hiển thị tiếng Việt cho vai trò (nếu có)
      */
-    public static function getRoleLabel($name)
+     public static function getRoleLabel($name)
     {
         return [
             'system_admin' => 'Quản trị hệ thống',
@@ -78,4 +78,5 @@ class Role extends Model
             'finance' => 'Kế toán/Tài chính',
         ][$name] ?? ucfirst($name);
     }
+
 }

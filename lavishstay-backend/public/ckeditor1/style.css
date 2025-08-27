@@ -1,22 +1,23 @@
 body {
-    font-size: 25px !important;      /* Desktop */
+      font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji" !important;
+    font-size: 18px !important; /* ép font-size 18px */
     line-height: 1.5;
-    font-family: 'Arial', sans-serif;
-    padding: 20px;
-    color: #222;
-    word-break: break-word;
-    background-color: #fff;
+}
+.editor-body {
+    font-size: 18px !important;
+    font-family: "Arial", sans-serif !important;
 }
 
 /* Khi lớp dark được thêm vào */
 :where(.dark) body {
     background-color: #1f2937 !important;  /* Nền tối */
-    color: #e5e7eb !important;  /* Màu chữ sáng */
+    color: #e5e7eb !important;             /* Màu chữ sáng */
 }
 
 :where(.dark) .cke_editable {
     background-color: #1f2937 !important;  /* Nền tối */
-    color: #e5e7eb !important;  /* Màu chữ sáng */
+    color: #e5e7eb !important;             /* Màu chữ sáng */
 }
 
 

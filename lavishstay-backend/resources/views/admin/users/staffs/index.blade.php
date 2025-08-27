@@ -103,18 +103,18 @@
                 </div>
 
                 <div>
-                    <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 cursor-pointer">
                         <i class="fas fa-user-tag mr-1 text-violet-600"></i> Vai trò
                     </label>
                     <!-- Dropdown chọn vai trò -->
                     <select name="role" id="role"
-                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 cursor-pointer">
                         <!-- Lựa chọn mặc định -->
                         <option value="">-- Tất cả --</option>
                         <!-- Lặp qua danh sách vai trò để tạo các option -->
                         @foreach ($roles as $role)
                             <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>
-                                {{ ucfirst($role->name) }}
+                                {{ \App\Models\Role::getRoleLabel($role->name) }}
                             </option>
                         @endforeach
                     </select>
@@ -123,7 +123,7 @@
                 <!-- Buttons group -->
                 <div class="flex flex-col sm:flex-row sm:space-x-2">
                     <button type="submit"
-                        class="inline-flex justify-center items-center px-4 py-2 mb-2 sm:mb-0 bg-violet-600 hover:bg-violet-700 border border-transparent rounded-md font-medium text-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 w-full sm:w-auto cursor-pointer">
+                        class="inline-flex justify-center items-center px-4 py-2 mb-2 mr-3 sm:mb-0 bg-violet-600 hover:bg-violet-700 border border-transparent rounded-md font-medium text-white text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 w-full sm:w-auto cursor-pointer">
                         <i class="fas fa-search mr-2"></i> Tìm kiếm
                     </button>
 
@@ -198,19 +198,19 @@
 
                                         <!-- Email -->
                                         <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                            {!! $user->email ?: '<span class="text-red-300 ">Chưa cung cấp</span>' !!}
+                                            {!! $user->email ?: '<span class="text-violet-500 ">Chưa cung cấp</span>' !!}
                                         </td>
 
                                         <!-- Phone -->
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {!! $user->phone ?: '<span class="text-red-300 ">Chưa cung cấp</span>' !!}
+                                            {!! $user->phone ?: '<span class="text-violet-500 ">Chưa cung cấp</span>' !!}
                                         </td>
 
                                         <!-- Identity Code -->
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {!! $user->identity_code ?: '<span class="text-red-300 ">Chưa cung cấp</span>' !!}
+                                            {!! $user->identity_code ?: '<span class="text-violet-500 ">Chưa cung cấp</span>' !!}
                                         </td>
 
                                         <!-- Role -->
@@ -218,22 +218,22 @@
                                             @foreach ($user->roles as $role)
                                                 @php
                                                     $roleColors = [
-                                                        'system_admin' => 'bg-red-100 text-red-800',
-                                                        'guest' => 'bg-blue-100 text-blue-800',
-                                                        'receptionist' => 'bg-yellow-100 text-yellow-800',
-                                                        'hotel_manager' => 'bg-purple-100 text-purple-800',
-                                                        'dept_manager' => 'bg-indigo-100 text-indigo-800',
-                                                        'housekeeping' => 'bg-green-100 text-green-800',
-                                                        'marketing' => 'bg-pink-100 text-pink-800',
-                                                        'finance' => 'bg-teal-100 text-teal-800',
+                                                        'system_admin' => 'bg-red-100 text-red-800', // Quản trị hệ thống
+                                                        'guest' => 'bg-blue-100 text-blue-800', // Khách hàng
+                                                        'receptionist' => 'bg-yellow-100 text-yellow-800', // Lễ tân
+                                                        'hotel_manager' => 'bg-purple-100 text-purple-800', // Quản lý khách sạn
+                                                        'marketing' => 'bg-pink-100 text-pink-800', // Marketing & SEO
+                                                        'finance' => 'bg-teal-100 text-teal-800', // Kế toán & Tài chính
                                                     ];
                                                     $color = $roleColors[$role->name] ?? 'bg-gray-100 text-gray-800';
                                                 @endphp
+
                                                 <span
                                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $color }} mr-1">
                                                     {{ \App\Models\Role::getRoleLabel($role->name) }}
                                                 </span>
                                             @endforeach
+
                                         </td>
 
                                         <!-- Join Date -->
