@@ -36,18 +36,6 @@
                 </a>
             </div>
         </div>
-        <x-slot name="header">
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {{ __('Quản lý Loại Phòng') }}
-                </h2>
-                <a href="{{ route('admin.room-types.create') }}"
-                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Thêm Loại Phòng Mới
-                </a>
-            </div>
-        </x-slot>
-
         <div class="py-12">
             <div class="">
                 @if (session('success'))
