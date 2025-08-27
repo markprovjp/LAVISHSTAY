@@ -406,6 +406,17 @@ class PaymentController extends Controller
      */
    public function createBooking(Request $request)
 {
+        // Dev-only: log raw incoming payload to help debug missing notes/specialRequests
+        try {
+            if (config('app.debug')) {
+                \Log::info('Incoming booking request (parsed):', $request->all());
+                $raw = file_get_contents('php://input');
+                \Log::info('Incoming booking request (raw): ' . substr($raw, 0, 10000));
+            }
+        } catch (\Throwable $e) {
+            // swallowing logging errors to avoid interfering with request handling
+            \Log::warning('Failed to log incoming booking request: ' . $e->getMessage());
+        }
     Log::info('Create Booking Request Received:', $request->all());
     Log::info('Rooms data received:', ['rooms' => $request->input('rooms', [])]);
     Log::info('Total guests from request:', ['total_guests' => $request->input('total_guests')]);
@@ -577,18 +588,50 @@ class PaymentController extends Controller
             }
         }
 
+        // Sanitize fields to avoid inserting arrays into string columns
+        $rawNotes = $request->input('notes', null);
+
+        // If notes is empty but frontend sent specialRequests (Select tags), map them into notes
+        $specialRequests = $request->input('specialRequests', $request->input('special_requests', null));
+        if ((is_null($rawNotes) || $rawNotes === '') && !empty($specialRequests)) {
+            if (is_array($specialRequests)) {
+                $rawNotes = implode('; ', array_map(function($v) {
+                    return is_string($v) ? $v : json_encode($v, JSON_UNESCAPED_UNICODE);
+                }, $specialRequests));
+            } else {
+                $rawNotes = (string)$specialRequests;
+            }
+        }
+
+        if (is_array($rawNotes) || is_object($rawNotes)) {
+            // Keep unicode characters intact
+            $notesValue = json_encode($rawNotes, JSON_UNESCAPED_UNICODE);
+        } else {
+            $notesValue = (string)($rawNotes ?? '');
+        }
+
+        Log::info('Notes value to be saved for booking', ['notesValue' => $notesValue]);
+
+        $guestName = is_array($request->input('customer_name')) ? (string)($request->input('customer_name')[0] ?? '') : (string)$request->input('customer_name');
+        $guestEmail = is_array($request->input('customer_email')) ? (string)($request->input('customer_email')[0] ?? '') : (string)$request->input('customer_email');
+        $guestPhone = is_array($request->input('customer_phone')) ? (string)($request->input('customer_phone')[0] ?? '') : (string)$request->input('customer_phone');
+
+        $roomTypeId = intval($request->input('room_type_id', 0)) ?: null;
+        $guestCount = intval($request->input('total_guests', 1));
+        $totalPriceVnd = is_numeric($finalTotalPrice) ? $finalTotalPrice : floatval($finalTotalPrice);
+
         $booking = Booking::create([
             'booking_code' => '', // Will be updated after creation
-            'guest_name' => $request->input('customer_name'),
-            'guest_email' => $request->input('customer_email'),
-            'guest_phone' => $request->input('customer_phone'),
+            'guest_name' => $guestName,
+            'guest_email' => $guestEmail,
+            'guest_phone' => $guestPhone,
             'check_in_date' => $checkInDate,
             'check_out_date' => $checkOutDate,
-            'guest_count' => $request->input('total_guests'),
-            'total_price_vnd' => $finalTotalPrice, // Sẽ được cập nhật sau khi áp dụng coupon
+            'guest_count' => $guestCount,
+            'total_price_vnd' => $totalPriceVnd, // Sẽ được cập nhật sau khi áp dụng coupon
             'status' => 'pending', // Vẫn pending cho đến khi thanh toán
-            'notes' => $request->input('notes'),
-            'room_type_id' => intval($request->input('room_type_id', 0)) ?: null,
+            'notes' => $notesValue,
+            'room_type_id' => $roomTypeId,
             'user_id' => $userId,
             'room_id' => null, // Sẽ được cập nhật sau khi thanh toán
             'option_id' => null, // Sẽ cập nhật sau khi có booking_code

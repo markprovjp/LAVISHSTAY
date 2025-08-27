@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Input, Row, Col, Button, Checkbox, Typography, Divider, Collapse } from 'antd';
+import { Card, Form, Input, Row, Col, Button, Checkbox, Typography, Divider, Collapse, Select, Tag } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { selectSelectedRoomsSummary } from '../../store/slices/bookingSlice';
@@ -7,7 +7,6 @@ import { Phone } from 'lucide-react';
 import CouponInput from './CouponInput';
 import { AppliedCoupon } from '../../services/couponService';
 
-const { TextArea } = Input;
 const { Title } = Typography;
 const { Panel } = Collapse;
 
@@ -49,6 +48,18 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
     const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
     const selectedRoomsSummary = useSelector(selectSelectedRoomsSummary);
 
+    // Preset options to help users express special requests in a way
+    // that maps well to backend smart assignment keywords
+    const SPECIAL_REQUEST_OPTIONS = [
+        { label: 'Gần nhau / cùng tầng', value: 'gần nhau' },
+        { label: 'Tầng cao / view đẹp', value: 'tầng cao' },
+        { label: 'Tầng thấp / dễ đi lại', value: 'tầng thấp' },
+        { label: 'Yên tĩnh', value: 'yên tĩnh' },
+        { label: 'View / phòng góc', value: 'view đẹp' },
+        { label: 'Gia đình (cần cũi / thêm giường)', value: 'gia đình' },
+        { label: 'Ưu tiên phòng liền kề', value: 'kế tiếp' },
+    ];
+
     // Auto-fill form with user data if logged in
     useEffect(() => {
         if (isAuthenticated && user) {
@@ -61,9 +72,26 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
         }
     }, [isAuthenticated, user, form]);
 
+    // Ensure specialRequests is an array (Select mode="tags" returns array)
+    const handleFinish = (values: any) => {
+        let special = values.specialRequests || [];
+        if (typeof special === 'string') {
+            special = special.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        values.specialRequests = special;
+
+        if (process.env.NODE_ENV === 'development') {
+            // Debugging helper to ensure frontend is sending specialRequests correctly
+            // eslint-disable-next-line no-console
+            console.debug('BookingInfoStep handleFinish - specialRequests:', special, 'full values:', values);
+        }
+
+        onSubmit(values);
+    };
+
     return (
         <Card title="Thông tin khách hàng" className="mb-4">
-            <Form form={form} layout="vertical" onFinish={onSubmit}>
+            <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ termsAgreement: true }}>
                 {/* Payment method is selected in PaymentStep; no selector here */}
                 <Title level={5}>Thông tin người đại diện</Title>
                 <Row gutter={16}>
@@ -147,7 +175,21 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                 )}
 
                 <Form.Item name="specialRequests" label="Yêu cầu đặc biệt (tùy chọn)">
-                    <TextArea rows={3} placeholder="Ví dụ: phòng không hút thuốc, tầng cao..." />
+                    <Select
+                        mode="tags"
+                        showSearch
+                        placeholder="Chọn hoặc nhập yêu cầu (ví dụ: tầng cao, gần nhau)..."
+                        options={SPECIAL_REQUEST_OPTIONS.map(o => ({ label: o.label, value: o.value }))}
+                        tokenSeparators={[',']}
+                        style={{ width: '100%' }}
+                        onChange={(val) => form.setFieldsValue({ specialRequests: val })}
+                        tagRender={({ label, closable, onClose }) => (
+                            <Tag color="#2f54eb" closable={closable} onClose={onClose} style={{ marginRight: 6 }}>
+                                {label}
+                            </Tag>
+                        )}
+                    />
+                    <div style={{ marginTop: 8, color: 'rgba(0,0,0,0.45)' }}>Bạn có thể gõ để thêm yêu cầu riêng, hoặc chọn từ gợi ý.</div>
                 </Form.Item>
 
                 {/* Coupon Input Section */}
@@ -157,7 +199,10 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                             base_price_vnd: totals.roomsTotal + totals.serviceFee + totals.taxAmount,
                             taxes_vnd: totals.taxAmount,
                             fees_vnd: totals.serviceFee,
-                            room_type_id: Number(selectedRoomsSummary[0]?.room?.room_type_id || selectedRoomsSummary[0]?.room?.id || 1)
+                            room_type_id: Number(selectedRoomsSummary[0]?.room?.room_type_id || selectedRoomsSummary[0]?.room?.id || 1),
+                            // Include nights and total_price_vnd to match backend validation rules
+                            nights: 1,
+                            total_price_vnd: totals.finalTotal ?? (totals.roomsTotal + totals.serviceFee + totals.taxAmount)
                         }}
                         appliedCoupon={appliedCoupon}
                         onCouponChange={onCouponChange}
@@ -177,7 +222,14 @@ const BookingInfoStep: React.FC<BookingInfoStepProps> = ({
                     ]}
                 >
                     <Checkbox>
-                        Tôi đồng ý với <a href="/terms" target="_blank" rel="noopener noreferrer">điều khoản dịch vụ</a> và <a href="/privacy" target="_blank" rel="noopener noreferrer">chính sách bảo mật</a>.
+                        Tôi đồng ý với{' '}
+                        <Typography.Link href="/about" target="_blank" rel="noopener noreferrer" underline style={{ color: '#1677ff', fontWeight: 600 }}>
+                            điều khoản dịch vụ
+                        </Typography.Link>{' '}
+                        và{' '}
+                        <Typography.Link href="/about" target="_blank" rel="noopener noreferrer" underline style={{ color: '#1677ff', fontWeight: 600 }}>
+                            chính sách bảo mật
+                        </Typography.Link>.
                     </Checkbox>
                 </Form.Item>
 

@@ -17,12 +17,48 @@ class NewsCommentController extends Controller
     public function index(Request $request, $newsId)
     {
         $perPage = $request->query('per_page', 10);
+        $userId = Auth::id();
         
         $comments = NewsComment::with(['user', 'replies.user', 'replies.replies.user'])
             ->where('news_id', $newsId)
             ->topLevel()
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
+
+        // Add user like status to each comment
+        if ($userId) {
+            $commentIds = $comments->pluck('id')->toArray();
+            $userLikes = \App\Models\News\NewsCommentLike::where('user_id', $userId)
+                ->whereIn('comment_id', $commentIds)
+                ->pluck('comment_id')
+                ->toArray();
+
+            foreach ($comments as $comment) {
+                $comment->is_liked = in_array($comment->id, $userLikes);
+                
+                // Also check replies
+                if ($comment->replies) {
+                    $replyIds = $comment->replies->pluck('id')->toArray();
+                    $replyLikes = \App\Models\News\NewsCommentLike::where('user_id', $userId)
+                        ->whereIn('comment_id', $replyIds)
+                        ->pluck('comment_id')
+                        ->toArray();
+                    
+                    foreach ($comment->replies as $reply) {
+                        $reply->is_liked = in_array($reply->id, $replyLikes);
+                    }
+                }
+            }
+        } else {
+            foreach ($comments as $comment) {
+                $comment->is_liked = false;
+                if ($comment->replies) {
+                    foreach ($comment->replies as $reply) {
+                        $reply->is_liked = false;
+                    }
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -38,6 +74,9 @@ class NewsCommentController extends Controller
      */
     public function store(Request $request, $newsId)
     {
+        \Log::debug('NewsCommentController::store incoming Authorization:', [
+            'auth_header' => $request->header('Authorization')
+        ]);
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
             'parent_id' => 'nullable|exists:news_comments,id',
@@ -74,9 +113,17 @@ class NewsCommentController extends Controller
             }
         }
 
+        // Require authentication for commenting
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required to comment'
+            ], 401);
+        }
+
         $comment = NewsComment::create([
             'news_id' => $newsId,
-            'user_id' => Auth::id() ?? 1, // Default to user 1 if not authenticated
+            'user_id' => Auth::id(),
             'content' => $request->content,
             'parent_id' => $request->parent_id,
             'likes' => 0,
@@ -198,6 +245,17 @@ class NewsCommentController extends Controller
      */
     public function toggleLike(Request $request, $newsId, $id)
     {
+        \Log::debug('NewsCommentController::toggleLike incoming Authorization:', [
+            'auth_header' => $request->header('Authorization')
+        ]);
+
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
         $comment = NewsComment::find($id);
 
         if (!$comment || $comment->news_id != $newsId) {
@@ -207,19 +265,44 @@ class NewsCommentController extends Controller
             ], 404);
         }
 
-        // For simplicity keep existing behavior: if query param 'action' provided use it,
-        // otherwise default to 'like' (increment). Real toggle by user not implemented here.
-        $action = $request->query('action', 'like'); // 'like' or 'unlike'
+        $userId = Auth::id();
 
-        if ($action === 'like') {
-            $comment->increment('likes');
-            $isLiked = true;
-            $message = 'Comment liked successfully';
-        } else {
+        // Use news_user_actions.comment_likes JSON array to track which comment ids the user liked for this news
+        $userAction = \App\Models\News\NewsUserAction::firstOrCreate(
+            ['news_id' => $newsId, 'user_id' => $userId],
+            ['is_liked' => false, 'is_bookmarked' => false, 'rating' => null, 'comment_likes' => null]
+        );
+
+        // Load existing likes array
+        $commentLikes = [];
+        if ($userAction->comment_likes) {
+            try {
+                $commentLikes = (array) json_decode($userAction->comment_likes, true) ?: [];
+            } catch (\Exception $e) {
+                $commentLikes = [];
+            }
+        }
+
+        $isLiked = false;
+        $message = '';
+
+        if (in_array($id, $commentLikes)) {
+            // Unlike
+            $commentLikes = array_values(array_diff($commentLikes, [$id]));
             $comment->decrement('likes');
             $isLiked = false;
             $message = 'Comment unliked successfully';
+        } else {
+            // Like
+            $commentLikes[] = $id;
+            $comment->increment('likes');
+            $isLiked = true;
+            $message = 'Comment liked successfully';
         }
+
+        // Persist updated comment_likes JSON
+        $userAction->comment_likes = json_encode(array_values($commentLikes));
+        $userAction->save();
 
         return response()->json([
             'success' => true,

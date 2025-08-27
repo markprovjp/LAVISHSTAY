@@ -31,7 +31,6 @@ const CleanupPanel: React.FC = () => {
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     const [currentOperation, setCurrentOperation] = useState<{
         type: string;
-        execute: () => Promise<any>;
         previewData?: CleanupPreviewData;
     } | null>(null);
 
@@ -136,7 +135,10 @@ const CleanupPanel: React.FC = () => {
         requiresConfirmation?: boolean
     ) => {
         if (requiresConfirmation) {
-            setCurrentOperation({ type, execute: executeFn, previewData });
+            // Store only the operation type and preview; don't store executeFn because it
+            // may have closed over an empty confirmationCode. We'll call the correct
+            // mutation with the latest confirmationCode when the user confirms.
+            setCurrentOperation({ type, previewData });
             setShowConfirmationModal(true);
             setConfirmationCode('');
         } else {
@@ -153,7 +155,24 @@ const CleanupPanel: React.FC = () => {
         if (!currentOperation) return;
 
         try {
-            await currentOperation.execute();
+            // Call the correct mutation with the current confirmation code value
+            switch (currentOperation.type) {
+                case 'expire_pending':
+                    await executeExpirePendingMutation.mutateAsync(confirmationCode);
+                    break;
+                case 'complete_checkouts':
+                    await executeCompletePastCheckoutsMutation.mutateAsync(confirmationCode);
+                    break;
+                case 'complete_cleaning':
+                    await executeCompleteCleaningBookingsMutation.mutateAsync(confirmationCode);
+                    break;
+                case 'run_all':
+                    await executeRunAllMutation.mutateAsync(confirmationCode);
+                    break;
+                default:
+                    break;
+            }
+
             setShowConfirmationModal(false);
             setCurrentOperation(null);
             setConfirmationCode('');
@@ -221,7 +240,7 @@ const CleanupPanel: React.FC = () => {
     };
 
     return (
-        <div style={{ padding: 24 , marginTop: 30 }}>
+        <div style={{ padding: 24, marginTop: 30 }}>
             <Title level={2}>
                 <SafetyOutlined /> Hệ thống Dọn dẹp Tự động
             </Title>

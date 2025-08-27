@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { useToggleLike } from '../../hooks/useNews';
 
 // Zustand store for likes
 interface LikeStore {
@@ -127,6 +130,8 @@ const NewsLikeButton: React.FC<NewsLikeButtonProps> = ({
 }) => {
     const { t } = useTranslation();
     const { toggleLike, isLiked: storeIsLiked, getLikeCount } = useLikeStore();
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const toggleLikeMutation = useToggleLike();
     const [isAnimating, setIsAnimating] = useState(false);
 
     // Use prop value if provided, otherwise use store value
@@ -139,7 +144,13 @@ const NewsLikeButton: React.FC<NewsLikeButtonProps> = ({
         if (isAnimating) return;
 
         setIsAnimating(true);
-        toggleLike(newsId, initialLikeCount);
+        // If user is authenticated, call backend mutation; fallback to local store
+        if (isAuthenticated) {
+            // call backend and optimistic update handled by hooks
+            toggleLikeMutation.mutate(Number(newsId));
+        } else {
+            toggleLike(newsId, initialLikeCount);
+        }
 
         // Reset animation state after animation completes
         setTimeout(() => setIsAnimating(false), 600);

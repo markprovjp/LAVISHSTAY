@@ -1,33 +1,70 @@
 // src/components/news/NewsList.tsx
 import React, { useState } from 'react';
-import { Row, Col, Spin, Empty, Button, Alert } from 'antd';
+import { Row, Col, Spin, Empty, Button, Alert, Card, Image, Tag, Avatar, Pagination } from 'antd';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { useNewsList } from '../../hooks/useNews';
 import { ApiParams } from '../../services/newsApi';
-import NewsItem from './NewsItem';
-import NewsPagination from './NewsPagination';
-import { useNavigate } from 'react-router-dom';
-import { normalizeNewsResponse } from '../../utils/normalizeNewsData';
+import { ClockCircleOutlined, EyeOutlined, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/vi';
+
+dayjs.extend(relativeTime);
+dayjs.locale('vi');
 
 interface NewsListProps {
   className?: string;
+  categoryId?: number;
 }
+
+// Helper function to get image URL with fallback
+const getImageUrl = (newsItem: any): string => {
+  return newsItem.featured_image ||
+    newsItem.image_url ||
+    newsItem.image ||
+    newsItem.thumbnail?.filepath ||
+    '/images/placeholder-news.png';
+};
+
+// Helper function to get summary/excerpt
+const getSummary = (newsItem: any): string => {
+  return newsItem.summary ||
+    newsItem.excerpt ||
+    newsItem.meta_description ||
+    'Không có mô tả';
+};
 
 const NewsList: React.FC<NewsListProps> = ({
   className = '',
+  categoryId
 }) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
-  // Chỉ truyền per_page và page, không filter gì hết
+  // State cho pagination
   const [params, setParams] = useState<ApiParams>({
     per_page: 9,
-    page: 1
+    page: 1,
+    category_id: categoryId,
+    sort_by: 'published_at',
+    sort_order: 'desc'
   });
 
-  // DEBUG: log params truyền vào API
-  console.log('NewsList - params:', params);
+  // Sync categoryId prop into params when it changes
+  React.useEffect(() => {
+    setParams(prev => {
+      const next = { ...prev, page: 1 } as any;
+      if (categoryId != null) {
+        next.category_id = categoryId;
+      } else {
+        // remove category_id so API returns all
+        if ('category_id' in next) delete next.category_id;
+      }
+      return next;
+    });
+  }, [categoryId]);
+
   // API query
   const {
     data: newsResponse,
@@ -36,9 +73,15 @@ const NewsList: React.FC<NewsListProps> = ({
     refetch
   } = useNewsList(params);
 
-  // Handle filter changes
+  // Dev-only: Log response để debug
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('NewsList - News Response:', newsResponse);
+      console.debug('NewsList - Params:', params);
+    }
+  }, [newsResponse, params]);
 
-  // Chỉ cho phép đổi page, không filter/search/sort gì hết
+  // Handle page change
   const handlePageChange = (page: number, pageSize?: number) => {
     setParams(prev => ({
       ...prev,
@@ -47,19 +90,23 @@ const NewsList: React.FC<NewsListProps> = ({
     }));
   };
 
-  const handleNewsClick = (slug: string) => {
-    navigate(`/news/${slug}`);
-  };
-
-  const handleRefresh = () => {
-    refetch();
-  };
-
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <Spin size="large" tip={t('news.loading', 'Đang tải tin tức...')} />
+      <div className={`space-y-6 ${className}`}>
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('news.list.title', 'Danh sách tin tức')}
+          </h3>
+        </div>
+
+        <Row gutter={[16, 16]}>
+          {Array.from({ length: 9 }, (_, index) => (
+            <Col xs={24} sm={12} lg={8} key={index}>
+              <Card loading />
+            </Col>
+          ))}
+        </Row>
       </div>
     );
   }
@@ -67,14 +114,14 @@ const NewsList: React.FC<NewsListProps> = ({
   // Error state
   if (error) {
     return (
-      <div className="py-8">
+      <div className={className}>
         <Alert
-          message={t('news.error.title', 'Không thể tải tin tức')}
-          description={t('news.error.description', 'Đã có lỗi xảy ra khi tải danh sách tin tức. Vui lòng thử lại.')}
+          message={t('news.error.loadFailed', 'Không thể tải tin tức')}
+          description={t('news.error.tryAgain', 'Vui lòng thử lại sau')}
           type="error"
           showIcon
           action={
-            <Button size="small" danger onClick={handleRefresh}>
+            <Button size="small" onClick={() => refetch()}>
               {t('common.retry', 'Thử lại')}
             </Button>
           }
@@ -83,426 +130,191 @@ const NewsList: React.FC<NewsListProps> = ({
     );
   }
 
+  // Empty state
+  if (!newsResponse?.data || newsResponse.data.length === 0) {
+    return (
+      <div className={className}>
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={t('news.empty.noNews', 'Chưa có tin tức')}
+          className="py-12"
+        />
+      </div>
+    );
+  }
 
-  // Normalize and filter data: chỉ nhận object hợp lệ, tránh lỗi spread/iteration
-  const normalizedResponse = normalizeNewsResponse(newsResponse);
-  const newsData = normalizedResponse.data;
-
-  // DEBUG: log dữ liệu nhận được từ API
-  console.log('NewsList - normalizedResponse:', normalizedResponse);
-
+  const newsList = newsResponse.data;
   const pagination = {
-    current: normalizedResponse.pagination?.current_page || 1,
-    total: normalizedResponse.pagination?.total || 0,
-    pageSize: normalizedResponse.pagination?.per_page || 9,
+    current: newsResponse.current_page || 1,
+    pageSize: newsResponse.per_page || 9,
+    total: newsResponse.total || 0,
+    lastPage: newsResponse.last_page || 1
   };
 
   return (
-    <div className={`news-list ${className}`}>
-      {/* News Grid - không filter, không search, không sort, chỉ hiển thị data trả về */}
-      <AnimatePresence mode="wait">
-        {newsData.length === 0 ? (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-12"
-          >
-            <Empty
-              description={t('news.empty.default', 'Chưa có tin tức nào')}
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Row gutter={[24, 24]}>
-              {newsData.map((news, index) => (
-                <Col
-                  key={news.id}
-                  xs={24}
-                  sm={12}
-                  lg={8}
-                  xl={8}
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <NewsItem
-                      news={news}
-                      onClick={handleNewsClick}
-                      showCategory={true}
-                      showAuthor={true}
-                      showViews={true}
-                      showTags={true}
-                    />
-                  </motion.div>
-                </Col>
-              ))}
-            </Row>
+    <div className={`space-y-6 ${className}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          {t('news.list.title', 'Danh sách tin tức')}
+        </h3>
+        <div className="text-sm text-gray-500">
+          {t('news.list.showing', 'Hiển thị')} {newsResponse.from || 1} - {newsResponse.to || newsList.length} / {pagination.total} {t('news.list.articles', 'bài viết')}
+        </div>
+      </div>
 
-            {/* Pagination */}
-            <NewsPagination
-              current={pagination.current}
-              total={pagination.total}
-              pageSize={pagination.pageSize}
-              onChange={handlePageChange}
-              showSizeChanger={true}
-              showTotal={true}
-              className="mt-8"
-            />
-          </motion.div>
-        )}
+      {/* News Grid */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={params.page}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Row gutter={[16, 16]}>
+            {newsList.map((newsItem: any, index: number) => (
+              <Col xs={24} sm={12} lg={8} key={newsItem.id}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1, duration: 0.3 }}
+                  whileHover={{ y: -5 }}
+                >
+                  <Card
+                    className="h-full hover:shadow-lg transition-all duration-300 border-0 shadow-sm"
+                    cover={
+                      <div className="relative h-48 overflow-hidden">
+                        <Link to={`/news/${newsItem.slug}`}>
+                          <Image
+                            src={getImageUrl(newsItem)}
+                            alt={newsItem.title}
+                            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                            fallback="/images/placeholder-news.png"
+                            preview={false}
+                          />
+                        </Link>
+
+                        {/* Category badge */}
+                        <div className="absolute top-2 left-2">
+                          <Tag className="bg-blue-500 text-white border-blue-500 rounded">
+                            {newsItem.category?.name || 'Tin tức'}
+                          </Tag>
+                        </div>
+
+                        {/* Featured badge */}
+                        {newsItem.is_featured && (
+                          <div className="absolute top-2 right-2">
+                            <Tag className="bg-red-500 text-white border-red-500 rounded">
+                              {t('news.featured', 'Nổi bật')}
+                            </Tag>
+                          </div>
+                        )}
+                      </div>
+                    }
+                    actions={[
+                      <Link to={`/news/${newsItem.slug}`} key="view">
+                        <Button
+                          type="text"
+                          icon={<ArrowRightOutlined />}
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          {t('news.readMore', 'Xem chi tiết')}
+                        </Button>
+                      </Link>
+                    ]}
+                  >
+                    <Card.Meta
+                      title={
+                        <Link
+                          to={`/news/${newsItem.slug}`}
+                          className="text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
+                        >
+                          {newsItem.title}
+                        </Link>
+                      }
+                      description={
+                        <div className="space-y-3">
+                          <p className="text-gray-600 text-sm line-clamp-3">
+                            {getSummary(newsItem)}
+                          </p>
+
+                          {/* Author & Date */}
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center space-x-2">
+                              <Avatar
+                                size="small"
+                                icon={<UserOutlined />}
+                                src={newsItem.author?.avatar_url}
+                              />
+                              <span>{newsItem.author?.name || 'Admin'}</span>
+                            </div>
+
+                            <div className="flex items-center space-x-1">
+                              <ClockCircleOutlined />
+                              <span>{dayjs(newsItem.published_at || newsItem.publish_date).fromNow()}</span>
+                            </div>
+                          </div>
+
+                          {/* Stats & Tags */}
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-1">
+                                <EyeOutlined />
+                                <span>{(newsItem.views || 0).toLocaleString()}</span>
+                              </div>
+
+                              {newsItem.comments_count > 0 && (
+                                <span>{newsItem.comments_count} bình luận</span>
+                              )}
+
+                              {newsItem.likes_count > 0 && (
+                                <span>{newsItem.likes_count} lượt thích</span>
+                              )}
+                            </div>
+
+                            {newsItem.tags && newsItem.tags.length > 0 && (
+                              <div className="flex space-x-1">
+                                {newsItem.tags.slice(0, 2).map((tag: any, tagIndex: number) => (
+                                  <Tag key={tagIndex} className="text-xs">
+                                    #{typeof tag === 'string' ? tag : tag.name}
+                                  </Tag>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      }
+                    />
+                  </Card>
+                </motion.div>
+              </Col>
+            ))}
+          </Row>
+        </motion.div>
       </AnimatePresence>
+
+      {/* Pagination */}
+      {pagination.total > pagination.pageSize && (
+        <div className="flex justify-center mt-8">
+          <Pagination
+            current={pagination.current}
+            pageSize={pagination.pageSize}
+            total={pagination.total}
+            onChange={handlePageChange}
+            onShowSizeChange={handlePageChange}
+            showSizeChanger
+            showQuickJumper
+            showTotal={(total, range) =>
+              `${range[0]}-${range[1]} / ${total} ${t('news.list.articles', 'bài viết')}`
+            }
+            pageSizeOptions={['6', '9', '12', '18']}
+            className="custom-pagination"
+          />
+        </div>
+      )}
     </div>
   );
 };
 
 export default NewsList;
-//             title: 'LavishStay được vinh danh "Khách sạn tốt nhất năm 2024"',
-//             summary: 'Giải thưởng danh giá từ Hiệp hội Du lịch Quốc tế khẳng định chất lượng dịch vụ xuất sắc của chúng tôi.',
-//             imageUrl: 'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=250&fit=crop',
-//             category: 'Giải thưởng',
-//             publishedAt: new Date('2024-01-08'),
-//             author: { name: 'Ban biên tập' },
-//             views: 8765,
-//             tags: ['giải thưởng', 'vinh danh', '2024'],
-//             isBookmarked: false,
-//             isLiked: true,
-//             likesCount: 234
-//         },
-//         {
-//             id: '9',
-//             title: 'Workshop pha chế cocktail miễn phí cho khách hàng',
-//             summary: 'Học cách pha chế những ly cocktail tuyệt vời từ bartender chuyên nghiệp của chúng tôi.',
-//             imageUrl: 'https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=400&h=250&fit=crop',
-//             category: 'Sự kiện',
-//             publishedAt: new Date('2024-01-07'),
-//             author: { name: 'Nguyễn Mixer' },
-//             views: 3456,
-//             tags: ['workshop', 'cocktail', 'miễn phí'],
-//             isBookmarked: true,
-//             isLiked: false,
-//             likesCount: 89
-//         },
-//         {
-//             id: '10',
-//             title: 'Chương trình âm nhạc cuối tuần tại LavishLounge',
-//             summary: 'Thưởng thức những giai điệu tuyệt vời từ các nghệ sĩ tài năng trong không gian sang trọng.',
-//             imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=250&fit=crop',
-//             category: 'Giải trí',
-//             publishedAt: new Date('2024-01-06'),
-//             author: { name: 'Music Team' },
-//             views: 5678,
-//             tags: ['âm nhạc', 'cuối tuần', 'lounge'],
-//             isBookmarked: false,
-//             isLiked: true,
-//             likesCount: 156
-//         },
-//         {
-//             id: '11',
-//             title: 'Khóa học nấu ăn với đầu bếp Michelin Star',
-//             summary: 'Cơ hội hiếm có để học nấu ăn từ đầu bếp đạt sao Michelin ngay tại khách sạn.',
-//             imageUrl: 'https://images.unsplash.com/photo-1556909114-b7a93d48d766?w=400&h=250&fit=crop',
-//             category: 'Ẩm thực',
-//             publishedAt: new Date('2024-01-05'),
-//             author: { name: 'Chef Martin' },
-//             views: 9876,
-//             tags: ['nấu ăn', 'michelin', 'khóa học'],
-//             isBookmarked: true,
-//             isLiked: true,
-//             likesCount: 567
-//         },
-//         {
-//             id: '12',
-//             title: 'Gói nghỉ dưỡng kết hợp yoga và meditation',
-//             summary: 'Tìm lại sự cân bằng trong cuộc sống với chương trình yoga và thiền định chuyên nghiệp.',
-//             imageUrl: 'https://images.unsplash.com/photo-1506629905607-ea9a6a27a9eb?w=400&h=250&fit=crop',
-//             category: 'Wellness',
-//             publishedAt: new Date('2024-01-04'),
-//             author: { name: 'Yoga Master' },
-//             views: 4321,
-//             tags: ['yoga', 'meditation', 'wellness'],
-//             isBookmarked: false,
-//             isLiked: false,
-//             likesCount: 123
-//         },
-//         {
-//             id: '13',
-//             title: 'Triển lãm nghệ thuật "Vẻ đẹp Việt Nam" tại lobby',
-//             summary: 'Khám phá vẻ đẹp đất nước qua triển lãm tranh và tác phẩm nghệ thuật độc đáo.',
-//             imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=250&fit=crop',
-//             category: 'Văn hóa',
-//             publishedAt: new Date('2024-01-03'),
-//             author: { name: 'Art Curator' },
-//             views: 2345,
-//             tags: ['triển lãm', 'nghệ thuật', 'việt nam'],
-//             isBookmarked: false,
-//             isLiked: true,
-//             likesCount: 78
-//         }
-//     ];
-
-//     // Filter by category
-//     let filteredNews = category === 'all'
-//         ? mockNews
-//         : mockNews.filter(news => news.category.toLowerCase().includes(category.toLowerCase()));
-
-//     // Filter by search query
-//     if (searchQuery) {
-//         filteredNews = filteredNews.filter(news =>
-//             news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//             news.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//             news.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-//         );
-//     }
-
-//     // Sort news
-//     if (sortBy === 'publishedAt') {
-//         filteredNews.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-//     } else if (sortBy === 'views') {
-//         filteredNews.sort((a, b) => b.views - a.views);
-//     } else if (sortBy === 'likes') {
-//         filteredNews.sort((a, b) => b.likesCount - a.likesCount);
-//     }
-
-//     const pageSize = 6;
-//     const startIndex = (pageParam - 1) * pageSize;
-//     const endIndex = startIndex + pageSize;
-//     const paginatedNews = filteredNews.slice(startIndex, endIndex);
-
-//     return {
-//         data: paginatedNews,
-//         total: filteredNews.length,
-//         hasNextPage: endIndex < filteredNews.length,
-//         nextPage: endIndex < filteredNews.length ? pageParam + 1 : undefined
-//     };
-// };
-
-// const NewsList: React.FC<NewsListProps> = ({
-//     category = 'all',
-//     searchQuery = '',
-//     onNewsClick
-// }) => {
-//     const { t } = useTranslation();
-//     const [currentPage, setCurrentPage] = useState(1);
-//     const [sortBy, setSortBy] = useState<'publishedAt' | 'views' | 'likes'>('publishedAt');
-//     const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
-
-//     const {
-//         data,
-//         isLoading,
-//         error,
-//         refetch,
-//         isFetching
-//     } = useQuery({
-//         queryKey: ['newsList', category, sortBy, localSearchQuery, currentPage],
-//         queryFn: () => fetchNewsList({
-//             pageParam: currentPage,
-//             category,
-//             sortBy,
-//             searchQuery: localSearchQuery
-//         }),
-//         staleTime: 2 * 60 * 1000, // 2 minutes
-//     });
-
-//     const handlePageChange = (page: number) => {
-//         setCurrentPage(page);
-//         window.scrollTo({ top: 0, behavior: 'smooth' });
-//     };
-
-//     const handleSortChange = (value: 'publishedAt' | 'views' | 'likes') => {
-//         setSortBy(value);
-//         setCurrentPage(1);
-//     };
-
-//     const handleSearch = (value: string) => {
-//         setLocalSearchQuery(value);
-//         setCurrentPage(1);
-//     };
-
-//     const handleRefresh = () => {
-//         refetch();
-//     };
-
-//     if (isLoading) {
-//         return (
-//             <div className="space-y-6">
-//                 <div className="flex justify-center py-12">
-//                     <Spin size="large" />
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     if (error) {
-//         return (
-//             <div className="text-center py-12">
-//                 <Empty
-//                     description={t('news.error', 'Có lỗi xảy ra khi tải tin tức')}
-//                     image={Empty.PRESENTED_IMAGE_SIMPLE}
-//                 >
-//                     <Button type="primary" onClick={handleRefresh}>
-//                         {t('news.retry', 'Thử lại')}
-//                     </Button>
-//                 </Empty>
-//             </div>
-//         );
-//     }
-
-//     return (
-//         <motion.div
-//             initial={{ opacity: 0 }}
-//             animate={{ opacity: 1 }}
-//             transition={{ duration: 0.5 }}
-//             className="space-y-6"
-//         >
-//             {/* Header Controls */}
-//             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-//                 <div className="flex items-center space-x-3">
-//                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-//                         {t('news.list.title', 'Danh sách tin tức')}
-//                     </h3>
-//                     {isFetching && (
-//                         <motion.div
-//                             animate={{ rotate: 360 }}
-//                             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-//                         >
-//                             <ReloadOutlined className="text-blue-500" />
-//                         </motion.div>
-//                     )}
-//                 </div>
-
-//                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-//                     {/* Search */}
-//                     <Search
-//                         placeholder={t('news.search.placeholder', 'Tìm kiếm tin tức...')}
-//                         allowClear
-//                         enterButton
-//                         size="middle"
-//                         className="w-full sm:w-64"
-//                         onSearch={handleSearch}
-//                         defaultValue={localSearchQuery}
-//                     />
-
-//                     {/* Sort */}
-//                     <Select
-//                         value={sortBy}
-//                         onChange={handleSortChange}
-//                         size="middle"
-//                         className="w-full sm:w-40"
-//                         suffixIcon={<SortAscendingOutlined />}
-//                     >
-//                         <Option value="publishedAt">{t('news.sort.latest', 'Mới nhất')}</Option>
-//                         <Option value="views">{t('news.sort.popular', 'Phổ biến')}</Option>
-//                         <Option value="likes">{t('news.sort.liked', 'Yêu thích')}</Option>
-//                     </Select>
-
-//                     {/* Refresh */}
-//                     <Button
-//                         type="text"
-//                         icon={<FilterOutlined />}
-//                         onClick={handleRefresh}
-//                         loading={isFetching}
-//                         className="w-full sm:w-auto"
-//                     >
-//                         {t('news.refresh', 'Làm mới')}
-//                     </Button>
-//                 </div>
-//             </div>
-
-//             {/* News Grid */}
-//             <AnimatePresence mode="wait">
-//                 {data?.data && data.data.length > 0 ? (
-//                     <motion.div
-//                         key={`${category}-${sortBy}-${currentPage}`}
-//                         initial={{ opacity: 0, y: 20 }}
-//                         animate={{ opacity: 1, y: 0 }}
-//                         exit={{ opacity: 0, y: -20 }}
-//                         transition={{ duration: 0.4 }}
-//                     >
-//                         <Row gutter={[24, 24]}>
-//                             {data.data.map((news, index) => (
-//                                 <Col xs={24} sm={12} lg={8} key={news.id}>
-//                                     <motion.div
-//                                         initial={{ opacity: 0, y: 30 }}
-//                                         animate={{ opacity: 1, y: 0 }}
-//                                         transition={{
-//                                             duration: 0.5,
-//                                             delay: index * 0.1,
-//                                             ease: "easeOut"
-//                                         }}
-//                                         whileHover={{ y: -5 }}
-//                                         className="h-full"
-//                                     >
-//                                         <NewsCard
-//                                             news={news}
-//                                             onClick={() => onNewsClick?.(news)}
-//                                         />
-//                                     </motion.div>
-//                                 </Col>
-//                             ))}
-//                         </Row>
-
-//                         {/* Pagination */}
-//                         {data.total > 6 && (
-//                             <motion.div
-//                                 initial={{ opacity: 0 }}
-//                                 animate={{ opacity: 1 }}
-//                                 transition={{ delay: 0.3 }}
-//                                 className="flex justify-center mt-8"
-//                             >
-//                                 <Pagination
-//                                     current={currentPage}
-//                                     total={data.total}
-//                                     pageSize={6}
-//                                     onChange={handlePageChange}
-//                                     showSizeChanger={false}
-//                                     showQuickJumper
-//                                     showTotal={(total, range) =>
-//                                         `${range[0]}-${range[1]} ${t('news.pagination.of', 'trong')} ${total} ${t('news.pagination.items', 'tin tức')}`
-//                                     }
-//                                     className="custom-pagination"
-//                                 />
-//                             </motion.div>
-//                         )}
-//                     </motion.div>
-//                 ) : (
-//                     <motion.div
-//                         initial={{ opacity: 0 }}
-//                         animate={{ opacity: 1 }}
-//                         className="py-12"
-//                     >
-//                         <Empty
-//                             description={t('news.empty', 'Không có tin tức nào')}
-//                             image={Empty.PRESENTED_IMAGE_SIMPLE}
-//                         />
-//                     </motion.div>
-//                 )}
-//             </AnimatePresence>
-
-//             {/* Stats */}
-//             <motion.div
-//                 initial={{ opacity: 0 }}
-//                 animate={{ opacity: 1 }}
-//                 transition={{ delay: 0.5 }}
-//                 className="text-center text-sm text-gray-500 dark:text-gray-400"
-//             >
-//                 {data?.total && (
-//                     <p>
-//                         {t('news.stats.showing', 'Hiển thị')} {data.data.length} {t('news.stats.of', 'trong')} {data.total} {t('news.stats.articles', 'bài viết')}
-//                     </p>
-//                 )}
-//             </motion.div>
-//         </motion.div>
-//     );
-// };
-
-// export default NewsList;

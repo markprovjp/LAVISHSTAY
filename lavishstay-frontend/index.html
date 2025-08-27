@@ -17,6 +17,12 @@
       rel="stylesheet"
     />
     <title>LavishStay Thanh Hoa</title>
+    <script>
+  // Nếu người dùng vào /index.html thì sửa URL thành / để SPA Router xử lý
+  if (location.pathname === '/index.html' || location.pathname.endsWith('/index.html')) {
+    history.replaceState(null, '', '/');
+  }
+</script>
   </head>
   <body>
     <div id="root"></div>

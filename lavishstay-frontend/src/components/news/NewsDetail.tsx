@@ -161,7 +161,7 @@ const NewsDetail: React.FC = () => {
                 ))}
             </Helmet>
 
-            <div className="news-detail max-w-6xl mx-auto px-4 py-6">
+            <div className="news-detail max-w-6xl mx-auto px-4 py-6 mt-5">
                 <BackTop />
 
                 {/* Breadcrumb Navigation */}

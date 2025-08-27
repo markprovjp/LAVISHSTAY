@@ -16,7 +16,9 @@ class NewsUserActionController extends Controller
      */
     public function show($newsId, $userId = null)
     {
-        $userId = $userId ?? Auth::id() ?? 1;
+    // If no explicit userId provided, use authenticated user if present.
+    // Do NOT default to user id 1 (could expose another user's data).
+    $userId = $userId ?? Auth::id();
 
         $news = News::find($newsId);
         if (!$news) {
@@ -50,7 +52,17 @@ class NewsUserActionController extends Controller
      */
     public function toggleLike(Request $request, $newsId)
     {
-        $userId = Auth::id() ?? 1;
+        \Log::debug('NewsUserActionController::toggleLike incoming Authorization:', [
+            'auth_header' => $request->header('Authorization')
+        ]);
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $userId = Auth::id();
 
         $news = News::find($newsId);
         if (!$news) {
@@ -68,7 +80,7 @@ class NewsUserActionController extends Controller
         $userAction->is_liked = !$userAction->is_liked;
         $userAction->save();
 
-        $likesCount = $news->getLikesCount();
+        $likesCount = NewsUserAction::where('news_id', $newsId)->where('is_liked', true)->count();
         
         return response()->json([
             'success' => true,
@@ -85,7 +97,14 @@ class NewsUserActionController extends Controller
      */
     public function toggleBookmark(Request $request, $newsId)
     {
-        $userId = Auth::id() ?? 1;
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $userId = Auth::id();
 
         $news = News::find($newsId);
         if (!$news) {
@@ -103,7 +122,7 @@ class NewsUserActionController extends Controller
         $userAction->is_bookmarked = !$userAction->is_bookmarked;
         $userAction->save();
 
-        $bookmarksCount = $news->getBookmarksCount();
+        $bookmarksCount = NewsUserAction::where('news_id', $newsId)->where('is_bookmarked', true)->count();
         
         return response()->json([
             'success' => true,
@@ -120,11 +139,20 @@ class NewsUserActionController extends Controller
      */
     public function rate(Request $request, $newsId)
     {
+        \Log::debug('NewsUserActionController::rate payload', ['payload' => $request->all(), 'headers' => $request->header('Authorization')]);
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
         $validator = Validator::make($request->all(), [
             'rating' => 'required|numeric|min:1|max:5',
         ]);
 
         if ($validator->fails()) {
+            \Log::debug('NewsUserActionController::rate validation failed', ['errors' => $validator->errors()->toArray()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -132,7 +160,7 @@ class NewsUserActionController extends Controller
             ], 422);
         }
 
-        $userId = Auth::id() ?? 1;
+        $userId = Auth::id();
 
         $news = News::find($newsId);
         if (!$news) {
@@ -147,7 +175,8 @@ class NewsUserActionController extends Controller
             ['rating' => $request->rating]
         );
 
-        $averageRating = round($news->getAverageRating(), 1);
+        $averageRating = NewsUserAction::where('news_id', $newsId)->whereNotNull('rating')->avg('rating');
+        $averageRating = $averageRating ? round($averageRating, 1) : 0;
         
         return response()->json([
             'success' => true,
@@ -164,7 +193,14 @@ class NewsUserActionController extends Controller
      */
     public function removeRating(Request $request, $newsId)
     {
-        $userId = Auth::id() ?? 1;
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $userId = Auth::id();
 
         $news = News::find($newsId);
         if (!$news) {
@@ -200,7 +236,14 @@ class NewsUserActionController extends Controller
      */
     public function getLikedNews(Request $request)
     {
-        $userId = Auth::id() ?? 1;
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $userId = Auth::id();
         $perPage = $request->query('per_page', 10);
 
         $likedNews = News::whereHas('userActions', function($query) use ($userId) {
@@ -224,7 +267,14 @@ class NewsUserActionController extends Controller
      */
     public function getBookmarkedNews(Request $request)
     {
-        $userId = Auth::id() ?? 1;
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $userId = Auth::id();
         $perPage = $request->query('per_page', 10);
 
         $bookmarkedNews = News::whereHas('userActions', function($query) use ($userId) {

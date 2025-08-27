@@ -4,6 +4,8 @@ import { Form, Input, Button, Avatar, Space, message } from 'antd';
 import { UserOutlined, SendOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useCreateComment } from '../../hooks/useNews';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 const { TextArea } = Input;
 
@@ -28,9 +30,18 @@ const CommentForm: React.FC<CommentFormProps> = ({
 
     const createCommentMutation = useCreateComment(newsId);
 
+    // Get auth user from redux to show correct avatar/name while composing
+    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
     const handleSubmit = async (values: { content: string }) => {
         if (!newsId) {
             message.error(t('news.comments.form.noNewsId', 'Không tìm thấy bài viết'));
+            return;
+        }
+
+        // Require authentication to post comments
+        if (!isAuthenticated) {
+            message.error(t('news.comments.form.loginRequired', 'Vui lòng đăng nhập để bình luận'));
             return;
         }
 
@@ -70,7 +81,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
     return (
         <div className="comment-form">
             <div className="flex items-start space-x-3">
-                <Avatar icon={<UserOutlined />} />
+                <Avatar src={isAuthenticated ? (user?.avatar || user?.profile_photo_path || undefined) : undefined} icon={<UserOutlined />} />
 
                 <div className="flex-1">
                     <Form

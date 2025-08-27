@@ -418,26 +418,33 @@ Route::prefix('news-categories')->name('news-categories.')->group(function () {
 // News Comments API Routes
 Route::prefix('news/{newsId}/comments')->name('news.comments.')->group(function () {
     Route::get('/', [NewsCommentController::class, 'index'])->name('index');
-    Route::post('/', [NewsCommentController::class, 'store'])->name('store');
+    // Creating comments requires authentication
+    Route::middleware('auth:sanctum')->post('/', [NewsCommentController::class, 'store'])->name('store');
     Route::get('/{id}', [NewsCommentController::class, 'show'])->name('show');
     Route::put('/{id}', [NewsCommentController::class, 'update'])->name('update');
     Route::delete('/{id}', [NewsCommentController::class, 'destroy'])->name('destroy');
-    Route::post('/{id}/like', [NewsCommentController::class, 'toggleLike'])->name('like');
+    // Liking a comment requires authentication
+    Route::middleware('auth:sanctum')->post('/{id}/like', [NewsCommentController::class, 'toggleLike'])->name('like');
     Route::get('/{id}/replies', [NewsCommentController::class, 'getReplies'])->name('replies');
 });
 
 // News User Actions API Routes
 Route::prefix('news-actions')->name('news.actions.')->group(function () {
     Route::get('/{newsId}', [NewsUserActionController::class, 'show'])->name('show');
-    Route::post('/{newsId}/like', [NewsUserActionController::class, 'toggleLike'])->name('like');
-    Route::post('/{newsId}/bookmark', [NewsUserActionController::class, 'toggleBookmark'])->name('bookmark');
-    Route::post('/{newsId}/rate', [NewsUserActionController::class, 'rate'])->name('rate');
-    Route::delete('/{newsId}/rate', [NewsUserActionController::class, 'removeRating'])->name('remove-rate');
-    Route::get('/{newsId}/stats', [NewsUserActionController::class, 'getStats'])->name('stats');
+    // Actions that modify state require authentication
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/{newsId}/like', [NewsUserActionController::class, 'toggleLike'])->name('like');
+        Route::post('/{newsId}/bookmark', [NewsUserActionController::class, 'toggleBookmark'])->name('bookmark');
+        Route::post('/{newsId}/rate', [NewsUserActionController::class, 'rate'])->name('rate');
+        Route::delete('/{newsId}/rate', [NewsUserActionController::class, 'removeRating'])->name('remove-rate');
 
-    // User's personal lists
-    Route::get('/user/liked', [NewsUserActionController::class, 'getLikedNews'])->name('user.liked');
-    Route::get('/user/bookmarked', [NewsUserActionController::class, 'getBookmarkedNews'])->name('user.bookmarked');
+        // User's personal lists
+        Route::get('/user/liked', [NewsUserActionController::class, 'getLikedNews'])->name('user.liked');
+        Route::get('/user/bookmarked', [NewsUserActionController::class, 'getBookmarkedNews'])->name('user.bookmarked');
+    });
+
+    // Public stats can remain public
+    Route::get('/{newsId}/stats', [NewsUserActionController::class, 'getStats'])->name('stats');
 });
 
 // Legacy routes (keep for compatibility)

@@ -19,6 +19,9 @@ export interface CouponValidateRequest {
         taxes_vnd?: number;
         fees_vnd?: number;
         room_type_id: number;
+        nights?: number;
+        total_price_vnd?: number;
+        user_id?: number;
     };
 }
 

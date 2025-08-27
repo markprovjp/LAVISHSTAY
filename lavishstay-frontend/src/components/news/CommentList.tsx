@@ -135,6 +135,8 @@ const CommentList: React.FC<CommentListProps> = ({
                                     />
                                 }
                             />
+                            {/* Reply form placeholder - show reply form when clicking Reply */}
+                            {/* This component focuses on displaying comments. Replying will be handled by parent (NewsDetail) via CommentForm. */}
 
                             {/* Replies */}
                             {comment.replies && Array.isArray(comment.replies) && comment.replies.length > 0 && (

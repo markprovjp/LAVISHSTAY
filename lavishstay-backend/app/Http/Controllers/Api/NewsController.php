@@ -154,26 +154,38 @@ class NewsController extends Controller
         // Increment views
         $news->increment('views');
 
-        // Get user actions - đơn giản hóa để tránh lỗi
-        $userAction = null; // Tạm thời set null để tránh lỗi model method
+        // Get user actions
+        $userId = Auth::id();
+        $userAction = null;
+        if ($userId) {
+            $userAction = \App\Models\News\NewsUserAction::where('news_id', $news->id)
+                ->where('user_id', $userId)
+                ->first();
+        }
 
         // Build response data with safe defaults
         $data = $news->toArray();
         
-        // Ensure safe data structure to prevent frontend spread errors
+        // Add user action data
         $data['user_action'] = [
             'is_liked' => $userAction ? (bool)$userAction->is_liked : false,
             'is_bookmarked' => $userAction ? (bool)$userAction->is_bookmarked : false,
             'rating' => $userAction && $userAction->rating ? (float)$userAction->rating : null,
         ];
         
-        // Get stats with simple fallback - không dùng model methods phức tạp
+        // Get real stats
+        $likesCount = \App\Models\News\NewsUserAction::where('news_id', $news->id)->where('is_liked', true)->count();
+        $bookmarksCount = \App\Models\News\NewsUserAction::where('news_id', $news->id)->where('is_bookmarked', true)->count();
+        $commentsCount = \App\Models\News\NewsComment::where('news_id', $news->id)->count();
+        $averageRating = \App\Models\News\NewsUserAction::where('news_id', $news->id)->whereNotNull('rating')->avg('rating');
+        
         $data['stats'] = [
-            'views' => 0,
-            'likes' => 0,
-            'bookmarks' => 0,
-            'comments' => 0,
-            'shares' => 0
+            'views' => (int)$news->views,
+            'likes' => $likesCount,
+            'bookmarks' => $bookmarksCount,
+            'comments' => $commentsCount,
+            'shares' => 0,
+            'average_rating' => $averageRating ? round($averageRating, 1) : 0
         ];
 
         // Ensure arrays are properly formatted to prevent spread errors

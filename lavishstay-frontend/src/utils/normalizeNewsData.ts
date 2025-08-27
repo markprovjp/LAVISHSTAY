@@ -155,13 +155,15 @@ function normalizeStats(stats: any): {
     likes_count: number;
     comments_count: number;
     bookmarks_count: number;
+    views: number;
     average_rating: number;
 } {
     if (isPlainObject(stats)) {
         return {
-            likes_count: toNumber(stats.likes_count, 0),
-            comments_count: toNumber(stats.comments_count, 0),
-            bookmarks_count: toNumber(stats.bookmarks_count, 0),
+            likes_count: toNumber(stats.likes || stats.likes_count, 0),
+            comments_count: toNumber(stats.comments || stats.comments_count, 0),
+            bookmarks_count: toNumber(stats.bookmarks || stats.bookmarks_count, 0),
+            views: toNumber(stats.views, 0),
             average_rating: toNumber(stats.average_rating, 0)
         };
     }
@@ -170,6 +172,7 @@ function normalizeStats(stats: any): {
         likes_count: 0,
         comments_count: 0,
         bookmarks_count: 0,
+        views: 0,
         average_rating: 0
     };
 }

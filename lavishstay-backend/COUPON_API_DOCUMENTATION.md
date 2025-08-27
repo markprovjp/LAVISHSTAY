@@ -17,7 +17,7 @@ The LavishStay hotel booking system now includes a comprehensive coupon/discount
 ### 1. Validate Coupon Code
 
 **Endpoint:** `POST /api/coupons/validate`
-**Description:** Validates a coupon code against a booking preview
+**Description:** Xác thực mã phiếu giảm giá đối với bản xem trước đặt phòng
 **Authentication:** Not required
 
 **Request Body:**

@@ -24,13 +24,52 @@ export const createApiUrl = (endpoint: string): string => {
 
 // Helper để tạo fetch options
 export const createFetchOptions = (options: RequestInit = {}): RequestInit => {
+    // Attach auth token from localStorage if present (accessToken / token / authToken)
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+        token = localStorage.getItem('authToken') || localStorage.getItem('accessToken') || localStorage.getItem('token') || null;
+
+        // Fallback: some flows persist entire redux store under 'persist:root' (stringified). Try to extract auth.token from it.
+        if (!token) {
+            try {
+                const persistRoot = localStorage.getItem('persist:root');
+                if (persistRoot) {
+                    const parsed = JSON.parse(persistRoot);
+                    // parsed may contain nested serialized JSON strings per slice
+                    if (parsed?.auth) {
+                        try {
+                            const authSlice = JSON.parse(parsed.auth);
+                            token = authSlice?.token || null;
+                        } catch (e) {
+                            // auth slice might already be an object
+                            token = parsed.auth?.token || null;
+                        }
+                    }
+                }
+            } catch (e) {
+                // ignore parse errors
+            }
+        }
+    }
+
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
+    // Debug: print token presence for troubleshooting auth flow
+    try {
+        // eslint-disable-next-line no-console
+        console.log('[ApiService] resolved token:', token ? '***REDACTED***' : null);
+        // eslint-disable-next-line no-console
+        console.log('[ApiService] authHeaders set:', authHeaders);
+    } catch (e) { }
+
     return {
         headers: {
             ...API_CONFIG.HEADERS,
-            ...options.headers,
-        },
+            ...authHeaders,
+            ...(options.headers as Record<string, string> | undefined),
+        } as Record<string, string>,
         ...options,
-    };
+    } as RequestInit;
 };
 
 // Custom fetch function that bypasses Mirage.js for certain endpoints

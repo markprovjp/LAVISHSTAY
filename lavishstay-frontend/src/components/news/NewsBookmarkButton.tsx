@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next';
 import { BookOutlined, BookFilled } from '@ant-design/icons';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { useToggleBookmark } from '../../hooks/useNews';
 
 // Zustand store for bookmarks
 interface BookmarkStore {
@@ -86,13 +89,19 @@ const NewsBookmarkButton: React.FC<NewsBookmarkButtonProps> = ({
 }) => {
     const { t } = useTranslation();
     const { toggleBookmark, isBookmarked: storeIsBookmarked } = useBookmarkStore();
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const toggleBookmarkMutation = useToggleBookmark();
 
     // Use prop value if provided, otherwise use store value
     const isBookmarked = propIsBookmarked !== undefined ? propIsBookmarked : storeIsBookmarked(newsId);
 
     const handleBookmark = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card click
-        toggleBookmark(newsId);
+        if (isAuthenticated) {
+            toggleBookmarkMutation.mutate(Number(newsId));
+        } else {
+            toggleBookmark(newsId);
+        }
     };
 
     return (
