@@ -7,25 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class CheckInRequest extends Model
 {
     protected $table = 'check_in_requests';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'request_id';
+    public $incrementing = true;
+    public $timestamps = true;
     
+    // Match columns defined in database schema
     protected $fillable = [
         'booking_id',
         'policy_id',
-        'requested_time',
-        'actual_time',
-        'status',
-        'fee_amount_vnd',
-        'payment_id',
-        'processed_by',
-        'notes',
+        'type',
+        'requested_check_in_time',
+        'fee_vnd',
         'special_requests',
+        'total_amount_vnd',
+        'status',
     ];
     
     protected $casts = [
-        'requested_time' => 'datetime:H:i:s',
-        'actual_time' => 'datetime:H:i:s',
-        'fee_amount_vnd' => 'decimal:2',
+        'requested_check_in_time' => 'datetime',
+        'fee_vnd' => 'decimal:2',
+        'total_amount_vnd' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

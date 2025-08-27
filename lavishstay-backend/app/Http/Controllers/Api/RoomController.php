@@ -35,6 +35,10 @@ class RoomController extends Controller
             }
 
             // Sử dụng DB query thay vì Eloquent để tránh lỗi model
+            // Allow frontend to request booking status for a specific date (defaults to today)
+            // Frontend often sends a date range as `dateRange.0` / `dateRange.1`. Prefer that if present.
+            $statusDate = $request->get('status_date') ?? $request->get('dateRange.0') ?? Carbon::now()->toDateString();
+
             $rooms = DB::table($roomTable . ' as r')
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
                 ->select([
@@ -45,13 +49,75 @@ class RoomController extends Controller
                     'rt.description',
                     'rt.base_price',
                     'rt.room_area as size',
-                    'rt.max_guests'
+                    'rt.max_guests',
+                    // include bed type name for frontend display
+                    'rt.bed_type as bed_type_name'
                 ])
                 ->paginate(15);
 
+            // Attach current booking (if any) to each room for the given date so FE can derive effective status
+            $roomItems = $rooms->items();
+            $roomIds = array_map(function ($r) { return $r->id; }, $roomItems);
+
+            if (!empty($roomIds)) {
+        // Find bookings that overlap the status_date (use blocking statuses)
+    $blocking = \App\Models\Booking::getBlockingStatusesLower();
+    $placeholders = implode(',', array_fill(0, count($blocking), '?'));
+    $bookings = DB::table('booking_rooms as br')
+            ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+            ->whereIn('br.room_id', $roomIds)
+            ->whereRaw('LOWER(b.status) IN (' . $placeholders . ')', $blocking)
+            ->where('br.check_in_date', '<=', $statusDate)
+            ->where('br.check_out_date', '>', $statusDate)
+            ->whereNotNull('br.room_id')
+            ->select([
+        'br.room_id',
+        'b.booking_id',
+        'b.booking_code',
+        'b.status as booking_status',
+        'br.check_in_date',
+        'br.check_out_date'
+            ])
+            ->orderBy('br.created_at', 'desc')
+            ->get();
+
+                $bookingMap = [];
+                foreach ($bookings as $bk) {
+                    // keep the first (most recent) booking record per room
+                    if (!isset($bookingMap[$bk->room_id])) {
+                        $bookingMap[$bk->room_id] = $bk;
+                    }
+                }
+
+                // mutate room items to include booking info
+                foreach ($roomItems as &$room) {
+                    $bk = $bookingMap[$room->id] ?? null;
+                    // Provide a `booking_info` object matching frontend expectations when possible
+                    if ($bk) {
+                        $room->booking_info = [
+                            'check_in' => $bk->check_in_date,
+                            'check_out' => $bk->check_out_date,
+                            // backend booking status is authoritative
+                            'status' => $bk->booking_status,
+                            // keep some identifiers for debugging/use
+                            'booking_id' => $bk->booking_id,
+                            'booking_code' => $bk->booking_code ?? null,
+                        ];
+                    } else {
+                        $room->booking_info = null;
+                    }
+
+                    // keep backward-compatible fields as well
+                    $room->current_booking = $bk;
+                    $room->booking_status = $bk->booking_status ?? null;
+                    $room->needs_cleaning = $room->booking_status && strtolower($room->booking_status) === 'cleaning';
+                }
+                unset($room);
+            }
+
             return response()->json([
                 'success' => true,
-                'data' => $rooms->items(),
+                'data' => $roomItems,
                 'pagination' => [
                     'current_page' => $rooms->currentPage(),
                     'last_page' => $rooms->lastPage(),

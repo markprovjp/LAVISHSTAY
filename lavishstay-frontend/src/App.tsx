@@ -58,9 +58,10 @@ import {
   ForgotPassword,
   Wishlist,
   Notifications,
-  Settings,
+  // Settings,
   ChangePassword
 } from "./components/profile";
+import CleanupPanel from './pages/reception/CleanupPanel';
 
 // Import Google OAuth callback
 import GoogleOAuthCallback from "./components/auth/GoogleOAuthCallback";
@@ -162,7 +163,7 @@ const App: React.FC = React.memo(() => {
                 <Route path="bookings" element={<BookingManagement />} />
                 <Route path="wishlist" element={<Wishlist />} />
                 <Route path="notifications" element={<Notifications />} />
-                <Route path="settings" element={<Settings />} />
+                {/* <Route path="settings" element={<Settings />} /> */}
                 <Route path="forgot-password" element={<ForgotPassword />} />
                 <Route path="change-password" element={<ChangePassword />} />
               </Route>                    {/* Standalone routes */}
@@ -174,6 +175,8 @@ const App: React.FC = React.memo(() => {
                 <Route path="dashboard" element={<ReceptionDashboard />} />
                 <Route path="room-management-list" element={<RoomManagementDashboard />} />
                 <Route path="booking-management" element={<BookingManagementPage />} />
+                <Route path="room-management/cleanup" element={<CleanupPanel />} />
+
                 <Route path="confirm-representative-payment" element={<ConfirmRepresentativePayment />} />
                 <Route path="payment-booking" element={<PaymentBookingReception />} />
                 <Route path="room-management/today" element={<RoomManagementDashboard />} />

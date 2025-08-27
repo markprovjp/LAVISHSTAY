@@ -1,0 +1,83 @@
+* Print styles for CompletionStep component */
+@media print {
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  .room-card {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+  
+  .ant-card {
+    box-shadow: none !important;
+    border: 1px solid #d9d9d9 !important;
+  }
+  
+  .ant-result-icon {
+    display: none;
+  }
+  
+  .ant-result-title {
+    color: #000 !important;
+  }
+  
+  .ant-descriptions-item-label {
+    font-weight: bold !important;
+  }
+  
+  .bg-blue-50 {
+    background-color: #f0f8ff !important;
+    border: 2px solid #1890ff !important;
+    print-color-adjust: exact;
+  }
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .ant-descriptions-bordered .ant-descriptions-item-label,
+  .ant-descriptions-bordered .ant-descriptions-item-content {
+    padding: 8px 12px;
+  }
+  
+  .room-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .ant-col {
+    margin-bottom: 16px;
+  }
+}
+
+/* Custom button group styles */
+.ant-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+@media (max-width: 576px) {
+  .ant-btn-group {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .ant-btn-group .ant-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+/* Highlight booking code */
+.booking-code-highlight {
+  font-size: 24px;
+  color: #1890ff;
+  font-weight: bold;
+  text-align: center;
+  padding: 16px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border: 2px solid #1890ff;
+}

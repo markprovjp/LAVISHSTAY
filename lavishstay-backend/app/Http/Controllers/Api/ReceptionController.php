@@ -23,6 +23,11 @@ class ReceptionController extends Controller
     {
         $this->pricingService = $pricingService;
     }
+
+    /**
+     * Mark cash as paid for at_hotel bookings
+     */
+    
  /**
      * Generate invoice PDF for a booking
      */
@@ -296,6 +301,10 @@ class ReceptionController extends Controller
                     'room.name',
                     'room.status',
                     'room.floor_id as floor',
+                    'room.cleaning_started_at',
+                    'room.cleaning_ends_at',
+                    'room.cleaning_by',
+                    'room.cleaning_note',
                     'room.created_at',
                     'room.updated_at',
                     'room_types.room_type_id',
@@ -316,6 +325,10 @@ class ReceptionController extends Controller
                 $roomTypes = is_array($request->room_type_id) ? $request->room_type_id : [$request->room_type_id];
                 $baseRooms->whereIn('room.room_type_id', $roomTypes);
             }
+            if ($request->has('roomType') && !empty($request->roomType)) {
+                $roomTypeFilter = is_array($request->roomType) ? $request->roomType : [$request->roomType];
+                $baseRooms->whereIn('room.room_type_id', $roomTypeFilter);
+            }
             if ($request->has('floor') && !empty($request->floor)) {
                 $floors = is_array($request->floor) ? $request->floor : [$request->floor];
                 $baseRooms->whereIn('room.floor_id', $floors);
@@ -328,48 +341,118 @@ class ReceptionController extends Controller
                 });
             }
 
+            // Kiểm tra dateRange để lọc phòng available
+            $checkInDate = $request->get('dateRange.0') ?? $request->get('check_in_date');
+            $checkOutDate = $request->get('dateRange.1') ?? $request->get('check_out_date');
+            
+            // Nếu client yêu cầu lọc theo trạng thái booking (ví dụ: Cleaning, Operational, Confirmed)
+            $bookingStatusFilter = $request->get('booking_status');
+            if ($bookingStatusFilter && !empty($bookingStatusFilter)) {
+                $statuses = is_array($bookingStatusFilter) ? $bookingStatusFilter : [$bookingStatusFilter];
+                // Keep rooms that have at least one booking with requested statuses overlapping the date range (or today if no range)
+                $baseRooms->whereExists(function ($query) use ($statuses, $checkInDate, $checkOutDate) {
+                    $query->select(DB::raw(1))
+                          ->from('booking_rooms as br')
+                          ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                          ->whereRaw('br.room_id = room.room_id')
+                          ->whereIn('b.status', $statuses);
+
+                    if ($checkInDate && $checkOutDate) {
+                        $query->where(function ($q) use ($checkInDate, $checkOutDate) {
+                            $q->where('br.check_in_date', '<', $checkOutDate)
+                              ->where('br.check_out_date', '>', $checkInDate);
+                        });
+                    } else {
+                        // default to bookings active today
+                        $today = Carbon::now()->toDateString();
+                        $query->where('br.check_in_date', '<=', $today)
+                              ->where('br.check_out_date', '>', $today);
+                    }
+                });
+            }
+
+            // Chỉ filter phòng available khi có dateRange và KHÔNG có booking_status filter
+            if ($checkInDate && $checkOutDate && !$bookingStatusFilter) {
+                // Nếu có dateRange, chỉ lấy phòng không có booking ACTIVE trong khoảng thời gian này
+                $baseRooms->whereNotExists(function ($query) use ($checkInDate, $checkOutDate) {
+                    $query->select(DB::raw(1))
+                          ->from('booking_rooms as br')
+                          ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                          ->whereRaw('br.room_id = room.room_id')
+                          ->where(function ($q) use ($checkInDate, $checkOutDate) {
+                              $q->where('br.check_in_date', '<', $checkOutDate)
+                                ->where('br.check_out_date', '>', $checkInDate);
+                          })
+                          ->whereIn('b.status', ['Pending', 'Confirmed', 'Operational', 'Cleaning']);
+                });
+            }
+
             $baseRooms->orderBy('room.floor_id', 'asc')->orderBy('room.name', 'asc');
             $rooms = $baseRooms->get();
 
-            // Lấy booking hiện tại cho từng phòng
+            // Lấy booking hiện tại cho từng phòng (booking đang diễn ra cho ngày được yêu cầu)
+            $statusDate = $request->get('dateRange.0') ?? $request->get('status_date') ?? $today;
             $roomIds = $rooms->pluck('id')->toArray();
             $bookings = DB::table('booking_rooms as br')
                 ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
                 ->select(
                     'br.room_id',
+                    'b.booking_id',
+                    'b.booking_code',
                     'b.guest_name',
+                    'b.status as booking_status',
                     'b.check_in_date',
                     'b.check_out_date',
                     'br.adults',
                     'br.children'
                 )
                 ->whereIn('br.room_id', $roomIds)
-                ->where('b.check_in_date', '<=', $today)
-                ->where('b.check_out_date', '>=', $today)
+                ->where('br.check_in_date', '<=', $statusDate)
+                ->where('br.check_out_date', '>', $statusDate)
+                ->whereNotNull('br.room_id')
+                ->orderBy('br.created_at', 'desc')
                 ->get();
 
-            // Map booking theo room_id
+            // Map booking theo room_id (keep the first/most recent booking per room)
             $bookingMap = [];
             foreach ($bookings as $booking) {
-                $bookingMap[$booking->room_id] = [
-                    'guest_name' => $booking->guest_name,
-                    'check_in' => $booking->check_in_date,
-                    'check_out' => $booking->check_out_date,
-                    'adults' => $booking->adults,
-                    'children' => $booking->children,
-                    'total_guests' => ($booking->adults ?? 0) + ($booking->children ?? 0)
-                ];
+                if (!isset($bookingMap[$booking->room_id])) {
+                    $bookingMap[$booking->room_id] = [
+                        'guest_name' => $booking->guest_name,
+                        'check_in' => $booking->check_in_date,
+                        'check_out' => $booking->check_out_date,
+                        'status' => $booking->booking_status, // Include booking status for frontend
+                        'booking_id' => $booking->booking_id,
+                        'booking_code' => $booking->booking_code,
+                        'guest_count' => ($booking->adults ?? 0) + ($booking->children ?? 0),
+                        'adults' => $booking->adults,
+                        'children' => $booking->children,
+                        'total_guests' => ($booking->adults ?? 0) + ($booking->children ?? 0)
+                    ];
+                }
             }
 
             $formattedRooms = $rooms->map(function ($room) use ($request, $bookingMap) {
                 $adjustedPrice = $this->calculateAdjustedPrice($room->room_type_id, $request);
                 $bookingInfo = $bookingMap[$room->id] ?? null;
+                
+                // Calculate is_cleaning based on cleaning_ends_at
+                $isCleaningValue = false;
+                if ($room->cleaning_ends_at) {
+                    $isCleaningValue = Carbon::parse($room->cleaning_ends_at)->isFuture();
+                }
+                
                 return [
                     'id' => $room->id,
                     'name' => $room->name,
                     'status' => $room->status,
                     'floor' => $room->floor,
+                    'cleaning_ends_at' => $room->cleaning_ends_at,
+                    'is_cleaning' => $isCleaningValue,
+                    'cleaning_note' => $room->cleaning_note,
                     'booking_info' => $bookingInfo,
+                    // Add booking_status at room level for compatibility
+                    'booking_status' => $bookingInfo ? $bookingInfo['status'] : null,
                     'room_type' => [
                         'id' => $room->room_type_id,
                         'name' => $room->room_type_name,
@@ -379,7 +462,7 @@ class ReceptionController extends Controller
                         'room_area' => $room->room_area,
                         'max_guests' => $room->max_guests,
                     ],
-                    'bed_type_name' => $room->bed_type_name,
+                    'bed_type_name' => $room->bed_type_name, // Đã có trong SELECT
                     'created_at' => $room->created_at,
                     'updated_at' => $room->updated_at,
                 ];
@@ -412,7 +495,7 @@ class ReceptionController extends Controller
         try {
             $date = $request->get('date', Carbon::now()->format('Y-m-d'));
             
-            // Get room count by status
+            // Get room count by status (for informational breakdown)
             $statusStats = DB::table('room')
                 ->select('status', DB::raw('count(*) as count'))
                 ->groupBy('status')
@@ -420,42 +503,83 @@ class ReceptionController extends Controller
                 ->pluck('count', 'status')
                 ->toArray();
 
-            // Get occupancy rate
+            // Total rooms and fixed room-status counts
             $totalRooms = DB::table('room')->count();
-            // $occupiedRooms = DB::table('room')->where('status', 'occupied')->count();
-            $availableRooms = DB::table('room')->where('status', 'available')->count();
-            $cleaningRooms = DB::table('room')->where('status', 'cleaning')->count();
+            // Count rooms that are currently being cleaned by checking cleaning_ends_at
+            $cleaningRooms = DB::table('room')->where('cleaning_ends_at', '>', Carbon::now())->count();
             $maintenanceRooms = DB::table('room')->where('status', 'maintenance')->count();
+            $outOfServiceRooms = DB::table('room')->where('status', 'out_of_service')->count();
 
-            $occupancyRate = $totalRooms > 0 ? ($occupiedRooms / $totalRooms) * 100 : 0;
-
-            // Get room stats by floor
-            $floorStats = DB::table('room')
-                ->select([
-                    'room.floor_id',
-                    'room.status',
-                    DB::raw('count(*) as count')
-                ])
-                ->groupBy('room.floor_id', 'room.status')
-                ->orderBy('room.floor_id')
+            // Determine booked/occupied/cleaning rooms by checking bookings overlapping the requested date
+            $bookingsOnDate = DB::table('booking_rooms as br')
+                ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+                ->join('room as r', 'br.room_id', '=', 'r.room_id')
+                ->where('br.check_in_date', '<=', $date)
+                ->where('br.check_out_date', '>', $date)
+                ->whereIn('b.status', ['Pending', 'Confirmed', 'Operational', 'Cleaning'])
+                ->select('br.room_id', 'b.status as booking_status', 'r.floor_id')
                 ->get();
 
+            // Group by booking status using proper enum values
+            $operationalRoomIds = collect($bookingsOnDate)->where('booking_status', 'Operational')->pluck('room_id')->unique()->values()->all();
+            $confirmedRoomIds = collect($bookingsOnDate)->where('booking_status', 'Confirmed')->pluck('room_id')->unique()->values()->all();
+            $pendingRoomIds = collect($bookingsOnDate)->where('booking_status', 'Pending')->pluck('room_id')->unique()->values()->all();
+            $cleaningBookingRoomIds = collect($bookingsOnDate)->where('booking_status', 'Cleaning')->pluck('room_id')->unique()->values()->all();
+
+            // Combine confirmed and pending as "booked"
+            $bookedRoomIds = array_unique(array_merge($confirmedRoomIds, $pendingRoomIds));
+            
+            $operationalRooms = count($operationalRoomIds);
+            $bookedRooms = count($bookedRoomIds);
+            $cleaningBookingRooms = count($cleaningBookingRoomIds);
+
+            // Available rooms = total - (operational + booked + cleaning from booking + non-available room states)
+            $availableRooms = $totalRooms - $operationalRooms - $bookedRooms - $cleaningBookingRooms - $maintenanceRooms - $outOfServiceRooms;
+            if ($availableRooms < 0) $availableRooms = 0;
+
+            $occupancyRate = $totalRooms > 0 ? (($operationalRooms + $bookedRooms + $cleaningBookingRooms) / $totalRooms) * 100 : 0;
+
+            // Build per-floor breakdown by iterating rooms and using booking sets
+            // Include cleaning_ends_at so we can infer cleaning from timestamps (room.status does not include 'cleaning')
+            $allRooms = DB::table('room')->select('room_id', 'floor_id', 'status', 'cleaning_ends_at')->get();
             $floorStatsFormatted = [];
-            foreach ($floorStats as $stat) {
-                $floorId = $stat->floor_id;
+            foreach ($allRooms as $r) {
+                $floorId = $r->floor_id;
                 if (!isset($floorStatsFormatted[$floorId])) {
                     $floorStatsFormatted[$floorId] = [
                         'floor_id' => $floorId,
                         'floor_name' => "Tầng {$floorId}",
                         'available' => 0,
                         'occupied' => 0,
+                        'booked' => 0,
                         'cleaning' => 0,
                         'maintenance' => 0,
+                        'out_of_service' => 0,
                         'total' => 0
                     ];
                 }
-                $floorStatsFormatted[$floorId][$stat->status] = $stat->count;
-                $floorStatsFormatted[$floorId]['total'] += $stat->count;
+
+                $floorStatsFormatted[$floorId]['total'] += 1;
+
+                    // Check booking status first (priority: booking status > room status)
+                if (in_array($r->room_id, $operationalRoomIds)) {
+                    $floorStatsFormatted[$floorId]['occupied'] += 1;
+                } elseif (in_array($r->room_id, $bookedRoomIds)) {
+                    $floorStatsFormatted[$floorId]['booked'] += 1;
+                } elseif (in_array($r->room_id, $cleaningBookingRoomIds)) {
+                    $floorStatsFormatted[$floorId]['cleaning'] += 1;
+                } else {
+                        // Check room-level indicators (use cleaning_ends_at instead of non-existent 'cleaning' enum)
+                        if (!empty($r->cleaning_ends_at) && Carbon::parse($r->cleaning_ends_at)->isFuture()) {
+                            $floorStatsFormatted[$floorId]['cleaning'] += 1;
+                        } elseif ($r->status === 'maintenance') {
+                            $floorStatsFormatted[$floorId]['maintenance'] += 1;
+                        } elseif ($r->status === 'out_of_service') {
+                            $floorStatsFormatted[$floorId]['out_of_service'] += 1;
+                        } else {
+                            $floorStatsFormatted[$floorId]['available'] += 1;
+                        }
+                }
             }
 
             return response()->json([
@@ -464,9 +588,11 @@ class ReceptionController extends Controller
                     'date' => $date,
                     'total_rooms' => $totalRooms,
                     'available_rooms' => $availableRooms,
-                    'occupied_rooms' => $occupiedRooms,
-                    'cleaning_rooms' => $cleaningRooms,
+                    'occupied_rooms' => $operationalRooms, // Use Operational booking status
+                    'booked_rooms' => $bookedRooms,
+                    'cleaning_rooms' => $cleaningRooms + $cleaningBookingRooms, // Room status + booking status
                     'maintenance_rooms' => $maintenanceRooms,
+                    'out_of_service_rooms' => $outOfServiceRooms,
                     'occupancy_rate' => round($occupancyRate, 2),
                     'status_breakdown' => $statusStats,
                     'floor_breakdown' => array_values($floorStatsFormatted)
@@ -490,8 +616,9 @@ class ReceptionController extends Controller
     public function updateRoomStatus(Request $request, $roomId): JsonResponse
     {
         try {
+            // Room table supports only a small set of statuses; cleaning is a booking-level concept.
             $validator = Validator::make($request->all(), [
-                'status' => 'required|in:available,occupied,cleaning,maintenance,deposited,no_show,check_in,check_out'
+                'status' => 'required|in:available,out_of_service,maintenance'
             ]);
 
             if ($validator->fails()) {
@@ -914,7 +1041,6 @@ class ReceptionController extends Controller
     public function getBookings(Request $request): JsonResponse
     {
         try {
-                       
             $query = DB::table('booking as b')
                 ->leftJoin('payment as p', 'b.booking_id', '=', 'p.booking_id')
                 ->leftJoin('booking_rooms as br', 'b.booking_id', '=', 'br.booking_id')
@@ -935,18 +1061,29 @@ class ReceptionController extends Controller
                     'b.notes',
                     'b.created_at',
                     'b.updated_at',
-                    'p.amount_vnd as payment_amount',
-                    'p.payment_type',
-                    'p.status as payment_status',
-                    'p.transaction_id',
+                    // Aggregate payment info across all payment rows to compute collected amount and remaining
+                    DB::raw('MAX(p.amount_vnd) as payment_amount'),
+                    DB::raw('MAX(p.payment_type) as payment_type'),
+                    DB::raw('MAX(p.status) as payment_status'),
+                    DB::raw('MAX(p.transaction_id) as transaction_id'),
+                    // Collected across completed payments + any partial at_hotel cash_amount_vnd
+                    DB::raw("COALESCE(SUM(CASE 
+                        WHEN p.status = 'completed' THEN COALESCE(p.amount_vnd, p.cash_amount_vnd, 0)
+                        WHEN p.payment_type = 'at_hotel' THEN COALESCE(p.cash_amount_vnd, 0)
+                        ELSE 0
+                    END), 0) as collected_amount"),
+                    // Remaining = booking total - collected_amount
+                    DB::raw("GREATEST(0, COALESCE(b.total_price_vnd, 0) - COALESCE(SUM(CASE 
+                        WHEN p.status = 'completed' THEN COALESCE(p.amount_vnd, p.cash_amount_vnd, 0)
+                        WHEN p.payment_type = 'at_hotel' THEN COALESCE(p.cash_amount_vnd, 0)
+                        ELSE 0
+                    END), 0)) as remaining_balance_vnd"),
                     DB::raw('COUNT(br.id) as total_rooms'),
                     DB::raw('GROUP_CONCAT(DISTINCT r.name ORDER BY r.name SEPARATOR ", ") as room_names'),
                     DB::raw('GROUP_CONCAT(DISTINCT rt.name ORDER BY rt.name SEPARATOR ", ") as room_type_names'),
                     DB::raw('COALESCE(SUM(br.adults), 0) as total_adults'),
                     DB::raw('COALESCE(SUM(br.children), 0) as total_children'),
-                    // hiển thị tên gói option_name của booking_rooms
                     DB::raw('GROUP_CONCAT(DISTINCT br.option_name ORDER BY br.option_name SEPARATOR ", ") as option_names'),
-                     // Whether any booking_room for this booking was auto-assigned
                     DB::raw('MAX(COALESCE(br.auto_assigned, 0)) as has_auto_assigned'),
                     'rep.full_name as representative_name',
                     'rep.phone_number as representative_phone',
@@ -956,7 +1093,6 @@ class ReceptionController extends Controller
                     'b.booking_id', 'b.booking_code', 'b.guest_name', 'b.guest_email', 'b.guest_phone',
                     'b.check_in_date', 'b.check_out_date', 'b.total_price_vnd',
                     'b.status', 'b.notes', 'b.created_at', 'b.updated_at',
-                    'p.amount_vnd', 'p.payment_type', 'p.status', 'p.transaction_id',
                     'rep.full_name', 'rep.phone_number', 'rep.email'
                 ]);
 
@@ -1025,8 +1161,12 @@ $bookings = $query->paginate($request->get('per_page', 500));
                     'room_names' => $booking->room_names,
                     'room_type_names' => $booking->room_type_names,
                     'payment_status' => $booking->payment_status ?: 'pending',
-                    'payment_type' => $booking->payment_type,
-                    'payment_amount' => (float) ($booking->payment_amount ?: 0),
+                    'payment_type' => $booking->payment_type ?: null,
+                        'payment_type' => $booking->payment_type,
+                        'payment_amount' => (float) ($booking->payment_amount ?: 0),
+                        // Use aggregated collected amount and remaining balance computed in query
+                        'collected_cash_vnd' => (float) ($booking->collected_amount ?? 0),
+                        'remaining_balance_vnd' => (float) ($booking->remaining_balance_vnd ?? max(0, ($booking->total_price_vnd ?? $booking->total_price ?? 0) - ($booking->collected_amount ?? 0))),
                     'transaction_id' => $booking->transaction_id,
                     'representative_name' => $booking->representative_name,
                     'representative_phone' => $booking->representative_phone,
@@ -1107,8 +1247,22 @@ $bookings = $query->paginate($request->get('per_page', 500));
                     $transformedBookings[count($transformedBookings) - 1]['coupon_applied'] = false;
                     $transformedBookings[count($transformedBookings) - 1]['coupon'] = null;
                 }
+                // Attach latest payment metadata (do NOT override aggregated collected/remaining)
+                try {
+                    $latestPayment = DB::table('payment')->where('booking_id', $booking->booking_id)->orderBy('payment_id', 'desc')->first();
+                    if ($latestPayment) {
+                        // Keep aggregated collected_cash_vnd and remaining_balance_vnd computed in the query
+                        $transformedBookings[count($transformedBookings) - 1]['payment_status'] = $latestPayment->status ?? ($transformedBookings[count($transformedBookings) - 1]['payment_status'] ?? 'pending');
+                        $transformedBookings[count($transformedBookings) - 1]['payment_id'] = $latestPayment->payment_id;
+                        // Expose latest payment details for frontend if needed
+                        $transformedBookings[count($transformedBookings) - 1]['latest_payment_type'] = $latestPayment->payment_type ?? null;
+                        $transformedBookings[count($transformedBookings) - 1]['latest_payment_amount_vnd'] = (float) ($latestPayment->amount_vnd ?? 0);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to attach latest payment info for booking ' . $booking->booking_id . ': ' . $e->getMessage());
+                }
             }
-            Log::info('Bookings retrieved successfully', ['total_count' => count($transformedBookings)]);
+            Log::info('Đặt chỗ lấy thành công', ['total_count' => count($transformedBookings)]);
             return response()->json([
                 'success' => true,
                 'message' => 'Bookings retrieved successfully',
@@ -1601,9 +1755,19 @@ $allChildrenAges = DB::table('booking_room_children')
             
             // Check if any room is auto-assigned
             $hasAutoAssigned = $bookingRooms->contains('auto_assigned', 1);
-            
-            Log::error('error in getAssignmentPreview for booking ID ' . $bookingId, ['booking' => $booking]);
-            $roomTypeId = $booking->room_type_id;
+
+            // Debug/info logging only (avoid noisy error-level log for normal flows)
+            Log::info('getAssignmentPreview for booking', ['booking_id' => $bookingId, 'booking' => $booking]);
+
+            // Defensive: ensure booking has a room_type_id before proceeding
+            $roomTypeId = $booking->room_type_id ?? null;
+            if (empty($roomTypeId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking does not specify a room type.',
+                    'assignment_options' => []
+                ], 422);
+            }
             $assignmentPreview = [];
             $checkInDate = $booking->check_in_date;
             $checkOutDate = $booking->check_out_date;
@@ -1661,7 +1825,8 @@ $allChildrenAges = DB::table('booking_room_children')
             ]);
     
         } catch (\Exception $e) {
-            Log::error('Error getting assignment preview: ' . $e->getMessage());
+            // Include booking id in error log for easier triage
+            Log::error('Error getting assignment preview for booking ID ' . $bookingId . ': ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while generating the assignment preview.',
@@ -1687,24 +1852,56 @@ $allChildrenAges = DB::table('booking_room_children')
             return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
-        DB::beginTransaction();
+        // Pre-check: only allow assignment for bookings in Confirmed or Operational
+        $bookingRoomIds = collect($request->assignments)->pluck('booking_room_id')->unique()->values()->all();
+        $bookingStatuses = DB::table('booking_rooms as br')
+            ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
+            ->whereIn('br.id', $bookingRoomIds)
+            ->select('br.id as booking_room_id', 'br.booking_id', 'b.status as booking_status')
+            ->get()
+            ->keyBy('booking_room_id');
 
+        $disallowed = [];
+        foreach ($bookingRoomIds as $brId) {
+            if (!isset($bookingStatuses[$brId])) {
+                $disallowed[] = ['booking_room_id' => $brId, 'reason' => 'booking_room_not_found'];
+                continue;
+            }
+            $status = strtolower($bookingStatuses[$brId]->booking_status ?? '');
+            if (!in_array($status, ['confirmed', 'operational'])) {
+                $disallowed[] = ['booking_room_id' => $brId, 'booking_id' => $bookingStatuses[$brId]->booking_id, 'status' => $status];
+            }
+        }
+
+        if (!empty($disallowed)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Some booking rooms cannot be assigned because their booking is not in Confirmed or Operational state.',
+                'details' => $disallowed
+            ], 400);
+        }
+
+        DB::beginTransaction();
         try {
             $assignedCount = 0;
             foreach ($request->assignments as $assignment) {
+                $brId = $assignment['booking_room_id'];
+                $roomId = $assignment['room_id'];
+
                 // Update booking_rooms table
                 DB::table('booking_rooms')
-                    ->where('id', $assignment['booking_room_id'])
+                    ->where('id', $brId)
                     ->update([
-                        'room_id' => $assignment['room_id'],
+                        'room_id' => $roomId,
                         'assigned_by' => 'manual',
                         'auto_assigned' => 0,
                         'updated_at' => Carbon::now()
                     ]);
-                
-                // Update the booking status to 'operational' 
+
+                // Update the parent booking status to 'Operational' using correct booking_id
+                $bookingId = $bookingStatuses[$brId]->booking_id;
                 DB::table('booking')
-                    ->where('booking_id', $assignment['booking_room_id'])
+                    ->where('booking_id', $bookingId)
                     ->update(['status' => 'Operational']);
 
                 $assignedCount++;
@@ -1963,6 +2160,176 @@ $allChildrenAges = DB::table('booking_room_children')
         }
     }
 
-   
+    /**
+     * Mark cash payment as collected
+     */
+    public function markCashPaid(Request $request): JsonResponse
+    {
+        // Simple role check - use User model helper to check assigned roles
+        $user = auth()->user();
+        if (!$user || !$user->hasAnyRole(['receptionist', 'cashier', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only receptionists and cashiers can mark cash as paid.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|integer|exists:booking,booking_id',
+            'payment_id' => 'nullable|integer|exists:payment,payment_id',
+            'amount_vnd' => 'required|numeric|min:0.01',
+            'receipt_number' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Find booking with lock
+            $booking = Booking::where('booking_id', $request->booking_id)->lockForUpdate()->first();
+            if (!$booking) {
+                return response()->json(['success' => false, 'message' => 'Booking not found'], 404);
+            }
+
+            // Determine how to record this cash collection:
+            // - If request provides a payment_id, use it (but if it's a 'deposit' and completed, we should create/use an 'at_hotel' payment to collect remaining)
+            // - Otherwise, find existing at_hotel payment for the booking or create one.
+
+            $rawAmount = $request->amount_vnd;
+            $amount = is_numeric($rawAmount) ? floatval($rawAmount) : floatval(str_replace([',', ' '], '', (string)$rawAmount));
+
+            // Determine booking total and already collected amount across payments
+            $totalPrice = floatval(str_replace([',', ' '], '', (string)($booking->total_price_vnd ?? $booking->total_price ?? 0)));
+            $collectedSoFar = DB::table('payment')->where('booking_id', $booking->booking_id)
+                ->select(DB::raw('COALESCE(SUM(CASE WHEN status = "completed" THEN COALESCE(amount_vnd, cash_amount_vnd, 0) ELSE 0 END),0) + COALESCE(SUM(CASE WHEN payment_type = "at_hotel" THEN COALESCE(cash_amount_vnd,0) ELSE 0 END),0) as collected_total'))
+                ->value('collected_total');
+            $collectedSoFar = floatval($collectedSoFar ?? 0);
+
+            // If payment_id provided, load it
+            $payment = null;
+            if ($request->payment_id) {
+                $payment = Payment::where('payment_id', $request->payment_id)->first();
+            }
+
+            // If no payment specified, prefer an existing 'at_hotel' payment (for collecting remaining). If none, create one.
+            if (!$payment) {
+                $payment = Payment::where('booking_id', $request->booking_id)->where('payment_type', 'at_hotel')->latest()->first();
+            }
+
+            if (!$payment) {
+                // Create underlying at_hotel payment to track remaining cash collection
+                $payment = new Payment();
+                $payment->booking_id = $booking->booking_id;
+                $payment->amount_vnd = $totalPrice; // target amount for at_hotel record is booking total for clarity
+                $payment->payment_type = 'at_hotel';
+                $payment->status = 'pending';
+                $payment->transaction_id = null;
+                $payment->cash_amount_vnd = 0;
+                $payment->save();
+            }
+
+            // Accumulate collected cash on the at_hotel payment record
+            $existingCollected = floatval($payment->cash_amount_vnd ?? 0);
+            $newCollected = $existingCollected + $amount;
+            $payment->cash_amount_vnd = $newCollected;
+            $payment->collected_by = auth()->id();
+            $payment->collected_at = now();
+            $payment->cash_receipt_number = $request->receipt_number;
+            $payment->collector_notes = $request->notes;
+
+            // If total collected across all payments reaches booking total, mark completed
+            $totalCollectedAfter = $collectedSoFar + $amount;
+            if ($totalCollectedAfter + 0.0001 >= $totalPrice) {
+                $payment->status = 'completed';
+                $payment->transaction_id = 'cash_' . $booking->booking_code . '_' . now()->format('YmdHis');
+
+                // Update booking status if pending
+                if ($booking->status === 'pending') {
+                    $checkInDate = Carbon::parse($booking->check_in_date);
+                    $booking->status = $checkInDate->isToday() ? 'operational' : 'confirmed';
+                    $booking->save();
+                }
+
+                if (method_exists($this, 'completeBookingAfterPayment')) {
+                    $this->completeBookingAfterPayment($booking->booking_code);
+                }
+            } else {
+                $payment->status = 'pending';
+            }
+
+            $payment->save();
+
+            // Log the transaction
+            Log::info('Cash payment marked as collected', [
+                'booking_code' => $booking->booking_code,
+                'amount_vnd' => $request->amount_vnd,
+                'collected_by' => auth()->id(),
+                'new_total_collected' => $newCollected,
+                'payment_status' => $payment->status
+            ]);
+
+            DB::commit();
+
+            // Compute remaining balance for clarity in UI (recompute across all payments)
+            $collectedTotal = DB::table('payment')->where('booking_id', $booking->booking_id)
+                ->select(DB::raw('COALESCE(SUM(CASE WHEN status = "completed" THEN COALESCE(amount_vnd, cash_amount_vnd, 0) ELSE 0 END),0) + COALESCE(SUM(CASE WHEN payment_type = "at_hotel" THEN COALESCE(cash_amount_vnd,0) ELSE 0 END),0) as collected_total'))
+                ->value('collected_total');
+            $collectedTotal = floatval($collectedTotal ?? 0);
+            $remaining = max(0, $totalPrice - $collectedTotal);
+            $isFullyPaid = $remaining <= 0;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Recorded cash collection',
+                'data' => [
+                    'booking' => [
+                        'booking_id' => $booking->booking_id,
+                        'booking_code' => $booking->booking_code,
+                        'status' => $booking->status,
+                        'total_price_vnd' => $totalPrice
+                    ],
+                    'payment' => [
+                        'payment_id' => $payment->payment_id,
+                        'payment_type' => $payment->payment_type,
+                        'status' => $payment->status,
+                        'cash_amount_vnd' => $payment->cash_amount_vnd,
+                        'collected_by' => $payment->collected_by,
+                        'collected_at' => $payment->collected_at,
+                        'transaction_id' => $payment->transaction_id,
+                        'remaining_balance_vnd' => $remaining,
+                    ],
+                    'summary' => [
+                        'collected_total_vnd' => $collectedTotal,
+                        'remaining_balance_vnd' => $remaining,
+                        'is_fully_paid' => $isFullyPaid
+                    ],
+                    // Backwards-compatible top-level flags for frontend
+                    'is_fully_paid' => $isFullyPaid,
+                    'remaining_balance_vnd' => $remaining
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error marking cash as paid: ' . $e->getMessage(), [
+                'booking_id' => $request->booking_id,
+                'amount_vnd' => $request->amount_vnd,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing cash payment',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 }

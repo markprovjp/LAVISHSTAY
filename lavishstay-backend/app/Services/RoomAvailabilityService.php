@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Room;
-use App\Models\RoomAvailability;
 use App\Models\RoomPricing;
 use App\Models\Event;
 use App\Models\Holiday;
@@ -12,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\Booking;
 
 class RoomAvailabilityService
 {
@@ -44,7 +44,8 @@ class RoomAvailabilityService
                     
                     return [
                         'room_id' => $room->id,
-                        'room_number' => $room->room_number,
+                        // DB uses `name` for the visible room code; use it as fallback when room_number is missing
+                        'room_number' => $room->room_number ?? $room->name,
                         'room_type' => [
                             'id' => $room->roomType->id,
                             'name' => $room->roomType->name,
@@ -136,29 +137,8 @@ class RoomAvailabilityService
     private function isRoomAvailable(Room $room, Carbon $checkIn, Carbon $checkOut): bool
     {
         try {
-            // Kiểm tra xem có bảng RoomAvailability không
-            $availabilityTableExists = DB::select("SHOW TABLES LIKE 'room_availability'");
-            if (empty($availabilityTableExists)) {
-                // Nếu không có bảng availability, kiểm tra booking
-                return $this->isRoomAvailableByBooking($room, $checkIn, $checkOut);
-            }
-
-            // Kiểm tra từng ngày trong khoảng thời gian
-            $currentDate = $checkIn->copy();
-            
-            while ($currentDate->lt($checkOut)) {
-                $availability = RoomAvailability::where('room_id', $room->id) // Sửa từ availability_id thành room_id
-                    ->whereDate('date', $currentDate)
-                    ->first();
-
-                if (!$availability || $availability->available_rooms <= 0) {
-                    return false;
-                }
-                
-                $currentDate->addDay();
-            }
-
-            return true;
+            // Use booking data to determine availability (room_availability table not guaranteed)
+            return $this->isRoomAvailableByBooking($room, $checkIn, $checkOut);
             
         } catch (\Exception $e) {
             Log::error('Error checking room availability for room ' . $room->id . ': ' . $e->getMessage());
@@ -180,10 +160,12 @@ class RoomAvailabilityService
             }
 
             // Kiểm tra xem phòng có bị đặt trong khoảng thời gian không
+            $blocking = Booking::getBlockingStatusesLower();
+            // Use case-insensitive check
             $conflictingBookings = DB::table('booking_rooms as br')
                 ->join('booking as b', 'br.booking_id', '=', 'b.booking_id')
                 ->where('br.room_id', $room->id)
-                ->whereIn('b.status', ['pending', 'confirmed'])
+                ->whereRaw('LOWER(b.status) IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')', $blocking)
                 ->where('br.check_in_date', '<', $checkOut->format('Y-m-d'))
                 ->where('br.check_out_date', '>', $checkIn->format('Y-m-d'))
                 ->count();
@@ -354,34 +336,8 @@ class RoomAvailabilityService
         try {
             $totalRooms = Room::where('room_type_id', $roomType->id)->count();
             if ($totalRooms === 0) return 0;
-
-            // Kiểm tra xem có bảng RoomAvailability không
-            $availabilityTableExists = DB::select("SHOW TABLES LIKE 'room_availability'");
-            if (empty($availabilityTableExists)) {
-                // Fallback: tính dựa trên booking
-                return $this->calculateOccupancyRateByBooking($roomType, $checkIn, $checkOut, $totalRooms);
-            }
-
-            $currentDate = $checkIn->copy();
-            $totalAvailableRooms = 0;
-            $days = 0;
-
-            while ($currentDate->lt($checkOut)) {
-                $availableRooms = RoomAvailability::whereHas('room', function ($q) use ($roomType) {
-                    $q->where('room_type_id', $roomType->id);
-                })
-                ->whereDate('date', $currentDate)
-                ->sum('available_rooms');
-
-                $totalAvailableRooms += $availableRooms;
-                $days++;
-                $currentDate->addDay();
-            }
-
-            $averageAvailableRooms = $days > 0 ? $totalAvailableRooms / $days : $totalRooms;
-            $occupancyRate = (($totalRooms - $averageAvailableRooms) / $totalRooms) * 100;
-
-            return max(0, min(100, $occupancyRate));
+            // Compute occupancy rate based on bookings only
+            return $this->calculateOccupancyRateByBooking($roomType, $checkIn, $checkOut, $totalRooms);
             
         } catch (\Exception $e) {
             Log::error('Error calculating occupancy rate: ' . $e->getMessage());
@@ -503,7 +459,7 @@ class RoomAvailabilityService
                 ->join('room_types as rt', 'r.room_type_id', '=', 'rt.room_type_id')
                 ->select([
                     'r.room_id as id',
-                    'r.room_number',
+                    // `r.name` holds the visible room code in the DB; don't select r.room_number which doesn't exist
                     'r.room_type_id',
                     'rt.name',
                     'rt.description',
@@ -559,7 +515,8 @@ class RoomAvailabilityService
 
                 return (object) [
                     'id' => $room->id,
-                    'room_number' => $room->room_number,
+                    // Use name as fallback for room_code/room_number
+                    'room_number' => $room->room_number ?? $room->name,
                     'room_type_id' => $room->room_type_id,
                     'roomType' => (object) [
                         'id' => $room->room_type_id,

@@ -124,6 +124,9 @@ class AuthController extends Controller
             $user = Auth::user();
             $token = $user->createToken('auth_token')->plainTextToken;
 
+            // Include roles and avatar for frontend role-based gating and display
+            $roles = $user->roles()->pluck('name')->toArray();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Đăng nhập thành công',
@@ -133,6 +136,9 @@ class AuthController extends Controller
                         'name' => $user->name,
                         'email' => $user->email,
                         'phone' => $user->phone,
+                        'avatar' => $user->avatar ?? $user->profile_photo_url ?? null,
+                        'google_id' => $user->google_id ?? null,
+                        'roles' => $roles,
                     ],
                     'token' => $token,
                 ]
@@ -174,17 +180,12 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         try {
-            $user = $request->user();
+            $user = $request->user()->load('roles');
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $user->phone,
-                    ]
+                    'user' => new \App\Http\Resources\UserResource($user)
                 ]
             ]);
 
