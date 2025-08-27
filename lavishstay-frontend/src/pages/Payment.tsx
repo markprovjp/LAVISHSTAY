@@ -769,7 +769,7 @@ const Payment: React.FC = () => {
                         <Title level={2}>Thanh toán đặt phòng</Title>
 
                         {/* Debug button - Remove in production */}
-                        {process.env.NODE_ENV === 'development' && (
+                        {/* {process.env.NODE_ENV === 'development' && (
                             <div className="mb-4">
                                 <button
                                     onClick={() => {
@@ -782,7 +782,7 @@ const Payment: React.FC = () => {
                                     [DEV] Clear All Data
                                 </button>
                             </div>
-                        )}
+                        )} */}
 
                         {/* Steps */}
                         <Steps

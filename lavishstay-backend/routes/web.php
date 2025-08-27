@@ -243,6 +243,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::delete('/admin/reviews/destroy/{id}', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
     Route::patch('/admin/reviews/toggle-status/{id}', [ReviewController::class, 'toggleStatus'])->name('admin.reviews.toggle-status');
     Route::post('/admin/reviews/{id}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
+    Route::post('/admin/reviews/{id}/note', [ReviewController::class, 'note'])->name('admin.reviews.note');
 
     // Cách liiiiiiiiiiiiiiiiiiii
 
@@ -588,7 +589,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/export', [EventFestivalManagementController::class, 'export'])->name('export');
     });
 
-    Route::prefix('/admin/flexible-pricing')->name('admin.flexible-pricing.')->group(function () {
+    Route::prefix('/admin/flexible-pricing')->name('admin.flexible-pricing.')->group(function () { 
         Route::get('/', [FlexiblePricingController::class, 'index'])->name('index');
         Route::get('/data', [FlexiblePricingController::class, 'getData'])->name('data');
         Route::get('/room-types', [FlexiblePricingController::class, 'getRoomTypes'])->name('room-types');
