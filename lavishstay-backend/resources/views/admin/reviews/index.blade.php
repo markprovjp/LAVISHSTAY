@@ -397,7 +397,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             @forelse ($stats as $stat)
                 <div class="rounded-xl p-6 bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-all">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ $stat->room_option_name ?? 'N/A' }}</h3>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ $stat->room_type_name ?? 'N/A' }}</h3>
                     <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ $stat->total_reviews }}</div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">Đánh giá</div>
                     <div class="flex items-center mt-2">
@@ -426,7 +426,7 @@
                 <thead>
                     <tr class="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                         <th class="px-4 py-3 text-left font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase">Khách hàng</th>
-                        <th class="px-4 py-3 text-left font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase">Phòng</th>
+                        <th class="px-4 py-3 text-left font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase">loại phòng</th>
                         <th class="px-4 py-3 text-left font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase">Đánh giá</th>
                         <th class="px-4 py-3 text-left font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase">Bình luận</th>
                         <th class="px-4 py-3 text-left font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase">Ngày</th>
@@ -450,7 +450,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 align-middle">
-                                    <div class="font-medium text-gray-800 dark:text-gray-200">{{ $review->roomOption->name ?? 'N/A' }}</div>
+                                    <div class="font-medium text-gray-800 dark:text-gray-200">{{ $review->roomType->name ?? 'N/A' }}</div>
                                     <div class="text-xs text-gray-400">Booking: {{ $review->booking ? $review->booking->booking_id : 'N/A' }}</div>
                                 </td>
                                 <td class="px-4 py-3 align-middle">
@@ -542,6 +542,7 @@
     <script>
         // Store review data for modal display
         const reviewsData = @json($reviews->keyBy('review_id'));
+        let currentDropdownId = null;
         const scoreLabels = {
             room_comfort: 'Thoải mái phòng',
             food_breakfast: 'Bữa sáng',
@@ -585,7 +586,6 @@
             dropdown.innerHTML = `
                 <button onclick="showDetailModal(${reviewId}); closeAllDropdowns()" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">Xem Chi tiết</button>
                 ${approveBtn}
-                <button onclick="showNotePopup(${reviewId}); closeAllDropdowns()" class="w-full text-left px-4 py-2 hover:bg-green-100 dark:hover:bg-green-900 text-green-700 dark:text-green-300">Ghi chú</button>
                 <button onclick="deleteReview(${reviewId}); closeAllDropdowns()" class="w-full text-left px-4 py-2 hover:bg-red-100 dark:hover:bg-red-900 text-red-700 dark:text-red-300">Xóa</button>
             `;
 
@@ -707,8 +707,8 @@
                             </div>
                             <div class="space-y-3">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Phòng:</span>
-                                    <span class="font-medium text-gray-900 dark:text-gray-100">${review.room_option ? review.room_option.name : 'N/A'}</span>
+                                    <span class="text-gray-600 dark:text-gray-400">Loại phòng:</span>
+                                    <span class="font-medium text-gray-900 dark:text-gray-100">${review.room_type ? review.room_type.name : 'N/A'}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600 dark:text-gray-400">Ngày đánh giá:</span>

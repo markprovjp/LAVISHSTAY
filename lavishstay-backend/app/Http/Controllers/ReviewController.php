@@ -12,18 +12,20 @@ class ReviewController extends Controller
     // Danh sách review + thống kê
     public function index()
     {
-        $reviews = Review::with(['booking.user', 'booking.roomOption', 'reviewMedia'])
+        // Load reviews with user, room type, and review media
+        $reviews = Review::with(['booking.user', 'roomType', 'reviewMedia'])
             ->paginate(20);
 
+        // Statistics grouped by room type
         $stats = Review::select(
-                'room_option.name as room_option_name',
+                'room_types.name as room_type_name',
                 DB::raw('COUNT(*) as total_reviews'),
                 DB::raw('AVG(reviews.rating) as average_rating')
             )
             ->join('booking', 'reviews.booking_id', '=', 'booking.booking_id')
-            ->join('room_option', 'booking.option_id', '=', 'room_option.option_id')
+            ->join('room_types', 'booking.room_type_id', '=', 'room_types.room_type_id')
             ->where('reviews.status', 'approved')
-            ->groupBy('room_option.name')
+            ->groupBy('room_types.name')
             ->get();
 
         return view('admin.reviews.index', compact('reviews', 'stats'));

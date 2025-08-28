@@ -427,7 +427,10 @@
                                                 <svg class="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
                                                 </svg>
-                                                <span class="font-medium">${room.adults || 0} người lớn, ${room.children || 0} trẻ em</span>
+                                                <span class="font-medium">
+                                                    ${parseInt(room.adults) || 0} người lớn, 
+                                                    ${parseInt(room.children) || 0} trẻ em
+                                                </span>
                                             </p>
                                             ${room.room ? `
                                                 <p class="flex items-center text-blue-600 dark:text-blue-400">

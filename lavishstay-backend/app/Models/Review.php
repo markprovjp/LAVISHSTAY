@@ -71,4 +71,16 @@ class Review extends Model
             'option_id'   // Khóa ngoại trên bookings
         );
     }
+
+    public function roomType()
+    {
+        return $this->hasOneThrough(
+            RoomType::class,
+            Booking::class,
+            'booking_id', // Khóa chính trên bookings
+            'room_type_id', // Khóa chính trên room_types
+            'booking_id', // Khóa ngoại trên reviews
+            'room_type_id' // Khóa ngoại trên bookings
+        );
+    }
 }
