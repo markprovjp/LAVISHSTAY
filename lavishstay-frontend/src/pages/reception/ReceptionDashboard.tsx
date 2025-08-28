@@ -401,7 +401,7 @@ const ReceptionDashboard: React.FC = () => {
 
   // Fetch daily revenue when month changes
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
     const load = async () => {
       try {
         const res = await receptionChartApi.getDailyRevenueByMonth(selectedMonth);
@@ -462,6 +462,18 @@ const ReceptionDashboard: React.FC = () => {
             label: 'Đang dọn dẹp',
             bgColor: '#f0f9ff',
             textColor: '#096dd9'
+          },
+          out_of_service: {
+            color: '#8c8c8c',
+            label: 'Ngoài phục vụ',
+            bgColor: '#fbfbfb',
+            textColor: '#595959'
+          },
+          'out of service': {
+            color: '#8c8c8c',
+            label: 'Ngoài phục vụ',
+            bgColor: '#fbfbfb',
+            textColor: '#595959'
           },
           'Sẵn sàng': {
             color: '#52c41a',
@@ -989,7 +1001,7 @@ const ReceptionDashboard: React.FC = () => {
                 boxShadow: '0 2px 8px #1890ff22',
                 height: '100%'
               }}
-              bodyStyle={{ padding: 28 }}
+              bodyStyle={{ padding: 28, marginBottom: 16 }}
             >
               {roomStatus.length > 0 ? roomStatusDisplay : (
                 <Empty description="Không có dữ liệu trạng thái phòng" />

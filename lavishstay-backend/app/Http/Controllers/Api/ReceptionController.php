@@ -1435,11 +1435,76 @@ $bookings = $query->paginate($request->get('per_page', 500));
                     ], 400);
                 }
 
-                // Update booking status to cancelled
+                // Enforce payment requirement: if there's an action-fee payment for cancellation
+                // only allow cancel when corresponding payment status is 'completed'.
+                $actionPayments = DB::table('payment')
+                    ->where('booking_id', $bookingId)
+                    ->where('payment_type', 'additional')
+                    ->whereNotNull('collector_notes')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                foreach ($actionPayments as $p) {
+                    $notes = null;
+                    try {
+                        $notes = json_decode($p->collector_notes, true);
+                    } catch (\Exception $e) {
+                        $notes = null;
+                    }
+
+                    if (is_array($notes) && isset($notes['created_for']) && $notes['created_for'] === 'booking_action_fee') {
+                        if (isset($notes['action_type']) && $notes['action_type'] === 'cancel') {
+                            if ($p->status !== 'completed') {
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => 'Cancellation requires payment of applicable fee before confirmation',
+                                    'payment' => [
+                                        'payment_id' => $p->payment_id,
+                                        'transaction_id' => $p->transaction_id,
+                                        'amount' => $p->amount_vnd,
+                                        'status' => $p->status
+                                    ]
+                                ], 402);
+                            }
+                            // if completed, proceed with cancellation
+                            break;
+                        }
+                    }
+                }
+
+                // Determine final status: if a completed cancel action-fee payment exists,
+                // mark as 'Cancelled With Penalty', otherwise 'Cancelled'.
+                $actionPayments = DB::table('payment')
+                    ->where('booking_id', $bookingId)
+                    ->where('payment_type', 'additional')
+                    ->whereNotNull('collector_notes')
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                $hasCompletedCancelPayment = false;
+                foreach ($actionPayments as $p) {
+                    $notes = null;
+                    try {
+                        $notes = json_decode($p->collector_notes, true);
+                    } catch (\Exception $e) {
+                        $notes = null;
+                    }
+
+                    if (is_array($notes) && isset($notes['created_for']) && $notes['created_for'] === 'booking_action_fee') {
+                        if (isset($notes['action_type']) && $notes['action_type'] === 'cancel' && $p->status === 'completed') {
+                            $hasCompletedCancelPayment = true;
+                            break;
+                        }
+                    }
+                }
+
+                $finalStatus = $hasCompletedCancelPayment ? 'Cancelled With Penalty' : 'Cancelled';
+
+                // Update booking status
                 DB::table('booking')
                     ->where('booking_id', $bookingId)
                     ->update([
-                        'status' => 'cancelled',
+                        'status' => $finalStatus,
                         'updated_at' => Carbon::now()
                     ]);
 

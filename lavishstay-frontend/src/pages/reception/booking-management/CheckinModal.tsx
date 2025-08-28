@@ -5,7 +5,6 @@ import {
     Alert,
     Tag,
     Button,
-    Checkbox,
     Spin,
     Typography,
     Space,
@@ -15,7 +14,8 @@ import {
     Avatar,
     Statistic,
     Timeline,
-    Table
+    Table,
+    message
 } from 'antd';
 import {
     UserOutlined,
@@ -27,11 +27,13 @@ import {
     CheckCircleOutlined,
     ExclamationCircleOutlined,
     ClockCircleOutlined,
-    InfoCircleOutlined
+    InfoCircleOutlined,
+    DollarOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { receptionAPI } from '../../../utils/api';
 import { useProcessCheckIn } from '../../../hooks/useReception';
+import EarlyCheckinPaymentModal from './EarlyCheckinPaymentModal';
 
 const { Title, Text } = Typography;
 
@@ -126,6 +128,7 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
     const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [earlyCheckinFeeAccepted, setEarlyCheckinFeeAccepted] = useState(false);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // Use the enhanced mutation with automatic query invalidation
     const checkInMutation = useProcessCheckIn();
@@ -161,7 +164,7 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
 
         const payload: any = {};
 
-        // Nếu có phí early check-in và user đã đồng ý
+        // Nếu có phí early check-in và user đã đồng ý thanh toán
         if (checkinInfo.early_checkin_info.has_fee && earlyCheckinFeeAccepted) {
             payload.early_checkin_fee_accepted = true;
         }
@@ -173,6 +176,12 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
         } catch (err: any) {
             console.error('Error processing checkin:', err);
         }
+    };
+
+    const handlePaymentSuccess = () => {
+        setEarlyCheckinFeeAccepted(true);
+        setShowPaymentModal(false);
+        message.success('Thanh toán phí check-in sớm thành công!');
     };
 
     const formatCurrency = (amount: number) => {
@@ -454,13 +463,25 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
                 />
 
                 {checkinInfo.early_checkin_info.has_fee && (
-                    <Checkbox
-                        checked={earlyCheckinFeeAccepted}
-                        onChange={(e) => setEarlyCheckinFeeAccepted(e.target.checked)}
-                        style={{ marginTop: 12 }}
-                    >
-                        Tôi đồng ý thanh toán phí check-in sớm: {formatCurrency(checkinInfo.early_checkin_info.fee_amount)}
-                    </Checkbox>
+                    <div style={{ marginTop: 16 }}>
+                        <Button
+                            type="primary"
+                            icon={<DollarOutlined />}
+                            onClick={() => setShowPaymentModal(true)}
+                            size="large"
+                            disabled={earlyCheckinFeeAccepted}
+                        >
+                            {earlyCheckinFeeAccepted
+                                ? 'Đã thanh toán phí check-in sớm'
+                                : `Thanh toán phí check-in sớm: ${formatCurrency(checkinInfo.early_checkin_info.fee_amount)}`
+                            }
+                        </Button>
+                        {earlyCheckinFeeAccepted && (
+                            <Tag color="green" style={{ marginLeft: 8 }}>
+                                <CheckCircleOutlined /> Đã thanh toán
+                            </Tag>
+                        )}
+                    </div>
                 )}
             </Card>
         );
@@ -521,61 +542,75 @@ const CheckinModal: React.FC<CheckinModalProps> = ({
     };
 
     return (
-        <Modal
-            title={
-                <Space>
-                    <ClockCircleOutlined />
-                    <span>Check-in Booking</span>
-                    {checkinInfo && <Text type="secondary">({checkinInfo.booking_code})</Text>}
-                </Space>
-            }
-            open={visible}
-            onCancel={onClose}
-            width={800}
-            footer={[
-                <Button key="cancel" onClick={onClose}>
-                    Đóng
-                </Button>,
-                <Button
-                    key="checkin"
-                    type="primary"
-                    loading={checkInMutation.isPending}
-                    disabled={!canCheckin()}
-                    onClick={handleCheckin}
-                    icon={<CheckCircleOutlined />}
-                >
-                    Xác nhận Check-in
-                </Button>
-            ]}
-            destroyOnClose
-        >
-            <Spin spinning={loading}>
-                {error ? (
-                    <Alert
-                        message="Lỗi"
-                        description={error}
-                        type="error"
-                        showIcon
-                        action={
-                            <Button size="small" onClick={fetchCheckinInfo}>
-                                Thử lại
-                            </Button>
-                        }
-                    />
-                ) : checkinInfo ? (
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                        {renderBasicInfo()}
-                        {renderGuestInfo()}
-                        {renderConditionsStatus()}
-                        {renderWarnings()}
-                        {renderEarlyCheckinInfo()}
-                        {renderRoomInfo()}
-                        {renderPaymentDetails()}
-                        {renderPolicies()}
+        <>
+            <Modal
+                title={
+                    <Space>
+                        <ClockCircleOutlined />
+                        <span>Check-in Booking</span>
+                        {checkinInfo && <Text type="secondary">({checkinInfo.booking_code})</Text>}
                     </Space>
-                ) : null}
-            </Spin>
-        </Modal>
+                }
+                open={visible}
+                onCancel={onClose}
+                width={800}
+                footer={[
+                    <Button key="cancel" onClick={onClose}>
+                        Đóng
+                    </Button>,
+                    <Button
+                        key="checkin"
+                        type="primary"
+                        loading={checkInMutation.isPending}
+                        disabled={!canCheckin()}
+                        onClick={handleCheckin}
+                        icon={<CheckCircleOutlined />}
+                    >
+                        Xác nhận Check-in
+                    </Button>
+                ]}
+                destroyOnClose
+            >
+                <Spin spinning={loading}>
+                    {error ? (
+                        <Alert
+                            message="Lỗi"
+                            description={error}
+                            type="error"
+                            showIcon
+                            action={
+                                <Button size="small" onClick={fetchCheckinInfo}>
+                                    Thử lại
+                                </Button>
+                            }
+                        />
+                    ) : checkinInfo ? (
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            {renderBasicInfo()}
+                            {renderGuestInfo()}
+                            {renderConditionsStatus()}
+                            {renderWarnings()}
+                            {renderEarlyCheckinInfo()}
+                            {renderRoomInfo()}
+                            {renderPaymentDetails()}
+                            {renderPolicies()}
+                        </Space>
+                    ) : null}
+                </Spin>
+            </Modal>
+
+            {/* Early Checkin Payment Modal */}
+            {checkinInfo && (
+                <EarlyCheckinPaymentModal
+                    visible={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    onSuccess={handlePaymentSuccess}
+                    bookingId={checkinInfo.booking_id}
+                    bookingCode={checkinInfo.booking_code}
+                    feeAmount={checkinInfo.early_checkin_info.fee_amount}
+                />
+            )}
+        </>
     );
 };
 

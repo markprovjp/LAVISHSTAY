@@ -249,6 +249,65 @@ class BookingExtensionController extends Controller
                 'total_extension_fee' => $extensionFee,
             ]);
 
+            // Check if extension fee payment is required and completed
+            if ($extensionFee > 0) {
+                // Check for completed payment with extend action type
+                $completedPayments = DB::table('payment')
+                    ->where('booking_id', $booking->booking_id)
+                    ->where('status', 'completed')
+                    ->whereNotNull('collector_notes')
+                    ->get();
+
+                $hasExtendPayment = false;
+                foreach ($completedPayments as $payment) {
+                    $notes = json_decode($payment->collector_notes, true);
+                    if (is_array($notes) && 
+                        isset($notes['created_for']) && $notes['created_for'] === 'booking_action_fee' &&
+                        isset($notes['action_type']) && $notes['action_type'] === 'extend') {
+                        $hasExtendPayment = true;
+                        break;
+                    }
+                }
+
+                if (!$hasExtendPayment) {
+                    // Create payment record for extend action
+                    $transactionId = 'LAVISH_EXTEND_' . $booking->booking_id . '_' . time();
+                    $collectorNotes = [
+                        'created_for' => 'booking_action_fee',
+                        'action_type' => 'extend',
+                        'booking_id' => $booking->booking_id,
+                        'fee_amount' => $extensionFee,
+                        'new_check_out_date' => $newCheckOutDate->toDateTimeString(),
+                        'extension_days' => $extensionDays,
+                        'created_at' => Carbon::now()->toDateTimeString()
+                    ];
+
+                    DB::table('payment')->insert([
+                        'booking_id' => $booking->booking_id,
+                        'transaction_id' => $transactionId,
+                        'payment_method' => 'bank_transfer',
+                        'amount_vnd' => $extensionFee,
+                        'status' => 'pending',
+                        'collector_notes' => json_encode($collectorNotes),
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+
+                    Log::info('Extension payment required, returning payment info');
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cần thanh toán phí gia hạn trước khi thực hiện',
+                        'requires_payment' => true,
+                        'extension_fee' => $extensionFee,
+                        'transaction_id' => $transactionId,
+                        'extension_days' => $extensionDays,
+                        'new_check_out_date' => $newCheckOutDate->toDateTimeString(),
+                    ]);
+                }
+
+                Log::info('Extension payment found, proceeding with extension');
+            }
+
             // Update booking and save extension request
             DB::transaction(function () use ($booking, $extensionPolicy, $newCheckOutDate, $extensionDays, $extensionFee) {
                 $booking->check_out_date = $newCheckOutDate->toDateTimeString();

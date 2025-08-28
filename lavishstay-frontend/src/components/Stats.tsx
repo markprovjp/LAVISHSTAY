@@ -6,7 +6,7 @@ const { Title } = Typography;
 
 interface StatItem {
   title: string;
-  value: number;
+  value: number | string;
   suffix?: string;
   prefix?: string;
   icon?: React.ReactNode;
@@ -19,9 +19,14 @@ interface StatsProps {
   className?: string;
 }
 
-const formatter = (value: number) => (
-  <CountUp end={value} separator="," duration={5.5} />
-);
+const formatter = (value: number | string) => {
+  // If value is a number, animate with CountUp (with thousand separator).
+  // If value is a string (like a year), render it as-is to avoid locale comma.
+  if (typeof value === "number") {
+    return <CountUp end={value} separator="," duration={1.2} />;
+  }
+  return <span>{value}</span>;
+};
 
 const Stats: React.FC<StatsProps> = ({
   title,

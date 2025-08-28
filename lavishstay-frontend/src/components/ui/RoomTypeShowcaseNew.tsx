@@ -301,7 +301,7 @@ console.log("Room types:", roomTypes);
                                                         type="secondary"
                                                         style={{ fontSize: "11px" }}
                                                     >
-                                                        /{roomType.search_criteria?.nights || 1} đêm
+                                                        /{roomType.search_criteria?.nights || 1} đêm 
                                                     </Text>
                                                 </div>
                                             </Flex>

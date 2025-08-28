@@ -47,6 +47,7 @@ import {
     GiftOutlined
 } from '@ant-design/icons';
 import { CopyOutlined } from '@ant-design/icons';
+import BookingActionPaymentModal from '../../components/booking/BookingActionPaymentModal';
 import dayjs from 'dayjs';
 import { roomTypesAPI, bookingsAPI, couponAPI } from '../../utils/api';
 import axiosInstance from '../../utils/api';
@@ -161,6 +162,12 @@ const LookupBookingByPhone: React.FC = () => {
     const [extendDate, setExtendDate] = useState<dayjs.Dayjs | null>(null);
 
     const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
+
+    // Payment modal states
+    const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+    const [paymentActionType, setPaymentActionType] = useState<'cancel' | 'extend' | 'reschedule'>('cancel');
+    const [paymentPolicyInfo, setPaymentPolicyInfo] = useState<any>(null);
+    const [paymentActionParams, setPaymentActionParams] = useState<any>(null);
 
 
     const [reviewEligibility, setReviewEligibility] = useState<Record<number, { eligible: boolean; reason?: string }>>({});
@@ -424,7 +431,16 @@ const LookupBookingByPhone: React.FC = () => {
 
         try {
             const policy = await bookingService.getCancelPolicy(booking.booking_id);
-            setCancelPolicy(policy);
+            // If there's a penalty, show unified payment modal (preview + payment)
+            if (policy.penalty > 0) {
+                setPaymentActionType('cancel');
+                setPaymentPolicyInfo(policy);
+                setPaymentActionParams(null);
+                setPaymentModalVisible(true);
+            } else {
+                // No penalty -> show simple cancel preview/confirm modal
+                setCancelPolicy(policy);
+            }
         } catch (err: any) {
             Modal.error({
                 title: 'Không thể lấy chính sách huỷ',
@@ -468,7 +484,21 @@ const LookupBookingByPhone: React.FC = () => {
 
         try {
             const policy = await bookingService.getExtendPolicy(booking.booking_id, newDate.format('YYYY-MM-DD'));
+            // Always show preview first so user can choose/confirm extension details
             setExtendPolicy(policy);
+            // Prepare payment info if fee exists but don't open payment modal yet — open after user confirms preview
+            if (policy.extension_fee > 0) {
+                setPaymentActionType('extend');
+                setPaymentPolicyInfo({
+                    ...policy,
+                    penalty: policy.extension_fee,
+                    penalty_type: policy.fee_type || 'fixed',
+                    penalty_percentage: policy.fee_percentage || 0,
+                    penalty_fixed_amount: policy.extension_fee,
+                });
+                setPaymentActionParams({ newCheckOutDate: newDate.format('YYYY-MM-DD') });
+                // Do not call setPaymentModalVisible(true) here — wait for user to confirm preview
+            }
         } catch (err: any) {
             Modal.error({
                 title: 'Không thể lấy chính sách gia hạn',
@@ -479,8 +509,61 @@ const LookupBookingByPhone: React.FC = () => {
         }
     }, []);
 
+    // When user changes the extend date inside the preview modal, refresh the policy/pricing immediately
+    const handleExtendDateChange = useCallback(async (date: dayjs.Dayjs | null) => {
+        setExtendDate(date);
+
+        if (!date || !extendBookingId) {
+            // clear policy if no date
+            setExtendPolicy(null);
+            setPaymentPolicyInfo(null);
+            setPaymentActionParams(null);
+            return;
+        }
+
+        setExtendLoading(true);
+        try {
+            const policy = await bookingService.getExtendPolicy(extendBookingId, date.format('YYYY-MM-DD'));
+            setExtendPolicy(policy);
+
+            if (policy.extension_fee > 0) {
+                const prepared = {
+                    ...policy,
+                    penalty: policy.extension_fee,
+                    penalty_type: policy.fee_type || 'fixed',
+                    penalty_percentage: policy.fee_percentage || 0,
+                    penalty_fixed_amount: policy.extension_fee,
+                };
+                setPaymentActionType('extend');
+                setPaymentPolicyInfo(prepared);
+                setPaymentActionParams({ newCheckOutDate: date.format('YYYY-MM-DD') });
+            } else {
+                setPaymentPolicyInfo(null);
+                setPaymentActionParams(null);
+            }
+        } catch (err: any) {
+            Modal.error({
+                title: 'Không thể cập nhật chính sách gia hạn',
+                content: err?.message || 'Đã có lỗi xảy ra',
+            });
+        } finally {
+            setExtendLoading(false);
+        }
+    }, [extendBookingId]);
+
     const handleConfirmExtend = useCallback(async () => {
         if (!extendBookingId || !extendDate) return;
+        // If there's a prepared paymentPolicyInfo with penalty, open the payment modal instead of direct execution
+        if (paymentPolicyInfo && paymentPolicyInfo.penalty > 0) {
+            setPaymentActionType('extend');
+            // ensure action params include selected new date
+            setPaymentActionParams({ newCheckOutDate: extendDate.format('YYYY-MM-DD') });
+            // close the preview modal before opening payment modal to avoid double-modals
+            setExtendPolicy(null);
+            setPaymentModalVisible(true);
+            return;
+        }
+
         setExtendConfirming(true);
         try {
             await bookingService.confirmExtendBooking(extendBookingId, extendDate.format('YYYY-MM-DD'));
@@ -505,8 +588,49 @@ const LookupBookingByPhone: React.FC = () => {
         }
     }, [extendBookingId, extendDate]);
 
-    const handleRescheduleBooking = useCallback(async (_booking: BookingSummary) => {
-        setRescheduleModalVisible(true);
+    const handleRescheduleBooking = useCallback(async (booking: BookingSummary) => {
+        // For now, show a modal to get new dates - this would need a proper form
+        Modal.info({
+            title: `Dời lịch đặt phòng ${booking.booking_code}`,
+            content: 'Chức năng dời lịch đang được phát triển. Vui lòng liên hệ lễ tân để được hỗ trợ.',
+            onOk: () => {
+                // TODO: Implement reschedule form
+                // Example of how it would work:
+                /*
+                const newCheckInDate = '2024-12-01';
+                const newCheckOutDate = '2024-12-03';
+                const newRoomId = [1, 2];
+                
+                try {
+                    const policy = await bookingService.getReschedulePolicy(
+                        booking.booking_id, 
+                        newCheckInDate, 
+                        newCheckOutDate, 
+                        newRoomId
+                    );
+                    
+                    if (policy.reschedule_fee > 0) {
+                        setPaymentActionType('reschedule');
+                        setPaymentPolicyInfo({
+                            ...policy,
+                            penalty: policy.reschedule_fee,
+                            penalty_type: policy.fee_type || 'fixed',
+                            penalty_percentage: policy.fee_percentage || 0,
+                            penalty_fixed_amount: policy.reschedule_fee,
+                        });
+                        setPaymentActionParams({ 
+                            newCheckInDate, 
+                            newCheckOutDate, 
+                            newRoomId 
+                        });
+                        setPaymentModalVisible(true);
+                    }
+                } catch (err) {
+                    message.error('Không thể lấy chính sách dời lịch');
+                }
+                */
+            }
+        });
         setDrawerVisible(false);
     }, []);
 
@@ -784,7 +908,6 @@ const LookupBookingByPhone: React.FC = () => {
                     //     label: 'Chi tiết',
                     //     onClick: () => handleViewDetail(record.booking_id)
                     // },
-                    // { type: 'divider' },
                     {
                         key: 'cancel',
                         icon: <StopOutlined />,
@@ -793,6 +916,7 @@ const LookupBookingByPhone: React.FC = () => {
                         disabled: !isActionEnabled(record, 'cancel'),
                         onClick: () => handleCancelBooking(record)
                     },
+                    { type: 'divider' },
                     {
                         key: 'extend',
                         icon: <CalendarOutlined />,
@@ -800,13 +924,13 @@ const LookupBookingByPhone: React.FC = () => {
                         disabled: !isActionEnabled(record, 'extend'),
                         onClick: () => handleExtendBooking(record)
                     },
-                    {
-                        key: 'reschedule',
-                        icon: <EditOutlined />,
-                        label: 'Dời lịch',
-                        disabled: !isActionEnabled(record, 'reschedule'),
-                        onClick: () => handleRescheduleBooking(record)
-                    },
+                    // {
+                    //     key: 'reschedule',
+                    //     icon: <EditOutlined />,
+                    //     label: 'Dời lịch',
+                    //     disabled: !isActionEnabled(record, 'reschedule'),
+                    //     onClick: () => handleRescheduleBooking(record)
+                    // },
                     {
                         key: 'review',
                         icon: <CommentOutlined />,
@@ -1320,7 +1444,7 @@ const LookupBookingByPhone: React.FC = () => {
                             <b>Chọn ngày trả phòng mới:</b>
                             <DatePicker
                                 value={extendDate}
-                                onChange={(date) => setExtendDate(date)}
+                                onChange={handleExtendDateChange}
                                 style={{ marginLeft: 8 }}
                                 disabledDate={current => {
                                     if (!current) return false;
@@ -1364,6 +1488,36 @@ const LookupBookingByPhone: React.FC = () => {
                     showIcon
                 />
             </Modal>
+
+            {/* Booking Action Payment Modal */}
+            <BookingActionPaymentModal
+                visible={paymentModalVisible}
+                onClose={() => {
+                    setPaymentModalVisible(false);
+                    setPaymentPolicyInfo(null);
+                    setPaymentActionParams(null);
+                }}
+                onSuccess={(result) => {
+                    message.success(`Thao tác hoàn thành thành công! Mã giao dịch: ${result.payment?.transaction_id || 'N/A'}`);
+                    // Refresh bookings list
+                    loadUserBookings();
+
+                    // Clear related states
+                    if (paymentActionType === 'cancel') {
+                        setCancelPolicy(null);
+                        setCancelBookingId(null);
+                    } else if (paymentActionType === 'extend') {
+                        setExtendPolicy(null);
+                        setExtendBookingId(null);
+                        setExtendDate(null);
+                    }
+                }}
+                bookingId={cancelBookingId || extendBookingId || 0}
+                bookingCode={selectedBooking?.booking_code || ''}
+                actionType={paymentActionType}
+                policyInfo={paymentPolicyInfo}
+                actionParams={paymentActionParams}
+            />
         </div>
     );
 };

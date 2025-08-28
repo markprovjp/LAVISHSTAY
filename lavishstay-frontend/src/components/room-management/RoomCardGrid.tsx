@@ -327,40 +327,54 @@ const RoomCard = memo(({
         );
     };
 
+    const cardStyle: React.CSSProperties = {
+        width: '100%',
+        height: 160,
+        borderRadius: 12,
+        backgroundColor: statusConfig.color,
+        border: `2px solid ${statusConfig.borderColor || 'rgba(0,0,0,0.08)'}`,
+        overflow: 'hidden',
+    };
+
+    if (isSelected && mode === 'select') {
+        // Selected style: user prefers red highlight — apply subtle red overlay, red border and glow
+        cardStyle.backgroundImage = 'linear-gradient(rgba(255,77,79,0.06), rgba(255,77,79,0.06))';
+        cardStyle.border = '3px solid rgba(255,77,79,0.95)';
+        cardStyle.boxShadow = '0 12px 30px rgba(255,77,79,0.16)';
+    }
+
     const cardElement = (
         <CheckCard
             checked={isSelected && mode === 'select'}
             onChange={mode === 'select' ? onSelect : undefined}
             onClick={handleCardClick}
             disabled={effectiveStatus === 'out_of_service'}
-            className={`
-                transition-all duration-300 cursor-pointer
-                hover:shadow-lg hover:-translate-y-1
-                ${isSelected && mode === 'select' ? 'ring-2 ring-blue-400' : ''}
-            `}
-            style={{
-                width: '100%',
-                height: 160,
-                borderRadius: 12,
-                backgroundColor: statusConfig.color,
-                border: `2px solid ${statusConfig.borderColor}`,
-                overflow: 'hidden'
-            }}
+            className={`transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-1 ${isSelected && mode === 'select' ? 'selected-room' : ''}`}
+            style={cardStyle}
             bodyStyle={{ padding: 0, height: '100%' }}
         >
             {/* Header với icons */}
             <div className="flex justify-between items-start p-3 h-full">
 
 
-                {/* Tên phòng - ribbon style */}
+                {/* Tên phòng - decorative pill ribbon */}
                 <div
-                    className="absolute top-0 right-0 px-3 py-1 text-white font-bold text-lg"
+                    className="absolute"
                     style={{
-                        backgroundColor: 'rgba(0,0,0,0.2)',
-                        borderBottomLeftRadius: 12
+                        top: 12,
+                        right: 12,
+                        padding: '8px 14px',
+                        color: '#fff',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        background: 'linear-gradient(135deg, rgba(0,0,0,0.32), rgba(0,0,0,0.18))',
+                        borderRadius: 14,
+                        zIndex: 110,
+                        boxShadow: '0 8px 18px rgba(0,0,0,0.18)',
+                        backdropFilter: 'blur(6px)'
                     }}
                 >
-                    {room.name}
+                    <span style={{ display: 'inline-block', minWidth: 40, textAlign: 'center' }}>{room.name}</span>
                 </div>
             </div>
 
@@ -439,7 +453,19 @@ const RoomCard = memo(({
             }}
         >
             <div className="relative">
+                {isSelected && mode === 'select' && (
+                    <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 30 }}>
+                        <Tag style={{ backgroundColor: '#e6f7ff', color: '#094fa6', padding: '2px 6px', borderRadius: 6, fontWeight: 700, fontSize: 12 }}>Đã chọn</Tag>
+                    </div>
+                )}
                 {cardElement}
+                <style>{`
+                    .selected-room {
+                        box-shadow: 0 10px 25px rgba(25, 118, 210, 0.18) !important;
+                        transform: translateY(-4px) !important;
+                        border-width: 3px !important;
+                    }
+                `}</style>
             </div>
         </ConfigProvider>
     );

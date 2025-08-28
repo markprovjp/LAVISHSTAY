@@ -7,6 +7,7 @@ import {
   message,
   ConfigProvider,
   theme,
+  Modal,
 } from "antd";
 import {
   MailOutlined,
@@ -14,12 +15,12 @@ import {
   GiftOutlined,
   SafetyOutlined,
 } from "@ant-design/icons";
-import { useSelector } from "react-redux";
-import { RootState } from "../store";
 import { useTranslation } from "react-i18next";
 import illustration from "../assets/images/illustration.svg";
 
 const { Title, Paragraph, Text } = Typography;
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8888";
 
 interface NewsletterProps {
   title?: string;
@@ -40,10 +41,11 @@ const Newsletter: React.FC<NewsletterProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  const { isDarkMode } = useSelector((state: RootState) => state.theme);
   const { token } = theme.useToken();
   const location = window.location.pathname;
   const { t } = useTranslation();
+  const [visibleModal, setVisibleModal] = useState(false);
+  const [discountCode, setDiscountCode] = useState<string | null>(null);
 
   // Đặt các giá trị mặc định bằng cách sử dụng các bản dịch nếu không được cung cấp
   title = title || t("newsletter.title");
@@ -55,16 +57,50 @@ const Newsletter: React.FC<NewsletterProps> = ({
     return null;
   }
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setLoading(true);
 
-    // Giả lập API call
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/api/newsletter`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      let data: any = null;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (e) {
+          // ignore JSON parse errors
+          console.warn("Failed to parse JSON response", e);
+        }
+      }
+
+      if (res.ok && data && data.success) {
+        const code = data.discount_code || null;
+        setDiscountCode(code);
+        setVisibleModal(true);
+        message.success(data.message || "Đăng ký thành công!");
+        form.resetFields();
+      } else if (data && data.message) {
+        message.error(data.message);
+      } else {
+        message.error("Có lỗi xảy ra khi đăng ký.");
+      }
+    } catch (err) {
+      message.error("Không thể đăng ký. Vui lòng thử lại sau.");
+      // eslint-disable-next-line no-console
+      console.error("Newsletter submit error", err);
+    } finally {
       setLoading(false);
-      message.success("Đăng ký thành công!");
-      form.resetFields();
-    }, 1000);
+    }
   };
+
   return (
     <ConfigProvider theme={{ token }}>
       <div className="container mx-auto px-4">
@@ -189,6 +225,28 @@ const Newsletter: React.FC<NewsletterProps> = ({
             </div>
           </div>
         </div>
+
+        <Modal
+          title="Mã giảm giá của bạn"
+          visible={visibleModal}
+          onOk={() => setVisibleModal(false)}
+          onCancel={() => setVisibleModal(false)}
+        >
+          <div className="text-center">
+            <p className="text-lg font-semibold">Cảm ơn bạn đã đăng ký!</p>
+            {discountCode ? (
+              <div className="mt-4">
+                <p className="text-sm">Mã giảm giá 20% của bạn:</p>
+                <div className="text-2xl font-bold text-blue-600 mt-2">
+                  {discountCode}
+                </div>
+                <p className="text-xs mt-2 text-gray-500">Hạn sử dụng 90 ngày</p>
+              </div>
+            ) : (
+              <p>Vui lòng kiểm tra email để nhận mã.</p>
+            )}
+          </div>
+        </Modal>
       </div>
     </ConfigProvider>
   );

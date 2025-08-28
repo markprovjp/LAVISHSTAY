@@ -177,7 +177,7 @@ const HotelActivities: React.FC = React.memo(() => {
             </div>
 
             {/* CTA Button */}
-            <Button
+            {/* <Button
               type="primary"
               size="large"
               icon={<ArrowRightOutlined />}
@@ -189,7 +189,7 @@ const HotelActivities: React.FC = React.memo(() => {
               }}
             >
               Khám phá ngay
-            </Button>
+            </Button> */}
           </div>
         </Card>
       </div>
@@ -225,7 +225,7 @@ const HotelActivities: React.FC = React.memo(() => {
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-12">
+        {/* <div className="text-center mt-12">
           <Button
             type="primary"
             size="large"
@@ -235,8 +235,8 @@ const HotelActivities: React.FC = React.memo(() => {
           >
             Đặt lịch trải nghiệm ngay
           </Button>
-        </div>
-      </div>
+        </div>*/}
+      </div> 
     </div>
   );
 });

@@ -360,7 +360,7 @@ class BookingCheckinController extends Controller
                     $earlyCheckinPayment = Payment::create([
                         'booking_id' => $booking->booking_id,
                         'amount_vnd' => $earlyCheckinInfo['fee_amount'],
-                        'payment_type' => 'early_checkin_fee',
+                        'payment_type' => 'additional',
                         'status' => 'completed',
                         'transaction_id' => 'EARLY_CHECKIN_' . $booking->booking_code . '_' . time(),
                         'created_at' => Carbon::now(),

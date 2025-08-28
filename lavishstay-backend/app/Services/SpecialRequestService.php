@@ -353,9 +353,11 @@ class SpecialRequestService
             // Create audit log
             DB::table('audit_logs')->insert([
                 'user_id' => auth()->id(),
-                'action' => 'Approve Compensation Request',
+                // action must match enum in audit_logs table; use 'update' for approve
+                'action' => 'update',
                 'model' => 'compensation_requests',
                 'model_id' => $request->request_id,
+                'changes_summary' => 'Approved compensation request',
                 'description' => "Approved compensation request for booking {$request->booking->booking_code}",
                 'created_at' => now(),
             ]);
@@ -377,9 +379,11 @@ class SpecialRequestService
             // Create audit log
             DB::table('audit_logs')->insert([
                 'user_id' => auth()->id(),
-                'action' => 'Reject Compensation Request',
+                // action must match enum in audit_logs table; use 'update' for reject
+                'action' => 'update',
                 'model' => 'compensation_requests',
                 'model_id' => $request->request_id,
+                'changes_summary' => 'Rejected compensation request',
                 'description' => "Rejected compensation request for booking {$request->booking->booking_code}",
                 'created_at' => now(),
             ]);

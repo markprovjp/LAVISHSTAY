@@ -340,7 +340,7 @@ const NewsDetail: React.FC = () => {
                                         size="large"
                                         showCount
                                     />
-
+{/* 
                                     <NewsBookmarkButton
                                         newsId={news.id.toString()}
                                         isBookmarked={news.is_bookmarked}
@@ -353,9 +353,9 @@ const NewsDetail: React.FC = () => {
                                         url={window.location.href}
                                         size="large"
                                     />
+                                     */}
                                 </Space>
-
-                                {/* Rating */}
+ {/*
                                 <div className="flex items-center gap-3">
                                     <Text className="font-medium text-gray-700">Đánh giá:</Text>
                                     <Rate
@@ -369,7 +369,7 @@ const NewsDetail: React.FC = () => {
                                             ({news.rating.toFixed(1)})
                                         </Text>
                                     )}
-                                </div>
+                                </div> */}
                             </motion.div>
                         </Card>
 

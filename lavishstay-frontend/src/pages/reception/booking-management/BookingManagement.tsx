@@ -169,7 +169,8 @@ const BookingManagement: React.FC = () => {
     const [hotelPaymentBooking, setHotelPaymentBooking] = useState<BookingTableData | null>(null);
 
     // Table-level filters (used by column filterDropdowns)
-    const [tableFilters, setTableFilters] = useState<{ bookingCode?: string; guest?: string; dateRange?: [string, string] }>({});
+    const [tableFilters, setTableFilters] = useState<{ bookingCode?: string; guest?: string; dateRange?: [string, string]; status?: string[] }>({});
+    const [tablePagination, setTablePagination] = useState<{ current: number; pageSize: number }>({ current: 1, pageSize: 10 });
 
     const { data: bookingsData, isLoading, refetch } = useGetBookings(filters);
     const { data: statisticsData } = useGetBookingStatistics();
@@ -238,17 +239,17 @@ const BookingManagement: React.FC = () => {
             }
 
             // Debug helper for a reported problematic booking (only in non-production)
-            if (process.env.NODE_ENV !== 'production' && (booking.booking_id === 306 || booking.id === 306)) {
-                // eslint-disable-next-line no-console
-                console.debug('[BookingManagement][DEBUG] booking_id=306 raw:', {
-                    booking_id: booking.booking_id || booking.id,
-                    booking_adults: booking.adults,
-                    booking_children: booking.children,
-                    guest_count: booking.guest_count || booking.total_guests,
-                    roomSumAdults,
-                    roomSumChildren,
-                });
-            }
+            // if (process.env.NODE_ENV !== 'production' && (booking.booking_id === 306 || booking.id === 306)) {
+            //     // eslint-disable-next-line no-console
+            //     console.debug('[BookingManagement][DEBUG] booking_id=306 raw:', {
+            //         booking_id: booking.booking_id || booking.id,
+            //         booking_adults: booking.adults,
+            //         booking_children: booking.children,
+            //         guest_count: booking.guest_count || booking.total_guests,
+            //         roomSumAdults,
+            //         roomSumChildren,
+            //     });
+            // }
 
             // Derive safeChildren consistently: prefer room-level sum when available, then booking.children when consistent,
             // otherwise compute as guest_count - adults (keeps totals consistent).
@@ -423,6 +424,14 @@ const BookingManagement: React.FC = () => {
             return true;
         });
     }, [bookings, tableFilters]);
+
+    // Apply status filter from column filters if present (kept separate from custom filterDropdowns)
+    const filteredAndStatusApplied = React.useMemo(() => {
+        if (!filteredBookings || filteredBookings.length === 0) return [];
+        if (!tableFilters.status || tableFilters.status.length === 0) return filteredBookings;
+        const allowed = tableFilters.status.map((s) => String(s).toLowerCase());
+        return filteredBookings.filter((b: any) => allowed.includes(String(b.status || '').toLowerCase()));
+    }, [filteredBookings, tableFilters.status]);
 
     const statistics = statisticsData?.data || {};
 
@@ -735,14 +744,15 @@ const BookingManagement: React.FC = () => {
                             {parts}
                         </div>
 
-                        {/* Remaining amount display for deposit/at_hotel */}
-                        {(record.payment_type === 'deposit' || record.payment_type === 'at_hotel') && (
+                        {/* Remaining amount display for deposit/at_hotel or online processing */}
+                        {((record.payment_type === 'deposit' || record.payment_type === 'at_hotel') || (['vietqr', 'online'].includes(String(record.payment_type || '').toLowerCase()))) && (
                             <div style={{ textAlign: 'center' }}>
                                 <Text strong style={{ color: '#f5222d', fontSize: 14 }}>{new Intl.NumberFormat('vi-VN').format((record as any).remaining_balance_vnd || 0)} ₫</Text>
                             </div>
                         )}
 
-                   
+
+
                     </div>
                 );
             },
@@ -901,7 +911,9 @@ const BookingManagement: React.FC = () => {
                 // Check if this booking has deposit and needs remaining payment
                 const hasDeposit = record.payment_type === 'deposit';
                 const remainingBalance = (record as any).remaining_balance_vnd || 0;
-                const needsRemainingPayment = hasDeposit && remainingBalance > 0;
+                // Consider deposit or online payment methods that may still be "processing" as needing remaining payment collection at hotel
+                const isOnlineProcessing = ['vietqr', 'online'].includes(String(record.payment_type || '').toLowerCase()) && String(record.payment_status || '').toLowerCase() !== 'completed';
+                const needsRemainingPayment = (hasDeposit || isOnlineProcessing) && remainingBalance > 0;
 
                 const menu = (
                     <Menu onClick={handleMenuClick}>
@@ -1004,34 +1016,60 @@ const BookingManagement: React.FC = () => {
 
                 <Card style={{ borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}>
                     <ErrorBoundary fallback={<Alert message="Lỗi hiển thị bảng" type="error" showIcon />}>
-                        <ProTable<BookingTableData>
-                            columns={columns}
-                            dataSource={filteredBookings}
-                            loading={isLoading}
-                            rowKey="key"
-                            rowSelection={{
-                                selectedRowKeys,
-                                onChange: (keys) => setSelectedRowKeys(keys),
-                            }}
-                            pagination={{ pageSize: 10, showQuickJumper: true }}
-                            search={false}
-                            options={{ density: true, reload: true, setting: true, fullScreen: true }}
-                            headerTitle="Danh sách Đặt phòng"
-                            toolBarRender={() => [
-                                <Dropdown
-                                    overlay={
-                                        <Menu onClick={({ key }) => handleBulkAction(key)}>
-                                            <Menu.Item key="cancel" icon={<DeleteOutlined />} disabled={selectedRowKeys.length === 0}>Hủy {selectedRowKeys.length} mục</Menu.Item>
-                                            <Menu.Item key="assign" icon={<HomeOutlined />} disabled={selectedRowKeys.length === 0}>Gán phòng (mục đầu)</Menu.Item>
-                                            <Menu.Item key="checkin" icon={<CheckCircleOutlined />} disabled={selectedRowKeys.length === 0}>Mở Check-in (mục đầu)</Menu.Item>
-                                            <Menu.Item key="checkout" icon={<CheckCircleOutlined />} disabled={selectedRowKeys.length === 0}>Mở Check-out (mục đầu)</Menu.Item>
-                                        </Menu>
+                        <div style={{ overflowX: 'auto' }}>
+                            <ProTable<BookingTableData>
+                                columns={columns}
+                                dataSource={filteredAndStatusApplied}
+                                loading={isLoading}
+                                rowKey="key"
+                                rowSelection={{
+                                    selectedRowKeys,
+                                    onChange: (keys) => setSelectedRowKeys(keys),
+                                }}
+                                pagination={{
+                                    current: tablePagination.current,
+                                    pageSize: tablePagination.pageSize,
+                                    showSizeChanger: true,
+                                    showQuickJumper: true,
+                                    total: filteredAndStatusApplied.length,
+                                    showTotal: (total) => `Tổng ${total} đặt phòng`,
+                                    onChange: (page, pageSize) => setTablePagination({ current: page, pageSize: pageSize || tablePagination.pageSize }),
+                                    onShowSizeChange: (_, size) => setTablePagination(prev => ({ ...prev, pageSize: size })),
+                                }}
+                                onChange={(pagination, filters) => {
+                                    // Capture status filter from built-in column filter
+                                    if (filters && filters.status) {
+                                        // filters.status may be string or array
+                                        const vals = Array.isArray(filters.status) ? filters.status.map(String) : [String(filters.status)];
+                                        setTableFilters(prev => ({ ...prev, status: vals }));
+                                    } else {
+                                        setTableFilters(prev => ({ ...prev, status: undefined }));
                                     }
-                                >
-                                    <Button disabled={selectedRowKeys.length === 0}>Hành động hàng loạt ({selectedRowKeys.length})</Button>
-                                </Dropdown>
-                            ]}
-                        />
+                                    // sync pagination state
+                                    if (pagination && typeof pagination.current === 'number') {
+                                        setTablePagination(prev => ({ ...prev, current: pagination.current as number, pageSize: (pagination.pageSize as number) || prev.pageSize }));
+                                    }
+                                }}
+                                scroll={{ x: 1600 }}
+                                search={false}
+                                options={{ density: true, reload: true, setting: true, fullScreen: true }}
+                                headerTitle="Danh sách Đặt phòng"
+                                toolBarRender={() => [
+                                    <Dropdown
+                                        overlay={
+                                            <Menu onClick={({ key }) => handleBulkAction(key)}>
+                                                <Menu.Item key="cancel" icon={<DeleteOutlined />} disabled={selectedRowKeys.length === 0}>Hủy {selectedRowKeys.length} mục</Menu.Item>
+                                                <Menu.Item key="assign" icon={<HomeOutlined />} disabled={selectedRowKeys.length === 0}>Gán phòng (mục đầu)</Menu.Item>
+                                                <Menu.Item key="checkin" icon={<CheckCircleOutlined />} disabled={selectedRowKeys.length === 0}>Mở Check-in (mục đầu)</Menu.Item>
+                                                <Menu.Item key="checkout" icon={<CheckCircleOutlined />} disabled={selectedRowKeys.length === 0}>Mở Check-out (mục đầu)</Menu.Item>
+                                            </Menu>
+                                        }
+                                    >
+                                        <Button disabled={selectedRowKeys.length === 0}>Hành động hàng loạt ({selectedRowKeys.length})</Button>
+                                    </Dropdown>
+                                ]}
+                            />
+                        </div>
                     </ErrorBoundary>
                 </Card>
 

@@ -23,8 +23,8 @@ const RoomTypeOverviewCard: React.FC<RoomTypeOverviewCardProps> = ({
         if (onClick) {
             onClick(roomType);
         } else {
-            // Default behavior: navigate to room details
-            window.open(roomType.slug_url, '_blank');
+            // Default behavior: navigate to room details in same tab
+            window.location.href = `/room-types/${roomType.slug}`;
         }
     };
 

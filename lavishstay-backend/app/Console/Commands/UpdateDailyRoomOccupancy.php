@@ -133,19 +133,19 @@ class UpdateDailyRoomOccupancy extends Command
      * 
      * Logic: Count rooms that are:
      * 1. Checked-in and not checked-out yet
-     * 2. Have bookings for today (today is within check_in_date to check_out_date - 1)
+     * 2. Have booking for today (today is within check_in_date to check_out_date - 1)
      */
     private function calculateBookedRooms(int $roomTypeId, Carbon $targetDate): int
     {
         try {
-            // Get bookings that overlap with the target date
-            $bookedRooms = DB::table('bookings')
-                ->join('booking_rooms', 'bookings.booking_id', '=', 'booking_rooms.booking_id')
+            // Get booking that overlap with the target date
+            $bookedRooms = DB::table('booking')
+                ->join('booking_rooms', 'booking.booking_id', '=', 'booking_rooms.booking_id')
                 ->join('rooms', 'booking_rooms.room_id', '=', 'rooms.room_id')
                 ->where('rooms.room_type_id', $roomTypeId)
-                ->where('bookings.status', 'confirmed') // Only confirmed bookings
-                ->where('bookings.check_in_date', '<=', $targetDate->format('Y-m-d'))
-                ->where('bookings.check_out_date', '>', $targetDate->format('Y-m-d')) // check_out_date is exclusive
+                ->where('booking.status', 'confirmed') // Only confirmed booking
+                ->where('booking.check_in_date', '<=', $targetDate->format('Y-m-d'))
+                ->where('booking.check_out_date', '>', $targetDate->format('Y-m-d')) // check_out_date is exclusive
                 ->distinct('booking_rooms.room_id') // Count unique rooms
                 ->count('booking_rooms.room_id');
 

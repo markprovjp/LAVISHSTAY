@@ -13,6 +13,9 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\PaymentSetting;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 class BookingRescheduleController extends Controller
 {
@@ -242,6 +245,45 @@ class BookingRescheduleController extends Controller
                 }
                 $totalPriceDifference = $priceDifference + $rescheduleFee;
 
+                                // If there's a fee (additional payment required), require payment via booking action flow (CPay) before finalizing reschedule.
+                                if ($totalPriceDifference > 0) {
+                                        $actionPayments = DB::table('payment')
+                                                ->where('booking_id', $booking->booking_id)
+                                                ->where('payment_type', 'additional')
+                                                ->whereNotNull('collector_notes')
+                                                ->orderBy('created_at', 'desc')
+                                                ->get();
+
+                                        foreach ($actionPayments as $p) {
+                                                $notes = null;
+                                                try {
+                                                        $notes = json_decode($p->collector_notes, true);
+                                                } catch (\Exception $e) {
+                                                        $notes = null;
+                                                }
+
+                                                if (is_array($notes) && isset($notes['created_for']) && $notes['created_for'] === 'booking_action_fee') {
+                                                        if (isset($notes['action_type']) && $notes['action_type'] === 'reschedule') {
+                                                                if ($p->status !== 'completed') {
+                                                                        return response()->json([
+                                                                                'success' => false,
+                                                                                'message' => 'Reschedule requires payment of applicable fee before confirmation',
+                                                                                'payment' => [
+                                                                                        'payment_id' => $p->payment_id,
+                                                                                        'transaction_id' => $p->transaction_id,
+                                                                                        'amount' => $p->amount_vnd,
+                                                                                        'status' => $p->status
+                                                                                ],
+                                                                                'penalty' => $totalPriceDifference
+                                                                        ], 402);
+                                                                }
+                                                                // if completed, proceed with reschedule
+                                                                break;
+                                                        }
+                                                }
+                                        }
+                                }
+
                 // Prepare room info for response
                 $roomInfo = $targetRooms->map(function ($room) use ($roomType, $package, $roomIdColumn) {
                 return [
@@ -256,20 +298,54 @@ class BookingRescheduleController extends Controller
                 ];
                 })->toArray();
 
-                // Update booking and create reschedule requests within a transaction
-                $paymentId = null;
-                DB::transaction(function () use ($booking, $validated, $newRoomIds, $roomOption, $reschedulePolicy, $totalPriceDifference, $roomPricePerNight, $stayDays, $newCheckInDate, $newCheckOutDate, $roomIdColumn, &$paymentId, $currentRoomCount) {
-                    // Create payment if there is a price difference
-                    if ($totalPriceDifference != 0) {
-                        $payment = Payment::create([
-                            'booking_id' => $booking->booking_id,
-                            'amount_vnd' => abs($totalPriceDifference),
-                            'payment_type' => $totalPriceDifference > 0 ? 'additional' : 'refund',
-                            'status' => 'pending',
-                            'created_at' => Carbon::now(),
-                        ]);
-                        $paymentId = $payment->payment_id;
-                    }
+                                // Update booking and create reschedule requests within a transaction
+                                $paymentId = null;
+                                $paymentTransactionId = null;
+                                $paymentQrUrl = null;
+                                DB::transaction(function () use ($booking, $validated, $newRoomIds, $roomOption, $reschedulePolicy, $totalPriceDifference, $roomPricePerNight, $stayDays, $newCheckInDate, $newCheckOutDate, $roomIdColumn, &$paymentId, &$paymentTransactionId, &$paymentQrUrl, $currentRoomCount) {
+                                        // Create payment if there is a price difference
+                                        if ($totalPriceDifference != 0) {
+                                                $payment = new Payment();
+                                                $payment->booking_id = $booking->booking_id;
+                                                $payment->amount_vnd = abs($totalPriceDifference);
+                                                $payment->payment_type = $totalPriceDifference > 0 ? 'additional' : 'refund';
+                                                $payment->status = 'pending';
+
+                                                // create transaction id in same shape as other action payments
+                                                $transactionId = 'RESCHEDULE_FEE_' . $booking->booking_id . '_' . time();
+                                                $payment->transaction_id = $transactionId;
+
+                                                // collector notes for action payment
+                                                $actionInfo = [
+                                                        'action_type' => 'reschedule',
+                                                        'action_params' => [
+                                                                'new_check_in_date' => $newCheckInDate->toDateString(),
+                                                                'new_check_out_date' => $newCheckOutDate->toDateString(),
+                                                                'new_room_ids' => $newRoomIds,
+                                                        ],
+                                                        'created_for' => 'booking_action_fee',
+                                                        'expires_at' => Carbon::now()->addMinutes(15)->toIsoString(),
+                                                ];
+                                                $payment->collector_notes = json_encode($actionInfo);
+
+                                                $payment->created_at = Carbon::now();
+                                                $payment->save();
+
+                                                $paymentId = $payment->payment_id;
+                                                $paymentTransactionId = $transactionId;
+
+                                                // Build VietQR URL using payment settings (mirror createActionFeeQR)
+                                                $bankId = PaymentSetting::get('vietqr.bank_id', 'MBBank');
+                                                $accountNo = PaymentSetting::get('vietqr.account_no', '0335920306');
+                                                $accountName = PaymentSetting::get('vietqr.account_name', 'NGUYEN VAN QUYEN');
+                                                $template = PaymentSetting::get('vietqr.template', 'print');
+
+                                                $content = "LVSA {$booking->booking_code} {$payment->payment_id}";
+                                                $encodedContent = urlencode($content);
+                                                $encodedAccountName = urlencode($accountName);
+
+                                                $paymentQrUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-{$template}.png?amount=" . $payment->amount_vnd . "&addInfo={$encodedContent}&accountName={$encodedAccountName}";
+                                        }
 
                     // Create reschedule requests: mỗi phòng 1 bản ghi
                     foreach ($newRoomIds as $roomId) {
@@ -339,24 +415,35 @@ class BookingRescheduleController extends Controller
 
                 Log::info('=== BookingController@rescheduleBooking SUCCESS ===');
 
-                return response()->json([
-                'success' => true,
-                'message' => 'Rời lịch thành công',
-                'reason' => $validated['reason'] ?? 'Rời lịch theo yêu cầu khách',
-                'formula' => $reschedulePolicy->reschedule_fee_percentage > 0
-                        ? 'Phí rời lịch = Phí cố định + (Giá phòng mới * Tỷ lệ phần trăm)'
-                        : 'Phí rời lịch = Phí cố định',
-                'policy' => $reschedulePolicy->name,
-                'policy_id' => $reschedulePolicy->policy_id,
-                'reschedule_fee' => $rescheduleFee,
-                'price_difference' => $priceDifference,
-                'total_price_difference' => $totalPriceDifference,
-                'fee_type' => $reschedulePolicy->reschedule_fee_percentage > 0 ? 'mixed' : 'fixed',
-                'reschedule_percentage' => $reschedulePolicy->reschedule_fee_percentage,
-                'reschedule_fixed_amount' => $reschedulePolicy->reschedule_fee_vnd,
-                'booking_info' => $bookingInfo,
-                'room_info' => $roomInfo,
-                ]);
+                                $response = [
+                                'success' => true,
+                                'message' => 'Rời lịch thành công',
+                                'reason' => $validated['reason'] ?? 'Rời lịch theo yêu cầu khách',
+                                'formula' => $reschedulePolicy->reschedule_fee_percentage > 0
+                                                ? 'Phí rời lịch = Phí cố định + (Giá phòng mới * Tỷ lệ phần trăm)'
+                                                : 'Phí rời lịch = Phí cố định',
+                                'policy' => $reschedulePolicy->name,
+                                'policy_id' => $reschedulePolicy->policy_id,
+                                'reschedule_fee' => $rescheduleFee,
+                                'price_difference' => $priceDifference,
+                                'total_price_difference' => $totalPriceDifference,
+                                'fee_type' => $reschedulePolicy->reschedule_fee_percentage > 0 ? 'mixed' : 'fixed',
+                                'reschedule_percentage' => $reschedulePolicy->reschedule_fee_percentage,
+                                'reschedule_fixed_amount' => $reschedulePolicy->reschedule_fee_vnd,
+                                'booking_info' => $bookingInfo,
+                                'room_info' => $roomInfo,
+                                ];
+
+                                if (!empty($paymentTransactionId)) {
+                                        $response['payment'] = [
+                                                'transaction_id' => $paymentTransactionId,
+                                                'amount' => abs($totalPriceDifference),
+                                                'status' => 'pending',
+                                                'qr_url' => $paymentQrUrl,
+                                        ];
+                                }
+
+                                return response()->json($response);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
                 Log::error('Validation error: ', $e->errors());

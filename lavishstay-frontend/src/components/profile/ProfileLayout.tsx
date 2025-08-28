@@ -39,12 +39,12 @@ const ProfileLayout: React.FC = React.memo(() => {
             label: 'Thông tin cá nhân',
             onClick: () => handleMenuClick('/profile/personal-info'),
         },
-        {
-            key: '/profile/bookings',
-            icon: <BookOutlined />,
-            label: 'Lịch sử đặt phòng',
-            onClick: () => handleMenuClick('/profile/bookings'),
-        },
+        // {
+        //     key: '/profile/bookings',
+        //     icon: <BookOutlined />,
+        //     label: 'Lịch sử đặt phòng',
+        //     onClick: () => handleMenuClick('/profile/bookings'),
+        // },
         // {
         //     key: '/profile/wishlist',
         //     icon: <HeartOutlined />,

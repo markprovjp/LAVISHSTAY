@@ -283,7 +283,7 @@ const GallerySection: React.FC = () => {
                     transition={{ duration: 0.8, delay: 0.3 }}
                     style={{ textAlign: 'center', paddingBottom: '60px' }}
                 >
-                    <Button
+                    {/* <Button
                         size="large"
                         icon={<ExpandOutlined />}
                         style={{
@@ -313,7 +313,7 @@ const GallerySection: React.FC = () => {
                         }}
                     >
                         XEM THƯ VIỆN ẢNH
-                    </Button>
+                    </Button> */}
                 </motion.div>
             </div>
 

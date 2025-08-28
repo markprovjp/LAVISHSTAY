@@ -81,7 +81,7 @@ const HeroSection: React.FC = () => {
                                 justifyContent: 'center',
                                 flexWrap: 'wrap'
                             }}>
-                                <Button type="primary" size="large" style={{
+                                {/* <Button type="primary" size="large" style={{
                                     background: 'linear-gradient(45deg, #d4af37, #f4e7aa)',
                                     border: 'none',
                                     height: 50,
@@ -105,7 +105,7 @@ const HeroSection: React.FC = () => {
                                     backdropFilter: 'blur(10px)'
                                 }}>
                                     Xem thư viện
-                                </Button>
+                                </Button> */}
                             </div>
                         </motion.div>
                     </div>

@@ -10,6 +10,8 @@ import {
 const { TextArea } = Input;
 const { Title, Paragraph } = Typography;
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8888";
+
 interface ContactFormProps {
   title?: string;
   subtitle?: string;
@@ -26,19 +28,47 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (values: any) => {
+  const handleSubmit = async (values: any) => {
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (onSubmit) {
-        onSubmit(values);
+    try {
+      const res = await fetch(`${API_BASE}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      let data: any = null;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (e) {
+          console.warn("Contact: failed to parse JSON response", e);
+        }
       }
 
-      message.success("Thông tin của bạn đã được gửi thành công!");
-      form.resetFields();
+      if (res.ok && data && data.success) {
+        message.success(
+          data.message || "Thông tin của bạn đã được gửi thành công!"
+        );
+        form.resetFields();
+        if (onSubmit) onSubmit(values);
+      } else if (data && data.message) {
+        message.error(data.message);
+      } else {
+        message.error("Có lỗi xảy ra khi gửi thông tin.");
+      }
+    } catch (err) {
+      message.error("Không thể gửi yêu cầu. Vui lòng thử lại sau.");
+      // eslint-disable-next-line no-console
+      console.error("Contact form submit error", err);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (

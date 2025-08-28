@@ -1,34 +1,60 @@
-Mục tiêu: Sửa và cải tiến toàn bộ trang tin tức `src/pages/News.tsx` và các component con trong `src/components/news/*` để dữ liệu từ BE (API) được hiển thị đầy đủ: banner (ảnh + link), tin nổi bật, danh sách tin, tab chuyên mục, tin thịnh hành/ thống kê. Giao diện dùng Ant Design/Ant Design Pro, tối giản và responsive. Thực hiện cả phần xử lý loading/empty và các fallback khi dữ liệu thiếu.
+Bạn là một developer backend Laravel; nhiệm vụ: tạo 2 template email đẹp responsive và controller + Mailables để gửi email cho ContactForm và Newsletter sử dụng cấu hình mail hiện tại (config/mail.php) và cấu trúc DB đã có (xem file SQL: có bảng coupons, coupon_redemptions, booking, payment). Chỉ cần tạo template + controller + mailable và route để frontend gọi — không thay đổi config mail hay thêm queue infra (dùng queue driver hiện có).
 
-Yêu cầu cụ thể:
-1. Kiểm tra hook gọi API: `src/hooks/useNews` hoặc các hook liên quan. Đảm bảo endpoint, params (per_page, page, category) đúng với BE. Nếu cấu trúc response khác (vd. `data.items`, `data.results`), map lại cho component.
-2. Trong `src/components/news/NewsMainHighlight.tsx`:
-   - Lấy đúng trường ảnh (vd. `image`, `image_url`, `thumbnail`) từ response; nếu không có ảnh, hiển thị placeholder (AntD `Image` với `fallback`).
-   - Hiển thị tiêu đề, mô tả ngắn và nút "Xem" dẫn tới `/news/:slug` dùng `react-router-dom` `Link`.
-   - Dùng `Carousel` hoặc `Card` của AntD (đẹp nhưng đơn giản).
-3. Trong `src/components/news/NewsHighlights.tsx` và `NewsList.tsx`:
-   - Map đúng trường (title, excerpt, tags, views, publish_date, slug).
-   - Cho phép click vào item để chuyển trang chi tiết.
-   - Hiện `Skeleton` khi loading và `Empty` khi không có data.
-4. Trong `src/components/news/NewsCategoryTabs.tsx`:
-   - Gọi API lấy danh sách chuyên mục; render `Tabs` (AntD) hoặc `Radio.Group`/`Menu`.
-   - Khi người dùng đổi tab, gọi lại API để load tin theo chuyên mục hoặc filter dữ liệu sẵn có.
-5. Trong `src/components/news/NewsSidebar.tsx`:
-   - Hiển thị tin thịnh hành (top views) và các thống kê (AntD `Statistic`/`Card`).
-   - Lấy dữ liệu từ API endpoint chuyên dụng nếu có (vd. `/news/trending` or `/stats/news`); nếu BE chưa có, bổ sung fallback dựa trên `newsListResponse`.
-6. Bảo đảm: mọi đường link dùng `to={`/news/${slug}`}` hoặc `href` mở new tab nếu là external; target `_blank` với rel `noopener noreferrer`.
-7. Thêm dev-only console.debug hoặc Log để in `newsListResponse` trong component khi `process.env.NODE_ENV !== 'production'`.
-8. Sửa lỗi mapping/typing: nếu TS báo lỗi kiểu, sửa type hoặc dùng optional chaining `?.`.
-9. Tối ưu UI: dùng `Card`, `Avatar`, `Tag`, `Carousel`, `List`, `Skeleton`, `Image` từ AntD để đạt thẩm mỹ AntD-Pro.
-10. Viết checklist test manual nhỏ (mạng) để dev kiểm tra.
+Yêu cầu chi tiết (làm đúng và ngắn gọn)
 
-Các file chính cần chỉnh (hãy chỉnh từng file và tạo test manual):
-- `src/pages/News.tsx`
-- `src/components/news/NewsMainHighlight.tsx`
-- `src/components/news/NewsHighlights.tsx`
-- `src/components/news/NewsCategoryTabs.tsx`
-- `src/components/news/NewsList.tsx`
-- `src/components/news/NewsSidebar.tsx`
-- `src/hooks/useNews.ts` (hoặc nơi gọi API)
-- Thêm: `src/types/news.ts` nếu cần types cho response.
+Đọc schema: dùng bảng coupons để lưu mã giảm giá 20% cho subscriber (không tạo bảng mới).
 
+Bảng coupons có các cột chính: code, type (percent/fixed), value, start_at, end_at, usage_limit, per_user_limit, min_booking_amount_vnd, applicable_room_type_ids, active, created_by, timestamps.
+Khi tạo mã cho newsletter: insert vào coupons với:
+code = LAVISH20- + 6 chữ số ngẫu nhiên (uppercase)
+type = 'percent', value = 20
+start_at = now(), end_at = now() + 90 days
+active = 1
+điền description / created_by tùy ý
+API endpoints (controller)
+
+POST /api/contact
+
+body { name, email, phone, subject, message }
+Validate inputs.
+Lưu record vào contact_messages (nếu chưa có, tạo migration nhỏ — optional; nếu không muốn migration, lưu vào log & reply).
+Queue gửi 2 email:
+To customer: ContactResponse Mailable (cảm ơn, tóm tắt, thời gian phản hồi).
+To admin: quyenjpn@gmail.com notification with full details, Reply-To set to customer email.
+Response: 200 { success:true, message: 'Đã nhận yêu cầu. Kiểm tra email để xác nhận.' }
+POST /api/newsletter
+
+body { email }
+Validate, dedupe (nếu đã có trong newsletter_subscribers hoặc coupons assigned, return existing code).
+Tạo coupon (see 1) và lưu.
+Queue gửi 1 email: NewsletterWelcome Mailable includes big 20% code box, CTA button to booking page http://localhost:3000/booking?discount=CODE.
+Add List-Unsubscribe header and unsubscribe link (route GET /api/newsletter/unsubscribe?email=...&token=...).
+Response: 200 { success:true, discount_code: 'LAVISH20-XXXXXX' }.
+Mailables & templates
+
+Create app/Mail/ContactResponse.php and app/Mail/NewsletterWelcome.php extending Mailable and using ->queue() for sending.
+Blade templates under resources/views/emails/:
+contact-response.blade.php — header logo, greeting by name, summary of message, expected response time, support contact, footer.
+newsletter-welcome.blade.php — hero illustration (use /resources/assets/illustration.svg or /images), big code box (visible on mobile), expiry info, CTA button, unsubscribe link.
+Templates must be responsive, inline-styles acceptable; use color #1890ff as primary.
+Coupon creation specifics (code sample pseudo)
+
+$code = sprintf('LAVISH20-%06d', random_int(0,999999));
+DB::table('coupons')->insert([... 'code' => strtoupper($code), 'type'=>'percent', 'value'=>20, 'start_at'=>now(), 'end_at'=>now()->addDays(90), 'description' => '20% cho newsletter', 'active'=>1, 'created_at'=>now(), 'updated_at'=>now() ... ]);
+Unsubscribe & headers
+
+Add List-Unsubscribe header in mailable: $message->getHeaders()->addTextHeader('List-Unsubscribe', '<' . $unsubscribeUrl . '>');
+Unsubscribe route toggles a newsletter_subscribers row active=false (create table if missing) or stores token-based opt-out.
+Use existing mail config
+
+Use Laravel Mail facade; do not change config/mail.php. Use Mail::to($email)->queue(new NewsletterWelcome(...));
+Queue & retry
+
+Use default queue connection from .env (no infra steps). Jobs should be queued; wrap DB writes in try/catch and log errors. Set mailables to implement ShouldQueue.
+Return values & frontend UX
+
+For newsletter, return the generated code in JSON so frontend can display it immediately (and still send email). For contact, return success message.
+Tests (minimal)
+
+Add unit test to assert POST /api/newsletter creates coupon row and queues NewsletterWelcome mail.
+Add unit test for POST /api/contact queues ContactResponse.
