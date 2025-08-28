@@ -248,7 +248,7 @@ class NewsController extends Controller
 
                 // Lấy CKEditorFuncNum từ request
                 $CKEditorFuncNum = $request->input('CKEditorFuncNum', 0);
-                $msg = 'Image uploaded successfully';
+                $msg = 'Tải ảnh thành công!';
 
                 // Trả về response HTML cho CKEditor, bao gồm data-filepath
                 $response = "<script>window.parent.CKEDITOR.tools.callFunction($CKEditorFuncNum, '$url', '$msg');";

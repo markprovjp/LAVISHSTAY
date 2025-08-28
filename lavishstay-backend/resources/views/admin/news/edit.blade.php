@@ -5,6 +5,7 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật bài viết tin tức cho website khách sạn</p>
         </div>
 
+
         <!-- Flash messages -->
         @if (session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4 animate-slide-in">
@@ -32,7 +33,8 @@
             <section class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-6">
                 <!-- Meta Title -->
                 <div x-data="{ metaTitle: '{{ old('meta_title', $news->meta_title) }}', maxMetaTitle: 60, hasError: {{ $errors->has('meta_title') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tiêu đề bài viết (Meta Title)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tiêu đề bài viết
+                        (Meta Title)</label>
                     <input type="text" name="meta_title" x-model="metaTitle"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         required placeholder="Nhập tiêu đề bài viết (50-60 ký tự)">
@@ -46,7 +48,8 @@
 
                 <!-- Meta Description -->
                 <div x-data="{ metaDescription: '{{ old('meta_description', $news->meta_description) }}', maxMetaDescription: 160, hasError: {{ $errors->has('meta_description') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả ngắn (Meta Description)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả ngắn (Meta
+                        Description)</label>
                     <textarea name="meta_description" rows="3" x-model="metaDescription"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         placeholder="Nhập mô tả ngắn (dưới 160 ký tự)"></textarea>
@@ -60,7 +63,8 @@
 
                 <!-- Meta Keywords -->
                 <div x-data="{ metaKeywords: '{{ old('meta_keywords', $news->meta_keywords) }}', maxMetaKeywords: 100, hasError: {{ $errors->has('meta_keywords') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Từ khóa SEO (Meta Keywords)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Từ khóa SEO (Meta
+                        Keywords)</label>
                     <input type="text" name="meta_keywords" x-model="metaKeywords"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         placeholder="Nhập từ khóa, cách nhau bởi dấu phẩy">
@@ -74,7 +78,8 @@
 
                 <!-- Summary -->
                 <div x-data="{ summary: '{{ old('summary', $news->summary) }}', maxSummary: 500, hasError: {{ $errors->has('summary') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tóm tắt bài viết</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tóm tắt bài
+                        viết</label>
                     <textarea name="summary" rows="3" x-model="summary"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         placeholder="Nhập tóm tắt ngắn gọn (dưới 500 ký tự)"></textarea>
@@ -88,7 +93,8 @@
 
                 <!-- Tags -->
                 <div x-data="{ tags: '{{ old('tags', $news->tags) }}', hasError: {{ $errors->has('tags') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (phân cách bởi dấu phẩy)</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (phân cách bởi
+                        dấu phẩy)</label>
                     <input type="text" name="tags" x-model="tags"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         placeholder="Nhập tags, ví dụ: resort, luxury, travel">
@@ -102,7 +108,8 @@
 
                 <!-- Content -->
                 <div x-data="{ hasError: {{ $errors->has('content') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nội dung bài viết</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nội dung bài
+                        viết</label>
                     <textarea name="content" id="ckeditor" rows="10"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         x-on:input="hasError = false">{{ old('content', $news->content) }}</textarea>
@@ -116,13 +123,16 @@
             <aside class="space-y-6">
                 <!-- Category -->
                 <div x-data="{ categoryId: '{{ old('category_id', $news->category_id) }}', hasError: {{ $errors->has('category_id') ? 'true' : 'false' }} }">
-                    <label for="category_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục bài viết</label>
+                    <label for="category_id"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Danh mục bài
+                        viết</label>
                     <select name="category_id" id="category_id"
                         class="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         x-model="categoryId" x-on:change="hasError = false">
                         <option value="">-- Chọn danh mục --</option>
                         @foreach ($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ old('category_id', $news->category_id) == $cat->id ? 'selected' : '' }}>
+                            <option value="{{ $cat->id }}"
+                                {{ old('category_id', $news->category_id) == $cat->id ? 'selected' : '' }}>
                                 {{ $cat->name }}
                             </option>
                         @endforeach
@@ -134,7 +144,8 @@
 
                 <!-- Thumbnail -->
                 <div x-data="{ hasThumbnailError: {{ $errors->has('thumbnail') || $errors->has('thumbnail_id') ? 'true' : 'false' }} }" x-cloak>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ảnh đại diện bài viết</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ảnh đại diện bài
+                        viết</label>
                     <img id="thumbnail_preview"
                         src="{{ old('thumbnail_id', $news->thumbnail_id) ? optional($mediaFiles->firstWhere('id', old('thumbnail_id', $news->thumbnail_id)))->filepath : asset('images/placeholder.png') }}"
                         class="w-40 h-24 object-cover border rounded-lg mt-2"
@@ -147,7 +158,8 @@
                         <input type="file" accept="image/*" x-ref="uploadInput" class="hidden"
                             @change="uploadFiles($event); hasThumbnailError = false">
                     </div>
-                    <input type="hidden" id="thumbnail_id" name="thumbnail_id" value="{{ old('thumbnail_id', $news->thumbnail_id) }}"
+                    <input type="hidden" id="thumbnail_id" name="thumbnail_id"
+                        value="{{ old('thumbnail_id', $news->thumbnail_id) }}"
                         x-on:change="hasThumbnailError = false">
                     @error('thumbnail')
                         <p class="text-xs text-red-500 mt-1" x-show="hasThumbnailError">{{ $message }}</p>
@@ -165,7 +177,8 @@
 
                 <!-- Is Featured -->
                 <div x-data="{ hasError: {{ $errors->has('is_featured') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vị trí hiển thị</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vị trí hiển
+                        thị</label>
                     <input type="checkbox" name="is_featured" value="1"
                         class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                         {{ old('is_featured', $news->is_featured) == 1 ? 'checked' : '' }}>
@@ -202,7 +215,8 @@
 
                 <!-- Publish Date -->
                 <div x-data="{ publishDate: '{{ old('publish_date', $news->published_at ? $news->published_at->format('Y-m-d\TH:i') : '') }}', hasError: {{ $errors->has('publish_date') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày đăng bài</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ngày đăng
+                        bài</label>
                     <input type="datetime-local" name="publish_date" x-model="publishDate"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         x-on:input="hasError = false">
@@ -213,12 +227,15 @@
 
                 <!-- Status -->
                 <div x-data="{ status: '{{ old('status', $news->status) }}', hasError: {{ $errors->has('status') ? 'true' : 'false' }} }">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái bài viết</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trạng thái bài
+                        viết</label>
                     <select name="status"
                         class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                         x-model="status" x-on:change="hasError = false">
-                        <option value="1" {{ old('status', $news->status) == 1 ? 'selected' : '' }}>Công khai</option>
-                        <option value="0" {{ old('status', $news->status) == 0 ? 'selected' : '' }}>Bản nháp</option>
+                        <option value="1" {{ old('status', $news->status) == 1 ? 'selected' : '' }}>Công khai
+                        </option>
+                        <option value="0" {{ old('status', $news->status) == 0 ? 'selected' : '' }}>Bản nháp
+                        </option>
                     </select>
                     @error('status')
                         <p class="text-xs text-red-500 mt-1" x-show="hasError">{{ $message }}</p>
@@ -365,6 +382,25 @@
                             this.showMedia = true;
                             this.altText = this.selectedMedia.alt_text || '';
                             this.titleText = this.selectedMedia.title || '';
+
+                            // Lấy width, height, size từ ảnh
+                            const img = new Image();
+                            img.onload = () => {
+                                this.selectedMedia.width = img.naturalWidth;
+                                this.selectedMedia.height = img.naturalHeight;
+                            };
+                            img.src = this.selectedMedia.filepath;
+
+                            // Lấy dung lượng bằng fetch HEAD (nếu chưa có)
+                            if (!this.selectedMedia.size) {
+                                fetch(this.selectedMedia.filepath, {
+                                        method: 'HEAD'
+                                    })
+                                    .then(res => {
+                                        const size = res.headers.get('content-length');
+                                        if (size) this.selectedMedia.size = parseInt(size);
+                                    });
+                            }
                         } else {
                             this.uploadSuccessMessage = 'Vui lòng chọn hoặc tải ảnh trước!';
                             setTimeout(() => this.uploadSuccessMessage = '', 3000);
