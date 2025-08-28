@@ -468,11 +468,11 @@ const BookingManagement: React.FC = () => {
                             Theo dõi và quản lý các đặt phòng của bạn tại LavishStay Hotel
                         </Text>
                     </Col>
-                    <Col>
+                    {/* <Col>
                         <Button type="primary" icon={<DownloadOutlined />} size="large" style={{ borderRadius: 4, height: 40, border: 'none', fontWeight: 500, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                             Xuất báo cáo
                         </Button>
-                    </Col>
+                    </Col> */}
                 </Row>
             </div>
 

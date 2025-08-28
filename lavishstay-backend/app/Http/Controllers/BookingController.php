@@ -858,7 +858,7 @@ return response()->json($responseData);
                 'r.updated_at'
             ])->get();
 
-        Log::info("User bookings fetched " . json_encode($bookings) . " for user ID: " . $userId);
+        // Log::info("User bookings fetched " . json_encode($bookings) . " for user ID: " . $userId);
         return response()->json([
             'success' => true,
             'bookings' => $bookings,
@@ -1282,9 +1282,37 @@ public function assignRoom(Request $request, $id)
         try {
             DB::beginTransaction();
 
+            // Determine final status: if a completed cancel action-fee payment exists,
+            // mark as 'Cancelled With Penalty', otherwise 'Cancelled'.
+            $actionPayments = DB::table('payment')
+                ->where('booking_id', $id)
+                ->where('payment_type', 'additional')
+                ->whereNotNull('collector_notes')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $hasCompletedCancelPayment = false;
+            foreach ($actionPayments as $p) {
+                $notes = null;
+                try {
+                    $notes = json_decode($p->collector_notes, true);
+                } catch (\Exception $e) {
+                    $notes = null;
+                }
+
+                if (is_array($notes) && isset($notes['created_for']) && $notes['created_for'] === 'booking_action_fee') {
+                    if (isset($notes['action_type']) && $notes['action_type'] === 'cancel' && $p->status === 'completed') {
+                        $hasCompletedCancelPayment = true;
+                        break;
+                    }
+                }
+            }
+
+            $finalStatus = $hasCompletedCancelPayment ? 'Cancelled With Penalty' : 'Cancelled';
+
             // Update booking status
             DB::table('booking')->where('booking_id', $id)->update([
-                'status' => 'Cancelled',
+                'status' => $finalStatus,
                 'updated_at' => now()
             ]);
 
@@ -1679,6 +1707,9 @@ public function assignRoom(Request $request, $id)
         try {
             DB::beginTransaction();
 
+            // Note: bulk cancel keeps previous behavior (mass-cancelling as 'Cancelled').
+            // If you want bulk cancel to consider per-booking penalty payments, we should
+            // implement per-booking checks similar to single cancel flows.
             $cancelledCount = DB::table('booking')
                 ->whereIn('booking_id', $request->booking_ids)
                 ->whereIn('status', ['Pending', 'Confirmed'])

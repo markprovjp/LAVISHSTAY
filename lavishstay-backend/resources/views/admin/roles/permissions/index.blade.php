@@ -5,7 +5,7 @@
             <!-- Left: Title -->
             <div class="mb-4 sm:mb-0">
                 <h1 class="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-                    Phân quyền: <span class="text-violet-600 dark:text-violet-400">{{ $role->name }}</span>
+                    Phân quyền: <span class="text-violet-600 dark:text-violet-400">{{ $role->description }}</span>
                 </h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                     Quản lý quyền truy cập cho vai trò này

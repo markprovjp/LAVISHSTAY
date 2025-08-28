@@ -174,7 +174,46 @@ class BookingCancellationController extends Controller
             $penaltyType = 'fixed';
         }
 
-        // Update status to Cancelled With Penalty
+        // If there's a penalty, require payment before finalizing cancellation.
+        if ($penaltyAmount > 0) {
+            $actionPayments = DB::table('payment')
+                ->where('booking_id', $booking->booking_id)
+                ->where('payment_type', 'additional')
+                ->whereNotNull('collector_notes')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            foreach ($actionPayments as $p) {
+                $notes = null;
+                try {
+                    $notes = json_decode($p->collector_notes, true);
+                } catch (\Exception $e) {
+                    $notes = null;
+                }
+
+                if (is_array($notes) && isset($notes['created_for']) && $notes['created_for'] === 'booking_action_fee') {
+                    if (isset($notes['action_type']) && $notes['action_type'] === 'cancel') {
+                        if ($p->status !== 'completed') {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Cancellation requires payment of applicable fee before confirmation',
+                                'payment' => [
+                                    'payment_id' => $p->payment_id,
+                                    'transaction_id' => $p->transaction_id,
+                                    'amount' => $p->amount_vnd,
+                                    'status' => $p->status
+                                ],
+                                'penalty' => $penaltyAmount
+                            ], 402);
+                        }
+                        // if completed, proceed with cancellation
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Update status to Cancelled With Penalty (or Cancelled if somehow zero)
         DB::transaction(function () use ($booking, $penaltyAmount) {
             $booking->status = $penaltyAmount > 0 ? 'Cancelled With Penalty' : 'Cancelled';
             $booking->save();
@@ -351,12 +390,6 @@ class BookingCancellationController extends Controller
         if ($penaltyAmount === 0 && $penaltyFixedAmount > 0) {
             $penaltyAmount = $penaltyFixedAmount;
             $penaltyType = 'fixed';
-        }
-
-        // Nếu có phí phạt, update trạng thái booking thành 'Cancelled With Penalty'
-        if ($penaltyAmount > 0) {
-            $booking->status = 'Cancelled With Penalty';
-            $booking->save();
         }
 
         return response()->json([

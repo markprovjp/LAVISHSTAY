@@ -620,6 +620,14 @@ export const paymentAPI = {
     const response = await api.post('/payment/verify-vietqr', data);
     return response.data;
   },
+  createActionFeeQR: async (data: { booking_id: number; action_type: string; amount: number; booking_code: string; description?: string }) => {
+    const response = await api.post('/payment/create-action-fee-qr', data);
+    return response.data;
+  },
+  checkActionFeePayment: async (data: { payment_id: string; booking_code: string; action_type: string; booking_id: number }) => {
+    const response = await api.post('/payment/check-action-fee', data);
+    return response.data;
+  },
 };
 
 export const processEarlyCheckOut = async (values: any) => {

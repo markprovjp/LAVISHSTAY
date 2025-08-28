@@ -110,7 +110,7 @@ const IntroductionSection: React.FC = () => {
                                 />
 
                                 {/* Gallery Button */}
-                                <Button
+                                {/* <Button
                                     style={{
                                         position: 'absolute',
                                         bottom: '20px',
@@ -138,7 +138,7 @@ const IntroductionSection: React.FC = () => {
                                     }}
                                 >
                                     XEM THƯ VIỆN
-                                </Button>
+                                </Button> */}
                             </div>
                         </motion.div>
                     </Col>

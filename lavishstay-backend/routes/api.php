@@ -12,6 +12,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TranslationController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\NewsletterController;
 
 
 use Illuminate\Http\Request;
@@ -34,6 +36,7 @@ use App\Http\Controllers\Api\NewsCommentController;
 use App\Http\Controllers\Api\NewsAPICategoryController;
 use App\Http\Controllers\Api\NewsUserActionController;
 use App\Http\Controllers\Api\BookingServicePaymentController;
+use App\Http\Controllers\Api\BookingActionPaymentController;
 use App\Http\Controllers\NewsController\NewsCategoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\PaymentSettingsController;
@@ -90,6 +93,15 @@ Route::prefix('public')->middleware(['throttle:20,1'])->group(function () {
 
 // Route test gửi email
 Route::get('/test-email/{bookingId}', [PaymentController::class, 'testEmail']);
+
+// Contact and Newsletter routes (public, with throttling)
+Route::middleware(['throttle:5,10'])->group(function () {
+    Route::post('/contact', [ContactController::class, 'store'])->name('api.contact.store');
+    Route::post('/newsletter', [NewsletterController::class, 'subscribe'])->name('api.newsletter.subscribe');
+});
+
+// Newsletter unsubscribe (no throttling needed)
+Route::get('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('api.newsletter.unsubscribe');
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
@@ -259,6 +271,10 @@ Route::prefix('pricing')->group(function () {
         Route::get('/stats', [PricingController::class, 'getPricingStats']);
     });
 });
+   // Booking Action Payment Management (cancel/extend/reschedule fees)
+    Route::post('/payment/create-action-fee-qr', [BookingActionPaymentController::class, 'createActionFeeQR']);
+    Route::post('/payment/check-action-fee', [BookingActionPaymentController::class, 'checkActionFeePayment']);
+    Route::get('/bookings/{bookingId}/action-payment-history', [BookingActionPaymentController::class, 'getActionPaymentHistory']);
 
 // Reception Management API (Quản lý lễ tân)
 Route::prefix('reception')->group(function () {
@@ -284,13 +300,6 @@ Route::prefix('reception')->group(function () {
     // Cash payment management
     Route::post('/mark-cash-paid', [ReceptionController::class, 'markCashPaid'])->middleware('auth:sanctum');
     
-    // Reception check-in: delegate to BookingCheckinController for check-in flows
-    // API Routes cho Check-in///////////////////////////////////////////////////
-    Route::prefix('checkin')->group(function () {
-        Route::get('/today', [BookingCheckinController::class, 'getTodayCheckins'])->name('api.checkin.today');
-        Route::get('/booking/{bookingId}/info', [BookingCheckinController::class, 'getCheckinInfo'])->name('api.checkin.info');
-        Route::post('/booking/{bookingId}/process', [BookingCheckinController::class, 'processCheckin'])->name('api.checkin.process');
-    });
     // Reception check-out: run through BookingCheckoutController so services are calculated before finalizing
     // Checkout
     Route::get('/bookings/{id}/checkout-info', [BookingCheckoutController::class, 'getCheckoutInfo']);
@@ -312,6 +321,7 @@ Route::prefix('reception')->group(function () {
     Route::post('/bookings/services/payment/check', [BookingServicePaymentController::class, 'checkServicePayment']);
     Route::get('/bookings/{bookingId}/services/payment-history', [BookingServicePaymentController::class, 'getServicePaymentHistory']);
 
+ 
     // Notifications (with auth middleware)
     Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);

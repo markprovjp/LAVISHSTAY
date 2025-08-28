@@ -184,7 +184,7 @@ const LoungeSection: React.FC<LoungeSectionProps> = () => {
                                 ))}
                             </div>
 
-                            <Button
+                            {/* <Button
                                 size="large"
                                 style={{
                                     background: 'linear-gradient(45deg, #d4af37, #f4d03f)',
@@ -210,7 +210,7 @@ const LoungeSection: React.FC<LoungeSectionProps> = () => {
                                 }}
                             >
                                 Khám Phá Ngay
-                            </Button>
+                            </Button> */}
                         </div>
 
                         {/* Image */}

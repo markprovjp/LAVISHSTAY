@@ -77,18 +77,18 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Log::info('EventServiceProvider booting', [
-            'registered_events' => array_keys($this->listen)
-        ]);
+        // Log::info('EventServiceProvider booting', [
+        //     'registered_events' => array_keys($this->listen)
+        // ]);
 
         // Register a wildcard listener to debug all events
         Event::listen('*', function ($eventName, $data) {
             if (str_contains($eventName, 'Booking') || str_contains($eventName, 'Payment') || str_contains($eventName, 'Room')) {
-                Log::info('Event fired', [
-                    'event' => $eventName,
-                    'data_count' => count($data),
-                    'timestamp' => now()
-                ]);
+                // Log::info('Event fired', [
+                //     'event' => $eventName,
+                //     'data_count' => count($data),
+                //     'timestamp' => now()
+                // ]);
             }
         });
     }

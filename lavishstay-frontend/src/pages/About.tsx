@@ -84,7 +84,7 @@ const About: React.FC = () => {
     },
     {
       title: "Năm xây dựng",
-      value: 2018,
+      value: "2018",
       suffix: "",
       icon: <UserOutlined />,
     },
@@ -337,7 +337,7 @@ const About: React.FC = () => {
                     <span className="inline-block w-full sm:w-32 font-medium mb-1 sm:mb-0">
                       Năm xây dựng:
                     </span>
-                    <span>2018</span>
+                    <span>{String(2018)}</span>
                   </Paragraph>
                   <Paragraph className="mb-2 flex flex-wrap items-center">
                     <span className="inline-block w-full sm:w-32 font-medium mb-1 sm:mb-0">

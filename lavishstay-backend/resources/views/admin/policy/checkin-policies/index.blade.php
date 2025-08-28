@@ -50,7 +50,7 @@
                         <option value="created_at" {{ request('sort_by') === 'created_at' ? 'selected' : '' }}>Ngày tạo</option>
                         <option value="name" {{ request('sort_by') === 'name' ? 'selected' : '' }}>Tên</option>
                         <option value="standard_check_in_time"
-                            {{ request('sort_by') === 'standard_check_in_time' ? 'selected' : '' }}>Giờ check-in tiêu chuẩn</option>
+                            {{ request('sort_by') === 'standard_check_in_time' ? 'selected' : '' }}>Nhận phòng (Trong khoảng)</option>
                         <option value="early_check_in_fee_vnd"
                             {{ request('sort_by') === 'early_check_in_fee_vnd' ? 'selected' : '' }}>Phí check-in sớm</option>
                     </select>
@@ -114,7 +114,7 @@
                         <tr>
                             <th class="px-6 py-4 text-left">ID</th>
                             <th class="px-6 py-4 text-left">Tên chính sách</th>
-                            <th class="px-6 py-4 text-left">Giờ check-in tiêu chuẩn</th>
+                            <th class="px-6 py-4 text-left">Nhận phòng (Trong khoảng)</th>
                             <th class="px-6 py-4 text-left">Phí check-in sớm</th>
                             <th class="px-6 py-4 text-left">Mức độ ưu tiên</th>
                             <th class="px-6 py-4 text-left">Điều kiện</th>
@@ -241,7 +241,7 @@
                                                 @endif
                                                 <div>
                                                     <span
-                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Giờ check-in tiêu chuẩn:</span>
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Nhận phòng (Trong khoảng):</span>
                                                     <div class="text-sm text-gray-900 dark:text-gray-100">
                                                         {{ $policy->standard_check_in_time ? \Carbon\Carbon::parse($policy->standard_check_in_time)->format('H:i') : 'Chưa thiết lập' }}</div>
                                                 </div>

@@ -1,53 +1,36 @@
-CREATE TABLE `news` (
-  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính, mã bài viết',
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Đường dẫn không dấu, duy nhất cho mỗi bài viết (SEO)',
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'Tiêu đề bài viết',
-  `summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Tóm tắt ngắn nội dung bài viết',
-  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Nội dung chi tiết bài viết (HTML)',
-  `tags` json DEFAULT NULL COMMENT 'Danh sách tag (mảng string, phục vụ tìm kiếm, phân loại)',
-  `thumbnail_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID ảnh đại diện (liên kết media_files)',
-  `author_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID tác giả (liên kết users)',
-  `category_id` bigint UNSIGNED DEFAULT NULL COMMENT 'ID chuyên mục/danh mục (liên kết news_categories)',
-  `meta_title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tiêu đề SEO (meta title)',
-  `meta_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'Mô tả SEO (meta description)',
-  `meta_keywords` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Từ khóa SEO (meta keywords)',
-  `canonical_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'URL chuẩn SEO (canonical)',
-  `schema_json` json DEFAULT NULL COMMENT 'Dữ liệu cấu trúc SEO (schema.org, dạng JSON)',
-  `views` int DEFAULT '0' COMMENT 'Số lượt xem bài viết',
-  `status` tinyint DEFAULT '1' COMMENT 'Trạng thái bài viết (1: hiển thị, 0: ẩn, nháp...)',
-  `is_featured` tinyint(1) DEFAULT '1',
-  `published_at` datetime DEFAULT NULL COMMENT 'Thời điểm xuất bản',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-CREATE TABLE `news_categories` (
-  `id` bigint UNSIGNED NOT NULL COMMENT 'Khóa chính chuyên mục',
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Tên chuyên mục (ví dụ: Ưu đãi, Tin tức, Hướng dẫn...)',
-  `slug` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Slug URL của chuyên mục (không dấu)',
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả ngắn giúp định nghĩa mục đích chuyên mục',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Thời điểm tạo',
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Thời điểm cập nhật'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục tin tức phân loại nội dung';
-CREATE TABLE `news_comments` (
+CREATE TABLE `coupons` (
   `id` bigint UNSIGNED NOT NULL,
-  `news_id` bigint UNSIGNED NOT NULL,
-  `user_id` bigint UNSIGNED NOT NULL,
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `likes` int DEFAULT '0',
-  `parent_id` bigint UNSIGNED DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-CREATE TABLE `news_user_actions` (
+  `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã giảm giá (uppercase)',
+  `type` enum('percent','fixed') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Loại giảm giá: phần trăm hoặc số tiền cố định',
+  `value` decimal(10,2) NOT NULL COMMENT 'Giá trị giảm (% hoặc VND)',
+  `currency` varchar(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'VND' COMMENT 'Đơn vị tiền tệ',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT 'Mô tả mã giảm giá',
+  `start_at` timestamp NOT NULL COMMENT 'Thời gian bắt đầu có hiệu lực',
+  `end_at` timestamp NOT NULL COMMENT 'Thời gian hết hiệu lực',
+  `usage_limit` int DEFAULT NULL COMMENT 'Giới hạn số lần sử dụng toàn cục',
+  `per_user_limit` int DEFAULT NULL COMMENT 'Giới hạn số lần sử dụng mỗi user',
+  `min_booking_amount_vnd` decimal(15,2) DEFAULT NULL COMMENT 'Số tiền booking tối thiểu để áp dụng',
+  `applicable_room_type_ids` json DEFAULT NULL COMMENT 'Danh sách ID loại phòng áp dụng',
+  `stackable` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Có thể chồng với mã khác không',
+  `combinable_with` json DEFAULT NULL COMMENT 'Danh sách mã có thể kết hợp',
+  `active` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Trạng thái hoạt động',
+  `created_by` bigint UNSIGNED DEFAULT NULL COMMENT 'Người tạo mã',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `coupon_redemptions` (
   `id` bigint UNSIGNED NOT NULL,
-  `news_id` bigint UNSIGNED NOT NULL,
-  `user_id` bigint UNSIGNED NOT NULL,
-  `is_liked` tinyint DEFAULT '0',
-  `is_bookmarked` tinyint DEFAULT '0',
-  `rating` float DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `coupon_id` bigint UNSIGNED NOT NULL,
+  `user_id` bigint UNSIGNED DEFAULT NULL,
+  `booking_id` int NOT NULL,
+  `amount_saved_vnd` decimal(15,2) NOT NULL,
+  `applied_amount_vnd` decimal(15,2) DEFAULT NULL,
+  `meta` json DEFAULT NULL,
+  `redeemed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `booking` (
   `booking_id` int NOT NULL AUTO_INCREMENT COMMENT 'Khóa chính, mã đặt phòng',

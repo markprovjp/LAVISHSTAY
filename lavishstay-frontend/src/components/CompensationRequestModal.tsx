@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Select, Input, InputNumber, Upload, Button, message, Space } from 'antd';
+import { Modal, Form, Select, Input, InputNumber, Upload, Button, message, Space, Radio } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
@@ -39,7 +39,10 @@ const CompensationRequestModal: React.FC<Props> = ({ visible, bookingId, policie
             const raw = localStorage.getItem('authUser') || localStorage.getItem('user') || null;
             try {
                 const parsed = raw ? JSON.parse(raw) : null;
-                if (parsed && parsed.id) form.setFieldsValue({ requested_by: parsed.id });
+                if (parsed && parsed.id) {
+                    form.setFieldsValue({ requested_by: parsed.id });
+                    setCurrentUser(parsed);
+                }
             } catch (e) { }
         }
     }, [form]);
@@ -96,27 +99,51 @@ const CompensationRequestModal: React.FC<Props> = ({ visible, bookingId, policie
             footer={null}
             width={720}
         >
-            <Form form={form} layout="vertical" onFinish={handleFinish}>
-                <Form.Item name="policy_id" label="Chọn chính sách" rules={[{ required: true, message: 'Bạn phải chọn chính sách' }]}>
-                    <Select placeholder="Chọn chính sách bồi thường">
-                        {policies?.map(p => (
-                            <Select.Option key={p.compensation_policy_id} value={p.compensation_policy_id}>
-                                {p.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleFinish}
+                initialValues={{
+                    policy_id: policies && policies.length ? policies[0].compensation_policy_id : undefined,
+                    mode: policies && policies.length ? 'policy' : 'custom'
+                }}
+            >
+                <Form.Item label="Loại yêu cầu">
+                    <Radio.Group value={form.getFieldValue('mode') || (policies && policies.length ? 'policy' : 'custom')} onChange={(e) => {
+                        form.setFieldsValue({ mode: e.target.value });
+                    }}>
+                        <Radio value="policy">Chọn chính sách</Radio>
+                        <Radio value="custom">Khác (nhập lý do)</Radio>
+                    </Radio.Group>
+                </Form.Item>
+
+                <Form.Item shouldUpdate>
+                    {() => {
+                        const currentMode = form.getFieldValue('mode') || (policies && policies.length ? 'policy' : 'custom');
+                        return currentMode === 'policy' ? (
+                            <Form.Item name="policy_id" label="Chọn chính sách" rules={[{ required: true, message: 'Bạn phải chọn chính sách' }]}>
+                                <Select placeholder="Chọn chính sách bồi thường">
+                                    {policies?.map(p => (
+                                        <Select.Option key={p.compensation_policy_id} value={p.compensation_policy_id}>
+                                            {p.name}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        ) : (
+                            <Form.Item name="custom_reason" label="Lý do (bắt buộc)" rules={[{ required: true, message: 'Bạn phải nhập lý do' }]}>
+                                <TextArea rows={3} placeholder="Mô tả lý do bồi thường" />
+                            </Form.Item>
+                        );
+                    }}
                 </Form.Item>
 
                 <Form.Item name="requested_amount" label="Số tiền đề nghị (VND)">
                     <InputNumber style={{ width: '100%' }} min={0} />
                 </Form.Item>
 
-                <Form.Item name="custom_reason" label="Lý do (tuỳ chọn)">
-                    <TextArea rows={3} placeholder="Mô tả lý do bồi thường" />
-                </Form.Item>
-
-                <Form.Item name="requested_by" label="Người thực hiện">
-                    <Input placeholder="ID người dùng (nếu bỏ trống server sẽ lấy từ token)" disabled={!!currentUser} />
+                <Form.Item name="requested_by" initialValue={currentUser?.id || undefined} hidden>
+                    <Input />
                 </Form.Item>
 
                 <Form.Item name="attachments" label="Tệp đính kèm">

@@ -509,7 +509,7 @@ class BookingCheckoutController extends Controller
 
             // Validate input
             $validated = $request->validate([
-                'policy_id' => 'nullable|integer|exists:compensation_policies,compensation_policy_id',
+                // 'policy_id' => 'nullable|integer|exists:compensation_policies,compensation_policy_id',
                 'custom_reason' => 'nullable|string|max:2000',
                 'requested_amount' => 'nullable|numeric|min:0',
                 'requested_by' => 'nullable|integer|exists:users,id',
@@ -542,41 +542,30 @@ class BookingCheckoutController extends Controller
                 ], 422);
             }
 
-            // Handle file uploads
+            // Handle file uploads - store on the public disk (storage/app/public/...)
             $attachmentPaths = [];
             if (!empty($validated['attachments'])) {
-                $targetDir = public_path('compensation_attachments');
-                if (!is_dir($targetDir)) {
-                    try {
-                        mkdir($targetDir, 0755, true);
-                    } catch (\Exception $e) {
-                        Log::warning('Failed to create compensation attachments directory', ['dir' => $targetDir, 'error' => $e->getMessage()]);
-                    }
-                }
-
                 foreach ($validated['attachments'] as $index => $file) {
-                    // Capture metadata before moving the uploaded file
                     $originalName = $file->getClientOriginalName();
                     $fileSize = $file->getSize();
                     $mimeType = $file->getMimeType();
 
-                    $fileName = time() . '_' . $index . '_' . $originalName;
-                    $filePath = 'compensation_attachments/' . $fileName;
+                    $fileName = time() . '_' . $index . '_' . preg_replace('/[^A-Za-z0-9_\.-]/', '_', $originalName);
+                    $relativePath = 'compensation_attachments/' . $fileName;
 
                     try {
-                        // Move file to public directory
-                        $file->move($targetDir, $fileName);
+                        // Store using the public disk so files are under storage/app/public
+                        Storage::disk('public')->putFileAs('compensation_attachments', $file, $fileName);
                     } catch (\Exception $e) {
-                        // Log and continue; record a failed-upload marker
-                        Log::error('Failed to move uploaded compensation attachment', ['error' => $e->getMessage(), 'original_name' => $originalName]);
-                        // Optionally, you may throw here to abort the whole request
+                        Log::error('Failed to store compensation attachment to public disk', ['error' => $e->getMessage(), 'original_name' => $originalName]);
                         throw $e;
                     }
 
                     $attachmentPaths[] = [
                         'original_name' => $originalName,
                         'file_name' => $fileName,
-                        'file_path' => $filePath,
+                        // Public URL path served via the storage symlink
+                        'file_path' => 'storage/' . $relativePath,
                         'file_size' => $fileSize,
                         'mime_type' => $mimeType,
                         'uploaded_at' => Carbon::now()->toDateTimeString()
@@ -611,7 +600,7 @@ class BookingCheckoutController extends Controller
                 $compensationRequest = CompensationRequest::create([
                     'booking_id' => $booking->booking_id,
                     'requested_by' => $requestedBy,
-                    'policy_id' => $validated['policy_id'] ?? null,
+                    // 'policy_id' => $validated['policy_id'] ?? null,
                     'custom_reason' => $validated['custom_reason'] ?? null,
                     'status' => 'pending',
                     'requested_amount' => $validated['requested_amount'] ?? $calculatedAmount,
@@ -625,8 +614,8 @@ class BookingCheckoutController extends Controller
                         'action' => 'create',
                         'model' => 'CompensationRequest',
                         'model_id' => $compensationRequest->request_id,
-                        'description' => "Created compensation request for booking {$booking->booking_code}. " . 
-                                       ($validated['policy_id'] ? "Policy ID: {$validated['policy_id']}" : "Custom reason provided"),
+                        // 'description' => "Created compensation request for booking {$booking->booking_code}. " . 
+                                    //    ($validated['policy_id'] ? "Policy ID: {$validated['policy_id']}" : "Custom reason provided"),
                         'created_at' => Carbon::now(),
                     ]);
             });

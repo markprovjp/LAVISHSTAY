@@ -133,13 +133,6 @@ const TravelExperience: React.FC<TravelExperienceProps> = ({
               >
                 {showFullContent ? "Thu gọn" : "Xem thêm"}
               </Button>
-              <Button
-                type="primary"
-                icon={<ArrowRightOutlined />}
-                className="flex-1"
-              >
-                Đặt phòng ngay
-              </Button>
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">

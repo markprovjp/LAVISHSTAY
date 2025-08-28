@@ -190,12 +190,12 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
       <Menu.Item key="profile" icon={<UserOutlined />}>
         <Link to="/profile">{t("user.profile")}</Link>
       </Menu.Item>
-      <Menu.Item key="bookings" icon={<BookOutlined />}>
+      {/* <Menu.Item key="bookings" icon={<BookOutlined />}>
         <Link to="/profile/bookings">{t("user.bookings")}</Link>
       </Menu.Item>
       <Menu.Item key="wishlist" icon={<HeartOutlined />}>
         <Link to="/profile/wishlist">{t("user.wishlist")}</Link>
-      </Menu.Item>
+      </Menu.Item> */}
 
       <Menu.Divider />
       <Menu.Item key="logout" icon={<LogoutOutlined />}>
@@ -341,7 +341,7 @@ const Header: React.FC<HeaderProps> = ({ transparent = false }) => {
           {/* Theme Toggle */}
           <ThemeToggle />
           {/* Language Switcher */}
-          <LanguageSwitcher mode="icon-only" />
+          {/* <LanguageSwitcher mode="icon-only" /> */}
           {/* Notifications */}
           <Dropdown
             overlay={notificationMenu}
