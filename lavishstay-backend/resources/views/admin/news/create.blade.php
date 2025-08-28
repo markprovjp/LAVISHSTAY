@@ -178,7 +178,7 @@
                 </div>
 
                 <!-- Canonical URL -->
-                <div x-data="{ canonicalUrl: '{{ old('canonical_url') }}', hasError: {{ $errors->has('canonical_url') ? 'true' : 'false' }} }">
+                {{-- <div x-data="{ canonicalUrl: '{{ old('canonical_url') }}', hasError: {{ $errors->has('canonical_url') ? 'true' : 'false' }} }">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Canonical
                         URL</label>
                     <input type="url" name="canonical_url" x-model="canonicalUrl"
@@ -199,7 +199,7 @@
                     @error('schema_json')
                         <p class="text-xs text-red-500 mt-1" x-show="hasError">{{ $message }}</p>
                     @enderror
-                </div>
+                </div> --}}
 
                 <!-- Publish Date -->
                 <div x-data="{ publishDate: '{{ old('publish_date') }}', hasError: {{ $errors->has('publish_date') ? 'true' : 'false' }} }">

@@ -257,35 +257,26 @@ class StaffController extends Controller
 
     public function destroy($id)
     {
-        // Tìm user theo ID, nếu không có thì báo lỗi 404
         $user = User::findOrFail($id);
 
-        // Chặn trường hợp admin tự xoá chính mình
+        // Không cho admin tự xoá mình
         if ($user->id === Auth::id()) {
             return redirect()->route('admin.users.staffs.index')
                 ->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
         }
 
         try {
-            // Xóa ảnh đại diện nếu có (theo Jetstream)
             $user->deleteProfilePhoto();
-
-            // Tiến hành xoá user trong DB
             $user->delete();
 
-            // Nếu xoá thành công thì trả về thông báo
             return redirect()->route('admin.users.staffs.index')
                 ->with('success', 'Người dùng đã được xóa thành công!');
-        } catch (QueryException $e) {
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Nếu bị lỗi ràng buộc (foreign key)
             if ($e->getCode() == '23000') {
                 return redirect()->route('admin.users.staffs.index')
-                    ->with(
-                        'error',
-                        'Không thể xoá tài khoản này vì vẫn còn dữ liệu liên quan. ' .
-                            'Vui lòng xoá hoặc cập nhật dữ liệu liên quan trước.'
-                    );
+                    ->with('error', 'Không thể xoá nhân viên này vì vẫn còn dữ liệu liên quan. Vui lòng xoá hoặc cập nhật dữ liệu liên quan trước.');
             }
-
             throw $e;
         }
     }

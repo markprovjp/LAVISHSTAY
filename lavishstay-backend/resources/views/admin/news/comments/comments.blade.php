@@ -1,5 +1,16 @@
 <x-app-layout>
     <div x-data="comments" class="px-4 sm:px-6 lg:px-8 py-8 max-w-9xl mx-auto">
+        <!-- Nút quay lại -->
+        {{-- <a href="{{ route('admin.news.index') }}"
+            class="inline-flex items-center mb-4 px-4 py-2 rounded-lg font-semibold text-base transition cursor-pointer
+            bg-gray-900 text-white hover:bg-gray-700
+            dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Quay lại
+        </a> --}}
+
         <!-- Tiêu đề và thống kê -->
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $news->title }}</h1>
@@ -13,7 +24,9 @@
                 <span class="text-base text-gray-600 dark:text-gray-400">
                     Lượt thích: {{ $news->getLikesCount() }}
                 </span>
+                
             </div>
+
         </div>
 
         <!-- Thông báo flash -->
@@ -45,31 +58,50 @@
                 class="px-4 py-2 rounded-lg font-semibold text-base hover:bg-violet-500 hover:text-white transition cursor-pointer">
                 Cũ nhất
             </button>
+       <div class="flex-grow text-right">
+         <a href="{{ route('admin.news.index') }}"
+            class="inline-flex items-center mb-4 px-4 py-2 rounded-lg font-semibold text-base transition cursor-pointer
+            bg-gray-900 text-white hover:bg-gray-700
+            dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Quay lại
+        </a>
+    </div>
         </div>
 
-        <!-- Form thêm bình luận cha -->
-        <div class="mb-6">
-            <form @submit.prevent="addComment" class="flex flex-col gap-2">
-                <textarea x-model="newCommentContent" placeholder="Viết bình luận của bạn..."
-                    class="w-full border dark:bg-gray-900 dark:text-white rounded-lg py-3 px-4 text-base focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    rows="4"></textarea>
-                <button type="submit"
-                    class="self-end px-5 py-2 rounded-lg text-base font-semibold transition cursor-pointer bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
-                    :disabled="!newCommentContent">Thêm bình luận</button>
-            </form>
-            <!-- Mục đích: Form để thêm bình luận cha, gửi đến route news.comments.store -->
-            <!-- Lợi ích: Cho phép cả khách gửi bình luận mới -->
+        <!-- Ô to chứa bình luận, có thanh cuộn riêng -->
+        <div class="rounded-xl bg-white dark:bg-gray-900 shadow p-4" style="max-height: 500px; overflow-y: auto;">
+            <div class="space-y-4" x-ref="commentsContainer" id="comments-list">
+                @if ($comments->count())
+                    @foreach ($comments as $comment)
+                        @include('admin.news.comments._comment_item', [
+                            'comment' => $comment,
+                            'level' => 0,
+                        ])
+                    @endforeach
+                @else
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400 text-base">Không có bình luận nào.
+                    </div>
+                @endif
+            </div>
         </div>
 
-        <!-- Danh sách bình luận -->
-        <div class="space-y-4" x-ref="commentsContainer" id="comments-list">
-            @if ($comments->count())
-                @foreach ($comments as $comment)
-                    @include('admin.news.comments._comment_item', ['comment' => $comment, 'level' => 0])
-                @endforeach
-            @else
-                <div class="text-center py-4 text-gray-500 dark:text-gray-400 text-base">Không có bình luận nào.</div>
-            @endif
+        <!-- Form thêm bình luận mới -->
+        <div class="mb-4 flex flex-col gap-2">
+            <textarea x-model="newCommentContent" placeholder="Nhập bình luận của bạn..."
+                class="w-full border dark:bg-gray-900 dark:text-white rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                rows="3"></textarea>
+            <div class="flex justify-end">
+                <button @click="addComment"
+                    class="px-5 py-2 rounded-lg text-base font-semibold transition cursor-pointer
+                bg-gray-900 text-white hover:bg-gray-700
+                dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                    :disabled="!newCommentContent">
+                    Thêm bình luận
+                </button>
+            </div>
         </div>
 
         <!-- Modal thêm phản hồi -->
@@ -143,119 +175,118 @@
                             url += '?sort=oldest';
                         }
                         fetch(url, {
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            // Cập nhật HTML của container bình luận
-                            this.$refs.commentsContainer.innerHTML = data.html;
-                            // Khởi tạo lại các binding của Alpine.js trong container
-                            Alpine.initTree(this.$refs.commentsContainer);
-                        });
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                // Cập nhật HTML của container bình luận
+                                this.$refs.commentsContainer.innerHTML = data.html;
+                                // Khởi tạo lại các binding của Alpine.js trong container
+                                Alpine.initTree(this.$refs.commentsContainer);
+                            });
                     },
                     // Hàm thêm bình luận cha mới
                     addComment() {
                         if (!this.newCommentContent) return;
                         fetch('{{ route('admin.news.comments.store', ['news' => $news->id]) }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                news_id: {{ $news->id }},
-                                content: this.newCommentContent
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    news_id: {{ $news->id }},
+                                    content: this.newCommentContent
+                                })
                             })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Cập nhật danh sách bình luận
-                                this.$refs.commentsContainer.innerHTML = data.html;
-                                Alpine.initTree(this.$refs.commentsContainer);
-                                // Xóa nội dung form sau khi gửi
-                                this.newCommentContent = '';
-                                // Hiển thị thông báo thành công
-                                this.showToast(data.message, 'success');
-                            } else {
-                                // Hiển thị thông báo lỗi
-                                this.showToast(data.message, 'error');
-                            }
-                        });
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Cập nhật danh sách bình luận
+                                    this.$refs.commentsContainer.innerHTML = data.html;
+                                    Alpine.initTree(this.$refs.commentsContainer);
+                                    // Xóa nội dung form sau khi gửi
+                                    this.newCommentContent = '';
+                                    // Hiển thị thông báo thành công
+                                    this.showToast(data.message, 'success');
+                                } else {
+                                    // Hiển thị thông báo lỗi
+                                    this.showToast(data.message, 'error');
+                                }
+                            });
                     },
                     // Hàm gửi phản hồi cho bình luận
                     submitReply() {
                         fetch('{{ route('admin.news.comments.store', ['news' => $news->id]) }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                news_id: {{ $news->id }},
-                                parent_id: this.selectedCommentId,
-                                content: this.replyContent
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    news_id: {{ $news->id }},
+                                    parent_id: this.selectedCommentId,
+                                    content: this.replyContent
+                                })
                             })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Cập nhật danh sách bình luận
-                                this.$refs.commentsContainer.innerHTML = data.html;
-                                Alpine.initTree(this.$refs.commentsContainer);
-                                // Xóa nội dung phản hồi và đóng modal
-                                this.replyContent = '';
-                                this.showReplyModal = false;
-                                this.showToast(data.message, 'success');
-                            } else {
-                                this.showToast(data.message, 'error');
-                            }
-                        });
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Cập nhật danh sách bình luận
+                                    this.$refs.commentsContainer.innerHTML = data.html;
+                                    Alpine.initTree(this.$refs.commentsContainer);
+                                    // Xóa nội dung phản hồi và đóng modal
+                                    this.replyContent = '';
+                                    this.showReplyModal = false;
+                                    this.showToast(data.message, 'success');
+                                } else {
+                                    this.showToast(data.message, 'error');
+                                }
+                            });
                     },
                     // Hàm xóa bình luận
                     deleteComment() {
-                        fetch('{{ route('admin.news.comments.delete', ['comment' => ':id']) }}'.replace(':id', this.selectedCommentId), {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Cập nhật danh sách bình luận
-                                this.$refs.commentsContainer.innerHTML = data.html;
-                                Alpine.initTree(this.$refs.commentsContainer);
-                                // Hiển thị thông báo thành công và đóng modal
-                                this.showToast(data.message, 'success');
-                                this.showDeleteModal = false;
-                            } else {
-                                // Hiển thị thông báo lỗi
-                                this.showToast(data.message, 'error');
-                            }
-                        });
+                        fetch('{{ route('admin.news.comments.delete', ['comment' => ':id']) }}'.replace(
+                                ':id', this.selectedCommentId), {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Sau khi xoá, gọi lại fetchComments với filterType hiện tại
+                                    this.showToast(data.message, 'success');
+                                    this.showDeleteModal = false;
+                                    this.fetchComments(); // <-- Gọi lại hàm này để giữ đúng filter
+                                } else {
+                                    this.showToast(data.message, 'error');
+                                }
+                            });
                     },
                     // Hàm thả/bỏ tym bình luận
                     likeComment(commentId) {
-                        fetch('{{ route('admin.news.comments.like', ['comment' => ':id']) }}'.replace(':id', commentId), {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Cập nhật trạng thái tym và số lượt tym
-                                this.likedComments[commentId] = data.is_liked;
-                                this.commentsLikes[commentId] = data.likes;
-                                this.showToast(data.message, 'success');
-                            } else {
-                                this.showToast(data.message, 'error');
-                            }
-                        });
+                        fetch('{{ route('admin.news.comments.like', ['comment' => ':id']) }}'.replace(
+                                ':id', commentId), {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Cập nhật trạng thái tym và số lượt tym
+                                    this.likedComments[commentId] = data.is_liked;
+                                    this.commentsLikes[commentId] = data.likes;
+                                    this.showToast(data.message, 'success');
+                                } else {
+                                    this.showToast(data.message, 'error');
+                                }
+                            });
                     },
                     // Hàm mở/đóng danh sách phản hồi
                     toggleReplies(commentId) {

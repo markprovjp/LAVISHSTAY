@@ -293,45 +293,31 @@ class CustomerController extends Controller
 
     public function destroy($id)
     {
-        // Tìm user theo ID, nếu không tồn tại thì trả về 404
         $user = User::findOrFail($id);
 
         // Chỉ cho phép xoá user có role = guest
         if (!$user->hasRole('guest')) {
-            // abort(403): HTTP Forbidden
-            // Nghĩa là không có quyền thực hiện hành động này
             abort(403, 'Không thể xóa người không phải guest');
         }
 
-        // Ngăn chặn trường hợp user tự xoá chính mình
         if ($user->id === Auth::id()) {
             return redirect()->route('admin.users.customers.index')
                 ->with('error', 'Bạn không thể xóa tài khoản của chính mình!');
         }
 
         try {
-            // Nếu user có ảnh đại diện thì xoá ảnh trước (theo Jetstream)
             if ($user->profile_photo_path) {
                 $user->deleteProfilePhoto();
             }
-
-            // Thực hiện xoá user trong DB
             $user->delete();
 
-            // Xoá thành công -> trả về thông báo
             return redirect()->route('admin.users.customers.index')
                 ->with('success', 'Khách hàng đã được xóa thành công!');
-        } catch (QueryException $e) {
+        } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() == '23000') {
                 return redirect()->route('admin.users.customers.index')
-                    ->with(
-                        'error',
-                        'Không thể xoá khách hàng này vì vẫn còn dữ liệu liên quan. ' .
-                            'Vui lòng xoá hoặc cập nhật các dữ liệu liên quan trước.'
-                    );
+                    ->with('error', 'Không thể xoá khách hàng này vì vẫn còn dữ liệu liên quan. Vui lòng xoá hoặc cập nhật các dữ liệu liên quan trước.');
             }
-
-            // Nếu lỗi khác, tiếp tục ném ra cho Laravel xử lý
             throw $e;
         }
     }

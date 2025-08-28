@@ -23,7 +23,7 @@
 </style>
 
 <x-app-layout>
-    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto" x-data="{ showAddModal: false, showEditModal: false, editRole: {}, editId: null }">
+    <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto" x-data="{ showAddModal: false }">
 
         <!-- Page header -->
         <div class="sm:flex sm:justify-between sm:items-center mb-8">
@@ -34,49 +34,40 @@
 
             <!-- Actions -->
             <div class="flex gap-2">
-                <button @click="showAddModal = true" class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white cursor-pointer">
+                <button @click="showAddModal = true"
+                    class="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white cursor-pointer">
                     <i class="fa fa-plus mr-2"></i> Thêm vai trò
                 </button>
             </div>
         </div>
         <!-- Thông báo -->
         @if (session('success'))
-            <div x-data="{ show: true }" 
-                 x-show="show" 
-                 x-init="setTimeout(() => show = false, 5000)" 
-                 x-transition
-                 class="mb-4 flex items-center p-4 text-sm text-green-700 bg-green-100 rounded-lg shadow dark:bg-green-800 dark:text-green-200">
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition
+                class="mb-4 flex items-center p-4 text-sm text-green-700 bg-green-100 rounded-lg shadow dark:bg-green-800 dark:text-green-200">
                 <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.293-4.707a1 1 0 001.414 0l4-4a1 
-                          1 0 00-1.414-1.414L10 11.586 8.293 9.879a1 1 0 
-                          00-1.414 1.414l2 2z"
-                          clip-rule="evenodd"></path>
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1.293-4.707a1 1 0 001.414 0l4-4a1
+                          1 0 00-1.414-1.414L10 11.586 8.293 9.879a1 1 0
+                          00-1.414 1.414l2 2z" clip-rule="evenodd"></path>
                 </svg>
                 <span>{{ session('success') }}</span>
             </div>
         @endif
 
         @if (session('error'))
-            <div x-data="{ show: true }" 
-                 x-show="show" 
-                 x-init="setTimeout(() => show = false, 5000)" 
-                 x-transition
-                 class="mb-4 flex items-center p-4 text-sm text-red-700 bg-red-100 rounded-lg shadow dark:bg-red-800 dark:text-red-200">
+            <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition
+                class="mb-4 flex items-center p-4 text-sm text-red-700 bg-red-100 rounded-lg shadow dark:bg-red-800 dark:text-red-200">
                 <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                          d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7-4a1 
-                          1 0 11-2 0 1 1 0 012 0zM9 9a1 
-                          1 0 000 2h2a1 1 0 100-2H9zm0 
-                          4a1 1 0 100 2h2a1 1 0 
-                          100-2H9z"
-                          clip-rule="evenodd"></path>
+                    <path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-7-4a1
+                          1 0 11-2 0 1 1 0 012 0zM9 9a1
+                          1 0 000 2h2a1 1 0 100-2H9zm0
+                          4a1 1 0 100 2h2a1 1 0
+                          100-2H9z" clip-rule="evenodd"></path>
                 </svg>
                 <span>{{ session('error') }}</span>
             </div>
         @endif
 
-      
+
         <!-- Main Content -->
         <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg">
             <div class="p-6 text-gray-900 dark:text-white">
@@ -135,23 +126,19 @@
                                                             <i class="fa fa-key mr-2"></i> Xem quyền
                                                         </a>
 
-                                                        @if (!$isSpecialRole)
-                                                            <button
-                                                                class="flex items-center w-full px-4 py-2 text-sm text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-700 hover:text-yellow-900 dark:hover:text-white transition-colors duration-150 cursor-pointer"
-                                                                @click="
-                                                                    openAction = false;
-                                                                    showEditModal = true;
-                                                                    editRole = {{ json_encode(['name' => $role->name, 'description' => $role->description]) }};
-                                                                    editId = {{ $role->id }};
-                                                                ">
-                                                                <i class="fa fa-edit mr-2"></i> Sửa vai trò
-                                                            </button>
-                                                        @else
-                                                            <button disabled style="opacity:0.5; pointer-events:none;"
-                                                                class="flex items-center w-full px-4 py-2 text-sm text-yellow-400">
-                                                                <i class="fa fa-edit mr-2"></i> Sửa vai trò
-                                                            </button>
-                                                        @endif
+                                                        {{-- Xoá hoặc comment toàn bộ nút sửa này --}}
+                                                        {{-- 
+                                                        <button
+                                                            class="flex items-center w-full px-4 py-2 text-sm text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-700 hover:text-yellow-900 dark:hover:text-white transition-colors duration-150 cursor-pointer"
+                                                            @click="
+                                                                openAction = false;
+                                                                showEditModal = true;
+                                                                editRole = {{ json_encode(['name' => $role->name, 'description' => $role->description]) }};
+                                                                editId = {{ $role->id }};
+                                                            ">
+                                                            <i class="fa fa-edit mr-2"></i> Sửa vai trò
+                                                        </button>
+                                                        --}}
 
                                                         @if (!$isSpecialRole)
                                                             <form action="{{ route('admin.roles.destroy', $role->id) }}"
@@ -233,8 +220,9 @@
             </div>
         </div>
 
+       
         <!-- Modal Sửa vai trò -->
-        <div x-show="showEditModal" x-transition
+        {{-- <div x-show="showEditModal" x-transition
             class="fixed inset-0 z-50 flex items-center justify-center bg-opacity-20 backdrop-blur-sm"
             style="display: none;">
             <div @click.away="showEditModal = false" class="bg-white rounded-xl w-full max-w-md p-6 shadow-lg relative">
@@ -268,9 +256,11 @@
                 <button @click="showEditModal = false"
                     class="absolute top-2 right-2 text-xl text-gray-400 hover:text-gray-700 cursor-pointer">&times;</button>
             </div>
-        </div>
+        </div> --}}
+        
 
     </div>
 
- 
+
+
 </x-app-layout>
