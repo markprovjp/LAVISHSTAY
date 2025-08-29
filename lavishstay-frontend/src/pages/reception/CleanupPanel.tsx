@@ -209,10 +209,14 @@ const CleanupPanel: React.FC = () => {
         getConfirmationCodeMutation.mutate({ operation, count });
     };
 
-    const renderSampleTable = (data: any[], title: string) => {
-        if (!data || data.length === 0) return null;
+    const renderSampleTable = (data: any, title: string) => {
+        // Normalize incoming data into an array. Some API responses return an object
+        // or a single record instead of an array; Ant Design Table expects an array
+        // (it will call .some internally) so we must coerce safely.
+        const rows: any[] = Array.isArray(data) ? data : (data ? [data] : []);
+        if (!rows || rows.length === 0) return null;
 
-        const columns = Object.keys(data[0]).map(key => ({
+        const columns = Object.keys(rows[0]).map(key => ({
             title: key,
             dataIndex: key,
             key,
@@ -224,12 +228,15 @@ const CleanupPanel: React.FC = () => {
             }
         }));
 
+        // Ensure each row has a stable key for Table
+        const dataSource = rows.map((r, idx) => ({ key: r.id ?? r.booking_id ?? r.room_id ?? idx, ...r }));
+
         return (
             <div style={{ marginTop: 16 }}>
                 <Text strong>{title}</Text>
                 <Table
                     size="small"
-                    dataSource={data}
+                    dataSource={dataSource}
                     columns={columns}
                     pagination={false}
                     scroll={{ x: true }}
